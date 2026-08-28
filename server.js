@@ -8,7 +8,11 @@ const { bot, notifyAdmin } = require('./bot');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public', {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+}));
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
