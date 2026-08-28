@@ -309,7 +309,6 @@ function renderChat() {
         }
       </div>
       <button class="btn" onclick="requestAccess()">Adminga murojaat yuborish</button>
-      <button class="btn secondary" onclick="tg.openTelegramLink('https://t.me/')">Admin profiliga o'tish</button>
     </div>
   `;
 }
