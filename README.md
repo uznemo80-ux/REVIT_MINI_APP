@@ -43,3 +43,4 @@ Botga `/start` yozing → "📚 Darslarni ochish" tugmasi chiqadi → bosganda M
 ## Eslatma
 - 140 ta darsni qanday modul/tuzilmaga bo'lish sizning ixtiyoringizda — `modules` va `lessons` jadvaliga xohlagancha qo'shishingiz mumkin, kod tomondan cheklov yo'q
 - Fayllarni (`lesson_files`) Telegram orqali botga yuborib, `file_id` sifatida ham saqlash mumkin — buni keyinroq avtomatlashtirish mumkin
+test
