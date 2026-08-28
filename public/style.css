@@ -8,7 +8,29 @@
   --locked: #48484a;
   --radius: 20px;
   --radius-sm: 14px;
+  --accent: #ffffff;
+  --accent-text: #000000;
 }
+
+html.light {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #f2f2f7;
+  --line: rgba(0,0,0,0.08);
+  --text: #0e0e0e;
+  --muted: #6e6e73;
+  --locked: #c7c7cc;
+  --accent: #0e0e0e;
+  --accent-text: #ffffff;
+}
+html.light body { background: var(--bg); }
+html.light .btn { background: var(--accent); color: var(--accent-text); }
+html.light .module-head .tag.passed,
+html.light .profile-avatar,
+html.light .progress-fill,
+html.light .option.selected { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+html.light .about-photo { border-color: var(--accent); }
+html.light .nav { background: rgba(255,255,255,0.85); }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -19,6 +41,7 @@ html, body {
   font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   height: 100%;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 #app { display: flex; flex-direction: column; height: 100vh; }
@@ -243,6 +266,56 @@ html, body {
   cursor: pointer;
   transition: color 0.15s ease, transform 0.15s ease;
 }
-.nav-item.active { color: #fff; transform: translateY(-1px); }
+.nav-item.active { color: var(--text); transform: translateY(-1px); }
 .nav-icon { font-size: 20px; line-height: 1; }
 .nav-label { font-size: 10px; font-weight: 500; }
+
+/* ---------- Apple-style toggle ---------- */
+.apple-toggle {
+  width: 46px; height: 28px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.apple-toggle.on { background: #34c759; border-color: #34c759; }
+.apple-toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 22px; height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+.apple-toggle.on .apple-toggle-knob { transform: translateX(18px); }
+
+/* ---------- Tasdiqlash oynasi (modal) ---------- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.15s ease;
+  padding: 24px;
+}
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  max-width: 300px;
+  width: 100%;
+  text-align: center;
+  animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn { from{transform:scale(0.9); opacity:0} to{transform:scale(1); opacity:1} }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.modal-msg { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 18px; }
+.modal-actions { display: flex; gap: 8px; }
+.modal-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+.modal-btn.cancel { background: var(--surface-2); color: var(--text); }
+.modal-btn.confirm { background: var(--accent); color: var(--accent-text); }

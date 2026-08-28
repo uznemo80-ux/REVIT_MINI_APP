@@ -5,6 +5,45 @@ tg.expand();
 const initData = tg.initData || "";
 const app = document.getElementById('app');
 
+// ---------- Mavzu (kunduzgi/tungi) ----------
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('light', theme === 'light');
+}
+let currentTheme = localStorage.getItem('theme') || 'dark';
+applyTheme(currentTheme);
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', currentTheme);
+  applyTheme(currentTheme);
+  haptic();
+  render();
+}
+
+// ---------- Haptik tebranish (Telegramning haqiqiy vibratsiyasi) ----------
+function haptic(style = 'light') {
+  try { tg.HapticFeedback.impactOccurred(style); } catch (e) {}
+}
+
+// ---------- Apple uslubidagi tasdiqlash oynasi ----------
+function showConfirm(title, message, confirmLabel, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-title">${title}</div>
+      <div class="modal-msg">${message}</div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel">Bekor qilish</button>
+        <button class="modal-btn confirm">${confirmLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.cancel').onclick = () => { haptic(); overlay.remove(); };
+  overlay.querySelector('.confirm').onclick = () => { haptic('medium'); overlay.remove(); onConfirm(); };
+}
+
 let state = { has_access: false, modules: [], access_until: null, first_name: '', telegram_id: '' };
 let activeTab = 'home';
 let currentView = null; // {type:'lesson', id} yoki {type:'test', id} — bottom nav ustida ochiladi
@@ -64,6 +103,7 @@ function renderNav() {
 }
 
 function setTab(id) {
+  haptic();
   activeTab = id;
   currentView = null;
   render();
@@ -274,9 +314,16 @@ function renderChat() {
   `;
 }
 
-async function requestAccess() {
-  await api('/api/request-access');
-  tg.showAlert("So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi.");
+function requestAccess() {
+  showConfirm(
+    "So'rov yuborilsinmi?",
+    "Adminga to'liq kirish uchun so'rov yuboriladi. U tez orada siz bilan bog'lanadi.",
+    "Yuborish",
+    async () => {
+      await api('/api/request-access');
+      tg.showAlert("So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi.");
+    }
+  );
 }
 
 // ---------- PROFIL ----------
@@ -298,6 +345,14 @@ function renderProfile() {
         <span>Muddat tugash sanasi</span>
         <span>${fmtDate(state.access_until)}</span>
       </div>` : ''}
+
+      <div class="info-row">
+        <span>Kunduzgi rejim</span>
+        <div class="apple-toggle ${currentTheme === 'light' ? 'on' : ''}" onclick="toggleTheme()">
+          <div class="apple-toggle-knob"></div>
+        </div>
+      </div>
+
       ${!state.has_access ? `<button class="btn" onclick="setTab('chat')">To'liq kirish uchun murojaat</button>` : `<button class="btn secondary" onclick="setTab('chat')">Muddatni uzaytirish uchun murojaat</button>`}
     </div>
   `;
