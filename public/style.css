@@ -1,54 +1,90 @@
 :root {
-  --bg: #0a0a0a;
-  --surface: #151515;
+  --bg: #000000;
+  --surface: #111111;
+  --surface-2: #1a1a1a;
   --line: #2a2a2a;
-  --text: #f2f2f2;
+  --text: #ffffff;
   --muted: #8a8a8a;
-  --accent: #ffffff;
   --locked: #3a3a3a;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
+html, body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-  padding: 16px;
+  height: 100%;
 }
 
+#app { display: flex; flex-direction: column; height: 100vh; }
+.screen { flex: 1; overflow-y: auto; padding: 16px 16px 8px; }
 #loading { text-align: center; color: var(--muted); margin-top: 40px; }
 
-.header {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
   margin-bottom: 16px;
-}
-.header h1 {
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  margin: 0 0 4px 0;
-}
-.header .status {
-  font-size: 13px;
-  color: var(--muted);
-  font-family: "SF Mono", monospace;
+  letter-spacing: -0.01em;
 }
 
+/* ---------- Bosh sahifa ---------- */
+.hero {
+  padding: 20px 4px 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+.hero-greeting { font-size: 24px; font-weight: 700; }
+.hero-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+.stat-row { display: flex; gap: 10px; margin-bottom: 24px; }
+.stat-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 8px;
+  text-align: center;
+}
+.stat-num { font-size: 22px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 20px 0 10px;
+}
+
+.quick-list { display: flex; flex-direction: column; gap: 8px; }
+.quick-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  cursor: pointer;
+}
+.quick-item span:last-child { color: var(--muted); }
+
+/* ---------- Darslar ---------- */
 .module {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 12px;
   overflow: hidden;
+  background: var(--surface);
 }
 .module-head {
-  padding: 12px 14px;
+  padding: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  background: var(--surface);
 }
 .module-head .idx {
   font-family: "SF Mono", monospace;
@@ -59,83 +95,146 @@ body {
 .module.locked .module-head { color: var(--locked); }
 .module-head .tag {
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 20px;
   border: 1px solid var(--line);
   color: var(--muted);
+  white-space: nowrap;
 }
-.module-head .tag.passed { color: #fff; border-color: #fff; }
+.module-head .tag.passed { color: #000; background: #fff; border-color: #fff; }
 
 .lesson-list { display: none; }
 .lesson-list.open { display: block; }
 
 .lesson {
-  padding: 12px 14px;
+  padding: 13px 14px;
   border-top: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  font-size: 14px;
+  background: var(--surface-2);
 }
-.lesson.disabled {
-  color: var(--locked);
-  cursor: not-allowed;
-}
+.lesson.disabled { color: var(--locked); cursor: not-allowed; }
 .lesson .free-badge {
   font-size: 10px;
   color: var(--muted);
   border: 1px solid var(--line);
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 20px;
 }
 
-.lesson-detail { max-width: 100%; }
+.empty-box {
+  text-align: center;
+  padding: 30px 16px;
+  color: var(--muted);
+  font-size: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+/* ---------- Dars detali ---------- */
 .lesson-detail iframe {
   width: 100%;
   aspect-ratio: 16/9;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
 }
-.section-title {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin: 20px 0 8px;
-}
+.lesson-detail h2 { font-size: 18px; margin: 14px 0 4px; }
 .task-box {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 14px;
   margin-bottom: 8px;
   font-size: 14px;
 }
-.file-item a { color: var(--text); }
+.file-item a { color: var(--text); text-decoration: underline; }
 
+.back-btn {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+/* ---------- Vazifalar ---------- */
+.task-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.task-module { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.task-title { font-size: 15px; font-weight: 600; margin: 4px 0 6px; }
+.task-text { font-size: 13px; color: #cfcfcf; line-height: 1.5; }
+
+/* ---------- Chat ---------- */
+.chat-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+/* ---------- Profil ---------- */
+.profile-card {
+  text-align: center;
+  padding: 24px 0 20px;
+}
+.profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-size: 26px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+}
+.profile-name { font-size: 18px; font-weight: 700; }
+.profile-id { font-size: 12px; color: var(--muted); font-family: "SF Mono", monospace; margin-top: 2px; }
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.info-row .ok { color: #fff; font-weight: 600; }
+.info-row .warn { color: var(--muted); }
+
+/* ---------- Tugmalar ---------- */
 .btn {
-  display: inline-block;
-  background: var(--accent);
+  display: block;
+  width: 100%;
+  background: #fff;
   color: #000;
   border: none;
-  padding: 12px 18px;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  width: 100%;
-  text-align: center;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 .btn.secondary {
   background: transparent;
@@ -143,29 +242,37 @@ body {
   border: 1px solid var(--line);
 }
 
-.locked-box {
-  text-align: center;
-  padding: 30px 16px;
-  color: var(--muted);
-}
-
-.back-btn {
-  color: var(--muted);
-  font-size: 14px;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
-
-.test-question {
-  margin-bottom: 18px;
-}
+/* ---------- Test ---------- */
+.test-question { margin-bottom: 18px; }
 .test-question p { font-size: 14px; margin-bottom: 8px; }
 .option {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 12px 14px;
   margin-bottom: 6px;
   font-size: 14px;
   cursor: pointer;
+  background: var(--surface);
 }
-.option.selected { border-color: var(--accent); background: var(--surface); }
+.option.selected { border-color: #fff; background: #fff; color: #000; font-weight: 600; }
+
+/* ---------- Pastki navigatsiya ---------- */
+.nav {
+  display: flex;
+  border-top: 1px solid var(--line);
+  background: #050505;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+.nav-item.active { color: #fff; }
+.nav-icon { font-size: 20px; line-height: 1; }
+.nav-label { font-size: 10px; }
