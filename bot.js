@@ -9,13 +9,12 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 // --- /start: Mini App'ni ochish tugmasi ---
 bot.start((ctx) => {
-  const freshUrl = `${process.env.APP_URL}?v=${Date.now()}`;
   ctx.reply(
     "Assalomu alaykum! Revit darslariga xush kelibsiz 👋\n\nDarslarni ko'rish uchun quyidagi tugmani bosing:",
     {
       reply_markup: {
         inline_keyboard: [[
-          { text: "📚 Darslarni ochish", web_app: { url: freshUrl } }
+          { text: "📚 Darslarni ochish", web_app: { url: process.env.APP_URL } }
         ]]
       }
     }

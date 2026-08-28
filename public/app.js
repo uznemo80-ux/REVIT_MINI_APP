@@ -78,101 +78,51 @@ function renderTab() {
   return '';
 }
 
-// ---------- STATIK KONTENT (o'zingiz tahrirlaysiz) ----------
-const ABOUT_TEXT = `Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
-
-Men Revit'ni shunchaki dastur sifatida emas, balki real loyihalarni ishlab chiqish, ishchi chizmalar tayyorlash va loyiha jarayonini tizimli tashkil qilish vositasi sifatida o'rganib, amaliyotda qo'llab kelaman.
-
-Faoliyatim davomida arxitektura va interyer loyihalari, Revit modellashtirish, ishchi chizmalar, spetsifikatsiyalar va loyiha hujjatlari bilan ishlash bo'yicha tajriba orttirganman. Bu sohada 4 yildan beri ishlayman.
-
-Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyihasini yo'lga qo'ydim.`;
-
-const COURSE = {
-  title: "INTPRO — Revit dasturida interyer loyihalash",
-  price: "1 500 000 so'm",
-  cover: "course-cover.jpg" // public/course-cover.jpg — o'zingizning rasmingizni shu nom bilan qo'ying
-};
-
-// Namuna fikrlar — o'zingizning haqiqiy o'quvchilaringiz fikrlari bilan almashtiring
-const TESTIMONIALS = [
-  { text: "Kurs juda tushunarli va amaliy, ishimda darhol qo'llay boshladim.", name: "O'quvchi ismi" },
-  { text: "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.", name: "O'quvchi ismi" },
-  { text: "Vazifalar orqali bilim mustahkam o'rnashib qoldi.", name: "O'quvchi ismi" }
-];
-
-// Tez-tez so'raladigan savollar — moslashtiring
-const FAQ = [
-  { q: "Kursga qanday to'lov qilaman?", a: "\"Chat\" bo'limidan \"Adminga murojaat yuborish\" tugmasini bosing, men siz bilan bog'lanib to'lov usulini aytaman." },
-  { q: "Kirish huquqi qancha muddatga beriladi?", a: "To'lov tasdiqlangandan so'ng darslarga 1 yil davomida kirish huquqi beriladi." },
-  { q: "Muddatim tugasa nima bo'ladi?", a: "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning." },
-  { q: "Namuna darslarni ko'ra olamanmi?", a: "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan." }
-];
-
-let openFaq = null;
-
 // ---------- BOSH SAHIFA ----------
 function renderHome() {
   const totalLessons = state.modules.reduce((a, m) => a + m.lessons.length, 0);
-  const totalModules = state.modules.length;
+  const availableLessons = state.modules.reduce((a, m) => a + m.lessons.filter(l => l.available).length, 0);
+  const statusLine = state.has_access
+    ? `Faol obuna · ${fmtDate(state.access_until)} gacha`
+    : "Obunangiz yo'q — namuna darslar ochiq";
 
   return `
     <div class="page">
-      <div class="welcome-hero">
-        <div class="welcome-title">Xush kelibsiz</div>
-        <div class="welcome-sub">Revit dasturi bo'yicha darsliklar</div>
+      <div class="hero">
+        <div class="hero-greeting">Salom, ${state.first_name || 'do\u2019stim'} 👋</div>
+        <div class="hero-sub">${statusLine}</div>
       </div>
 
-      <div class="about-card">
-        <div class="about-photo-wrap">
-          <img class="about-photo" src="admin.jpg" onerror="this.style.display='none'" alt="Abdulloh">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-num">${availableLessons}</div>
+          <div class="stat-label">Ochiq dars</div>
         </div>
-        <div class="about-text">${ABOUT_TEXT.replace(/\n/g, '<br><br>')}</div>
-      </div>
-
-      <div class="section-title">Kurslar</div>
-      <div class="course-card">
-        <img class="course-cover" src="${COURSE.cover}" onerror="this.style.display='none'" alt="${COURSE.title}">
-        <div class="course-body">
-          <div class="course-title">${COURSE.title}</div>
-          <div class="course-meta">${totalModules} modul · ${totalLessons} dars</div>
-          <div class="course-price">${COURSE.price}</div>
-          <button class="btn" onclick="setTab('chat')">Kursni sotib olish</button>
+        <div class="stat-card">
+          <div class="stat-num">${totalLessons}</div>
+          <div class="stat-label">Jami dars</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${state.modules.length}</div>
+          <div class="stat-label">Modul</div>
         </div>
       </div>
 
-      <div class="section-title">Bepul darslar</div>
-      <div class="quick-item" onclick="setTab('lessons')">
-        <span>▶ Namuna darslarni bepul ko'rish</span><span>→</span>
-      </div>
-
-      <div class="section-title">O'quvchilar fikri</div>
-      <div class="testi-scroll">
-        ${TESTIMONIALS.map(t => `
-          <div class="testi-card">
-            <div class="testi-text">"${t.text}"</div>
-            <div class="testi-name">— ${t.name}</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="section-title">Ko'p beriladigan savollar</div>
-      <div class="faq-list">
-        ${FAQ.map((f, i) => `
-          <div class="faq-item">
-            <div class="faq-q" onclick="toggleFaq(${i})">
-              <span>${f.q}</span><span class="faq-plus">${openFaq === i ? '−' : '+'}</span>
-            </div>
-            ${openFaq === i ? `<div class="faq-a">${f.a}</div>` : ''}
-          </div>
-        `).join('')}
+      <div class="section-title">Tezkor havolalar</div>
+      <div class="quick-list">
+        <div class="quick-item" onclick="setTab('lessons')">
+          <span>▤ Darslarni ko'rish</span><span>→</span>
+        </div>
+        <div class="quick-item" onclick="setTab('tasks')">
+          <span>✎ Vazifalarni ko'rish</span><span>→</span>
+        </div>
+        ${!state.has_access ? `
+        <div class="quick-item" onclick="setTab('chat')">
+          <span>◈ To'liq kirish uchun murojaat</span><span>→</span>
+        </div>` : ''}
       </div>
     </div>
   `;
-}
-
-function toggleFaq(i) {
-  openFaq = openFaq === i ? null : i;
-  render();
 }
 
 // ---------- DARSLAR ----------
