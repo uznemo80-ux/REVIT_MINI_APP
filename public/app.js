@@ -716,15 +716,23 @@ function renderHome() {
 
       <div class="about-card">
 
-        <div class="about-photo-wrap">
+  <div class="about-photo-wrap">
+    <img
+      class="about-photo"
+      src="/admin.jpg?v=2"
+      alt="Abdulloh"
+    >
+  </div>
 
-          <img
-            class="about-photo"
-            src="/admin.jpg?v=2"
-            alt="Abdulloh"
-          >
+  <div class="about-text ${aboutOpen ? "expanded" : ""}">
+    ${ABOUT_TEXT.replace(/\n/g, "<br><br>")}
+  </div>
 
-        </div>
+  <div class="about-more">
+    ${aboutOpen ? "Yashirish ↑" : "Batafsil ↓"}
+  </div>
+
+</div>
 
 
         <div
