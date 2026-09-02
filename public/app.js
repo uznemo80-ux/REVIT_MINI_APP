@@ -556,7 +556,6 @@ let openFaq = null;
 
 let aboutOpen = false;
 
-
 function toggleAbout() {
 
   const text =
@@ -565,11 +564,12 @@ function toggleAbout() {
   const button =
     document.querySelector(".about-more");
 
-  if (!text || !button) return;
-
+  if (!text || !button) {
+    console.log("ABOUT ELEMENT TOPILMADI");
+    return;
+  }
 
   aboutOpen = !aboutOpen;
-
 
   if (aboutOpen) {
 
@@ -586,7 +586,6 @@ function toggleAbout() {
       "Batafsil ↓";
 
   }
-
 
   haptic();
 
