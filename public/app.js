@@ -1,3 +1,4 @@
+```javascript
 const tg = window.Telegram.WebApp;
 
 tg.ready();
@@ -6,7 +7,11 @@ tg.expand();
 const initData = tg.initData || "";
 const app = document.getElementById("app");
 
-// ---------- Mavzu ----------
+
+// ======================================================
+// MAVZU
+// ======================================================
+
 function applyTheme(theme) {
   document.documentElement.classList.toggle(
     "light",
@@ -36,14 +41,22 @@ function toggleTheme() {
   render();
 }
 
-// ---------- HAPTIC ----------
+
+// ======================================================
+// HAPTIC
+// ======================================================
+
 function haptic(style = "light") {
   try {
     tg.HapticFeedback.impactOccurred(style);
   } catch (e) {}
 }
 
-// ---------- CONFIRM ----------
+
+// ======================================================
+// CONFIRM
+// ======================================================
+
 function showConfirm(
   title,
   message,
@@ -110,7 +123,11 @@ function showConfirm(
   }
 }
 
-// ---------- STATE ----------
+
+// ======================================================
+// STATE
+// ======================================================
+
 let state = {
   has_access: false,
   modules: [],
@@ -122,7 +139,11 @@ let state = {
 let activeTab = "home";
 let currentView = null;
 
-// ---------- API ----------
+
+// ======================================================
+// API
+// ======================================================
+
 async function api(path, body = {}) {
   const res = await fetch(path, {
     method: "POST",
@@ -150,7 +171,11 @@ async function api(path, body = {}) {
   return data;
 }
 
-// ---------- DATE ----------
+
+// ======================================================
+// DATE
+// ======================================================
+
 function fmtDate(d) {
   if (!d) return null;
 
@@ -164,7 +189,11 @@ function fmtDate(d) {
   );
 }
 
-// ---------- CONTENT ----------
+
+// ======================================================
+// CONTENT
+// ======================================================
+
 async function loadContent() {
   try {
     const data =
@@ -198,7 +227,11 @@ async function loadContent() {
   }
 }
 
-// ---------- LAYOUT ----------
+
+// ======================================================
+// LAYOUT
+// ======================================================
+
 function render() {
   if (!app) return;
 
@@ -209,9 +242,7 @@ function render() {
 
   app.innerHTML = `
     <div class="screen">
-
       ${body}
-
     </div>
 
     ${
@@ -222,7 +253,11 @@ function render() {
   `;
 }
 
-// ---------- NAVIGATION ----------
+
+// ======================================================
+// NAVIGATION
+// ======================================================
+
 function renderNav() {
   const tabs = [
     {
@@ -280,6 +315,7 @@ function renderNav() {
   `;
 }
 
+
 function setTab(id) {
   haptic();
 
@@ -287,7 +323,17 @@ function setTab(id) {
   currentView = null;
 
   render();
+
+  requestAnimationFrame(() => {
+    const screen =
+      document.querySelector(".screen");
+
+    if (screen) {
+      screen.scrollTop = 0;
+    }
+  });
 }
+
 
 function renderTab() {
   if (activeTab === "home") {
@@ -313,7 +359,10 @@ function renderTab() {
   return "";
 }
 
-// ---------- STATIC CONTENT ----------
+
+// ======================================================
+// STATIC CONTENT
+// ======================================================
 
 const ABOUT_TEXT = `
 Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
@@ -324,6 +373,7 @@ Faoliyatim davomida arxitektura va interyer loyihalari, Revit modellashtirish, i
 
 Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyihasini yo'lga qo'ydim.
 `;
+
 
 const COURSE = {
   title:
@@ -341,6 +391,7 @@ const COURSE = {
   cover:
     "course-cover.jpg"
 };
+
 
 const TESTIMONIALS = [
   {
@@ -367,6 +418,7 @@ const TESTIMONIALS = [
       "O'quvchi ismi"
   }
 ];
+
 
 const FAQ = [
   {
@@ -402,17 +454,21 @@ const FAQ = [
   }
 ];
 
+
 let openFaq = null;
+
 
 // ======================================================
 // BOSH SAHIFA
 // ======================================================
 
 function renderHome() {
+
   const modules =
     Array.isArray(state.modules)
       ? state.modules
       : [];
+
 
   const myAvailable =
     modules.reduce(
@@ -428,6 +484,7 @@ function renderHome() {
       0
     );
 
+
   const myTotal =
     modules.reduce(
       (a, m) =>
@@ -440,6 +497,7 @@ function renderHome() {
       0
     );
 
+
   const pct =
     myTotal
       ? Math.round(
@@ -447,6 +505,7 @@ function renderHome() {
           100
         )
       : 0;
+
 
   return `
     <div class="page">
@@ -462,6 +521,7 @@ function renderHome() {
         </div>
 
       </div>
+
 
       ${
         myTotal
@@ -494,6 +554,11 @@ function renderHome() {
           : ""
       }
 
+
+      <!-- ==========================================
+           MEN HAQIMDA
+      =========================================== -->
+
       <div class="about-card">
 
         <div class="about-photo-wrap">
@@ -501,8 +566,8 @@ function renderHome() {
           <img
             class="about-photo"
             src="admin.jpg"
-            onerror="this.style.display='none'"
             alt="Abdulloh"
+            onerror="this.style.display='none'"
           >
 
         </div>
@@ -516,9 +581,15 @@ function renderHome() {
 
       </div>
 
+
+      <!-- ==========================================
+           KURS
+      =========================================== -->
+
       <div class="section-title">
         Kurslar
       </div>
+
 
       <div class="course-card">
 
@@ -529,11 +600,13 @@ function renderHome() {
           alt="${COURSE.title}"
         >
 
+
         <div class="course-body">
 
           <div class="course-title">
             ${COURSE.title}
           </div>
+
 
           <div class="course-meta">
             ${COURSE.totalModules}
@@ -542,9 +615,11 @@ function renderHome() {
             dars
           </div>
 
+
           <div class="course-price">
             ${COURSE.price}
           </div>
+
 
           <button
             class="btn"
@@ -557,9 +632,15 @@ function renderHome() {
 
       </div>
 
+
+      <!-- ==========================================
+           BEPUL DARSLAR
+      =========================================== -->
+
       <div class="section-title">
         Bepul darslar
       </div>
+
 
       <div
         class="quick-item"
@@ -576,9 +657,15 @@ function renderHome() {
 
       </div>
 
+
+      <!-- ==========================================
+           FIKRLAR
+      =========================================== -->
+
       <div class="section-title">
         O'quvchilar fikri
       </div>
+
 
       <div class="testi-scroll">
 
@@ -598,9 +685,15 @@ function renderHome() {
 
       </div>
 
+
+      <!-- ==========================================
+           FAQ
+      =========================================== -->
+
       <div class="section-title">
         Ko'p beriladigan savollar
       </div>
+
 
       <div class="faq-list">
 
@@ -617,16 +710,15 @@ function renderHome() {
               </span>
 
               <span class="faq-plus">
-
                 ${
                   openFaq === i
                     ? "−"
                     : "+"
                 }
-
               </span>
 
             </div>
+
 
             ${
               openFaq === i
@@ -647,20 +739,74 @@ function renderHome() {
   `;
 }
 
+
+// ======================================================
+// FAQ — TUZATILGAN
+// ======================================================
+
 function toggleFaq(i) {
+
+  const screen =
+    document.querySelector(".screen");
+
+  /*
+    FAQ bosilishidan oldingi
+    scroll holatini saqlab qolamiz.
+  */
+
+  const oldScrollTop =
+    screen
+      ? screen.scrollTop
+      : 0;
+
+
+  /*
+    Qaysi FAQ ochilishini o'zgartiramiz.
+  */
+
   openFaq =
     openFaq === i
       ? null
       : i;
 
+
+  /*
+    FAQ ochilganda butun sahifa
+    qayta render qilinadi.
+  */
+
   render();
+
+
+  /*
+    Brauzer yangi DOM elementlarini
+    joylashtirgandan keyin eski
+    scroll holatini qaytaramiz.
+  */
+
+  requestAnimationFrame(() => {
+
+    const newScreen =
+      document.querySelector(".screen");
+
+    if (newScreen) {
+
+      newScreen.scrollTop =
+        oldScrollTop;
+
+    }
+
+  });
+
 }
+
 
 // ======================================================
 // DARSLAR
 // ======================================================
 
 function renderLessons() {
+
   let html = `
     <div class="page">
 
@@ -669,10 +815,12 @@ function renderLessons() {
       </div>
   `;
 
+
   const modules =
     Array.isArray(state.modules)
       ? state.modules
       : [];
+
 
   modules.forEach(
     (m, i) => {
@@ -681,6 +829,7 @@ function renderLessons() {
         Array.isArray(m.lessons)
           ? m.lessons
           : [];
+
 
       html += `
         <div
@@ -707,6 +856,7 @@ function renderLessons() {
 
             </div>
 
+
             <div
               class="tag ${
                 m.passed_test
@@ -728,6 +878,7 @@ function renderLessons() {
             </div>
 
           </div>
+
 
           <div
             class="lesson-list"
@@ -753,6 +904,7 @@ function renderLessons() {
                     ${l.title}
                   </span>
 
+
                   ${
                     l.is_free
                       ? '<span class="free-badge">Namuna</span>'
@@ -771,18 +923,24 @@ function renderLessons() {
 
         </div>
       `;
+
     }
   );
 
+
   if (!modules.length) {
+
     html += `
       <div class="empty-box">
         Hozircha darslar qo'shilmagan.
       </div>
     `;
+
   }
 
+
   if (!state.has_access) {
+
     html += `
       <button
         class="btn"
@@ -791,35 +949,47 @@ function renderLessons() {
         To'liq kirish uchun murojaat qilish
       </button>
     `;
+
   }
 
+
   html += `</div>`;
+
 
   return html;
 }
 
+
 function toggleModule(id) {
+
   const el =
     document.getElementById(
       `mod-${id}`
     );
 
+
   if (el) {
     el.classList.toggle("open");
   }
+
 }
 
+
 function showLockedInfo() {
+
   tg.showAlert(
     "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
+
 }
+
 
 // ======================================================
 // VAZIFALAR
 // ======================================================
 
 function renderTasks() {
+
   let html = `
     <div class="page">
 
@@ -828,10 +998,12 @@ function renderTasks() {
       </div>
   `;
 
+
   const modules =
     Array.isArray(state.modules)
       ? state.modules
       : [];
+
 
   const allLessons =
     modules.flatMap(
@@ -849,6 +1021,7 @@ function renderTasks() {
         )
     );
 
+
   const withTasks =
     allLessons.filter(
       l =>
@@ -856,21 +1029,27 @@ function renderTasks() {
         l.task_text
     );
 
+
   const lockedCount =
     allLessons.filter(
       l =>
         !l.available
     ).length;
 
+
   if (!withTasks.length) {
+
     html += `
       <div class="empty-box">
         Hozircha ochiq vazifalar yo'q.
       </div>
     `;
+
   } else {
+
     withTasks.forEach(
       l => {
+
         html += `
           <div
             class="task-card"
@@ -891,11 +1070,15 @@ function renderTasks() {
 
           </div>
         `;
+
       }
     );
+
   }
 
+
   if (lockedCount > 0) {
+
     html += `
       <div class="empty-box">
 
@@ -906,24 +1089,30 @@ function renderTasks() {
 
       </div>
     `;
+
   }
+
 
   html += `</div>`;
 
+
   return html;
 }
+
 
 // ======================================================
 // CHAT
 // ======================================================
 
 function renderChat() {
+
   return `
     <div class="page">
 
       <div class="page-title">
         Chat
       </div>
+
 
       <div class="chat-box">
 
@@ -957,6 +1146,7 @@ function renderChat() {
 
       </div>
 
+
       <button
         class="btn"
         onclick="requestAccess()"
@@ -968,49 +1158,64 @@ function renderChat() {
   `;
 }
 
+
 function requestAccess() {
+
   showConfirm(
-    "So'rov yuborilsinmi?",
+
+    "So'rov yuborilsin?",
 
     "Adminga to'liq kirish uchun so'rov yuboriladi. U tez orada siz bilan bog'lanadi.",
 
     "Yuborish",
 
     async () => {
+
       try {
+
         await api(
           "/api/request-access"
         );
+
 
         tg.showAlert(
           "So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi."
         );
 
       } catch (error) {
+
         console.error(
           "REQUEST ACCESS ERROR:",
           error
         );
 
+
         tg.showAlert(
           "So'rov yuborishda xatolik yuz berdi."
         );
+
       }
+
     }
+
   );
+
 }
+
 
 // ======================================================
 // PROFIL
 // ======================================================
 
 function renderProfile() {
+
   return `
     <div class="page">
 
       <div class="page-title">
         Profil
       </div>
+
 
       <div class="profile-card">
 
@@ -1025,6 +1230,7 @@ function renderProfile() {
 
         </div>
 
+
         <div class="profile-name">
 
           ${
@@ -1033,6 +1239,7 @@ function renderProfile() {
           }
 
         </div>
+
 
         <div class="profile-id">
 
@@ -1043,11 +1250,13 @@ function renderProfile() {
 
       </div>
 
+
       <div class="info-row">
 
         <span>
           Obuna holati
         </span>
+
 
         <span
           class="${
@@ -1066,6 +1275,7 @@ function renderProfile() {
         </span>
 
       </div>
+
 
       ${
         state.has_access
@@ -1087,11 +1297,13 @@ function renderProfile() {
           : ""
       }
 
+
       <div class="info-row">
 
         <span>
           Kunduzgi rejim
         </span>
+
 
         <div
           class="apple-toggle ${
@@ -1109,6 +1321,7 @@ function renderProfile() {
         </div>
 
       </div>
+
 
       ${
         !state.has_access
@@ -1134,6 +1347,7 @@ function renderProfile() {
   `;
 }
 
+
 // ======================================================
 // DETAIL VIEW
 // ======================================================
@@ -1142,53 +1356,51 @@ function renderDetailView() {
   return currentView.html;
 }
 
+
 // ======================================================
 // VIDEO
 // YOUTUBE + BUNNY STREAM
 // ======================================================
 
 async function openLesson(id) {
+
   try {
+
     const lesson =
       await api(
         `/api/lesson/${id}`
       );
 
-    // --------------------------------
-    // PULLIK DARSLAR
-    // --------------------------------
 
     if (
       lesson.error === "locked"
     ) {
+
       return showLockedInfo();
+
     }
 
-    // --------------------------------
-    // SERVER XATOSI
-    // --------------------------------
 
     if (lesson.error) {
+
       return tg.showAlert(
         lesson.message ||
         "Darsni ochishda xatolik yuz berdi."
       );
+
     }
 
-    // --------------------------------
-    // VIDEO PLAYER
-    // --------------------------------
 
     let videoHtml = "";
 
-    // ==============================
+
     // YOUTUBE
-    // ==============================
 
     if (
       lesson.video_type === "youtube" &&
       lesson.youtube_player_url
     ) {
+
       videoHtml = `
         <div class="video-container">
 
@@ -1210,16 +1422,17 @@ async function openLesson(id) {
 
         </div>
       `;
+
     }
 
-    // ==============================
-    // BUNNY STREAM
-    // ==============================
+
+    // BUNNY
 
     else if (
       lesson.video_type === "bunny" &&
       lesson.bunny_player_url
     ) {
+
       videoHtml = `
         <div class="video-container">
 
@@ -1239,15 +1452,16 @@ async function openLesson(id) {
 
         </div>
       `;
+
     }
 
-    // ==============================
-    // ESKI FORMAT
-    // ==============================
+
+    // ESKI YOUTUBE FORMAT
 
     else if (
       lesson.youtube_player_url
     ) {
+
       videoHtml = `
         <div class="video-container">
 
@@ -1259,11 +1473,16 @@ async function openLesson(id) {
 
         </div>
       `;
+
     }
+
+
+    // ESKI BUNNY FORMAT
 
     else if (
       lesson.bunny_player_url
     ) {
+
       videoHtml = `
         <div class="video-container">
 
@@ -1275,13 +1494,12 @@ async function openLesson(id) {
 
         </div>
       `;
+
     }
 
-    // --------------------------------
-    // VIDEO TOPILMADI
-    // --------------------------------
 
     else {
+
       console.error(
         "VIDEO URL TOPILMADI:",
         lesson
@@ -1290,11 +1508,11 @@ async function openLesson(id) {
       return tg.showAlert(
         "Video topilmadi. Server ma'lumotlarini tekshirish kerak."
       );
+
     }
 
-    // --------------------------------
+
     // FILES
-    // --------------------------------
 
     const filesHtml =
       lesson.files &&
@@ -1326,12 +1544,13 @@ async function openLesson(id) {
         `
         : "";
 
-    // --------------------------------
+
     // DETAIL PAGE
-    // --------------------------------
 
     currentView = {
+
       html: `
+
         <div
           class="back-btn"
           onclick="closeDetail()"
@@ -1339,13 +1558,16 @@ async function openLesson(id) {
           ← Orqaga
         </div>
 
+
         <div class="lesson-detail">
 
           ${videoHtml}
 
+
           <h2>
             ${lesson.title}
           </h2>
+
 
           ${
             lesson.task_text
@@ -1361,15 +1583,19 @@ async function openLesson(id) {
               : ""
           }
 
+
           ${filesHtml}
 
         </div>
+
       `
     };
+
 
     render();
 
   } catch (error) {
+
     console.error(
       "OPEN LESSON ERROR:",
       error
@@ -1378,39 +1604,55 @@ async function openLesson(id) {
     tg.showAlert(
       "Darsni ochishda server bilan bog'lanib bo'lmadi."
     );
+
   }
+
 }
 
+
 function closeDetail() {
+
   currentView = null;
+
   render();
+
 }
+
 
 // ======================================================
 // TEST
 // ======================================================
 
 async function openTest(moduleId) {
+
   try {
+
     const {
       questions
     } = await api(
       `/api/module/${moduleId}/test`
     );
 
+
     if (
       !questions ||
       !questions.length
     ) {
+
       return tg.showAlert(
         "Bu modul uchun test hali qo'shilmagan."
       );
+
     }
+
 
     window._answers = {};
 
+
     currentView = {
+
       html: `
+
         <div
           class="back-btn"
           onclick="closeDetail()"
@@ -1418,9 +1660,11 @@ async function openTest(moduleId) {
           ← Orqaga
         </div>
 
+
         <div class="section-title">
           Modul testi
         </div>
+
 
         <div id="test-body">
 
@@ -1428,6 +1672,7 @@ async function openTest(moduleId) {
             questions
               .map(
                 q => `
+
                   <div
                     class="test-question"
                   >
@@ -1436,24 +1681,30 @@ async function openTest(moduleId) {
                       ${q.question}
                     </p>
 
+
                     ${
                       q.options
                         .map(
                           (opt, i) => `
+
                             <div
                               class="option"
                               data-q="${q.id}"
                               data-i="${i}"
                               onclick="selectOption(${q.id}, ${i})"
                             >
+
                               ${opt}
+
                             </div>
+
                           `
                         )
                         .join("")
                     }
 
                   </div>
+
                 `
               )
               .join("")
@@ -1461,18 +1712,22 @@ async function openTest(moduleId) {
 
         </div>
 
+
         <button
           class="btn"
           onclick="submitTest(${moduleId})"
         >
           Yuborish
         </button>
+
       `
     };
+
 
     render();
 
   } catch (error) {
+
     console.error(
       "OPEN TEST ERROR:",
       error
@@ -1481,15 +1736,21 @@ async function openTest(moduleId) {
     tg.showAlert(
       "Testni yuklashda xatolik yuz berdi."
     );
+
   }
+
 }
 
+
 function selectOption(qId, i) {
+
   if (!window._answers) {
     window._answers = {};
   }
 
+
   window._answers[qId] = i;
+
 
   document
     .querySelectorAll(
@@ -1497,26 +1758,36 @@ function selectOption(qId, i) {
     )
     .forEach(
       el => {
+
         el.classList.remove(
           "selected"
         );
+
       }
     );
+
 
   const selected =
     document.querySelector(
       `.option[data-q="${qId}"][data-i="${i}"]`
     );
 
+
   if (selected) {
+
     selected.classList.add(
       "selected"
     );
+
   }
+
 }
 
+
 async function submitTest(moduleId) {
+
   try {
+
     const result =
       await api(
         `/api/module/${moduleId}/submit`,
@@ -1526,34 +1797,46 @@ async function submitTest(moduleId) {
         }
       );
 
+
     if (result.passed) {
+
       tg.showAlert(
         `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
       );
+
     } else {
+
       tg.showAlert(
         `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
       );
+
     }
+
 
     closeDetail();
 
     await loadContent();
 
   } catch (error) {
+
     console.error(
       "SUBMIT TEST ERROR:",
       error
     );
 
+
     tg.showAlert(
       "Test natijasini yuborishda xatolik yuz berdi."
     );
+
   }
+
 }
+
 
 // ======================================================
 // START
 // ======================================================
 
 loadContent();
+```
