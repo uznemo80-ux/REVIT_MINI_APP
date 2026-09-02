@@ -739,11 +739,11 @@ function renderHome() {
             /\n/g,
             "<br><br>"
           )}
-
         </div>
   class="about-more"
   onclick="toggleAbout()"
 >
+ <div class="about-more">
   ${
     aboutOpen
       ? "Yashirish ↑"
