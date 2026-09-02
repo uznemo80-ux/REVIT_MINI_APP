@@ -550,6 +550,43 @@ const FAQ = [
 let openFaq = null;
 
 
+let openFaq = null;
+
+let aboutOpen = false;
+
+function toggleAbout() {
+
+  const text =
+    document.querySelector(".about-text");
+
+  const button =
+    document.querySelector(".about-more");
+
+  if (!text || !button) return;
+
+  aboutOpen = !aboutOpen;
+
+  if (aboutOpen) {
+
+    text.classList.add("expanded");
+
+    button.textContent =
+      "Yashirish ↑";
+
+  } else {
+
+    text.classList.remove("expanded");
+
+    button.textContent =
+      "Batafsil ↓";
+
+  }
+
+  haptic();
+
+}
+
+
 // ======================================================
 // BOSH SAHIFA
 // ======================================================
@@ -669,6 +706,210 @@ function renderHome() {
           : ""
       }
 
+
+      <!-- MEN HAQIMDA -->
+
+      <div class="about-card">
+
+        <div class="about-photo-wrap">
+
+          <img
+            class="about-photo"
+            src="/admin.jpg?v=2"
+            alt="Abdulloh"
+          >
+
+        </div>
+
+
+        <div
+          class="about-text ${
+            aboutOpen
+              ? "expanded"
+              : ""
+          }"
+        >
+
+          ${ABOUT_TEXT.replace(
+            /\n/g,
+            "<br><br>"
+          )}
+
+        </div>
+
+
+        <div
+          class="about-more"
+          onclick="toggleAbout()"
+        >
+
+          ${
+            aboutOpen
+              ? "Yashirish ↑"
+              : "Batafsil ↓"
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- KURSLAR -->
+
+      <div class="section-title">
+        Kurslar
+      </div>
+
+
+      <div class="course-card">
+
+        <img
+          class="course-cover"
+          src="${COURSE.cover}"
+          onerror="this.style.display='none'"
+          alt="${COURSE.title}"
+        >
+
+
+        <div class="course-body">
+
+          <div class="course-title">
+            ${COURSE.title}
+          </div>
+
+
+          <div class="course-meta">
+
+            ${COURSE.totalModules}
+            modul ·
+            ${COURSE.totalLessons}
+            dars
+
+          </div>
+
+
+          <div class="course-price">
+            ${COURSE.price}
+          </div>
+
+
+          <button
+            class="btn"
+            onclick="setTab('chat')"
+          >
+            Kursni sotib olish
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- BEPUL DARSLAR -->
+
+      <div class="section-title">
+        Bepul darslar
+      </div>
+
+
+      <div
+        class="quick-item"
+        onclick="setTab('lessons')"
+      >
+
+        <span>
+          ▶ Namuna darslarni bepul ko'rish
+        </span>
+
+        <span>
+          →
+        </span>
+
+      </div>
+
+
+      <!-- O'QUVCHILAR FIKRI -->
+
+      <div class="section-title">
+        O'quvchilar fikri
+      </div>
+
+
+      <div class="testi-scroll">
+
+        ${TESTIMONIALS.map(t => `
+
+          <div class="testi-card">
+
+            <div class="testi-text">
+              "${t.text}"
+            </div>
+
+            <div class="testi-name">
+              — ${t.name}
+            </div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+
+      <!-- FAQ -->
+
+      <div class="section-title">
+        Ko'p beriladigan savollar
+      </div>
+
+
+      <div class="faq-list">
+
+        ${FAQ.map((f, i) => `
+
+          <div
+            class="faq-item"
+            data-faq="${i}"
+          >
+
+            <div
+              class="faq-q"
+              onclick="toggleFaq(${i})"
+            >
+
+              <span>
+                ${f.q}
+              </span>
+
+
+              <span class="faq-plus">
+                +
+              </span>
+
+            </div>
+
+
+            <div
+              class="faq-a"
+              style="display:none;"
+            >
+
+              ${f.a}
+
+            </div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+
+    </div>
+
+  `;
+
+}
 
       <!-- MEN HAQIMDA -->
 
