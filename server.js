@@ -44,10 +44,7 @@ const pool = new Pool({
 // BUNNY STREAM
 // ======================================================
 
-function generateBunnyToken(
-  videoId,
-  expiresAt
-) {
+function generateBunnyToken(videoId, expiresAt) {
   const securityKey =
     process.env.BUNNY_TOKEN_AUTH_KEY;
 
@@ -67,7 +64,6 @@ function generateBunnyToken(
     .update(hashableString)
     .digest('hex');
 }
-
 
 function generateBunnyPlayerUrl(
   libraryId,
@@ -96,20 +92,16 @@ function generateBunnyPlayerUrl(
 // ======================================================
 
 function getYouTubeVideoId(url) {
-
   if (!url) {
     return null;
   }
 
   try {
-
-    const parsedUrl =
-      new URL(url);
+    const parsedUrl = new URL(url);
 
     // youtu.be
     if (
-      parsedUrl.hostname ===
-      'youtu.be'
+      parsedUrl.hostname === 'youtu.be'
     ) {
       return (
         parsedUrl.pathname
@@ -120,14 +112,10 @@ function getYouTubeVideoId(url) {
 
     // youtube.com
     if (
-      parsedUrl.hostname ===
-        'youtube.com' ||
-      parsedUrl.hostname ===
-        'www.youtube.com' ||
-      parsedUrl.hostname ===
-        'm.youtube.com'
+      parsedUrl.hostname === 'youtube.com' ||
+      parsedUrl.hostname === 'www.youtube.com' ||
+      parsedUrl.hostname === 'm.youtube.com'
     ) {
-
       // ?v=VIDEO_ID
       const videoId =
         parsedUrl.searchParams.get('v');
@@ -160,7 +148,6 @@ function getYouTubeVideoId(url) {
     return null;
 
   } catch (error) {
-
     console.error(
       'YOUTUBE URL ERROR:',
       error
@@ -170,11 +157,9 @@ function getYouTubeVideoId(url) {
   }
 }
 
-
 function generateYouTubePlayerUrl(
   youtubeUrl
 ) {
-
   const videoId =
     getYouTubeVideoId(
       youtubeUrl
@@ -196,7 +181,6 @@ function generateYouTubePlayerUrl(
 // ======================================================
 
 function hasAccess(user) {
-
   if (!user) {
     return false;
   }
@@ -215,10 +199,7 @@ function hasAccess(user) {
 // TELEGRAM USERNI OLISH / YARATISH
 // ======================================================
 
-async function getOrCreateUser(
-  initData
-) {
-
+async function getOrCreateUser(initData) {
   const tgUser =
     verifyInitData(
       initData,
@@ -274,16 +255,13 @@ async function getOrCreateUser(
 app.post(
   '/api/auth',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -293,7 +271,6 @@ app.post(
       }
 
       return res.json({
-
         telegram_id:
           user.telegram_id.toString(),
 
@@ -305,11 +282,9 @@ app.post(
 
         access_until:
           user.access_until || null
-
       });
 
     } catch (error) {
-
       console.error(
         'AUTH ERROR:',
         error
@@ -332,16 +307,13 @@ app.post(
 app.post(
   '/api/content',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -442,7 +414,6 @@ app.post(
               );
 
             return {
-
               id:
                 module.id,
 
@@ -483,7 +454,6 @@ app.post(
                         );
 
                       return {
-
                         id:
                           lesson.id,
 
@@ -506,7 +476,6 @@ app.post(
         );
 
       return res.json({
-
         has_access:
           unlocked,
 
@@ -524,7 +493,6 @@ app.post(
       });
 
     } catch (error) {
-
       console.error(
         'CONTENT ERROR:',
         error
@@ -547,16 +515,13 @@ app.post(
 app.post(
   '/api/lesson/:id',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -583,7 +548,6 @@ app.post(
         lessonResult.rows[0];
 
       if (!lesson) {
-
         return res
           .status(404)
           .json({
@@ -600,11 +564,9 @@ app.post(
         !lesson.is_free &&
         !hasAccess(user)
       ) {
-
         return res
           .status(403)
           .json({
-
             error:
               'locked',
 
@@ -679,9 +641,7 @@ app.post(
         );
 
       if (youtubePlayerUrl) {
-
         return res.json({
-
           id:
             lesson.id,
 
@@ -713,11 +673,9 @@ app.post(
         !lesson.bunny_video_id ||
         !process.env.BUNNY_LIBRARY_ID
       ) {
-
         return res
           .status(500)
           .json({
-
             error:
               'Bu dars uchun video sozlanmagan'
           });
@@ -736,7 +694,6 @@ app.post(
         );
 
       return res.json({
-
         id:
           lesson.id,
 
@@ -763,7 +720,6 @@ app.post(
       });
 
     } catch (error) {
-
       console.error(
         'LESSON ERROR:',
         error
@@ -786,16 +742,13 @@ app.post(
 app.post(
   '/api/module/:id/test',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -828,7 +781,6 @@ app.post(
       });
 
     } catch (error) {
-
       console.error(
         'TEST ERROR:',
         error
@@ -851,16 +803,13 @@ app.post(
 app.post(
   '/api/module/:id/submit',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -894,12 +843,10 @@ app.post(
       for (
         const question of questions
       ) {
-
         if (
           answers[question.id] ===
           question.correct_index
         ) {
-
           correct++;
         }
       }
@@ -955,7 +902,6 @@ app.post(
       );
 
       return res.json({
-
         score:
           score,
 
@@ -964,7 +910,6 @@ app.post(
       });
 
     } catch (error) {
-
       console.error(
         'SUBMIT TEST ERROR:',
         error
@@ -987,16 +932,13 @@ app.post(
 app.post(
   '/api/request-access',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -1027,9 +969,7 @@ app.post(
       if (
         existingResult.rows.length > 0
       ) {
-
         return res.json({
-
           ok:
             true,
 
@@ -1062,20 +1002,12 @@ app.post(
       // ==================================================
 
       await notifyAdmin(
-
-       await notifyAdmin(
-  `💰 YANGI TO'LOV SO'ROVI!\n\n` +
-  `👤 Ism: ${user.first_name || "Noma'lum"}\n` +
-  `📱 Username: @${user.username || "username yo‘q"}\n` +
-  `🆔 Telegram ID: ${user.telegram_id}\n\n` +
-  `👇 Quyidagi tugmalardan birini tanlang:`,
-  user.telegram_id.toString()
-);
-
-`👇 Quyidagi tugmalardan birini tanlang:`
-
+        `💰 YANGI TO'LOV SO'ROVI!\n\n` +
+        `👤 Ism: ${user.first_name || "Noma'lum"}\n` +
+        `📱 Username: @${user.username || "username yo‘q"}\n` +
+        `🆔 Telegram ID: ${user.telegram_id}\n\n` +
+        `👇 Quyidagi tugmalardan birini tanlang:`,
         user.telegram_id.toString()
-
       );
 
       // ==================================================
@@ -1088,7 +1020,6 @@ app.post(
       });
 
     } catch (error) {
-
       console.error(
         'REQUEST ACCESS ERROR:',
         error
@@ -1111,7 +1042,6 @@ app.post(
 app.get(
   '/api/health',
   (req, res) => {
-
     res.json({
       ok:
         true,
@@ -1119,7 +1049,6 @@ app.get(
       message:
         'Server ishlayapti'
     });
-
   }
 );
 
@@ -1133,10 +1062,8 @@ const PORT =
 app.listen(
   PORT,
   () => {
-
     console.log(
       `Server ${PORT}-portda ishga tushdi`
     );
-
   }
 );
