@@ -1,4 +1,3 @@
-```js
 require('dotenv').config();
 
 const crypto = require('crypto');
@@ -22,20 +21,17 @@ app.use(express.static('public', {
   )
 }));
 
+// ======================================================
+// DATABASE
+// ======================================================
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
-
-
 // ======================================================
 // BUNNY STREAM TOKEN
 // ======================================================
-
-// Bunny Embed View Token Authentication uchun token yaratish
-// Formula:
-// SHA256_HEX(token_security_key + video_id + expiration)
 
 function generateBunnyToken(videoId, expiresAt) {
   const securityKey = process.env.BUNNY_TOKEN_AUTH_KEY;
@@ -55,10 +51,7 @@ function generateBunnyToken(videoId, expiresAt) {
     .digest('hex');
 }
 
-
-// Bunny player uchun himoyalangan URL
 function generateBunnyPlayerUrl(libraryId, videoId) {
-
   // Token 2 soat amal qiladi
   const expiresAt =
     Math.floor(Date.now() / 1000) + (2 * 60 * 60);
@@ -68,17 +61,11 @@ function generateBunnyPlayerUrl(libraryId, videoId) {
     expiresAt
   );
 
-  return (
-    `https://iframe.mediadelivery.net/embed/` +
-    `${libraryId}/${videoId}` +
-    `?token=${token}` +
-    `&expires=${expiresAt}`
-  );
+  return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiresAt}`;
 }
 
-
 // ======================================================
-// DATABASE
+// ACCESS
 // ======================================================
 
 function hasAccess(user) {
@@ -88,13 +75,11 @@ function hasAccess(user) {
   );
 }
 
-
 // ======================================================
-// TELEGRAM USER
+// USER
 // ======================================================
 
 async function getOrCreateUser(initData) {
-
   const tgUser = verifyInitData(
     initData,
     process.env.BOT_TOKEN
@@ -123,15 +108,12 @@ async function getOrCreateUser(initData) {
   return rows[0];
 }
 
-
 // ======================================================
-// LOGIN / AUTH
+// AUTH
 // ======================================================
 
 app.post('/api/auth', async (req, res) => {
-
   try {
-
     const user = await getOrCreateUser(
       req.body.initData
     );
@@ -150,7 +132,6 @@ app.post('/api/auth', async (req, res) => {
     });
 
   } catch (error) {
-
     console.error('AUTH ERROR:', error);
 
     res.status(500).json({
@@ -159,15 +140,12 @@ app.post('/api/auth', async (req, res) => {
   }
 });
 
-
 // ======================================================
 // CONTENT
 // ======================================================
 
 app.post('/api/content', async (req, res) => {
-
   try {
-
     const user = await getOrCreateUser(
       req.body.initData
     );
@@ -207,8 +185,6 @@ app.post('/api/content', async (req, res) => {
 
     const data = modules.map((m, idx) => {
 
-      // 1-modul doim ochiq.
-      // Keyingi modul oldingi test o'tilgandan keyin ochiladi.
       const moduleUnlocked =
         idx === 0 ||
         passedModuleIds.has(
@@ -216,9 +192,7 @@ app.post('/api/content', async (req, res) => {
         );
 
       return {
-
         id: m.id,
-
         title: m.title,
 
         unlocked: moduleUnlocked,
@@ -227,7 +201,9 @@ app.post('/api/content', async (req, res) => {
           passedModuleIds.has(m.id),
 
         lessons: lessons
-          .filter(l => l.module_id === m.id)
+          .filter(
+            l => l.module_id === m.id
+          )
           .map(l => ({
 
             id: l.id,
@@ -238,8 +214,6 @@ app.post('/api/content', async (req, res) => {
 
             task_text: l.task_text,
 
-            // Bepul dars har doim ochiq.
-            // Pullik dars esa to'lov + modul ochiqligini talab qiladi.
             available:
               l.is_free ||
               (unlocked && moduleUnlocked)
@@ -249,7 +223,6 @@ app.post('/api/content', async (req, res) => {
     });
 
     res.json({
-
       has_access: unlocked,
 
       access_until:
@@ -266,7 +239,10 @@ app.post('/api/content', async (req, res) => {
 
   } catch (error) {
 
-    console.error('CONTENT ERROR:', error);
+    console.error(
+      'CONTENT ERROR:',
+      error
+    );
 
     res.status(500).json({
       error: 'Server xatosi'
@@ -274,13 +250,11 @@ app.post('/api/content', async (req, res) => {
   }
 });
 
-
 // ======================================================
-// SINGLE LESSON
+// LESSON
 // ======================================================
 
 app.post('/api/lesson/:id', async (req, res) => {
-
   try {
 
     const user = await getOrCreateUser(
@@ -293,7 +267,6 @@ app.post('/api/lesson/:id', async (req, res) => {
       });
     }
 
-
     // Darsni olish
     const lessonRes = await pool.query(
       'SELECT * FROM lessons WHERE id = $1',
@@ -303,44 +276,35 @@ app.post('/api/lesson/:id', async (req, res) => {
     const lesson =
       lessonRes.rows[0];
 
-
     if (!lesson) {
-
       return res.status(404).json({
         error: 'Dars topilmadi'
       });
-
     }
 
-
-    // Pullik dars bo'lsa access tekshiriladi
+    // Pullik darsni tekshirish
     if (
       !lesson.is_free &&
       !hasAccess(user)
     ) {
-
       return res.status(403).json({
         error: 'locked',
+
         message:
           'Bu dars uchun to‘lov qilinishi kerak'
       });
-
     }
 
-
-    // Bunny ma'lumotlari mavjudligini tekshirish
+    // Bunny sozlamalarini tekshirish
     if (
       !lesson.bunny_video_id ||
       !process.env.BUNNY_LIBRARY_ID
     ) {
-
       return res.status(500).json({
         error:
           'Bu dars uchun Bunny video sozlanmagan'
       });
-
     }
-
 
     // Fayllar
     const files = (
@@ -351,7 +315,6 @@ app.post('/api/lesson/:id', async (req, res) => {
         [lesson.id]
       )
     ).rows;
-
 
     // Progress
     await pool.query(
@@ -366,32 +329,28 @@ app.post('/api/lesson/:id', async (req, res) => {
       ]
     );
 
-
-    // ==================================================
-    // BUNNY TOKEN
-    // ==================================================
-
+    // Bunny
     const bunnyLibraryId =
       process.env.BUNNY_LIBRARY_ID;
 
     const bunnyVideoId =
       lesson.bunny_video_id;
 
-
+    // Tokenli Bunny URL
     const bunnyPlayerUrl =
       generateBunnyPlayerUrl(
         bunnyLibraryId,
         bunnyVideoId
       );
 
-
-    // Frontendga tokenning o'zini emas,
-    // tayyor himoyalangan player URL yuboramiz.
+    // Javob
     res.json({
 
-      id: lesson.id,
+      id:
+        lesson.id,
 
-      title: lesson.title,
+      title:
+        lesson.title,
 
       bunny_video_id:
         bunnyVideoId,
@@ -417,18 +376,17 @@ app.post('/api/lesson/:id', async (req, res) => {
     );
 
     res.status(500).json({
-      error: 'Darsni ochishda server xatosi'
+      error:
+        'Darsni ochishda server xatosi'
     });
   }
 });
-
 
 // ======================================================
 // MODULE TEST
 // ======================================================
 
 app.post('/api/module/:id/test', async (req, res) => {
-
   try {
 
     const user = await getOrCreateUser(
@@ -467,18 +425,17 @@ app.post('/api/module/:id/test', async (req, res) => {
     );
 
     res.status(500).json({
-      error: 'Server xatosi'
+      error:
+        'Server xatosi'
     });
   }
 });
 
-
 // ======================================================
-// SUBMIT MODULE TEST
+// SUBMIT TEST
 // ======================================================
 
 app.post('/api/module/:id/submit', async (req, res) => {
-
   try {
 
     const user = await getOrCreateUser(
@@ -487,13 +444,13 @@ app.post('/api/module/:id/submit', async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        error: 'Tekshirishdan o‘tmadi'
+        error:
+          'Tekshirishdan o‘tmadi'
       });
     }
 
     const { answers } =
       req.body;
-
 
     const questions = (
       await pool.query(
@@ -506,9 +463,7 @@ app.post('/api/module/:id/submit', async (req, res) => {
       )
     ).rows;
 
-
     let correct = 0;
-
 
     for (const q of questions) {
 
@@ -521,7 +476,6 @@ app.post('/api/module/:id/submit', async (req, res) => {
 
     }
 
-
     const score =
       questions.length > 0
         ? Math.round(
@@ -531,11 +485,8 @@ app.post('/api/module/:id/submit', async (req, res) => {
           )
         : 0;
 
-
-    // 70% yoki undan yuqori = o'tdi
     const passed =
       score >= 70;
-
 
     await pool.query(
       `INSERT INTO module_results
@@ -555,7 +506,6 @@ app.post('/api/module/:id/submit', async (req, res) => {
       ]
     );
 
-
     res.json({
       score,
       passed
@@ -569,18 +519,17 @@ app.post('/api/module/:id/submit', async (req, res) => {
     );
 
     res.status(500).json({
-      error: 'Server xatosi'
+      error:
+        'Server xatosi'
     });
   }
 });
-
 
 // ======================================================
 // REQUEST ACCESS
 // ======================================================
 
 app.post('/api/request-access', async (req, res) => {
-
   try {
 
     const user = await getOrCreateUser(
@@ -589,10 +538,10 @@ app.post('/api/request-access', async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        error: 'Tekshirishdan o‘tmadi'
+        error:
+          'Tekshirishdan o‘tmadi'
       });
     }
-
 
     await pool.query(
       `INSERT INTO payment_requests
@@ -601,29 +550,22 @@ app.post('/api/request-access', async (req, res) => {
       [user.id]
     );
 
-
     await notifyAdmin(
-
       `💰 Yangi to'lov so'rovi!\n` +
-
       `Ism: ${
         user.first_name
       } (@${
         user.username ||
         'username yo‘q'
       })\n` +
-
       `Telegram ID: ${
         user.telegram_id
       }\n\n` +
-
       `Tasdiqlash uchun: ` +
       `/approve ${
         user.telegram_id
       }`
-
     );
-
 
     res.json({
       ok: true
@@ -637,11 +579,11 @@ app.post('/api/request-access', async (req, res) => {
     );
 
     res.status(500).json({
-      error: 'Server xatosi'
+      error:
+        'Server xatosi'
     });
   }
 });
-
 
 // ======================================================
 // SERVER
@@ -658,4 +600,3 @@ app.listen(
     );
   }
 );
-```
