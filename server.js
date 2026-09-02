@@ -113,9 +113,10 @@ app.post('/api/lesson/:id', async (req, res) => {
 
   res.json({
     id: lesson.id,
-    title: lesson.title,
-    youtube_url: lesson.youtube_url,
-    task_text: lesson.task_text,
+  title: lesson.title,
+  bunny_video_id: lesson.bunny_video_id,
+  bunny_library_id: process.env.BUNNY_LIBRARY_ID,
+  task_text: lesson.task_text,
     files
   });
 });
