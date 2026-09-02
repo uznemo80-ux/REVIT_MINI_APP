@@ -1,925 +1,786 @@
+```javascript
 require('dotenv').config();
 
-const crypto = require('crypto');
-const express = require('express');
-const cors = require('cors');
+const { Telegraf } = require('telegraf');
 const { Pool } = require('pg');
-const { verifyInitData } = require('./verifyTelegram');
-const { bot, notifyAdmin } = require('./bot');
 
-const app = express();
+// ======================================================
+// BOT
+// ======================================================
 
-app.use(cors());
-app.use(express.json());
-
-app.use(express.static('public', {
-  etag: false,
-  lastModified: false,
-  setHeaders: (res) => res.set(
-    'Cache-Control',
-    'no-store, no-cache, must-revalidate'
-  )
-}));
+const bot = new Telegraf(
+  process.env.BOT_TOKEN
+);
 
 // ======================================================
 // DATABASE
 // ======================================================
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString:
+    process.env.DATABASE_URL
 });
 
 // ======================================================
-// BUNNY STREAM TOKEN
+// ADMIN
 // ======================================================
 
-function generateBunnyToken(videoId, expiresAt) {
+const ADMIN_ID =
+  Number(process.env.ADMIN_TELEGRAM_ID);
 
-  const securityKey =
-    process.env.BUNNY_TOKEN_AUTH_KEY;
-
-  if (!securityKey) {
-    throw new Error(
-      'BUNNY_TOKEN_AUTH_KEY topilmadi'
-    );
-  }
-
-  const hashableString =
-    securityKey +
-    videoId +
-    expiresAt;
-
-  return crypto
-    .createHash('sha256')
-    .update(hashableString)
-    .digest('hex');
-}
-
-function generateBunnyPlayerUrl(
-  libraryId,
-  videoId
-) {
-
-  // Token 2 soat amal qiladi
-  const expiresAt =
-    Math.floor(Date.now() / 1000) +
-    (2 * 60 * 60);
-
-  const token =
-    generateBunnyToken(
-      videoId,
-      expiresAt
-    );
-
-  return (
-    `https://iframe.mediadelivery.net/embed/` +
-    `${libraryId}/${videoId}` +
-    `?token=${token}&expires=${expiresAt}`
-  );
-}
+// 1 yil
+const ONE_YEAR_MS =
+  365 * 24 * 60 * 60 * 1000;
 
 // ======================================================
-// YOUTUBE
+// /START
 // ======================================================
 
-function getYouTubeVideoId(url) {
-
-  if (!url) {
-    return null;
-  }
+bot.start(async (ctx) => {
 
   try {
 
-    const parsedUrl =
-      new URL(url);
+    const freshUrl =
+      `${process.env.APP_URL}?v=${Date.now()}`;
 
-    // youtu.be
-    if (
-      parsedUrl.hostname ===
-      'youtu.be'
-    ) {
+    await ctx.reply(
 
-      return (
-        parsedUrl.pathname
-          .replace('/', '')
-          .trim() || null
-      );
-    }
+      "Assalomu alaykum! Revit darslariga xush kelibsiz 👋\n\n" +
 
-    // youtube.com
-    if (
-      parsedUrl.hostname ===
-        'youtube.com' ||
+      "Darslarni ko'rish uchun quyidagi tugmani bosing:",
 
-      parsedUrl.hostname ===
-        'www.youtube.com' ||
+      {
+        reply_markup: {
 
-      parsedUrl.hostname ===
-        'm.youtube.com'
-    ) {
+          inline_keyboard: [
 
-      const videoId =
-        parsedUrl.searchParams.get('v');
+            [
+              {
+                text:
+                  "📚 Darslarni ochish",
 
-      if (videoId) {
-        return videoId;
+                web_app: {
+                  url:
+                    freshUrl
+                }
+              }
+            ]
+
+          ]
+        }
       }
-
-      // /embed/VIDEO_ID
-      const embedMatch =
-        parsedUrl.pathname.match(
-          /^\/embed\/([^/]+)/
-        );
-
-      if (embedMatch) {
-        return embedMatch[1];
-      }
-
-      // /shorts/VIDEO_ID
-      const shortsMatch =
-        parsedUrl.pathname.match(
-          /^\/shorts\/([^/]+)/
-        );
-
-      if (shortsMatch) {
-        return shortsMatch[1];
-      }
-    }
-
-    return null;
+    );
 
   } catch (error) {
 
     console.error(
-      'YOUTUBE URL ERROR:',
+      "START ERROR:",
       error
     );
 
-    return null;
-  }
-}
-
-function generateYouTubePlayerUrl(
-  youtubeUrl
-) {
-
-  const videoId =
-    getYouTubeVideoId(
-      youtubeUrl
-    );
-
-  if (!videoId) {
-    return null;
   }
 
-  return (
-    `https://www.youtube.com/embed/` +
-    `${videoId}` +
-    `?rel=0&modestbranding=1`
-  );
-}
+});
 
 // ======================================================
-// ACCESS
+// /APPROVE
+// Qo'lda ruxsat berish
+// /approve 123456789
 // ======================================================
 
-function hasAccess(user) {
+bot.command(
+  'approve',
+  async (ctx) => {
 
-  return (
-    user.access_until &&
-    new Date(user.access_until) >
-      new Date()
-  );
-}
-
-// ======================================================
-// USER
-// ======================================================
-
-async function getOrCreateUser(
-  initData
-) {
-
-  const tgUser =
-    verifyInitData(
-      initData,
-      process.env.BOT_TOKEN
-    );
-
-  if (!tgUser) {
-    return null;
-  }
-
-  const { rows } =
-    await pool.query(
-      `INSERT INTO users
-        (telegram_id, first_name, username)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (telegram_id)
-       DO UPDATE SET
-         first_name = $2,
-         username = $3
-       RETURNING *`,
-      [
-        tgUser.id,
-        tgUser.first_name,
-        tgUser.username
-      ]
-    );
-
-  return rows[0];
-}
-
-// ======================================================
-// AUTH
-// ======================================================
-
-app.post(
-  '/api/auth',
-  async (req, res) => {
-
-    try {
-
-      const user =
-        await getOrCreateUser(
-          req.body.initData
-        );
-
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
-      }
-
-      res.json({
-
-        telegram_id:
-          user.telegram_id.toString(),
-
-        first_name:
-          user.first_name,
-
-        has_access:
-          hasAccess(user),
-
-        access_until:
-          user.access_until
-      });
-
-    } catch (error) {
-
-      console.error(
-        'AUTH ERROR:',
-        error
-      );
-
-      res
-        .status(500)
-        .json({
-          error:
-            'Server xatosi'
-        });
+    if (
+      ctx.from.id !==
+      ADMIN_ID
+    ) {
+      return;
     }
-  }
-);
-
-// ======================================================
-// CONTENT
-// ======================================================
-
-app.post(
-  '/api/content',
-  async (req, res) => {
 
     try {
 
-      const user =
-        await getOrCreateUser(
-          req.body.initData
+      const parts =
+        ctx.message.text
+          .trim()
+          .split(/\s+/);
+
+      const targetId =
+        Number(parts[1]);
+
+      if (!targetId) {
+
+        return ctx.reply(
+          "To'g'ri format:\n/approve 123456789"
         );
 
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
       }
 
-      const unlocked =
-        hasAccess(user);
-
-      const modules =
-        (
-          await pool.query(
-            `SELECT *
-             FROM modules
-             ORDER BY order_index`
-          )
-        ).rows;
-
-      const lessons =
-        (
-          await pool.query(
-            `SELECT *
-             FROM lessons
-             ORDER BY module_id, order_index`
-          )
-        ).rows;
-
-      const results =
-        (
-          await pool.query(
-            `SELECT *
-             FROM module_results
-             WHERE user_id = $1`,
-            [user.id]
-          )
-        ).rows;
-
-      const passedModuleIds =
-        new Set(
-          results
-            .filter(
-              r => r.passed
-            )
-            .map(
-              r => r.module_id
-            )
+      const accessUntil =
+        new Date(
+          Date.now() +
+          ONE_YEAR_MS
         );
 
-      const data =
-        modules.map(
-          (m, idx) => {
+      // --------------------------------------------------
+      // USER ACCESS
+      // --------------------------------------------------
 
-            const moduleUnlocked =
-              idx === 0 ||
-              passedModuleIds.has(
-                modules[idx - 1].id
-              );
-
-            return {
-
-              id:
-                m.id,
-
-              title:
-                m.title,
-
-              unlocked:
-                moduleUnlocked,
-
-              passed_test:
-                passedModuleIds.has(
-                  m.id
-                ),
-
-              lessons:
-                lessons
-                  .filter(
-                    l =>
-                      l.module_id ===
-                      m.id
-                  )
-                  .map(
-                    l => {
-
-                      const available =
-                        l.is_free ||
-                        (
-                          unlocked &&
-                          moduleUnlocked
-                        );
-
-                      return {
-
-                        id:
-                          l.id,
-
-                        title:
-                          l.title,
-
-                        is_free:
-                          l.is_free,
-
-                        task_text:
-                          l.task_text,
-
-                        available:
-                          available
-                      };
-                    }
-                  )
-            };
-          }
-        );
-
-      res.json({
-
-        has_access:
-          unlocked,
-
-        access_until:
-          user.access_until,
-
-        telegram_id:
-          user.telegram_id.toString(),
-
-        first_name:
-          user.first_name,
-
-        modules:
-          data
-      });
-
-    } catch (error) {
-
-      console.error(
-        'CONTENT ERROR:',
-        error
-      );
-
-      res
-        .status(500)
-        .json({
-          error:
-            'Server xatosi'
-        });
-    }
-  }
-);
-
-// ======================================================
-// LESSON
-// ======================================================
-
-app.post(
-  '/api/lesson/:id',
-  async (req, res) => {
-
-    try {
-
-      const user =
-        await getOrCreateUser(
-          req.body.initData
-        );
-
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
-      }
-
-      const lessonRes =
+      const userResult =
         await pool.query(
-          `SELECT *
-           FROM lessons
-           WHERE id = $1`,
-          [req.params.id]
+
+          `UPDATE users
+           SET access_until = $1
+           WHERE telegram_id = $2
+           RETURNING id,
+                     telegram_id,
+                     first_name,
+                     username`,
+
+          [
+            accessUntil,
+            targetId
+          ]
+
         );
-
-      const lesson =
-        lessonRes.rows[0];
-
-      if (!lesson) {
-
-        return res
-          .status(404)
-          .json({
-            error:
-              'Dars topilmadi'
-          });
-      }
 
       if (
-        !lesson.is_free &&
-        !hasAccess(user)
+        userResult.rows.length === 0
       ) {
 
-        return res
-          .status(403)
-          .json({
+        return ctx.reply(
 
-            error:
-              'locked',
+          `❌ ${targetId} Telegram ID bo'yicha foydalanuvchi topilmadi.`
 
-            message:
-              'Bu dars uchun to‘lov qilinishi kerak'
-          });
+        );
+
       }
 
-      const files =
-        (
-          await pool.query(
-            `SELECT
-               file_name,
-               file_url
-             FROM lesson_files
-             WHERE lesson_id = $1`,
-            [lesson.id]
-          )
-        ).rows;
+      const user =
+        userResult.rows[0];
+
+      // --------------------------------------------------
+      // PAYMENT REQUEST
+      // --------------------------------------------------
 
       await pool.query(
-        `INSERT INTO progress
-          (user_id, lesson_id, watched)
-         VALUES ($1, $2, true)
-         ON CONFLICT
-           (user_id, lesson_id)
-         DO UPDATE SET
-           watched = true`,
+
+        `UPDATE payment_requests
+         SET status = 'approved',
+             approved_at = now(),
+             approved_by = $1
+         WHERE user_id = $2
+           AND status = 'pending'`,
+
         [
-          user.id,
-          lesson.id
+          ADMIN_ID,
+          user.id
         ]
+
       );
 
-      const youtubePlayerUrl =
-        generateYouTubePlayerUrl(
-          lesson.youtube_url
-        );
+      // --------------------------------------------------
+      // ADMIN
+      // --------------------------------------------------
 
-      // ==================================================
-      // YOUTUBE
-      // ==================================================
+      await ctx.reply(
 
-      if (youtubePlayerUrl) {
-
-        return res.json({
-
-          id:
-            lesson.id,
-
-          title:
-            lesson.title,
-
-          video_type:
-            'youtube',
-
-          youtube_url:
-            lesson.youtube_url,
-
-          youtube_player_url:
-            youtubePlayerUrl,
-
-          task_text:
-            lesson.task_text,
-
-          files:
-            files
-        });
-      }
-
-      // ==================================================
-      // BUNNY
-      // ==================================================
-
-      if (
-        !lesson.bunny_video_id ||
-        !process.env.BUNNY_LIBRARY_ID
-      ) {
-
-        return res
-          .status(500)
-          .json({
-
-            error:
-              'Bu dars uchun video sozlanmagan'
-          });
-      }
-
-      const bunnyLibraryId =
-        process.env.BUNNY_LIBRARY_ID;
-
-      const bunnyVideoId =
-        lesson.bunny_video_id;
-
-      const bunnyPlayerUrl =
-        generateBunnyPlayerUrl(
-          bunnyLibraryId,
-          bunnyVideoId
-        );
-
-      return res.json({
-
-        id:
-          lesson.id,
-
-        title:
-          lesson.title,
-
-        video_type:
-          'bunny',
-
-        bunny_video_id:
-          bunnyVideoId,
-
-        bunny_library_id:
-          bunnyLibraryId,
-
-        bunny_player_url:
-          bunnyPlayerUrl,
-
-        task_text:
-          lesson.task_text,
-
-        files:
-          files
-      });
-
-    } catch (error) {
-
-      console.error(
-        'LESSON ERROR:',
-        error
-      );
-
-      res
-        .status(500)
-        .json({
-          error:
-            'Darsni ochishda server xatosi'
-        });
-    }
-  }
-);
-
-// ======================================================
-// MODULE TEST
-// ======================================================
-
-app.post(
-  '/api/module/:id/test',
-  async (req, res) => {
-
-    try {
-
-      const user =
-        await getOrCreateUser(
-          req.body.initData
-        );
-
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
-      }
-
-      const questions =
-        (
-          await pool.query(
-            `SELECT
-               id,
-               question,
-               options,
-               order_index
-             FROM module_tests
-             WHERE module_id = $1
-             ORDER BY order_index`,
-            [req.params.id]
-          )
-        ).rows;
-
-      res.json({
-        questions
-      });
-
-    } catch (error) {
-
-      console.error(
-        'TEST ERROR:',
-        error
-      );
-
-      res
-        .status(500)
-        .json({
-          error:
-            'Server xatosi'
-        });
-    }
-  }
-);
-
-// ======================================================
-// SUBMIT TEST
-// ======================================================
-
-app.post(
-  '/api/module/:id/submit',
-  async (req, res) => {
-
-    try {
-
-      const user =
-        await getOrCreateUser(
-          req.body.initData
-        );
-
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
-      }
-
-      const { answers } =
-        req.body;
-
-      const questions =
-        (
-          await pool.query(
-            `SELECT
-               id,
-               correct_index
-             FROM module_tests
-             WHERE module_id = $1`,
-            [req.params.id]
-          )
-        ).rows;
-
-      let correct = 0;
-
-      for (
-        const q of questions
-      ) {
-
-        if (
-          answers[q.id] ===
-          q.correct_index
-        ) {
-          correct++;
-        }
-      }
-
-      const score =
-        questions.length > 0
-          ? Math.round(
-              (
-                correct /
-                questions.length
-              ) * 100
-            )
-          : 0;
-
-      const passed =
-        score >= 70;
-
-      await pool.query(
-        `INSERT INTO module_results
-          (user_id, module_id, passed, score)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT
-           (user_id, module_id)
-         DO UPDATE SET
-           passed = $3,
-           score = $4,
-           attempted_at = now()`,
-        [
-          user.id,
-          req.params.id,
-          passed,
-          score
-        ]
-      );
-
-      res.json({
-        score,
-        passed
-      });
-
-    } catch (error) {
-
-      console.error(
-        'SUBMIT TEST ERROR:',
-        error
-      );
-
-      res
-        .status(500)
-        .json({
-          error:
-            'Server xatosi'
-        });
-    }
-  }
-);
-
-// ======================================================
-// REQUEST ACCESS
-// ======================================================
-
-app.post(
-  '/api/request-access',
-  async (req, res) => {
-
-    try {
-
-      const user =
-        await getOrCreateUser(
-          req.body.initData
-        );
-
-      if (!user) {
-
-        return res
-          .status(401)
-          .json({
-            error:
-              'Tekshirishdan o‘tmadi'
-          });
-      }
-
-      // ==================================================
-      // SO'ROVNI DATABASE'GA SAQLASH
-      // ==================================================
-
-      await pool.query(
-        `INSERT INTO payment_requests
-          (user_id)
-         VALUES ($1)`,
-        [user.id]
-      );
-
-      // ==================================================
-      // ADMIN XABARI
-      // ==================================================
-
-      await notifyAdmin(
-
-        `💰 YANGI TO'LOV SO'ROVI!\n\n` +
+        `✅ RUXSAT BERILDI\n\n` +
 
         `👤 Ism: ${
           user.first_name ||
-          'Noma'lum'
-        }\n` +
-
-        `📱 Username: @${
-          user.username ||
-          'username yo‘q'
+          "Noma'lum"
         }\n` +
 
         `🆔 Telegram ID: ${
           user.telegram_id
         }\n\n` +
 
-        `👇 Quyidagi tugmalardan birini tanlang:`,
+        `📅 Kirish muddati:\n` +
 
-        user.telegram_id.toString()
+        `${accessUntil.toLocaleDateString(
+          'uz-UZ'
+        )}\n\n` +
+
+        `🔓 1 yillik kursga kirish faollashtirildi.`
+
       );
 
-      res.json({
-        ok: true
-      });
+      // --------------------------------------------------
+      // USER NOTIFICATION
+      // --------------------------------------------------
+
+      try {
+
+        await bot.telegram.sendMessage(
+
+          targetId,
+
+          "🎉 To'lovingiz tasdiqlandi!\n\n" +
+
+          "✅ Kursga kirish huquqi berildi.\n" +
+
+          "📚 Barcha darslarga 1 yil davomida kirishingiz mumkin.\n\n" +
+
+          "Mini App'ni qayta oching va darslarni boshlang."
+
+        );
+
+      } catch (error) {
+
+        console.error(
+
+          "User notification error:",
+
+          error.message
+
+        );
+
+      }
 
     } catch (error) {
 
       console.error(
-        'REQUEST ACCESS ERROR:',
+        "APPROVE COMMAND ERROR:",
         error
       );
 
-      res
-        .status(500)
-        .json({
-          error:
-            'Server xatosi'
-        });
+      await ctx.reply(
+        "❌ Ruxsat berishda xatolik yuz berdi."
+      );
+
     }
+
   }
 );
 
 // ======================================================
-// SERVER
+// 🟢 RUXSAT BERISH TUGMASI
 // ======================================================
 
-const PORT =
-  process.env.PORT || 3000;
+bot.action(
+  /^approve_(\d+)$/,
+  async (ctx) => {
 
-app.listen(
-  PORT,
-  () => {
+    // --------------------------------------------------
+    // ADMIN TEKSHIRISH
+    // --------------------------------------------------
 
-    console.log(
-      `Server ${PORT}-portda ishga tushdi`
+    if (
+      ctx.from.id !==
+      ADMIN_ID
+    ) {
+
+      await ctx.answerCbQuery(
+
+        "❌ Sizda ruxsat yo'q.",
+
+        {
+          show_alert:
+            true
+        }
+
+      );
+
+      return;
+    }
+
+    const targetId =
+      Number(
+        ctx.match[1]
+      );
+
+    try {
+
+      await ctx.answerCbQuery(
+        "⏳ Ruxsat berilmoqda..."
+      );
+
+      // --------------------------------------------------
+      // USER
+      // --------------------------------------------------
+
+      const userResult =
+        await pool.query(
+
+          `SELECT
+             id,
+             telegram_id,
+             first_name,
+             username
+           FROM users
+           WHERE telegram_id = $1`,
+
+          [
+            targetId
+          ]
+
+        );
+
+      if (
+        userResult.rows.length === 0
+      ) {
+
+        await ctx.editMessageText(
+          "❌ Foydalanuvchi topilmadi."
+        );
+
+        return;
+      }
+
+      const user =
+        userResult.rows[0];
+
+      // --------------------------------------------------
+      // ACCESS 1 YEAR
+      // --------------------------------------------------
+
+      const accessUntil =
+        new Date(
+          Date.now() +
+          ONE_YEAR_MS
+        );
+
+      await pool.query(
+
+        `UPDATE users
+         SET access_until = $1
+         WHERE telegram_id = $2`,
+
+        [
+          accessUntil,
+          targetId
+        ]
+
+      );
+
+      // --------------------------------------------------
+      // PAYMENT STATUS
+      // --------------------------------------------------
+
+      await pool.query(
+
+        `UPDATE payment_requests
+         SET status = 'approved',
+             approved_at = now(),
+             approved_by = $1
+         WHERE user_id = $2
+           AND status = 'pending'`,
+
+        [
+          ADMIN_ID,
+          user.id
+        ]
+
+      );
+
+      // --------------------------------------------------
+      // ADMIN XABARINI YANGILASH
+      // --------------------------------------------------
+
+      await ctx.editMessageText(
+
+        `✅ RUXSAT BERILDI\n\n` +
+
+        `👤 Ism: ${
+          user.first_name ||
+          "Noma'lum"
+        }\n` +
+
+        `📱 Username: @${
+          user.username ||
+          "username yo'q"
+        }\n` +
+
+        `🆔 Telegram ID: ${
+          user.telegram_id
+        }\n\n` +
+
+        `📅 Kirish muddati:\n` +
+
+        `${accessUntil.toLocaleDateString(
+          'uz-UZ'
+        )}\n\n` +
+
+        `🔓 1 yillik kursga kirish faollashtirildi.`
+
+      );
+
+      // --------------------------------------------------
+      // USERGA XABAR
+      // --------------------------------------------------
+
+      try {
+
+        await bot.telegram.sendMessage(
+
+          targetId,
+
+          "🎉 To'lovingiz tasdiqlandi!\n\n" +
+
+          "✅ Kursga kirish huquqi berildi.\n" +
+
+          "📚 Barcha darslarga 1 yil davomida kirishingiz mumkin.\n\n" +
+
+          "Mini App'ni qayta oching va darslarni boshlang."
+
+        );
+
+      } catch (error) {
+
+        console.error(
+
+          "User notification error:",
+
+          error.message
+
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+
+        "APPROVE BUTTON ERROR:",
+
+        error
+
+      );
+
+      try {
+
+        await ctx.answerCbQuery(
+
+          "❌ Xatolik yuz berdi.",
+
+          {
+            show_alert:
+              true
+          }
+
+        );
+
+      } catch (e) {}
+
+    }
+
+  }
+);
+
+// ======================================================
+// 🔴 RAD ETISH TUGMASI
+// ======================================================
+
+bot.action(
+  /^reject_(\d+)$/,
+  async (ctx) => {
+
+    // --------------------------------------------------
+    // ADMIN TEKSHIRISH
+    // --------------------------------------------------
+
+    if (
+      ctx.from.id !==
+      ADMIN_ID
+    ) {
+
+      await ctx.answerCbQuery(
+
+        "❌ Sizda ruxsat yo'q.",
+
+        {
+          show_alert:
+            true
+        }
+
+      );
+
+      return;
+    }
+
+    const targetId =
+      Number(
+        ctx.match[1]
+      );
+
+    try {
+
+      await ctx.answerCbQuery(
+        "⏳ So'rov rad etilmoqda..."
+      );
+
+      // --------------------------------------------------
+      // USER
+      // --------------------------------------------------
+
+      const userResult =
+        await pool.query(
+
+          `SELECT
+             id,
+             telegram_id,
+             first_name,
+             username
+           FROM users
+           WHERE telegram_id = $1`,
+
+          [
+            targetId
+          ]
+
+        );
+
+      if (
+        userResult.rows.length === 0
+      ) {
+
+        await ctx.editMessageText(
+          "❌ Foydalanuvchi topilmadi."
+        );
+
+        return;
+      }
+
+      const user =
+        userResult.rows[0];
+
+      // --------------------------------------------------
+      // REJECT PAYMENT
+      // --------------------------------------------------
+
+      await pool.query(
+
+        `UPDATE payment_requests
+         SET status = 'rejected',
+             approved_at = now(),
+             approved_by = $1
+         WHERE user_id = $2
+           AND status = 'pending'`,
+
+        [
+          ADMIN_ID,
+          user.id
+        ]
+
+      );
+
+      // --------------------------------------------------
+      // ADMIN
+      // --------------------------------------------------
+
+      await ctx.editMessageText(
+
+        `❌ SO'ROV RAD ETILDI\n\n` +
+
+        `👤 Ism: ${
+          user.first_name ||
+          "Noma'lum"
+        }\n` +
+
+        `📱 Username: @${
+          user.username ||
+          "username yo'q"
+        }\n` +
+
+        `🆔 Telegram ID: ${
+          user.telegram_id
+        }\n\n` +
+
+        `Admin tomonidan rad etildi.`
+
+      );
+
+      // --------------------------------------------------
+      // USER
+      // --------------------------------------------------
+
+      try {
+
+        await bot.telegram.sendMessage(
+
+          targetId,
+
+          "❌ Kursga kirish so'rovingiz rad etildi.\n\n" +
+
+          "Agar to'lov qilgan bo'lsangiz, administrator bilan bog'laning."
+
+        );
+
+      } catch (error) {
+
+        console.error(
+
+          "Reject notification error:",
+
+          error.message
+
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+
+        "REJECT BUTTON ERROR:",
+
+        error
+
+      );
+
+      try {
+
+        await ctx.answerCbQuery(
+
+          "❌ Xatolik yuz berdi.",
+
+          {
+            show_alert:
+              true
+          }
+
+        );
+
+      } catch (e) {}
+
+    }
+
+  }
+);
+
+// ======================================================
+// NOTIFY ADMIN
+// ======================================================
+
+async function notifyAdmin(
+  text,
+  telegramId = null
+) {
+
+  try {
+
+    let replyMarkup;
+
+    // --------------------------------------------------
+    // TUGMALAR
+    // --------------------------------------------------
+
+    if (
+      telegramId
+    ) {
+
+      replyMarkup = {
+
+        inline_keyboard: [
+
+          [
+
+            {
+              text:
+                "🟢 Ruxsat berish",
+
+              callback_data:
+                `approve_${telegramId}`
+            }
+
+          ],
+
+          [
+
+            {
+              text:
+                "🔴 Rad etish",
+
+              callback_data:
+                `reject_${telegramId}`
+            }
+
+          ]
+
+        ]
+
+      };
+
+    }
+
+    // --------------------------------------------------
+    // ADMIN XABARI
+    // --------------------------------------------------
+
+    await bot.telegram.sendMessage(
+
+      ADMIN_ID,
+
+      text,
+
+      {
+        reply_markup:
+          replyMarkup
+      }
+
     );
 
+  } catch (error) {
+
+    console.error(
+
+      "Adminga xabar yuborilmadi:",
+
+      error.message
+
+    );
+
+    throw error;
+
   }
+
+}
+
+// ======================================================
+// BOTNI ISHGA TUSHIRISH
+// ======================================================
+
+bot.launch()
+
+  .then(() => {
+
+    console.log(
+      "Telegram bot ishga tushdi ✅"
+    );
+
+  })
+
+  .catch((error) => {
+
+    console.error(
+      "BOT LAUNCH ERROR:",
+      error
+    );
+
+  });
+
+// ======================================================
+// STOP
+// ======================================================
+
+process.once(
+  'SIGINT',
+  () => bot.stop('SIGINT')
 );
+
+process.once(
+  'SIGTERM',
+  () => bot.stop('SIGTERM')
+);
+
+// ======================================================
+// EXPORT
+// ======================================================
+
+module.exports = {
+  bot,
+  notifyAdmin
+};
+```
