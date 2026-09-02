@@ -962,40 +962,92 @@ app.post(
         });
       }
 
-      // ------------------------------------------------
-      // PENDING REQUEST
-      // ------------------------------------------------
+// ======================================================
+// PENDING REQUEST
+// ======================================================
 
-      const existingResult =
-        await pool.query(
-          `
-          SELECT id
-          FROM payment_requests
-          WHERE user_id = $1
-            AND status = 'pending'
-          LIMIT 1
-          `,
-          [user.id]
-        );
+const existingResult =
+  await pool.query(
+    `
+    SELECT id
+    FROM payment_requests
+    WHERE user_id = $1
+      AND status = 'pending'
+    LIMIT 1
+    `,
+    [user.id]
+  );
 
-      if (
-        existingResult.rows.length > 0
-      ) {
 
-        console.log(
-          '⚠️ PENDING SO‘ROV ALLAQACHON BOR'
-        );
+// ------------------------------------------------------
+// OLDIN SO‘ROV YUBORILGAN BO‘LSA
+// ADMINGA QAYTA XABAR YUBORAMIZ
+// ------------------------------------------------------
 
-        return res.json({
-          ok: true,
+if (
+  existingResult.rows.length > 0
+) {
 
-          already_pending:
-            true,
+  console.log(
+    '⚠️ PENDING SO‘ROV ALLAQACHON BOR'
+  );
 
-          message:
-            'So‘rovingiz allaqachon adminga yuborilgan'
-        });
-      }
+  const adminMessage =
+    `💰 TO'LOV SO'ROVI!\n\n` +
+
+    `👤 Ism: ${
+      user.first_name ||
+      "Noma'lum"
+    }\n` +
+
+    `📱 Username: @${
+      user.username ||
+      "username yo‘q"
+    }\n` +
+
+    `🆔 Telegram ID: ${
+      user.telegram_id
+    }\n\n` +
+
+    `⚠️ Bu foydalanuvchi oldin ham so‘rov yuborgan.\n\n` +
+
+    `👇 Quyidagi tugmalardan birini tanlang:`;
+
+
+  console.log(
+    '📤 MAVJUD SO‘ROV BO‘YICHA ADMINGA XABAR YUBORILMOQDA...'
+  );
+
+
+  console.log(
+    '🎯 ADMIN ID:',
+    ADMIN_TELEGRAM_ID
+  );
+
+
+  await notifyAdmin(
+    adminMessage,
+    user.telegram_id.toString()
+  );
+
+
+  console.log(
+    '✅ MAVJUD SO‘ROV BO‘YICHA ADMINGA XABAR YUBORILDI'
+  );
+
+
+  return res.json({
+
+    ok: true,
+
+    already_pending: true,
+
+    message:
+      'So‘rovingiz adminga yuborildi'
+
+  });
+
+}
 
       // ------------------------------------------------
       // DATABASE REQUEST
