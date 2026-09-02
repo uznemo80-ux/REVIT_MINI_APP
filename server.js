@@ -1065,18 +1065,18 @@ app.post(
 
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
 
-       `👤 Ism: ${user.first_name || "Noma'lum"}\n`
+      `👤 Ism: ${user.first_name || "Noma'lum"}\n` +
 
-        `📱 Username: @${
-          user.username ||
-          'username yo‘q'
-        }\n` +
+`📱 Username: @${
+  user.username ||
+  'username yo‘q'
+}\n` +
 
-        `🆔 Telegram ID: ${
-          user.telegram_id
-        }\n\n` +
+`🆔 Telegram ID: ${
+  user.telegram_id
+}\n\n` +
 
-        `👇 Quyidagi tugmalardan birini tanlang:`,
+`👇 Quyidagi tugmalardan birini tanlang:`
 
         user.telegram_id.toString()
 
