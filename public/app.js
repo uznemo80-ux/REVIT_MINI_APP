@@ -677,10 +677,11 @@ function renderHome() {
         <div class="about-photo-wrap">
 
           <img
-            class="about-photo"
-            src="admin.jpg"
-            alt="Abdulloh"
-            onerror="this.style.display='none'"
+           <img
+  class="about-photo"
+  src="/admin.jpg?v=2"
+  alt="Abdulloh"
+>
           >
 
         </div>
