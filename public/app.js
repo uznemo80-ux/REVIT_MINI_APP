@@ -714,7 +714,6 @@ function renderHome() {
 
       <!-- MEN HAQIMDA -->
 
-      <div class="about-card">
 
   <div class="about-photo-wrap">
     <img
