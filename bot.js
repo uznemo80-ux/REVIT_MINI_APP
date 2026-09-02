@@ -1,4 +1,3 @@
-```javascript
 require('dotenv').config();
 
 const { Telegraf } = require('telegraf');
@@ -8,25 +7,31 @@ const { Pool } = require('pg');
 // BOT
 // ======================================================
 
-const bot = new Telegraf(
-  process.env.BOT_TOKEN
-);
+if (!process.env.BOT_TOKEN) {
+  throw new Error('BOT_TOKEN topilmadi!');
+}
+
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // ======================================================
 // DATABASE
 // ======================================================
 
 const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
 });
 
 // ======================================================
 // ADMIN
 // ======================================================
 
-const ADMIN_ID =
-  Number(process.env.ADMIN_TELEGRAM_ID);
+const ADMIN_ID = Number(process.env.ADMIN_TELEGRAM_ID);
+
+if (!ADMIN_ID) {
+  console.warn(
+    '⚠️ ADMIN_TELEGRAM_ID noto‘g‘ri yoki mavjud emas!'
+  );
+}
 
 // 1 yil
 const ONE_YEAR_MS =
@@ -37,54 +42,47 @@ const ONE_YEAR_MS =
 // ======================================================
 
 bot.start(async (ctx) => {
-
   try {
+    const appUrl = process.env.APP_URL;
+
+    if (!appUrl) {
+      throw new Error('APP_URL topilmadi!');
+    }
 
     const freshUrl =
-      `${process.env.APP_URL}?v=${Date.now()}`;
+      `${appUrl}?v=${Date.now()}`;
 
     await ctx.reply(
-
       "Assalomu alaykum! Revit darslariga xush kelibsiz 👋\n\n" +
-
-      "Darslarni ko'rish uchun quyidagi tugmani bosing:",
-
+      "Darslarni ko‘rish uchun quyidagi tugmani bosing:",
       {
         reply_markup: {
-
           inline_keyboard: [
-
             [
               {
-                text:
-                  "📚 Darslarni ochish",
-
+                text: "📚 Darslarni ochish",
                 web_app: {
-                  url:
-                    freshUrl
-                }
-              }
-            ]
-
-          ]
-        }
+                  url: freshUrl,
+                },
+              },
+            ],
+          ],
+        },
       }
     );
 
   } catch (error) {
-
     console.error(
       "START ERROR:",
       error
     );
-
   }
-
 });
 
 // ======================================================
 // /APPROVE
-// Qo'lda ruxsat berish
+// Qo‘lda ruxsat berish
+//
 // /approve 123456789
 // ======================================================
 
@@ -92,10 +90,8 @@ bot.command(
   'approve',
   async (ctx) => {
 
-    if (
-      ctx.from.id !==
-      ADMIN_ID
-    ) {
+    // ADMIN TEKSHIRISH
+    if (ctx.from.id !== ADMIN_ID) {
       return;
     }
 
@@ -110,12 +106,15 @@ bot.command(
         Number(parts[1]);
 
       if (!targetId) {
-
-        return ctx.reply(
-          "To'g'ri format:\n/approve 123456789"
+        await ctx.reply(
+          "❌ To‘g‘ri format:\n\n/approve 123456789"
         );
-
+        return;
       }
+
+      // --------------------------------------------------
+      // USERNI TOPISH VA ACCESS BERISH
+      // --------------------------------------------------
 
       const accessUntil =
         new Date(
@@ -123,118 +122,105 @@ bot.command(
           ONE_YEAR_MS
         );
 
-      // --------------------------------------------------
-      // USER ACCESS
-      // --------------------------------------------------
-
       const userResult =
         await pool.query(
-
           `UPDATE users
            SET access_until = $1
            WHERE telegram_id = $2
-           RETURNING id,
-                     telegram_id,
-                     first_name,
-                     username`,
-
+           RETURNING
+             id,
+             telegram_id,
+             first_name,
+             username`,
           [
             accessUntil,
-            targetId
+            targetId,
           ]
-
         );
 
       if (
         userResult.rows.length === 0
       ) {
-
-        return ctx.reply(
-
-          `❌ ${targetId} Telegram ID bo'yicha foydalanuvchi topilmadi.`
-
+        await ctx.reply(
+          `❌ ${targetId} Telegram ID bo‘yicha foydalanuvchi topilmadi.`
         );
-
+        return;
       }
 
       const user =
         userResult.rows[0];
 
       // --------------------------------------------------
-      // PAYMENT REQUEST
+      // PAYMENT REQUESTNI APPROVED QILISH
       // --------------------------------------------------
 
       await pool.query(
-
         `UPDATE payment_requests
-         SET status = 'approved',
-             approved_at = now(),
-             approved_by = $1
+         SET
+           status = 'approved',
+           approved_at = NOW(),
+           approved_by = $1
          WHERE user_id = $2
            AND status = 'pending'`,
-
         [
           ADMIN_ID,
-          user.id
+          user.id,
         ]
-
       );
 
       // --------------------------------------------------
-      // ADMIN
+      // ADMINGA JAVOB
       // --------------------------------------------------
 
       await ctx.reply(
-
-        `✅ RUXSAT BERILDI\n\n` +
+        "✅ RUXSAT BERILDI\n\n" +
 
         `👤 Ism: ${
           user.first_name ||
           "Noma'lum"
         }\n` +
 
+        `📱 Username: @${
+          user.username ||
+          "username yo‘q"
+        }\n` +
+
         `🆔 Telegram ID: ${
           user.telegram_id
         }\n\n` +
 
-        `📅 Kirish muddati:\n` +
+        "📅 Kirish muddati:\n" +
 
         `${accessUntil.toLocaleDateString(
           'uz-UZ'
         )}\n\n` +
 
-        `🔓 1 yillik kursga kirish faollashtirildi.`
-
+        "🔓 1 yillik kursga kirish faollashtirildi."
       );
 
       // --------------------------------------------------
-      // USER NOTIFICATION
+      // USERGA XABAR
       // --------------------------------------------------
 
       try {
 
         await bot.telegram.sendMessage(
-
           targetId,
 
-          "🎉 To'lovingiz tasdiqlandi!\n\n" +
+          "🎉 To‘lovingiz tasdiqlandi!\n\n" +
 
           "✅ Kursga kirish huquqi berildi.\n" +
 
           "📚 Barcha darslarga 1 yil davomida kirishingiz mumkin.\n\n" +
 
-          "Mini App'ni qayta oching va darslarni boshlang."
-
+          "Mini App’ni qayta oching va darslarni boshlang."
         );
 
       } catch (error) {
 
         console.error(
-
-          "User notification error:",
-
+          "USER NOTIFICATION ERROR:",
           error.message
-
         );
 
       }
@@ -249,9 +235,7 @@ bot.command(
       await ctx.reply(
         "❌ Ruxsat berishda xatolik yuz berdi."
       );
-
     }
-
   }
 );
 
@@ -263,33 +247,21 @@ bot.action(
   /^approve_(\d+)$/,
   async (ctx) => {
 
-    // --------------------------------------------------
     // ADMIN TEKSHIRISH
-    // --------------------------------------------------
-
-    if (
-      ctx.from.id !==
-      ADMIN_ID
-    ) {
+    if (ctx.from.id !== ADMIN_ID) {
 
       await ctx.answerCbQuery(
-
-        "❌ Sizda ruxsat yo'q.",
-
+        "❌ Sizda ruxsat yo‘q.",
         {
-          show_alert:
-            true
+          show_alert: true,
         }
-
       );
 
       return;
     }
 
     const targetId =
-      Number(
-        ctx.match[1]
-      );
+      Number(ctx.match[1]);
 
     try {
 
@@ -298,12 +270,11 @@ bot.action(
       );
 
       // --------------------------------------------------
-      // USER
+      // USERNI TOPISH
       // --------------------------------------------------
 
       const userResult =
         await pool.query(
-
           `SELECT
              id,
              telegram_id,
@@ -311,11 +282,9 @@ bot.action(
              username
            FROM users
            WHERE telegram_id = $1`,
-
           [
-            targetId
+            targetId,
           ]
-
         );
 
       if (
@@ -333,7 +302,7 @@ bot.action(
         userResult.rows[0];
 
       // --------------------------------------------------
-      // ACCESS 1 YEAR
+      // 1 YILLIK ACCESS
       // --------------------------------------------------
 
       const accessUntil =
@@ -343,36 +312,31 @@ bot.action(
         );
 
       await pool.query(
-
         `UPDATE users
          SET access_until = $1
          WHERE telegram_id = $2`,
-
         [
           accessUntil,
-          targetId
+          targetId,
         ]
-
       );
 
       // --------------------------------------------------
-      // PAYMENT STATUS
+      // PAYMENT REQUEST
       // --------------------------------------------------
 
       await pool.query(
-
         `UPDATE payment_requests
-         SET status = 'approved',
-             approved_at = now(),
-             approved_by = $1
+         SET
+           status = 'approved',
+           approved_at = NOW(),
+           approved_by = $1
          WHERE user_id = $2
            AND status = 'pending'`,
-
         [
           ADMIN_ID,
-          user.id
+          user.id,
         ]
-
       );
 
       // --------------------------------------------------
@@ -381,7 +345,7 @@ bot.action(
 
       await ctx.editMessageText(
 
-        `✅ RUXSAT BERILDI\n\n` +
+        "✅ RUXSAT BERILDI\n\n" +
 
         `👤 Ism: ${
           user.first_name ||
@@ -390,21 +354,20 @@ bot.action(
 
         `📱 Username: @${
           user.username ||
-          "username yo'q"
+          "username yo‘q"
         }\n` +
 
         `🆔 Telegram ID: ${
           user.telegram_id
         }\n\n` +
 
-        `📅 Kirish muddati:\n` +
+        "📅 Kirish muddati:\n" +
 
         `${accessUntil.toLocaleDateString(
           'uz-UZ'
         )}\n\n` +
 
-        `🔓 1 yillik kursga kirish faollashtirildi.`
-
+        "🔓 1 yillik kursga kirish faollashtirildi."
       );
 
       // --------------------------------------------------
@@ -414,27 +377,22 @@ bot.action(
       try {
 
         await bot.telegram.sendMessage(
-
           targetId,
 
-          "🎉 To'lovingiz tasdiqlandi!\n\n" +
+          "🎉 To‘lovingiz tasdiqlandi!\n\n" +
 
           "✅ Kursga kirish huquqi berildi.\n" +
 
           "📚 Barcha darslarga 1 yil davomida kirishingiz mumkin.\n\n" +
 
-          "Mini App'ni qayta oching va darslarni boshlang."
-
+          "Mini App’ni qayta oching va darslarni boshlang."
         );
 
       } catch (error) {
 
         console.error(
-
-          "User notification error:",
-
+          "USER NOTIFICATION ERROR:",
           error.message
-
         );
 
       }
@@ -442,30 +400,23 @@ bot.action(
     } catch (error) {
 
       console.error(
-
         "APPROVE BUTTON ERROR:",
-
         error
-
       );
 
       try {
 
         await ctx.answerCbQuery(
-
           "❌ Xatolik yuz berdi.",
-
           {
-            show_alert:
-              true
+            show_alert: true,
           }
-
         );
 
-      } catch (e) {}
-
+      } catch (e) {
+        // ignore
+      }
     }
-
   }
 );
 
@@ -477,47 +428,34 @@ bot.action(
   /^reject_(\d+)$/,
   async (ctx) => {
 
-    // --------------------------------------------------
     // ADMIN TEKSHIRISH
-    // --------------------------------------------------
-
-    if (
-      ctx.from.id !==
-      ADMIN_ID
-    ) {
+    if (ctx.from.id !== ADMIN_ID) {
 
       await ctx.answerCbQuery(
-
-        "❌ Sizda ruxsat yo'q.",
-
+        "❌ Sizda ruxsat yo‘q.",
         {
-          show_alert:
-            true
+          show_alert: true,
         }
-
       );
 
       return;
     }
 
     const targetId =
-      Number(
-        ctx.match[1]
-      );
+      Number(ctx.match[1]);
 
     try {
 
       await ctx.answerCbQuery(
-        "⏳ So'rov rad etilmoqda..."
+        "⏳ So‘rov rad etilmoqda..."
       );
 
       // --------------------------------------------------
-      // USER
+      // USERNI TOPISH
       // --------------------------------------------------
 
       const userResult =
         await pool.query(
-
           `SELECT
              id,
              telegram_id,
@@ -525,11 +463,9 @@ bot.action(
              username
            FROM users
            WHERE telegram_id = $1`,
-
           [
-            targetId
+            targetId,
           ]
-
         );
 
       if (
@@ -547,32 +483,30 @@ bot.action(
         userResult.rows[0];
 
       // --------------------------------------------------
-      // REJECT PAYMENT
+      // PAYMENTNI RAD ETISH
       // --------------------------------------------------
 
       await pool.query(
-
         `UPDATE payment_requests
-         SET status = 'rejected',
-             approved_at = now(),
-             approved_by = $1
+         SET
+           status = 'rejected',
+           approved_at = NOW(),
+           approved_by = $1
          WHERE user_id = $2
            AND status = 'pending'`,
-
         [
           ADMIN_ID,
-          user.id
+          user.id,
         ]
-
       );
 
       // --------------------------------------------------
-      // ADMIN
+      // ADMIN XABARI
       // --------------------------------------------------
 
       await ctx.editMessageText(
 
-        `❌ SO'ROV RAD ETILDI\n\n` +
+        "❌ SO‘ROV RAD ETILDI\n\n" +
 
         `👤 Ism: ${
           user.first_name ||
@@ -581,41 +515,35 @@ bot.action(
 
         `📱 Username: @${
           user.username ||
-          "username yo'q"
+          "username yo‘q"
         }\n` +
 
         `🆔 Telegram ID: ${
           user.telegram_id
         }\n\n` +
 
-        `Admin tomonidan rad etildi.`
-
+        "Admin tomonidan rad etildi."
       );
 
       // --------------------------------------------------
-      // USER
+      // USERGA XABAR
       // --------------------------------------------------
 
       try {
 
         await bot.telegram.sendMessage(
-
           targetId,
 
-          "❌ Kursga kirish so'rovingiz rad etildi.\n\n" +
+          "❌ Kursga kirish so‘rovingiz rad etildi.\n\n" +
 
-          "Agar to'lov qilgan bo'lsangiz, administrator bilan bog'laning."
-
+          "Agar to‘lov qilgan bo‘lsangiz, administrator bilan bog‘laning."
         );
 
       } catch (error) {
 
         console.error(
-
-          "Reject notification error:",
-
+          "REJECT NOTIFICATION ERROR:",
           error.message
-
         );
 
       }
@@ -623,35 +551,29 @@ bot.action(
     } catch (error) {
 
       console.error(
-
         "REJECT BUTTON ERROR:",
-
         error
-
       );
 
       try {
 
         await ctx.answerCbQuery(
-
           "❌ Xatolik yuz berdi.",
-
           {
-            show_alert:
-              true
+            show_alert: true,
           }
-
         );
 
-      } catch (e) {}
-
+      } catch (e) {
+        // ignore
+      }
     }
-
   }
 );
 
 // ======================================================
 // NOTIFY ADMIN
+// server.js DAN CHAQIRILADI
 // ======================================================
 
 async function notifyAdmin(
@@ -661,48 +583,38 @@ async function notifyAdmin(
 
   try {
 
-    let replyMarkup;
+    const messageOptions = {};
 
     // --------------------------------------------------
-    // TUGMALAR
+    // AGAR USER ID BERILGAN BO‘LSA
+    // TUGMALAR CHIQADI
     // --------------------------------------------------
 
-    if (
-      telegramId
-    ) {
+    if (telegramId) {
 
-      replyMarkup = {
+      messageOptions.reply_markup = {
 
         inline_keyboard: [
 
           [
-
             {
-              text:
-                "🟢 Ruxsat berish",
-
+              text: "🟢 Ruxsat berish",
               callback_data:
-                `approve_${telegramId}`
-            }
-
+                `approve_${telegramId}`,
+            },
           ],
 
           [
-
             {
-              text:
-                "🔴 Rad etish",
-
+              text: "🔴 Rad etish",
               callback_data:
-                `reject_${telegramId}`
-            }
+                `reject_${telegramId}`,
+            },
+          ],
 
-          ]
-
-        ]
+        ],
 
       };
-
     }
 
     // --------------------------------------------------
@@ -710,32 +622,24 @@ async function notifyAdmin(
     // --------------------------------------------------
 
     await bot.telegram.sendMessage(
-
       ADMIN_ID,
-
       text,
+      messageOptions
+    );
 
-      {
-        reply_markup:
-          replyMarkup
-      }
-
+    console.log(
+      "✅ Adminga xabar yuborildi"
     );
 
   } catch (error) {
 
     console.error(
-
-      "Adminga xabar yuborilmadi:",
-
+      "❌ Adminga xabar yuborilmadi:",
       error.message
-
     );
 
     throw error;
-
   }
-
 }
 
 // ======================================================
@@ -743,7 +647,6 @@ async function notifyAdmin(
 // ======================================================
 
 bot.launch()
-
   .then(() => {
 
     console.log(
@@ -751,11 +654,10 @@ bot.launch()
     );
 
   })
-
   .catch((error) => {
 
     console.error(
-      "BOT LAUNCH ERROR:",
+      "❌ BOT LAUNCH ERROR:",
       error
     );
 
@@ -767,12 +669,16 @@ bot.launch()
 
 process.once(
   'SIGINT',
-  () => bot.stop('SIGINT')
+  () => {
+    bot.stop('SIGINT');
+  }
 );
 
 process.once(
   'SIGTERM',
-  () => bot.stop('SIGTERM')
+  () => {
+    bot.stop('SIGTERM');
+  }
 );
 
 // ======================================================
@@ -781,6 +687,5 @@ process.once(
 
 module.exports = {
   bot,
-  notifyAdmin
+  notifyAdmin,
 };
-```
