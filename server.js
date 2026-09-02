@@ -65,6 +65,82 @@ function generateBunnyPlayerUrl(libraryId, videoId) {
 }
 
 // ======================================================
+// YOUTUBE
+// ======================================================
+
+function getYouTubeVideoId(url) {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+
+    // https://youtu.be/VIDEO_ID
+    if (parsedUrl.hostname === 'youtu.be') {
+      return parsedUrl.pathname
+        .replace('/', '')
+        .trim() || null;
+    }
+
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    if (
+      parsedUrl.hostname === 'youtube.com' ||
+      parsedUrl.hostname === 'www.youtube.com' ||
+      parsedUrl.hostname === 'm.youtube.com'
+    ) {
+      const videoId =
+        parsedUrl.searchParams.get('v');
+
+      if (videoId) {
+        return videoId;
+      }
+
+      // /embed/VIDEO_ID
+      const embedMatch =
+        parsedUrl.pathname.match(
+          /^\/embed\/([^/]+)/
+        );
+
+      if (embedMatch) {
+        return embedMatch[1];
+      }
+
+      // /shorts/VIDEO_ID
+      const shortsMatch =
+        parsedUrl.pathname.match(
+          /^\/shorts\/([^/]+)/
+        );
+
+      if (shortsMatch) {
+        return shortsMatch[1];
+      }
+    }
+
+    return null;
+
+  } catch (error) {
+    console.error(
+      'YOUTUBE URL ERROR:',
+      error
+    );
+
+    return null;
+  }
+}
+
+function generateYouTubePlayerUrl(youtubeUrl) {
+  const videoId =
+    getYouTubeVideoId(youtubeUrl);
+
+  if (!videoId) {
+    return null;
+  }
+
+  return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+}
+
+// ======================================================
 // ACCESS
 // ======================================================
 
@@ -114,6 +190,7 @@ async function getOrCreateUser(initData) {
 
 app.post('/api/auth', async (req, res) => {
   try {
+
     const user = await getOrCreateUser(
       req.body.initData
     );
@@ -125,14 +202,25 @@ app.post('/api/auth', async (req, res) => {
     }
 
     res.json({
-      telegram_id: user.telegram_id.toString(),
-      first_name: user.first_name,
-      has_access: hasAccess(user),
-      access_until: user.access_until
+      telegram_id:
+        user.telegram_id.toString(),
+
+      first_name:
+        user.first_name,
+
+      has_access:
+        hasAccess(user),
+
+      access_until:
+        user.access_until
     });
 
   } catch (error) {
-    console.error('AUTH ERROR:', error);
+
+    console.error(
+      'AUTH ERROR:',
+      error
+    );
 
     res.status(500).json({
       error: 'Server xatosi'
@@ -146,6 +234,7 @@ app.post('/api/auth', async (req, res) => {
 
 app.post('/api/content', async (req, res) => {
   try {
+
     const user = await getOrCreateUser(
       req.body.initData
     );
@@ -156,74 +245,119 @@ app.post('/api/content', async (req, res) => {
       });
     }
 
-    const unlocked = hasAccess(user);
+    const unlocked =
+      hasAccess(user);
 
     const modules = (
       await pool.query(
-        'SELECT * FROM modules ORDER BY order_index'
+        `SELECT *
+         FROM modules
+         ORDER BY order_index`
       )
     ).rows;
 
     const lessons = (
       await pool.query(
-        'SELECT * FROM lessons ORDER BY order_index'
+        `SELECT *
+         FROM lessons
+         ORDER BY module_id, order_index`
       )
     ).rows;
 
     const results = (
       await pool.query(
-        'SELECT * FROM module_results WHERE user_id = $1',
+        `SELECT *
+         FROM module_results
+         WHERE user_id = $1`,
         [user.id]
       )
     ).rows;
 
-    const passedModuleIds = new Set(
-      results
-        .filter(r => r.passed)
-        .map(r => r.module_id)
-    );
+    const passedModuleIds =
+      new Set(
+        results
+          .filter(r => r.passed)
+          .map(r => r.module_id)
+      );
 
-    const data = modules.map((m, idx) => {
+    const data =
+      modules.map((m, idx) => {
 
-      const moduleUnlocked =
-        idx === 0 ||
-        passedModuleIds.has(
-          modules[idx - 1].id
-        );
+        /*
+          Birinchi modul avtomatik ko‘rinadi.
 
-      return {
-        id: m.id,
-        title: m.title,
+          Keyingi modulga o‘tish:
+          oldingi modul testidan o'tgan bo‘lishi kerak.
+        */
+        const moduleUnlocked =
+          idx === 0 ||
+          passedModuleIds.has(
+            modules[idx - 1].id
+          );
 
-        unlocked: moduleUnlocked,
+        return {
 
-        passed_test:
-          passedModuleIds.has(m.id),
+          id:
+            m.id,
 
-        lessons: lessons
-          .filter(
-            l => l.module_id === m.id
-          )
-          .map(l => ({
+          title:
+            m.title,
 
-            id: l.id,
+          unlocked:
+            moduleUnlocked,
 
-            title: l.title,
+          passed_test:
+            passedModuleIds.has(m.id),
 
-            is_free: l.is_free,
+          lessons:
+            lessons
+              .filter(
+                l =>
+                  l.module_id === m.id
+              )
+              .map(l => {
 
-            task_text: l.task_text,
+                /*
+                  is_free = true
+                  bo‘lsa dars ochiq.
 
-            available:
-              l.is_free ||
-              (unlocked && moduleUnlocked)
+                  is_free = false
+                  bo‘lsa faqat pullik
+                  foydalanuvchi ko‘ra oladi.
+                */
 
-          }))
-      };
-    });
+                const available =
+                  l.is_free ||
+                  (
+                    unlocked &&
+                    moduleUnlocked
+                  );
+
+                return {
+
+                  id:
+                    l.id,
+
+                  title:
+                    l.title,
+
+                  is_free:
+                    l.is_free,
+
+                  task_text:
+                    l.task_text,
+
+                  available:
+                    available
+                };
+              })
+        };
+      });
 
     res.json({
-      has_access: unlocked,
+
+      has_access:
+        unlocked,
 
       access_until:
         user.access_until,
@@ -234,7 +368,8 @@ app.post('/api/content', async (req, res) => {
       first_name:
         user.first_name,
 
-      modules: data
+      modules:
+        data
     });
 
   } catch (error) {
@@ -245,7 +380,8 @@ app.post('/api/content', async (req, res) => {
     );
 
     res.status(500).json({
-      error: 'Server xatosi'
+      error:
+        'Server xatosi'
     });
   }
 });
@@ -257,100 +393,176 @@ app.post('/api/content', async (req, res) => {
 app.post('/api/lesson/:id', async (req, res) => {
   try {
 
-    const user = await getOrCreateUser(
-      req.body.initData
-    );
+    const user =
+      await getOrCreateUser(
+        req.body.initData
+      );
 
     if (!user) {
       return res.status(401).json({
-        error: 'Tekshirishdan o‘tmadi'
+        error:
+          'Tekshirishdan o‘tmadi'
       });
     }
 
-    // Darsni olish
-    const lessonRes = await pool.query(
-      'SELECT * FROM lessons WHERE id = $1',
-      [req.params.id]
-    );
+    // ==================================================
+    // DARSNI OLISH
+    // ==================================================
+
+    const lessonRes =
+      await pool.query(
+        `SELECT *
+         FROM lessons
+         WHERE id = $1`,
+        [req.params.id]
+      );
 
     const lesson =
       lessonRes.rows[0];
 
     if (!lesson) {
       return res.status(404).json({
-        error: 'Dars topilmadi'
+        error:
+          'Dars topilmadi'
       });
     }
 
-    // Pullik darsni tekshirish
+    // ==================================================
+    // PULLIK DARSNI TEKSHIRISH
+    // ==================================================
+
     if (
       !lesson.is_free &&
       !hasAccess(user)
     ) {
       return res.status(403).json({
-        error: 'locked',
+
+        error:
+          'locked',
 
         message:
           'Bu dars uchun to‘lov qilinishi kerak'
       });
     }
 
-    // Bunny sozlamalarini tekshirish
-    if (
-      !lesson.bunny_video_id ||
-      !process.env.BUNNY_LIBRARY_ID
-    ) {
-      return res.status(500).json({
-        error:
-          'Bu dars uchun Bunny video sozlanmagan'
-      });
-    }
+    // ==================================================
+    // FAYLLAR
+    // ==================================================
 
-    // Fayllar
     const files = (
       await pool.query(
-        `SELECT file_name, file_url
+        `SELECT
+           file_name,
+           file_url
          FROM lesson_files
          WHERE lesson_id = $1`,
         [lesson.id]
       )
     ).rows;
 
-    // Progress
+    // ==================================================
+    // PROGRESS
+    // ==================================================
+
     await pool.query(
       `INSERT INTO progress
         (user_id, lesson_id, watched)
        VALUES ($1, $2, true)
-       ON CONFLICT (user_id, lesson_id)
-       DO UPDATE SET watched = true`,
+       ON CONFLICT
+         (user_id, lesson_id)
+       DO UPDATE SET
+         watched = true`,
       [
         user.id,
         lesson.id
       ]
     );
 
-    // Bunny
+    // ==================================================
+    // VIDEO TURI
+    // ==================================================
+
+    /*
+      Agar youtube_url mavjud bo‘lsa:
+      → YouTube ishlatiladi.
+
+      Agar youtube_url bo‘lmasa:
+      → Bunny ishlatiladi.
+    */
+
+    const youtubePlayerUrl =
+      generateYouTubePlayerUrl(
+        lesson.youtube_url
+      );
+
+    // ==================================================
+    // YOUTUBE
+    // ==================================================
+
+    if (youtubePlayerUrl) {
+
+      return res.json({
+
+        id:
+          lesson.id,
+
+        title:
+          lesson.title,
+
+        video_type:
+          'youtube',
+
+        youtube_url:
+          lesson.youtube_url,
+
+        youtube_player_url:
+          youtubePlayerUrl,
+
+        task_text:
+          lesson.task_text,
+
+        files:
+          files
+      });
+    }
+
+    // ==================================================
+    // BUNNY
+    // ==================================================
+
+    if (
+      !lesson.bunny_video_id ||
+      !process.env.BUNNY_LIBRARY_ID
+    ) {
+      return res.status(500).json({
+
+        error:
+          'Bu dars uchun video sozlanmagan'
+      });
+    }
+
     const bunnyLibraryId =
       process.env.BUNNY_LIBRARY_ID;
 
     const bunnyVideoId =
       lesson.bunny_video_id;
 
-    // Tokenli Bunny URL
     const bunnyPlayerUrl =
       generateBunnyPlayerUrl(
         bunnyLibraryId,
         bunnyVideoId
       );
 
-    // Javob
-    res.json({
+    return res.json({
 
       id:
         lesson.id,
 
       title:
         lesson.title,
+
+      video_type:
+        'bunny',
 
       bunny_video_id:
         bunnyVideoId,
@@ -364,8 +576,8 @@ app.post('/api/lesson/:id', async (req, res) => {
       task_text:
         lesson.task_text,
 
-      files
-
+      files:
+        files
     });
 
   } catch (error) {
@@ -389,13 +601,15 @@ app.post('/api/lesson/:id', async (req, res) => {
 app.post('/api/module/:id/test', async (req, res) => {
   try {
 
-    const user = await getOrCreateUser(
-      req.body.initData
-    );
+    const user =
+      await getOrCreateUser(
+        req.body.initData
+      );
 
     if (!user) {
       return res.status(401).json({
-        error: 'Tekshirishdan o‘tmadi'
+        error:
+          'Tekshirishdan o‘tmadi'
       });
     }
 
@@ -438,9 +652,10 @@ app.post('/api/module/:id/test', async (req, res) => {
 app.post('/api/module/:id/submit', async (req, res) => {
   try {
 
-    const user = await getOrCreateUser(
-      req.body.initData
-    );
+    const user =
+      await getOrCreateUser(
+        req.body.initData
+      );
 
     if (!user) {
       return res.status(401).json({
@@ -473,15 +688,15 @@ app.post('/api/module/:id/submit', async (req, res) => {
       ) {
         correct++;
       }
-
     }
 
     const score =
       questions.length > 0
         ? Math.round(
-            (correct /
-              questions.length) *
-            100
+            (
+              correct /
+              questions.length
+            ) * 100
           )
         : 0;
 
@@ -532,9 +747,10 @@ app.post('/api/module/:id/submit', async (req, res) => {
 app.post('/api/request-access', async (req, res) => {
   try {
 
-    const user = await getOrCreateUser(
-      req.body.initData
-    );
+    const user =
+      await getOrCreateUser(
+        req.body.initData
+      );
 
     if (!user) {
       return res.status(401).json({
@@ -568,7 +784,8 @@ app.post('/api/request-access', async (req, res) => {
     );
 
     res.json({
-      ok: true
+      ok:
+        true
     });
 
   } catch (error) {
