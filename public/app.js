@@ -1,4 +1,3 @@
-```javascript
 const tg = window.Telegram.WebApp;
 
 tg.ready();
@@ -325,12 +324,11 @@ function setTab(id) {
   render();
 
   requestAnimationFrame(() => {
-    const screen =
-      document.querySelector(".screen");
-
-    if (screen) {
-      screen.scrollTop = 0;
-    }
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant"
+    });
   });
 }
 
@@ -555,9 +553,7 @@ function renderHome() {
       }
 
 
-      <!-- ==========================================
-           MEN HAQIMDA
-      =========================================== -->
+      <!-- MEN HAQIMDA -->
 
       <div class="about-card">
 
@@ -582,9 +578,7 @@ function renderHome() {
       </div>
 
 
-      <!-- ==========================================
-           KURS
-      =========================================== -->
+      <!-- KURS -->
 
       <div class="section-title">
         Kurslar
@@ -633,9 +627,7 @@ function renderHome() {
       </div>
 
 
-      <!-- ==========================================
-           BEPUL DARSLAR
-      =========================================== -->
+      <!-- BEPUL DARSLAR -->
 
       <div class="section-title">
         Bepul darslar
@@ -658,9 +650,7 @@ function renderHome() {
       </div>
 
 
-      <!-- ==========================================
-           FIKRLAR
-      =========================================== -->
+      <!-- FIKRLAR -->
 
       <div class="section-title">
         O'quvchilar fikri
@@ -686,9 +676,7 @@ function renderHome() {
       </div>
 
 
-      <!-- ==========================================
-           FAQ
-      =========================================== -->
+      <!-- FAQ -->
 
       <div class="section-title">
         Ko'p beriladigan savollar
@@ -741,27 +729,25 @@ function renderHome() {
 
 
 // ======================================================
-// FAQ — TUZATILGAN
+// FAQ — SCROLL TUZATILGAN
 // ======================================================
 
 function toggleFaq(i) {
 
-  const screen =
-    document.querySelector(".screen");
-
   /*
-    FAQ bosilishidan oldingi
-    scroll holatini saqlab qolamiz.
+    Hozirgi scroll joyini saqlaymiz.
+    Scroll window orqali boshqarilayotgan
+    holat uchun aynan window.scrollY ishlatiladi.
   */
 
-  const oldScrollTop =
-    screen
-      ? screen.scrollTop
-      : 0;
+  const scrollY =
+    window.scrollY ||
+    window.pageYOffset ||
+    0;
 
 
   /*
-    Qaysi FAQ ochilishini o'zgartiramiz.
+    FAQ holatini o'zgartiramiz.
   */
 
   openFaq =
@@ -771,30 +757,24 @@ function toggleFaq(i) {
 
 
   /*
-    FAQ ochilganda butun sahifa
-    qayta render qilinadi.
+    Sahifani qayta chizamiz.
   */
 
   render();
 
 
   /*
-    Brauzer yangi DOM elementlarini
-    joylashtirgandan keyin eski
-    scroll holatini qaytaramiz.
+    Yangi DOM hosil bo'lgandan keyin
+    eski scroll joyiga qaytaramiz.
   */
 
   requestAnimationFrame(() => {
 
-    const newScreen =
-      document.querySelector(".screen");
-
-    if (newScreen) {
-
-      newScreen.scrollTop =
-        oldScrollTop;
-
-    }
+    window.scrollTo({
+      top: scrollY,
+      left: 0,
+      behavior: "instant"
+    });
 
   });
 
@@ -1839,4 +1819,3 @@ async function submitTest(moduleId) {
 // ======================================================
 
 loadContent();
-```
