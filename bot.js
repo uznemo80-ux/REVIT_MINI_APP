@@ -4,36 +4,55 @@ const { Telegraf } = require('telegraf');
 const { Pool } = require('pg');
 
 // ======================================================
-// BOT
+// ENVIRONMENT
 // ======================================================
 
 if (!process.env.BOT_TOKEN) {
-  throw new Error('BOT_TOKEN topilmadi!');
+  throw new Error('❌ BOT_TOKEN topilmadi!');
 }
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+if (!process.env.DATABASE_URL) {
+  throw new Error('❌ DATABASE_URL topilmadi!');
+}
+
+const ADMIN_ID = Number(
+  process.env.ADMIN_TELEGRAM_ID
+);
+
+if (!ADMIN_ID) {
+  throw new Error(
+    '❌ ADMIN_TELEGRAM_ID topilmadi yoki noto‘g‘ri!'
+  );
+}
+
+// ======================================================
+// BOT
+// ======================================================
+
+const bot = new Telegraf(
+  process.env.BOT_TOKEN
+);
 
 // ======================================================
 // DATABASE
 // ======================================================
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString:
+    process.env.DATABASE_URL
+});
+
+pool.on('error', (error) => {
+  console.error(
+    '❌ PostgreSQL pool error:',
+    error
+  );
 });
 
 // ======================================================
-// ADMIN
+// CONSTANTS
 // ======================================================
 
-const ADMIN_ID = Number(process.env.ADMIN_TELEGRAM_ID);
-
-if (!ADMIN_ID) {
-  console.warn(
-    '⚠️ ADMIN_TELEGRAM_ID noto‘g‘ri yoki mavjud emas!'
-  );
-}
-
-// 1 yil
 const ONE_YEAR_MS =
   365 * 24 * 60 * 60 * 1000;
 
@@ -43,10 +62,13 @@ const ONE_YEAR_MS =
 
 bot.start(async (ctx) => {
   try {
-    const appUrl = process.env.APP_URL;
+    const appUrl =
+      process.env.APP_URL;
 
     if (!appUrl) {
-      throw new Error('APP_URL topilmadi!');
+      throw new Error(
+        'APP_URL topilmadi!'
+      );
     }
 
     const freshUrl =
@@ -60,28 +82,45 @@ bot.start(async (ctx) => {
           inline_keyboard: [
             [
               {
-                text: "📚 Darslarni ochish",
+                text:
+                  "📚 Darslarni ochish",
+
                 web_app: {
-                  url: freshUrl,
-                },
-              },
-            ],
-          ],
-        },
+                  url: freshUrl
+                }
+              }
+            ]
+          ]
+        }
       }
+    );
+
+    console.log(
+      `✅ /start: ${ctx.from.id}`
     );
 
   } catch (error) {
     console.error(
-      "START ERROR:",
+      '❌ START ERROR:',
       error
     );
+
+    try {
+      await ctx.reply(
+        "❌ Mini App'ni ochishda xatolik yuz berdi."
+      );
+    } catch (replyError) {
+      console.error(
+        'START REPLY ERROR:',
+        replyError.message
+      );
+    }
   }
 });
 
 // ======================================================
 // /APPROVE
-// Qo‘lda ruxsat berish
+// QO‘LDA RUXSAT BERISH
 //
 // /approve 123456789
 // ======================================================
@@ -90,8 +129,13 @@ bot.command(
   'approve',
   async (ctx) => {
 
+    // --------------------------------------------------
     // ADMIN TEKSHIRISH
-    if (ctx.from.id !== ADMIN_ID) {
+    // --------------------------------------------------
+
+    if (
+      ctx.from.id !== ADMIN_ID
+    ) {
       return;
     }
 
@@ -106,9 +150,11 @@ bot.command(
         Number(parts[1]);
 
       if (!targetId) {
+
         await ctx.reply(
           "❌ To‘g‘ri format:\n\n/approve 123456789"
         );
+
         return;
       }
 
@@ -124,26 +170,33 @@ bot.command(
 
       const userResult =
         await pool.query(
-          `UPDATE users
-           SET access_until = $1
-           WHERE telegram_id = $2
-           RETURNING
-             id,
-             telegram_id,
-             first_name,
-             username`,
+          `
+          UPDATE users
+
+          SET access_until = $1
+
+          WHERE telegram_id = $2
+
+          RETURNING
+            id,
+            telegram_id,
+            first_name,
+            username
+          `,
           [
             accessUntil,
-            targetId,
+            targetId
           ]
         );
 
       if (
         userResult.rows.length === 0
       ) {
+
         await ctx.reply(
           `❌ ${targetId} Telegram ID bo‘yicha foydalanuvchi topilmadi.`
         );
+
         return;
       }
 
@@ -155,21 +208,25 @@ bot.command(
       // --------------------------------------------------
 
       await pool.query(
-        `UPDATE payment_requests
-         SET
-           status = 'approved',
-           approved_at = NOW(),
-           approved_by = $1
-         WHERE user_id = $2
-           AND status = 'pending'`,
+        `
+        UPDATE payment_requests
+
+        SET
+          status = 'approved',
+          approved_at = NOW(),
+          approved_by = $1
+
+        WHERE user_id = $2
+          AND status = 'pending'
+        `,
         [
           ADMIN_ID,
-          user.id,
+          user.id
         ]
       );
 
       // --------------------------------------------------
-      // ADMINGA JAVOB
+      // ADMIN XABARI
       // --------------------------------------------------
 
       await ctx.reply(
@@ -219,7 +276,7 @@ bot.command(
       } catch (error) {
 
         console.error(
-          "USER NOTIFICATION ERROR:",
+          "❌ USER NOTIFICATION ERROR:",
           error.message
         );
 
@@ -228,7 +285,7 @@ bot.command(
     } catch (error) {
 
       console.error(
-        "APPROVE COMMAND ERROR:",
+        "❌ APPROVE COMMAND ERROR:",
         error
       );
 
@@ -247,13 +304,18 @@ bot.action(
   /^approve_(\d+)$/,
   async (ctx) => {
 
+    // --------------------------------------------------
     // ADMIN TEKSHIRISH
-    if (ctx.from.id !== ADMIN_ID) {
+    // --------------------------------------------------
+
+    if (
+      ctx.from.id !== ADMIN_ID
+    ) {
 
       await ctx.answerCbQuery(
         "❌ Sizda ruxsat yo‘q.",
         {
-          show_alert: true,
+          show_alert: true
         }
       );
 
@@ -275,16 +337,18 @@ bot.action(
 
       const userResult =
         await pool.query(
-          `SELECT
-             id,
-             telegram_id,
-             first_name,
-             username
-           FROM users
-           WHERE telegram_id = $1`,
-          [
-            targetId,
-          ]
+          `
+          SELECT
+            id,
+            telegram_id,
+            first_name,
+            username
+
+          FROM users
+
+          WHERE telegram_id = $1
+          `,
+          [targetId]
         );
 
       if (
@@ -312,12 +376,16 @@ bot.action(
         );
 
       await pool.query(
-        `UPDATE users
-         SET access_until = $1
-         WHERE telegram_id = $2`,
+        `
+        UPDATE users
+
+        SET access_until = $1
+
+        WHERE telegram_id = $2
+        `,
         [
           accessUntil,
-          targetId,
+          targetId
         ]
       );
 
@@ -326,16 +394,20 @@ bot.action(
       // --------------------------------------------------
 
       await pool.query(
-        `UPDATE payment_requests
-         SET
-           status = 'approved',
-           approved_at = NOW(),
-           approved_by = $1
-         WHERE user_id = $2
-           AND status = 'pending'`,
+        `
+        UPDATE payment_requests
+
+        SET
+          status = 'approved',
+          approved_at = NOW(),
+          approved_by = $1
+
+        WHERE user_id = $2
+          AND status = 'pending'
+        `,
         [
           ADMIN_ID,
-          user.id,
+          user.id
         ]
       );
 
@@ -391,7 +463,7 @@ bot.action(
       } catch (error) {
 
         console.error(
-          "USER NOTIFICATION ERROR:",
+          "❌ USER NOTIFICATION ERROR:",
           error.message
         );
 
@@ -400,7 +472,7 @@ bot.action(
     } catch (error) {
 
       console.error(
-        "APPROVE BUTTON ERROR:",
+        "❌ APPROVE BUTTON ERROR:",
         error
       );
 
@@ -409,12 +481,12 @@ bot.action(
         await ctx.answerCbQuery(
           "❌ Xatolik yuz berdi.",
           {
-            show_alert: true,
+            show_alert: true
           }
         );
 
       } catch (e) {
-        // ignore
+        // callback allaqachon javoblangan bo‘lishi mumkin
       }
     }
   }
@@ -428,13 +500,18 @@ bot.action(
   /^reject_(\d+)$/,
   async (ctx) => {
 
+    // --------------------------------------------------
     // ADMIN TEKSHIRISH
-    if (ctx.from.id !== ADMIN_ID) {
+    // --------------------------------------------------
+
+    if (
+      ctx.from.id !== ADMIN_ID
+    ) {
 
       await ctx.answerCbQuery(
         "❌ Sizda ruxsat yo‘q.",
         {
-          show_alert: true,
+          show_alert: true
         }
       );
 
@@ -456,16 +533,18 @@ bot.action(
 
       const userResult =
         await pool.query(
-          `SELECT
-             id,
-             telegram_id,
-             first_name,
-             username
-           FROM users
-           WHERE telegram_id = $1`,
-          [
-            targetId,
-          ]
+          `
+          SELECT
+            id,
+            telegram_id,
+            first_name,
+            username
+
+          FROM users
+
+          WHERE telegram_id = $1
+          `,
+          [targetId]
         );
 
       if (
@@ -486,19 +565,26 @@ bot.action(
       // PAYMENTNI RAD ETISH
       // --------------------------------------------------
 
-      await pool.query(
-        `UPDATE payment_requests
-         SET
-           status = 'rejected',
-           approved_at = NOW(),
-           approved_by = $1
-         WHERE user_id = $2
-           AND status = 'pending'`,
-        [
-          ADMIN_ID,
-          user.id,
-        ]
-      );
+      const rejectResult =
+        await pool.query(
+          `
+          UPDATE payment_requests
+
+          SET
+            status = 'rejected',
+            approved_at = NOW(),
+            approved_by = $1
+
+          WHERE user_id = $2
+            AND status = 'pending'
+
+          RETURNING id
+          `,
+          [
+            ADMIN_ID,
+            user.id
+          ]
+        );
 
       // --------------------------------------------------
       // ADMIN XABARI
@@ -522,7 +608,11 @@ bot.action(
           user.telegram_id
         }\n\n` +
 
-        "Admin tomonidan rad etildi."
+        (
+          rejectResult.rows.length > 0
+            ? "Admin tomonidan rad etildi."
+            : "⚠️ Ushbu so‘rov allaqachon ko‘rib chiqilgan."
+        )
       );
 
       // --------------------------------------------------
@@ -542,7 +632,7 @@ bot.action(
       } catch (error) {
 
         console.error(
-          "REJECT NOTIFICATION ERROR:",
+          "❌ REJECT NOTIFICATION ERROR:",
           error.message
         );
 
@@ -551,7 +641,7 @@ bot.action(
     } catch (error) {
 
       console.error(
-        "REJECT BUTTON ERROR:",
+        "❌ REJECT BUTTON ERROR:",
         error
       );
 
@@ -560,7 +650,7 @@ bot.action(
         await ctx.answerCbQuery(
           "❌ Xatolik yuz berdi.",
           {
-            show_alert: true,
+            show_alert: true
           }
         );
 
@@ -583,11 +673,14 @@ async function notifyAdmin(
 
   try {
 
+    // --------------------------------------------------
+    // MESSAGE OPTIONS
+    // --------------------------------------------------
+
     const messageOptions = {};
 
     // --------------------------------------------------
-    // AGAR USER ID BERILGAN BO‘LSA
-    // TUGMALAR CHIQADI
+    // APPROVE / REJECT TUGMALARI
     // --------------------------------------------------
 
     if (telegramId) {
@@ -598,27 +691,30 @@ async function notifyAdmin(
 
           [
             {
-              text: "🟢 Ruxsat berish",
+              text:
+                "🟢 Ruxsat berish",
+
               callback_data:
-                `approve_${telegramId}`,
-            },
+                `approve_${telegramId}`
+            }
           ],
 
           [
             {
-              text: "🔴 Rad etish",
+              text:
+                "🔴 Rad etish",
+
               callback_data:
-                `reject_${telegramId}`,
-            },
-          ],
+                `reject_${telegramId}`
+            }
+          ]
 
-        ],
-
+        ]
       };
     }
 
     // --------------------------------------------------
-    // ADMIN XABARI
+    // ADMINGA YUBORISH
     // --------------------------------------------------
 
     await bot.telegram.sendMessage(
@@ -634,7 +730,7 @@ async function notifyAdmin(
   } catch (error) {
 
     console.error(
-      "❌ Adminga xabar yuborilmadi:",
+      "❌ ADMINGA XABAR YUBORILMADI:",
       error.message
     );
 
@@ -643,33 +739,53 @@ async function notifyAdmin(
 }
 
 // ======================================================
-// BOTNI ISHGA TUSHIRISH
+// BOT START
 // ======================================================
 
 bot.launch()
   .then(() => {
 
     console.log(
-      "Telegram bot ishga tushdi ✅"
+      "================================="
+    );
+
+    console.log(
+      "🤖 Telegram bot ishga tushdi ✅"
+    );
+
+    console.log(
+      `👤 Admin ID: ${ADMIN_ID}`
+    );
+
+    console.log(
+      "================================="
     );
 
   })
   .catch((error) => {
 
     console.error(
-      "❌ BOT LAUNCH ERROR:",
+      "❌ BOT LAUNCH ERROR:"
+    );
+
+    console.error(
       error
     );
 
   });
 
 // ======================================================
-// STOP
+// GRACEFUL STOP
 // ======================================================
 
 process.once(
   'SIGINT',
   () => {
+
+    console.log(
+      "🛑 Bot SIGINT orqali to‘xtatilmoqda..."
+    );
+
     bot.stop('SIGINT');
   }
 );
@@ -677,6 +793,11 @@ process.once(
 process.once(
   'SIGTERM',
   () => {
+
+    console.log(
+      "🛑 Bot SIGTERM orqali to‘xtatilmoqda..."
+    );
+
     bot.stop('SIGTERM');
   }
 );
@@ -687,5 +808,5 @@ process.once(
 
 module.exports = {
   bot,
-  notifyAdmin,
+  notifyAdmin
 };
