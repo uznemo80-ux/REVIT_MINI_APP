@@ -11,12 +11,33 @@ const { notifyAdmin } = require('./bot');
 const app = express();
 
 // ======================================================
+// CONFIG
+// ======================================================
+
+const PORT = process.env.PORT || 3000;
+
+// ADMIN TELEGRAM ID
+// Railway Variables'dagi qiymat ishlatiladi.
+// Agar Railway'da vaqtincha yozilmagan bo'lsa,
+// siz bergan ID ishlatiladi.
+const ADMIN_TELEGRAM_ID =
+  process.env.ADMIN_TELEGRAM_ID || '8043641301';
+
+console.log(
+  `ADMIN TELEGRAM ID: ${ADMIN_TELEGRAM_ID}`
+);
+
+// ======================================================
 // MIDDLEWARE
 // ======================================================
 
 app.use(cors());
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: '10mb'
+  })
+);
 
 app.use(
   express.static('public', {
@@ -38,6 +59,13 @@ app.use(
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
+});
+
+pool.on('error', (error) => {
+  console.error(
+    'DATABASE POOL ERROR:',
+    error
+  );
 });
 
 // ======================================================
@@ -69,7 +97,6 @@ function generateBunnyPlayerUrl(
   libraryId,
   videoId
 ) {
-  // Video token 2 soat amal qiladi
   const expiresAt =
     Math.floor(Date.now() / 1000) +
     2 * 60 * 60;
@@ -99,7 +126,6 @@ function getYouTubeVideoId(url) {
   try {
     const parsedUrl = new URL(url);
 
-    // youtu.be
     if (
       parsedUrl.hostname === 'youtu.be'
     ) {
@@ -110,13 +136,11 @@ function getYouTubeVideoId(url) {
       );
     }
 
-    // youtube.com
     if (
       parsedUrl.hostname === 'youtube.com' ||
       parsedUrl.hostname === 'www.youtube.com' ||
       parsedUrl.hostname === 'm.youtube.com'
     ) {
-      // ?v=VIDEO_ID
       const videoId =
         parsedUrl.searchParams.get('v');
 
@@ -124,7 +148,6 @@ function getYouTubeVideoId(url) {
         return videoId;
       }
 
-      // /embed/VIDEO_ID
       const embedMatch =
         parsedUrl.pathname.match(
           /^\/embed\/([^/]+)/
@@ -134,7 +157,6 @@ function getYouTubeVideoId(url) {
         return embedMatch[1];
       }
 
-      // /shorts/VIDEO_ID
       const shortsMatch =
         parsedUrl.pathname.match(
           /^\/shorts\/([^/]+)/
@@ -150,7 +172,7 @@ function getYouTubeVideoId(url) {
   } catch (error) {
     console.error(
       'YOUTUBE URL ERROR:',
-      error
+      error.message
     );
 
     return null;
@@ -177,7 +199,7 @@ function generateYouTubePlayerUrl(
 }
 
 // ======================================================
-// ACCESS TEKSHIRISH
+// ACCESS
 // ======================================================
 
 function hasAccess(user) {
@@ -196,10 +218,18 @@ function hasAccess(user) {
 }
 
 // ======================================================
-// TELEGRAM USERNI OLISH / YARATISH
+// GET / CREATE TELEGRAM USER
 // ======================================================
 
 async function getOrCreateUser(initData) {
+  if (!initData) {
+    console.error(
+      'GET USER ERROR: initData mavjud emas'
+    );
+
+    return null;
+  }
+
   const tgUser =
     verifyInitData(
       initData,
@@ -207,6 +237,10 @@ async function getOrCreateUser(initData) {
     );
 
   if (!tgUser) {
+    console.error(
+      'GET USER ERROR: Telegram initData noto‘g‘ri'
+    );
+
     return null;
   }
 
@@ -240,8 +274,8 @@ async function getOrCreateUser(initData) {
       `,
       [
         tgUser.id,
-        tgUser.first_name,
-        tgUser.username
+        tgUser.first_name || '',
+        tgUser.username || null
       ]
     );
 
@@ -266,7 +300,7 @@ app.post(
           .status(401)
           .json({
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
 
@@ -318,16 +352,12 @@ app.post(
           .status(401)
           .json({
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
 
       const unlocked =
         hasAccess(user);
-
-      // --------------------------------------------------
-      // MODULES
-      // --------------------------------------------------
 
       const modulesResult =
         await pool.query(
@@ -340,10 +370,6 @@ app.post(
 
       const modules =
         modulesResult.rows;
-
-      // --------------------------------------------------
-      // LESSONS
-      // --------------------------------------------------
 
       const lessonsResult =
         await pool.query(
@@ -358,10 +384,6 @@ app.post(
 
       const lessons =
         lessonsResult.rows;
-
-      // --------------------------------------------------
-      // TEST RESULTS
-      // --------------------------------------------------
 
       const resultsResult =
         await pool.query(
@@ -389,23 +411,9 @@ app.post(
             )
         );
 
-      // --------------------------------------------------
-      // MODULE DATA
-      // --------------------------------------------------
-
       const data =
         modules.map(
           (module, index) => {
-
-            /*
-              1-modul avtomatik ochiq.
-
-              2-modul ochilishi uchun
-              1-modul testi o'tilgan bo'lishi kerak.
-
-              3-modul ochilishi uchun
-              2-modul testi o'tilgan bo'lishi kerak.
-            */
 
             const moduleUnlocked =
               index === 0 ||
@@ -437,14 +445,6 @@ app.post(
                   )
                   .map(
                     lesson => {
-
-                      /*
-                        Bepul dars:
-                        is_free = true
-
-                        Pullik dars:
-                        access kerak.
-                      */
 
                       const available =
                         lesson.is_free ||
@@ -526,13 +526,9 @@ app.post(
           .status(401)
           .json({
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
-
-      // --------------------------------------------------
-      // DARS
-      // --------------------------------------------------
 
       const lessonResult =
         await pool.query(
@@ -556,10 +552,6 @@ app.post(
           });
       }
 
-      // --------------------------------------------------
-      // ACCESS
-      // --------------------------------------------------
-
       if (
         !lesson.is_free &&
         !hasAccess(user)
@@ -574,10 +566,6 @@ app.post(
               'Bu dars uchun to‘lov qilinishi kerak'
           });
       }
-
-      // --------------------------------------------------
-      // FILES
-      // --------------------------------------------------
 
       const filesResult =
         await pool.query(
@@ -595,10 +583,6 @@ app.post(
 
       const files =
         filesResult.rows;
-
-      // --------------------------------------------------
-      // PROGRESS
-      // --------------------------------------------------
 
       await pool.query(
         `
@@ -631,10 +615,6 @@ app.post(
         ]
       );
 
-      // --------------------------------------------------
-      // YOUTUBE
-      // --------------------------------------------------
-
       const youtubePlayerUrl =
         generateYouTubePlayerUrl(
           lesson.youtube_url
@@ -665,10 +645,6 @@ app.post(
         });
       }
 
-      // --------------------------------------------------
-      // BUNNY
-      // --------------------------------------------------
-
       if (
         !lesson.bunny_video_id ||
         !process.env.BUNNY_LIBRARY_ID
@@ -681,16 +657,10 @@ app.post(
           });
       }
 
-      const bunnyLibraryId =
-        process.env.BUNNY_LIBRARY_ID;
-
-      const bunnyVideoId =
-        lesson.bunny_video_id;
-
       const bunnyPlayerUrl =
         generateBunnyPlayerUrl(
-          bunnyLibraryId,
-          bunnyVideoId
+          process.env.BUNNY_LIBRARY_ID,
+          lesson.bunny_video_id
         );
 
       return res.json({
@@ -704,10 +674,10 @@ app.post(
           'bunny',
 
         bunny_video_id:
-          bunnyVideoId,
+          lesson.bunny_video_id,
 
         bunny_library_id:
-          bunnyLibraryId,
+          process.env.BUNNY_LIBRARY_ID,
 
         bunny_player_url:
           bunnyPlayerUrl,
@@ -753,7 +723,7 @@ app.post(
           .status(401)
           .json({
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
 
@@ -814,7 +784,7 @@ app.post(
           .status(401)
           .json({
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
 
@@ -902,11 +872,8 @@ app.post(
       );
 
       return res.json({
-        score:
-          score,
-
-        passed:
-          passed
+        score,
+        passed
       });
 
     } catch (error) {
@@ -932,35 +899,80 @@ app.post(
 app.post(
   '/api/request-access',
   async (req, res) => {
+
+    console.log(
+      '========================================'
+    );
+
+    console.log(
+      '📩 REQUEST ACCESS KELDI'
+    );
+
     try {
+
+      // ------------------------------------------------
+      // TELEGRAM USER
+      // ------------------------------------------------
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
+        console.error(
+          '❌ USER ANIQLANMADI'
+        );
+
         return res
           .status(401)
           .json({
+            ok: false,
             error:
-              'Tekshirishdan o‘tmadi'
+              'Telegram foydalanuvchisi aniqlanmadi'
           });
       }
 
-      // ==================================================
-      // OLDIN PENDING REQUEST BORMI?
-      // ==================================================
+      console.log(
+        '👤 USER:',
+        user.telegram_id.toString()
+      );
+
+      console.log(
+        '👤 NAME:',
+        user.first_name
+      );
+
+      console.log(
+        '📱 USERNAME:',
+        user.username
+      );
+
+      // ------------------------------------------------
+      // ACCESS BOR BO‘LSA
+      // ------------------------------------------------
+
+      if (hasAccess(user)) {
+
+        return res.json({
+          ok: true,
+          message:
+            'Sizda allaqachon kursga kirish huquqi mavjud'
+        });
+      }
+
+      // ------------------------------------------------
+      // PENDING REQUEST
+      // ------------------------------------------------
 
       const existingResult =
         await pool.query(
           `
           SELECT id
-
           FROM payment_requests
-
           WHERE user_id = $1
             AND status = 'pending'
-
           LIMIT 1
           `,
           [user.id]
@@ -969,67 +981,170 @@ app.post(
       if (
         existingResult.rows.length > 0
       ) {
+
+        console.log(
+          '⚠️ PENDING SO‘ROV ALLAQACHON BOR'
+        );
+
         return res.json({
-          ok:
-            true,
+          ok: true,
 
           already_pending:
-            true
+            true,
+
+          message:
+            'So‘rovingiz allaqachon adminga yuborilgan'
         });
       }
 
-      // ==================================================
-      // REQUEST YARATISH
-      // ==================================================
+      // ------------------------------------------------
+      // DATABASE REQUEST
+      // ------------------------------------------------
 
-      await pool.query(
-        `
-        INSERT INTO payment_requests
-        (
-          user_id
-        )
+      const requestResult =
+        await pool.query(
+          `
+          INSERT INTO payment_requests
+          (
+            user_id,
+            status
+          )
 
-        VALUES
-        (
-          $1
-        )
-        `,
-        [user.id]
+          VALUES
+          (
+            $1,
+            'pending'
+          )
+
+          RETURNING id
+          `,
+          [user.id]
+        );
+
+      console.log(
+        '✅ PAYMENT REQUEST YARATILDI:',
+        requestResult.rows[0].id
       );
 
-      // ==================================================
-      // ADMIN TELEGRAM
-      // ==================================================
+      // ------------------------------------------------
+      // ADMIN MESSAGE
+      // ------------------------------------------------
 
-      await notifyAdmin(
+      const adminMessage =
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
         `👤 Ism: ${user.first_name || "Noma'lum"}\n` +
         `📱 Username: @${user.username || "username yo‘q"}\n` +
         `🆔 Telegram ID: ${user.telegram_id}\n\n` +
-        `👇 Quyidagi tugmalardan birini tanlang:`,
+        `💳 Kursga kirish uchun so‘rov yuborildi.\n\n` +
+        `👇 Quyidagi tugmalardan birini tanlang:`;
+
+      console.log(
+        '📤 ADMINGA XABAR YUBORILMOQDA...'
+      );
+
+      console.log(
+        '🎯 ADMIN ID:',
+        ADMIN_TELEGRAM_ID
+      );
+
+      // notifyAdmin ikkinchi argument sifatida
+      // foydalanuvchining Telegram ID'sini oladi.
+      // Shu ID orqali approve/reject tugmalari
+      // ishlaydi.
+      await notifyAdmin(
+        adminMessage,
         user.telegram_id.toString()
       );
 
-      // ==================================================
+      console.log(
+        '✅ ADMINGA XABAR YUBORILDI'
+      );
+
+      // ------------------------------------------------
       // RESPONSE
-      // ==================================================
+      // ------------------------------------------------
 
       return res.json({
-        ok:
-          true
+        ok: true,
+
+        already_pending:
+          false,
+
+        message:
+          'So‘rov adminga yuborildi'
       });
 
     } catch (error) {
+
       console.error(
-        'REQUEST ACCESS ERROR:',
+        '❌ REQUEST ACCESS ERROR:',
+        error
+      );
+
+      console.error(
+        '❌ ERROR MESSAGE:',
+        error.message
+      );
+
+      return res
+        .status(500)
+        .json({
+          ok: false,
+
+          error:
+            'Adminga murojaat yuborishda xatolik: ' +
+            error.message
+        });
+    }
+  }
+);
+
+// ======================================================
+// TEST ADMIN CONNECTION
+// ======================================================
+
+app.get(
+  '/api/admin-test',
+  async (req, res) => {
+
+    try {
+
+      console.log(
+        '🧪 ADMIN TEST'
+      );
+
+      console.log(
+        'ADMIN ID:',
+        ADMIN_TELEGRAM_ID
+      );
+
+      await notifyAdmin(
+        `🧪 TEST XABARI\n\n` +
+        `Telegram Admin ID: ${ADMIN_TELEGRAM_ID}\n\n` +
+        `✅ Mini App serveridan test xabari.`
+      );
+
+      return res.json({
+        ok: true,
+
+        message:
+          'Admin Telegramiga test xabari yuborildi'
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN TEST ERROR:',
         error
       );
 
       return res
         .status(500)
         .json({
+          ok: false,
+
           error:
-            'Server xatosi'
+            error.message
         });
     }
   }
@@ -1042,12 +1157,15 @@ app.post(
 app.get(
   '/api/health',
   (req, res) => {
+
     res.json({
-      ok:
-        true,
+      ok: true,
 
       message:
-        'Server ishlayapti'
+        'Server ishlayapti',
+
+      admin_telegram_id:
+        ADMIN_TELEGRAM_ID
     });
   }
 );
@@ -1056,14 +1174,24 @@ app.get(
 // SERVER START
 // ======================================================
 
-const PORT =
-  process.env.PORT || 3000;
-
 app.listen(
   PORT,
   () => {
+
     console.log(
-      `Server ${PORT}-portda ishga tushdi`
+      '========================================'
+    );
+
+    console.log(
+      `🚀 Server ${PORT}-portda ishga tushdi`
+    );
+
+    console.log(
+      `🤖 Admin Telegram ID: ${ADMIN_TELEGRAM_ID}`
+    );
+
+    console.log(
+      '========================================'
     );
   }
 );
