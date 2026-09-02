@@ -1065,8 +1065,7 @@ app.post(
 
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
 
-        `👤 Ism: ${
-          user.first_name || "Noma'lum"
+       `👤 Ism: ${user.first_name || "Noma'lum"}\n`
         }\n` +
 
         `📱 Username: @${
