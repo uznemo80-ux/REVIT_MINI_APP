@@ -21,6 +21,7 @@ let currentTheme =
 applyTheme(currentTheme);
 
 function toggleTheme() {
+
   currentTheme =
     currentTheme === "dark"
       ? "light"
@@ -40,9 +41,15 @@ function toggleTheme() {
 
 // ---------- HAPTIC ----------
 function haptic(style = "light") {
+
   try {
-    tg.HapticFeedback.impactOccurred(style);
+
+    tg.HapticFeedback.impactOccurred(
+      style
+    );
+
   } catch (e) {}
+
 }
 
 // ---------- CONFIRM ----------
@@ -52,6 +59,7 @@ function showConfirm(
   confirmLabel,
   onConfirm
 ) {
+
   const overlay =
     document.createElement("div");
 
@@ -59,6 +67,7 @@ function showConfirm(
     "modal-overlay";
 
   overlay.innerHTML = `
+
     <div class="modal-card">
 
       <div class="modal-title">
@@ -86,36 +95,54 @@ function showConfirm(
       </div>
 
     </div>
+
   `;
 
-  document.body.appendChild(overlay);
+  document.body.appendChild(
+    overlay
+  );
 
   overlay
     .querySelector(".cancel")
     .onclick = () => {
+
       haptic();
+
       overlay.remove();
+
     };
 
   overlay
     .querySelector(".confirm")
     .onclick = () => {
+
       haptic("medium");
+
       overlay.remove();
+
       onConfirm();
+
     };
+
 }
 
 // ---------- STATE ----------
 let state = {
+
   has_access: false,
+
   modules: [],
+
   access_until: null,
+
   first_name: "",
+
   telegram_id: ""
+
 };
 
 let activeTab = "home";
+
 let currentView = null;
 
 // ---------- API ----------
@@ -123,9 +150,11 @@ async function api(
   path,
   body = {}
 ) {
+
   const res = await fetch(
     path,
     {
+
       method: "POST",
 
       headers: {
@@ -134,17 +163,23 @@ async function api(
       },
 
       body: JSON.stringify({
+
         initData,
+
         ...body
+
       })
+
     }
   );
 
   return res.json();
+
 }
 
 // ---------- DATE ----------
 function fmtDate(d) {
+
   if (!d)
     return null;
 
@@ -152,16 +187,23 @@ function fmtDate(d) {
     .toLocaleDateString(
       "uz-UZ",
       {
+
         day: "2-digit",
+
         month: "long",
+
         year: "numeric"
+
       }
     );
+
 }
 
 // ---------- CONTENT ----------
 async function loadContent() {
+
   try {
+
     const data =
       await api(
         "/api/content"
@@ -181,7 +223,9 @@ async function loadContent() {
     tg.showAlert(
       "Ma'lumotlarni yuklashda xatolik yuz berdi."
     );
+
   }
+
 }
 
 // ---------- LAYOUT ----------
@@ -193,8 +237,11 @@ function render() {
       : renderTab();
 
   app.innerHTML = `
+
     <div class="screen">
+
       ${body}
+
     </div>
 
     ${
@@ -202,7 +249,9 @@ function render() {
         ? renderNav()
         : ""
     }
+
   `;
+
 }
 
 // ---------- NAVIGATION ----------
@@ -243,6 +292,7 @@ function renderNav() {
   ];
 
   return `
+
     <div class="nav">
 
       ${tabs.map(t => `
@@ -269,7 +319,9 @@ function renderNav() {
       `).join("")}
 
     </div>
+
   `;
+
 }
 
 function setTab(id) {
@@ -281,6 +333,7 @@ function setTab(id) {
   currentView = null;
 
   render();
+
 }
 
 function renderTab() {
@@ -311,6 +364,7 @@ function renderTab() {
     return renderProfile();
 
   return "";
+
 }
 
 // ---------- STATIC CONTENT ----------
@@ -345,24 +399,33 @@ const COURSE = {
 const TESTIMONIALS = [
 
   {
+
     text:
       "Kurs juda tushunarli va amaliy, ishimda darhol qo'llay boshladim.",
+
     name:
       "O'quvchi ismi"
+
   },
 
   {
+
     text:
       "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.",
+
     name:
       "O'quvchi ismi"
+
   },
 
   {
+
     text:
       "Vazifalar orqali bilim mustahkam o'rnashib qoldi.",
+
     name:
       "O'quvchi ismi"
+
   }
 
 ];
@@ -370,35 +433,43 @@ const TESTIMONIALS = [
 const FAQ = [
 
   {
+
     q:
       "Kursga qanday to'lov qilaman?",
 
     a:
       "\"Chat\" bo'limidan \"Adminga murojaat yuborish\" tugmasini bosing, men siz bilan bog'lanib to'lov usulini aytaman."
+
   },
 
   {
+
     q:
       "Kirish huquqi qancha muddatga beriladi?",
 
     a:
       "To'lov tasdiqlangandan so'ng darslarga 1 yil davomida kirish huquqi beriladi."
+
   },
 
   {
+
     q:
       "Muddatim tugasa nima bo'ladi?",
 
     a:
       "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning."
+
   },
 
   {
+
     q:
       "Namuna darslarni ko'ra olamanmi?",
 
     a:
       "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan."
+
   }
 
 ];
@@ -528,12 +599,10 @@ function renderHome() {
           </div>
 
           <div class="course-meta">
-
             ${COURSE.totalModules}
             modul ·
             ${COURSE.totalLessons}
             dars
-
           </div>
 
           <div class="course-price">
@@ -646,6 +715,7 @@ function renderHome() {
     </div>
 
   `;
+
 }
 
 function toggleFaq(i) {
@@ -656,6 +726,7 @@ function toggleFaq(i) {
       : i;
 
   render();
+
 }
 
 // ======================================================
@@ -695,10 +766,8 @@ function renderLessons() {
             <div>
 
               <span class="idx">
-
                 ${String(i + 1)
                   .padStart(2, "0")}
-
               </span>
 
               ${m.title}
@@ -817,6 +886,7 @@ function renderLessons() {
   html += `</div>`;
 
   return html;
+
 }
 
 function toggleModule(id) {
@@ -955,6 +1025,7 @@ function renderTasks() {
   html += `</div>`;
 
   return html;
+
 }
 
 // ======================================================
@@ -1021,6 +1092,7 @@ function renderChat() {
     </div>
 
   `;
+
 }
 
 function requestAccess() {
@@ -1214,6 +1286,7 @@ function renderProfile() {
     </div>
 
   `;
+
 }
 
 // ======================================================
@@ -1530,6 +1603,7 @@ async function openLesson(id) {
         </div>
 
       `
+
     };
 
     render();
@@ -1663,6 +1737,7 @@ async function openTest(
         </button>
 
       `
+
     };
 
     render();
@@ -1729,8 +1804,10 @@ async function submitTest(
       await api(
         `/api/module/${moduleId}/submit`,
         {
+
           answers:
             window._answers
+
         }
       );
 
@@ -1739,13 +1816,17 @@ async function submitTest(
     ) {
 
       tg.showAlert(
+
         `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
+
       );
 
     } else {
 
       tg.showAlert(
+
         `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
+
       );
 
     }
