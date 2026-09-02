@@ -1530,6 +1530,12 @@ function renderChat() {
 
 function requestAccess() {
 
+ // ======================================================
+// CHAT — ADMIN REQUEST
+// ======================================================
+
+async function requestAccess() {
+
   showConfirm(
 
     "So'rov yuborilsin?",
@@ -1542,25 +1548,119 @@ function requestAccess() {
 
       try {
 
-        await api(
-          "/api/request-access"
+        console.log("========================================");
+        console.log("📩 ADMIN REQUEST BOSHLANDI");
+
+        // Telegram initData tekshirish
+        if (!initData) {
+
+          console.error(
+            "❌ Telegram initData mavjud emas"
+          );
+
+          tg.showAlert(
+            "❌ Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
+          );
+
+          return;
+        }
+
+        console.log(
+          "✅ initData mavjud"
         );
 
+        // Tugmani vaqtincha bloklash
+        const buttons =
+          document.querySelectorAll(
+            ".btn"
+          );
 
-        tg.showAlert(
-          "So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi."
+        buttons.forEach(
+          button => {
+            button.disabled = true;
+          }
+        );
+
+        // Serverga so‘rov
+        const result =
+          await api(
+            "/api/request-access"
+          );
+
+        console.log(
+          "📨 SERVER JAVOBI:",
+          result
+        );
+
+        // ----------------------------------------------
+        // OLDIN SO‘ROV YUBORILGAN
+        // ----------------------------------------------
+
+        if (
+          result.already_pending
+        ) {
+
+          tg.showAlert(
+            "ℹ️ So‘rovingiz adminga yuborilgan.\n\nTez orada siz bilan bog‘lanishadi."
+          );
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // MUVAFFAQIYATLI
+        // ----------------------------------------------
+
+        if (
+          result.ok
+        ) {
+
+          haptic("medium");
+
+          tg.showAlert(
+            "✅ So‘rovingiz adminga yuborildi!\n\nTez orada siz bilan bog‘lanishadi."
+          );
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // NOMA'LUM JAVOB
+        // ----------------------------------------------
+
+        throw new Error(
+          result.error ||
+          result.message ||
+          "Server noma'lum javob qaytardi"
         );
 
       } catch (error) {
 
         console.error(
-          "REQUEST ACCESS ERROR:",
+          "❌ REQUEST ACCESS ERROR:",
           error
         );
 
-
         tg.showAlert(
-          "So'rov yuborishda xatolik yuz berdi."
+          "❌ So‘rov yuborishda xatolik yuz berdi.\n\n" +
+          (
+            error.message ||
+            "Server bilan bog‘lanib bo‘lmadi."
+          )
+        );
+
+      } finally {
+
+        // Tugmalarni qayta yoqish
+        const buttons =
+          document.querySelectorAll(
+            ".btn"
+          );
+
+        buttons.forEach(
+          button => {
+            button.disabled = false;
+          }
         );
 
       }
@@ -1570,7 +1670,6 @@ function requestAccess() {
   );
 
 }
-
 
 // ======================================================
 // PROFIL
