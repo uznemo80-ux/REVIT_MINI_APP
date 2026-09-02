@@ -741,9 +741,9 @@ function renderHome() {
           )}
 
         </div>
-
-
-        <div class="about-more">
+  class="about-more"
+  onclick="toggleAbout()"
+>
   ${
     aboutOpen
       ? "Yashirish ↑"
