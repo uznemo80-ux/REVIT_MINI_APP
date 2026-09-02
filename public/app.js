@@ -1,4 +1,3 @@
-```javascript
 const tg = window.Telegram.WebApp;
 
 tg.ready();
@@ -21,7 +20,6 @@ let currentTheme =
 applyTheme(currentTheme);
 
 function toggleTheme() {
-
   currentTheme =
     currentTheme === "dark"
       ? "light"
@@ -35,21 +33,14 @@ function toggleTheme() {
   applyTheme(currentTheme);
 
   haptic();
-
   render();
 }
 
 // ---------- HAPTIC ----------
 function haptic(style = "light") {
-
   try {
-
-    tg.HapticFeedback.impactOccurred(
-      style
-    );
-
+    tg.HapticFeedback.impactOccurred(style);
   } catch (e) {}
-
 }
 
 // ---------- CONFIRM ----------
@@ -59,7 +50,6 @@ function showConfirm(
   confirmLabel,
   onConfirm
 ) {
-
   const overlay =
     document.createElement("div");
 
@@ -67,7 +57,6 @@ function showConfirm(
     "modal-overlay";
 
   overlay.innerHTML = `
-
     <div class="modal-card">
 
       <div class="modal-title">
@@ -95,141 +84,123 @@ function showConfirm(
       </div>
 
     </div>
-
   `;
 
-  document.body.appendChild(
-    overlay
-  );
+  document.body.appendChild(overlay);
 
-  overlay
-    .querySelector(".cancel")
-    .onclick = () => {
+  const cancelButton =
+    overlay.querySelector(".cancel");
 
+  const confirmButton =
+    overlay.querySelector(".confirm");
+
+  if (cancelButton) {
+    cancelButton.onclick = () => {
       haptic();
-
       overlay.remove();
-
     };
+  }
 
-  overlay
-    .querySelector(".confirm")
-    .onclick = () => {
-
+  if (confirmButton) {
+    confirmButton.onclick = () => {
       haptic("medium");
-
       overlay.remove();
-
       onConfirm();
-
     };
-
+  }
 }
 
 // ---------- STATE ----------
 let state = {
-
   has_access: false,
-
   modules: [],
-
   access_until: null,
-
   first_name: "",
-
   telegram_id: ""
-
 };
 
 let activeTab = "home";
-
 let currentView = null;
 
 // ---------- API ----------
-async function api(
-  path,
-  body = {}
-) {
+async function api(path, body = {}) {
+  const res = await fetch(path, {
+    method: "POST",
 
-  const res = await fetch(
-    path,
-    {
+    headers: {
+      "Content-Type": "application/json"
+    },
 
-      method: "POST",
+    body: JSON.stringify({
+      initData,
+      ...body
+    })
+  });
 
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
+  const data = await res.json();
 
-      body: JSON.stringify({
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+      data.error ||
+      "Server xatosi"
+    );
+  }
 
-        initData,
-
-        ...body
-
-      })
-
-    }
-  );
-
-  return res.json();
-
+  return data;
 }
 
 // ---------- DATE ----------
 function fmtDate(d) {
+  if (!d) return null;
 
-  if (!d)
-    return null;
-
-  return new Date(d)
-    .toLocaleDateString(
-      "uz-UZ",
-      {
-
-        day: "2-digit",
-
-        month: "long",
-
-        year: "numeric"
-
-      }
-    );
-
+  return new Date(d).toLocaleDateString(
+    "uz-UZ",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    }
+  );
 }
 
 // ---------- CONTENT ----------
 async function loadContent() {
-
   try {
-
     const data =
-      await api(
-        "/api/content"
-      );
+      await api("/api/content");
 
     state = data;
 
     render();
 
   } catch (error) {
-
     console.error(
       "CONTENT LOAD ERROR:",
       error
     );
 
-    tg.showAlert(
-      "Ma'lumotlarni yuklashda xatolik yuz berdi."
-    );
+    if (app) {
+      app.innerHTML = `
+        <div class="page">
+          <div class="empty-box">
+            Ma'lumotlarni yuklashda xatolik yuz berdi.
+          </div>
+        </div>
+      `;
+    }
 
+    try {
+      tg.showAlert(
+        "Ma'lumotlarni yuklashda xatolik yuz berdi."
+      );
+    } catch (e) {}
   }
-
 }
 
 // ---------- LAYOUT ----------
 function render() {
+  if (!app) return;
 
   const body =
     currentView
@@ -237,7 +208,6 @@ function render() {
       : renderTab();
 
   app.innerHTML = `
-
     <div class="screen">
 
       ${body}
@@ -249,54 +219,43 @@ function render() {
         ? renderNav()
         : ""
     }
-
   `;
-
 }
 
 // ---------- NAVIGATION ----------
 function renderNav() {
-
   const tabs = [
-
     {
       id: "home",
       label: "Bosh sahifa",
       icon: "⌂"
     },
-
     {
       id: "lessons",
       label: "Darslar",
       icon: "▤"
     },
-
     {
       id: "tasks",
       label: "Vazifalar",
       icon: "✎"
     },
-
     {
       id: "chat",
       label: "Chat",
       icon: "◈"
     },
-
     {
       id: "profile",
       label: "Profil",
       icon: "◍"
     }
-
   ];
 
   return `
-
     <div class="nav">
 
       ${tabs.map(t => `
-
         <div
           class="nav-item ${
             activeTab === t.id
@@ -315,70 +274,58 @@ function renderNav() {
           </div>
 
         </div>
-
       `).join("")}
 
     </div>
-
   `;
-
 }
 
 function setTab(id) {
-
   haptic();
 
   activeTab = id;
-
   currentView = null;
 
   render();
-
 }
 
 function renderTab() {
-
-  if (
-    activeTab === "home"
-  )
+  if (activeTab === "home") {
     return renderHome();
+  }
 
-  if (
-    activeTab === "lessons"
-  )
+  if (activeTab === "lessons") {
     return renderLessons();
+  }
 
-  if (
-    activeTab === "tasks"
-  )
+  if (activeTab === "tasks") {
     return renderTasks();
+  }
 
-  if (
-    activeTab === "chat"
-  )
+  if (activeTab === "chat") {
     return renderChat();
+  }
 
-  if (
-    activeTab === "profile"
-  )
+  if (activeTab === "profile") {
     return renderProfile();
+  }
 
   return "";
-
 }
 
 // ---------- STATIC CONTENT ----------
 
-const ABOUT_TEXT = `Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
+const ABOUT_TEXT = `
+Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
 
 Men Revit'ni shunchaki dastur sifatida emas, balki real loyihalarni ishlab chiqish, ishchi chizmalar tayyorlash va loyiha jarayonini tizimli tashkil qilish vositasi sifatida o'rganib, amaliyotda qo'llab kelaman.
 
 Faoliyatim davomida arxitektura va interyer loyihalari, Revit modellashtirish, ishchi chizmalar, spetsifikatsiyalar va loyiha hujjatlari bilan ishlash bo'yicha tajriba orttirganman. Bu sohada 4 yildan beri ishlayman.
 
-Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyihasini yo'lga qo'ydim.`;
+Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyihasini yo'lga qo'ydim.
+`;
 
 const COURSE = {
-
   title:
     "INTPRO — Revit dasturida interyer loyihalash",
 
@@ -393,85 +340,66 @@ const COURSE = {
 
   cover:
     "course-cover.jpg"
-
 };
 
 const TESTIMONIALS = [
-
   {
-
     text:
       "Kurs juda tushunarli va amaliy, ishimda darhol qo'llay boshladim.",
 
     name:
       "O'quvchi ismi"
-
   },
 
   {
-
     text:
       "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.",
 
     name:
       "O'quvchi ismi"
-
   },
 
   {
-
     text:
       "Vazifalar orqali bilim mustahkam o'rnashib qoldi.",
 
     name:
       "O'quvchi ismi"
-
   }
-
 ];
 
 const FAQ = [
-
   {
-
     q:
       "Kursga qanday to'lov qilaman?",
 
     a:
       "\"Chat\" bo'limidan \"Adminga murojaat yuborish\" tugmasini bosing, men siz bilan bog'lanib to'lov usulini aytaman."
-
   },
 
   {
-
     q:
       "Kirish huquqi qancha muddatga beriladi?",
 
     a:
       "To'lov tasdiqlangandan so'ng darslarga 1 yil davomida kirish huquqi beriladi."
-
   },
 
   {
-
     q:
       "Muddatim tugasa nima bo'ladi?",
 
     a:
       "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning."
-
   },
 
   {
-
     q:
       "Namuna darslarni ko'ra olamanmi?",
 
     a:
       "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan."
-
   }
-
 ];
 
 let openFaq = null;
@@ -481,22 +409,34 @@ let openFaq = null;
 // ======================================================
 
 function renderHome() {
+  const modules =
+    Array.isArray(state.modules)
+      ? state.modules
+      : [];
 
   const myAvailable =
-    state.modules.reduce(
+    modules.reduce(
       (a, m) =>
         a +
-        m.lessons.filter(
-          l => l.available
-        ).length,
+        (
+          Array.isArray(m.lessons)
+            ? m.lessons.filter(
+                l => l.available
+              ).length
+            : 0
+        ),
       0
     );
 
   const myTotal =
-    state.modules.reduce(
+    modules.reduce(
       (a, m) =>
         a +
-        m.lessons.length,
+        (
+          Array.isArray(m.lessons)
+            ? m.lessons.length
+            : 0
+        ),
       0
     );
 
@@ -509,7 +449,6 @@ function renderHome() {
       : 0;
 
   return `
-
     <div class="page">
 
       <div class="welcome-hero">
@@ -527,7 +466,6 @@ function renderHome() {
       ${
         myTotal
           ? `
-
             <div class="progress-wrap">
 
               <div class="progress-labels">
@@ -552,7 +490,6 @@ function renderHome() {
               </div>
 
             </div>
-
           `
           : ""
       }
@@ -646,7 +583,6 @@ function renderHome() {
       <div class="testi-scroll">
 
         ${TESTIMONIALS.map(t => `
-
           <div class="testi-card">
 
             <div class="testi-text">
@@ -658,7 +594,6 @@ function renderHome() {
             </div>
 
           </div>
-
         `).join("")}
 
       </div>
@@ -670,7 +605,6 @@ function renderHome() {
       <div class="faq-list">
 
         ${FAQ.map((f, i) => `
-
           <div class="faq-item">
 
             <div
@@ -697,36 +631,29 @@ function renderHome() {
             ${
               openFaq === i
                 ? `
-
                   <div class="faq-a">
                     ${f.a}
                   </div>
-
                 `
                 : ""
             }
 
           </div>
-
         `).join("")}
 
       </div>
 
     </div>
-
   `;
-
 }
 
 function toggleFaq(i) {
-
   openFaq =
     openFaq === i
       ? null
       : i;
 
   render();
-
 }
 
 // ======================================================
@@ -734,22 +661,28 @@ function toggleFaq(i) {
 // ======================================================
 
 function renderLessons() {
-
   let html = `
-
     <div class="page">
 
       <div class="page-title">
         Darslar
       </div>
-
   `;
 
-  state.modules.forEach(
+  const modules =
+    Array.isArray(state.modules)
+      ? state.modules
+      : [];
+
+  modules.forEach(
     (m, i) => {
 
-      html += `
+      const moduleLessons =
+        Array.isArray(m.lessons)
+          ? m.lessons
+          : [];
 
+      html += `
         <div
           class="module ${
             m.unlocked
@@ -784,13 +717,11 @@ function renderLessons() {
 
               ${
                 m.unlocked
-
                   ? (
                       m.passed_test
                         ? "Test topshirilgan"
                         : "Ochiq"
                     )
-
                   : "Qulflangan"
               }
 
@@ -803,16 +734,14 @@ function renderLessons() {
             id="mod-${m.id}"
           >
 
-            ${m.lessons.map(
+            ${moduleLessons.map(
               l => `
-
                 <div
                   class="lesson ${
                     l.available
                       ? ""
                       : "disabled"
                   }"
-
                   onclick="${
                     l.available
                       ? `openLesson(${l.id})`
@@ -826,9 +755,7 @@ function renderLessons() {
 
                   ${
                     l.is_free
-
                       ? '<span class="free-badge">Namuna</span>'
-
                       : (
                           l.available
                             ? ""
@@ -837,81 +764,55 @@ function renderLessons() {
                   }
 
                 </div>
-
               `
             ).join("")}
 
           </div>
 
         </div>
-
       `;
-
     }
   );
 
-  if (
-    !state.modules.length
-  ) {
-
+  if (!modules.length) {
     html += `
-
       <div class="empty-box">
         Hozircha darslar qo'shilmagan.
       </div>
-
     `;
-
   }
 
-  if (
-    !state.has_access
-  ) {
-
+  if (!state.has_access) {
     html += `
-
       <button
         class="btn"
         onclick="setTab('chat')"
       >
-
         To'liq kirish uchun murojaat qilish
-
       </button>
-
     `;
-
   }
 
   html += `</div>`;
 
   return html;
-
 }
 
 function toggleModule(id) {
-
   const el =
     document.getElementById(
       `mod-${id}`
     );
 
   if (el) {
-
-    el.classList.toggle(
-      "open"
-    );
-
+    el.classList.toggle("open");
   }
-
 }
 
 function showLockedInfo() {
-
   tg.showAlert(
-    "Bu dars uchun to'lov qilinishi kerak. \"Chat\" bo'limidan admin bilan bog'laning."
+    "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
-
 }
 
 // ======================================================
@@ -919,28 +820,31 @@ function showLockedInfo() {
 // ======================================================
 
 function renderTasks() {
-
   let html = `
-
     <div class="page">
 
       <div class="page-title">
         Vazifalar
       </div>
-
   `;
 
+  const modules =
+    Array.isArray(state.modules)
+      ? state.modules
+      : [];
+
   const allLessons =
-    state.modules.flatMap(
+    modules.flatMap(
       m =>
-        m.lessons.map(
+        (
+          Array.isArray(m.lessons)
+            ? m.lessons
+            : []
+        ).map(
           l => ({
-
             ...l,
-
             moduleTitle:
               m.title
-
           })
         )
     );
@@ -958,25 +862,16 @@ function renderTasks() {
         !l.available
     ).length;
 
-  if (
-    !withTasks.length
-  ) {
-
+  if (!withTasks.length) {
     html += `
-
       <div class="empty-box">
         Hozircha ochiq vazifalar yo'q.
       </div>
-
     `;
-
   } else {
-
     withTasks.forEach(
       l => {
-
         html += `
-
           <div
             class="task-card"
             onclick="openLesson(${l.id})"
@@ -995,20 +890,13 @@ function renderTasks() {
             </div>
 
           </div>
-
         `;
-
       }
     );
-
   }
 
-  if (
-    lockedCount > 0
-  ) {
-
+  if (lockedCount > 0) {
     html += `
-
       <div class="empty-box">
 
         🔒 Yana
@@ -1017,15 +905,12 @@ function renderTasks() {
         to'lovdan keyin ochiladi
 
       </div>
-
     `;
-
   }
 
   html += `</div>`;
 
   return html;
-
 }
 
 // ======================================================
@@ -1033,9 +918,7 @@ function renderTasks() {
 // ======================================================
 
 function renderChat() {
-
   return `
-
     <div class="page">
 
       <div class="page-title">
@@ -1046,9 +929,7 @@ function renderChat() {
 
         ${
           state.has_access
-
             ? `
-
               <p>
 
                 Obunangiz faol
@@ -1060,11 +941,8 @@ function renderChat() {
                 admin bilan bog'laning.
 
               </p>
-
             `
-
             : `
-
               <p>
 
                 To'liq kirish uchun to'lovni tashqarida
@@ -1074,7 +952,6 @@ function renderChat() {
                 u siz bilan bog'lanadi.
 
               </p>
-
             `
         }
 
@@ -1084,21 +961,15 @@ function renderChat() {
         class="btn"
         onclick="requestAccess()"
       >
-
         Adminga murojaat yuborish
-
       </button>
 
     </div>
-
   `;
-
 }
 
 function requestAccess() {
-
   showConfirm(
-
     "So'rov yuborilsinmi?",
 
     "Adminga to'liq kirish uchun so'rov yuboriladi. U tez orada siz bilan bog'lanadi.",
@@ -1106,9 +977,7 @@ function requestAccess() {
     "Yuborish",
 
     async () => {
-
       try {
-
         await api(
           "/api/request-access"
         );
@@ -1118,7 +987,6 @@ function requestAccess() {
         );
 
       } catch (error) {
-
         console.error(
           "REQUEST ACCESS ERROR:",
           error
@@ -1127,13 +995,9 @@ function requestAccess() {
         tg.showAlert(
           "So'rov yuborishda xatolik yuz berdi."
         );
-
       }
-
     }
-
   );
-
 }
 
 // ======================================================
@@ -1141,9 +1005,7 @@ function requestAccess() {
 // ======================================================
 
 function renderProfile() {
-
   return `
-
     <div class="page">
 
       <div class="page-title">
@@ -1207,9 +1069,7 @@ function renderProfile() {
 
       ${
         state.has_access
-
           ? `
-
             <div class="info-row">
 
               <span>
@@ -1223,9 +1083,7 @@ function renderProfile() {
               </span>
 
             </div>
-
           `
-
           : ""
       }
 
@@ -1241,7 +1099,6 @@ function renderProfile() {
               ? "on"
               : ""
           }"
-
           onclick="toggleTheme()"
         >
 
@@ -1255,38 +1112,26 @@ function renderProfile() {
 
       ${
         !state.has_access
-
           ? `
-
             <button
               class="btn"
               onclick="setTab('chat')"
             >
-
               To'liq kirish uchun murojaat
-
             </button>
-
           `
-
           : `
-
             <button
               class="btn secondary"
               onclick="setTab('chat')"
             >
-
               Muddatni uzaytirish uchun murojaat
-
             </button>
-
           `
       }
 
     </div>
-
   `;
-
 }
 
 // ======================================================
@@ -1294,9 +1139,7 @@ function renderProfile() {
 // ======================================================
 
 function renderDetailView() {
-
   return currentView.html;
-
 }
 
 // ======================================================
@@ -1305,9 +1148,7 @@ function renderDetailView() {
 // ======================================================
 
 async function openLesson(id) {
-
   try {
-
     const lesson =
       await api(
         `/api/lesson/${id}`
@@ -1320,26 +1161,18 @@ async function openLesson(id) {
     if (
       lesson.error === "locked"
     ) {
-
       return showLockedInfo();
-
     }
 
     // --------------------------------
     // SERVER XATOSI
     // --------------------------------
 
-    if (
-      lesson.error
-    ) {
-
+    if (lesson.error) {
       return tg.showAlert(
-
         lesson.message ||
         "Darsni ochishda xatolik yuz berdi."
-
       );
-
     }
 
     // --------------------------------
@@ -1353,23 +1186,15 @@ async function openLesson(id) {
     // ==============================
 
     if (
-
       lesson.video_type === "youtube" &&
-
       lesson.youtube_player_url
-
     ) {
-
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
-
             src="${lesson.youtube_player_url}"
-
             title="${lesson.title}"
-
             allow="
               accelerometer;
               autoplay;
@@ -1379,17 +1204,12 @@ async function openLesson(id) {
               picture-in-picture;
               web-share
             "
-
             allowfullscreen
-
             loading="lazy"
-
           ></iframe>
 
         </div>
-
       `;
-
     }
 
     // ==============================
@@ -1397,23 +1217,15 @@ async function openLesson(id) {
     // ==============================
 
     else if (
-
       lesson.video_type === "bunny" &&
-
       lesson.bunny_player_url
-
     ) {
-
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
-
             src="${lesson.bunny_player_url}"
-
             title="${lesson.title}"
-
             allow="
               accelerometer;
               gyroscope;
@@ -1421,69 +1233,48 @@ async function openLesson(id) {
               encrypted-media;
               picture-in-picture;
             "
-
             allowfullscreen
-
             loading="lazy"
-
           ></iframe>
 
         </div>
-
       `;
-
     }
 
     // ==============================
-    // ESKI FORMAT UCHUN
+    // ESKI FORMAT
     // ==============================
 
     else if (
       lesson.youtube_player_url
     ) {
-
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
-
             src="${lesson.youtube_player_url}"
-
             title="${lesson.title}"
-
             allowfullscreen
-
           ></iframe>
 
         </div>
-
       `;
-
     }
 
     else if (
       lesson.bunny_player_url
     ) {
-
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
-
             src="${lesson.bunny_player_url}"
-
             title="${lesson.title}"
-
             allowfullscreen
-
           ></iframe>
 
         </div>
-
       `;
-
     }
 
     // --------------------------------
@@ -1491,7 +1282,6 @@ async function openLesson(id) {
     // --------------------------------
 
     else {
-
       console.error(
         "VIDEO URL TOPILMADI:",
         lesson
@@ -1500,24 +1290,53 @@ async function openLesson(id) {
       return tg.showAlert(
         "Video topilmadi. Server ma'lumotlarini tekshirish kerak."
       );
-
     }
+
+    // --------------------------------
+    // FILES
+    // --------------------------------
+
+    const filesHtml =
+      lesson.files &&
+      lesson.files.length
+        ? `
+          <div class="section-title">
+            Darslikda ishlatilgan fayllar
+          </div>
+
+          ${lesson.files.map(
+            f => `
+              <div class="file-item">
+
+                <span>
+                  📎 ${f.file_name}
+                </span>
+
+                <a
+                  href="${f.file_url}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Yuklab olish
+                </a>
+
+              </div>
+            `
+          ).join("")}
+        `
+        : "";
 
     // --------------------------------
     // DETAIL PAGE
     // --------------------------------
 
     currentView = {
-
       html: `
-
         <div
           class="back-btn"
           onclick="closeDetail()"
         >
-
           ← Orqaga
-
         </div>
 
         <div class="lesson-detail">
@@ -1530,9 +1349,7 @@ async function openLesson(id) {
 
           ${
             lesson.task_text
-
               ? `
-
                 <div class="section-title">
                   Vazifa
                 </div>
@@ -1540,76 +1357,19 @@ async function openLesson(id) {
                 <div class="task-box">
                   ${lesson.task_text}
                 </div>
-
               `
-
               : ""
           }
 
-          ${
-            lesson.files &&
-            lesson.files.length
-
-              ? `
-
-                <div class="section-title">
-
-                  Darslikda ishlatilgan fayllar
-
-                </div>
-
-                ${
-                  lesson.files
-                    .map(
-                      f => `
-
-                        <div
-                          class="file-item"
-                        >
-
-                          <span>
-
-                            📎
-                            ${f.file_name}
-
-                          </span>
-
-                          <a
-
-                            href="${f.file_url}"
-
-                            target="_blank"
-
-                            rel="noopener noreferrer"
-
-                          >
-
-                            Yuklab olish
-
-                          </a>
-
-                        </div>
-
-                      `
-                    )
-                    .join("")
-                }
-
-              `
-
-              : ""
-          }
+          ${filesHtml}
 
         </div>
-
       `
-
     };
 
     render();
 
   } catch (error) {
-
     console.error(
       "OPEN LESSON ERROR:",
       error
@@ -1618,65 +1378,48 @@ async function openLesson(id) {
     tg.showAlert(
       "Darsni ochishda server bilan bog'lanib bo'lmadi."
     );
-
   }
-
 }
 
 function closeDetail() {
-
   currentView = null;
-
   render();
-
 }
 
 // ======================================================
 // TEST
 // ======================================================
 
-async function openTest(
-  moduleId
-) {
-
+async function openTest(moduleId) {
   try {
-
     const {
       questions
-    } =
-      await api(
-        `/api/module/${moduleId}/test`
-      );
+    } = await api(
+      `/api/module/${moduleId}/test`
+    );
 
     if (
+      !questions ||
       !questions.length
     ) {
-
       return tg.showAlert(
         "Bu modul uchun test hali qo'shilmagan."
       );
-
     }
 
     window._answers = {};
 
     currentView = {
-
       html: `
-
         <div
           class="back-btn"
           onclick="closeDetail()"
         >
-
           ← Orqaga
-
         </div>
 
         <div class="section-title">
-
           Modul testi
-
         </div>
 
         <div id="test-body">
@@ -1685,7 +1428,6 @@ async function openTest(
             questions
               .map(
                 q => `
-
                   <div
                     class="test-question"
                   >
@@ -1698,28 +1440,20 @@ async function openTest(
                       q.options
                         .map(
                           (opt, i) => `
-
                             <div
                               class="option"
-
                               data-q="${q.id}"
-
                               data-i="${i}"
-
-                              onclick="selectOption(${q.id},${i})"
+                              onclick="selectOption(${q.id}, ${i})"
                             >
-
                               ${opt}
-
                             </div>
-
                           `
                         )
                         .join("")
                     }
 
                   </div>
-
                 `
               )
               .join("")
@@ -1731,19 +1465,14 @@ async function openTest(
           class="btn"
           onclick="submitTest(${moduleId})"
         >
-
           Yuborish
-
         </button>
-
       `
-
     };
 
     render();
 
   } catch (error) {
-
     console.error(
       "OPEN TEST ERROR:",
       error
@@ -1752,18 +1481,15 @@ async function openTest(
     tg.showAlert(
       "Testni yuklashda xatolik yuz berdi."
     );
-
   }
-
 }
 
-function selectOption(
-  qId,
-  i
-) {
+function selectOption(qId, i) {
+  if (!window._answers) {
+    window._answers = {};
+  }
 
-  window._answers[qId] =
-    i;
+  window._answers[qId] = i;
 
   document
     .querySelectorAll(
@@ -1771,11 +1497,9 @@ function selectOption(
     )
     .forEach(
       el => {
-
         el.classList.remove(
           "selected"
         );
-
       }
     );
 
@@ -1785,50 +1509,31 @@ function selectOption(
     );
 
   if (selected) {
-
     selected.classList.add(
       "selected"
     );
-
   }
-
 }
 
-async function submitTest(
-  moduleId
-) {
-
+async function submitTest(moduleId) {
   try {
-
     const result =
       await api(
         `/api/module/${moduleId}/submit`,
         {
-
           answers:
-            window._answers
-
+            window._answers || {}
         }
       );
 
-    if (
-      result.passed
-    ) {
-
+    if (result.passed) {
       tg.showAlert(
-
         `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
-
       );
-
     } else {
-
       tg.showAlert(
-
         `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
-
       );
-
     }
 
     closeDetail();
@@ -1836,7 +1541,6 @@ async function submitTest(
     await loadContent();
 
   } catch (error) {
-
     console.error(
       "SUBMIT TEST ERROR:",
       error
@@ -1845,9 +1549,7 @@ async function submitTest(
     tg.showAlert(
       "Test natijasini yuborishda xatolik yuz berdi."
     );
-
   }
-
 }
 
 // ======================================================
@@ -1855,4 +1557,3 @@ async function submitTest(
 // ======================================================
 
 loadContent();
-```
