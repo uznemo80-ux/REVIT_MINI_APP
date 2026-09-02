@@ -4,8 +4,9 @@ const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+
 const { verifyInitData } = require('./verifyTelegram');
-const { bot, notifyAdmin } = require('./bot');
+const { notifyAdmin } = require('./bot');
 
 const app = express();
 
@@ -14,18 +15,22 @@ const app = express();
 // ======================================================
 
 app.use(cors());
+
 app.use(express.json());
 
-app.use(express.static('public', {
-  etag: false,
-  lastModified: false,
-  setHeaders: (res) => {
-    res.set(
-      'Cache-Control',
-      'no-store, no-cache, must-revalidate'
-    );
-  }
-}));
+app.use(
+  express.static('public', {
+    etag: false,
+    lastModified: false,
+
+    setHeaders: (res) => {
+      res.set(
+        'Cache-Control',
+        'no-store, no-cache, must-revalidate'
+      );
+    }
+  })
+);
 
 // ======================================================
 // DATABASE
@@ -36,11 +41,13 @@ const pool = new Pool({
 });
 
 // ======================================================
-// BUNNY STREAM TOKEN
+// BUNNY STREAM
 // ======================================================
 
-function generateBunnyToken(videoId, expiresAt) {
-
+function generateBunnyToken(
+  videoId,
+  expiresAt
+) {
   const securityKey =
     process.env.BUNNY_TOKEN_AUTH_KEY;
 
@@ -61,15 +68,15 @@ function generateBunnyToken(videoId, expiresAt) {
     .digest('hex');
 }
 
+
 function generateBunnyPlayerUrl(
   libraryId,
   videoId
 ) {
-
-  // Token 2 soat amal qiladi
+  // Video token 2 soat amal qiladi
   const expiresAt =
     Math.floor(Date.now() / 1000) +
-    (2 * 60 * 60);
+    2 * 60 * 60;
 
   const token =
     generateBunnyToken(
@@ -99,12 +106,11 @@ function getYouTubeVideoId(url) {
     const parsedUrl =
       new URL(url);
 
-    // https://youtu.be/VIDEO_ID
+    // youtu.be
     if (
       parsedUrl.hostname ===
       'youtu.be'
     ) {
-
       return (
         parsedUrl.pathname
           .replace('/', '')
@@ -116,10 +122,8 @@ function getYouTubeVideoId(url) {
     if (
       parsedUrl.hostname ===
         'youtube.com' ||
-
       parsedUrl.hostname ===
         'www.youtube.com' ||
-
       parsedUrl.hostname ===
         'm.youtube.com'
     ) {
@@ -166,6 +170,7 @@ function getYouTubeVideoId(url) {
   }
 }
 
+
 function generateYouTubePlayerUrl(
   youtubeUrl
 ) {
@@ -187,20 +192,27 @@ function generateYouTubePlayerUrl(
 }
 
 // ======================================================
-// ACCESS
+// ACCESS TEKSHIRISH
 // ======================================================
 
 function hasAccess(user) {
 
+  if (!user) {
+    return false;
+  }
+
+  if (!user.access_until) {
+    return false;
+  }
+
   return (
-    user.access_until &&
     new Date(user.access_until) >
-      new Date()
+    new Date()
   );
 }
 
 // ======================================================
-// USER
+// TELEGRAM USERNI OLISH / YARATISH
 // ======================================================
 
 async function getOrCreateUser(
@@ -217,19 +229,34 @@ async function getOrCreateUser(
     return null;
   }
 
-  const { rows } =
+  const result =
     await pool.query(
-      `INSERT INTO users
-        (telegram_id, first_name, username)
-       VALUES ($1, $2, $3)
+      `
+      INSERT INTO users
+      (
+        telegram_id,
+        first_name,
+        username
+      )
 
-       ON CONFLICT (telegram_id)
+      VALUES
+      (
+        $1,
+        $2,
+        $3
+      )
 
-       DO UPDATE SET
-         first_name = $2,
-         username = $3
+      ON CONFLICT
+      (
+        telegram_id
+      )
 
-       RETURNING *`,
+      DO UPDATE SET
+        first_name = $2,
+        username = $3
+
+      RETURNING *
+      `,
       [
         tgUser.id,
         tgUser.first_name,
@@ -237,7 +264,7 @@ async function getOrCreateUser(
       ]
     );
 
-  return rows[0];
+  return result.rows[0];
 }
 
 // ======================================================
@@ -265,19 +292,20 @@ app.post(
           });
       }
 
-      res.json({
+      return res.json({
 
         telegram_id:
           user.telegram_id.toString(),
 
         first_name:
-          user.first_name,
+          user.first_name || '',
 
         has_access:
           hasAccess(user),
 
         access_until:
-          user.access_until
+          user.access_until || null
+
       });
 
     } catch (error) {
@@ -287,7 +315,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -325,116 +353,130 @@ app.post(
       const unlocked =
         hasAccess(user);
 
-      // ==================================================
+      // --------------------------------------------------
       // MODULES
-      // ==================================================
+      // --------------------------------------------------
+
+      const modulesResult =
+        await pool.query(
+          `
+          SELECT *
+          FROM modules
+          ORDER BY order_index
+          `
+        );
 
       const modules =
-        (
-          await pool.query(
-            `SELECT *
-             FROM modules
-             ORDER BY order_index`
-          )
-        ).rows;
+        modulesResult.rows;
 
-      // ==================================================
+      // --------------------------------------------------
       // LESSONS
-      // ==================================================
+      // --------------------------------------------------
+
+      const lessonsResult =
+        await pool.query(
+          `
+          SELECT *
+          FROM lessons
+          ORDER BY
+            module_id,
+            order_index
+          `
+        );
 
       const lessons =
-        (
-          await pool.query(
-            `SELECT *
-             FROM lessons
-             ORDER BY module_id, order_index`
-          )
-        ).rows;
+        lessonsResult.rows;
 
-      // ==================================================
+      // --------------------------------------------------
       // TEST RESULTS
-      // ==================================================
+      // --------------------------------------------------
+
+      const resultsResult =
+        await pool.query(
+          `
+          SELECT *
+          FROM module_results
+          WHERE user_id = $1
+          `,
+          [user.id]
+        );
 
       const results =
-        (
-          await pool.query(
-            `SELECT *
-             FROM module_results
-             WHERE user_id = $1`,
-            [user.id]
-          )
-        ).rows;
+        resultsResult.rows;
 
       const passedModuleIds =
         new Set(
           results
             .filter(
-              r => r.passed
+              result =>
+                result.passed
             )
             .map(
-              r => r.module_id
+              result =>
+                result.module_id
             )
         );
 
-      // ==================================================
-      // BUILD MODULE DATA
-      // ==================================================
+      // --------------------------------------------------
+      // MODULE DATA
+      // --------------------------------------------------
 
       const data =
         modules.map(
-          (m, idx) => {
+          (module, index) => {
 
             /*
               1-modul avtomatik ochiq.
 
-              Keyingi modul:
-              oldingi modul testi
-              o'tilgan bo'lsa ochiladi.
+              2-modul ochilishi uchun
+              1-modul testi o'tilgan bo'lishi kerak.
+
+              3-modul ochilishi uchun
+              2-modul testi o'tilgan bo'lishi kerak.
             */
 
             const moduleUnlocked =
-              idx === 0 ||
+              index === 0 ||
               passedModuleIds.has(
-                modules[idx - 1].id
+                modules[index - 1].id
               );
 
             return {
 
               id:
-                m.id,
+                module.id,
 
               title:
-                m.title,
+                module.title,
 
               unlocked:
                 moduleUnlocked,
 
               passed_test:
                 passedModuleIds.has(
-                  m.id
+                  module.id
                 ),
 
               lessons:
                 lessons
                   .filter(
-                    l =>
-                      l.module_id ===
-                      m.id
+                    lesson =>
+                      lesson.module_id ===
+                      module.id
                   )
                   .map(
-                    l => {
+                    lesson => {
 
                       /*
+                        Bepul dars:
                         is_free = true
-                        bo'lsa ochiq.
 
-                        is_free = false
-                        bo'lsa pullik access
-                        kerak.
+                        Pullik dars:
+                        access kerak.
                       */
 
                       const available =
-                        l.is_free ||
+                        lesson.is_free ||
                         (
                           unlocked &&
                           moduleUnlocked
@@ -443,16 +485,16 @@ app.post(
                       return {
 
                         id:
-                          l.id,
+                          lesson.id,
 
                         title:
-                          l.title,
+                          lesson.title,
 
                         is_free:
-                          l.is_free,
+                          lesson.is_free,
 
                         task_text:
-                          l.task_text,
+                          lesson.task_text,
 
                         available:
                           available
@@ -463,23 +505,19 @@ app.post(
           }
         );
 
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.json({
+      return res.json({
 
         has_access:
           unlocked,
 
         access_until:
-          user.access_until,
+          user.access_until || null,
 
         telegram_id:
           user.telegram_id.toString(),
 
         first_name:
-          user.first_name,
+          user.first_name || '',
 
         modules:
           data
@@ -492,7 +530,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -527,20 +565,22 @@ app.post(
           });
       }
 
-      // ==================================================
-      // LESSON
-      // ==================================================
+      // --------------------------------------------------
+      // DARS
+      // --------------------------------------------------
 
-      const lessonRes =
+      const lessonResult =
         await pool.query(
-          `SELECT *
-           FROM lessons
-           WHERE id = $1`,
+          `
+          SELECT *
+          FROM lessons
+          WHERE id = $1
+          `,
           [req.params.id]
         );
 
       const lesson =
-        lessonRes.rows[0];
+        lessonResult.rows[0];
 
       if (!lesson) {
 
@@ -552,9 +592,9 @@ app.post(
           });
       }
 
-      // ==================================================
-      // ACCESS CHECK
-      // ==================================================
+      // --------------------------------------------------
+      // ACCESS
+      // --------------------------------------------------
 
       if (
         !lesson.is_free &&
@@ -573,46 +613,65 @@ app.post(
           });
       }
 
-      // ==================================================
+      // --------------------------------------------------
       // FILES
-      // ==================================================
+      // --------------------------------------------------
+
+      const filesResult =
+        await pool.query(
+          `
+          SELECT
+            file_name,
+            file_url
+
+          FROM lesson_files
+
+          WHERE lesson_id = $1
+          `,
+          [lesson.id]
+        );
 
       const files =
-        (
-          await pool.query(
-            `SELECT
-               file_name,
-               file_url
-             FROM lesson_files
-             WHERE lesson_id = $1`,
-            [lesson.id]
-          )
-        ).rows;
+        filesResult.rows;
 
-      // ==================================================
+      // --------------------------------------------------
       // PROGRESS
-      // ==================================================
+      // --------------------------------------------------
 
       await pool.query(
-        `INSERT INTO progress
-          (user_id, lesson_id, watched)
+        `
+        INSERT INTO progress
+        (
+          user_id,
+          lesson_id,
+          watched
+        )
 
-         VALUES ($1, $2, true)
+        VALUES
+        (
+          $1,
+          $2,
+          true
+        )
 
-         ON CONFLICT
-           (user_id, lesson_id)
+        ON CONFLICT
+        (
+          user_id,
+          lesson_id
+        )
 
-         DO UPDATE SET
-           watched = true`,
+        DO UPDATE SET
+          watched = true
+        `,
         [
           user.id,
           lesson.id
         ]
       );
 
-      // ==================================================
+      // --------------------------------------------------
       // YOUTUBE
-      // ==================================================
+      // --------------------------------------------------
 
       const youtubePlayerUrl =
         generateYouTubePlayerUrl(
@@ -646,9 +705,9 @@ app.post(
         });
       }
 
-      // ==================================================
+      // --------------------------------------------------
       // BUNNY
-      // ==================================================
+      // --------------------------------------------------
 
       if (
         !lesson.bunny_video_id ||
@@ -710,7 +769,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -745,26 +804,27 @@ app.post(
           });
       }
 
-      const questions =
-        (
-          await pool.query(
-            `SELECT
-               id,
-               question,
-               options,
-               order_index
+      const questionsResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            question,
+            options,
+            order_index
 
-             FROM module_tests
+          FROM module_tests
 
-             WHERE module_id = $1
+          WHERE module_id = $1
 
-             ORDER BY order_index`,
-            [req.params.id]
-          )
-        ).rows;
+          ORDER BY order_index
+          `,
+          [req.params.id]
+        );
 
-      res.json({
-        questions
+      return res.json({
+        questions:
+          questionsResult.rows
       });
 
     } catch (error) {
@@ -774,7 +834,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -809,33 +869,35 @@ app.post(
           });
       }
 
-      const {
-        answers
-      } = req.body;
+      const answers =
+        req.body.answers || {};
+
+      const questionsResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            correct_index
+
+          FROM module_tests
+
+          WHERE module_id = $1
+          `,
+          [req.params.id]
+        );
 
       const questions =
-        (
-          await pool.query(
-            `SELECT
-               id,
-               correct_index
-
-             FROM module_tests
-
-             WHERE module_id = $1`,
-            [req.params.id]
-          )
-        ).rows;
+        questionsResult.rows;
 
       let correct = 0;
 
       for (
-        const q of questions
+        const question of questions
       ) {
 
         if (
-          answers[q.id] ===
-          q.correct_index
+          answers[question.id] ===
+          question.correct_index
         ) {
 
           correct++;
@@ -844,38 +906,46 @@ app.post(
 
       const score =
         questions.length > 0
-
           ? Math.round(
               (
                 correct /
                 questions.length
               ) * 100
             )
-
           : 0;
 
       const passed =
         score >= 70;
 
       await pool.query(
-        `INSERT INTO module_results
-          (
-            user_id,
-            module_id,
-            passed,
-            score
-          )
+        `
+        INSERT INTO module_results
+        (
+          user_id,
+          module_id,
+          passed,
+          score
+        )
 
-         VALUES
-          ($1, $2, $3, $4)
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4
+        )
 
-         ON CONFLICT
-          (user_id, module_id)
+        ON CONFLICT
+        (
+          user_id,
+          module_id
+        )
 
-         DO UPDATE SET
-           passed = $3,
-           score = $4,
-           attempted_at = now()`,
+        DO UPDATE SET
+          passed = $3,
+          score = $4,
+          attempted_at = now()
+        `,
         [
           user.id,
           req.params.id,
@@ -884,11 +954,13 @@ app.post(
         ]
       );
 
-      res.json({
+      return res.json({
 
-        score,
+        score:
+          score,
 
-        passed
+        passed:
+          passed
       });
 
     } catch (error) {
@@ -898,7 +970,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -934,39 +1006,54 @@ app.post(
       }
 
       // ==================================================
-      // OLDINI OLISH:
-      // OLDINDA PENDING REQUEST BO'LSA
-      // YANA YARATMASLIK
+      // OLDIN PENDING REQUEST BORMI?
       // ==================================================
 
-      const existingRequest =
+      const existingResult =
         await pool.query(
-          `SELECT id
-           FROM payment_requests
-           WHERE user_id = $1
-             AND status = 'pending'
-           LIMIT 1`,
+          `
+          SELECT id
+
+          FROM payment_requests
+
+          WHERE user_id = $1
+            AND status = 'pending'
+
+          LIMIT 1
+          `,
           [user.id]
         );
 
       if (
-        existingRequest.rows.length > 0
+        existingResult.rows.length > 0
       ) {
 
         return res.json({
-          ok: true,
-          already_pending: true
+
+          ok:
+            true,
+
+          already_pending:
+            true
         });
       }
 
       // ==================================================
-      // PAYMENT REQUEST
+      // REQUEST YARATISH
       // ==================================================
 
       await pool.query(
-        `INSERT INTO payment_requests
-          (user_id)
-         VALUES ($1)`,
+        `
+        INSERT INTO payment_requests
+        (
+          user_id
+        )
+
+        VALUES
+        (
+          $1
+        )
+        `,
         [user.id]
       );
 
@@ -995,14 +1082,16 @@ app.post(
         `👇 Quyidagi tugmalardan birini tanlang:`,
 
         user.telegram_id.toString()
+
       );
 
       // ==================================================
       // RESPONSE
       // ==================================================
 
-      res.json({
-        ok: true
+      return res.json({
+        ok:
+          true
       });
 
     } catch (error) {
@@ -1012,7 +1101,7 @@ app.post(
         error
       );
 
-      res
+      return res
         .status(500)
         .json({
           error:
@@ -1023,7 +1112,26 @@ app.post(
 );
 
 // ======================================================
-// SERVER
+// HEALTH CHECK
+// ======================================================
+
+app.get(
+  '/api/health',
+  (req, res) => {
+
+    res.json({
+      ok:
+        true,
+
+      message:
+        'Server ishlayapti'
+    });
+
+  }
+);
+
+// ======================================================
+// SERVER START
 // ======================================================
 
 const PORT =
