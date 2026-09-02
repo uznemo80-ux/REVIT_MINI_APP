@@ -681,7 +681,7 @@ function renderHome() {
   class="about-photo"
   src="/admin.jpg?v=2"
   alt="Abdulloh"
->
+
           >
 
         </div>
