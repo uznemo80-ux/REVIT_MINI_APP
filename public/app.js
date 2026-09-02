@@ -480,6 +480,13 @@ Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyih
 `;
 
 
+const ABOUT_SHORT = `
+Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
+
+Men Revit'ni real loyihalarni ishlab chiqish va ishchi chizmalar tayyorlashda amaliyotda qo'llab kelaman.
+`;
+
+
 const COURSE = {
 
   title:
@@ -592,14 +599,26 @@ let aboutOpen = false;
 
 function toggleAbout() {
 
-  const text =
-    document.querySelector(".about-text");
+  aboutOpen = !aboutOpen;
+
+
+  const shortText =
+    document.querySelector(".about-short");
+
+
+  const fullText =
+    document.querySelector(".about-full");
+
 
   const button =
     document.querySelector(".about-more");
 
 
-  if (!text || !button) {
+  if (
+    !shortText ||
+    !fullText ||
+    !button
+  ) {
 
     console.log(
       "ABOUT ELEMENT TOPILMADI"
@@ -610,24 +629,24 @@ function toggleAbout() {
   }
 
 
-  aboutOpen =
-    !aboutOpen;
-
-
   if (aboutOpen) {
 
-    text.classList.add(
-      "expanded"
-    );
+    shortText.style.display =
+      "none";
+
+    fullText.style.display =
+      "block";
 
     button.textContent =
       "Yashirish ↑";
 
   } else {
 
-    text.classList.remove(
-      "expanded"
-    );
+    shortText.style.display =
+      "block";
+
+    fullText.style.display =
+      "none";
 
     button.textContent =
       "Batafsil ↓";
@@ -775,12 +794,23 @@ function renderHome() {
         </div>
 
 
+        <!-- QISQA MATN -->
+
+        <div class="about-text about-short">
+
+          ${ABOUT_SHORT.replace(
+            /\n/g,
+            "<br><br>"
+          )}
+
+        </div>
+
+
+        <!-- TO'LIQ MATN -->
+
         <div
-          class="about-text ${
-            aboutOpen
-              ? "expanded"
-              : ""
-          }"
+          class="about-text about-full"
+          style="display: none;"
         >
 
           ${ABOUT_TEXT.replace(
@@ -790,6 +820,8 @@ function renderHome() {
 
         </div>
 
+
+        <!-- BATAFSIL -->
 
         <div class="about-more">
 
