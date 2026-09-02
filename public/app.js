@@ -24,6 +24,7 @@ let currentTheme =
 applyTheme(currentTheme);
 
 function toggleTheme() {
+
   currentTheme =
     currentTheme === "dark"
       ? "light"
@@ -46,9 +47,13 @@ function toggleTheme() {
 // ======================================================
 
 function haptic(style = "light") {
+
   try {
+
     tg.HapticFeedback.impactOccurred(style);
+
   } catch (e) {}
+
 }
 
 
@@ -62,6 +67,7 @@ function showConfirm(
   confirmLabel,
   onConfirm
 ) {
+
   const overlay =
     document.createElement("div");
 
@@ -106,6 +112,7 @@ function showConfirm(
   const confirmButton =
     overlay.querySelector(".confirm");
 
+
   if (cancelButton) {
 
     cancelButton.onclick = () => {
@@ -117,6 +124,7 @@ function showConfirm(
     };
 
   }
+
 
   if (confirmButton) {
 
@@ -131,6 +139,7 @@ function showConfirm(
     };
 
   }
+
 }
 
 
@@ -139,14 +148,21 @@ function showConfirm(
 // ======================================================
 
 let state = {
+
   has_access: false,
+
   modules: [],
+
   access_until: null,
+
   first_name: "",
+
   telegram_id: ""
+
 };
 
 let activeTab = "home";
+
 let currentView = null;
 
 
@@ -201,7 +217,6 @@ function fmtDate(d) {
 
   if (!d) return null;
 
-
   return new Date(d).toLocaleDateString(
     "uz-UZ",
     {
@@ -225,9 +240,7 @@ async function loadContent() {
     const data =
       await api("/api/content");
 
-
     state = data;
-
 
     render();
 
@@ -295,6 +308,24 @@ function render() {
     }
 
   `;
+
+
+  // ====================================================
+  // MEN HAQIMDA — CLICK
+  // ====================================================
+
+  const aboutButton =
+    document.querySelector(".about-more");
+
+
+  if (aboutButton) {
+
+    aboutButton.addEventListener(
+      "click",
+      toggleAbout
+    );
+
+  }
 
 }
 
@@ -378,11 +409,9 @@ function setTab(id) {
 
   haptic();
 
-
   activeTab = id;
 
   currentView = null;
-
 
   render();
 
@@ -390,9 +419,13 @@ function setTab(id) {
   requestAnimationFrame(() => {
 
     window.scrollTo({
+
       top: 0,
+
       left: 0,
+
       behavior: "instant"
+
     });
 
   });
@@ -556,6 +589,7 @@ let openFaq = null;
 
 let aboutOpen = false;
 
+
 function toggleAbout() {
 
   const text =
@@ -564,28 +598,42 @@ function toggleAbout() {
   const button =
     document.querySelector(".about-more");
 
+
   if (!text || !button) {
-    console.log("ABOUT ELEMENT TOPILMADI");
+
+    console.log(
+      "ABOUT ELEMENT TOPILMADI"
+    );
+
     return;
+
   }
 
-  aboutOpen = !aboutOpen;
+
+  aboutOpen =
+    !aboutOpen;
+
 
   if (aboutOpen) {
 
-    text.classList.add("expanded");
+    text.classList.add(
+      "expanded"
+    );
 
     button.textContent =
       "Yashirish ↑";
 
   } else {
 
-    text.classList.remove("expanded");
+    text.classList.remove(
+      "expanded"
+    );
 
     button.textContent =
       "Batafsil ↓";
 
   }
+
 
   haptic();
 
@@ -714,24 +762,17 @@ function renderHome() {
 
       <!-- MEN HAQIMDA -->
 
+      <div class="about-card">
 
-  <div class="about-photo-wrap">
-    <img
-      class="about-photo"
-      src="/admin.jpg?v=2"
-      alt="Abdulloh"
-    >
-  </div>
+        <div class="about-photo-wrap">
 
-  <div class="about-text ${aboutOpen ? "expanded" : ""}">
-    ${ABOUT_TEXT.replace(/\n/g, "<br><br>")}
-  </div>
+          <img
+            class="about-photo"
+            src="/admin.jpg?v=2"
+            alt="Abdulloh"
+          >
 
-  <div class="about-more">
-    ${aboutOpen ? "Yashirish ↑" : "Batafsil ↓"}
-  </div>
-
-</div>
+        </div>
 
 
         <div
@@ -746,18 +787,11 @@ function renderHome() {
             /\n/g,
             "<br><br>"
           )}
+
         </div>
-  class="about-more"
-  onclick="toggleAbout()"
->
- <div class="about-more">
-  ${
-    aboutOpen
-      ? "Yashirish ↑"
-      : "Batafsil ↓"
-  }
-</div>
-        >
+
+
+        <div class="about-more">
 
           ${
             aboutOpen
@@ -813,7 +847,9 @@ function renderHome() {
             class="btn"
             onclick="setTab('chat')"
           >
+
             Kursni sotib olish
+
           </button>
 
         </div>
@@ -930,7 +966,6 @@ function renderHome() {
 
 // ======================================================
 // FAQ
-// MUHIM: RENDER QILMASDAN OCHIB-YOPADI
 // ======================================================
 
 function toggleFaq(i) {
