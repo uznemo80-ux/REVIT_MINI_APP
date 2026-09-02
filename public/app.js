@@ -37,9 +37,15 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
     <div class="modal-card">
       <div class="modal-title">${title}</div>
       <div class="modal-msg">${message}</div>
+
       <div class="modal-actions">
-        <button class="modal-btn cancel">Bekor qilish</button>
-        <button class="modal-btn confirm">${confirmLabel}</button>
+        <button class="modal-btn cancel">
+          Bekor qilish
+        </button>
+
+        <button class="modal-btn confirm">
+          ${confirmLabel}
+        </button>
       </div>
     </div>
   `;
@@ -58,6 +64,7 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
   };
 }
 
+// ---------- STATE ----------
 let state = {
   has_access: false,
   modules: [],
@@ -71,11 +78,14 @@ let currentView = null;
 
 // ---------- API ----------
 async function api(path, body = {}) {
+
   const res = await fetch(path, {
     method: 'POST',
+
     headers: {
       'Content-Type': 'application/json'
     },
+
     body: JSON.stringify({
       initData,
       ...body
@@ -85,72 +95,163 @@ async function api(path, body = {}) {
   return res.json();
 }
 
+// ---------- DATE ----------
 function fmtDate(d) {
+
   if (!d) return null;
 
-  return new Date(d).toLocaleDateString('uz-UZ', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
+  return new Date(d).toLocaleDateString(
+    'uz-UZ',
+    {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    }
+  );
 }
 
+// ---------- CONTENT ----------
 async function loadContent() {
-  const data = await api('/api/content');
-  state = data;
-  render();
+
+  try {
+
+    const data =
+      await api('/api/content');
+
+    state = data;
+
+    render();
+
+  } catch (error) {
+
+    console.error(
+      'CONTENT LOAD ERROR:',
+      error
+    );
+
+    tg.showAlert(
+      "Ma'lumotlarni yuklashda xatolik yuz berdi."
+    );
+  }
 }
 
 // ---------- LAYOUT ----------
 function render() {
-  const body = currentView ? renderDetailView() : renderTab();
+
+  const body =
+    currentView
+      ? renderDetailView()
+      : renderTab();
 
   app.innerHTML = `
-    <div class="screen">${body}</div>
+    <div class="screen">
+      ${body}
+    </div>
+
     ${!currentView ? renderNav() : ''}
   `;
 }
 
+// ---------- NAVIGATION ----------
 function renderNav() {
+
   const tabs = [
-    { id: 'home', label: 'Bosh sahifa', icon: '⌂' },
-    { id: 'lessons', label: 'Darslar', icon: '▤' },
-    { id: 'tasks', label: 'Vazifalar', icon: '✎' },
-    { id: 'chat', label: 'Chat', icon: '◈' },
-    { id: 'profile', label: 'Profil', icon: '◍' }
+
+    {
+      id: 'home',
+      label: 'Bosh sahifa',
+      icon: '⌂'
+    },
+
+    {
+      id: 'lessons',
+      label: 'Darslar',
+      icon: '▤'
+    },
+
+    {
+      id: 'tasks',
+      label: 'Vazifalar',
+      icon: '✎'
+    },
+
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: '◈'
+    },
+
+    {
+      id: 'profile',
+      label: 'Profil',
+      icon: '◍'
+    }
+
   ];
 
   return `
     <div class="nav">
+
       ${tabs.map(t => `
-        <div class="nav-item ${activeTab === t.id ? 'active' : ''}"
-             onclick="setTab('${t.id}')">
-          <div class="nav-icon">${t.icon}</div>
-          <div class="nav-label">${t.label}</div>
+
+        <div
+          class="nav-item ${
+            activeTab === t.id
+              ? 'active'
+              : ''
+          }"
+          onclick="setTab('${t.id}')"
+        >
+
+          <div class="nav-icon">
+            ${t.icon}
+          </div>
+
+          <div class="nav-label">
+            ${t.label}
+          </div>
+
         </div>
+
       `).join('')}
+
     </div>
   `;
 }
 
 function setTab(id) {
+
   haptic();
+
   activeTab = id;
+
   currentView = null;
+
   render();
 }
 
 function renderTab() {
-  if (activeTab === 'home') return renderHome();
-  if (activeTab === 'lessons') return renderLessons();
-  if (activeTab === 'tasks') return renderTasks();
-  if (activeTab === 'chat') return renderChat();
-  if (activeTab === 'profile') return renderProfile();
+
+  if (activeTab === 'home')
+    return renderHome();
+
+  if (activeTab === 'lessons')
+    return renderLessons();
+
+  if (activeTab === 'tasks')
+    return renderTasks();
+
+  if (activeTab === 'chat')
+    return renderChat();
+
+  if (activeTab === 'profile')
+    return renderProfile();
 
   return '';
 }
 
 // ---------- STATIK KONTENT ----------
+
 const ABOUT_TEXT = `Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
 
 Men Revit'ni shunchaki dastur sifatida emas, balki real loyihalarni ishlab chiqish, ishchi chizmalar tayyorlash va loyiha jarayonini tizimli tashkil qilish vositasi sifatida o'rganib, amaliyotda qo'llab kelaman.
@@ -160,104 +261,194 @@ Faoliyatim davomida arxitektura va interyer loyihalari, Revit modellashtirish, i
 Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyihasini yo'lga qo'ydim.`;
 
 const COURSE = {
-  title: "INTPRO — Revit dasturida interyer loyihalash",
-  price: "1 500 000 so'm",
-  totalModules: 11,
-  totalLessons: 140,
-  cover: "course-cover.jpg"
+
+  title:
+    "INTPRO — Revit dasturida interyer loyihalash",
+
+  price:
+    "1 500 000 so'm",
+
+  totalModules:
+    11,
+
+  totalLessons:
+    140,
+
+  cover:
+    "course-cover.jpg"
 };
 
 const TESTIMONIALS = [
+
   {
-    text: "Kurs juda tushunarli va amaliy, ishimda darhol qo'llay boshladim.",
-    name: "O'quvchi ismi"
+    text:
+      "Kurs juda tushunarli va amaliy, ishimda darhol qo'llay boshladim.",
+
+    name:
+      "O'quvchi ismi"
   },
+
   {
-    text: "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.",
-    name: "O'quvchi ismi"
+    text:
+      "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.",
+
+    name:
+      "O'quvchi ismi"
   },
+
   {
-    text: "Vazifalar orqali bilim mustahkam o'rnashib qoldi.",
-    name: "O'quvchi ismi"
+    text:
+      "Vazifalar orqali bilim mustahkam o'rnashib qoldi.",
+
+    name:
+      "O'quvchi ismi"
   }
+
 ];
 
 const FAQ = [
+
   {
-    q: "Kursga qanday to'lov qilaman?",
-    a: "\"Chat\" bo'limidan \"Adminga murojaat yuborish\" tugmasini bosing, men siz bilan bog'lanib to'lov usulini aytaman."
+    q:
+      "Kursga qanday to'lov qilaman?",
+
+    a:
+      "\"Chat\" bo'limidan \"Adminga murojaat yuborish\" tugmasini bosing, men siz bilan bog'lanib to'lov usulini aytaman."
   },
+
   {
-    q: "Kirish huquqi qancha muddatga beriladi?",
-    a: "To'lov tasdiqlangandan so'ng darslarga 1 yil davomida kirish huquqi beriladi."
+    q:
+      "Kirish huquqi qancha muddatga beriladi?",
+
+    a:
+      "To'lov tasdiqlangandan so'ng darslarga 1 yil davomida kirish huquqi beriladi."
   },
+
   {
-    q: "Muddatim tugasa nima bo'ladi?",
-    a: "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning."
+    q:
+      "Muddatim tugasa nima bo'ladi?",
+
+    a:
+      "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning."
   },
+
   {
-    q: "Namuna darslarni ko'ra olamanmi?",
-    a: "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan."
+    q:
+      "Namuna darslarni ko'ra olamanmi?",
+
+    a:
+      "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan."
   }
+
 ];
 
 let openFaq = null;
 
-// ---------- BOSH SAHIFA ----------
+// ======================================================
+// BOSH SAHIFA
+// ======================================================
+
 function renderHome() {
-  const myAvailable = state.modules.reduce(
-    (a, m) => a + m.lessons.filter(l => l.available).length,
-    0
-  );
 
-  const myTotal = state.modules.reduce(
-    (a, m) => a + m.lessons.length,
-    0
-  );
+  const myAvailable =
+    state.modules.reduce(
+      (a, m) =>
+        a +
+        m.lessons.filter(
+          l => l.available
+        ).length,
+      0
+    );
 
-  const pct = myTotal
-    ? Math.round((myAvailable / myTotal) * 100)
-    : 0;
+  const myTotal =
+    state.modules.reduce(
+      (a, m) =>
+        a +
+        m.lessons.length,
+      0
+    );
+
+  const pct =
+    myTotal
+      ? Math.round(
+          (myAvailable / myTotal) * 100
+        )
+      : 0;
 
   return `
+
     <div class="page">
 
       <div class="welcome-hero">
-        <div class="welcome-title">Xush kelibsiz</div>
-        <div class="welcome-sub">Revit dasturi bo'yicha darsliklar</div>
+
+        <div class="welcome-title">
+          Xush kelibsiz
+        </div>
+
+        <div class="welcome-sub">
+          Revit dasturi bo'yicha darsliklar
+        </div>
+
       </div>
 
-      ${myTotal ? `
-        <div class="progress-wrap">
-          <div class="progress-labels">
-            <span>Sizning progressingiz</span>
-            <span>${pct}%</span>
-          </div>
+      ${
+        myTotal
+          ? `
 
-          <div class="progress-track">
-            <div class="progress-fill" style="width:${pct}%"></div>
-          </div>
-        </div>
-      ` : ''}
+            <div class="progress-wrap">
+
+              <div class="progress-labels">
+
+                <span>
+                  Sizning progressingiz
+                </span>
+
+                <span>
+                  ${pct}%
+                </span>
+
+              </div>
+
+              <div class="progress-track">
+
+                <div
+                  class="progress-fill"
+                  style="width:${pct}%"
+                ></div>
+
+              </div>
+
+            </div>
+
+          `
+          : ''
+      }
 
       <div class="about-card">
 
         <div class="about-photo-wrap">
+
           <img
             class="about-photo"
             src="admin.jpg"
             onerror="this.style.display='none'"
             alt="Abdulloh"
           >
+
         </div>
 
         <div class="about-text">
-          ${ABOUT_TEXT.replace(/\n/g, '<br><br>')}
+          ${ABOUT_TEXT.replace(
+            /\n/g,
+            '<br><br>'
+          )}
         </div>
 
       </div>
 
-      <div class="section-title">Kurslar</div>
+      <div class="section-title">
+        Kurslar
+      </div>
 
       <div class="course-card">
 
@@ -275,27 +466,42 @@ function renderHome() {
           </div>
 
           <div class="course-meta">
-            ${COURSE.totalModules} modul · ${COURSE.totalLessons} dars
+            ${COURSE.totalModules} modul ·
+            ${COURSE.totalLessons} dars
           </div>
 
           <div class="course-price">
             ${COURSE.price}
           </div>
 
-          <button class="btn" onclick="setTab('chat')">
+          <button
+            class="btn"
+            onclick="setTab('chat')"
+          >
             Kursni sotib olish
           </button>
 
         </div>
+
       </div>
 
       <div class="section-title">
         Bepul darslar
       </div>
 
-      <div class="quick-item" onclick="setTab('lessons')">
-        <span>▶ Namuna darslarni bepul ko'rish</span>
-        <span>→</span>
+      <div
+        class="quick-item"
+        onclick="setTab('lessons')"
+      >
+
+        <span>
+          ▶ Namuna darslarni bepul ko'rish
+        </span>
+
+        <span>
+          →
+        </span>
+
       </div>
 
       <div class="section-title">
@@ -303,8 +509,11 @@ function renderHome() {
       </div>
 
       <div class="testi-scroll">
+
         ${TESTIMONIALS.map(t => `
+
           <div class="testi-card">
+
             <div class="testi-text">
               "${t.text}"
             </div>
@@ -312,8 +521,11 @@ function renderHome() {
             <div class="testi-name">
               — ${t.name}
             </div>
+
           </div>
+
         `).join('')}
+
       </div>
 
       <div class="section-title">
@@ -321,72 +533,142 @@ function renderHome() {
       </div>
 
       <div class="faq-list">
+
         ${FAQ.map((f, i) => `
+
           <div class="faq-item">
 
-            <div class="faq-q" onclick="toggleFaq(${i})">
-              <span>${f.q}</span>
-              <span class="faq-plus">
-                ${openFaq === i ? '−' : '+'}
+            <div
+              class="faq-q"
+              onclick="toggleFaq(${i})"
+            >
+
+              <span>
+                ${f.q}
               </span>
+
+              <span class="faq-plus">
+                ${
+                  openFaq === i
+                    ? '−'
+                    : '+'
+                }
+              </span>
+
             </div>
 
-            ${openFaq === i
-              ? `<div class="faq-a">${f.a}</div>`
-              : ''
+            ${
+              openFaq === i
+                ? `
+                  <div class="faq-a">
+                    ${f.a}
+                  </div>
+                `
+                : ''
             }
 
           </div>
+
         `).join('')}
+
       </div>
 
     </div>
+
   `;
 }
 
 function toggleFaq(i) {
-  openFaq = openFaq === i ? null : i;
+
+  openFaq =
+    openFaq === i
+      ? null
+      : i;
+
   render();
 }
 
-// ---------- DARSLAR ----------
+// ======================================================
+// DARSLAR
+// ======================================================
+
 function renderLessons() {
+
   let html = `
+
     <div class="page">
-      <div class="page-title">Darslar</div>
+
+      <div class="page-title">
+        Darslar
+      </div>
+
   `;
 
   state.modules.forEach((m, i) => {
-    html += `
-      <div class="module ${m.unlocked ? '' : 'locked'}">
 
-        <div class="module-head" onclick="toggleModule(${m.id})">
+    html += `
+
+      <div
+        class="module ${
+          m.unlocked
+            ? ''
+            : 'locked'
+        }"
+      >
+
+        <div
+          class="module-head"
+          onclick="toggleModule(${m.id})"
+        >
 
           <div>
+
             <span class="idx">
               ${String(i + 1).padStart(2, '0')}
             </span>
 
             ${m.title}
+
           </div>
 
-          <div class="tag ${m.passed_test ? 'passed' : ''}">
+          <div
+            class="tag ${
+              m.passed_test
+                ? 'passed'
+                : ''
+            }"
+          >
+
             ${
               m.unlocked
-                ? (m.passed_test
-                    ? 'Test topshirilgan'
-                    : 'Ochiq')
+
+                ? (
+                    m.passed_test
+                      ? 'Test topshirilgan'
+                      : 'Ochiq'
+                  )
+
                 : 'Qulflangan'
             }
+
           </div>
 
         </div>
 
-        <div class="lesson-list" id="mod-${m.id}">
+        <div
+          class="lesson-list"
+          id="mod-${m.id}"
+        >
 
           ${m.lessons.map(l => `
+
             <div
-              class="lesson ${l.available ? '' : 'disabled'}"
+              class="lesson ${
+                l.available
+                  ? ''
+                  : 'disabled'
+              }"
+
               onclick="${
                 l.available
                   ? `openLesson(${l.id})`
@@ -394,44 +676,68 @@ function renderLessons() {
               }"
             >
 
-              <span>${l.title}</span>
+              <span>
+                ${l.title}
+              </span>
 
               ${
                 l.is_free
                   ? '<span class="free-badge">Namuna</span>'
-                  : (l.available ? '' : '🔒')
+                  : (
+                      l.available
+                        ? ''
+                        : '🔒'
+                    )
               }
 
             </div>
+
           `).join('')}
 
           ${
             m.unlocked
-              ? `<div class="lesson" onclick="openTest(${m.id})">
-                   📝 Modul testi
-                 </div>`
+              ? `
+
+                <div
+                  class="lesson"
+                  onclick="openTest(${m.id})"
+                >
+                  📝 Modul testi
+                </div>
+
+              `
               : ''
           }
 
         </div>
 
       </div>
+
     `;
   });
 
   if (!state.modules.length) {
+
     html += `
+
       <div class="empty-box">
         Hozircha darslar qo'shilmagan.
       </div>
+
     `;
   }
 
   if (!state.has_access) {
+
     html += `
-      <button class="btn" onclick="setTab('chat')">
+
+      <button
+        class="btn"
+        onclick="setTab('chat')"
+      >
         To'liq kirish uchun murojaat qilish
       </button>
+
     `;
   }
 
@@ -441,7 +747,11 @@ function renderLessons() {
 }
 
 function toggleModule(id) {
-  const el = document.getElementById(`mod-${id}`);
+
+  const el =
+    document.getElementById(
+      `mod-${id}`
+    );
 
   if (el) {
     el.classList.toggle('open');
@@ -449,43 +759,69 @@ function toggleModule(id) {
 }
 
 function showLockedInfo() {
+
   tg.showAlert(
     "Bu dars uchun to'lov qilinishi kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
 }
 
-// ---------- VAZIFALAR ----------
+// ======================================================
+// VAZIFALAR
+// ======================================================
+
 function renderTasks() {
+
   let html = `
+
     <div class="page">
-      <div class="page-title">Vazifalar</div>
+
+      <div class="page-title">
+        Vazifalar
+      </div>
+
   `;
 
-  const allLessons = state.modules.flatMap(
-    m => m.lessons.map(l => ({
-      ...l,
-      moduleTitle: m.title
-    }))
-  );
+  const allLessons =
+    state.modules.flatMap(
+      m =>
+        m.lessons.map(
+          l => ({
+            ...l,
+            moduleTitle:
+              m.title
+          })
+        )
+    );
 
-  const withTasks = allLessons.filter(
-    l => l.available && l.task_text
-  );
+  const withTasks =
+    allLessons.filter(
+      l =>
+        l.available &&
+        l.task_text
+    );
 
-  const lockedCount = allLessons.filter(
-    l => !l.available
-  ).length;
+  const lockedCount =
+    allLessons.filter(
+      l =>
+        !l.available
+    ).length;
 
   if (!withTasks.length) {
+
     html += `
+
       <div class="empty-box">
         Hozircha ochiq vazifalar yo'q.
       </div>
+
     `;
+
   } else {
 
     withTasks.forEach(l => {
+
       html += `
+
         <div
           class="task-card"
           onclick="openLesson(${l.id})"
@@ -504,16 +840,22 @@ function renderTasks() {
           </div>
 
         </div>
+
       `;
+
     });
 
   }
 
   if (lockedCount > 0) {
+
     html += `
+
       <div class="empty-box">
-        🔒 Yana ${lockedCount} ta vazifa to'lovdan keyin ochiladi
+        🔒 Yana ${lockedCount} ta vazifa
+        to'lovdan keyin ochiladi
       </div>
+
     `;
   }
 
@@ -522,9 +864,14 @@ function renderTasks() {
   return html;
 }
 
-// ---------- CHAT ----------
+// ======================================================
+// CHAT
+// ======================================================
+
 function renderChat() {
+
   return `
+
     <div class="page">
 
       <div class="page-title">
@@ -537,56 +884,89 @@ function renderChat() {
           state.has_access
 
             ? `
+
               <p>
                 Obunangiz faol
                 (${fmtDate(state.access_until)} gacha).
                 Muddatni uzaytirish yoki savolingiz bo'lsa,
                 admin bilan bog'laning.
               </p>
+
             `
 
             : `
+
               <p>
                 To'liq kirish uchun to'lovni tashqarida
                 (admin bilan kelishilgan holda) amalga oshirasiz.
                 Quyidagi tugmani bosing — so'rovingiz adminga yuboriladi,
                 u siz bilan bog'lanadi.
               </p>
+
             `
         }
 
       </div>
 
-      <button class="btn" onclick="requestAccess()">
+      <button
+        class="btn"
+        onclick="requestAccess()"
+      >
         Adminga murojaat yuborish
       </button>
 
     </div>
+
   `;
 }
 
 function requestAccess() {
 
   showConfirm(
+
     "So'rov yuborilsinmi?",
+
     "Adminga to'liq kirish uchun so'rov yuboriladi. U tez orada siz bilan bog'lanadi.",
+
     "Yuborish",
 
     async () => {
 
-      await api('/api/request-access');
+      try {
 
-      tg.showAlert(
-        "So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi."
-      );
+        await api(
+          '/api/request-access'
+        );
+
+        tg.showAlert(
+          "So'rovingiz adminga yuborildi. Tez orada siz bilan bog'lanishadi."
+        );
+
+      } catch (error) {
+
+        console.error(
+          'REQUEST ACCESS ERROR:',
+          error
+        );
+
+        tg.showAlert(
+          "So'rov yuborishda xatolik yuz berdi."
+        );
+      }
 
     }
+
   );
 }
 
-// ---------- PROFIL ----------
+// ======================================================
+// PROFIL
+// ======================================================
+
 function renderProfile() {
+
   return `
+
     <div class="page">
 
       <div class="page-title">
@@ -596,11 +976,19 @@ function renderProfile() {
       <div class="profile-card">
 
         <div class="profile-avatar">
-          ${(state.first_name || '?')[0].toUpperCase()}
+          ${
+            (
+              state.first_name ||
+              '?'
+            )[0].toUpperCase()
+          }
         </div>
 
         <div class="profile-name">
-          ${state.first_name || 'Foydalanuvchi'}
+          ${
+            state.first_name ||
+            'Foydalanuvchi'
+          }
         </div>
 
         <div class="profile-id">
@@ -610,21 +998,48 @@ function renderProfile() {
       </div>
 
       <div class="info-row">
-        <span>Obuna holati</span>
 
-        <span class="${state.has_access ? 'ok' : 'warn'}">
-          ${state.has_access ? 'Faol' : 'Yo\'q'}
+        <span>
+          Obuna holati
         </span>
+
+        <span
+          class="${
+            state.has_access
+              ? 'ok'
+              : 'warn'
+          }"
+        >
+
+          ${
+            state.has_access
+              ? 'Faol'
+              : 'Yo\'q'
+          }
+
+        </span>
+
       </div>
 
       ${
         state.has_access
 
           ? `
+
             <div class="info-row">
-              <span>Muddat tugash sanasi</span>
-              <span>${fmtDate(state.access_until)}</span>
+
+              <span>
+                Muddat tugash sanasi
+              </span>
+
+              <span>
+                ${fmtDate(
+                  state.access_until
+                )}
+              </span>
+
             </div>
+
           `
 
           : ''
@@ -637,10 +1052,18 @@ function renderProfile() {
         </span>
 
         <div
-          class="apple-toggle ${currentTheme === 'light' ? 'on' : ''}"
+          class="apple-toggle ${
+            currentTheme === 'light'
+              ? 'on'
+              : ''
+          }"
           onclick="toggleTheme()"
         >
-          <div class="apple-toggle-knob"></div>
+
+          <div
+            class="apple-toggle-knob"
+          ></div>
+
         </div>
 
       </div>
@@ -649,197 +1072,299 @@ function renderProfile() {
         !state.has_access
 
           ? `
-            <button class="btn" onclick="setTab('chat')">
+
+            <button
+              class="btn"
+              onclick="setTab('chat')"
+            >
               To'liq kirish uchun murojaat
             </button>
+
           `
 
           : `
-            <button class="btn secondary" onclick="setTab('chat')">
+
+            <button
+              class="btn secondary"
+              onclick="setTab('chat')"
+            >
               Muddatni uzaytirish uchun murojaat
             </button>
+
           `
       }
 
     </div>
+
   `;
 }
 
-// ---------- DARS / TEST ----------
+// ======================================================
+// DETAIL VIEW
+// ======================================================
+
 function renderDetailView() {
   return currentView.html;
 }
 
-// ---------- BUNNY STREAM VIDEO ----------
+// ======================================================
+// BUNNY STREAM VIDEO
+// ======================================================
+
 async function openLesson(id) {
 
-  const lesson = await api(`/api/lesson/${id}`);
+  try {
 
-  if (lesson.error === 'locked') {
-    return showLockedInfo();
-  }
+    const lesson =
+      await api(
+        `/api/lesson/${id}`
+      );
 
-  if (lesson.error) {
-    return tg.showAlert(
-      lesson.message || "Darsni ochishda xatolik yuz berdi."
+    // Pullik dars
+    if (
+      lesson.error === 'locked'
+    ) {
+
+      return showLockedInfo();
+    }
+
+    // Server xatosi
+    if (lesson.error) {
+
+      return tg.showAlert(
+        lesson.message ||
+        "Darsni ochishda xatolik yuz berdi."
+      );
+    }
+
+    // Eng muhim tekshiruv:
+    // serverdan tokenli URL kelishi kerak
+    if (
+      !lesson.bunny_player_url
+    ) {
+
+      console.error(
+        'BUNNY PLAYER URL YOQ:',
+        lesson
+      );
+
+      return tg.showAlert(
+        "Video uchun xavfsiz Bunny URL olinmadi."
+      );
+    }
+
+    console.log(
+      'Bunny tokenli URL olindi'
     );
-  }
 
-  if (!lesson.bunny_video_id || !lesson.bunny_library_id) {
-    return tg.showAlert(
-      "Bu dars uchun video hali sozlanmagan."
-    );
-  }
+    currentView = {
 
-  const bunnyPlayerUrl =
-    `https://player.mediadelivery.net/embed/` +
-    `${lesson.bunny_library_id}/` +
-    `${lesson.bunny_video_id}`;
+      html: `
 
-  currentView = {
-
-    html: `
-
-      <div
-        class="back-btn"
-        onclick="closeDetail()"
-      >
-        ← Orqaga
-      </div>
-
-      <div class="lesson-detail">
-
-        <iframe
-          src="${bunnyPlayerUrl}"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-          allowfullscreen
-          loading="lazy"
-        ></iframe>
-
-        <h2>
-          ${lesson.title}
-        </h2>
-
-        <div class="section-title">
-          Vazifa
+        <div
+          class="back-btn"
+          onclick="closeDetail()"
+        >
+          ← Orqaga
         </div>
 
-        <div class="task-box">
-          ${lesson.task_text || 'Vazifa berilmagan'}
-        </div>
+        <div class="lesson-detail">
 
-        ${
-          lesson.files && lesson.files.length
+          <iframe
+            src="${lesson.bunny_player_url}"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
 
-            ? `
-              <div class="section-title">
-                Darslikda ishlatilgan fayllar
-              </div>
+          <h2>
+            ${lesson.title}
+          </h2>
 
-              ${lesson.files.map(f => `
-                <div class="file-item">
+          <div class="section-title">
+            Vazifa
+          </div>
 
-                  <span>
-                    📎 ${f.file_name}
-                  </span>
+          <div class="task-box">
+            ${
+              lesson.task_text ||
+              'Vazifa berilmagan'
+            }
+          </div>
 
-                  <a
-                    href="${f.file_url}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Yuklab olish
-                  </a>
+          ${
+            lesson.files &&
+            lesson.files.length
 
+              ? `
+
+                <div class="section-title">
+                  Darslikda ishlatilgan fayllar
                 </div>
-              `).join('')}
-            `
 
-            : ''
-        }
+                ${
+                  lesson.files
+                    .map(f => `
 
-      </div>
+                      <div
+                        class="file-item"
+                      >
 
-    `
-  };
+                        <span>
+                          📎 ${f.file_name}
+                        </span>
 
-  render();
+                        <a
+                          href="${f.file_url}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Yuklab olish
+                        </a>
+
+                      </div>
+
+                    `)
+                    .join('')
+                }
+
+              `
+
+              : ''
+          }
+
+        </div>
+
+      `
+    };
+
+    render();
+
+  } catch (error) {
+
+    console.error(
+      'OPEN LESSON ERROR:',
+      error
+    );
+
+    tg.showAlert(
+      "Darsni ochishda server bilan bog'lanib bo'lmadi."
+    );
+  }
 }
 
 function closeDetail() {
+
   currentView = null;
+
   render();
 }
 
-// ---------- TEST ----------
+// ======================================================
+// TEST
+// ======================================================
+
 async function openTest(moduleId) {
 
-  const { questions } =
-    await api(`/api/module/${moduleId}/test`);
+  try {
 
-  if (!questions.length) {
-    return tg.showAlert(
-      "Bu modul uchun test hali qo'shilmagan."
+    const {
+      questions
+    } =
+      await api(
+        `/api/module/${moduleId}/test`
+      );
+
+    if (
+      !questions.length
+    ) {
+
+      return tg.showAlert(
+        "Bu modul uchun test hali qo'shilmagan."
+      );
+    }
+
+    window._answers = {};
+
+    currentView = {
+
+      html: `
+
+        <div
+          class="back-btn"
+          onclick="closeDetail()"
+        >
+          ← Orqaga
+        </div>
+
+        <div class="section-title">
+          Modul testi
+        </div>
+
+        <div id="test-body">
+
+          ${
+            questions
+              .map(q => `
+
+                <div
+                  class="test-question"
+                >
+
+                  <p>
+                    ${q.question}
+                  </p>
+
+                  ${
+                    q.options
+                      .map(
+                        (opt, i) => `
+
+                          <div
+                            class="option"
+                            data-q="${q.id}"
+                            data-i="${i}"
+                            onclick="selectOption(${q.id},${i})"
+                          >
+                            ${opt}
+                          </div>
+
+                        `
+                      )
+                      .join('')
+                  }
+
+                </div>
+
+              `)
+              .join('')
+          }
+
+        </div>
+
+        <button
+          class="btn"
+          onclick="submitTest(${moduleId})"
+        >
+          Yuborish
+        </button>
+
+      `
+    };
+
+    render();
+
+  } catch (error) {
+
+    console.error(
+      'OPEN TEST ERROR:',
+      error
+    );
+
+    tg.showAlert(
+      "Testni yuklashda xatolik yuz berdi."
     );
   }
-
-  window._answers = {};
-
-  currentView = {
-
-    html: `
-
-      <div
-        class="back-btn"
-        onclick="closeDetail()"
-      >
-        ← Orqaga
-      </div>
-
-      <div class="section-title">
-        Modul testi
-      </div>
-
-      <div id="test-body">
-
-        ${questions.map(q => `
-
-          <div class="test-question">
-
-            <p>
-              ${q.question}
-            </p>
-
-            ${q.options.map((opt, i) => `
-
-              <div
-                class="option"
-                data-q="${q.id}"
-                data-i="${i}"
-                onclick="selectOption(${q.id},${i})"
-              >
-                ${opt}
-              </div>
-
-            `).join('')}
-
-          </div>
-
-        `).join('')}
-
-      </div>
-
-      <button
-        class="btn"
-        onclick="submitTest(${moduleId})"
-      >
-        Yuborish
-      </button>
-
-    `
-  };
-
-  render();
 }
 
 function selectOption(qId, i) {
@@ -847,9 +1372,15 @@ function selectOption(qId, i) {
   window._answers[qId] = i;
 
   document
-    .querySelectorAll(`.option[data-q="${qId}"]`)
+    .querySelectorAll(
+      `.option[data-q="${qId}"]`
+    )
     .forEach(el => {
-      el.classList.remove('selected');
+
+      el.classList.remove(
+        'selected'
+      );
+
     });
 
   const selected =
@@ -858,38 +1389,59 @@ function selectOption(qId, i) {
     );
 
   if (selected) {
-    selected.classList.add('selected');
+
+    selected.classList.add(
+      'selected'
+    );
   }
 }
 
 async function submitTest(moduleId) {
 
-  const result =
-    await api(
-      `/api/module/${moduleId}/submit`,
-      {
-        answers: window._answers
-      }
-    );
+  try {
 
-  if (result.passed) {
+    const result =
+      await api(
+        `/api/module/${moduleId}/submit`,
+        {
+          answers:
+            window._answers
+        }
+      );
+
+    if (result.passed) {
+
+      tg.showAlert(
+        `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
+      );
+
+    } else {
+
+      tg.showAlert(
+        `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
+      );
+
+    }
+
+    closeDetail();
+
+    await loadContent();
+
+  } catch (error) {
+
+    console.error(
+      'SUBMIT TEST ERROR:',
+      error
+    );
 
     tg.showAlert(
-      `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
+      "Test natijasini yuborishda xatolik yuz berdi."
     );
-
-  } else {
-
-    tg.showAlert(
-      `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
-    );
-
   }
-
-  closeDetail();
-
-  await loadContent();
 }
 
-// ---------- START ----------
+// ======================================================
+// START
+// ======================================================
+
 loadContent();
