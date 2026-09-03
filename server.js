@@ -72,10 +72,12 @@ function generateBunnyToken(
   videoId,
   expiresAt
 ) {
+
   const securityKey =
     process.env.BUNNY_TOKEN_AUTH_KEY;
 
   if (!securityKey) {
+
     throw new Error(
       'BUNNY_TOKEN_AUTH_KEY topilmadi'
     );
@@ -96,6 +98,7 @@ function generateBunnyPlayerUrl(
   libraryId,
   videoId
 ) {
+
   const expiresAt =
     Math.floor(Date.now() / 1000) +
     2 * 60 * 60;
@@ -141,7 +144,6 @@ function getYouTubeVideoId(url) {
           .split('/')[0]
           .trim() || null
       );
-
     }
 
     if (
@@ -268,6 +270,7 @@ async function getOrCreateUser(
       (
         telegram_id,
         first_name,
+        last_name,
         username
       )
 
@@ -275,7 +278,8 @@ async function getOrCreateUser(
       (
         $1,
         $2,
-        $3
+        $3,
+        $4
       )
 
       ON CONFLICT
@@ -284,14 +288,32 @@ async function getOrCreateUser(
       )
 
       DO UPDATE SET
-        first_name = $2,
-        username = $3
+
+        first_name =
+          CASE
+            WHEN users.first_name IS NULL
+              OR TRIM(users.first_name) = ''
+            THEN EXCLUDED.first_name
+            ELSE users.first_name
+          END,
+
+        last_name =
+          CASE
+            WHEN users.last_name IS NULL
+              OR TRIM(users.last_name) = ''
+            THEN EXCLUDED.last_name
+            ELSE users.last_name
+          END,
+
+        username =
+          EXCLUDED.username
 
       RETURNING *
       `,
       [
         tgUser.id,
         tgUser.first_name || '',
+        tgUser.last_name || null,
         tgUser.username || null
       ]
     );
@@ -476,6 +498,261 @@ async function requireSuperAdmin(
 }
 
 // ======================================================
+// REGISTER
+// ======================================================
+
+app.post(
+  '/api/register',
+  async (req, res) => {
+
+    try {
+
+      const initData =
+        req.body?.initData;
+
+      const firstName =
+        String(
+          req.body?.first_name || ''
+        ).trim();
+
+      const lastName =
+        String(
+          req.body?.last_name || ''
+        ).trim();
+
+      const phone =
+        String(
+          req.body?.phone || ''
+        ).trim();
+
+      // ------------------------------------------
+      // VALIDATION
+      // ------------------------------------------
+
+      if (!initData) {
+
+        return res
+          .status(401)
+          .json({
+            error:
+              'Telegram initData yuborilmagan'
+          });
+      }
+
+      if (!firstName) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Ismni kiriting'
+          });
+      }
+
+      if (!lastName) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Familiyani kiriting'
+          });
+      }
+
+      if (!phone) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Telefon raqamini kiriting'
+          });
+      }
+
+      // ------------------------------------------
+      // TELEGRAM USERNI TEKSHIRISH
+      // ------------------------------------------
+
+      const tgUser =
+        verifyInitData(
+          initData,
+          process.env.BOT_TOKEN
+        );
+
+      if (!tgUser) {
+
+        return res
+          .status(401)
+          .json({
+            error:
+              'Telegram maʼlumotlari noto‘g‘ri'
+          });
+      }
+
+      // ------------------------------------------
+      // TELEFONNI TOZALASH
+      // ------------------------------------------
+
+      const normalizedPhone =
+        phone
+          .replace(/[^\d+]/g, '')
+          .trim();
+
+      if (
+        normalizedPhone.length < 9
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Telefon raqamini to‘g‘ri kiriting'
+          });
+      }
+
+      // ------------------------------------------
+      // DATABASE
+      // ------------------------------------------
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO users
+          (
+            telegram_id,
+            first_name,
+            last_name,
+            phone,
+            username
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5
+          )
+
+          ON CONFLICT
+          (
+            telegram_id
+          )
+
+          DO UPDATE SET
+
+            first_name =
+              EXCLUDED.first_name,
+
+            last_name =
+              EXCLUDED.last_name,
+
+            phone =
+              EXCLUDED.phone,
+
+            username =
+              EXCLUDED.username
+
+          RETURNING *
+          `,
+          [
+            tgUser.id,
+            firstName,
+            lastName,
+            normalizedPhone,
+            tgUser.username || null
+          ]
+        );
+
+      const user =
+        result.rows[0];
+
+      console.log(
+        '========================================'
+      );
+
+      console.log(
+        '✅ USER REGISTERED'
+      );
+
+      console.log(
+        '🆔 TELEGRAM ID:',
+        user.telegram_id.toString()
+      );
+
+      console.log(
+        '👤 NAME:',
+        user.first_name,
+        user.last_name
+      );
+
+      console.log(
+        '📱 PHONE:',
+        user.phone
+      );
+
+      console.log(
+        '========================================'
+      );
+
+      return res.json({
+
+        ok: true,
+
+        registered: true,
+
+        message:
+          'Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi',
+
+        user: {
+
+          id:
+            user.id,
+
+          telegram_id:
+            user.telegram_id.toString(),
+
+          first_name:
+            user.first_name || '',
+
+          last_name:
+            user.last_name || '',
+
+          phone:
+            user.phone || '',
+
+          username:
+            user.username || null,
+
+          has_access:
+            hasAccess(user),
+
+          access_until:
+            user.access_until || null
+
+        }
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'REGISTRATION ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Ro‘yxatdan o‘tishda server xatosi'
+        });
+    }
+  }
+);
+
+// ======================================================
 // AUTH
 // ======================================================
 
@@ -512,6 +789,19 @@ app.post(
 
         first_name:
           user.first_name || '',
+
+        last_name:
+          user.last_name || '',
+
+        phone:
+          user.phone || '',
+
+        registered:
+          Boolean(
+            user.first_name &&
+            user.last_name &&
+            user.phone
+          ),
 
         has_access:
           hasAccess(user),
@@ -704,6 +994,19 @@ app.post(
 
         first_name:
           user.first_name || '',
+
+        last_name:
+          user.last_name || '',
+
+        phone:
+          user.phone || '',
+
+        registered:
+          Boolean(
+            user.first_name &&
+            user.last_name &&
+            user.phone
+          ),
 
         modules:
           data
@@ -1341,7 +1644,13 @@ app.post(
 
       console.log(
         '👤 NAME:',
-        user.first_name
+        user.first_name,
+        user.last_name
+      );
+
+      console.log(
+        '📱 PHONE:',
+        user.phone
       );
 
       console.log(
@@ -1390,8 +1699,18 @@ app.post(
           `💰 TO'LOV SO'ROVI!\n\n` +
 
           `👤 Ism: ${
-            user.first_name ||
+            [
+              user.first_name,
+              user.last_name
+            ]
+              .filter(Boolean)
+              .join(' ') ||
             "Noma'lum"
+          }\n` +
+
+          `📱 Telefon: ${
+            user.phone ||
+            "Telefon yo‘q"
           }\n` +
 
           `📱 Username: @${
@@ -1454,8 +1773,18 @@ app.post(
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
 
         `👤 Ism: ${
-          user.first_name ||
+          [
+            user.first_name,
+            user.last_name
+          ]
+            .filter(Boolean)
+            .join(' ') ||
           "Noma'lum"
+        }\n` +
+
+        `📱 Telefon: ${
+          user.phone ||
+          "Telefon yo‘q"
         }\n` +
 
         `📱 Username: @${
@@ -1529,9 +1858,7 @@ app.post(
 );
 
 // ======================================================
-// ======================================================
 // ADMIN API
-// ======================================================
 // ======================================================
 
 // ======================================================
@@ -1715,6 +2042,10 @@ app.post(
 
             u.first_name,
 
+            u.last_name,
+
+            u.phone,
+
             u.username,
 
             u.access_until,
@@ -1761,6 +2092,12 @@ app.post(
 
             first_name:
               student.first_name || '',
+
+            last_name:
+              student.last_name || '',
+
+            phone:
+              student.phone || null,
 
             username:
               student.username || null,
@@ -1830,6 +2167,8 @@ app.post(
             id,
             telegram_id,
             first_name,
+            last_name,
+            phone,
             username,
             access_until,
             created_at
@@ -1937,6 +2276,12 @@ app.post(
 
           first_name:
             student.first_name || '',
+
+          last_name:
+            student.last_name || '',
+
+          phone:
+            student.phone || null,
 
           username:
             student.username || null,
@@ -3225,8 +3570,6 @@ app.post(
 // ======================================================
 // ADMIN TEST
 // ======================================================
-// Faqat admin ishlata oladi.
-// Oldingi ochiq GET /api/admin-test endi himoyalangan.
 
 app.post(
   '/api/admin-test',
