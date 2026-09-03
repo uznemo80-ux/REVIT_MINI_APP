@@ -1913,3 +1913,1680 @@ a {
   }
 
 }
+
+/* ======================================================
+   ADMIN PANEL
+====================================================== */
+
+.admin-panel {
+  width: 100%;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+.admin-header-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.admin-header-subtitle {
+  margin-top: 5px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+
+/* ======================================================
+   ADMIN BACK BUTTON
+====================================================== */
+
+.admin-back {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 40px;
+
+  padding: 9px 13px;
+
+  background: var(--card);
+
+  border: 1px solid var(--border);
+
+  border-radius: 12px;
+
+  color: var(--text);
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-back:active {
+  transform: scale(0.96);
+}
+
+
+/* ======================================================
+   ADMIN TABS
+====================================================== */
+
+.admin-tabs {
+  display: flex;
+
+  gap: 7px;
+
+  overflow-x: auto;
+
+  margin-bottom: 18px;
+
+  padding-bottom: 3px;
+
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tab {
+  flex-shrink: 0;
+
+  min-height: 40px;
+
+  padding: 9px 13px;
+
+  border-radius: 11px;
+
+  border: 1px solid var(--border);
+
+  background: var(--card);
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-tab:active {
+  transform: scale(0.96);
+}
+
+.admin-tab.active {
+  background: var(--accent);
+
+  border-color: var(--accent);
+
+  color: #fff;
+}
+
+
+/* ======================================================
+   ADMIN STATS GRID
+====================================================== */
+
+.admin-stats {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 20px;
+}
+
+.admin-stat {
+  position: relative;
+
+  padding: 16px;
+
+  background: var(--card);
+
+  border: 1px solid var(--border);
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 5px 18px
+    rgba(0, 0, 0, 0.10);
+
+  overflow: hidden;
+}
+
+.admin-stat-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 11px;
+
+  border-radius: 11px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  font-size: 18px;
+}
+
+.admin-stat-value {
+  font-size: 25px;
+
+  line-height: 1;
+
+  font-weight: 850;
+
+  letter-spacing: -0.5px;
+}
+
+.admin-stat-label {
+  margin-top: 7px;
+
+  color: var(--text-secondary);
+
+  font-size: 11px;
+
+  line-height: 1.3;
+}
+
+
+/* ======================================================
+   ADMIN SECTION
+====================================================== */
+
+.admin-section {
+  margin-top: 22px;
+}
+
+.admin-section-title {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 11px;
+
+  font-size: 17px;
+
+  font-weight: 800;
+}
+
+
+/* ======================================================
+   ADMIN CARD
+====================================================== */
+
+.admin-card {
+  padding: 16px;
+
+  background: var(--card);
+
+  border: 1px solid var(--border);
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 5px 18px
+    rgba(0, 0, 0, 0.08);
+}
+
+
+/* ======================================================
+   ADMIN ACTION BUTTONS
+====================================================== */
+
+.admin-actions {
+  display: flex;
+
+  gap: 8px;
+
+  flex-wrap: wrap;
+}
+
+.admin-action-btn {
+  min-height: 40px;
+
+  padding: 9px 13px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background: var(--accent);
+
+  color: #fff;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-action-btn:active {
+  transform: scale(0.96);
+}
+
+.admin-action-btn:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+.admin-action-btn.secondary {
+  background: var(--card-2);
+
+  color: var(--text);
+
+  border: 1px solid var(--border);
+}
+
+.admin-action-btn.danger {
+  background:
+    rgba(255, 69, 58, 0.12);
+
+  color: var(--danger);
+
+  border:
+    1px solid
+    rgba(255, 69, 58, 0.18);
+}
+
+.admin-action-btn.success {
+  background:
+    rgba(53, 199, 89, 0.12);
+
+  color: var(--success);
+
+  border:
+    1px solid
+    rgba(53, 199, 89, 0.18);
+}
+
+
+/* ======================================================
+   ADMIN FORM
+====================================================== */
+
+.admin-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.admin-form-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+.admin-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.admin-field label {
+  color: var(--text-secondary);
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+.admin-input,
+.admin-select,
+.admin-textarea {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  background: var(--card-2);
+
+  border: 1px solid var(--border);
+
+  border-radius: 12px;
+
+  color: var(--text);
+
+  outline: none;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-input:focus,
+.admin-select:focus,
+.admin-textarea:focus {
+  border-color:
+    rgba(36, 129, 204, 0.65);
+
+  background: var(--card);
+}
+
+.admin-input::placeholder,
+.admin-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.admin-textarea {
+  min-height: 110px;
+
+  resize: vertical;
+
+  line-height: 1.5;
+}
+
+.admin-select {
+  appearance: auto;
+}
+
+
+/* ======================================================
+   ADMIN CHECKBOX / SWITCH
+====================================================== */
+
+.admin-checkbox-row {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 13px 14px;
+
+  background: var(--card-2);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+}
+
+.admin-checkbox-info {
+  min-width: 0;
+}
+
+.admin-checkbox-title {
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.admin-checkbox-description {
+  margin-top: 4px;
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+
+  line-height: 1.4;
+}
+
+.admin-checkbox {
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  accent-color: var(--accent);
+
+  cursor: pointer;
+}
+
+
+/* ======================================================
+   ADMIN SEARCH
+====================================================== */
+
+.admin-search {
+  position: relative;
+
+  margin-bottom: 12px;
+}
+
+.admin-search input {
+  width: 100%;
+
+  min-height: 44px;
+
+  padding:
+    11px
+    13px
+    11px
+    40px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+
+  color: var(--text);
+
+  outline: none;
+
+  font-size: 13px;
+}
+
+.admin-search-icon {
+  position: absolute;
+
+  left: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: var(--text-muted);
+
+  font-size: 16px;
+
+  pointer-events: none;
+}
+
+
+/* ======================================================
+   ADMIN STUDENT CARD
+====================================================== */
+
+.admin-student-list,
+.admin-lesson-list,
+.admin-module-list,
+.admin-admin-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+}
+
+.admin-student-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 13px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 15px;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-student-card:active {
+  transform: scale(0.985);
+}
+
+.admin-student-avatar {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--accent);
+
+  color: #fff;
+
+  font-size: 17px;
+
+  font-weight: 800;
+}
+
+.admin-student-info {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.admin-student-name {
+  font-size: 14px;
+
+  font-weight: 750;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-student-username {
+  margin-top: 3px;
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-student-progress {
+  margin-top: 6px;
+
+  color: var(--text-secondary);
+
+  font-size: 10px;
+}
+
+.admin-student-status {
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  border-radius: 8px;
+
+  font-size: 9px;
+
+  font-weight: 800;
+}
+
+.admin-student-status.active {
+  background:
+    rgba(53, 199, 89, 0.12);
+
+  color: var(--success);
+}
+
+.admin-student-status.expired {
+  background:
+    rgba(255, 176, 32, 0.12);
+
+  color: var(--warning);
+}
+
+.admin-student-status.unpaid {
+  background:
+    rgba(255, 69, 58, 0.12);
+
+  color: var(--danger);
+}
+
+
+/* ======================================================
+   ADMIN LESSON CARD
+====================================================== */
+
+.admin-lesson-card {
+  padding: 14px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 15px;
+}
+
+.admin-lesson-top {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.admin-lesson-number {
+  color: var(--accent);
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  margin-bottom: 5px;
+}
+
+.admin-lesson-title {
+  font-size: 14px;
+
+  font-weight: 750;
+
+  line-height: 1.4;
+}
+
+.admin-lesson-meta {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  flex-wrap: wrap;
+
+  margin-top: 9px;
+}
+
+.admin-meta-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  min-height: 23px;
+
+  padding:
+    4px
+    7px;
+
+  border-radius: 7px;
+
+  background: var(--card-2);
+
+  color: var(--text-secondary);
+
+  font-size: 9px;
+
+  font-weight: 700;
+}
+
+.admin-meta-badge.free {
+  background:
+    rgba(53, 199, 89, 0.12);
+
+  color: var(--success);
+}
+
+.admin-meta-badge.video {
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  color: var(--accent);
+}
+
+.admin-meta-badge.files {
+  background:
+    rgba(255, 176, 32, 0.12);
+
+  color: var(--warning);
+}
+
+.admin-lesson-actions {
+  display: flex;
+
+  gap: 7px;
+
+  margin-top: 12px;
+}
+
+.admin-small-btn {
+  min-height: 34px;
+
+  padding:
+    7px
+    10px;
+
+  border-radius: 9px;
+
+  border: 1px solid var(--border);
+
+  background: var(--card-2);
+
+  color: var(--text);
+
+  font-size: 10px;
+
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.admin-small-btn:active {
+  transform: scale(0.95);
+}
+
+.admin-small-btn.edit {
+  color: var(--accent);
+}
+
+.admin-small-btn.delete {
+  color: var(--danger);
+}
+
+.admin-small-btn.files {
+  color: var(--warning);
+}
+
+
+/* ======================================================
+   ADMIN MODULE CARD
+====================================================== */
+
+.admin-module-card {
+  overflow: hidden;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 16px;
+}
+
+.admin-module-head {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 15px;
+}
+
+.admin-module-name {
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  min-width: 0;
+
+  font-size: 14px;
+
+  font-weight: 750;
+}
+
+.admin-module-number {
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  color: var(--accent);
+
+  font-size: 10px;
+
+  font-weight: 800;
+}
+
+.admin-module-count {
+  flex-shrink: 0;
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+}
+
+
+/* ======================================================
+   ADMIN RESOURCE CARD
+====================================================== */
+
+.admin-file-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 12px;
+
+  background: var(--card-2);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+}
+
+.admin-file-icon {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  font-size: 17px;
+}
+
+.admin-file-info {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.admin-file-name {
+  font-size: 12px;
+
+  font-weight: 700;
+
+  word-break: break-word;
+
+  line-height: 1.35;
+}
+
+.admin-file-url {
+  margin-top: 4px;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-file-actions {
+  display: flex;
+
+  gap: 5px;
+
+  flex-shrink: 0;
+}
+
+
+/* ======================================================
+   ADMIN USER / ADMIN CARD
+====================================================== */
+
+.admin-user-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 13px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 15px;
+}
+
+.admin-user-avatar {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(36, 129, 204, 0.15);
+
+  color: var(--accent);
+
+  font-size: 16px;
+
+  font-weight: 800;
+}
+
+.admin-user-info {
+  flex: 1;
+
+  min-width: 0;
+}
+
+.admin-user-name {
+  font-size: 13px;
+
+  font-weight: 750;
+}
+
+.admin-user-id {
+  margin-top: 3px;
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+}
+
+.admin-role {
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  border-radius: 8px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  color: var(--accent);
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+.admin-role.super {
+  background:
+    rgba(255, 176, 32, 0.12);
+
+  color: var(--warning);
+}
+
+
+/* ======================================================
+   ADMIN STUDENT DETAIL
+====================================================== */
+
+.admin-detail-header {
+  padding: 18px;
+
+  margin-bottom: 14px;
+
+  text-align: center;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 18px;
+}
+
+.admin-detail-avatar {
+  width: 62px;
+  height: 62px;
+
+  margin: 0 auto 10px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--accent);
+
+  color: #fff;
+
+  font-size: 24px;
+
+  font-weight: 800;
+}
+
+.admin-detail-name {
+  font-size: 18px;
+
+  font-weight: 800;
+}
+
+.admin-detail-id {
+  margin-top: 4px;
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+}
+
+.admin-progress-box {
+  margin-top: 14px;
+
+  text-align: left;
+}
+
+.admin-progress-info {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 7px;
+
+  color: var(--text-secondary);
+
+  font-size: 11px;
+}
+
+.admin-progress-info strong {
+  color: var(--accent);
+}
+
+.admin-progress-track {
+  width: 100%;
+
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(128, 128, 128, 0.15);
+}
+
+.admin-progress-fill {
+  height: 100%;
+
+  border-radius: 999px;
+
+  background: var(--accent);
+}
+
+
+/* ======================================================
+   ADMIN MODULE PROGRESS
+====================================================== */
+
+.admin-module-progress {
+  margin-top: 9px;
+
+  padding: 12px;
+
+  background: var(--card-2);
+
+  border-radius: 12px;
+}
+
+.admin-module-progress-head {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 7px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+.admin-module-progress-head span:last-child {
+  color: var(--accent);
+}
+
+.admin-lesson-status-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  margin-top: 9px;
+}
+
+.admin-lesson-status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 8px 9px;
+
+  border-radius: 9px;
+
+  background: var(--card);
+
+  font-size: 10px;
+
+  color: var(--text-secondary);
+}
+
+.admin-lesson-status.watched {
+  color: var(--success);
+}
+
+.admin-status-icon {
+  flex-shrink: 0;
+
+  width: 18px;
+  height: 18px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(128, 128, 128, 0.12);
+
+  font-size: 9px;
+}
+
+.admin-lesson-status.watched
+.admin-status-icon {
+  background:
+    rgba(53, 199, 89, 0.12);
+}
+
+
+/* ======================================================
+   ADMIN TEST RESULT
+====================================================== */
+
+.admin-test-result {
+  padding: 13px;
+
+  margin-top: 8px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+}
+
+.admin-test-result-head {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  font-size: 12px;
+
+  font-weight: 750;
+}
+
+.admin-test-score {
+  color: var(--success);
+
+  font-weight: 800;
+}
+
+.admin-test-date {
+  margin-top: 5px;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+}
+
+
+/* ======================================================
+   ADMIN EMPTY
+====================================================== */
+
+.admin-empty {
+  padding: 28px 18px;
+
+  text-align: center;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 17px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+.admin-empty-icon {
+  margin-bottom: 9px;
+
+  font-size: 32px;
+}
+
+
+/* ======================================================
+   ADMIN LOADING
+====================================================== */
+
+.admin-loading {
+  min-height: 220px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+
+/* ======================================================
+   ADMIN ALERT
+====================================================== */
+
+.admin-alert {
+  padding: 12px 14px;
+
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+
+  line-height: 1.45;
+}
+
+.admin-alert.success {
+  background:
+    rgba(53, 199, 89, 0.10);
+
+  border:
+    1px solid
+    rgba(53, 199, 89, 0.20);
+
+  color: var(--success);
+}
+
+.admin-alert.warning {
+  background:
+    rgba(255, 176, 32, 0.10);
+
+  border:
+    1px solid
+    rgba(255, 176, 32, 0.20);
+
+  color: var(--warning);
+}
+
+.admin-alert.danger {
+  background:
+    rgba(255, 69, 58, 0.10);
+
+  border:
+    1px solid
+    rgba(255, 69, 58, 0.20);
+
+  color: var(--danger);
+}
+
+
+/* ======================================================
+   ADMIN MODAL
+====================================================== */
+
+.admin-modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 3000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px;
+
+  background:
+    rgba(0, 0, 0, 0.62);
+
+  backdrop-filter: blur(7px);
+
+  -webkit-backdrop-filter: blur(7px);
+
+  overflow-y: auto;
+}
+
+.admin-modal {
+  width: 100%;
+
+  max-width: 520px;
+
+  max-height: calc(100vh - 32px);
+
+  overflow-y: auto;
+
+  padding: 20px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 70px
+    rgba(0, 0, 0, 0.4);
+}
+
+.admin-modal-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+.admin-modal-title {
+  font-size: 18px;
+
+  font-weight: 800;
+}
+
+.admin-modal-close {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background: var(--card-2);
+
+  color: var(--text-secondary);
+
+  font-size: 18px;
+
+  cursor: pointer;
+}
+
+
+/* ======================================================
+   ADMIN QUICK ACTION
+====================================================== */
+
+.admin-quick-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 9px;
+}
+
+.admin-quick-action {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 62px;
+
+  padding: 12px;
+
+  background: var(--card);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-quick-action:active {
+  transform: scale(0.97);
+}
+
+.admin-quick-icon {
+  width: 35px;
+  height: 35px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  font-size: 17px;
+}
+
+.admin-quick-title {
+  font-size: 11px;
+
+  font-weight: 750;
+
+  line-height: 1.3;
+}
+
+
+/* ======================================================
+   ADMIN BADGE
+====================================================== */
+
+.admin-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 23px;
+
+  padding:
+    4px
+    8px;
+
+  border-radius: 8px;
+
+  background:
+    rgba(36, 129, 204, 0.12);
+
+  color: var(--accent);
+
+  font-size: 9px;
+
+  font-weight: 800;
+}
+
+.admin-badge.super {
+  background:
+    rgba(255, 176, 32, 0.12);
+
+  color: var(--warning);
+}
+
+
+/* ======================================================
+   ADMIN RESPONSIVE
+====================================================== */
+
+@media (max-width: 480px) {
+
+  .admin-header-title {
+    font-size: 23px;
+  }
+
+  .admin-stats {
+    gap: 8px;
+  }
+
+  .admin-stat {
+    padding: 14px;
+  }
+
+  .admin-stat-value {
+    font-size: 22px;
+  }
+
+  .admin-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-student-card {
+    padding: 11px;
+  }
+
+  .admin-student-avatar {
+    width: 40px;
+    height: 40px;
+
+    font-size: 15px;
+  }
+
+  .admin-student-status {
+    font-size: 8px;
+
+    padding: 4px 6px;
+  }
+
+  .admin-quick-grid {
+    gap: 7px;
+  }
+
+  .admin-modal {
+    padding: 16px;
+
+    border-radius: 17px;
+  }
+}
+
+
+@media (max-width: 360px) {
+
+  .admin-stats {
+    grid-template-columns: 1fr 1fr;
+
+    gap: 6px;
+  }
+
+  .admin-stat {
+    padding: 12px;
+  }
+
+  .admin-stat-icon {
+    width: 32px;
+    height: 32px;
+
+    font-size: 16px;
+  }
+
+  .admin-stat-value {
+    font-size: 20px;
+  }
+
+  .admin-stat-label {
+    font-size: 10px;
+  }
+
+  .admin-tab {
+    padding-left: 10px;
+    padding-right: 10px;
+
+    font-size: 11px;
+  }
+
+  .admin-action-btn {
+    padding:
+      8px
+      10px;
+
+    font-size: 11px;
+  }
+
+}
