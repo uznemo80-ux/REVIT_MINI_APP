@@ -22,6 +22,22 @@ function escapeHtml(value) {
 
 
 // ======================================================
+// JS STRING ESCAPE
+// ======================================================
+
+function escapeJsString(value) {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/</g, "\\u003C")
+    .replace(/>/g, "\\u003E");
+}
+
+
+// ======================================================
 // THEME
 // ======================================================
 
@@ -58,6 +74,19 @@ function haptic(style = "light") {
   try {
     tg.HapticFeedback.impactOccurred(style);
   } catch (e) {}
+}
+
+
+// ======================================================
+// TELEGRAM ALERT
+// ======================================================
+
+function showAlert(message) {
+  try {
+    tg.showAlert(String(message || ""));
+  } catch (e) {
+    alert(String(message || ""));
+  }
 }
 
 
@@ -123,6 +152,10 @@ function showConfirm(
         await onConfirm();
       } catch (error) {
         console.error("CONFIRM ERROR:", error);
+        showAlert(
+          error.message ||
+          "Amalni bajarishda xatolik."
+        );
       }
     }
   );
@@ -429,7 +462,7 @@ async function submitRegistration() {
 
 
   if (!firstName) {
-    tg.showAlert(
+    showAlert(
       "Iltimos, ismingizni kiriting."
     );
     return;
@@ -437,7 +470,7 @@ async function submitRegistration() {
 
 
   if (!lastName) {
-    tg.showAlert(
+    showAlert(
       "Iltimos, familiyangizni kiriting."
     );
     return;
@@ -445,7 +478,7 @@ async function submitRegistration() {
 
 
   if (!phone) {
-    tg.showAlert(
+    showAlert(
       "Iltimos, telefon raqamingizni kiriting."
     );
     return;
@@ -456,7 +489,7 @@ async function submitRegistration() {
     phone.replace(/[^\d]/g, "");
 
   if (phoneDigits.length < 9) {
-    tg.showAlert(
+    showAlert(
       "Telefon raqamini to‘g‘ri kiriting."
     );
     return;
@@ -470,7 +503,7 @@ async function submitRegistration() {
 
   if (button) {
     button.disabled = true;
-    button.textContent =
+    button.innerHTML =
       "Saqlanmoqda...";
   }
 
@@ -520,7 +553,7 @@ async function submitRegistration() {
     };
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi!"
     );
 
@@ -534,7 +567,7 @@ async function submitRegistration() {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Ro‘yxatdan o‘tishda xatolik yuz berdi."
     );
@@ -542,8 +575,8 @@ async function submitRegistration() {
 
     if (button) {
       button.disabled = false;
-      button.textContent =
-        "Davom etish";
+      button.innerHTML =
+        `Davom etish <span>→</span>`;
     }
   }
 }
@@ -557,7 +590,14 @@ function fmtDate(d) {
 
   if (!d) return null;
 
-  return new Date(d).toLocaleDateString(
+  const date =
+    new Date(d);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleDateString(
     "uz-UZ",
     {
       day: "2-digit",
@@ -652,7 +692,7 @@ async function loadContent() {
     }
 
     try {
-      tg.showAlert(
+      showAlert(
         error.message ||
         "Ma'lumotlarni yuklashda xatolik."
       );
@@ -1222,7 +1262,11 @@ function renderHome() {
 
         ${FAQ.map((f, i) => `
           <div
-            class="faq-item"
+            class="faq-item ${
+              openFaq === i
+                ? "open"
+                : ""
+            }"
             data-faq="${i}"
           >
 
@@ -1236,14 +1280,22 @@ function renderHome() {
               </span>
 
               <span class="faq-plus">
-                +
+                ${
+                  openFaq === i
+                    ? "−"
+                    : "+"
+                }
               </span>
 
             </div>
 
             <div
               class="faq-a"
-              style="display:none;"
+              style="${
+                openFaq === i
+                  ? "display:block;"
+                  : "display:none;"
+              }"
             >
               ${escapeHtml(f.a)}
             </div>
@@ -1264,63 +1316,14 @@ function renderHome() {
 
 function toggleFaq(i) {
 
-  const item =
-    document.querySelector(
-      `.faq-item[data-faq="${i}"]`
-    );
-
-  if (!item) return;
-
-
-  const answer =
-    item.querySelector(".faq-a");
-
-  const plus =
-    item.querySelector(".faq-plus");
-
-
-  const isOpen =
-    item.classList.contains("open");
-
-
-  document
-    .querySelectorAll(".faq-item.open")
-    .forEach(el => {
-
-      el.classList.remove("open");
-
-      const a =
-        el.querySelector(".faq-a");
-
-      const p =
-        el.querySelector(".faq-plus");
-
-      if (a) {
-        a.style.display = "none";
-      }
-
-      if (p) {
-        p.textContent = "+";
-      }
-
-    });
-
-
-  if (!isOpen) {
-
-    item.classList.add("open");
-
-    if (answer) {
-      answer.style.display = "block";
-    }
-
-    if (plus) {
-      plus.textContent = "−";
-    }
-
+  if (openFaq === i) {
+    openFaq = null;
+  } else {
+    openFaq = i;
   }
 
   haptic();
+  render();
 }
 
 
@@ -1418,7 +1421,7 @@ function renderLessons() {
                   }"
                   onclick="${
                     lesson.available
-                      ? `openLesson(${lesson.id})`
+                      ? `openLesson(${Number(lesson.id)})`
                       : "showLockedInfo()"
                   }"
                 >
@@ -1505,7 +1508,7 @@ function showLockedInfo() {
 
   haptic();
 
-  tg.showAlert(
+  showAlert(
     "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
 }
@@ -1576,7 +1579,7 @@ function renderTasks() {
       html += `
         <div
           class="task-card"
-          onclick="openLesson(${lesson.id})"
+          onclick="openLesson(${Number(lesson.id)})"
         >
 
           <div class="task-module">
@@ -1641,9 +1644,13 @@ function renderChat() {
             ? `
               <p>
                 Obunangiz faol
-                (${fmtDate(
-                  state.access_until
-                )} gacha).
+                ${
+                  fmtDate(state.access_until)
+                    ? `(${escapeHtml(
+                        fmtDate(state.access_until)
+                      )} gacha).`
+                    : "."
+                }
               </p>
             `
             : `
@@ -1700,7 +1707,7 @@ async function requestAccess() {
 
         if (result.already_pending) {
 
-          tg.showAlert(
+          showAlert(
             "ℹ️ So‘rovingiz adminga yuborilgan."
           );
 
@@ -1712,7 +1719,7 @@ async function requestAccess() {
 
           haptic("medium");
 
-          tg.showAlert(
+          showAlert(
             "✅ So‘rovingiz adminga yuborildi!"
           );
 
@@ -1733,7 +1740,7 @@ async function requestAccess() {
           error
         );
 
-        tg.showAlert(
+        showAlert(
           error.message ||
           "So‘rov yuborishda xatolik."
         );
@@ -1868,9 +1875,13 @@ function renderProfile() {
               </span>
 
               <span>
-                ${fmtDate(
-                  state.access_until
-                )}
+                ${
+                  escapeHtml(
+                    fmtDate(
+                      state.access_until
+                    ) || "-"
+                  )
+                }
               </span>
 
             </div>
@@ -2109,7 +2120,7 @@ async function openLesson(id) {
 
     const lesson =
       await api(
-        `/api/lesson/${id}`
+        `/api/lesson/${Number(id)}`
       );
 
 
@@ -2131,7 +2142,7 @@ async function openLesson(id) {
 
       render();
 
-      return tg.showAlert(
+      return showAlert(
         lesson.message ||
         "Darsni ochishda xatolik."
       );
@@ -2345,7 +2356,7 @@ async function openLesson(id) {
 
     render();
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Darsni ochishda xatolik."
     );
@@ -2385,17 +2396,19 @@ async function openTest(moduleId) {
 
     const data =
       await api(
-        `/api/module/${moduleId}/test`
+        `/api/module/${Number(moduleId)}/test`
       );
 
 
     const questions =
-      data.questions || [];
+      Array.isArray(data.questions)
+        ? data.questions
+        : [];
 
 
     if (!questions.length) {
 
-      tg.showAlert(
+      showAlert(
         "Bu modul uchun test hali qo'shilmagan."
       );
 
@@ -2440,9 +2453,9 @@ async function openTest(moduleId) {
                       (option, index) => `
                         <div
                           class="option"
-                          data-q="${q.id}"
+                          data-q="${Number(q.id)}"
                           data-i="${index}"
-                          onclick="selectOption(${q.id}, ${index})"
+                          onclick="selectOption(${Number(q.id)}, ${index})"
                         >
                           ${escapeHtml(
                             option
@@ -2462,7 +2475,7 @@ async function openTest(moduleId) {
 
         <button
           class="btn"
-          onclick="submitTest(${moduleId})"
+          onclick="submitTest(${Number(moduleId)})"
         >
           Yuborish
         </button>
@@ -2479,7 +2492,7 @@ async function openTest(moduleId) {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Testni yuklashda xatolik."
     );
@@ -2538,7 +2551,7 @@ async function submitTest(moduleId) {
 
     const result =
       await api(
-        `/api/module/${moduleId}/submit`,
+        `/api/module/${Number(moduleId)}/submit`,
         {
           answers:
             window._answers || {}
@@ -2548,13 +2561,13 @@ async function submitTest(moduleId) {
 
     if (result.passed) {
 
-      tg.showAlert(
+      showAlert(
         `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
       );
 
     } else {
 
-      tg.showAlert(
+      showAlert(
         `Natija: ${result.score}%. O'tish uchun kamida 70% kerak.`
       );
     }
@@ -2571,7 +2584,7 @@ async function submitTest(moduleId) {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Test natijasini yuborishda xatolik."
     );
@@ -2625,7 +2638,7 @@ async function openAdminPanel() {
 
   if (!state.is_admin) {
 
-    tg.showAlert(
+    showAlert(
       "Sizda admin huquqi mavjud emas."
     );
 
@@ -2674,7 +2687,7 @@ async function openAdminPanel() {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Admin panelni yuklashda xatolik."
     );
@@ -2894,7 +2907,7 @@ function renderAdminDashboard() {
         </div>
 
         <div class="admin-stat-value">
-          ${s.total_students || 0}
+          ${Number(s.total_students || 0)}
         </div>
 
         <div class="admin-stat-label">
@@ -2909,7 +2922,7 @@ function renderAdminDashboard() {
         </div>
 
         <div class="admin-stat-value">
-          ${s.paid_students || 0}
+          ${Number(s.paid_students || 0)}
         </div>
 
         <div class="admin-stat-label">
@@ -2924,7 +2937,7 @@ function renderAdminDashboard() {
         </div>
 
         <div class="admin-stat-value">
-          ${s.active_students || 0}
+          ${Number(s.active_students || 0)}
         </div>
 
         <div class="admin-stat-label">
@@ -2939,7 +2952,7 @@ function renderAdminDashboard() {
         </div>
 
         <div class="admin-stat-value">
-          ${s.total_lessons || 0}
+          ${Number(s.total_lessons || 0)}
         </div>
 
         <div class="admin-stat-label">
@@ -2954,7 +2967,7 @@ function renderAdminDashboard() {
         </div>
 
         <div class="admin-stat-value">
-          ${s.total_modules || 0}
+          ${Number(s.total_modules || 0)}
         </div>
 
         <div class="admin-stat-label">
@@ -2988,8 +3001,9 @@ async function adminOpenDashboard() {
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "Statistikani yuklashda xatolik."
     );
   }
 }
@@ -3012,8 +3026,9 @@ async function adminOpenStudents() {
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "O'quvchilarni yuklashda xatolik."
     );
   }
 }
@@ -3042,7 +3057,7 @@ function renderAdminStudents() {
 
         <div
           class="admin-student-card"
-          onclick="openAdminStudent(${student.id})"
+          onclick="openAdminStudent(${Number(student.id)})"
         >
 
           <div class="admin-student-avatar">
@@ -3106,9 +3121,9 @@ function renderAdminStudents() {
             <div class="admin-student-progress">
 
               Progress:
-              ${student.watched_lessons || 0}
+              ${Number(student.watched_lessons || 0)}
               /
-              ${student.total_lessons || 0}
+              ${Number(student.total_lessons || 0)}
 
             </div>
 
@@ -3142,7 +3157,7 @@ async function openAdminStudent(id) {
 
     const data =
       await adminApi(
-        `/api/admin/student/${id}`
+        `/api/admin/student/${Number(id)}`
       );
 
 
@@ -3275,8 +3290,9 @@ async function openAdminStudent(id) {
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "O'quvchini yuklashda xatolik."
     );
   }
 }
@@ -3377,7 +3393,7 @@ async function adminOpenLessons() {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Darslarni yuklashda xatolik."
     );
@@ -3456,8 +3472,10 @@ function renderAdminLessons() {
                                 <div class="admin-lesson-number">
 
                                   ${
-                                    lesson.order_index ||
-                                    ""
+                                    escapeHtml(
+                                      lesson.order_index ??
+                                      ""
+                                    )
                                   }
 
                                 </div>
@@ -3502,14 +3520,16 @@ function renderAdminLessons() {
                               <div class="admin-lesson-actions">
 
                                 <button
-                                  onclick="openAdminLessonEdit(${lesson.id})"
+                                  type="button"
+                                  onclick="event.stopPropagation(); openAdminLessonEdit(${Number(lesson.id)})"
                                 >
                                   ✏️
                                 </button>
 
 
                                 <button
-                                  onclick="deleteAdminLesson(${lesson.id})"
+                                  type="button"
+                                  onclick="event.stopPropagation(); deleteAdminLesson(${Number(lesson.id)})"
                                 >
                                   🗑️
                                 </button>
@@ -3556,7 +3576,7 @@ function openAddLessonForm() {
 
   if (!modules.length) {
 
-    tg.showAlert(
+    showAlert(
       "Avval modul yaratilgan bo‘lishi kerak."
     );
 
@@ -3599,7 +3619,7 @@ function openAddLessonForm() {
                 (module, index) => `
 
                   <option
-                    value="${module.id}"
+                    value="${Number(module.id)}"
                   >
 
                     ${index + 1}.
@@ -3809,7 +3829,7 @@ async function createAdminLesson() {
 
   if (!moduleId) {
 
-    tg.showAlert(
+    showAlert(
       "Modulni tanlang."
     );
 
@@ -3819,7 +3839,7 @@ async function createAdminLesson() {
 
   if (!orderIndex) {
 
-    tg.showAlert(
+    showAlert(
       "Dars raqamini kiriting."
     );
 
@@ -3829,7 +3849,7 @@ async function createAdminLesson() {
 
   if (!title) {
 
-    tg.showAlert(
+    showAlert(
       "Dars nomini kiriting."
     );
 
@@ -3868,7 +3888,7 @@ async function createAdminLesson() {
     );
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Dars qo'shildi."
     );
 
@@ -3882,7 +3902,7 @@ async function createAdminLesson() {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Dars qo'shishda xatolik."
     );
@@ -3900,7 +3920,7 @@ async function openAdminLessonEdit(id) {
 
     const lesson =
       await api(
-        `/api/lesson/${id}`
+        `/api/lesson/${Number(id)}`
       );
 
 
@@ -3919,6 +3939,12 @@ async function openAdminLessonEdit(id) {
       Array.isArray(adminData.modules)
         ? adminData.modules
         : [];
+
+
+    const safeLessonTitle =
+      escapeJsString(
+        lesson.title || ""
+      );
 
 
     currentView = {
@@ -3958,7 +3984,7 @@ async function openAdminLessonEdit(id) {
                     (module, index) => `
 
                       <option
-                        value="${module.id}"
+                        value="${Number(module.id)}"
                         ${
                           Number(module.id) ===
                           Number(lesson.module_id)
@@ -3995,7 +4021,7 @@ async function openAdminLessonEdit(id) {
                 type="number"
                 min="1"
                 value="${escapeHtml(
-                  lesson.order_index || ""
+                  lesson.order_index ?? ""
                 )}"
               >
 
@@ -4078,10 +4104,8 @@ async function openAdminLessonEdit(id) {
               <button
                 class="apple-resource-button"
                 onclick="openLessonFiles(
-                  ${id},
-                  '${escapeHtml(
-                    lesson.title || ""
-                  )}'
+                  ${Number(id)},
+                  '${safeLessonTitle}'
                 )"
               >
                 Boshqarish
@@ -4152,7 +4176,7 @@ async function openAdminLessonEdit(id) {
 
             <button
               class="apple-save-button"
-              onclick="updateAdminLesson(${id})"
+              onclick="updateAdminLesson(${Number(id)})"
             >
               💾 O‘zgarishlarni saqlash
             </button>
@@ -4174,7 +4198,7 @@ async function openAdminLessonEdit(id) {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Darsni yuklashda xatolik."
     );
@@ -4238,7 +4262,7 @@ async function updateAdminLesson(id) {
 
   if (!moduleId) {
 
-    tg.showAlert(
+    showAlert(
       "Modulni tanlang."
     );
 
@@ -4248,7 +4272,7 @@ async function updateAdminLesson(id) {
 
   if (!orderIndex) {
 
-    tg.showAlert(
+    showAlert(
       "Dars raqamini kiriting."
     );
 
@@ -4258,7 +4282,7 @@ async function updateAdminLesson(id) {
 
   if (!title) {
 
-    tg.showAlert(
+    showAlert(
       "Dars nomini kiriting."
     );
 
@@ -4269,7 +4293,7 @@ async function updateAdminLesson(id) {
   try {
 
     await adminApi(
-      `/api/admin/lesson/${id}/update`,
+      `/api/admin/lesson/${Number(id)}/update`,
       {
         module_id:
           Number(moduleId),
@@ -4297,7 +4321,7 @@ async function updateAdminLesson(id) {
     );
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Dars yangilandi."
     );
 
@@ -4311,7 +4335,7 @@ async function updateAdminLesson(id) {
       error
     );
 
-    tg.showAlert(
+    showAlert(
       error.message ||
       "Darsni saqlashda xatolik."
     );
@@ -4338,11 +4362,11 @@ function deleteAdminLesson(id) {
       try {
 
         await adminApi(
-          `/api/admin/lesson/${id}/delete`
+          `/api/admin/lesson/${Number(id)}/delete`
         );
 
 
-        tg.showAlert(
+        showAlert(
           "✅ Dars o'chirildi."
         );
 
@@ -4351,8 +4375,9 @@ function deleteAdminLesson(id) {
 
       } catch (error) {
 
-        tg.showAlert(
-          error.message
+        showAlert(
+          error.message ||
+          "Darsni o'chirishda xatolik."
         );
       }
     }
@@ -4374,7 +4399,7 @@ async function openLessonFiles(
 
     const lesson =
       await api(
-        `/api/lesson/${lessonId}`
+        `/api/lesson/${Number(lessonId)}`
       );
 
 
@@ -4417,6 +4442,7 @@ async function openLessonFiles(
 
             <input
               id="new-file-name"
+              class="apple-input"
               type="text"
               placeholder="Fayl nomi"
             >
@@ -4424,14 +4450,15 @@ async function openLessonFiles(
 
             <input
               id="new-file-url"
-              type="text"
+              class="apple-input"
+              type="url"
               placeholder="Google Drive linki"
             >
 
 
             <button
               class="btn"
-              onclick="addLessonFile(${lessonId})"
+              onclick="addLessonFile(${Number(lessonId)})"
             >
               ➕ Material qo'shish
             </button>
@@ -4443,7 +4470,19 @@ async function openLessonFiles(
 
             ${
               files.length
-                ? files.map(file => `
+                ? files.map(file => {
+
+                    const fileName =
+                      escapeJsString(
+                        file.file_name || ""
+                      );
+
+                    const fileUrl =
+                      escapeJsString(
+                        file.file_url || ""
+                      );
+
+                    return `
 
                     <div class="admin-file-card">
 
@@ -4478,17 +4517,12 @@ async function openLessonFiles(
                       <div class="admin-file-actions">
 
                         <button
+                          type="button"
                           onclick="editLessonFile(
-                            ${file.id},
-                            ${lessonId},
-                            '${escapeHtml(
-                              file.file_name ||
-                              ""
-                            )}',
-                            '${escapeHtml(
-                              file.file_url ||
-                              ""
-                            )}'
+                            ${Number(file.id)},
+                            ${Number(lessonId)},
+                            '${fileName}',
+                            '${fileUrl}'
                           )"
                         >
                           ✏️
@@ -4496,9 +4530,10 @@ async function openLessonFiles(
 
 
                         <button
+                          type="button"
                           onclick="deleteLessonFile(
-                            ${file.id},
-                            ${lessonId}
+                            ${Number(file.id)},
+                            ${Number(lessonId)}
                           )"
                         >
                           🗑️
@@ -4508,7 +4543,8 @@ async function openLessonFiles(
 
                     </div>
 
-                  `).join("")
+                  `;
+                  }).join("")
                 : `
                   <div class="empty-box">
                     Bu darsga hali material qo'shilmagan.
@@ -4527,8 +4563,14 @@ async function openLessonFiles(
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    console.error(
+      "OPEN LESSON FILES ERROR:",
+      error
+    );
+
+    showAlert(
+      error.message ||
+      "Materiallarni yuklashda xatolik."
     );
   }
 }
@@ -4556,7 +4598,7 @@ async function addLessonFile(
 
   if (!fileName) {
 
-    tg.showAlert(
+    showAlert(
       "Fayl nomini kiriting."
     );
 
@@ -4566,7 +4608,7 @@ async function addLessonFile(
 
   if (!fileUrl) {
 
-    tg.showAlert(
+    showAlert(
       "Fayl linkini kiriting."
     );
 
@@ -4577,7 +4619,7 @@ async function addLessonFile(
   try {
 
     await adminApi(
-      `/api/admin/lesson/${lessonId}/files/add`,
+      `/api/admin/lesson/${Number(lessonId)}/files/add`,
       {
         file_name:
           fileName,
@@ -4588,19 +4630,20 @@ async function addLessonFile(
     );
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Material qo'shildi."
     );
 
 
     await openLessonFiles(
-      lessonId
+      Number(lessonId)
     );
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "Material qo'shishda xatolik."
     );
   }
 }
@@ -4624,7 +4667,7 @@ function editLessonFile(
 
         <div
           class="back-btn"
-          onclick="openLessonFiles(${lessonId})"
+          onclick="openLessonFiles(${Number(lessonId)})"
         >
           ← Materiallar
         </div>
@@ -4639,6 +4682,7 @@ function editLessonFile(
 
           <input
             id="edit-file-name"
+            class="apple-input"
             type="text"
             value="${escapeHtml(oldName)}"
             placeholder="Fayl nomi"
@@ -4647,7 +4691,8 @@ function editLessonFile(
 
           <input
             id="edit-file-url"
-            type="text"
+            class="apple-input"
+            type="url"
             value="${escapeHtml(oldUrl)}"
             placeholder="Google Drive linki"
           >
@@ -4656,8 +4701,8 @@ function editLessonFile(
           <button
             class="btn"
             onclick="updateLessonFile(
-              ${fileId},
-              ${lessonId}
+              ${Number(fileId)},
+              ${Number(lessonId)}
             )"
           >
             💾 Saqlash
@@ -4697,7 +4742,7 @@ async function updateLessonFile(
 
   if (!fileName || !fileUrl) {
 
-    tg.showAlert(
+    showAlert(
       "Fayl nomi va linkini kiriting."
     );
 
@@ -4708,7 +4753,7 @@ async function updateLessonFile(
   try {
 
     await adminApi(
-      `/api/admin/file/${fileId}/update`,
+      `/api/admin/file/${Number(fileId)}/update`,
       {
         file_name:
           fileName,
@@ -4719,19 +4764,20 @@ async function updateLessonFile(
     );
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Material yangilandi."
     );
 
 
     await openLessonFiles(
-      lessonId
+      Number(lessonId)
     );
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "Materialni yangilashda xatolik."
     );
   }
 }
@@ -4759,23 +4805,24 @@ function deleteLessonFile(
       try {
 
         await adminApi(
-          `/api/admin/file/${fileId}/delete`
+          `/api/admin/file/${Number(fileId)}/delete`
         );
 
 
-        tg.showAlert(
+        showAlert(
           "✅ Material o'chirildi."
         );
 
 
         await openLessonFiles(
-          lessonId
+          Number(lessonId)
         );
 
       } catch (error) {
 
-        tg.showAlert(
-          error.message
+        showAlert(
+          error.message ||
+          "Materialni o'chirishda xatolik."
         );
       }
 
@@ -4796,7 +4843,7 @@ async function adminOpenAdmins() {
     "super_admin"
   ) {
 
-    tg.showAlert(
+    showAlert(
       "Faqat Super Admin bu bo'limdan foydalana oladi."
     );
 
@@ -4815,8 +4862,9 @@ async function adminOpenAdmins() {
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "Adminlarni yuklashda xatolik."
     );
   }
 }
@@ -4854,8 +4902,17 @@ function renderAdminAdmins() {
     <div class="admin-list">
 
       ${
-        adminData.admins.map(
-          admin => `
+        adminData.admins.length
+          ? adminData.admins.map(
+              admin => {
+
+                const telegramId =
+                  String(
+                    admin.telegram_id ||
+                    ""
+                  );
+
+                return `
 
             <div class="admin-admin-card">
 
@@ -4877,9 +4934,7 @@ function renderAdminAdmins() {
 
                   ID:
                   ${escapeHtml(
-                    String(
-                      admin.telegram_id
-                    )
+                    telegramId
                   )}
 
                 </div>
@@ -4900,14 +4955,12 @@ function renderAdminAdmins() {
 
 
               ${
-                String(
-                  admin.telegram_id
-                ) !==
+                telegramId !==
                 "8043641301"
                   ? `
                     <button
                       class="admin-delete-btn"
-                      onclick="deleteAdmin(${admin.id})"
+                      onclick="deleteAdmin(${Number(admin.id)})"
                     >
                       🗑️
                     </button>
@@ -4921,8 +4974,14 @@ function renderAdminAdmins() {
 
             </div>
 
+          `;
+              }
+            ).join("")
+          : `
+            <div class="empty-box">
+              Hozircha boshqa adminlar yo'q.
+            </div>
           `
-        ).join("")
       }
 
     </div>
@@ -4941,7 +5000,7 @@ function openAddAdminForm() {
     "super_admin"
   ) {
 
-    tg.showAlert(
+    showAlert(
       "Faqat Super Admin admin qo'sha oladi."
     );
 
@@ -4969,47 +5028,64 @@ function openAddAdminForm() {
 
         <div class="admin-form">
 
-          <label>
-            Telegram ID
-          </label>
+          <div class="apple-field">
 
-          <input
-            id="new-admin-telegram-id"
-            type="number"
-            placeholder="Masalan: 123456789"
-          >
+            <label>
+              Telegram ID
+            </label>
 
+            <input
+              id="new-admin-telegram-id"
+              class="apple-input"
+              type="number"
+              placeholder="Masalan: 123456789"
+            >
 
-          <label>
-            Ism
-          </label>
-
-          <input
-            id="new-admin-name"
-            type="text"
-            placeholder="Admin ismi"
-          >
+          </div>
 
 
-          <label>
-            Huquq
-          </label>
+          <div class="apple-field">
 
-          <select id="new-admin-role">
+            <label>
+              Ism
+            </label>
 
-            <option value="admin">
-              🛡️ Admin
-            </option>
+            <input
+              id="new-admin-name"
+              class="apple-input"
+              type="text"
+              placeholder="Admin ismi"
+            >
 
-            <option value="super_admin">
-              👑 Super Admin
-            </option>
+          </div>
 
-          </select>
+
+          <div class="apple-field">
+
+            <label>
+              Huquq
+            </label>
+
+            <select
+              id="new-admin-role"
+              class="apple-input"
+            >
+
+              <option value="admin">
+                🛡️ Admin
+              </option>
+
+              <option value="super_admin">
+                👑 Super Admin
+              </option>
+
+            </select>
+
+          </div>
 
 
           <button
-            class="btn"
+            class="apple-save-button"
             onclick="addAdmin()"
           >
             ➕ Admin qo'shish
@@ -5052,7 +5128,7 @@ async function addAdmin() {
 
   if (!telegramId) {
 
-    tg.showAlert(
+    showAlert(
       "Telegram ID kiriting."
     );
 
@@ -5076,7 +5152,7 @@ async function addAdmin() {
     );
 
 
-    tg.showAlert(
+    showAlert(
       "✅ Admin qo'shildi."
     );
 
@@ -5085,8 +5161,9 @@ async function addAdmin() {
 
   } catch (error) {
 
-    tg.showAlert(
-      error.message
+    showAlert(
+      error.message ||
+      "Admin qo'shishda xatolik."
     );
   }
 }
@@ -5111,11 +5188,11 @@ function deleteAdmin(id) {
       try {
 
         await adminApi(
-          `/api/admin/admins/${id}/delete`
+          `/api/admin/admins/${Number(id)}/delete`
         );
 
 
-        tg.showAlert(
+        showAlert(
           "✅ Admin o'chirildi."
         );
 
@@ -5124,14 +5201,46 @@ function deleteAdmin(id) {
 
       } catch (error) {
 
-        tg.showAlert(
-          error.message
+        showAlert(
+          error.message ||
+          "Adminni o'chirishda xatolik."
         );
       }
     }
 
   );
 }
+
+
+// ======================================================
+// GLOBAL ERROR HANDLING
+// ======================================================
+
+window.addEventListener(
+  "error",
+  event => {
+
+    console.error(
+      "GLOBAL JS ERROR:",
+      event.error ||
+      event.message
+    );
+
+  }
+);
+
+
+window.addEventListener(
+  "unhandledrejection",
+  event => {
+
+    console.error(
+      "UNHANDLED PROMISE ERROR:",
+      event.reason
+    );
+
+  }
+);
 
 
 // ======================================================
@@ -5242,7 +5351,7 @@ async function startApp() {
 
     try {
 
-      tg.showAlert(
+      showAlert(
         error.message ||
         "Ilovani ishga tushirishda xatolik."
       );
