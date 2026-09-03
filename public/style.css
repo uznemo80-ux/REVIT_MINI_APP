@@ -3590,3 +3590,213 @@ a {
   }
 
 }
+
+/* ======================================================
+   APPLE STYLE REGISTRATION
+====================================================== */
+
+.apple-registration {
+  min-height: calc(100vh - 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 32px 20px 40px;
+}
+
+.apple-registration-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 55px;
+}
+
+.apple-registration-logo {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.apple-registration-brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.apple-registration-content {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.apple-registration-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 27px;
+}
+
+.apple-registration-content h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+.apple-registration-description {
+  max-width: 320px;
+  margin: 12px auto 30px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.apple-registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.apple-registration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.apple-registration-field label {
+  padding-left: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.apple-registration-field input {
+  width: 100%;
+  height: 50px;
+  box-sizing: border-box;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  outline: none;
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.apple-registration-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.apple-registration-field input:focus {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px
+    rgba(36,129,204,.12);
+}
+
+.apple-phone-input {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.apple-phone-input > span {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 15px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.apple-phone-input input {
+  height: 100%;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding-left: 8px !important;
+}
+
+.apple-registration-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-top: 7px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform .15s ease,
+    opacity .15s ease;
+}
+
+.apple-registration-button:active {
+  transform: scale(.98);
+}
+
+.apple-registration-button span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.apple-registration-note {
+  max-width: 310px;
+  margin: 20px auto 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+
+  .apple-registration {
+    padding-top: 24px;
+  }
+
+  .apple-registration-brand {
+    margin-bottom: 45px;
+  }
+
+  .apple-registration-content h1 {
+    font-size: 29px;
+  }
+
+  .apple-registration-description {
+    font-size: 13px;
+    margin-bottom: 26px;
+  }
+
+}
