@@ -49,8 +49,6 @@ function toggleTheme() {
     currentTheme
   );
 
-  applyTheme(currentTheme);
-
   haptic();
   render();
 }
@@ -176,7 +174,13 @@ let state = {
 
   first_name: "",
 
+  last_name: "",
+
+  phone: "",
+
   telegram_id: "",
+
+  registered: false,
 
   is_admin: false,
 
@@ -251,16 +255,58 @@ async function loadAuth() {
 
   try {
 
+    if (!initData) {
+
+      throw new Error(
+        "Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
+      );
+
+    }
+
     const data =
       await api("/api/auth");
 
-    if (!data) return;
+    if (!data) {
 
-    state.is_admin =
-      data.is_admin === true;
+      throw new Error(
+        "Autentifikatsiya ma'lumotlari olinmadi."
+      );
 
-    state.admin_role =
-      data.admin_role || null;
+    }
+
+    state = {
+
+      ...state,
+
+      ...data,
+
+      first_name:
+        data.first_name || "",
+
+      last_name:
+        data.last_name || "",
+
+      phone:
+        data.phone || "",
+
+      telegram_id:
+        data.telegram_id || "",
+
+      registered:
+        data.registered === true,
+
+      has_access:
+        data.has_access === true,
+
+      is_admin:
+        data.is_admin === true,
+
+      admin_role:
+        data.admin_role || null
+
+    };
+
+    return data;
 
   } catch (error) {
 
@@ -271,6 +317,288 @@ async function loadAuth() {
 
     state.is_admin = false;
     state.admin_role = null;
+
+    throw error;
+
+  }
+
+}
+
+
+// ======================================================
+// REGISTRATION
+// ======================================================
+
+function renderRegistration() {
+
+  if (!app) return;
+
+  app.innerHTML = `
+
+    <div class="screen">
+
+      <div class="page registration-page">
+
+        <div class="registration-card">
+
+          <div class="registration-icon">
+            👋
+          </div>
+
+          <div class="page-title">
+            Xush kelibsiz!
+          </div>
+
+          <div class="registration-subtitle">
+
+            Ilovadan foydalanishni boshlash uchun
+            ma'lumotlaringizni kiriting.
+
+          </div>
+
+
+          <div class="admin-form">
+
+            <label>
+              Ismingiz
+            </label>
+
+            <input
+              id="register-first-name"
+              type="text"
+              autocomplete="given-name"
+              placeholder="Masalan: Abdulloh"
+            >
+
+
+            <label>
+              Familiyangiz
+            </label>
+
+            <input
+              id="register-last-name"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Masalan: Karimov"
+            >
+
+
+            <label>
+              Telefon raqamingiz
+            </label>
+
+            <input
+              id="register-phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              placeholder="+998 90 123 45 67"
+            >
+
+
+            <button
+              id="register-submit-btn"
+              class="btn"
+              onclick="submitRegistration()"
+            >
+
+              Davom etish
+
+            </button>
+
+          </div>
+
+
+          <div class="registration-note">
+
+            🔒 Sizning ma'lumotlaringiz faqat
+            kurs platformasidan foydalanish va
+            siz bilan bog'lanish uchun ishlatiladi.
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ======================================================
+// SUBMIT REGISTRATION
+// ======================================================
+
+async function submitRegistration() {
+
+  const firstName =
+    document.getElementById(
+      "register-first-name"
+    )?.value
+      ?.trim();
+
+  const lastName =
+    document.getElementById(
+      "register-last-name"
+    )?.value
+      ?.trim();
+
+  const phone =
+    document.getElementById(
+      "register-phone"
+    )?.value
+      ?.trim();
+
+
+  if (!firstName) {
+
+    tg.showAlert(
+      "Iltimos, ismingizni kiriting."
+    );
+
+    return;
+
+  }
+
+
+  if (!lastName) {
+
+    tg.showAlert(
+      "Iltimos, familiyangizni kiriting."
+    );
+
+    return;
+
+  }
+
+
+  if (!phone) {
+
+    tg.showAlert(
+      "Iltimos, telefon raqamingizni kiriting."
+    );
+
+    return;
+
+  }
+
+
+  const phoneDigits =
+    phone.replace(/[^\d]/g, "");
+
+  if (phoneDigits.length < 9) {
+
+    tg.showAlert(
+      "Telefon raqamini to‘g‘ri kiriting."
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "register-submit-btn"
+    );
+
+  if (button) {
+
+    button.disabled = true;
+
+    button.textContent =
+      "Saqlanmoqda...";
+
+  }
+
+
+  try {
+
+    haptic("medium");
+
+    const result =
+      await api(
+        "/api/register",
+        {
+          first_name:
+            firstName,
+
+          last_name:
+            lastName,
+
+          phone:
+            phone
+        }
+      );
+
+
+    if (!result || !result.ok) {
+
+      throw new Error(
+        result?.message ||
+        result?.error ||
+        "Ro‘yxatdan o‘tishda xatolik yuz berdi."
+      );
+
+    }
+
+
+    state = {
+
+      ...state,
+
+      ...(result.user || {}),
+
+      first_name:
+        result.user?.first_name ||
+        firstName,
+
+      last_name:
+        result.user?.last_name ||
+        lastName,
+
+      phone:
+        result.user?.phone ||
+        phone,
+
+      registered:
+        true
+
+    };
+
+
+    haptic("medium");
+
+    tg.showAlert(
+      "✅ Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi!"
+    );
+
+
+    await loadContent();
+
+  } catch (error) {
+
+    console.error(
+      "REGISTRATION ERROR:",
+      error
+    );
+
+    tg.showAlert(
+      error.message ||
+      "Ro‘yxatdan o‘tishda xatolik yuz berdi."
+    );
+
+    if (button) {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Davom etish";
+
+    }
 
   }
 
@@ -326,6 +654,31 @@ async function loadContent() {
       ...state,
       ...data,
 
+      first_name:
+        data.first_name ??
+        state.first_name ??
+        "",
+
+      last_name:
+        data.last_name ??
+        state.last_name ??
+        "",
+
+      phone:
+        data.phone ??
+        state.phone ??
+        "",
+
+      registered:
+        data.registered ??
+        state.registered ??
+        false,
+
+      telegram_id:
+        data.telegram_id ??
+        state.telegram_id ??
+        "",
+
       is_admin:
         state.is_admin,
 
@@ -354,6 +707,17 @@ async function loadContent() {
             Ma'lumotlarni yuklashda
             xatolik yuz berdi.
 
+            <br><br>
+
+            <button
+              class="btn"
+              onclick="location.reload()"
+            >
+
+              🔄 Qayta urinish
+
+            </button>
+
           </div>
 
         </div>
@@ -365,6 +729,7 @@ async function loadContent() {
     try {
 
       tg.showAlert(
+        error.message ||
         "Ma'lumotlarni yuklashda xatolik yuz berdi."
       );
 
@@ -768,7 +1133,14 @@ function renderHome() {
       <div class="welcome-hero">
 
         <div class="welcome-title">
-          Xush kelibsiz
+          Xush kelibsiz${
+            state.first_name
+              ? ", " +
+                escapeHtml(
+                  state.first_name
+                )
+              : ""
+          }
         </div>
 
         <div class="welcome-sub">
@@ -1612,6 +1984,17 @@ function renderAdminButton() {
 
 function renderProfile() {
 
+  const fullName = [
+
+    state.first_name || "",
+
+    state.last_name || ""
+
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+
   return `
 
     <div class="page">
@@ -1639,7 +2022,7 @@ function renderProfile() {
 
           ${
             escapeHtml(
-              state.first_name ||
+              fullName ||
               "Foydalanuvchi"
             )
           }
@@ -1664,6 +2047,26 @@ function renderProfile() {
           ? renderAdminButton()
           : ""
       }
+
+
+      <div class="info-row">
+
+        <span>
+          Telefon
+        </span>
+
+        <span>
+
+          ${
+            escapeHtml(
+              state.phone ||
+              "Kiritilmagan"
+            )
+          }
+
+        </span>
+
+      </div>
 
 
       <div class="info-row">
@@ -2674,11 +3077,6 @@ async function loadAdminStudents() {
 
 async function loadAdminModules() {
 
-  /*
-    Backenddan modullarni olamiz.
-    Agar /api/admin/modules bo'lsa ishlaydi.
-  */
-
   const data =
     await adminApi(
       "/api/admin/modules"
@@ -3089,7 +3487,12 @@ function renderAdminStudents() {
 
                   ${
                     escapeHtml(
-                      student.first_name ||
+                      [
+                        student.first_name || "",
+                        student.last_name || ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ") ||
                       "Foydalanuvchi"
                     )
                   }
@@ -3109,6 +3512,17 @@ function renderAdminStudents() {
                   }
 
                 </div>
+
+
+                ${
+                  student.phone
+                    ? `
+                      <div class="admin-student-username">
+                        📞 ${escapeHtml(student.phone)}
+                      </div>
+                    `
+                    : ""
+                }
 
 
                 <div class="admin-student-progress">
@@ -3163,6 +3577,21 @@ async function openAdminStudent(id) {
         `/api/admin/student/${id}`
       );
 
+    const student =
+      data.student || {};
+
+
+    const fullName = [
+
+      student.first_name || "",
+
+      student.last_name || ""
+
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+
     currentView = {
 
       html: `
@@ -3185,7 +3614,7 @@ async function openAdminStudent(id) {
 
               👨‍🎓 ${
                 escapeHtml(
-                  data.student?.first_name ||
+                  fullName ||
                   "O'quvchi"
                 )
               }
@@ -3200,6 +3629,66 @@ async function openAdminStudent(id) {
             <div class="info-row">
 
               <span>
+                Ism
+              </span>
+
+              <span>
+
+                ${
+                  escapeHtml(
+                    student.first_name ||
+                    "-"
+                  )
+                }
+
+              </span>
+
+            </div>
+
+
+            <div class="info-row">
+
+              <span>
+                Familiya
+              </span>
+
+              <span>
+
+                ${
+                  escapeHtml(
+                    student.last_name ||
+                    "-"
+                  )
+                }
+
+              </span>
+
+            </div>
+
+
+            <div class="info-row">
+
+              <span>
+                Telefon
+              </span>
+
+              <span>
+
+                ${
+                  escapeHtml(
+                    student.phone ||
+                    "-"
+                  )
+                }
+
+              </span>
+
+            </div>
+
+
+            <div class="info-row">
+
+              <span>
                 Telegram ID
               </span>
 
@@ -3208,7 +3697,7 @@ async function openAdminStudent(id) {
                 ${
                   escapeHtml(
                     String(
-                      data.student?.telegram_id ||
+                      student.telegram_id ||
                       ""
                     )
                   )
@@ -3228,10 +3717,10 @@ async function openAdminStudent(id) {
               <span>
 
                 ${
-                  data.student?.username
+                  student.username
                     ? "@" +
                       escapeHtml(
-                        data.student.username
+                        student.username
                       )
                     : "-"
                 }
@@ -3250,7 +3739,7 @@ async function openAdminStudent(id) {
               <span>
 
                 ${
-                  data.student?.has_access
+                  student.has_access
                     ? "🟢 Faol"
                     : "🔴 Faol emas"
                 }
@@ -3397,12 +3886,6 @@ async function adminOpenLessons() {
       "ADMIN MODULE ERROR:",
       error
     );
-
-    /*
-      Agar backendda /api/admin/modules
-      hozircha bo'lmasa, /api/content orqali
-      modullarni ko'rsatishga harakat qilamiz.
-    */
 
     try {
 
@@ -3891,10 +4374,6 @@ async function createAdminLesson() {
 async function openEditLessonForm(id) {
 
   try {
-
-    /*
-      Darsning mavjud ma'lumotini olish.
-    */
 
     const lesson =
       await api(
@@ -5137,10 +5616,116 @@ console.log(
 
 async function startApp() {
 
-  await loadAuth();
+  try {
 
-  await loadContent();
+    if (!initData) {
+
+      throw new Error(
+        "Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
+      );
+
+    }
+
+
+    const authData =
+      await loadAuth();
+
+
+    if (!authData) {
+
+      throw new Error(
+        "Autentifikatsiya ma'lumotlari olinmadi."
+      );
+
+    }
+
+
+    /*
+      ADMIN:
+      Registration talab qilinmaydi.
+    */
+
+    if (
+      !authData.registered &&
+      !authData.is_admin
+    ) {
+
+      currentView = null;
+
+      activeTab = "home";
+
+      renderRegistration();
+
+      return;
+
+    }
+
+
+    /*
+      Oddiy foydalanuvchi ro'yxatdan o'tgan
+      yoki admin bo'lsa — kontentni yuklaymiz.
+    */
+
+    await loadContent();
+
+  } catch (error) {
+
+    console.error(
+      "START APP ERROR:",
+      error
+    );
+
+    if (app) {
+
+      app.innerHTML = `
+
+        <div class="page">
+
+          <div class="empty-box">
+
+            Ilovani ishga tushirishda
+            xatolik yuz berdi.
+
+            <br><br>
+
+            <small>
+              ${escapeHtml(
+                error.message ||
+                "Noma'lum xatolik"
+              )}
+            </small>
+
+            <br><br>
+
+            <button
+              class="btn"
+              onclick="location.reload()"
+            >
+
+              🔄 Qayta urinish
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+    try {
+
+      tg.showAlert(
+        error.message ||
+        "Ilovani ishga tushirishda xatolik yuz berdi."
+      );
+
+    } catch (e) {}
+
+  }
 
 }
+
 
 startApp();
