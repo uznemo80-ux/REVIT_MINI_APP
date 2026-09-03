@@ -92,6 +92,7 @@ function generateBunnyToken(
     .digest('hex');
 }
 
+
 function generateBunnyPlayerUrl(
   libraryId,
   videoId
@@ -118,42 +119,56 @@ function generateBunnyPlayerUrl(
 // ======================================================
 
 function getYouTubeVideoId(url) {
+
   if (!url) {
     return null;
   }
 
   try {
+
     const parsedUrl =
       new URL(url);
 
+    const hostname =
+      parsedUrl.hostname.toLowerCase();
+
+    // ----------------------------------------------
+    // youtu.be
+    // ----------------------------------------------
+
     if (
-      parsedUrl.hostname ===
-      'youtu.be'
+      hostname === 'youtu.be'
     ) {
+
       return (
         parsedUrl.pathname
-          .replace('/', '')
+          .replace(/^\/+/, '')
+          .split('/')[0]
           .trim() || null
       );
+
     }
 
+    // ----------------------------------------------
+    // youtube.com
+    // ----------------------------------------------
+
     if (
-      parsedUrl.hostname ===
-        'youtube.com' ||
-      parsedUrl.hostname ===
-        'www.youtube.com' ||
-      parsedUrl.hostname ===
-        'm.youtube.com'
+      hostname === 'youtube.com' ||
+      hostname === 'www.youtube.com' ||
+      hostname === 'm.youtube.com'
     ) {
 
+      // youtube.com/watch?v=XXXXX
+
       const videoId =
-        parsedUrl.searchParams.get(
-          'v'
-        );
+        parsedUrl.searchParams.get('v');
 
       if (videoId) {
         return videoId;
       }
+
+      // youtube.com/embed/XXXXX
 
       const embedMatch =
         parsedUrl.pathname.match(
@@ -164,6 +179,8 @@ function getYouTubeVideoId(url) {
         return embedMatch[1];
       }
 
+      // youtube.com/shorts/XXXXX
+
       const shortsMatch =
         parsedUrl.pathname.match(
           /^\/shorts\/([^/]+)/
@@ -172,6 +189,7 @@ function getYouTubeVideoId(url) {
       if (shortsMatch) {
         return shortsMatch[1];
       }
+
     }
 
     return null;
@@ -187,9 +205,11 @@ function getYouTubeVideoId(url) {
   }
 }
 
+
 function generateYouTubePlayerUrl(
   youtubeUrl
 ) {
+
   const videoId =
     getYouTubeVideoId(
       youtubeUrl
@@ -319,6 +339,7 @@ app.post(
             error:
               'Telegram foydalanuvchisi tekshirilmadi'
           });
+
       }
 
       return res.json({
@@ -364,9 +385,9 @@ app.post(
 
     try {
 
-      // ------------------------------------------------
+      // ==================================================
       // USER
-      // ------------------------------------------------
+      // ==================================================
 
       const user =
         await getOrCreateUser(
@@ -383,16 +404,16 @@ app.post(
           });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // ACCESS
-      // ------------------------------------------------
+      // ==================================================
 
       const userHasAccess =
         hasAccess(user);
 
-      // ------------------------------------------------
+      // ==================================================
       // MODULES
-      // ------------------------------------------------
+      // ==================================================
 
       const modulesResult =
         await pool.query(
@@ -404,16 +425,18 @@ app.post(
 
           FROM modules
 
-          ORDER BY order_index
+          ORDER BY
+            order_index ASC,
+            id ASC
           `
         );
 
       const modules =
         modulesResult.rows;
 
-      // ------------------------------------------------
+      // ==================================================
       // LESSONS
-      // ------------------------------------------------
+      // ==================================================
 
       const lessonsResult =
         await pool.query(
@@ -430,32 +453,59 @@ app.post(
           FROM lessons
 
           ORDER BY
-            module_id,
-            order_index
+            module_id ASC,
+            order_index ASC,
+            id ASC
           `
         );
 
       const lessons =
         lessonsResult.rows;
 
-      // ------------------------------------------------
-      // MODULE DATA
-      // ------------------------------------------------
+      // ==================================================
+      // FIRST MODULE
+      // ==================================================
+
+      /*
+       * Eng birinchi modul doimo ochiq.
+       *
+       * Bu yerda:
+       *
+       * order_index = 1
+       *
+       * deb taxmin qilmaymiz.
+       *
+       * Bazadagi ORDER BY bo‘yicha
+       * birinchi modulni olamiz.
+       */
+
+      const firstModuleId =
+        modules.length
+          ? modules[0].id
+          : null;
+
+      // ==================================================
+      // BUILD MODULE DATA
+      // ==================================================
 
       const data =
         modules.map(
-          (module, index) => {
+          (module) => {
+
+            const isFirstModule =
+              module.id ===
+              firstModuleId;
 
             /*
-             * 1-MODUL:
-             * DOIMO OCHIQ.
+             * MODUL OCHILISHI
              *
-             * 2-MODUL VA KEYINGILAR:
-             * faqat to‘lovdan keyin ochiladi.
+             * 1-modul -> doimo ochiq
+             *
+             * 2+ modul -> faqat to‘lovdan keyin
              */
 
             const moduleUnlocked =
-              index === 0 ||
+              isFirstModule ||
               userHasAccess;
 
             return {
@@ -483,23 +533,22 @@ app.post(
                     lesson => {
 
                       /*
-                       * DARS OCHILISH QOIDASI:
+                       * DARS OCHILISHI
                        *
                        * is_free = true
-                       * → bepul preview
+                       * -> doimo ochiq
                        *
-                       * Modul 1
-                       * → bepul
+                       * 1-modul
+                       * -> doimo ochiq
                        *
-                       * Access mavjud
-                       * → pullik dars ochiladi
-                       *
-                       * Aks holda
-                       * → yopiq
+                       * paid user
+                       * -> barcha darslar ochiq
                        */
 
                       const available =
-                        lesson.is_free ||
+                        Boolean(
+                          lesson.is_free
+                        ) ||
                         moduleUnlocked;
 
                       return {
@@ -511,7 +560,9 @@ app.post(
                           lesson.title,
 
                         is_free:
-                          lesson.is_free,
+                          Boolean(
+                            lesson.is_free
+                          ),
 
                         task_text:
                           lesson.task_text,
@@ -523,14 +574,15 @@ app.post(
 
                     }
                   )
+
             };
 
           }
         );
 
-      // ------------------------------------------------
+      // ==================================================
       // RESPONSE
-      // ------------------------------------------------
+      // ==================================================
 
       return res.json({
 
@@ -578,9 +630,9 @@ app.post(
 
     try {
 
-      // ------------------------------------------------
+      // ==================================================
       // USER
-      // ------------------------------------------------
+      // ==================================================
 
       const user =
         await getOrCreateUser(
@@ -597,9 +649,9 @@ app.post(
           });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // LESSON
-      // ------------------------------------------------
+      // ==================================================
 
       const lessonResult =
         await pool.query(
@@ -629,9 +681,9 @@ app.post(
           });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // MODULE
-      // ------------------------------------------------
+      // ==================================================
 
       const moduleResult =
         await pool.query(
@@ -663,35 +715,58 @@ app.post(
           });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // ACCESS
-      // ------------------------------------------------
+      // ==================================================
 
       const userHasAccess =
         hasAccess(user);
 
+      // ==================================================
+      // FIRST MODULE
+      // ==================================================
+
       /*
-       * Modulning order_index = 1 bo‘lsa:
-       * bepul.
-       *
-       * Keyingi modullar:
-       * faqat access bo‘lsa ochiladi.
-       *
-       * Lekin is_free = true bo‘lgan
-       * darslar har doim ochiq.
+       * Eng birinchi modulni
+       * bazadan aniqlaymiz.
        */
 
+      const firstModuleResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM modules
+
+          ORDER BY
+            order_index ASC,
+            id ASC
+
+          LIMIT 1
+          `
+        );
+
+      const firstModule =
+        firstModuleResult.rows[0];
+
       const isFirstModule =
-        Number(module.order_index) === 1;
+        firstModule &&
+        Number(firstModule.id) ===
+        Number(module.id);
+
+      // ==================================================
+      // LESSON ACCESS
+      // ==================================================
 
       const lessonAvailable =
-        lesson.is_free ||
+        Boolean(lesson.is_free) ||
         isFirstModule ||
         userHasAccess;
 
-      // ------------------------------------------------
+      // ==================================================
       // LOCK
-      // ------------------------------------------------
+      // ==================================================
 
       if (!lessonAvailable) {
 
@@ -708,9 +783,9 @@ app.post(
           });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // FILES
-      // ------------------------------------------------
+      // ==================================================
 
       const filesResult =
         await pool.query(
@@ -724,7 +799,8 @@ app.post(
 
           WHERE lesson_id = $1
 
-          ORDER BY id
+          ORDER BY
+            id ASC
           `,
           [lesson.id]
         );
@@ -732,44 +808,60 @@ app.post(
       const files =
         filesResult.rows;
 
-      // ------------------------------------------------
+      // ==================================================
       // PROGRESS
-      // ------------------------------------------------
+      // ==================================================
 
-      await pool.query(
-        `
-        INSERT INTO progress
-        (
-          user_id,
-          lesson_id,
-          watched
-        )
+      try {
 
-        VALUES
-        (
-          $1,
-          $2,
-          true
-        )
+        await pool.query(
+          `
+          INSERT INTO progress
+          (
+            user_id,
+            lesson_id,
+            watched
+          )
 
-        ON CONFLICT
-        (
-          user_id,
-          lesson_id
-        )
+          VALUES
+          (
+            $1,
+            $2,
+            true
+          )
 
-        DO UPDATE SET
-          watched = true
-        `,
-        [
-          user.id,
-          lesson.id
-        ]
-      );
+          ON CONFLICT
+          (
+            user_id,
+            lesson_id
+          )
 
-      // ------------------------------------------------
+          DO UPDATE SET
+            watched = true
+          `,
+          [
+            user.id,
+            lesson.id
+          ]
+        );
+
+      } catch (progressError) {
+
+        /*
+         * Progress jadvalida muammo bo‘lsa,
+         * darsni ochishga to‘sqinlik qilmaymiz.
+         */
+
+        console.error(
+          'PROGRESS ERROR:',
+          progressError
+        );
+
+      }
+
+      // ==================================================
       // YOUTUBE
-      // ------------------------------------------------
+      // ==================================================
 
       const youtubePlayerUrl =
         generateYouTubePlayerUrl(
@@ -804,58 +896,62 @@ app.post(
         });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // BUNNY
-      // ------------------------------------------------
+      // ==================================================
 
       if (
-        !lesson.bunny_video_id ||
-        !process.env.BUNNY_LIBRARY_ID
+        lesson.bunny_video_id &&
+        process.env.BUNNY_LIBRARY_ID
       ) {
 
-        return res
-          .status(500)
-          .json({
+        const bunnyPlayerUrl =
+          generateBunnyPlayerUrl(
+            process.env.BUNNY_LIBRARY_ID,
+            lesson.bunny_video_id
+          );
 
-            error:
-              'Bu dars uchun video sozlanmagan'
+        return res.json({
 
-          });
+          id:
+            lesson.id,
+
+          title:
+            lesson.title,
+
+          video_type:
+            'bunny',
+
+          bunny_video_id:
+            lesson.bunny_video_id,
+
+          bunny_library_id:
+            process.env.BUNNY_LIBRARY_ID,
+
+          bunny_player_url:
+            bunnyPlayerUrl,
+
+          task_text:
+            lesson.task_text,
+
+          files:
+            files
+
+        });
       }
 
-      const bunnyPlayerUrl =
-        generateBunnyPlayerUrl(
-          process.env.BUNNY_LIBRARY_ID,
-          lesson.bunny_video_id
-        );
+      // ==================================================
+      // VIDEO NOT FOUND
+      // ==================================================
 
-      return res.json({
+      return res
+        .status(500)
+        .json({
 
-        id:
-          lesson.id,
+          error:
+            'Bu dars uchun video sozlanmagan'
 
-        title:
-          lesson.title,
-
-        video_type:
-          'bunny',
-
-        bunny_video_id:
-          lesson.bunny_video_id,
-
-        bunny_library_id:
-          process.env.BUNNY_LIBRARY_ID,
-
-        bunny_player_url:
-          bunnyPlayerUrl,
-
-        task_text:
-          lesson.task_text,
-
-        files:
-          files
-
-      });
+        });
 
     } catch (error) {
 
@@ -914,7 +1010,9 @@ app.post(
 
           WHERE module_id = $1
 
-          ORDER BY order_index
+          ORDER BY
+            order_index ASC,
+            id ASC
           `,
           [req.params.id]
         );
@@ -983,6 +1081,9 @@ app.post(
           FROM module_tests
 
           WHERE module_id = $1
+
+          ORDER BY
+            id ASC
           `,
           [req.params.id]
         );
@@ -996,14 +1097,26 @@ app.post(
         const question of questions
       ) {
 
+        /*
+         * Telegram/JS JSON orqali
+         * raqam ba'zida string bo‘lib kelishi mumkin.
+         *
+         * Shuning uchun Number() ishlatamiz.
+         */
+
         if (
-          answers[question.id] ===
-          question.correct_index
+          Number(
+            answers[question.id]
+          ) ===
+          Number(
+            question.correct_index
+          )
         ) {
 
           correct++;
 
         }
+
       }
 
       const score =
@@ -1056,6 +1169,18 @@ app.post(
         ]
       );
 
+      /*
+       * MUHIM:
+       *
+       * Testdan o'tish modulni ochmaydi.
+       *
+       * Modulga kirish faqat:
+       *
+       * access_until
+       *
+       * orqali boshqariladi.
+       */
+
       return res.json({
 
         score,
@@ -1101,9 +1226,9 @@ app.post(
 
     try {
 
-      // ------------------------------------------------
+      // ==================================================
       // USER
-      // ------------------------------------------------
+      // ==================================================
 
       const user =
         await getOrCreateUser(
@@ -1143,9 +1268,9 @@ app.post(
         user.username
       );
 
-      // ------------------------------------------------
+      // ==================================================
       // ACCESS BOR
-      // ------------------------------------------------
+      // ==================================================
 
       if (hasAccess(user)) {
 
@@ -1159,9 +1284,9 @@ app.post(
         });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // PENDING REQUEST
-      // ------------------------------------------------
+      // ==================================================
 
       const existingResult =
         await pool.query(
@@ -1180,9 +1305,9 @@ app.post(
           [user.id]
         );
 
-      // ------------------------------------------------
+      // ==================================================
       // OLDIN SO‘ROV YUBORILGAN
-      // ------------------------------------------------
+      // ==================================================
 
       if (
         existingResult.rows.length > 0
@@ -1231,9 +1356,9 @@ app.post(
         });
       }
 
-      // ------------------------------------------------
+      // ==================================================
       // CREATE PAYMENT REQUEST
-      // ------------------------------------------------
+      // ==================================================
 
       const requestResult =
         await pool.query(
@@ -1260,9 +1385,9 @@ app.post(
         requestResult.rows[0].id
       );
 
-      // ------------------------------------------------
+      // ==================================================
       // ADMIN MESSAGE
-      // ------------------------------------------------
+      // ==================================================
 
       const adminMessage =
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
@@ -1303,9 +1428,9 @@ app.post(
         '✅ ADMINGA XABAR YUBORILDI'
       );
 
-      // ------------------------------------------------
+      // ==================================================
       // RESPONSE
-      // ------------------------------------------------
+      // ==================================================
 
       return res.json({
 
@@ -1407,19 +1532,50 @@ app.get(
 
 app.get(
   '/api/health',
-  (req, res) => {
+  async (req, res) => {
 
-    res.json({
+    try {
 
-      ok: true,
+      await pool.query(
+        'SELECT 1'
+      );
 
-      message:
-        'Server ishlayapti',
+      return res.json({
 
-      admin_telegram_id:
-        ADMIN_TELEGRAM_ID
+        ok: true,
 
-    });
+        message:
+          'Server ishlayapti',
+
+        database:
+          'connected',
+
+        admin_telegram_id:
+          ADMIN_TELEGRAM_ID
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'HEALTH DATABASE ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          message:
+            'Server ishlayapti, lekin database bilan aloqa yo‘q',
+
+          database:
+            'error'
+
+        });
+    }
   }
 );
 
@@ -1446,5 +1602,6 @@ app.listen(
     console.log(
       '========================================'
     );
+
   }
 );
