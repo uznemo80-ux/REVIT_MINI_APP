@@ -3944,528 +3944,149 @@ async function adminOpenLessons() {
 
 
 // ======================================================
-// LESSON LIST
+// APPLE STYLE REGISTRATION
 // ======================================================
 
-function renderAdminLessons() {
-
-  const modules = Array.isArray(adminData.modules)
-    ? adminData.modules
-    : [];
-
-  return `
-
-    <div class="apple-admin-lessons">
-
-      <div class="apple-admin-top">
-
-        <div>
-
-          <div class="apple-admin-title">
-            Darslar
-          </div>
-
-          <div class="apple-admin-subtitle">
-            Kurs darslarini boshqaring
-          </div>
-
-        </div>
-
-        <button
-          class="apple-primary-btn"
-          onclick="openAddLessonForm()"
-        >
-          ＋ Dars qo‘shish
-        </button>
-
-      </div>
-
-
-      <div class="apple-module-selector">
-
-        <div class="apple-section-label">
-          Modullar
-        </div>
-
-        <div class="apple-module-scroll">
-
-          ${
-            modules.length
-              ? modules.map(
-                  (module, index) => `
-
-                    <button
-                      class="apple-module-pill"
-                      onclick="document
-                        .getElementById('admin-module-${module.id}')
-                        ?.scrollIntoView({
-                          behavior:'smooth',
-                          block:'start'
-                        })"
-                    >
-
-                      ${String(index + 1).padStart(2, "0")}
-
-                      <span>
-                        ${escapeHtml(
-                          module.title || "Modul"
-                        )}
-                      </span>
-
-                    </button>
-
-                  `
-                ).join("")
-              : `
-                <div class="apple-empty">
-                  Hali modul mavjud emas.
-                </div>
-              `
-          }
-
-        </div>
-
-      </div>
-
-
-      <div class="apple-admin-modules">
-
-        ${
-          modules.length
-            ? modules.map(
-                (module, index) => {
-
-                  const lessons =
-                    Array.isArray(module.lessons)
-                      ? module.lessons
-                      : [];
-
-                  return `
-
-                    <section
-                      id="admin-module-${module.id}"
-                      class="apple-admin-module"
-                    >
-
-                      <div class="apple-module-header">
-
-                        <div class="apple-module-index">
-
-                          ${String(index + 1)
-                            .padStart(2, "0")}
-
-                        </div>
-
-                        <div class="apple-module-info">
-
-                          <div class="apple-module-title">
-                            ${escapeHtml(
-                              module.title || "Modul"
-                            )}
-                          </div>
-
-                          <div class="apple-module-count">
-
-                            ${lessons.length}
-                            ta dars
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-
-                      <div class="apple-lessons">
-
-                        ${
-                          lessons.length
-                            ? lessons.map(
-                                lesson => `
-
-                                  <div
-                                    class="apple-lesson"
-                                  >
-
-                                    <div
-                                      class="apple-lesson-number"
-                                    >
-                                      ${lesson.order_index}
-                                    </div>
-
-
-                                    <div
-                                      class="apple-lesson-content"
-                                    >
-
-                                      <div
-                                        class="apple-lesson-name"
-                                      >
-
-                                        ${escapeHtml(
-                                          lesson.title ||
-                                          "Nomsiz dars"
-                                        )}
-
-                                      </div>
-
-
-                                      <div
-                                        class="apple-lesson-meta"
-                                      >
-
-                                        ${
-                                          lesson.is_free
-                                            ? `
-                                              <span
-                                                class="apple-badge free"
-                                              >
-                                                Namuna
-                                              </span>
-                                            `
-                                            : `
-                                              <span
-                                                class="apple-badge paid"
-                                              >
-                                                Pullik
-                                              </span>
-                                            `
-                                        }
-
-
-                                        ${
-                                          lesson.youtube_url
-                                            ? `
-                                              <span
-                                                class="apple-badge"
-                                              >
-                                                ▶ YouTube
-                                              </span>
-                                            `
-                                            : ""
-                                        }
-
-
-                                        ${
-                                          lesson.bunny_video_id
-                                            ? `
-                                              <span
-                                                class="apple-badge"
-                                              >
-                                                ● Bunny
-                                              </span>
-                                            `
-                                            : ""
-                                        }
-
-                                      </div>
-
-                                    </div>
-
-
-                                    <div
-                                      class="apple-lesson-actions"
-                                    >
-
-                                      <button
-                                        class="apple-icon-button"
-                                        onclick="openLessonFiles(
-                                          ${lesson.id},
-                                          '${escapeHtml(
-                                            lesson.title || ""
-                                          )}'
-                                        )"
-                                        title="Materiallar"
-                                      >
-                                        📎
-                                      </button>
-
-
-                                      <button
-                                        class="apple-icon-button"
-                                        onclick="openEditLessonForm(
-                                          ${lesson.id}
-                                        )"
-                                        title="Tahrirlash"
-                                      >
-                                        ✎
-                                      </button>
-
-
-                                      <button
-                                        class="apple-icon-button danger"
-                                        onclick="deleteAdminLesson(
-                                          ${lesson.id}
-                                        )"
-                                        title="O‘chirish"
-                                      >
-                                        ×
-                                      </button>
-
-                                    </div>
-
-                                  </div>
-
-                                `
-                              ).join("")
-                            : `
-                              <div class="apple-empty">
-                                Bu modulda hali dars yo‘q.
-                              </div>
-                            `
-                        }
-
-                      </div>
-
-                    </section>
-
-                  `;
-
-                }
-              ).join("")
-            : ""
-        }
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-// ======================================================
-// ADD LESSON
-// ======================================================
-
-function openAddLessonForm() {
-
-  const modules =
-    Array.isArray(adminData.modules)
-      ? adminData.modules
-      : [];
+function renderRegistration() {
+
+  const tgUser =
+    tg.initDataUnsafe?.user || {};
+
+  const firstName =
+    state.first_name ||
+    tgUser.first_name ||
+    "";
+
+  const lastName =
+    state.last_name ||
+    tgUser.last_name ||
+    "";
 
   currentView = {
 
     html: `
 
-      <div class="admin-page">
+      <div class="apple-registration">
 
-        <div
-          class="apple-form-back"
-          onclick="adminOpenLessons()"
-        >
-          ← Darslar
-        </div>
+        <div class="apple-registration-brand">
 
-
-        <div class="apple-form-header">
-
-          <div class="apple-form-title">
-            Yangi dars
+          <div class="apple-registration-logo">
+            Y
           </div>
 
-          <div class="apple-form-subtitle">
-            Dars ma’lumotlarini kiriting
+          <div class="apple-registration-brand-name">
+            YOSHUZBEKK Academy
           </div>
 
         </div>
 
 
-        <div class="apple-form">
+        <div class="apple-registration-content">
 
-
-          <div class="apple-field">
-
-            <label>
-              Modul
-            </label>
-
-            <select
-              id="lesson-module-id"
-              class="apple-input"
-            >
-
-              <option value="">
-                Modulni tanlang
-              </option>
-
-              ${
-                modules.map(
-                  (module, index) => `
-
-                    <option value="${module.id}">
-
-                      ${index + 1}.
-                      ${escapeHtml(
-                        module.title
-                      )}
-
-                    </option>
-
-                  `
-                ).join("")
-              }
-
-            </select>
-
+          <div class="apple-registration-icon">
+            👋
           </div>
 
 
-          <div class="apple-field">
-
-            <label>
-              Dars raqami
-            </label>
-
-            <input
-              id="lesson-order"
-              class="apple-input"
-              type="number"
-              min="1"
-              placeholder="Masalan: 2"
-            >
-
-          </div>
+          <h1>
+            Xush kelibsiz!
+          </h1>
 
 
-          <div class="apple-field">
+          <p class="apple-registration-description">
 
-            <label>
-              Dars nomi
-            </label>
+            Kursdan foydalanishni boshlash uchun
+            ma’lumotlaringizni kiriting.
 
-            <input
-              id="lesson-title"
-              class="apple-input"
-              type="text"
-              placeholder="Masalan: Devor chizish"
-            >
-
-          </div>
+          </p>
 
 
-          <div class="apple-field">
-
-            <label>
-              YouTube video
-            </label>
-
-            <input
-              id="lesson-youtube"
-              class="apple-input"
-              type="url"
-              placeholder="https://youtube.com/..."
-            >
-
-            <small>
-              Unlisted YouTube linkini kiriting.
-            </small>
-
-          </div>
+          <div class="apple-registration-form">
 
 
-          <div class="apple-field">
+            <div class="apple-registration-field">
 
-            <label>
-              Bunny Video ID
-            </label>
+              <label>
+                Ism
+              </label>
 
-            <input
-              id="lesson-bunny"
-              class="apple-input"
-              type="text"
-              placeholder="Ixtiyoriy"
-            >
+              <input
+                id="reg-first-name"
+                type="text"
+                autocomplete="given-name"
+                placeholder="Ismingiz"
+                value="${escapeHtml(firstName)}"
+              >
 
-          </div>
-
-
-          <div class="apple-resource-box">
-
-            <div class="apple-resource-icon">
-              📎
             </div>
 
-            <div class="apple-resource-info">
 
-              <div class="apple-resource-title">
-                Dars materiallari
-              </div>
+            <div class="apple-registration-field">
 
-              <div class="apple-resource-text">
+              <label>
+                Familiya
+              </label>
 
-                Darsni saqlagandan keyin
-                Google Drive, RAR, ZIP, DWG
-                va boshqa fayllarni qo‘shishingiz mumkin.
+              <input
+                id="reg-last-name"
+                type="text"
+                autocomplete="family-name"
+                placeholder="Familiyangiz"
+                value="${escapeHtml(lastName)}"
+              >
+
+            </div>
+
+
+            <div class="apple-registration-field">
+
+              <label>
+                Telefon raqam
+              </label>
+
+              <div class="apple-phone-input">
+
+                <span>
+                  +998
+                </span>
+
+                <input
+                  id="reg-phone"
+                  type="tel"
+                  inputmode="numeric"
+                  autocomplete="tel"
+                  placeholder="90 123 45 67"
+                >
 
               </div>
 
             </div>
 
-          </div>
 
-
-          <div class="apple-field">
-
-            <label>
-              Vazifa
-            </label>
-
-            <textarea
-              id="lesson-task"
-              class="apple-input apple-textarea"
-              placeholder="Darsdan keyingi topshiriq..."
-            ></textarea>
-
-          </div>
-
-
-          <div class="apple-field">
-
-            <label>
-              Ogohlantirish
-            </label>
-
-            <textarea
-              id="lesson-warning"
-              class="apple-input apple-textarea"
-              placeholder="Ixtiyoriy..."
-            ></textarea>
-
-          </div>
-
-
-          <label class="apple-check-row">
-
-            <input
-              id="lesson-free"
-              type="checkbox"
+            <button
+              id="registration-submit"
+              class="apple-registration-button"
+              onclick="submitRegistration()"
             >
 
-            <div>
+              Davom etish
 
-              <div class="apple-check-title">
-                Namuna dars
-              </div>
+              <span>
+                →
+              </span>
 
-              <div class="apple-check-text">
-                Ushbu dars bepul ko‘rinadi.
-              </div>
-
-            </div>
-
-          </label>
+            </button>
 
 
-          <button
-            class="apple-save-button"
-            onclick="createAdminLesson()"
-          >
-            Darsni saqlash
-          </button>
+          </div>
 
+
+          <div class="apple-registration-note">
+
+            Ma’lumotlaringiz faqat kursdan foydalanish
+            va siz bilan bog‘lanish uchun ishlatiladi.
+
+          </div>
 
         </div>
 
@@ -4478,228 +4099,6 @@ function openAddLessonForm() {
   render();
 
 }
-
-
-// ======================================================
-// CREATE LESSON
-// ======================================================
-
-async function createAdminLesson() {
-
-  const moduleId =
-    document.getElementById(
-      "lesson-module-id"
-    )?.value;
-
-  const orderIndex =
-    document.getElementById(
-      "lesson-order"
-    )?.value;
-
-  const title =
-    document.getElementById(
-      "lesson-title"
-    )?.value
-      ?.trim();
-
-  const youtubeUrl =
-    document.getElementById(
-      "lesson-youtube"
-    )?.value
-      ?.trim();
-
-  const bunnyVideoId =
-    document.getElementById(
-      "lesson-bunny"
-    )?.value
-      ?.trim();
-
-  const taskText =
-    document.getElementById(
-      "lesson-task"
-    )?.value
-      ?.trim();
-
-  const warningText =
-    document.getElementById(
-      "lesson-warning"
-    )?.value
-      ?.trim();
-
-  const isFree =
-    document.getElementById(
-      "lesson-free"
-    )?.checked;
-
-
-  if (!moduleId) {
-
-    tg.showAlert(
-      "Modulni tanlang."
-    );
-
-    return;
-
-  }
-
-
-  if (!orderIndex) {
-
-    tg.showAlert(
-      "Dars raqamini kiriting."
-    );
-
-    return;
-
-  }
-
-
-  if (!title) {
-
-    tg.showAlert(
-      "Dars nomini kiriting."
-    );
-
-    return;
-
-  }
-
-
-  try {
-
-    haptic("medium");
-
-
-    await adminApi(
-      "/api/admin/lesson",
-      {
-
-        module_id:
-          Number(moduleId),
-
-        title:
-          title,
-
-        order_index:
-          Number(orderIndex),
-
-        youtube_url:
-          youtubeUrl || null,
-
-        task_text:
-          taskText || null,
-
-        is_free:
-          isFree,
-
-        bunny_video_id:
-          bunnyVideoId || null,
-
-        warning_text:
-          warningText || null
-
-      }
-    );
-
-
-    haptic("medium");
-
-
-    tg.showAlert(
-      "✅ Dars muvaffaqiyatli qo‘shildi."
-    );
-
-
-    await adminOpenLessons();
-
-
-  } catch (error) {
-
-    console.error(
-      "CREATE LESSON ERROR:",
-      error
-    );
-
-    tg.showAlert(
-      error.message ||
-      "Darsni qo‘shishda xatolik."
-    );
-
-  }
-
-}
-
-
-// ======================================================
-// EDIT LESSON
-// ======================================================
-
-async function openEditLessonForm(id) {
-
-  try {
-
-    const lesson =
-      await api(
-        `/api/lesson/${id}`
-      );
-
-
-    const modules =
-      Array.isArray(adminData.modules)
-        ? adminData.modules
-        : [];
-
-
-    currentView = {
-
-      html: `
-
-        <div class="admin-page">
-
-
-          <div
-            class="apple-form-back"
-            onclick="adminOpenLessons()"
-          >
-            ← Darslar
-          </div>
-
-
-          <div class="apple-form-header">
-
-            <div class="apple-form-title">
-              Darsni tahrirlash
-            </div>
-
-            <div class="apple-form-subtitle">
-
-              ${escapeHtml(
-                lesson.title || ""
-              )}
-
-            </div>
-
-          </div>
-
-
-          <div class="apple-form">
-
-
-            <div class="apple-field">
-
-              <label>
-                Modul
-              </label>
-
-              <select
-                id="edit-lesson-module"
-                class="apple-input"
-              >
-
-                ${
-                  modules.map(
-                    (module, index) => `
-
                       <option
                         value="${module.id}"
                         ${
