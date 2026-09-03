@@ -1,4 +1,4 @@
-```js
+```javascript
 const tg = window.Telegram.WebApp;
 
 tg.ready();
@@ -21,10 +21,8 @@ function applyTheme(theme) {
 
 }
 
-
 let currentTheme =
   localStorage.getItem("theme") || "dark";
-
 
 applyTheme(currentTheme);
 
@@ -83,6 +81,7 @@ function showConfirm(
     "modal-overlay";
 
   overlay.innerHTML = `
+
     <div class="modal-card">
 
       <div class="modal-title">
@@ -110,6 +109,7 @@ function showConfirm(
       </div>
 
     </div>
+
   `;
 
   document.body.appendChild(overlay);
@@ -702,10 +702,6 @@ function toggleAbout() {
     !button
   ) {
 
-    console.log(
-      "ABOUT ELEMENT TOPILMADI"
-    );
-
     return;
 
   }
@@ -882,7 +878,7 @@ function renderHome() {
 
         <div
           class="about-text about-full"
-          style="display: none;"
+          style="display:none;"
         >
 
           ${ABOUT_TEXT.replace(
@@ -1341,7 +1337,7 @@ function renderLessons() {
         onclick="setTab('chat')"
       >
 
-        To'liq kursga kirish
+        💳 To'liq kursga kirish
 
       </button>
 
@@ -1738,6 +1734,7 @@ async function requestAccess() {
             button.disabled = false;
 
           }
+
         );
 
       }
