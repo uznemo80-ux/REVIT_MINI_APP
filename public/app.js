@@ -1,3 +1,4 @@
+```js
 const tg = window.Telegram.WebApp;
 
 tg.ready();
@@ -365,8 +366,6 @@ function render() {
 
   `;
 
-
-  // MEN HAQIMDA CLICK
 
   const aboutButton =
     document.querySelector(
@@ -1226,26 +1225,12 @@ function renderLessons() {
             </div>
 
 
-            <div
-              class="tag ${
-                m.passed_test
-                  ? "passed"
-                  : ""
-              }"
-            >
+            <div class="tag">
 
               ${
                 m.unlocked
-
-                  ? (
-
-                      m.passed_test
-                        ? "Test topshirilgan"
-                        : "Ochiq"
-
-                    )
-
-                  : "Qulflangan"
+                  ? "Ochiq"
+                  : "🔒 Qulflangan"
               }
 
             </div>
@@ -1258,54 +1243,68 @@ function renderLessons() {
             id="mod-${m.id}"
           >
 
-            ${moduleLessons.map(
-              l => `
+            ${
+              moduleLessons.length
 
-                <div
+                ? moduleLessons.map(
+                    l => `
 
-                  class="lesson ${
-                    l.available
-                      ? ""
-                      : "disabled"
-                  }"
+                      <div
 
-                  onclick="${
-                    l.available
-                      ? `openLesson(${l.id})`
-                      : "showLockedInfo()"
-                  }"
-
-                >
-
-                  <span>
-                    ${l.title}
-                  </span>
-
-
-                  ${
-                    l.is_free
-
-                      ? `
-
-                        <span class="free-badge">
-                          Namuna
-                        </span>
-
-                      `
-
-                      : (
-
+                        class="lesson ${
                           l.available
                             ? ""
-                            : "🔒"
+                            : "disabled"
+                        }"
 
-                        )
-                  }
+                        onclick="${
+                          l.available
+                            ? `openLesson(${l.id})`
+                            : "showLockedInfo()"
+                        }"
 
-                </div>
+                      >
 
-              `
-            ).join("")}
+                        <span>
+                          ${l.title}
+                        </span>
+
+
+                        ${
+                          l.is_free
+
+                            ? `
+
+                              <span class="free-badge">
+                                Namuna
+                              </span>
+
+                            `
+
+                            : (
+
+                                l.available
+                                  ? ""
+                                  : "🔒"
+
+                              )
+                        }
+
+                      </div>
+
+                    `
+                  ).join("")
+
+                : `
+
+                    <div class="empty-box">
+
+                      Bu modulda hozircha darslar yo'q.
+
+                    </div>
+
+                  `
+            }
 
           </div>
 
@@ -1342,7 +1341,7 @@ function renderLessons() {
         onclick="setTab('chat')"
       >
 
-        To'liq kirish uchun murojaat qilish
+        To'liq kursga kirish
 
       </button>
 
@@ -1371,13 +1370,15 @@ function toggleModule(id) {
     );
 
 
-  if (el) {
+  if (!el) return;
 
-    el.classList.toggle(
-      "open"
-    );
 
-  }
+  el.classList.toggle(
+    "open"
+  );
+
+
+  haptic();
 
 }
 
@@ -1386,7 +1387,7 @@ function showLockedInfo() {
 
   tg.showAlert(
 
-    "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
+    "🔒 Bu dars yopiq.\n\nTo'liq kursga kirish uchun \"Chat\" bo'limidan admin bilan bog'laning."
 
   );
 
@@ -1623,23 +1624,7 @@ async function requestAccess() {
 
       try {
 
-        console.log(
-          "========================================"
-        );
-
-        console.log(
-          "📩 ADMIN REQUEST BOSHLANDI"
-        );
-
-
-        // Telegram initData
-
         if (!initData) {
-
-          console.error(
-            "❌ Telegram initData mavjud emas"
-          );
-
 
           tg.showAlert(
 
@@ -1652,13 +1637,6 @@ async function requestAccess() {
 
         }
 
-
-        console.log(
-          "✅ initData mavjud"
-        );
-
-
-        // Tugmalarni vaqtincha bloklash
 
         const buttons =
           document.querySelectorAll(
@@ -1675,26 +1653,11 @@ async function requestAccess() {
         );
 
 
-        // Serverga so'rov
-
-        console.log(
-          "📤 /api/request-access ga so‘rov yuborilmoqda..."
-        );
-
-
         const result =
           await api(
             "/api/request-access"
           );
 
-
-        console.log(
-          "📨 SERVER JAVOBI:",
-          result
-        );
-
-
-        // Oldin pending so‘rov bo'lgan
 
         if (
           result.already_pending
@@ -1715,8 +1678,6 @@ async function requestAccess() {
         }
 
 
-        // Muvaffaqiyatli
-
         if (
           result.ok
         ) {
@@ -1736,8 +1697,6 @@ async function requestAccess() {
         }
 
 
-        // Noma'lum javob
-
         throw new Error(
 
           result.error ||
@@ -1749,7 +1708,7 @@ async function requestAccess() {
       } catch (error) {
 
         console.error(
-          "❌ REQUEST ACCESS ERROR:",
+          "REQUEST ACCESS ERROR:",
           error
         );
 
@@ -1760,14 +1719,12 @@ async function requestAccess() {
 
           (
             error.message ||
-            "Server bilan bog‘lanib bo‘lmadi."
+            "Server bilan bog'lanib bo'lmadi."
           )
 
         );
 
       } finally {
-
-        // Tugmalarni qayta yoqish
 
         const buttons =
           document.querySelectorAll(
@@ -2006,7 +1963,9 @@ async function openLesson(id) {
     let videoHtml = "";
 
 
+    // ==================================================
     // YOUTUBE
+    // ==================================================
 
     if (
 
@@ -2049,7 +2008,9 @@ async function openLesson(id) {
     }
 
 
+    // ==================================================
     // BUNNY
+    // ==================================================
 
     else if (
 
@@ -2090,7 +2051,9 @@ async function openLesson(id) {
     }
 
 
+    // ==================================================
     // ESKI YOUTUBE FORMAT
+    // ==================================================
 
     else if (
       lesson.youtube_player_url
@@ -2117,7 +2080,9 @@ async function openLesson(id) {
     }
 
 
+    // ==================================================
     // ESKI BUNNY FORMAT
+    // ==================================================
 
     else if (
       lesson.bunny_player_url
@@ -2161,7 +2126,9 @@ async function openLesson(id) {
     }
 
 
+    // ==================================================
     // FILES
+    // ==================================================
 
     const filesHtml =
 
@@ -2172,7 +2139,7 @@ async function openLesson(id) {
 
           <div class="section-title">
 
-            Darslikda ishlatilgan fayllar
+            📥 Kerakli manba
 
           </div>
 
@@ -2213,7 +2180,9 @@ async function openLesson(id) {
         : "";
 
 
+    // ==================================================
     // DETAIL PAGE
+    // ==================================================
 
     currentView = {
 
@@ -2522,7 +2491,7 @@ async function submitTest(moduleId) {
 
       tg.showAlert(
 
-        `Tabriklaymiz! Natija: ${result.score}%. Keyingi modul ochildi.`
+        `Tabriklaymiz! Natija: ${result.score}%.`
 
       );
 
@@ -2579,3 +2548,4 @@ console.log(
 
 
 loadContent();
+```
