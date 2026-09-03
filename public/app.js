@@ -25,6 +25,9 @@ function escapeHtml(value) {
 // THEME
 // ======================================================
 
+let currentTheme =
+  localStorage.getItem("theme") || "dark";
+
 function applyTheme(theme) {
   document.documentElement.classList.toggle(
     "light",
@@ -32,22 +35,15 @@ function applyTheme(theme) {
   );
 }
 
-let currentTheme =
-  localStorage.getItem("theme") || "dark";
-
 applyTheme(currentTheme);
 
 function toggleTheme() {
-
   currentTheme =
     currentTheme === "dark"
       ? "light"
       : "dark";
 
-  localStorage.setItem(
-    "theme",
-    currentTheme
-  );
+  localStorage.setItem("theme", currentTheme);
 
   haptic();
   render();
@@ -59,11 +55,9 @@ function toggleTheme() {
 // ======================================================
 
 function haptic(style = "light") {
-
   try {
     tg.HapticFeedback.impactOccurred(style);
   } catch (e) {}
-
 }
 
 
@@ -77,7 +71,6 @@ function showConfirm(
   confirmLabel,
   onConfirm
 ) {
-
   const overlay =
     document.createElement("div");
 
@@ -85,7 +78,6 @@ function showConfirm(
     "modal-overlay";
 
   overlay.innerHTML = `
-
     <div class="modal-card">
 
       <div class="modal-title">
@@ -109,54 +101,31 @@ function showConfirm(
       </div>
 
     </div>
-
   `;
 
   document.body.appendChild(overlay);
 
-  const cancelButton =
-    overlay.querySelector(".cancel");
-
-  const confirmButton =
-    overlay.querySelector(".confirm");
-
-  if (cancelButton) {
-
-    cancelButton.onclick = () => {
-
+  overlay.querySelector(".cancel")?.addEventListener(
+    "click",
+    () => {
       haptic();
-
       overlay.remove();
+    }
+  );
 
-    };
-
-  }
-
-  if (confirmButton) {
-
-    confirmButton.onclick = async () => {
-
+  overlay.querySelector(".confirm")?.addEventListener(
+    "click",
+    async () => {
       haptic("medium");
-
       overlay.remove();
 
       try {
-
         await onConfirm();
-
       } catch (error) {
-
-        console.error(
-          "CONFIRM ERROR:",
-          error
-        );
-
+        console.error("CONFIRM ERROR:", error);
       }
-
-    };
-
-  }
-
+    }
+  );
 }
 
 
@@ -165,32 +134,28 @@ function showConfirm(
 // ======================================================
 
 let state = {
-
   has_access: false,
-
   modules: [],
-
   access_until: null,
 
   first_name: "",
-
   last_name: "",
-
   phone: "",
-
   telegram_id: "",
 
   registered: false,
 
   is_admin: false,
-
   admin_role: null
-
 };
 
 let activeTab = "home";
-
 let currentView = null;
+
+let openFaq = null;
+let aboutOpen = false;
+
+window._answers = {};
 
 
 // ======================================================
@@ -198,52 +163,38 @@ let currentView = null;
 // ======================================================
 
 async function api(path, body = {}) {
+  const res = await fetch(path, {
+    method: "POST",
 
-  const res =
-    await fetch(
-      path,
-      {
-        method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          initData,
-          ...body
-        })
-
-      }
-    );
+    body: JSON.stringify({
+      initData,
+      ...body
+    })
+  });
 
   let data;
 
   try {
-
-    data =
-      await res.json();
-
+    data = await res.json();
   } catch (error) {
-
     throw new Error(
       "Serverdan noto‘g‘ri javob keldi."
     );
-
   }
 
   if (!res.ok) {
-
     throw new Error(
       data.message ||
       data.error ||
       "Server xatosi"
     );
-
   }
 
   return data;
-
 }
 
 
@@ -252,32 +203,18 @@ async function api(path, body = {}) {
 // ======================================================
 
 async function loadAuth() {
-
   try {
-
     if (!initData) {
-
       throw new Error(
         "Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
       );
-
     }
 
     const data =
       await api("/api/auth");
 
-    if (!data) {
-
-      throw new Error(
-        "Autentifikatsiya ma'lumotlari olinmadi."
-      );
-
-    }
-
     state = {
-
       ...state,
-
       ...data,
 
       first_name:
@@ -303,7 +240,6 @@ async function loadAuth() {
 
       admin_role:
         data.admin_role || null
-
     };
 
     return data;
@@ -319,9 +255,7 @@ async function loadAuth() {
     state.admin_role = null;
 
     throw error;
-
   }
-
 }
 
 
@@ -331,100 +265,144 @@ async function loadAuth() {
 
 function renderRegistration() {
 
-  if (!app) return;
+  const tgUser =
+    tg.initDataUnsafe?.user || {};
 
-  app.innerHTML = `
+  const firstName =
+    state.first_name ||
+    tgUser.first_name ||
+    "";
 
-    <div class="screen">
+  const lastName =
+    state.last_name ||
+    tgUser.last_name ||
+    "";
 
-      <div class="page registration-page">
+  currentView = {
+    html: `
+      <div class="apple-registration">
 
-        <div class="registration-card">
+        <div class="apple-registration-brand">
 
-          <div class="registration-icon">
+          <div class="apple-registration-logo">
+            Y
+          </div>
+
+          <div class="apple-registration-brand-name">
+            YOSHUZBEKK Academy
+          </div>
+
+        </div>
+
+
+        <div class="apple-registration-content">
+
+          <div class="apple-registration-icon">
             👋
           </div>
 
-          <div class="page-title">
+          <h1>
             Xush kelibsiz!
-          </div>
+          </h1>
 
-          <div class="registration-subtitle">
-
-            Ilovadan foydalanishni boshlash uchun
-            ma'lumotlaringizni kiriting.
-
-          </div>
+          <p class="apple-registration-description">
+            Kursdan foydalanishni boshlash uchun
+            ma’lumotlaringizni kiriting.
+          </p>
 
 
-          <div class="admin-form">
+          <div class="apple-registration-form">
 
-            <label>
-              Ismingiz
-            </label>
+            <div class="apple-registration-field">
 
-            <input
-              id="register-first-name"
-              type="text"
-              autocomplete="given-name"
-              placeholder="Masalan: Abdulloh"
-            >
+              <label>
+                Ism
+              </label>
 
+              <input
+                id="register-first-name"
+                type="text"
+                autocomplete="given-name"
+                placeholder="Ismingiz"
+                value="${escapeHtml(firstName)}"
+              >
 
-            <label>
-              Familiyangiz
-            </label>
-
-            <input
-              id="register-last-name"
-              type="text"
-              autocomplete="family-name"
-              placeholder="Masalan: Karimov"
-            >
+            </div>
 
 
-            <label>
-              Telefon raqamingiz
-            </label>
+            <div class="apple-registration-field">
 
-            <input
-              id="register-phone"
-              type="tel"
-              inputmode="tel"
-              autocomplete="tel"
-              placeholder="+998 90 123 45 67"
-            >
+              <label>
+                Familiya
+              </label>
+
+              <input
+                id="register-last-name"
+                type="text"
+                autocomplete="family-name"
+                placeholder="Familiyangiz"
+                value="${escapeHtml(lastName)}"
+              >
+
+            </div>
+
+
+            <div class="apple-registration-field">
+
+              <label>
+                Telefon raqam
+              </label>
+
+              <div class="apple-phone-input">
+
+                <span>
+                  +998
+                </span>
+
+                <input
+                  id="register-phone"
+                  type="tel"
+                  inputmode="numeric"
+                  autocomplete="tel"
+                  placeholder="90 123 45 67"
+                >
+
+              </div>
+
+            </div>
 
 
             <button
-              id="register-submit-btn"
-              class="btn"
+              id="registration-submit"
+              class="apple-registration-button"
               onclick="submitRegistration()"
             >
 
               Davom etish
+
+              <span>
+                →
+              </span>
 
             </button>
 
           </div>
 
 
-          <div class="registration-note">
+          <div class="apple-registration-note">
 
-            🔒 Sizning ma'lumotlaringiz faqat
-            kurs platformasidan foydalanish va
-            siz bilan bog'lanish uchun ishlatiladi.
+            Ma’lumotlaringiz faqat kursdan foydalanish
+            va siz bilan bog‘lanish uchun ishlatiladi.
 
           </div>
 
         </div>
 
       </div>
+    `
+  };
 
-    </div>
-
-  `;
-
+  render();
 }
 
 
@@ -437,52 +415,40 @@ async function submitRegistration() {
   const firstName =
     document.getElementById(
       "register-first-name"
-    )?.value
-      ?.trim();
+    )?.value.trim();
 
   const lastName =
     document.getElementById(
       "register-last-name"
-    )?.value
-      ?.trim();
+    )?.value.trim();
 
   const phone =
     document.getElementById(
       "register-phone"
-    )?.value
-      ?.trim();
+    )?.value.trim();
 
 
   if (!firstName) {
-
     tg.showAlert(
       "Iltimos, ismingizni kiriting."
     );
-
     return;
-
   }
 
 
   if (!lastName) {
-
     tg.showAlert(
       "Iltimos, familiyangizni kiriting."
     );
-
     return;
-
   }
 
 
   if (!phone) {
-
     tg.showAlert(
       "Iltimos, telefon raqamingizni kiriting."
     );
-
     return;
-
   }
 
 
@@ -490,28 +456,22 @@ async function submitRegistration() {
     phone.replace(/[^\d]/g, "");
 
   if (phoneDigits.length < 9) {
-
     tg.showAlert(
       "Telefon raqamini to‘g‘ri kiriting."
     );
-
     return;
-
   }
 
 
   const button =
     document.getElementById(
-      "register-submit-btn"
+      "registration-submit"
     );
 
   if (button) {
-
     button.disabled = true;
-
     button.textContent =
       "Saqlanmoqda...";
-
   }
 
 
@@ -523,31 +483,23 @@ async function submitRegistration() {
       await api(
         "/api/register",
         {
-          first_name:
-            firstName,
-
-          last_name:
-            lastName,
-
-          phone:
-            phone
+          first_name: firstName,
+          last_name: lastName,
+          phone
         }
       );
 
 
-    if (!result || !result.ok) {
-
+    if (!result?.ok) {
       throw new Error(
         result?.message ||
         result?.error ||
-        "Ro‘yxatdan o‘tishda xatolik yuz berdi."
+        "Ro‘yxatdan o‘tishda xatolik."
       );
-
     }
 
 
     state = {
-
       ...state,
 
       ...(result.user || {}),
@@ -564,13 +516,9 @@ async function submitRegistration() {
         result.user?.phone ||
         phone,
 
-      registered:
-        true
-
+      registered: true
     };
 
-
-    haptic("medium");
 
     tg.showAlert(
       "✅ Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi!"
@@ -591,17 +539,13 @@ async function submitRegistration() {
       "Ro‘yxatdan o‘tishda xatolik yuz berdi."
     );
 
+
     if (button) {
-
       button.disabled = false;
-
       button.textContent =
         "Davom etish";
-
     }
-
   }
-
 }
 
 
@@ -621,7 +565,6 @@ function fmtDate(d) {
       year: "numeric"
     }
   );
-
 }
 
 
@@ -636,19 +579,6 @@ async function loadContent() {
     const data =
       await api("/api/content");
 
-    if (!data) {
-
-      throw new Error(
-        "Kontent topilmadi."
-      );
-
-    }
-
-    /*
-      Muhim:
-      state = data qilish admin ma'lumotlarini o'chirib yuboradi.
-      Shuning uchun merge qilamiz.
-    */
 
     state = {
       ...state,
@@ -669,23 +599,23 @@ async function loadContent() {
         state.phone ??
         "",
 
-      registered:
-        data.registered ??
-        state.registered ??
-        false,
-
       telegram_id:
         data.telegram_id ??
         state.telegram_id ??
         "",
+
+      registered:
+        data.registered ??
+        state.registered ??
+        false,
 
       is_admin:
         state.is_admin,
 
       admin_role:
         state.admin_role
-
     };
+
 
     render();
 
@@ -699,7 +629,6 @@ async function loadContent() {
     if (app) {
 
       app.innerHTML = `
-
         <div class="page">
 
           <div class="empty-box">
@@ -713,35 +642,27 @@ async function loadContent() {
               class="btn"
               onclick="location.reload()"
             >
-
               🔄 Qayta urinish
-
             </button>
 
           </div>
 
         </div>
-
       `;
-
     }
 
     try {
-
       tg.showAlert(
         error.message ||
-        "Ma'lumotlarni yuklashda xatolik yuz berdi."
+        "Ma'lumotlarni yuklashda xatolik."
       );
-
     } catch (e) {}
-
   }
-
 }
 
 
 // ======================================================
-// LAYOUT
+// RENDER
 // ======================================================
 
 function render() {
@@ -753,12 +674,10 @@ function render() {
       ? renderDetailView()
       : renderTab();
 
+
   app.innerHTML = `
-
     <div class="screen">
-
       ${body}
-
     </div>
 
     ${
@@ -766,32 +685,31 @@ function render() {
         ? renderNav()
         : ""
     }
-
   `;
 
+
   const aboutButton =
-    document.querySelector(".about-more");
+    document.querySelector(
+      ".about-more"
+    );
+
 
   if (aboutButton) {
-
     aboutButton.addEventListener(
       "click",
       toggleAbout
     );
-
   }
-
 }
 
 
 // ======================================================
-// NAVIGATION
+// NAV
 // ======================================================
 
 function renderNav() {
 
   const tabs = [
-
     {
       id: "home",
       label: "Bosh sahifa",
@@ -821,15 +739,13 @@ function renderNav() {
       label: "Profil",
       icon: "◍"
     }
-
   ];
 
-  return `
 
+  return `
     <div class="nav">
 
       ${tabs.map(t => `
-
         <div
           class="nav-item ${
             activeTab === t.id
@@ -848,13 +764,10 @@ function renderNav() {
           </div>
 
         </div>
-
       `).join("")}
 
     </div>
-
   `;
-
 }
 
 
@@ -863,48 +776,42 @@ function setTab(id) {
   haptic();
 
   activeTab = id;
-
   currentView = null;
 
   render();
 
   requestAnimationFrame(() => {
-
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: "instant"
     });
-
   });
-
 }
 
 
 function renderTab() {
 
-  if (activeTab === "home") {
-    return renderHome();
+  switch (activeTab) {
+
+    case "home":
+      return renderHome();
+
+    case "lessons":
+      return renderLessons();
+
+    case "tasks":
+      return renderTasks();
+
+    case "chat":
+      return renderChat();
+
+    case "profile":
+      return renderProfile();
+
+    default:
+      return renderHome();
   }
-
-  if (activeTab === "lessons") {
-    return renderLessons();
-  }
-
-  if (activeTab === "tasks") {
-    return renderTasks();
-  }
-
-  if (activeTab === "chat") {
-    return renderChat();
-  }
-
-  if (activeTab === "profile") {
-    return renderProfile();
-  }
-
-  return "";
-
 }
 
 
@@ -925,11 +832,10 @@ Shu tajribalarimni boshqalar bilan bo'lishish maqsadida YOSHUZBEKK Academy loyih
 const ABOUT_SHORT = `
 Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi, asosiy ish jarayonida Autodesk Revit dasturidan foydalanadigan mutaxassisman.
 
-Men Revit'ni real loyihalarni ishlab chiqish va ishchi chizmalar tayyorlashda amaliyotda qo'llab kelaman.
+Men Revit'ni real loyihalarni ishlab chiqish va ishchi chizmalar tayyorlashda amaliyotda qo'llayman.
 `;
 
 const COURSE = {
-
   title:
     "INTPRO — Revit dasturida interyer loyihalash",
 
@@ -944,8 +850,8 @@ const COURSE = {
 
   cover:
     "course-cover.jpg"
-
 };
+
 
 const TESTIMONIALS = [
 
@@ -958,7 +864,7 @@ const TESTIMONIALS = [
 
   {
     text:
-      "Har bir dars qadam-baqadam tushuntirilgan, hech qanday savol qolmaydi.",
+      "Har bir dars qadam-baqadam tushuntirilgan.",
     name:
       "O'quvchi ismi"
   },
@@ -971,6 +877,7 @@ const TESTIMONIALS = [
   }
 
 ];
+
 
 const FAQ = [
 
@@ -995,7 +902,7 @@ const FAQ = [
       "Muddatim tugasa nima bo'ladi?",
 
     a:
-      "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun \"Chat\" orqali admin bilan bog'laning."
+      "Darslarga kirish qulflanadi. Yana 1 yilga uzaytirish uchun Chat orqali admin bilan bog'laning."
   },
 
   {
@@ -1003,14 +910,10 @@ const FAQ = [
       "Namuna darslarni ko'ra olamanmi?",
 
     a:
-      "Ha, ba'zi darslar hammaga bepul ochiq — \"Darslar\" bo'limida \"Namuna\" belgisi bilan ko'rsatilgan."
+      "Ha, ba'zi darslar hammaga bepul ochiq — Darslar bo'limida Namuna belgisi bilan ko'rsatilgan."
   }
 
 ];
-
-let openFaq = null;
-
-let aboutOpen = false;
 
 
 // ======================================================
@@ -1037,6 +940,7 @@ function toggleAbout() {
       ".about-more"
     );
 
+
   if (
     !shortText ||
     !fullText ||
@@ -1044,6 +948,7 @@ function toggleAbout() {
   ) {
     return;
   }
+
 
   if (aboutOpen) {
 
@@ -1066,11 +971,9 @@ function toggleAbout() {
 
     button.textContent =
       "Batafsil ↓";
-
   }
 
   haptic();
-
 }
 
 
@@ -1085,39 +988,34 @@ function renderHome() {
       ? state.modules
       : [];
 
+
   const myAvailable =
     modules.reduce(
-
-      (a, m) =>
-
-        a +
+      (total, module) =>
+        total +
         (
-          Array.isArray(m.lessons)
-            ? m.lessons.filter(
-                l => l.available
+          Array.isArray(module.lessons)
+            ? module.lessons.filter(
+                lesson => lesson.available
               ).length
             : 0
         ),
-
       0
-
     );
+
 
   const myTotal =
     modules.reduce(
-
-      (a, m) =>
-
-        a +
+      (total, module) =>
+        total +
         (
-          Array.isArray(m.lessons)
-            ? m.lessons.length
+          Array.isArray(module.lessons)
+            ? module.lessons.length
             : 0
         ),
-
       0
-
     );
+
 
   const pct =
     myTotal
@@ -1126,8 +1024,8 @@ function renderHome() {
         )
       : 0;
 
-  return `
 
+  return `
     <div class="page">
 
       <div class="welcome-hero">
@@ -1153,7 +1051,6 @@ function renderHome() {
       ${
         myTotal
           ? `
-
             <div class="progress-wrap">
 
               <div class="progress-labels">
@@ -1178,7 +1075,6 @@ function renderHome() {
               </div>
 
             </div>
-
           `
           : ""
       }
@@ -1198,12 +1094,10 @@ function renderHome() {
 
 
         <div class="about-text about-short">
-
           ${ABOUT_SHORT.replace(
             /\n/g,
             "<br><br>"
           )}
-
         </div>
 
 
@@ -1211,12 +1105,10 @@ function renderHome() {
           class="about-text about-full"
           style="display:none;"
         >
-
           ${ABOUT_TEXT.replace(
             /\n/g,
             "<br><br>"
           )}
-
         </div>
 
 
@@ -1254,12 +1146,10 @@ function renderHome() {
           </div>
 
           <div class="course-meta">
-
             ${COURSE.totalModules}
             modul ·
             ${COURSE.totalLessons}
             dars
-
           </div>
 
           <div class="course-price">
@@ -1270,9 +1160,7 @@ function renderHome() {
             class="btn"
             onclick="setTab('chat')"
           >
-
             Kursni sotib olish
-
           </button>
 
         </div>
@@ -1309,7 +1197,6 @@ function renderHome() {
       <div class="testi-scroll">
 
         ${TESTIMONIALS.map(t => `
-
           <div class="testi-card">
 
             <div class="testi-text">
@@ -1321,7 +1208,6 @@ function renderHome() {
             </div>
 
           </div>
-
         `).join("")}
 
       </div>
@@ -1335,7 +1221,6 @@ function renderHome() {
       <div class="faq-list">
 
         ${FAQ.map((f, i) => `
-
           <div
             class="faq-item"
             data-faq="${i}"
@@ -1360,21 +1245,16 @@ function renderHome() {
               class="faq-a"
               style="display:none;"
             >
-
               ${escapeHtml(f.a)}
-
             </div>
 
           </div>
-
         `).join("")}
 
       </div>
 
     </div>
-
   `;
-
 }
 
 
@@ -1384,65 +1264,63 @@ function renderHome() {
 
 function toggleFaq(i) {
 
-  const clickedItem =
+  const item =
     document.querySelector(
       `.faq-item[data-faq="${i}"]`
     );
 
-  if (!clickedItem) return;
+  if (!item) return;
 
-  const clickedAnswer =
-    clickedItem.querySelector(".faq-a");
 
-  const clickedPlus =
-    clickedItem.querySelector(".faq-plus");
+  const answer =
+    item.querySelector(".faq-a");
 
-  if (
-    !clickedAnswer ||
-    !clickedPlus
-  ) {
-    return;
-  }
+  const plus =
+    item.querySelector(".faq-plus");
 
-  const isAlreadyOpen =
-    clickedItem.classList.contains("open");
+
+  const isOpen =
+    item.classList.contains("open");
+
 
   document
     .querySelectorAll(".faq-item.open")
-    .forEach(item => {
+    .forEach(el => {
 
-      item.classList.remove("open");
+      el.classList.remove("open");
 
-      const answer =
-        item.querySelector(".faq-a");
+      const a =
+        el.querySelector(".faq-a");
 
-      const plus =
-        item.querySelector(".faq-plus");
+      const p =
+        el.querySelector(".faq-plus");
 
-      if (answer) {
-        answer.style.display = "none";
+      if (a) {
+        a.style.display = "none";
       }
 
-      if (plus) {
-        plus.textContent = "+";
+      if (p) {
+        p.textContent = "+";
       }
 
     });
 
-  if (!isAlreadyOpen) {
 
-    clickedItem.classList.add("open");
+  if (!isOpen) {
 
-    clickedAnswer.style.display =
-      "block";
+    item.classList.add("open");
 
-    clickedPlus.textContent =
-      "−";
+    if (answer) {
+      answer.style.display = "block";
+    }
+
+    if (plus) {
+      plus.textContent = "−";
+    }
 
   }
 
   haptic();
-
 }
 
 
@@ -1452,115 +1330,113 @@ function toggleFaq(i) {
 
 function renderLessons() {
 
-  let html = `
-
-    <div class="page">
-
-      <div class="page-title">
-        Darslar
-      </div>
-
-  `;
-
   const modules =
     Array.isArray(state.modules)
       ? state.modules
       : [];
 
-  modules.forEach(
-    (m, i) => {
 
-      const moduleLessons =
-        Array.isArray(m.lessons)
-          ? m.lessons
-          : [];
+  let html = `
+    <div class="page">
 
-      html += `
+      <div class="page-title">
+        Darslar
+      </div>
+  `;
+
+
+  modules.forEach((module, index) => {
+
+    const lessons =
+      Array.isArray(module.lessons)
+        ? module.lessons
+        : [];
+
+
+    html += `
+      <div
+        class="module ${
+          module.unlocked
+            ? ""
+            : "locked"
+        }"
+      >
 
         <div
-          class="module ${
-            m.unlocked
-              ? ""
-              : "locked"
-          }"
+          class="module-head"
+          onclick="toggleModule(${module.id})"
         >
 
-          <div
-            class="module-head"
-            onclick="toggleModule(${m.id})"
-          >
+          <div>
 
-            <div>
+            <span class="idx">
+              ${String(index + 1).padStart(2, "0")}
+            </span>
 
-              <span class="idx">
-
-                ${String(i + 1)
-                  .padStart(2, "0")}
-
-              </span>
-
-              ${escapeHtml(m.title)}
-
-            </div>
-
-            <div
-              class="tag ${
-                m.passed_test
-                  ? "passed"
-                  : ""
-              }"
-            >
-
-              ${
-                m.unlocked
-                  ? (
-                      m.passed_test
-                        ? "Test topshirilgan"
-                        : "Ochiq"
-                    )
-                  : "Qulflangan"
-              }
-
-            </div>
+            ${escapeHtml(module.title)}
 
           </div>
 
 
           <div
-            class="lesson-list"
-            id="mod-${m.id}"
+            class="tag ${
+              module.passed_test
+                ? "passed"
+                : ""
+            }"
           >
 
-            ${moduleLessons.map(
-              l => `
+            ${
+              module.unlocked
+                ? (
+                    module.passed_test
+                      ? "Test topshirilgan"
+                      : "Ochiq"
+                  )
+                : "Qulflangan"
+            }
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="lesson-list"
+          id="mod-${module.id}"
+        >
+
+          ${
+            lessons.length
+              ? lessons.map(lesson => `
 
                 <div
                   class="lesson ${
-                    l.available
+                    lesson.available
                       ? ""
                       : "disabled"
                   }"
-
                   onclick="${
-                    l.available
-                      ? `openLesson(${l.id})`
+                    lesson.available
+                      ? `openLesson(${lesson.id})`
                       : "showLockedInfo()"
                   }"
                 >
 
                   <span>
-                    ${escapeHtml(l.title)}
+                    ${escapeHtml(lesson.title)}
                   </span>
 
+
                   ${
-                    l.is_free
+                    lesson.is_free
                       ? `
                         <span class="free-badge">
                           Namuna
                         </span>
                       `
                       : (
-                          l.available
+                          lesson.available
                             ? ""
                             : "🔒"
                         )
@@ -1568,59 +1444,49 @@ function renderLessons() {
 
                 </div>
 
+              `).join("")
+              : `
+                <div class="empty-box">
+                  Bu modulda hali darslar yo'q.
+                </div>
               `
-            ).join("")}
-
-          </div>
+          }
 
         </div>
 
-      `;
+      </div>
+    `;
+  });
 
-    }
-  );
 
   if (!modules.length) {
 
     html += `
-
       <div class="empty-box">
-
         Hozircha darslar qo'shilmagan.
-
       </div>
-
     `;
-
   }
+
 
   if (!state.has_access) {
 
     html += `
-
       <button
         class="btn"
         onclick="setTab('chat')"
       >
-
         To'liq kirish uchun murojaat qilish
-
       </button>
-
     `;
-
   }
+
 
   html += `</div>`;
 
   return html;
-
 }
 
-
-// ======================================================
-// MODULE
-// ======================================================
 
 function toggleModule(id) {
 
@@ -1630,11 +1496,8 @@ function toggleModule(id) {
     );
 
   if (el) {
-
     el.classList.toggle("open");
-
   }
-
 }
 
 
@@ -1645,7 +1508,6 @@ function showLockedInfo() {
   tg.showAlert(
     "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
-
 }
 
 
@@ -1655,109 +1517,91 @@ function showLockedInfo() {
 
 function renderTasks() {
 
-  let html = `
-
-    <div class="page">
-
-      <div class="page-title">
-        Vazifalar
-      </div>
-
-  `;
-
   const modules =
     Array.isArray(state.modules)
       ? state.modules
       : [];
 
+
   const allLessons =
-    modules.flatMap(
-
-      m =>
-
-        (
-          Array.isArray(m.lessons)
-            ? m.lessons
-            : []
-        ).map(
-
-          l => ({
-            ...l,
-            moduleTitle: m.title
-          })
-
-        )
-
+    modules.flatMap(module =>
+      (
+        Array.isArray(module.lessons)
+          ? module.lessons
+          : []
+      ).map(lesson => ({
+        ...lesson,
+        moduleTitle:
+          module.title
+      }))
     );
+
 
   const withTasks =
     allLessons.filter(
-      l =>
-        l.available &&
-        l.task_text
+      lesson =>
+        lesson.available &&
+        lesson.task_text
     );
+
 
   const lockedCount =
     allLessons.filter(
-      l => !l.available
+      lesson =>
+        !lesson.available
     ).length;
+
+
+  let html = `
+    <div class="page">
+
+      <div class="page-title">
+        Vazifalar
+      </div>
+  `;
+
 
   if (!withTasks.length) {
 
     html += `
-
       <div class="empty-box">
-
         Hozircha ochiq vazifalar yo'q.
-
       </div>
-
     `;
 
   } else {
 
-    withTasks.forEach(
-      l => {
+    withTasks.forEach(lesson => {
 
-        html += `
+      html += `
+        <div
+          class="task-card"
+          onclick="openLesson(${lesson.id})"
+        >
 
-          <div
-            class="task-card"
-            onclick="openLesson(${l.id})"
-          >
-
-            <div class="task-module">
-              ${escapeHtml(l.moduleTitle)}
-            </div>
-
-            <div class="task-title">
-              ${escapeHtml(l.title)}
-            </div>
-
-            <div class="task-text">
-
-              ${escapeHtml(
-                l.task_text
-              ).replace(
-                /\n/g,
-                "<br>"
-              )}
-
-            </div>
-
+          <div class="task-module">
+            ${escapeHtml(lesson.moduleTitle)}
           </div>
 
-        `;
+          <div class="task-title">
+            ${escapeHtml(lesson.title)}
+          </div>
 
-      }
-    );
+          <div class="task-text">
+            ${escapeHtml(
+              lesson.task_text
+            ).replace(/\n/g, "<br>")}
+          </div>
 
+        </div>
+      `;
+    });
   }
+
 
   if (lockedCount > 0) {
 
     html += `
-
       <div class="empty-box">
 
         🔒 Yana
@@ -1766,15 +1610,13 @@ function renderTasks() {
         to'lovdan keyin ochiladi
 
       </div>
-
     `;
-
   }
+
 
   html += `</div>`;
 
   return html;
-
 }
 
 
@@ -1785,7 +1627,6 @@ function renderTasks() {
 function renderChat() {
 
   return `
-
     <div class="page">
 
       <div class="page-title">
@@ -1798,32 +1639,23 @@ function renderChat() {
         ${
           state.has_access
             ? `
-
               <p>
-
                 Obunangiz faol
                 (${fmtDate(
                   state.access_until
                 )} gacha).
-
-                Muddatni uzaytirish yoki savolingiz bo'lsa,
-                admin bilan bog'laning.
-
               </p>
-
             `
             : `
-
               <p>
-
-                To'liq kirish uchun to'lovni tashqarida
-                (admin bilan kelishilgan holda) amalga oshirasiz.
-
-                Quyidagi tugmani bosing — so'rovingiz adminga yuboriladi,
-                u siz bilan bog'lanadi.
-
+                To'liq kirish uchun to'lovni
+                admin bilan kelishilgan holda amalga oshirasiz.
               </p>
 
+              <p>
+                Quyidagi tugmani bosing —
+                so'rovingiz adminga yuboriladi.
+              </p>
             `
         }
 
@@ -1834,20 +1666,16 @@ function renderChat() {
         class="btn"
         onclick="requestAccess()"
       >
-
         Adminga murojaat yuborish
-
       </button>
 
     </div>
-
   `;
-
 }
 
 
 // ======================================================
-// ADMIN REQUEST
+// REQUEST ACCESS
 // ======================================================
 
 async function requestAccess() {
@@ -1856,7 +1684,7 @@ async function requestAccess() {
 
     "So'rov yuborilsin?",
 
-    "Adminga to'liq kirish uchun so'rov yuboriladi. U tez orada siz bilan bog'lanadi.",
+    "Adminga to'liq kirish uchun so'rov yuboriladi.",
 
     "Yuborish",
 
@@ -1864,41 +1692,21 @@ async function requestAccess() {
 
       try {
 
-        if (!initData) {
-
-          tg.showAlert(
-            "❌ Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
-          );
-
-          return;
-
-        }
-
-        const buttons =
-          document.querySelectorAll(".btn");
-
-        buttons.forEach(
-          button => {
-            button.disabled = true;
-          }
-        );
-
         const result =
           await api(
             "/api/request-access"
           );
 
-        if (result.already_pending) {
 
-          haptic("medium");
+        if (result.already_pending) {
 
           tg.showAlert(
             "ℹ️ So‘rovingiz adminga yuborilgan."
           );
 
           return;
-
         }
+
 
         if (result.ok) {
 
@@ -1909,8 +1717,8 @@ async function requestAccess() {
           );
 
           return;
-
         }
+
 
         throw new Error(
           result.error ||
@@ -1926,55 +1734,14 @@ async function requestAccess() {
         );
 
         tg.showAlert(
-          "❌ So‘rov yuborishda xatolik.\n\n" +
-          (
-            error.message ||
-            "Server bilan bog‘lanib bo‘lmadi."
-          )
+          error.message ||
+          "So‘rov yuborishda xatolik."
         );
-
-      } finally {
-
-        document
-          .querySelectorAll(".btn")
-          .forEach(
-            button => {
-              button.disabled = false;
-            }
-          );
-
       }
 
     }
 
   );
-
-}
-
-
-// ======================================================
-// ADMIN BUTTON
-// ======================================================
-
-function renderAdminButton() {
-
-  if (!state.is_admin) {
-    return "";
-  }
-
-  return `
-
-    <button
-      class="btn admin-panel-btn"
-      onclick="openAdminPanel()"
-    >
-
-      👑 Admin Panel
-
-    </button>
-
-  `;
-
 }
 
 
@@ -1985,18 +1752,14 @@ function renderAdminButton() {
 function renderProfile() {
 
   const fullName = [
-
     state.first_name || "",
-
     state.last_name || ""
-
   ]
     .filter(Boolean)
     .join(" ");
 
 
   return `
-
     <div class="page">
 
       <div class="page-title">
@@ -2020,12 +1783,10 @@ function renderProfile() {
 
         <div class="profile-name">
 
-          ${
-            escapeHtml(
-              fullName ||
-              "Foydalanuvchi"
-            )
-          }
+          ${escapeHtml(
+            fullName ||
+            "Foydalanuvchi"
+          )}
 
         </div>
 
@@ -2044,7 +1805,14 @@ function renderProfile() {
 
       ${
         state.is_admin
-          ? renderAdminButton()
+          ? `
+            <button
+              class="btn admin-panel-btn"
+              onclick="openAdminPanel()"
+            >
+              👑 Admin Panel
+            </button>
+          `
           : ""
       }
 
@@ -2056,14 +1824,10 @@ function renderProfile() {
         </span>
 
         <span>
-
-          ${
-            escapeHtml(
-              state.phone ||
-              "Kiritilmagan"
-            )
-          }
-
+          ${escapeHtml(
+            state.phone ||
+            "Kiritilmagan"
+          )}
         </span>
 
       </div>
@@ -2074,7 +1838,6 @@ function renderProfile() {
         <span>
           Obuna holati
         </span>
-
 
         <span
           class="${
@@ -2098,7 +1861,6 @@ function renderProfile() {
       ${
         state.has_access
           ? `
-
             <div class="info-row">
 
               <span>
@@ -2106,15 +1868,12 @@ function renderProfile() {
               </span>
 
               <span>
-
                 ${fmtDate(
                   state.access_until
                 )}
-
               </span>
 
             </div>
-
           `
           : ""
       }
@@ -2136,65 +1895,48 @@ function renderProfile() {
           onclick="toggleTheme()"
         >
 
-          <div
-            class="apple-toggle-knob"
-          ></div>
+          <div class="apple-toggle-knob"></div>
 
         </div>
 
       </div>
 
 
-      ${
-        !state.has_access
-          ? `
+      <button
+        class="btn ${
+          state.has_access
+            ? "secondary"
+            : ""
+        }"
+        onclick="setTab('chat')"
+      >
 
-            <button
-              class="btn"
-              onclick="setTab('chat')"
-            >
+        ${
+          state.has_access
+            ? "Muddatni uzaytirish uchun murojaat"
+            : "To'liq kirish uchun murojaat"
+        }
 
-              To'liq kirish uchun murojaat
-
-            </button>
-
-          `
-          : `
-
-            <button
-              class="btn secondary"
-              onclick="setTab('chat')"
-            >
-
-              Muddatni uzaytirish uchun murojaat
-
-            </button>
-
-          `
-      }
+      </button>
 
     </div>
-
   `;
-
 }
 
 
 // ======================================================
-// DETAIL VIEW
+// DETAIL
 // ======================================================
 
 function renderDetailView() {
-
   return currentView
     ? currentView.html
     : "";
-
 }
 
 
 // ======================================================
-// DEFAULT WARNING
+// WARNING
 // ======================================================
 
 const DEFAULT_LESSON_WARNING = `
@@ -2208,10 +1950,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.
 `;
 
 
-// ======================================================
-// WARNING
-// ======================================================
-
 function renderLessonWarning(warningText) {
 
   const text =
@@ -2220,8 +1958,8 @@ function renderLessonWarning(warningText) {
       ? warningText
       : DEFAULT_LESSON_WARNING;
 
-  return `
 
+  return `
     <div class="lesson-warning">
 
       <div class="lesson-warning-title">
@@ -2238,29 +1976,25 @@ function renderLessonWarning(warningText) {
       </div>
 
     </div>
-
   `;
-
 }
 
 
 // ======================================================
-// FILES
+// LESSON FILES RENDER
 // ======================================================
 
 function renderLessonFiles(files) {
 
   if (
     !Array.isArray(files) ||
-    files.length === 0
+    !files.length
   ) {
-
     return "";
-
   }
 
-  return `
 
+  return `
     <div class="lesson-section">
 
       <div class="section-title">
@@ -2278,80 +2012,69 @@ function renderLessonFiles(files) {
 
       <div class="lesson-files">
 
-        ${
-          files.map(
-            file => {
+        ${files.map(file => {
 
-              const fileName =
-                escapeHtml(
-                  file.file_name ||
-                  "Dars materiali"
-                );
-
-              const fileUrl =
-                escapeHtml(
-                  file.file_url ||
-                  "#"
-                );
-
-              return `
-
-                <div class="lesson-file">
-
-                  <div class="lesson-file-info">
-
-                    <div class="lesson-file-icon">
-                      📦
-                    </div>
-
-                    <div class="lesson-file-name">
-                      ${fileName}
-                    </div>
-
-                  </div>
+          const name =
+            escapeHtml(
+              file.file_name ||
+              "Dars materiali"
+            );
 
 
-                  ${
-                    file.file_url
-                      ? `
+          const url =
+            escapeHtml(
+              file.file_url ||
+              "#"
+            );
 
-                        <a
-                          class="download-file-btn"
-                          href="${fileUrl}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onclick="haptic('light')"
-                        >
 
-                          📥 Yuklab olish
+          return `
+            <div class="lesson-file">
 
-                        </a>
+              <div class="lesson-file-info">
 
-                      `
-                      : `
-                        <button
-                          class="download-file-btn"
-                          disabled
-                        >
-                          Fayl mavjud emas
-                        </button>
-                      `
-                  }
-
+                <div class="lesson-file-icon">
+                  📦
                 </div>
 
-              `;
+                <div class="lesson-file-name">
+                  ${name}
+                </div>
 
-            }
-          ).join("")
-        }
+              </div>
+
+
+              ${
+                file.file_url
+                  ? `
+                    <a
+                      class="download-file-btn"
+                      href="${url}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onclick="haptic('light')"
+                    >
+                      📥 Yuklab olish
+                    </a>
+                  `
+                  : `
+                    <button
+                      class="download-file-btn"
+                      disabled
+                    >
+                      Fayl mavjud emas
+                    </button>
+                  `
+              }
+
+            </div>
+          `;
+        }).join("")}
 
       </div>
 
     </div>
-
   `;
-
 }
 
 
@@ -2365,10 +2088,9 @@ async function openLesson(id) {
 
     haptic("light");
 
+
     currentView = {
-
       html: `
-
         <div class="lesson-loading">
 
           <div class="spinner"></div>
@@ -2378,17 +2100,18 @@ async function openLesson(id) {
           </div>
 
         </div>
-
       `
-
     };
 
+
     render();
+
 
     const lesson =
       await api(
         `/api/lesson/${id}`
       );
+
 
     if (
       lesson.error === "locked"
@@ -2399,8 +2122,8 @@ async function openLesson(id) {
       render();
 
       return showLockedInfo();
-
     }
+
 
     if (lesson.error) {
 
@@ -2410,10 +2133,10 @@ async function openLesson(id) {
 
       return tg.showAlert(
         lesson.message ||
-        "Darsni ochishda xatolik yuz berdi."
+        "Darsni ochishda xatolik."
       );
-
     }
+
 
     let videoHtml = "";
 
@@ -2424,7 +2147,6 @@ async function openLesson(id) {
     ) {
 
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
@@ -2448,18 +2170,14 @@ async function openLesson(id) {
           ></iframe>
 
         </div>
-
       `;
 
-    }
-
-    else if (
+    } else if (
       lesson.video_type === "bunny" &&
       lesson.bunny_player_url
     ) {
 
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
@@ -2471,27 +2189,23 @@ async function openLesson(id) {
             )}"
             allow="
               accelerometer;
-              gyroscope;
               autoplay;
               encrypted-media;
-              picture-in-picture;
+              gyroscope;
+              picture-in-picture
             "
             allowfullscreen
             loading="lazy"
           ></iframe>
 
         </div>
-
       `;
 
-    }
-
-    else if (
+    } else if (
       lesson.youtube_player_url
     ) {
 
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
@@ -2504,19 +2218,14 @@ async function openLesson(id) {
             allowfullscreen
             loading="lazy"
           ></iframe>
-
         </div>
-
       `;
 
-    }
-
-    else if (
+    } else if (
       lesson.bunny_player_url
     ) {
 
       videoHtml = `
-
         <div class="video-container">
 
           <iframe
@@ -2529,25 +2238,16 @@ async function openLesson(id) {
             allowfullscreen
             loading="lazy"
           ></iframe>
-
         </div>
-
       `;
 
-    }
-
-    else {
+    } else {
 
       videoHtml = `
-
         <div class="lesson-no-video">
-
           🎬 Ushbu dars uchun video mavjud emas.
-
         </div>
-
       `;
-
     }
 
 
@@ -2556,9 +2256,7 @@ async function openLesson(id) {
       String(
         lesson.task_text
       ).trim()
-
         ? `
-
           <div class="lesson-section">
 
             <div class="section-title">
@@ -2577,36 +2275,20 @@ async function openLesson(id) {
             </div>
 
           </div>
-
         `
         : "";
-
-
-    const filesHtml =
-      renderLessonFiles(
-        lesson.files
-      );
-
-
-    const warningHtml =
-      renderLessonWarning(
-        lesson.warning_text
-      );
 
 
     currentView = {
 
       html: `
-
         <div class="lesson-detail">
 
           <div
             class="back-btn"
             onclick="closeDetail()"
           >
-
             ← Orqaga
-
           </div>
 
 
@@ -2625,18 +2307,22 @@ async function openLesson(id) {
           ${taskHtml}
 
 
-          ${filesHtml}
+          ${renderLessonFiles(
+            lesson.files
+          )}
 
 
-          ${warningHtml}
+          ${renderLessonWarning(
+            lesson.warning_text
+          )}
 
         </div>
-
       `
-
     };
 
+
     render();
+
 
     requestAnimationFrame(() => {
 
@@ -2661,11 +2347,9 @@ async function openLesson(id) {
 
     tg.showAlert(
       error.message ||
-      "Darsni ochishda server bilan bog'lanib bo'lmadi."
+      "Darsni ochishda xatolik."
     );
-
   }
-
 }
 
 
@@ -2688,7 +2372,6 @@ function closeDetail() {
     });
 
   });
-
 }
 
 
@@ -2700,36 +2383,36 @@ async function openTest(moduleId) {
 
   try {
 
-    const {
-      questions
-    } = await api(
-      `/api/module/${moduleId}/test`
-    );
+    const data =
+      await api(
+        `/api/module/${moduleId}/test`
+      );
 
-    if (
-      !questions ||
-      !questions.length
-    ) {
 
-      return tg.showAlert(
+    const questions =
+      data.questions || [];
+
+
+    if (!questions.length) {
+
+      tg.showAlert(
         "Bu modul uchun test hali qo'shilmagan."
       );
 
+      return;
     }
 
+
     window._answers = {};
+
 
     currentView = {
 
       html: `
-
-        <div
-          class="back-btn"
+        <div class="back-btn"
           onclick="closeDetail()"
         >
-
           ← Orqaga
-
         </div>
 
 
@@ -2740,53 +2423,39 @@ async function openTest(moduleId) {
 
         <div id="test-body">
 
-          ${
-            questions
-              .map(
-                q => `
+          ${questions.map(q => `
 
-                  <div
-                    class="test-question"
-                  >
+            <div class="test-question">
 
-                    <p>
-                      ${escapeHtml(
-                        q.question
-                      )}
-                    </p>
+              <p>
+                ${escapeHtml(
+                  q.question
+                )}
+              </p>
 
 
-                    ${
-                      Array.isArray(q.options)
-                        ? q.options
-                            .map(
-                              (opt, i) => `
+              ${
+                Array.isArray(q.options)
+                  ? q.options.map(
+                      (option, index) => `
+                        <div
+                          class="option"
+                          data-q="${q.id}"
+                          data-i="${index}"
+                          onclick="selectOption(${q.id}, ${index})"
+                        >
+                          ${escapeHtml(
+                            option
+                          )}
+                        </div>
+                      `
+                    ).join("")
+                  : ""
+              }
 
-                                <div
-                                  class="option"
-                                  data-q="${q.id}"
-                                  data-i="${i}"
-                                  onclick="selectOption(${q.id}, ${i})"
-                                >
+            </div>
 
-                                  ${escapeHtml(
-                                    opt
-                                  )}
-
-                                </div>
-
-                              `
-                            )
-                            .join("")
-                        : ""
-                    }
-
-                  </div>
-
-                `
-              )
-              .join("")
-          }
+          `).join("")}
 
         </div>
 
@@ -2795,14 +2464,11 @@ async function openTest(moduleId) {
           class="btn"
           onclick="submitTest(${moduleId})"
         >
-
           Yuborish
-
         </button>
-
       `
-
     };
+
 
     render();
 
@@ -2814,11 +2480,10 @@ async function openTest(moduleId) {
     );
 
     tg.showAlert(
-      "Testni yuklashda xatolik yuz berdi."
+      error.message ||
+      "Testni yuklashda xatolik."
     );
-
   }
-
 }
 
 
@@ -2826,45 +2491,40 @@ async function openTest(moduleId) {
 // SELECT OPTION
 // ======================================================
 
-function selectOption(qId, i) {
+function selectOption(qId, index) {
 
   if (!window._answers) {
-
     window._answers = {};
-
   }
 
-  window._answers[qId] = i;
+
+  window._answers[qId] =
+    index;
+
 
   document
     .querySelectorAll(
       `.option[data-q="${qId}"]`
     )
-    .forEach(
-      el => {
+    .forEach(el => {
 
-        el.classList.remove(
-          "selected"
-        );
+      el.classList.remove(
+        "selected"
+      );
 
-      }
-    );
+    });
 
-  const selected =
-    document.querySelector(
-      `.option[data-q="${qId}"][data-i="${i}"]`
-    );
 
-  if (selected) {
-
-    selected.classList.add(
+  document
+    .querySelector(
+      `.option[data-q="${qId}"][data-i="${index}"]`
+    )
+    ?.classList.add(
       "selected"
     );
 
-  }
 
   haptic("light");
-
 }
 
 
@@ -2885,6 +2545,7 @@ async function submitTest(moduleId) {
         }
       );
 
+
     if (result.passed) {
 
       tg.showAlert(
@@ -2894,10 +2555,10 @@ async function submitTest(moduleId) {
     } else {
 
       tg.showAlert(
-        `Natija: ${result.score}%. O'tish uchun kamida 70% kerak. Qayta urinib ko'ring.`
+        `Natija: ${result.score}%. O'tish uchun kamida 70% kerak.`
       );
-
     }
+
 
     closeDetail();
 
@@ -2911,32 +2572,24 @@ async function submitTest(moduleId) {
     );
 
     tg.showAlert(
-      "Test natijasini yuborishda xatolik yuz berdi."
+      error.message ||
+      "Test natijasini yuborishda xatolik."
     );
-
   }
-
 }
 
 
 // ======================================================
-// ======================================================
-// ADMIN PANEL
-// ======================================================
+// ADMIN
 // ======================================================
 
 let adminView = "dashboard";
 
 let adminData = {
-
   stats: null,
-
   students: [],
-
   modules: [],
-
   admins: []
-
 };
 
 
@@ -2954,14 +2607,13 @@ async function adminApi(
     throw new Error(
       "Sizda admin huquqi mavjud emas."
     );
-
   }
+
 
   return await api(
     path,
     body
   );
-
 }
 
 
@@ -2978,15 +2630,14 @@ async function openAdminPanel() {
     );
 
     return;
-
   }
+
 
   haptic("medium");
 
+
   currentView = {
-
     html: `
-
       <div class="page">
 
         <div class="lesson-loading">
@@ -3000,12 +2651,12 @@ async function openAdminPanel() {
         </div>
 
       </div>
-
     `
-
   };
 
+
   render();
+
 
   try {
 
@@ -3029,14 +2680,12 @@ async function openAdminPanel() {
     );
 
     closeDetail();
-
   }
-
 }
 
 
 // ======================================================
-// ADMIN STATS
+// ADMIN LOAD
 // ======================================================
 
 async function loadAdminStats() {
@@ -3048,13 +2697,8 @@ async function loadAdminStats() {
 
   adminData.stats =
     data;
-
 }
 
-
-// ======================================================
-// ADMIN STUDENTS
-// ======================================================
 
 async function loadAdminStudents() {
 
@@ -3067,13 +2711,8 @@ async function loadAdminStudents() {
     Array.isArray(data.students)
       ? data.students
       : [];
-
 }
 
-
-// ======================================================
-// ADMIN MODULES
-// ======================================================
 
 async function loadAdminModules() {
 
@@ -3086,13 +2725,8 @@ async function loadAdminModules() {
     Array.isArray(data.modules)
       ? data.modules
       : [];
-
 }
 
-
-// ======================================================
-// ADMINS LIST
-// ======================================================
 
 async function loadAdmins() {
 
@@ -3105,12 +2739,11 @@ async function loadAdmins() {
     Array.isArray(data.admins)
       ? data.admins
       : [];
-
 }
 
 
 // ======================================================
-// ADMIN PANEL RENDER
+// ADMIN PANEL
 // ======================================================
 
 function renderAdminPanel() {
@@ -3118,16 +2751,13 @@ function renderAdminPanel() {
   currentView = {
 
     html: `
-
       <div class="admin-page">
 
         <div
           class="back-btn"
           onclick="closeDetail()"
         >
-
           ← Orqaga
-
         </div>
 
 
@@ -3160,9 +2790,7 @@ function renderAdminPanel() {
             }"
             onclick="adminOpenDashboard()"
           >
-
             📊 Statistika
-
           </button>
 
 
@@ -3174,9 +2802,7 @@ function renderAdminPanel() {
             }"
             onclick="adminOpenStudents()"
           >
-
             👨‍🎓 O'quvchilar
-
           </button>
 
 
@@ -3188,16 +2814,13 @@ function renderAdminPanel() {
             }"
             onclick="adminOpenLessons()"
           >
-
             📚 Darslar
-
           </button>
 
 
           ${
             state.admin_role === "super_admin"
               ? `
-
                 <button
                   class="${
                     adminView === "admins"
@@ -3206,11 +2829,8 @@ function renderAdminPanel() {
                   }"
                   onclick="adminOpenAdmins()"
                 >
-
                   👥 Adminlar
-
                 </button>
-
               `
               : ""
           }
@@ -3247,13 +2867,11 @@ function renderAdminPanel() {
         </div>
 
       </div>
-
     `
-
   };
 
-  render();
 
+  render();
 }
 
 
@@ -3266,103 +2884,82 @@ function renderAdminDashboard() {
   const s =
     adminData.stats || {};
 
-  return `
 
+  return `
     <div class="admin-stats-grid">
 
-
       <div class="admin-stat-card">
-
         <div class="admin-stat-icon">
           👨‍🎓
         </div>
 
         <div class="admin-stat-value">
-
           ${s.total_students || 0}
-
         </div>
 
         <div class="admin-stat-label">
           Jami o'quvchilar
         </div>
-
       </div>
 
 
       <div class="admin-stat-card">
-
         <div class="admin-stat-icon">
           💳
         </div>
 
         <div class="admin-stat-value">
-
           ${s.paid_students || 0}
-
         </div>
 
         <div class="admin-stat-label">
           To'lov qilganlar
         </div>
-
       </div>
 
 
       <div class="admin-stat-card">
-
         <div class="admin-stat-icon">
           ✅
         </div>
 
         <div class="admin-stat-value">
-
           ${s.active_students || 0}
-
         </div>
 
         <div class="admin-stat-label">
           Faol o'quvchilar
         </div>
-
       </div>
 
 
       <div class="admin-stat-card">
-
         <div class="admin-stat-icon">
           📚
         </div>
 
         <div class="admin-stat-value">
-
           ${s.total_lessons || 0}
-
         </div>
 
         <div class="admin-stat-label">
           Jami darslar
         </div>
-
       </div>
 
 
       <div class="admin-stat-card">
-
         <div class="admin-stat-icon">
           📦
         </div>
 
         <div class="admin-stat-value">
-
           ${s.total_modules || 0}
-
         </div>
 
         <div class="admin-stat-label">
           Jami modullar
         </div>
-
       </div>
 
     </div>
@@ -3372,19 +2969,11 @@ function renderAdminDashboard() {
       class="btn"
       onclick="adminOpenDashboard()"
     >
-
       🔄 Yangilash
-
     </button>
-
   `;
-
 }
 
-
-// ======================================================
-// DASHBOARD OPEN
-// ======================================================
 
 async function adminOpenDashboard() {
 
@@ -3402,9 +2991,7 @@ async function adminOpenDashboard() {
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -3428,9 +3015,7 @@ async function adminOpenStudents() {
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -3439,128 +3024,111 @@ function renderAdminStudents() {
   const students =
     adminData.students || [];
 
+
   if (!students.length) {
 
     return `
-
       <div class="empty-box">
-
         Hozircha o'quvchilar yo'q.
-
       </div>
-
     `;
-
   }
 
 
   return `
-
     <div class="admin-list">
 
-      ${
-        students.map(
-          student => `
+      ${students.map(student => `
 
-            <div
-              class="admin-student-card"
-              onclick="openAdminStudent(${student.id})"
-            >
+        <div
+          class="admin-student-card"
+          onclick="openAdminStudent(${student.id})"
+        >
 
-              <div class="admin-student-avatar">
+          <div class="admin-student-avatar">
 
-                ${
-                  escapeHtml(
-                    (
-                      student.first_name ||
-                      "?"
-                    )[0]
-                  ).toUpperCase()
-                }
+            ${
+              escapeHtml(
+                (
+                  student.first_name ||
+                  "?"
+                )[0]
+              ).toUpperCase()
+            }
 
-              </div>
+          </div>
 
 
-              <div class="admin-student-info">
+          <div class="admin-student-info">
 
-                <div class="admin-student-name">
+            <div class="admin-student-name">
 
-                  ${
-                    escapeHtml(
-                      [
-                        student.first_name || "",
-                        student.last_name || ""
-                      ]
-                        .filter(Boolean)
-                        .join(" ") ||
-                      "Foydalanuvchi"
-                    )
-                  }
-
-                </div>
-
-
-                <div class="admin-student-username">
-
-                  ${
-                    student.username
-                      ? "@" +
-                        escapeHtml(
-                          student.username
-                        )
-                      : "Telegram username yo'q"
-                  }
-
-                </div>
-
-
-                ${
-                  student.phone
-                    ? `
-                      <div class="admin-student-username">
-                        📞 ${escapeHtml(student.phone)}
-                      </div>
-                    `
-                    : ""
-                }
-
-
-                <div class="admin-student-progress">
-
-                  Progress:
-                  ${
-                    student.watched_lessons || 0
-                  }
-                  /
-                  ${
-                    student.total_lessons || 0
-                  }
-
-                </div>
-
-              </div>
-
-
-              <div>
-
-                ${
-                  student.has_access
-                    ? "🟢"
-                    : "🔴"
-                }
-
-              </div>
+              ${escapeHtml(
+                [
+                  student.first_name || "",
+                  student.last_name || ""
+                ]
+                  .filter(Boolean)
+                  .join(" ") ||
+                "Foydalanuvchi"
+              )}
 
             </div>
 
-          `
-        ).join("")
-      }
+
+            <div class="admin-student-username">
+
+              ${
+                student.username
+                  ? "@" +
+                    escapeHtml(
+                      student.username
+                    )
+                  : "Telegram username yo'q"
+              }
+
+            </div>
+
+
+            ${
+              student.phone
+                ? `
+                  <div class="admin-student-username">
+                    📞 ${escapeHtml(
+                      student.phone
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+
+            <div class="admin-student-progress">
+
+              Progress:
+              ${student.watched_lessons || 0}
+              /
+              ${student.total_lessons || 0}
+
+            </div>
+
+          </div>
+
+
+          <div>
+            ${
+              student.has_access
+                ? "🟢"
+                : "🔴"
+            }
+          </div>
+
+        </div>
+
+      `).join("")}
 
     </div>
-
   `;
-
 }
 
 
@@ -3577,16 +3145,14 @@ async function openAdminStudent(id) {
         `/api/admin/student/${id}`
       );
 
+
     const student =
       data.student || {};
 
 
     const fullName = [
-
       student.first_name || "",
-
       student.last_name || ""
-
     ]
       .filter(Boolean)
       .join(" ");
@@ -3595,16 +3161,13 @@ async function openAdminStudent(id) {
     currentView = {
 
       html: `
-
         <div class="admin-page">
 
           <div
             class="back-btn"
             onclick="adminOpenStudents()"
           >
-
             ← O'quvchilar
-
           </div>
 
 
@@ -3627,95 +3190,54 @@ async function openAdminStudent(id) {
           <div class="admin-student-detail">
 
             <div class="info-row">
-
+              <span>Ism</span>
               <span>
-                Ism
+                ${escapeHtml(
+                  student.first_name ||
+                  "-"
+                )}
               </span>
-
-              <span>
-
-                ${
-                  escapeHtml(
-                    student.first_name ||
-                    "-"
-                  )
-                }
-
-              </span>
-
             </div>
 
 
             <div class="info-row">
-
+              <span>Familiya</span>
               <span>
-                Familiya
+                ${escapeHtml(
+                  student.last_name ||
+                  "-"
+                )}
               </span>
-
-              <span>
-
-                ${
-                  escapeHtml(
-                    student.last_name ||
-                    "-"
-                  )
-                }
-
-              </span>
-
             </div>
 
 
             <div class="info-row">
-
+              <span>Telefon</span>
               <span>
-                Telefon
+                ${escapeHtml(
+                  student.phone ||
+                  "-"
+                )}
               </span>
-
-              <span>
-
-                ${
-                  escapeHtml(
-                    student.phone ||
-                    "-"
-                  )
-                }
-
-              </span>
-
             </div>
 
 
             <div class="info-row">
-
+              <span>Telegram ID</span>
               <span>
-                Telegram ID
-              </span>
-
-              <span>
-
-                ${
-                  escapeHtml(
-                    String(
-                      student.telegram_id ||
-                      ""
-                    )
+                ${escapeHtml(
+                  String(
+                    student.telegram_id ||
+                    ""
                   )
-                }
-
+                )}
               </span>
-
             </div>
 
 
             <div class="info-row">
-
+              <span>Username</span>
               <span>
-                Username
-              </span>
-
-              <span>
-
                 ${
                   student.username
                     ? "@" +
@@ -3724,44 +3246,30 @@ async function openAdminStudent(id) {
                       )
                     : "-"
                 }
-
               </span>
-
             </div>
 
 
             <div class="info-row">
-
+              <span>Kirish</span>
               <span>
-                Kirish
-              </span>
-
-              <span>
-
                 ${
                   student.has_access
                     ? "🟢 Faol"
                     : "🔴 Faol emas"
                 }
-
               </span>
-
             </div>
 
 
-            ${
-              renderStudentProgress(
-                data
-              )
-            }
+            ${renderStudentProgress(data)}
 
           </div>
 
         </div>
-
       `
-
     };
+
 
     render();
 
@@ -3770,9 +3278,7 @@ async function openAdminStudent(id) {
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -3787,81 +3293,65 @@ function renderStudentProgress(data) {
       ? data.modules
       : [];
 
+
   if (!modules.length) {
 
     return `
-
       <div class="empty-box">
-
         Progress ma'lumotlari yo'q.
-
       </div>
-
     `;
-
   }
 
 
-  return modules.map(
-    module => `
+  return modules.map(module => `
 
-      <div class="admin-progress-module">
+    <div class="admin-progress-module">
 
-        <div class="admin-progress-module-title">
+      <div class="admin-progress-module-title">
 
-          ${escapeHtml(
-            module.title ||
-            ""
-          )}
-
-        </div>
-
-
-        ${
-          Array.isArray(module.lessons)
-
-            ? module.lessons.map(
-                lesson => `
-
-                  <div
-                    class="admin-progress-lesson"
-                  >
-
-                    <span>
-
-                      ${
-                        escapeHtml(
-                          lesson.title ||
-                          ""
-                        )
-                      }
-
-                    </span>
-
-
-                    <span>
-
-                      ${
-                        lesson.watched
-                          ? "✅"
-                          : "⬜"
-                      }
-
-                    </span>
-
-                  </div>
-
-                `
-              ).join("")
-
-            : ""
-        }
+        ${escapeHtml(
+          module.title ||
+          ""
+        )}
 
       </div>
 
-    `
-  ).join("");
 
+      ${
+        Array.isArray(module.lessons)
+          ? module.lessons.map(
+              lesson => `
+
+                <div
+                  class="admin-progress-lesson"
+                >
+
+                  <span>
+                    ${escapeHtml(
+                      lesson.title ||
+                      ""
+                    )}
+                  </span>
+
+                  <span>
+                    ${
+                      lesson.watched
+                        ? "✅"
+                        : "⬜"
+                    }
+                  </span>
+
+                </div>
+
+              `
+            ).join("")
+          : ""
+      }
+
+    </div>
+
+  `).join("");
 }
 
 
@@ -3883,222 +3373,590 @@ async function adminOpenLessons() {
   } catch (error) {
 
     console.error(
-      "ADMIN MODULE ERROR:",
+      "ADMIN LESSONS ERROR:",
       error
     );
 
-    try {
-
-      const data =
-        await api("/api/content");
-
-      adminData.modules =
-        Array.isArray(data.modules)
-          ? data.modules
-          : [];
-
-      adminView =
-        "lessons";
-
-      renderAdminPanel();
-
-    } catch (secondError) {
-
-      tg.showAlert(
-        error.message
-      );
-
-    }
-
-  }
-
-}
-
-
-// ======================================================
-// ADMIN LESSONS — APPLE STYLE
-// ======================================================
-
-async function adminOpenLessons() {
-
-  try {
-
-    await loadAdminModules();
-
-    adminView = "lessons";
-
-    renderAdminPanel();
-
-  } catch (error) {
-
-    console.error("ADMIN LESSONS ERROR:", error);
-
     tg.showAlert(
       error.message ||
-      "Darslarni yuklashda xatolik yuz berdi."
+      "Darslarni yuklashda xatolik."
     );
-
   }
-
 }
 
 
 // ======================================================
-// APPLE STYLE REGISTRATION
+// RENDER ADMIN LESSONS
 // ======================================================
 
-function renderRegistration() {
+function renderAdminLessons() {
 
-  const tgUser =
-    tg.initDataUnsafe?.user || {};
+  const modules =
+    Array.isArray(adminData.modules)
+      ? adminData.modules
+      : [];
 
-  const firstName =
-    state.first_name ||
-    tgUser.first_name ||
-    "";
 
-  const lastName =
-    state.last_name ||
-    tgUser.last_name ||
-    "";
+  return `
+
+    <div class="admin-section-header">
+
+      <div class="admin-section-title">
+        📚 Kurs darslari
+      </div>
+
+
+      <button
+        class="admin-small-btn"
+        onclick="openAddLessonForm()"
+      >
+        ➕ Dars
+      </button>
+
+    </div>
+
+
+    ${
+      modules.length
+        ? modules.map(
+            (module, moduleIndex) => {
+
+              const lessons =
+                Array.isArray(module.lessons)
+                  ? module.lessons
+                  : [];
+
+
+              return `
+                <div class="admin-module-card">
+
+                  <div class="admin-module-title">
+
+                    ${String(
+                      moduleIndex + 1
+                    ).padStart(2, "0")}.
+                    ${escapeHtml(
+                      module.title
+                    )}
+
+                  </div>
+
+
+                  ${
+                    lessons.length
+                      ? lessons.map(
+                          lesson => `
+
+                            <div
+                              class="admin-lesson-card"
+                            >
+
+                              <div class="admin-lesson-info">
+
+                                <div class="admin-lesson-number">
+
+                                  ${
+                                    lesson.order_index ||
+                                    ""
+                                  }
+
+                                </div>
+
+
+                                <div>
+
+                                  <div class="admin-lesson-title">
+
+                                    ${escapeHtml(
+                                      lesson.title ||
+                                      ""
+                                    )}
+
+                                  </div>
+
+
+                                  <div class="admin-lesson-meta">
+
+                                    ${
+                                      lesson.is_free
+                                        ? "🟢 Namuna"
+                                        : "🔒 Pullik"
+                                    }
+
+                                    ${
+                                      lesson.video_type
+                                        ? " · " +
+                                          escapeHtml(
+                                            lesson.video_type
+                                          )
+                                        : ""
+                                    }
+
+                                  </div>
+
+                                </div>
+
+                              </div>
+
+
+                              <div class="admin-lesson-actions">
+
+                                <button
+                                  onclick="openAdminLessonEdit(${lesson.id})"
+                                >
+                                  ✏️
+                                </button>
+
+
+                                <button
+                                  onclick="deleteAdminLesson(${lesson.id})"
+                                >
+                                  🗑️
+                                </button>
+
+                              </div>
+
+                            </div>
+
+                          `
+                        ).join("")
+                      : `
+                        <div class="empty-box">
+                          Bu modulda dars yo'q.
+                        </div>
+                      `
+                  }
+
+                </div>
+              `;
+            }
+          ).join("")
+        : `
+          <div class="empty-box">
+            Hozircha modullar topilmadi.
+          </div>
+        `
+    }
+
+  `;
+}
+
+
+// ======================================================
+// ADD LESSON FORM
+// ======================================================
+
+function openAddLessonForm() {
+
+  const modules =
+    Array.isArray(adminData.modules)
+      ? adminData.modules
+      : [];
+
+
+  if (!modules.length) {
+
+    tg.showAlert(
+      "Avval modul yaratilgan bo‘lishi kerak."
+    );
+
+    return;
+  }
+
 
   currentView = {
 
     html: `
+      <div class="admin-page">
 
-      <div class="apple-registration">
-
-        <div class="apple-registration-brand">
-
-          <div class="apple-registration-logo">
-            Y
-          </div>
-
-          <div class="apple-registration-brand-name">
-            YOSHUZBEKK Academy
-          </div>
-
+        <div
+          class="back-btn"
+          onclick="adminOpenLessons()"
+        >
+          ← Darslar
         </div>
 
 
-        <div class="apple-registration-content">
+        <div class="admin-title">
+          ➕ Yangi dars qo'shish
+        </div>
 
-          <div class="apple-registration-icon">
-            👋
+
+        <div class="admin-form">
+
+          <div class="apple-field">
+
+            <label>
+              Modul
+            </label>
+
+            <select
+              id="new-lesson-module"
+              class="apple-input"
+            >
+
+              ${modules.map(
+                (module, index) => `
+
+                  <option
+                    value="${module.id}"
+                  >
+
+                    ${index + 1}.
+                    ${escapeHtml(
+                      module.title
+                    )}
+
+                  </option>
+
+                `
+              ).join("")}
+
+            </select>
+
           </div>
 
 
-          <h1>
-            Xush kelibsiz!
-          </h1>
+          <div class="apple-field">
+
+            <label>
+              Dars raqami
+            </label>
+
+            <input
+              id="new-lesson-order"
+              class="apple-input"
+              type="number"
+              min="1"
+              placeholder="Masalan: 1"
+            >
+
+          </div>
 
 
-          <p class="apple-registration-description">
+          <div class="apple-field">
 
-            Kursdan foydalanishni boshlash uchun
-            ma’lumotlaringizni kiriting.
+            <label>
+              Dars nomi
+            </label>
 
-          </p>
+            <input
+              id="new-lesson-title"
+              class="apple-input"
+              type="text"
+              placeholder="Masalan: Revit interfeysi"
+            >
 
-
-          <div class="apple-registration-form">
-
-
-            <div class="apple-registration-field">
-
-              <label>
-                Ism
-              </label>
-
-              <input
-                id="reg-first-name"
-                type="text"
-                autocomplete="given-name"
-                placeholder="Ismingiz"
-                value="${escapeHtml(firstName)}"
-              >
-
-            </div>
+          </div>
 
 
-            <div class="apple-registration-field">
+          <div class="apple-field">
 
-              <label>
-                Familiya
-              </label>
+            <label>
+              YouTube video
+            </label>
 
-              <input
-                id="reg-last-name"
-                type="text"
-                autocomplete="family-name"
-                placeholder="Familiyangiz"
-                value="${escapeHtml(lastName)}"
-              >
+            <input
+              id="new-lesson-youtube"
+              class="apple-input"
+              type="url"
+              placeholder="YouTube link"
+            >
 
-            </div>
+          </div>
 
 
-            <div class="apple-registration-field">
+          <div class="apple-field">
 
-              <label>
-                Telefon raqam
-              </label>
+            <label>
+              Bunny Video ID
+            </label>
 
-              <div class="apple-phone-input">
+            <input
+              id="new-lesson-bunny"
+              class="apple-input"
+              type="text"
+              placeholder="Bunny Video ID"
+            >
 
-                <span>
-                  +998
-                </span>
+          </div>
 
-                <input
-                  id="reg-phone"
-                  type="tel"
-                  inputmode="numeric"
-                  autocomplete="tel"
-                  placeholder="90 123 45 67"
-                >
 
+          <div class="apple-field">
+
+            <label>
+              Vazifa
+            </label>
+
+            <textarea
+              id="new-lesson-task"
+              class="apple-input apple-textarea"
+              placeholder="Dars vazifasi..."
+            ></textarea>
+
+          </div>
+
+
+          <div class="apple-field">
+
+            <label>
+              Ogohlantirish
+            </label>
+
+            <textarea
+              id="new-lesson-warning"
+              class="apple-input apple-textarea"
+            >${escapeHtml(
+              DEFAULT_LESSON_WARNING
+            )}</textarea>
+
+          </div>
+
+
+          <label class="apple-check-row">
+
+            <input
+              id="new-lesson-free"
+              type="checkbox"
+            >
+
+            <div>
+
+              <div class="apple-check-title">
+                Namuna dars
+              </div>
+
+              <div class="apple-check-text">
+                Bu dars hammaga bepul ochiladi.
               </div>
 
             </div>
 
-
-            <button
-              id="registration-submit"
-              class="apple-registration-button"
-              onclick="submitRegistration()"
-            >
-
-              Davom etish
-
-              <span>
-                →
-              </span>
-
-            </button>
+          </label>
 
 
-          </div>
-
-
-          <div class="apple-registration-note">
-
-            Ma’lumotlaringiz faqat kursdan foydalanish
-            va siz bilan bog‘lanish uchun ishlatiladi.
-
-          </div>
+          <button
+            class="apple-save-button"
+            onclick="createAdminLesson()"
+          >
+            ➕ Darsni qo'shish
+          </button>
 
         </div>
 
       </div>
-
     `
-
   };
 
-  render();
 
+  render();
 }
+
+
+// ======================================================
+// CREATE LESSON
+// ======================================================
+
+async function createAdminLesson() {
+
+  const moduleId =
+    document.getElementById(
+      "new-lesson-module"
+    )?.value;
+
+
+  const orderIndex =
+    document.getElementById(
+      "new-lesson-order"
+    )?.value;
+
+
+  const title =
+    document.getElementById(
+      "new-lesson-title"
+    )?.value.trim();
+
+
+  const youtubeUrl =
+    document.getElementById(
+      "new-lesson-youtube"
+    )?.value.trim();
+
+
+  const bunnyVideoId =
+    document.getElementById(
+      "new-lesson-bunny"
+    )?.value.trim();
+
+
+  const taskText =
+    document.getElementById(
+      "new-lesson-task"
+    )?.value.trim();
+
+
+  const warningText =
+    document.getElementById(
+      "new-lesson-warning"
+    )?.value.trim();
+
+
+  const isFree =
+    document.getElementById(
+      "new-lesson-free"
+    )?.checked === true;
+
+
+  if (!moduleId) {
+
+    tg.showAlert(
+      "Modulni tanlang."
+    );
+
+    return;
+  }
+
+
+  if (!orderIndex) {
+
+    tg.showAlert(
+      "Dars raqamini kiriting."
+    );
+
+    return;
+  }
+
+
+  if (!title) {
+
+    tg.showAlert(
+      "Dars nomini kiriting."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    await adminApi(
+      "/api/admin/lesson/add",
+      {
+        module_id:
+          Number(moduleId),
+
+        order_index:
+          Number(orderIndex),
+
+        title,
+
+        youtube_url:
+          youtubeUrl || null,
+
+        bunny_video_id:
+          bunnyVideoId || null,
+
+        task_text:
+          taskText || null,
+
+        warning_text:
+          warningText || null,
+
+        is_free:
+          isFree
+      }
+    );
+
+
+    tg.showAlert(
+      "✅ Dars qo'shildi."
+    );
+
+
+    await adminOpenLessons();
+
+  } catch (error) {
+
+    console.error(
+      "CREATE LESSON ERROR:",
+      error
+    );
+
+    tg.showAlert(
+      error.message ||
+      "Dars qo'shishda xatolik."
+    );
+  }
+}
+
+
+// ======================================================
+// EDIT LESSON
+// ======================================================
+
+async function openAdminLessonEdit(id) {
+
+  try {
+
+    const lesson =
+      await api(
+        `/api/lesson/${id}`
+      );
+
+
+    if (
+      lesson.error
+    ) {
+
+      throw new Error(
+        lesson.message ||
+        "Dars topilmadi."
+      );
+    }
+
+
+    const modules =
+      Array.isArray(adminData.modules)
+        ? adminData.modules
+        : [];
+
+
+    currentView = {
+
+      html: `
+        <div class="admin-page">
+
+          <div
+            class="back-btn"
+            onclick="adminOpenLessons()"
+          >
+            ← Darslar
+          </div>
+
+
+          <div class="admin-title">
+            ✏️ Darsni tahrirlash
+          </div>
+
+
+          <div class="admin-form">
+
+
+            <div class="apple-field">
+
+              <label>
+                Modul
+              </label>
+
+              <select
+                id="edit-lesson-module"
+                class="apple-input"
+              >
+
+                ${
+                  modules.map(
+                    (module, index) => `
+
                       <option
                         value="${module.id}"
                         ${
@@ -4211,10 +4069,11 @@ function renderRegistration() {
                 </div>
 
                 <div class="apple-resource-text">
-                  Mavjud fayllarni boshqarish
+                  Google Drive / boshqa fayl linklarini boshqarish
                 </div>
 
               </div>
+
 
               <button
                 class="apple-resource-button"
@@ -4295,21 +4154,18 @@ function renderRegistration() {
               class="apple-save-button"
               onclick="updateAdminLesson(${id})"
             >
-              O‘zgarishlarni saqlash
+              💾 O‘zgarishlarni saqlash
             </button>
 
 
           </div>
 
         </div>
-
       `
-
     };
 
 
     render();
-
 
   } catch (error) {
 
@@ -4322,10 +4178,147 @@ function renderRegistration() {
       error.message ||
       "Darsni yuklashda xatolik."
     );
+  }
+}
 
+
+// ======================================================
+// UPDATE LESSON
+// ======================================================
+
+async function updateAdminLesson(id) {
+
+  const moduleId =
+    document.getElementById(
+      "edit-lesson-module"
+    )?.value;
+
+
+  const orderIndex =
+    document.getElementById(
+      "edit-lesson-order"
+    )?.value;
+
+
+  const title =
+    document.getElementById(
+      "edit-lesson-title"
+    )?.value.trim();
+
+
+  const youtubeUrl =
+    document.getElementById(
+      "edit-lesson-youtube"
+    )?.value.trim();
+
+
+  const bunnyVideoId =
+    document.getElementById(
+      "edit-lesson-bunny"
+    )?.value.trim();
+
+
+  const taskText =
+    document.getElementById(
+      "edit-lesson-task"
+    )?.value.trim();
+
+
+  const warningText =
+    document.getElementById(
+      "edit-lesson-warning"
+    )?.value.trim();
+
+
+  const isFree =
+    document.getElementById(
+      "edit-lesson-free"
+    )?.checked === true;
+
+
+  if (!moduleId) {
+
+    tg.showAlert(
+      "Modulni tanlang."
+    );
+
+    return;
   }
 
+
+  if (!orderIndex) {
+
+    tg.showAlert(
+      "Dars raqamini kiriting."
+    );
+
+    return;
+  }
+
+
+  if (!title) {
+
+    tg.showAlert(
+      "Dars nomini kiriting."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    await adminApi(
+      `/api/admin/lesson/${id}/update`,
+      {
+        module_id:
+          Number(moduleId),
+
+        order_index:
+          Number(orderIndex),
+
+        title,
+
+        youtube_url:
+          youtubeUrl || null,
+
+        bunny_video_id:
+          bunnyVideoId || null,
+
+        task_text:
+          taskText || null,
+
+        warning_text:
+          warningText || null,
+
+        is_free:
+          isFree
+      }
+    );
+
+
+    tg.showAlert(
+      "✅ Dars yangilandi."
+    );
+
+
+    await adminOpenLessons();
+
+  } catch (error) {
+
+    console.error(
+      "UPDATE LESSON ERROR:",
+      error
+    );
+
+    tg.showAlert(
+      error.message ||
+      "Darsni saqlashda xatolik."
+    );
+  }
 }
+
+
 // ======================================================
 // DELETE LESSON
 // ======================================================
@@ -4361,13 +4354,10 @@ function deleteAdminLesson(id) {
         tg.showAlert(
           error.message
         );
-
       }
-
     }
 
   );
-
 }
 
 
@@ -4397,23 +4387,18 @@ async function openLessonFiles(
     currentView = {
 
       html: `
-
         <div class="admin-page">
 
           <div
             class="back-btn"
             onclick="adminOpenLessons()"
           >
-
             ← Darslar
-
           </div>
 
 
           <div class="admin-title">
-
             📥 Materiallar
-
           </div>
 
 
@@ -4448,9 +4433,7 @@ async function openLessonFiles(
               class="btn"
               onclick="addLessonFile(${lessonId})"
             >
-
               ➕ Material qo'shish
-
             </button>
 
           </div>
@@ -4460,89 +4443,85 @@ async function openLessonFiles(
 
             ${
               files.length
+                ? files.map(file => `
 
-                ? files.map(
-                    file => `
+                    <div class="admin-file-card">
 
-                      <div class="admin-file-card">
+                      <div>
 
-                        <div>
+                        <div class="admin-file-name">
 
-                          <div class="admin-file-name">
-
-                            📦 ${
-                              escapeHtml(
-                                file.file_name ||
-                                "Material"
-                              )
-                            }
-
-                          </div>
-
-
-                          <div class="admin-file-url">
-
-                            ${
-                              escapeHtml(
-                                file.file_url ||
-                                ""
-                              )
-                            }
-
-                          </div>
+                          📦 ${
+                            escapeHtml(
+                              file.file_name ||
+                              "Material"
+                            )
+                          }
 
                         </div>
 
 
-                        <div class="admin-file-actions">
+                        <div class="admin-file-url">
 
-                          <button
-                            onclick="editLessonFile(
-                              ${file.id},
-                              ${lessonId},
-                              '${escapeHtml(file.file_name || "")}',
-                              '${escapeHtml(file.file_url || "")}'
-                            )"
-                          >
-
-                            ✏️
-
-                          </button>
-
-
-                          <button
-                            onclick="deleteLessonFile(${file.id}, ${lessonId})"
-                          >
-
-                            🗑️
-
-                          </button>
+                          ${
+                            escapeHtml(
+                              file.file_url ||
+                              ""
+                            )
+                          }
 
                         </div>
 
                       </div>
 
-                    `
-                  ).join("")
 
+                      <div class="admin-file-actions">
+
+                        <button
+                          onclick="editLessonFile(
+                            ${file.id},
+                            ${lessonId},
+                            '${escapeHtml(
+                              file.file_name ||
+                              ""
+                            )}',
+                            '${escapeHtml(
+                              file.file_url ||
+                              ""
+                            )}'
+                          )"
+                        >
+                          ✏️
+                        </button>
+
+
+                        <button
+                          onclick="deleteLessonFile(
+                            ${file.id},
+                            ${lessonId}
+                          )"
+                        >
+                          🗑️
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  `).join("")
                 : `
-
                   <div class="empty-box">
-
                     Bu darsga hali material qo'shilmagan.
-
                   </div>
-
                 `
             }
 
           </div>
 
         </div>
-
       `
-
     };
+
 
     render();
 
@@ -4551,9 +4530,7 @@ async function openLessonFiles(
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -4568,14 +4545,13 @@ async function addLessonFile(
   const fileName =
     document.getElementById(
       "new-file-name"
-    )?.value
-      ?.trim();
+    )?.value.trim();
+
 
   const fileUrl =
     document.getElementById(
       "new-file-url"
-    )?.value
-      ?.trim();
+    )?.value.trim();
 
 
   if (!fileName) {
@@ -4585,7 +4561,6 @@ async function addLessonFile(
     );
 
     return;
-
   }
 
 
@@ -4596,7 +4571,6 @@ async function addLessonFile(
     );
 
     return;
-
   }
 
 
@@ -4605,13 +4579,11 @@ async function addLessonFile(
     await adminApi(
       `/api/admin/lesson/${lessonId}/files/add`,
       {
-
         file_name:
           fileName,
 
         file_url:
           fileUrl
-
       }
     );
 
@@ -4630,9 +4602,7 @@ async function addLessonFile(
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -4650,23 +4620,18 @@ function editLessonFile(
   currentView = {
 
     html: `
-
       <div class="admin-page">
 
         <div
           class="back-btn"
           onclick="openLessonFiles(${lessonId})"
         >
-
           ← Materiallar
-
         </div>
 
 
         <div class="admin-title">
-
           ✏️ Materialni tahrirlash
-
         </div>
 
 
@@ -4690,23 +4655,22 @@ function editLessonFile(
 
           <button
             class="btn"
-            onclick="updateLessonFile(${fileId}, ${lessonId})"
+            onclick="updateLessonFile(
+              ${fileId},
+              ${lessonId}
+            )"
           >
-
             💾 Saqlash
-
           </button>
 
         </div>
 
       </div>
-
     `
-
   };
 
-  render();
 
+  render();
 }
 
 
@@ -4722,14 +4686,13 @@ async function updateLessonFile(
   const fileName =
     document.getElementById(
       "edit-file-name"
-    )?.value
-      ?.trim();
+    )?.value.trim();
+
 
   const fileUrl =
     document.getElementById(
       "edit-file-url"
-    )?.value
-      ?.trim();
+    )?.value.trim();
 
 
   if (!fileName || !fileUrl) {
@@ -4739,7 +4702,6 @@ async function updateLessonFile(
     );
 
     return;
-
   }
 
 
@@ -4748,13 +4710,11 @@ async function updateLessonFile(
     await adminApi(
       `/api/admin/file/${fileId}/update`,
       {
-
         file_name:
           fileName,
 
         file_url:
           fileUrl
-
       }
     );
 
@@ -4773,9 +4733,7 @@ async function updateLessonFile(
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -4819,13 +4777,11 @@ function deleteLessonFile(
         tg.showAlert(
           error.message
         );
-
       }
 
     }
 
   );
-
 }
 
 
@@ -4845,7 +4801,6 @@ async function adminOpenAdmins() {
     );
 
     return;
-
   }
 
 
@@ -4863,9 +4818,7 @@ async function adminOpenAdmins() {
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -4875,9 +4828,7 @@ function renderAdminAdmins() {
     state.admin_role !==
     "super_admin"
   ) {
-
     return "";
-
   }
 
 
@@ -4886,9 +4837,7 @@ function renderAdminAdmins() {
     <div class="admin-section-header">
 
       <div class="admin-section-title">
-
         👥 Adminlar
-
       </div>
 
 
@@ -4896,9 +4845,7 @@ function renderAdminAdmins() {
         class="admin-small-btn"
         onclick="openAddAdminForm()"
       >
-
         ➕ Admin
-
       </button>
 
     </div>
@@ -4929,13 +4876,11 @@ function renderAdminAdmins() {
                 <div class="admin-student-username">
 
                   ID:
-                  ${
-                    escapeHtml(
-                      String(
-                        admin.telegram_id
-                      )
+                  ${escapeHtml(
+                    String(
+                      admin.telegram_id
                     )
-                  }
+                  )}
 
                 </div>
 
@@ -4945,9 +4890,7 @@ function renderAdminAdmins() {
                   ${
                     admin.role ===
                     "super_admin"
-
                       ? "👑 Super Admin"
-
                       : "🛡️ Admin"
                   }
 
@@ -4961,28 +4904,18 @@ function renderAdminAdmins() {
                   admin.telegram_id
                 ) !==
                 "8043641301"
-
                   ? `
-
                     <button
                       class="admin-delete-btn"
                       onclick="deleteAdmin(${admin.id})"
                     >
-
                       🗑️
-
                     </button>
-
                   `
-
                   : `
-
                     <div class="admin-protected">
-
                       🔐 Asosiy
-
                     </div>
-
                   `
               }
 
@@ -4993,14 +4926,12 @@ function renderAdminAdmins() {
       }
 
     </div>
-
   `;
-
 }
 
 
 // ======================================================
-// ADD ADMIN FORM
+// ADD ADMIN
 // ======================================================
 
 function openAddAdminForm() {
@@ -5015,30 +4946,24 @@ function openAddAdminForm() {
     );
 
     return;
-
   }
 
 
   currentView = {
 
     html: `
-
       <div class="admin-page">
 
         <div
           class="back-btn"
           onclick="adminOpenAdmins()"
         >
-
           ← Adminlar
-
         </div>
 
 
         <div class="admin-title">
-
           ➕ Admin qo'shish
-
         </div>
 
 
@@ -5087,21 +5012,17 @@ function openAddAdminForm() {
             class="btn"
             onclick="addAdmin()"
           >
-
             ➕ Admin qo'shish
-
           </button>
 
         </div>
 
       </div>
-
     `
-
   };
 
-  render();
 
+  render();
 }
 
 
@@ -5114,14 +5035,14 @@ async function addAdmin() {
   const telegramId =
     document.getElementById(
       "new-admin-telegram-id"
-    )?.value
-      ?.trim();
+    )?.value.trim();
+
 
   const firstName =
     document.getElementById(
       "new-admin-name"
-    )?.value
-      ?.trim();
+    )?.value.trim();
+
 
   const role =
     document.getElementById(
@@ -5136,7 +5057,6 @@ async function addAdmin() {
     );
 
     return;
-
   }
 
 
@@ -5145,16 +5065,13 @@ async function addAdmin() {
     await adminApi(
       "/api/admin/admins/add",
       {
-
         telegram_id:
           telegramId,
 
         first_name:
           firstName,
 
-        role:
-          role
-
+        role
       }
     );
 
@@ -5171,9 +5088,7 @@ async function addAdmin() {
     tg.showAlert(
       error.message
     );
-
   }
-
 }
 
 
@@ -5212,13 +5127,10 @@ function deleteAdmin(id) {
         tg.showAlert(
           error.message
         );
-
       }
-
     }
 
   );
-
 }
 
 
@@ -5251,7 +5163,6 @@ async function startApp() {
       throw new Error(
         "Telegram ma'lumotlari topilmadi. Mini App'ni Telegram ichidan oching."
       );
-
     }
 
 
@@ -5264,14 +5175,10 @@ async function startApp() {
       throw new Error(
         "Autentifikatsiya ma'lumotlari olinmadi."
       );
-
     }
 
 
-    /*
-      ADMIN:
-      Registration talab qilinmaydi.
-    */
+    // ADMIN uchun registration kerak emas
 
     if (
       !authData.registered &&
@@ -5285,14 +5192,8 @@ async function startApp() {
       renderRegistration();
 
       return;
-
     }
 
-
-    /*
-      Oddiy foydalanuvchi ro'yxatdan o'tgan
-      yoki admin bo'lsa — kontentni yuklaymiz.
-    */
 
     await loadContent();
 
@@ -5303,10 +5204,10 @@ async function startApp() {
       error
     );
 
+
     if (app) {
 
       app.innerHTML = `
-
         <div class="page">
 
           <div class="empty-box">
@@ -5329,30 +5230,25 @@ async function startApp() {
               class="btn"
               onclick="location.reload()"
             >
-
               🔄 Qayta urinish
-
             </button>
 
           </div>
 
         </div>
-
       `;
-
     }
+
 
     try {
 
       tg.showAlert(
         error.message ||
-        "Ilovani ishga tushirishda xatolik yuz berdi."
+        "Ilovani ishga tushirishda xatolik."
       );
 
     } catch (e) {}
-
   }
-
 }
 
 
