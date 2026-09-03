@@ -92,7 +92,6 @@ function generateBunnyToken(
     .digest('hex');
 }
 
-
 function generateBunnyPlayerUrl(
   libraryId,
   videoId
@@ -132,10 +131,6 @@ function getYouTubeVideoId(url) {
     const hostname =
       parsedUrl.hostname.toLowerCase();
 
-    // ----------------------------------------------
-    // youtu.be
-    // ----------------------------------------------
-
     if (
       hostname === 'youtu.be'
     ) {
@@ -149,17 +144,11 @@ function getYouTubeVideoId(url) {
 
     }
 
-    // ----------------------------------------------
-    // youtube.com
-    // ----------------------------------------------
-
     if (
       hostname === 'youtube.com' ||
       hostname === 'www.youtube.com' ||
       hostname === 'm.youtube.com'
     ) {
-
-      // youtube.com/watch?v=XXXXX
 
       const videoId =
         parsedUrl.searchParams.get('v');
@@ -167,8 +156,6 @@ function getYouTubeVideoId(url) {
       if (videoId) {
         return videoId;
       }
-
-      // youtube.com/embed/XXXXX
 
       const embedMatch =
         parsedUrl.pathname.match(
@@ -179,8 +166,6 @@ function getYouTubeVideoId(url) {
         return embedMatch[1];
       }
 
-      // youtube.com/shorts/XXXXX
-
       const shortsMatch =
         parsedUrl.pathname.match(
           /^\/shorts\/([^/]+)/
@@ -189,7 +174,6 @@ function getYouTubeVideoId(url) {
       if (shortsMatch) {
         return shortsMatch[1];
       }
-
     }
 
     return null;
@@ -204,7 +188,6 @@ function getYouTubeVideoId(url) {
     return null;
   }
 }
-
 
 function generateYouTubePlayerUrl(
   youtubeUrl
@@ -317,6 +300,182 @@ async function getOrCreateUser(
 }
 
 // ======================================================
+// ADMIN FUNCTIONS
+// ======================================================
+
+async function getAdminByTelegramId(
+  telegramId
+) {
+
+  const result =
+    await pool.query(
+      `
+      SELECT
+        id,
+        telegram_id,
+        first_name,
+        role,
+        created_at
+
+      FROM admins
+
+      WHERE telegram_id = $1
+
+      LIMIT 1
+      `,
+      [telegramId]
+    );
+
+  return result.rows[0] || null;
+}
+
+// ======================================================
+// ADMIN AUTH
+// ======================================================
+
+async function requireAdmin(
+  req,
+  res,
+  next
+) {
+
+  try {
+
+    const initData =
+      req.body?.initData ||
+      req.headers['x-telegram-init-data'];
+
+    if (!initData) {
+
+      return res
+        .status(401)
+        .json({
+          error:
+            'Telegram initData yuborilmagan'
+        });
+    }
+
+    const user =
+      await getOrCreateUser(
+        initData
+      );
+
+    if (!user) {
+
+      return res
+        .status(401)
+        .json({
+          error:
+            'Telegram foydalanuvchisi tekshirilmadi'
+        });
+    }
+
+    const admin =
+      await getAdminByTelegramId(
+        user.telegram_id
+      );
+
+    if (!admin) {
+
+      console.warn(
+        `ADMIN ACCESS DENIED: ${user.telegram_id}`
+      );
+
+      return res
+        .status(403)
+        .json({
+          error:
+            'Sizda admin huquqi mavjud emas'
+        });
+    }
+
+    req.user = user;
+    req.admin = admin;
+
+    next();
+
+  } catch (error) {
+
+    console.error(
+      'ADMIN AUTH ERROR:',
+      error
+    );
+
+    return res
+      .status(500)
+      .json({
+        error:
+          'Admin tekshirishda server xatosi'
+      });
+  }
+}
+
+// ======================================================
+// SUPER ADMIN AUTH
+// ======================================================
+
+async function requireSuperAdmin(
+  req,
+  res,
+  next
+) {
+
+  try {
+
+    if (!req.admin) {
+
+      return res
+        .status(403)
+        .json({
+          error:
+            'Admin huquqi kerak'
+        });
+    }
+
+    const isMainAdmin =
+      String(
+        req.admin.telegram_id
+      ) ===
+      String(
+        ADMIN_TELEGRAM_ID
+      );
+
+    const isSuperAdmin =
+      req.admin.role ===
+      'super_admin';
+
+    if (
+      !isMainAdmin &&
+      !isSuperAdmin
+    ) {
+
+      return res
+        .status(403)
+        .json({
+          error:
+            'Faqat super admin bu amalni bajarishi mumkin'
+        });
+    }
+
+    next();
+
+  } catch (error) {
+
+    console.error(
+      'SUPER ADMIN AUTH ERROR:',
+      error
+    );
+
+    return res
+      .status(500)
+      .json({
+        error:
+          'Super admin tekshirishda xato'
+      });
+  }
+}
+
+// ======================================================
 // AUTH
 // ======================================================
 
@@ -339,8 +498,12 @@ app.post(
             error:
               'Telegram foydalanuvchisi tekshirilmadi'
           });
-
       }
+
+      const admin =
+        await getAdminByTelegramId(
+          user.telegram_id
+        );
 
       return res.json({
 
@@ -354,7 +517,13 @@ app.post(
           hasAccess(user),
 
         access_until:
-          user.access_until || null
+          user.access_until || null,
+
+        is_admin:
+          Boolean(admin),
+
+        admin_role:
+          admin?.role || null
 
       });
 
@@ -385,10 +554,6 @@ app.post(
 
     try {
 
-      // ==================================================
-      // USER
-      // ==================================================
-
       const user =
         await getOrCreateUser(
           req.body.initData
@@ -404,16 +569,8 @@ app.post(
           });
       }
 
-      // ==================================================
-      // ACCESS
-      // ==================================================
-
       const userHasAccess =
         hasAccess(user);
-
-      // ==================================================
-      // MODULES
-      // ==================================================
 
       const modulesResult =
         await pool.query(
@@ -433,10 +590,6 @@ app.post(
 
       const modules =
         modulesResult.rows;
-
-      // ==================================================
-      // LESSONS
-      // ==================================================
 
       const lessonsResult =
         await pool.query(
@@ -462,18 +615,10 @@ app.post(
       const lessons =
         lessonsResult.rows;
 
-      // ==================================================
-      // FIRST MODULE
-      // ==================================================
-
       const firstModuleId =
         modules.length
           ? modules[0].id
           : null;
-
-      // ==================================================
-      // BUILD MODULE DATA
-      // ==================================================
 
       const data =
         modules.map(
@@ -546,10 +691,6 @@ app.post(
           }
         );
 
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
       return res.json({
 
         has_access:
@@ -596,10 +737,6 @@ app.post(
 
     try {
 
-      // ==================================================
-      // USER
-      // ==================================================
-
       const user =
         await getOrCreateUser(
           req.body.initData
@@ -614,10 +751,6 @@ app.post(
               'Telegram foydalanuvchisi tekshirilmadi'
           });
       }
-
-      // ==================================================
-      // LESSON
-      // ==================================================
 
       const lessonResult =
         await pool.query(
@@ -655,10 +788,6 @@ app.post(
           });
       }
 
-      // ==================================================
-      // MODULE
-      // ==================================================
-
       const moduleResult =
         await pool.query(
           `
@@ -689,16 +818,8 @@ app.post(
           });
       }
 
-      // ==================================================
-      // ACCESS
-      // ==================================================
-
       const userHasAccess =
         hasAccess(user);
-
-      // ==================================================
-      // FIRST MODULE
-      // ==================================================
 
       const firstModuleResult =
         await pool.query(
@@ -724,18 +845,10 @@ app.post(
         Number(firstModule.id) ===
         Number(module.id);
 
-      // ==================================================
-      // LESSON ACCESS
-      // ==================================================
-
       const lessonAvailable =
         Boolean(lesson.is_free) ||
         isFirstModule ||
         userHasAccess;
-
-      // ==================================================
-      // LOCK
-      // ==================================================
 
       if (!lessonAvailable) {
 
@@ -751,10 +864,6 @@ app.post(
 
           });
       }
-
-      // ==================================================
-      // LESSON FILES
-      // ==================================================
 
       let files = [];
 
@@ -788,17 +897,8 @@ app.post(
           fileError
         );
 
-        /*
-         * Fayllar jadvalida muammo bo‘lsa,
-         * darsning o‘zi baribir ochiladi.
-         */
-
         files = [];
       }
-
-      // ==================================================
-      // PROGRESS
-      // ==================================================
 
       try {
 
@@ -839,12 +939,7 @@ app.post(
           'PROGRESS ERROR:',
           progressError
         );
-
       }
-
-      // ==================================================
-      // WARNING TEXT
-      // ==================================================
 
       const defaultWarning =
         `⚠️ MUHIM OGOHLANTIRISH
@@ -860,10 +955,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
         lesson.warning_text.trim()
           ? lesson.warning_text
           : defaultWarning;
-
-      // ==================================================
-      // YOUTUBE
-      // ==================================================
 
       const youtubePlayerUrl =
         generateYouTubePlayerUrl(
@@ -900,10 +991,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 
         });
       }
-
-      // ==================================================
-      // BUNNY
-      // ==================================================
 
       if (
         lesson.bunny_video_id &&
@@ -947,10 +1034,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 
         });
       }
-
-      // ==================================================
-      // VIDEO NOT FOUND
-      // ==================================================
 
       return res.json({
 
@@ -1266,10 +1349,6 @@ app.post(
         user.username
       );
 
-      // ==================================================
-      // ACCESS BOR
-      // ==================================================
-
       if (hasAccess(user)) {
 
         return res.json({
@@ -1281,10 +1360,6 @@ app.post(
 
         });
       }
-
-      // ==================================================
-      // PENDING REQUEST
-      // ==================================================
 
       const existingResult =
         await pool.query(
@@ -1302,10 +1377,6 @@ app.post(
           `,
           [user.id]
         );
-
-      // ==================================================
-      // OLDIN SO‘ROV YUBORILGAN
-      // ==================================================
 
       if (
         existingResult.rows.length > 0
@@ -1354,10 +1425,6 @@ app.post(
         });
       }
 
-      // ==================================================
-      // CREATE PAYMENT REQUEST
-      // ==================================================
-
       const requestResult =
         await pool.query(
           `
@@ -1382,10 +1449,6 @@ app.post(
         '✅ PAYMENT REQUEST YARATILDI:',
         requestResult.rows[0].id
       );
-
-      // ==================================================
-      // ADMIN MESSAGE
-      // ==================================================
 
       const adminMessage =
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
@@ -1466,11 +1529,1708 @@ app.post(
 );
 
 // ======================================================
-// ADMIN TEST
+// ======================================================
+// ADMIN API
+// ======================================================
 // ======================================================
 
-app.get(
+// ======================================================
+// ADMIN AUTH
+// ======================================================
+
+app.post(
+  '/api/admin/auth',
+  requireAdmin,
+  async (req, res) => {
+
+    return res.json({
+
+      ok: true,
+
+      admin: {
+
+        id:
+          req.admin.id,
+
+        telegram_id:
+          req.admin.telegram_id.toString(),
+
+        first_name:
+          req.admin.first_name || '',
+
+        role:
+          req.admin.role
+
+      }
+
+    });
+  }
+);
+
+// ======================================================
+// ADMIN STATS
+// ======================================================
+
+app.post(
+  '/api/admin/stats',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const totalResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS total
+
+          FROM users
+          `
+        );
+
+      const paidResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS paid
+
+          FROM users
+
+          WHERE access_until > NOW()
+          `
+        );
+
+      const unpaidResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS unpaid
+
+          FROM users
+
+          WHERE
+            access_until IS NULL
+            OR access_until <= NOW()
+          `
+        );
+
+      const activeResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(
+              DISTINCT user_id
+            )::int AS active
+
+          FROM progress
+
+          WHERE watched = true
+          `
+        );
+
+      const lessonsResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS total
+
+          FROM lessons
+          `
+        );
+
+      const modulesResult =
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS total
+
+          FROM modules
+          `
+        );
+
+      return res.json({
+
+        ok: true,
+
+        stats: {
+
+          total_students:
+            totalResult.rows[0].total,
+
+          paid_students:
+            paidResult.rows[0].paid,
+
+          unpaid_students:
+            unpaidResult.rows[0].unpaid,
+
+          active_students:
+            activeResult.rows[0].active,
+
+          total_lessons:
+            lessonsResult.rows[0].total,
+
+          total_modules:
+            modulesResult.rows[0].total
+
+        }
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN STATS ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Statistikani olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN STUDENTS
+// ======================================================
+
+app.post(
+  '/api/admin/students',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+
+            u.id,
+
+            u.telegram_id,
+
+            u.first_name,
+
+            u.username,
+
+            u.access_until,
+
+            u.created_at,
+
+            COUNT(
+              DISTINCT
+              CASE
+                WHEN p.watched = true
+                THEN p.lesson_id
+              END
+            )::int AS watched_lessons,
+
+            (
+              SELECT
+                COUNT(*)::int
+
+              FROM lessons
+            ) AS total_lessons
+
+          FROM users u
+
+          LEFT JOIN progress p
+            ON p.user_id = u.id
+
+          GROUP BY
+            u.id
+
+          ORDER BY
+            u.created_at DESC
+          `
+        );
+
+      const students =
+        result.rows.map(
+          student => ({
+
+            id:
+              student.id,
+
+            telegram_id:
+              student.telegram_id.toString(),
+
+            first_name:
+              student.first_name || '',
+
+            username:
+              student.username || null,
+
+            access_until:
+              student.access_until || null,
+
+            created_at:
+              student.created_at,
+
+            watched_lessons:
+              student.watched_lessons,
+
+            total_lessons:
+              student.total_lessons,
+
+            has_access:
+              student.access_until &&
+              new Date(
+                student.access_until
+              ) > new Date()
+
+          })
+        );
+
+      return res.json({
+
+        ok: true,
+
+        students:
+          students
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN STUDENTS ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'O‘quvchilarni olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN STUDENT DETAIL / PROGRESS
+// ======================================================
+
+app.post(
+  '/api/admin/student/:id',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const studentResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            telegram_id,
+            first_name,
+            username,
+            access_until,
+            created_at
+
+          FROM users
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [req.params.id]
+        );
+
+      const student =
+        studentResult.rows[0];
+
+      if (!student) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'O‘quvchi topilmadi'
+          });
+      }
+
+      const progressResult =
+        await pool.query(
+          `
+          SELECT
+
+            m.id AS module_id,
+
+            m.title AS module_title,
+
+            m.order_index AS module_order,
+
+            l.id AS lesson_id,
+
+            l.title AS lesson_title,
+
+            l.order_index AS lesson_order,
+
+            COALESCE(
+              p.watched,
+              false
+            ) AS watched
+
+          FROM modules m
+
+          LEFT JOIN lessons l
+            ON l.module_id = m.id
+
+          LEFT JOIN progress p
+            ON p.lesson_id = l.id
+            AND p.user_id = $1
+
+          ORDER BY
+            m.order_index ASC,
+            l.order_index ASC,
+            l.id ASC
+          `,
+          [student.id]
+        );
+
+      const testResult =
+        await pool.query(
+          `
+          SELECT
+
+            mr.module_id,
+
+            m.title AS module_title,
+
+            mr.passed,
+
+            mr.score,
+
+            mr.attempted_at
+
+          FROM module_results mr
+
+          JOIN modules m
+            ON m.id = mr.module_id
+
+          WHERE mr.user_id = $1
+
+          ORDER BY
+            m.order_index ASC
+          `,
+          [student.id]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        student: {
+
+          id:
+            student.id,
+
+          telegram_id:
+            student.telegram_id.toString(),
+
+          first_name:
+            student.first_name || '',
+
+          username:
+            student.username || null,
+
+          access_until:
+            student.access_until || null,
+
+          created_at:
+            student.created_at
+
+        },
+
+        progress:
+          progressResult.rows,
+
+        tests:
+          testResult.rows
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN STUDENT DETAIL ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'O‘quvchi ma’lumotlarini olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN MODULES
+// ======================================================
+
+app.post(
+  '/api/admin/modules',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+
+            m.id,
+
+            m.title,
+
+            m.order_index,
+
+            COUNT(l.id)::int AS lesson_count
+
+          FROM modules m
+
+          LEFT JOIN lessons l
+            ON l.module_id = m.id
+
+          GROUP BY
+            m.id
+
+          ORDER BY
+            m.order_index ASC,
+            m.id ASC
+          `
+        );
+
+      return res.json({
+
+        ok: true,
+
+        modules:
+          result.rows
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN MODULES ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Modullarni olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN LESSON LIST
+// ======================================================
+
+app.post(
+  '/api/admin/module/:id/lessons',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const moduleResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            title,
+            order_index
+
+          FROM modules
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [req.params.id]
+        );
+
+      if (
+        moduleResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Modul topilmadi'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+
+            l.id,
+
+            l.module_id,
+
+            l.title,
+
+            l.order_index,
+
+            l.youtube_url,
+
+            l.task_text,
+
+            l.is_free,
+
+            l.bunny_video_id,
+
+            l.warning_text,
+
+            COUNT(
+              lf.id
+            )::int AS file_count
+
+          FROM lessons l
+
+          LEFT JOIN lesson_files lf
+            ON lf.lesson_id = l.id
+
+          WHERE
+            l.module_id = $1
+
+          GROUP BY
+            l.id
+
+          ORDER BY
+            l.order_index ASC,
+            l.id ASC
+          `,
+          [req.params.id]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        module:
+          moduleResult.rows[0],
+
+        lessons:
+          result.rows
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN MODULE LESSONS ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Darslarni olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// CREATE LESSON
+// ======================================================
+
+app.post(
+  '/api/admin/lesson',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const {
+        module_id,
+        title,
+        order_index,
+        youtube_url,
+        task_text,
+        is_free,
+        bunny_video_id,
+        warning_text
+      } = req.body;
+
+      if (
+        !module_id ||
+        !title ||
+        order_index === undefined
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'module_id, title va order_index majburiy'
+          });
+      }
+
+      const moduleResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM modules
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [module_id]
+        );
+
+      if (
+        moduleResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Modul topilmadi'
+          });
+      }
+
+      const duplicateResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM lessons
+
+          WHERE
+            module_id = $1
+            AND order_index = $2
+
+          LIMIT 1
+          `,
+          [
+            module_id,
+            Number(order_index)
+          ]
+        );
+
+      if (
+        duplicateResult.rows.length > 0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Bu modulda ushbu dars raqami allaqachon mavjud'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO lessons
+          (
+            module_id,
+            title,
+            order_index,
+            youtube_url,
+            task_text,
+            is_free,
+            bunny_video_id,
+            warning_text
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            $8
+          )
+
+          RETURNING *
+          `,
+          [
+            Number(module_id),
+            title.trim(),
+            Number(order_index),
+            youtube_url || null,
+            task_text || null,
+            Boolean(is_free),
+            bunny_video_id || null,
+            warning_text || null
+          ]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Dars muvaffaqiyatli yaratildi',
+
+        lesson:
+          result.rows[0]
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'CREATE LESSON ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Dars yaratishda server xatosi'
+        });
+    }
+  }
+);
+
+// ======================================================
+// UPDATE LESSON
+// ======================================================
+
+app.post(
+  '/api/admin/lesson/:id/update',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const {
+        module_id,
+        title,
+        order_index,
+        youtube_url,
+        task_text,
+        is_free,
+        bunny_video_id,
+        warning_text
+      } = req.body;
+
+      if (
+        !module_id ||
+        !title ||
+        order_index === undefined
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'module_id, title va order_index majburiy'
+          });
+      }
+
+      const existingResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM lessons
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [req.params.id]
+        );
+
+      if (
+        existingResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Dars topilmadi'
+          });
+      }
+
+      const duplicateResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM lessons
+
+          WHERE
+            module_id = $1
+            AND order_index = $2
+            AND id <> $3
+
+          LIMIT 1
+          `,
+          [
+            Number(module_id),
+            Number(order_index),
+            Number(req.params.id)
+          ]
+        );
+
+      if (
+        duplicateResult.rows.length > 0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Bu modulda ushbu dars raqami allaqachon mavjud'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE lessons
+
+          SET
+            module_id = $1,
+            title = $2,
+            order_index = $3,
+            youtube_url = $4,
+            task_text = $5,
+            is_free = $6,
+            bunny_video_id = $7,
+            warning_text = $8
+
+          WHERE id = $9
+
+          RETURNING *
+          `,
+          [
+            Number(module_id),
+            title.trim(),
+            Number(order_index),
+            youtube_url || null,
+            task_text || null,
+            Boolean(is_free),
+            bunny_video_id || null,
+            warning_text || null,
+            Number(req.params.id)
+          ]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Dars muvaffaqiyatli yangilandi',
+
+        lesson:
+          result.rows[0]
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'UPDATE LESSON ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Darsni yangilashda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// DELETE LESSON
+// ======================================================
+
+app.post(
+  '/api/admin/lesson/:id/delete',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const lessonId =
+        Number(req.params.id);
+
+      const lessonResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM lessons
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [lessonId]
+        );
+
+      if (
+        lessonResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Dars topilmadi'
+          });
+      }
+
+      await pool.query(
+        'DELETE FROM progress WHERE lesson_id = $1',
+        [lessonId]
+      );
+
+      await pool.query(
+        'DELETE FROM lesson_files WHERE lesson_id = $1',
+        [lessonId]
+      );
+
+      await pool.query(
+        'DELETE FROM lessons WHERE id = $1',
+        [lessonId]
+      );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Dars o‘chirildi'
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'DELETE LESSON ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Darsni o‘chirishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// GET LESSON FILES
+// ======================================================
+
+app.post(
+  '/api/admin/lesson/:id/files',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const lessonResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            title
+
+          FROM lessons
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [req.params.id]
+        );
+
+      if (
+        lessonResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Dars topilmadi'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+            id,
+            lesson_id,
+            file_name,
+            file_url
+
+          FROM lesson_files
+
+          WHERE lesson_id = $1
+
+          ORDER BY id ASC
+          `,
+          [req.params.id]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        lesson:
+          lessonResult.rows[0],
+
+        files:
+          result.rows
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'GET FILES ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Materiallarni olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADD LESSON FILE
+// ======================================================
+
+app.post(
+  '/api/admin/lesson/:id/files/add',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const {
+        file_name,
+        file_url
+      } = req.body;
+
+      if (
+        !file_name ||
+        !file_url
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'file_name va file_url majburiy'
+          });
+      }
+
+      const lessonResult =
+        await pool.query(
+          `
+          SELECT
+            id
+
+          FROM lessons
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [req.params.id]
+        );
+
+      if (
+        lessonResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Dars topilmadi'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO lesson_files
+          (
+            lesson_id,
+            file_name,
+            file_url
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3
+          )
+
+          RETURNING *
+          `,
+          [
+            Number(req.params.id),
+            file_name.trim(),
+            file_url.trim()
+          ]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Material qo‘shildi',
+
+        file:
+          result.rows[0]
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADD FILE ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Material qo‘shishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// UPDATE LESSON FILE
+// ======================================================
+
+app.post(
+  '/api/admin/file/:id/update',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const {
+        file_name,
+        file_url
+      } = req.body;
+
+      if (
+        !file_name ||
+        !file_url
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'file_name va file_url majburiy'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE lesson_files
+
+          SET
+            file_name = $1,
+            file_url = $2
+
+          WHERE id = $3
+
+          RETURNING *
+          `,
+          [
+            file_name.trim(),
+            file_url.trim(),
+            Number(req.params.id)
+          ]
+        );
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Material topilmadi'
+          });
+      }
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Material yangilandi',
+
+        file:
+          result.rows[0]
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'UPDATE FILE ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Materialni yangilashda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// DELETE LESSON FILE
+// ======================================================
+
+app.post(
+  '/api/admin/file/:id/delete',
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          DELETE FROM lesson_files
+
+          WHERE id = $1
+
+          RETURNING id
+          `,
+          [Number(req.params.id)]
+        );
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Material topilmadi'
+          });
+      }
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Material o‘chirildi'
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'DELETE FILE ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Materialni o‘chirishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN LIST
+// ======================================================
+
+app.post(
+  '/api/admin/admins',
+  requireSuperAdmin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+            id,
+            telegram_id,
+            first_name,
+            role,
+            created_at
+
+          FROM admins
+
+          ORDER BY
+            created_at ASC,
+            id ASC
+          `
+        );
+
+      return res.json({
+
+        ok: true,
+
+        admins:
+          result.rows.map(
+            admin => ({
+
+              id:
+                admin.id,
+
+              telegram_id:
+                admin.telegram_id.toString(),
+
+              first_name:
+                admin.first_name || '',
+
+              role:
+                admin.role,
+
+              created_at:
+                admin.created_at
+
+            })
+          )
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADMIN LIST ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Adminlarni olishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADD ADMIN
+// ======================================================
+
+app.post(
+  '/api/admin/admins/add',
+  requireSuperAdmin,
+  async (req, res) => {
+
+    try {
+
+      const {
+        telegram_id,
+        first_name,
+        role
+      } = req.body;
+
+      if (!telegram_id) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Telegram ID majburiy'
+          });
+      }
+
+      const telegramId =
+        String(
+          telegram_id
+        ).trim();
+
+      if (
+        !/^\d+$/.test(
+          telegramId
+        )
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Telegram ID faqat raqamlardan iborat bo‘lishi kerak'
+          });
+      }
+
+      const selectedRole =
+        role === 'super_admin'
+          ? 'super_admin'
+          : 'admin';
+
+      if (
+        telegramId ===
+        String(
+          ADMIN_TELEGRAM_ID
+        )
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Asosiy super adminni qayta qo‘shish shart emas'
+          });
+      }
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO admins
+          (
+            telegram_id,
+            first_name,
+            role
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3
+          )
+
+          ON CONFLICT
+          (
+            telegram_id
+          )
+
+          DO UPDATE SET
+
+            first_name = EXCLUDED.first_name,
+
+            role = EXCLUDED.role
+
+          RETURNING *
+          `,
+          [
+            telegramId,
+            first_name || '',
+            selectedRole
+          ]
+        );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Admin muvaffaqiyatli qo‘shildi',
+
+        admin: {
+
+          id:
+            result.rows[0].id,
+
+          telegram_id:
+            result.rows[0].telegram_id.toString(),
+
+          first_name:
+            result.rows[0].first_name || '',
+
+          role:
+            result.rows[0].role
+
+        }
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ADD ADMIN ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Admin qo‘shishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// DELETE ADMIN
+// ======================================================
+
+app.post(
+  '/api/admin/admins/:id/delete',
+  requireSuperAdmin,
+  async (req, res) => {
+
+    try {
+
+      const adminId =
+        Number(
+          req.params.id
+        );
+
+      const targetResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            telegram_id,
+            role
+
+          FROM admins
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [adminId]
+        );
+
+      const target =
+        targetResult.rows[0];
+
+      if (!target) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Admin topilmadi'
+          });
+      }
+
+      if (
+        String(
+          target.telegram_id
+        ) ===
+        String(
+          ADMIN_TELEGRAM_ID
+        )
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Asosiy super adminni o‘chirib bo‘lmaydi'
+          });
+      }
+
+      await pool.query(
+        `
+        DELETE FROM admins
+
+        WHERE id = $1
+        `,
+        [adminId]
+      );
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Admin o‘chirildi'
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'DELETE ADMIN ERROR:',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          error:
+            'Adminni o‘chirishda xato'
+        });
+    }
+  }
+);
+
+// ======================================================
+// ADMIN TEST
+// ======================================================
+// Faqat admin ishlata oladi.
+// Oldingi ochiq GET /api/admin-test endi himoyalangan.
+
+app.post(
   '/api/admin-test',
+  requireAdmin,
   async (req, res) => {
 
     try {
@@ -1487,6 +3247,10 @@ app.get(
       await notifyAdmin(
         `🧪 TEST XABARI\n\n` +
         `Telegram Admin ID: ${ADMIN_TELEGRAM_ID}\n\n` +
+        `👤 So‘rov yuborgan admin: ${
+          req.admin.first_name ||
+          'Noma’lum'
+        }\n\n` +
         `✅ Mini App serveridan test xabari.`
       );
 
