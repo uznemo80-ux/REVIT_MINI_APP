@@ -8,6 +8,20 @@ const app = document.getElementById("app");
 
 
 // ======================================================
+// HTML ESCAPE
+// ======================================================
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+// ======================================================
 // MAVZU
 // ======================================================
 
@@ -72,11 +86,11 @@ function showConfirm(
     <div class="modal-card">
 
       <div class="modal-title">
-        ${title}
+        ${escapeHtml(title)}
       </div>
 
       <div class="modal-msg">
-        ${message}
+        ${escapeHtml(message)}
       </div>
 
       <div class="modal-actions">
@@ -90,7 +104,7 @@ function showConfirm(
         <button
           class="modal-btn confirm"
         >
-          ${confirmLabel}
+          ${escapeHtml(confirmLabel)}
         </button>
 
       </div>
@@ -115,17 +129,24 @@ function showConfirm(
 
   if (confirmButton) {
     confirmButton.onclick = async () => {
+
       haptic("medium");
+
       overlay.remove();
 
       try {
+
         await onConfirm();
+
       } catch (error) {
+
         console.error(
           "CONFIRM ERROR:",
           error
         );
+
       }
+
     };
   }
 }
@@ -154,38 +175,46 @@ let currentView = null;
 
 async function api(path, body = {}) {
 
-  const res = await fetch(
-    path,
-    {
-      method: "POST",
+  const res =
+    await fetch(
+      path,
+      {
+        method: "POST",
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-      body: JSON.stringify({
-        initData,
-        ...body
-      })
-    }
-  );
+        body: JSON.stringify({
+          initData,
+          ...body
+        })
+      }
+    );
 
   let data;
 
   try {
-    data = await res.json();
+
+    data =
+      await res.json();
+
   } catch (error) {
+
     throw new Error(
       "Serverdan noto‘g‘ri javob keldi."
     );
+
   }
 
   if (!res.ok) {
+
     throw new Error(
       data.message ||
       data.error ||
       "Server xatosi"
     );
+
   }
 
   return data;
@@ -223,9 +252,11 @@ async function loadContent() {
       await api("/api/content");
 
     if (!data) {
+
       throw new Error(
         "Kontent topilmadi."
       );
+
     }
 
     state = data;
@@ -773,15 +804,15 @@ function renderHome() {
 
         <img
           class="course-cover"
-          src="${COURSE.cover}"
+          src="${escapeHtml(COURSE.cover)}"
           onerror="this.style.display='none'"
-          alt="${COURSE.title}"
+          alt="${escapeHtml(COURSE.title)}"
         >
 
         <div class="course-body">
 
           <div class="course-title">
-            ${COURSE.title}
+            ${escapeHtml(COURSE.title)}
           </div>
 
           <div class="course-meta">
@@ -794,7 +825,7 @@ function renderHome() {
           </div>
 
           <div class="course-price">
-            ${COURSE.price}
+            ${escapeHtml(COURSE.price)}
           </div>
 
           <button
@@ -844,11 +875,11 @@ function renderHome() {
           <div class="testi-card">
 
             <div class="testi-text">
-              "${t.text}"
+              "${escapeHtml(t.text)}"
             </div>
 
             <div class="testi-name">
-              — ${t.name}
+              — ${escapeHtml(t.name)}
             </div>
 
           </div>
@@ -878,7 +909,7 @@ function renderHome() {
             >
 
               <span>
-                ${f.q}
+                ${escapeHtml(f.q)}
               </span>
 
               <span class="faq-plus">
@@ -892,7 +923,7 @@ function renderHome() {
               style="display:none;"
             >
 
-              ${f.a}
+              ${escapeHtml(f.a)}
 
             </div>
 
@@ -1046,7 +1077,7 @@ function renderLessons() {
 
               </span>
 
-              ${m.title}
+              ${escapeHtml(m.title)}
 
             </div>
 
@@ -1100,7 +1131,7 @@ function renderLessons() {
                 >
 
                   <span>
-                    ${l.title}
+                    ${escapeHtml(l.title)}
                   </span>
 
                   ${
@@ -1198,6 +1229,8 @@ function toggleModule(id) {
 
 function showLockedInfo() {
 
+  haptic();
+
   tg.showAlert(
     "Bu dars uchun to'lov qilish kerak. \"Chat\" bo'limidan admin bilan bog'laning."
   );
@@ -1289,15 +1322,18 @@ function renderTasks() {
           >
 
             <div class="task-module">
-              ${l.moduleTitle}
+              ${escapeHtml(l.moduleTitle)}
             </div>
 
             <div class="task-title">
-              ${l.title}
+              ${escapeHtml(l.title)}
             </div>
 
             <div class="task-text">
-              ${l.task_text}
+              ${escapeHtml(l.task_text).replace(
+                /\n/g,
+                "<br>"
+              )}
             </div>
 
           </div>
@@ -1428,8 +1464,6 @@ async function requestAccess() {
         );
 
 
-        // Telegram initData tekshirish
-
         if (!initData) {
 
           console.error(
@@ -1449,8 +1483,6 @@ async function requestAccess() {
         );
 
 
-        // Tugmalarni bloklash
-
         const buttons =
           document.querySelectorAll(
             ".btn"
@@ -1469,8 +1501,6 @@ async function requestAccess() {
         );
 
 
-        // SERVER
-
         const result =
           await api(
             "/api/request-access"
@@ -1482,8 +1512,6 @@ async function requestAccess() {
           result
         );
 
-
-        // OLDIN PENDING BO'LGAN
 
         if (
           result.already_pending
@@ -1499,8 +1527,6 @@ async function requestAccess() {
         }
 
 
-        // MUVAFFAQIYATLI
-
         if (
           result.ok
         ) {
@@ -1514,8 +1540,6 @@ async function requestAccess() {
           return;
         }
 
-
-        // SERVER XATOSI
 
         throw new Error(
 
@@ -1547,8 +1571,6 @@ async function requestAccess() {
 
 
       } finally {
-
-        // Tugmalarni qayta yoqish
 
         const buttons =
           document.querySelectorAll(
@@ -1605,8 +1627,10 @@ function renderProfile() {
         <div class="profile-name">
 
           ${
-            state.first_name ||
-            "Foydalanuvchi"
+            escapeHtml(
+              state.first_name ||
+              "Foydalanuvchi"
+            )
           }
 
         </div>
@@ -1615,7 +1639,9 @@ function renderProfile() {
         <div class="profile-id">
 
           ID:
-          ${state.telegram_id}
+          ${escapeHtml(
+            state.telegram_id
+          )}
 
         </div>
 
@@ -1742,8 +1768,180 @@ function renderProfile() {
 
 function renderDetailView() {
 
-  return currentView.html;
+  return currentView
+    ? currentView.html
+    : "";
 
+}
+
+
+// ======================================================
+// DEFAULT WARNING
+// ======================================================
+
+const DEFAULT_LESSON_WARNING = `
+⚠️ MUHIM OGOHLANTIRISH
+
+Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.
+
+Darsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qat'iyan taqiqlanadi.
+
+Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.
+`;
+
+
+// ======================================================
+// WARNING HTML
+// ======================================================
+
+function renderLessonWarning(warningText) {
+
+  const text =
+    warningText &&
+    String(warningText).trim()
+      ? warningText
+      : DEFAULT_LESSON_WARNING;
+
+  return `
+
+    <div class="lesson-warning">
+
+      <div class="lesson-warning-title">
+        ⚠️ MUHIM OGOHLANTIRISH
+      </div>
+
+      <div class="lesson-warning-text">
+
+        ${escapeHtml(text).replace(
+          /\n/g,
+          "<br>"
+        )}
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+// ======================================================
+// FILES HTML
+// ======================================================
+
+function renderLessonFiles(files) {
+
+  if (
+    !Array.isArray(files) ||
+    files.length === 0
+  ) {
+
+    return "";
+
+  }
+
+
+  return `
+
+    <div class="lesson-section">
+
+      <div class="section-title">
+        📥 Kerakli manba
+      </div>
+
+
+      <div class="files-description">
+
+        Ushbu darsda ishlatilgan fayllarni
+        quyidagi tugma orqali yuklab olishingiz mumkin.
+
+      </div>
+
+
+      <div class="lesson-files">
+
+        ${
+          files.map(
+            (file) => {
+
+              const fileName =
+                escapeHtml(
+                  file.file_name ||
+                  "Dars materiali"
+                );
+
+              const fileUrl =
+                escapeHtml(
+                  file.file_url ||
+                  "#"
+                );
+
+              return `
+
+                <div class="lesson-file">
+
+                  <div class="lesson-file-info">
+
+                    <div class="lesson-file-icon">
+                      📦
+                    </div>
+
+
+                    <div class="lesson-file-name">
+
+                      ${fileName}
+
+                    </div>
+
+                  </div>
+
+
+                  ${
+                    file.file_url
+
+                      ? `
+
+                        <a
+                          class="download-file-btn"
+                          href="${fileUrl}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onclick="haptic('light')"
+                        >
+
+                          📥 Yuklab olish
+
+                        </a>
+
+                      `
+
+                      : `
+
+                        <button
+                          class="download-file-btn"
+                          disabled
+                        >
+
+                          Fayl mavjud emas
+
+                        </button>
+
+                      `
+                  }
+
+                </div>
+
+              `;
+
+            }
+          ).join("")
+        }
+
+      </div>
+
+    </div>
+
+  `;
 }
 
 
@@ -1755,15 +1953,56 @@ async function openLesson(id) {
 
   try {
 
+    haptic("light");
+
+
+    // ==================================================
+    // LOADING
+    // ==================================================
+
+    currentView = {
+
+      html: `
+
+        <div class="lesson-loading">
+
+          <div class="spinner"></div>
+
+          <div>
+            Dars yuklanmoqda...
+          </div>
+
+        </div>
+
+      `
+
+    };
+
+
+    render();
+
+
+    // ==================================================
+    // GET LESSON
+    // ==================================================
+
     const lesson =
       await api(
         `/api/lesson/${id}`
       );
 
 
+    // ==================================================
+    // LOCKED
+    // ==================================================
+
     if (
       lesson.error === "locked"
     ) {
+
+      currentView = null;
+
+      render();
 
       return showLockedInfo();
 
@@ -1771,6 +2010,10 @@ async function openLesson(id) {
 
 
     if (lesson.error) {
+
+      currentView = null;
+
+      render();
 
       return tg.showAlert(
 
@@ -1782,10 +2025,16 @@ async function openLesson(id) {
     }
 
 
+    // ==================================================
+    // VIDEO
+    // ==================================================
+
     let videoHtml = "";
 
 
+    // --------------------------------------------------
     // YOUTUBE
+    // --------------------------------------------------
 
     if (
       lesson.video_type === "youtube" &&
@@ -1798,9 +2047,13 @@ async function openLesson(id) {
 
           <iframe
 
-            src="${lesson.youtube_player_url}"
+            src="${escapeHtml(
+              lesson.youtube_player_url
+            )}"
 
-            title="${lesson.title}"
+            title="${escapeHtml(
+              lesson.title
+            )}"
 
             allow="
               accelerometer;
@@ -1825,7 +2078,9 @@ async function openLesson(id) {
     }
 
 
+    // --------------------------------------------------
     // BUNNY
+    // --------------------------------------------------
 
     else if (
       lesson.video_type === "bunny" &&
@@ -1838,9 +2093,13 @@ async function openLesson(id) {
 
           <iframe
 
-            src="${lesson.bunny_player_url}"
+            src="${escapeHtml(
+              lesson.bunny_player_url
+            )}"
 
-            title="${lesson.title}"
+            title="${escapeHtml(
+              lesson.title
+            )}"
 
             allow="
               accelerometer;
@@ -1863,7 +2122,9 @@ async function openLesson(id) {
     }
 
 
-    // ESKI YOUTUBE
+    // --------------------------------------------------
+    // OLD YOUTUBE
+    // --------------------------------------------------
 
     else if (
       lesson.youtube_player_url
@@ -1875,11 +2136,17 @@ async function openLesson(id) {
 
           <iframe
 
-            src="${lesson.youtube_player_url}"
+            src="${escapeHtml(
+              lesson.youtube_player_url
+            )}"
 
-            title="${lesson.title}"
+            title="${escapeHtml(
+              lesson.title
+            )}"
 
             allowfullscreen
+
+            loading="lazy"
 
           ></iframe>
 
@@ -1890,7 +2157,9 @@ async function openLesson(id) {
     }
 
 
-    // ESKI BUNNY
+    // --------------------------------------------------
+    // OLD BUNNY
+    // --------------------------------------------------
 
     else if (
       lesson.bunny_player_url
@@ -1902,11 +2171,17 @@ async function openLesson(id) {
 
           <iframe
 
-            src="${lesson.bunny_player_url}"
+            src="${escapeHtml(
+              lesson.bunny_player_url
+            )}"
 
-            title="${lesson.title}"
+            title="${escapeHtml(
+              lesson.title
+            )}"
 
             allowfullscreen
+
+            loading="lazy"
 
           ></iframe>
 
@@ -1917,112 +2192,124 @@ async function openLesson(id) {
     }
 
 
+    // --------------------------------------------------
+    // NO VIDEO
+    // --------------------------------------------------
+
     else {
 
-      console.error(
-        "VIDEO URL TOPILMADI:",
-        lesson
-      );
+      videoHtml = `
 
+        <div class="lesson-no-video">
 
-      return tg.showAlert(
-        "Video topilmadi. Server ma'lumotlarini tekshirish kerak."
-      );
+          🎬 Ushbu dars uchun video mavjud emas.
+
+        </div>
+
+      `;
 
     }
 
 
-    // FILES
+    // ==================================================
+    // TASK
+    // ==================================================
 
-    const filesHtml =
+    const taskHtml =
 
-      lesson.files &&
-      lesson.files.length
+      lesson.task_text &&
+      String(
+        lesson.task_text
+      ).trim()
 
         ? `
 
-          <div class="section-title">
-            Darslikda ishlatilgan fayllar
+          <div class="lesson-section">
+
+            <div class="section-title">
+              📋 Vazifa
+            </div>
+
+
+            <div class="task-box">
+
+              ${escapeHtml(
+                lesson.task_text
+              ).replace(
+                /\n/g,
+                "<br>"
+              )}
+
+            </div>
+
           </div>
-
-
-          ${lesson.files.map(
-            f => `
-
-              <div class="file-item">
-
-                <span>
-                  📎 ${f.file_name}
-                </span>
-
-
-                <a
-                  href="${f.file_url}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-
-                  Yuklab olish
-
-                </a>
-
-              </div>
-
-            `
-          ).join("")}
 
         `
 
         : "";
 
 
+    // ==================================================
+    // FILES
+    // ==================================================
+
+    const filesHtml =
+      renderLessonFiles(
+        lesson.files
+      );
+
+
+    // ==================================================
+    // WARNING
+    // ==================================================
+
+    const warningHtml =
+      renderLessonWarning(
+        lesson.warning_text
+      );
+
+
+    // ==================================================
+    // FINAL DETAIL
+    // ==================================================
+
     currentView = {
 
       html: `
 
-        <div
-          class="back-btn"
-          onclick="closeDetail()"
-        >
-
-          ← Orqaga
-
-        </div>
-
-
         <div class="lesson-detail">
+
+
+          <div
+            class="back-btn"
+            onclick="closeDetail()"
+          >
+
+            ← Orqaga
+
+          </div>
+
 
           ${videoHtml}
 
 
-          <h2>
-            ${lesson.title}
+          <h2 class="lesson-detail-title">
+
+            ${escapeHtml(
+              lesson.title
+            )}
+
           </h2>
 
 
-          ${
-            lesson.task_text
-
-              ? `
-
-                <div class="section-title">
-                  Vazifa
-                </div>
-
-
-                <div class="task-box">
-
-                  ${lesson.task_text}
-
-                </div>
-
-              `
-
-              : ""
-          }
+          ${taskHtml}
 
 
           ${filesHtml}
+
+
+          ${warningHtml}
+
 
         </div>
 
@@ -2033,6 +2320,22 @@ async function openLesson(id) {
 
     render();
 
+
+    // ==================================================
+    // SCROLL TOP
+    // ==================================================
+
+    requestAnimationFrame(() => {
+
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant"
+      });
+
+    });
+
+
   } catch (error) {
 
     console.error(
@@ -2041,8 +2344,16 @@ async function openLesson(id) {
     );
 
 
+    currentView = null;
+
+    render();
+
+
     tg.showAlert(
+
+      error.message ||
       "Darsni ochishda server bilan bog'lanib bo'lmadi."
+
     );
 
   }
@@ -2050,11 +2361,25 @@ async function openLesson(id) {
 }
 
 
+// ======================================================
+// CLOSE LESSON
+// ======================================================
+
 function closeDetail() {
 
   currentView = null;
 
   render();
+
+  requestAnimationFrame(() => {
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant"
+    });
+
+  });
 
 }
 
@@ -2120,29 +2445,37 @@ async function openTest(moduleId) {
                   >
 
                     <p>
-                      ${q.question}
+                      ${escapeHtml(
+                        q.question
+                      )}
                     </p>
 
 
                     ${
-                      q.options
-                        .map(
-                          (opt, i) => `
+                      Array.isArray(q.options)
 
-                            <div
-                              class="option"
-                              data-q="${q.id}"
-                              data-i="${i}"
-                              onclick="selectOption(${q.id}, ${i})"
-                            >
+                        ? q.options
+                            .map(
+                              (opt, i) => `
 
-                              ${opt}
+                                <div
+                                  class="option"
+                                  data-q="${q.id}"
+                                  data-i="${i}"
+                                  onclick="selectOption(${q.id}, ${i})"
+                                >
 
-                            </div>
+                                  ${escapeHtml(
+                                    opt
+                                  )}
 
-                          `
-                        )
-                        .join("")
+                                </div>
+
+                              `
+                            )
+                            .join("")
+
+                        : ""
                     }
 
                   </div>
@@ -2188,6 +2521,10 @@ async function openTest(moduleId) {
 }
 
 
+// ======================================================
+// SELECT OPTION
+// ======================================================
+
 function selectOption(qId, i) {
 
   if (!window._answers) {
@@ -2228,6 +2565,9 @@ function selectOption(qId, i) {
     );
 
   }
+
+
+  haptic("light");
 
 }
 
@@ -2305,5 +2645,8 @@ console.log(
 );
 
 
-// Ilovani ishga tushirish
+// ======================================================
+// START APP
+// ======================================================
+
 loadContent();
