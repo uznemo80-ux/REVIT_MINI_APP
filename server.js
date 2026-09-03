@@ -16,10 +16,6 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// ADMIN TELEGRAM ID
-// Railway Variables'dagi qiymat ishlatiladi.
-// Agar Railway'da vaqtincha yozilmagan bo'lsa,
-// siz bergan ID ishlatiladi.
 const ADMIN_TELEGRAM_ID =
   process.env.ADMIN_TELEGRAM_ID || '8043641301';
 
@@ -72,7 +68,10 @@ pool.on('error', (error) => {
 // BUNNY STREAM
 // ======================================================
 
-function generateBunnyToken(videoId, expiresAt) {
+function generateBunnyToken(
+  videoId,
+  expiresAt
+) {
   const securityKey =
     process.env.BUNNY_TOKEN_AUTH_KEY;
 
@@ -124,10 +123,12 @@ function getYouTubeVideoId(url) {
   }
 
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl =
+      new URL(url);
 
     if (
-      parsedUrl.hostname === 'youtu.be'
+      parsedUrl.hostname ===
+      'youtu.be'
     ) {
       return (
         parsedUrl.pathname
@@ -137,12 +138,18 @@ function getYouTubeVideoId(url) {
     }
 
     if (
-      parsedUrl.hostname === 'youtube.com' ||
-      parsedUrl.hostname === 'www.youtube.com' ||
-      parsedUrl.hostname === 'm.youtube.com'
+      parsedUrl.hostname ===
+        'youtube.com' ||
+      parsedUrl.hostname ===
+        'www.youtube.com' ||
+      parsedUrl.hostname ===
+        'm.youtube.com'
     ) {
+
       const videoId =
-        parsedUrl.searchParams.get('v');
+        parsedUrl.searchParams.get(
+          'v'
+        );
 
       if (videoId) {
         return videoId;
@@ -170,6 +177,7 @@ function getYouTubeVideoId(url) {
     return null;
 
   } catch (error) {
+
     console.error(
       'YOUTUBE URL ERROR:',
       error.message
@@ -203,6 +211,7 @@ function generateYouTubePlayerUrl(
 // ======================================================
 
 function hasAccess(user) {
+
   if (!user) {
     return false;
   }
@@ -221,8 +230,12 @@ function hasAccess(user) {
 // GET / CREATE TELEGRAM USER
 // ======================================================
 
-async function getOrCreateUser(initData) {
+async function getOrCreateUser(
+  initData
+) {
+
   if (!initData) {
+
     console.error(
       'GET USER ERROR: initData mavjud emas'
     );
@@ -237,6 +250,7 @@ async function getOrCreateUser(initData) {
     );
 
   if (!tgUser) {
+
     console.error(
       'GET USER ERROR: Telegram initData noto‘g‘ri'
     );
@@ -289,13 +303,16 @@ async function getOrCreateUser(initData) {
 app.post(
   '/api/auth',
   async (req, res) => {
+
     try {
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
         return res
           .status(401)
           .json({
@@ -305,6 +322,7 @@ app.post(
       }
 
       return res.json({
+
         telegram_id:
           user.telegram_id.toString(),
 
@@ -316,9 +334,11 @@ app.post(
 
         access_until:
           user.access_until || null
+
       });
 
     } catch (error) {
+
       console.error(
         'AUTH ERROR:',
         error
@@ -341,13 +361,20 @@ app.post(
 app.post(
   '/api/content',
   async (req, res) => {
+
     try {
+
+      // ------------------------------------------------
+      // USER
+      // ------------------------------------------------
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
         return res
           .status(401)
           .json({
@@ -356,14 +383,27 @@ app.post(
           });
       }
 
-      const unlocked =
+      // ------------------------------------------------
+      // ACCESS
+      // ------------------------------------------------
+
+      const userHasAccess =
         hasAccess(user);
+
+      // ------------------------------------------------
+      // MODULES
+      // ------------------------------------------------
 
       const modulesResult =
         await pool.query(
           `
-          SELECT *
+          SELECT
+            id,
+            title,
+            order_index
+
           FROM modules
+
           ORDER BY order_index
           `
         );
@@ -371,11 +411,24 @@ app.post(
       const modules =
         modulesResult.rows;
 
+      // ------------------------------------------------
+      // LESSONS
+      // ------------------------------------------------
+
       const lessonsResult =
         await pool.query(
           `
-          SELECT *
+          SELECT
+            id,
+            module_id,
+            title,
+            order_index,
+            youtube_url,
+            task_text,
+            is_free
+
           FROM lessons
+
           ORDER BY
             module_id,
             order_index
@@ -385,56 +438,39 @@ app.post(
       const lessons =
         lessonsResult.rows;
 
-      const resultsResult =
-        await pool.query(
-          `
-          SELECT *
-          FROM module_results
-          WHERE user_id = $1
-          `,
-          [user.id]
-        );
-
-      const results =
-        resultsResult.rows;
-
-      const passedModuleIds =
-        new Set(
-          results
-            .filter(
-              result =>
-                result.passed
-            )
-            .map(
-              result =>
-                result.module_id
-            )
-        );
+      // ------------------------------------------------
+      // MODULE DATA
+      // ------------------------------------------------
 
       const data =
         modules.map(
           (module, index) => {
 
+            /*
+             * 1-MODUL:
+             * DOIMO OCHIQ.
+             *
+             * 2-MODUL VA KEYINGILAR:
+             * faqat to‘lovdan keyin ochiladi.
+             */
+
             const moduleUnlocked =
               index === 0 ||
-              passedModuleIds.has(
-                modules[index - 1].id
-              );
+              userHasAccess;
 
             return {
+
               id:
                 module.id,
 
               title:
                 module.title,
 
+              order_index:
+                module.order_index,
+
               unlocked:
                 moduleUnlocked,
-
-              passed_test:
-                passedModuleIds.has(
-                  module.id
-                ),
 
               lessons:
                 lessons
@@ -446,14 +482,28 @@ app.post(
                   .map(
                     lesson => {
 
+                      /*
+                       * DARS OCHILISH QOIDASI:
+                       *
+                       * is_free = true
+                       * → bepul preview
+                       *
+                       * Modul 1
+                       * → bepul
+                       *
+                       * Access mavjud
+                       * → pullik dars ochiladi
+                       *
+                       * Aks holda
+                       * → yopiq
+                       */
+
                       const available =
                         lesson.is_free ||
-                        (
-                          unlocked &&
-                          moduleUnlocked
-                        );
+                        moduleUnlocked;
 
                       return {
+
                         id:
                           lesson.id,
 
@@ -468,16 +518,24 @@ app.post(
 
                         available:
                           available
+
                       };
+
                     }
                   )
             };
+
           }
         );
 
+      // ------------------------------------------------
+      // RESPONSE
+      // ------------------------------------------------
+
       return res.json({
+
         has_access:
-          unlocked,
+          userHasAccess,
 
         access_until:
           user.access_until || null,
@@ -490,9 +548,11 @@ app.post(
 
         modules:
           data
+
       });
 
     } catch (error) {
+
       console.error(
         'CONTENT ERROR:',
         error
@@ -515,13 +575,20 @@ app.post(
 app.post(
   '/api/lesson/:id',
   async (req, res) => {
+
     try {
+
+      // ------------------------------------------------
+      // USER
+      // ------------------------------------------------
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
         return res
           .status(401)
           .json({
@@ -530,12 +597,21 @@ app.post(
           });
       }
 
+      // ------------------------------------------------
+      // LESSON
+      // ------------------------------------------------
+
       const lessonResult =
         await pool.query(
           `
-          SELECT *
+          SELECT
+            *
+
           FROM lessons
+
           WHERE id = $1
+
+          LIMIT 1
           `,
           [req.params.id]
         );
@@ -544,6 +620,7 @@ app.post(
         lessonResult.rows[0];
 
       if (!lesson) {
+
         return res
           .status(404)
           .json({
@@ -552,37 +629,112 @@ app.post(
           });
       }
 
-      if (
-        !lesson.is_free &&
-        !hasAccess(user)
-      ) {
+      // ------------------------------------------------
+      // MODULE
+      // ------------------------------------------------
+
+      const moduleResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            title,
+            order_index
+
+          FROM modules
+
+          WHERE id = $1
+
+          LIMIT 1
+          `,
+          [lesson.module_id]
+        );
+
+      const module =
+        moduleResult.rows[0];
+
+      if (!module) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Darsga tegishli modul topilmadi'
+          });
+      }
+
+      // ------------------------------------------------
+      // ACCESS
+      // ------------------------------------------------
+
+      const userHasAccess =
+        hasAccess(user);
+
+      /*
+       * Modulning order_index = 1 bo‘lsa:
+       * bepul.
+       *
+       * Keyingi modullar:
+       * faqat access bo‘lsa ochiladi.
+       *
+       * Lekin is_free = true bo‘lgan
+       * darslar har doim ochiq.
+       */
+
+      const isFirstModule =
+        Number(module.order_index) === 1;
+
+      const lessonAvailable =
+        lesson.is_free ||
+        isFirstModule ||
+        userHasAccess;
+
+      // ------------------------------------------------
+      // LOCK
+      // ------------------------------------------------
+
+      if (!lessonAvailable) {
+
         return res
           .status(403)
           .json({
+
             error:
               'locked',
 
             message:
-              'Bu dars uchun to‘lov qilinishi kerak'
+              'Bu dars yopiq. Kursga kirish uchun to‘lov qilishingiz kerak.'
+
           });
       }
+
+      // ------------------------------------------------
+      // FILES
+      // ------------------------------------------------
 
       const filesResult =
         await pool.query(
           `
           SELECT
+            id,
             file_name,
             file_url
 
           FROM lesson_files
 
           WHERE lesson_id = $1
+
+          ORDER BY id
           `,
           [lesson.id]
         );
 
       const files =
         filesResult.rows;
+
+      // ------------------------------------------------
+      // PROGRESS
+      // ------------------------------------------------
 
       await pool.query(
         `
@@ -615,13 +767,19 @@ app.post(
         ]
       );
 
+      // ------------------------------------------------
+      // YOUTUBE
+      // ------------------------------------------------
+
       const youtubePlayerUrl =
         generateYouTubePlayerUrl(
           lesson.youtube_url
         );
 
       if (youtubePlayerUrl) {
+
         return res.json({
+
           id:
             lesson.id,
 
@@ -642,18 +800,26 @@ app.post(
 
           files:
             files
+
         });
       }
+
+      // ------------------------------------------------
+      // BUNNY
+      // ------------------------------------------------
 
       if (
         !lesson.bunny_video_id ||
         !process.env.BUNNY_LIBRARY_ID
       ) {
+
         return res
           .status(500)
           .json({
+
             error:
               'Bu dars uchun video sozlanmagan'
+
           });
       }
 
@@ -664,6 +830,7 @@ app.post(
         );
 
       return res.json({
+
         id:
           lesson.id,
 
@@ -687,9 +854,11 @@ app.post(
 
         files:
           files
+
       });
 
     } catch (error) {
+
       console.error(
         'LESSON ERROR:',
         error
@@ -698,8 +867,10 @@ app.post(
       return res
         .status(500)
         .json({
+
           error:
             'Darsni ochishda server xatosi'
+
         });
     }
   }
@@ -712,13 +883,16 @@ app.post(
 app.post(
   '/api/module/:id/test',
   async (req, res) => {
+
     try {
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
         return res
           .status(401)
           .json({
@@ -746,11 +920,14 @@ app.post(
         );
 
       return res.json({
+
         questions:
           questionsResult.rows
+
       });
 
     } catch (error) {
+
       console.error(
         'TEST ERROR:',
         error
@@ -759,8 +936,10 @@ app.post(
       return res
         .status(500)
         .json({
+
           error:
             'Server xatosi'
+
         });
     }
   }
@@ -773,13 +952,16 @@ app.post(
 app.post(
   '/api/module/:id/submit',
   async (req, res) => {
+
     try {
+
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
+
         return res
           .status(401)
           .json({
@@ -813,11 +995,14 @@ app.post(
       for (
         const question of questions
       ) {
+
         if (
           answers[question.id] ===
           question.correct_index
         ) {
+
           correct++;
+
         }
       }
 
@@ -872,11 +1057,15 @@ app.post(
       );
 
       return res.json({
+
         score,
+
         passed
+
       });
 
     } catch (error) {
+
       console.error(
         'SUBMIT TEST ERROR:',
         error
@@ -885,8 +1074,10 @@ app.post(
       return res
         .status(500)
         .json({
+
           error:
             'Server xatosi'
+
         });
     }
   }
@@ -911,7 +1102,7 @@ app.post(
     try {
 
       // ------------------------------------------------
-      // TELEGRAM USER
+      // USER
       // ------------------------------------------------
 
       const user =
@@ -928,9 +1119,12 @@ app.post(
         return res
           .status(401)
           .json({
+
             ok: false,
+
             error:
               'Telegram foydalanuvchisi aniqlanmadi'
+
           });
       }
 
@@ -950,107 +1144,95 @@ app.post(
       );
 
       // ------------------------------------------------
-      // ACCESS BOR BO‘LSA
+      // ACCESS BOR
       // ------------------------------------------------
 
       if (hasAccess(user)) {
 
         return res.json({
+
           ok: true,
+
           message:
             'Sizda allaqachon kursga kirish huquqi mavjud'
+
         });
       }
 
-// ======================================================
-// PENDING REQUEST
-// ======================================================
+      // ------------------------------------------------
+      // PENDING REQUEST
+      // ------------------------------------------------
 
-const existingResult =
-  await pool.query(
-    `
-    SELECT id
-    FROM payment_requests
-    WHERE user_id = $1
-      AND status = 'pending'
-    LIMIT 1
-    `,
-    [user.id]
-  );
+      const existingResult =
+        await pool.query(
+          `
+          SELECT
+            id
 
+          FROM payment_requests
 
-// ------------------------------------------------------
-// OLDIN SO‘ROV YUBORILGAN BO‘LSA
-// ADMINGA QAYTA XABAR YUBORAMIZ
-// ------------------------------------------------------
+          WHERE user_id = $1
 
-if (
-  existingResult.rows.length > 0
-) {
+            AND status = 'pending'
 
-  console.log(
-    '⚠️ PENDING SO‘ROV ALLAQACHON BOR'
-  );
-
-  const adminMessage =
-    `💰 TO'LOV SO'ROVI!\n\n` +
-
-    `👤 Ism: ${
-      user.first_name ||
-      "Noma'lum"
-    }\n` +
-
-    `📱 Username: @${
-      user.username ||
-      "username yo‘q"
-    }\n` +
-
-    `🆔 Telegram ID: ${
-      user.telegram_id
-    }\n\n` +
-
-    `⚠️ Bu foydalanuvchi oldin ham so‘rov yuborgan.\n\n` +
-
-    `👇 Quyidagi tugmalardan birini tanlang:`;
-
-
-  console.log(
-    '📤 MAVJUD SO‘ROV BO‘YICHA ADMINGA XABAR YUBORILMOQDA...'
-  );
-
-
-  console.log(
-    '🎯 ADMIN ID:',
-    ADMIN_TELEGRAM_ID
-  );
-
-
-  await notifyAdmin(
-    adminMessage,
-    user.telegram_id.toString()
-  );
-
-
-  console.log(
-    '✅ MAVJUD SO‘ROV BO‘YICHA ADMINGA XABAR YUBORILDI'
-  );
-
-
-  return res.json({
-
-    ok: true,
-
-    already_pending: true,
-
-    message:
-      'So‘rovingiz adminga yuborildi'
-
-  });
-
-}
+          LIMIT 1
+          `,
+          [user.id]
+        );
 
       // ------------------------------------------------
-      // DATABASE REQUEST
+      // OLDIN SO‘ROV YUBORILGAN
+      // ------------------------------------------------
+
+      if (
+        existingResult.rows.length > 0
+      ) {
+
+        console.log(
+          '⚠️ PENDING SO‘ROV ALLAQACHON BOR'
+        );
+
+        const adminMessage =
+          `💰 TO'LOV SO'ROVI!\n\n` +
+
+          `👤 Ism: ${
+            user.first_name ||
+            "Noma'lum"
+          }\n` +
+
+          `📱 Username: @${
+            user.username ||
+            "username yo‘q"
+          }\n` +
+
+          `🆔 Telegram ID: ${
+            user.telegram_id
+          }\n\n` +
+
+          `⚠️ Bu foydalanuvchi oldin ham so‘rov yuborgan.\n\n` +
+
+          `👇 Quyidagi tugmalardan birini tanlang:`;
+
+        await notifyAdmin(
+          adminMessage,
+          user.telegram_id.toString()
+        );
+
+        return res.json({
+
+          ok: true,
+
+          already_pending:
+            true,
+
+          message:
+            'So‘rovingiz adminga yuborildi'
+
+        });
+      }
+
+      // ------------------------------------------------
+      // CREATE PAYMENT REQUEST
       // ------------------------------------------------
 
       const requestResult =
@@ -1084,10 +1266,23 @@ if (
 
       const adminMessage =
         `💰 YANGI TO'LOV SO'ROVI!\n\n` +
-        `👤 Ism: ${user.first_name || "Noma'lum"}\n` +
-        `📱 Username: @${user.username || "username yo‘q"}\n` +
-        `🆔 Telegram ID: ${user.telegram_id}\n\n` +
+
+        `👤 Ism: ${
+          user.first_name ||
+          "Noma'lum"
+        }\n` +
+
+        `📱 Username: @${
+          user.username ||
+          "username yo‘q"
+        }\n` +
+
+        `🆔 Telegram ID: ${
+          user.telegram_id
+        }\n\n` +
+
         `💳 Kursga kirish uchun so‘rov yuborildi.\n\n` +
+
         `👇 Quyidagi tugmalardan birini tanlang:`;
 
       console.log(
@@ -1099,10 +1294,6 @@ if (
         ADMIN_TELEGRAM_ID
       );
 
-      // notifyAdmin ikkinchi argument sifatida
-      // foydalanuvchining Telegram ID'sini oladi.
-      // Shu ID orqali approve/reject tugmalari
-      // ishlaydi.
       await notifyAdmin(
         adminMessage,
         user.telegram_id.toString()
@@ -1117,6 +1308,7 @@ if (
       // ------------------------------------------------
 
       return res.json({
+
         ok: true,
 
         already_pending:
@@ -1124,6 +1316,7 @@ if (
 
         message:
           'So‘rov adminga yuborildi'
+
       });
 
     } catch (error) {
@@ -1141,18 +1334,20 @@ if (
       return res
         .status(500)
         .json({
+
           ok: false,
 
           error:
             'Adminga murojaat yuborishda xatolik: ' +
             error.message
+
         });
     }
   }
 );
 
 // ======================================================
-// TEST ADMIN CONNECTION
+// ADMIN TEST
 // ======================================================
 
 app.get(
@@ -1177,10 +1372,12 @@ app.get(
       );
 
       return res.json({
+
         ok: true,
 
         message:
           'Admin Telegramiga test xabari yuborildi'
+
       });
 
     } catch (error) {
@@ -1193,10 +1390,12 @@ app.get(
       return res
         .status(500)
         .json({
+
           ok: false,
 
           error:
             error.message
+
         });
     }
   }
@@ -1211,6 +1410,7 @@ app.get(
   (req, res) => {
 
     res.json({
+
       ok: true,
 
       message:
@@ -1218,6 +1418,7 @@ app.get(
 
       admin_telegram_id:
         ADMIN_TELEGRAM_ID
+
     });
   }
 );
