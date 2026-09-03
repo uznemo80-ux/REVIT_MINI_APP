@@ -17,7 +17,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const ADMIN_TELEGRAM_ID =
-  process.env.ADMIN_TELEGRAM_ID || '8043641301';
+  String(
+    process.env.ADMIN_TELEGRAM_ID || '8043641301'
+  ).trim();
 
 console.log(
   `ADMIN TELEGRAM ID: ${ADMIN_TELEGRAM_ID}`
@@ -72,12 +74,10 @@ function generateBunnyToken(
   videoId,
   expiresAt
 ) {
-
   const securityKey =
     process.env.BUNNY_TOKEN_AUTH_KEY;
 
   if (!securityKey) {
-
     throw new Error(
       'BUNNY_TOKEN_AUTH_KEY topilmadi'
     );
@@ -98,7 +98,6 @@ function generateBunnyPlayerUrl(
   libraryId,
   videoId
 ) {
-
   const expiresAt =
     Math.floor(Date.now() / 1000) +
     2 * 60 * 60;
@@ -121,13 +120,11 @@ function generateBunnyPlayerUrl(
 // ======================================================
 
 function getYouTubeVideoId(url) {
-
   if (!url) {
     return null;
   }
 
   try {
-
     const parsedUrl =
       new URL(url);
 
@@ -137,7 +134,6 @@ function getYouTubeVideoId(url) {
     if (
       hostname === 'youtu.be'
     ) {
-
       return (
         parsedUrl.pathname
           .replace(/^\/+/, '')
@@ -151,7 +147,6 @@ function getYouTubeVideoId(url) {
       hostname === 'www.youtube.com' ||
       hostname === 'm.youtube.com'
     ) {
-
       const videoId =
         parsedUrl.searchParams.get('v');
 
@@ -181,7 +176,6 @@ function getYouTubeVideoId(url) {
     return null;
 
   } catch (error) {
-
     console.error(
       'YOUTUBE URL ERROR:',
       error.message
@@ -194,7 +188,6 @@ function getYouTubeVideoId(url) {
 function generateYouTubePlayerUrl(
   youtubeUrl
 ) {
-
   const videoId =
     getYouTubeVideoId(
       youtubeUrl
@@ -216,7 +209,6 @@ function generateYouTubePlayerUrl(
 // ======================================================
 
 function hasAccess(user) {
-
   if (!user) {
     return false;
   }
@@ -238,9 +230,7 @@ function hasAccess(user) {
 async function getOrCreateUser(
   initData
 ) {
-
   if (!initData) {
-
     console.error(
       'GET USER ERROR: initData mavjud emas'
     );
@@ -255,7 +245,6 @@ async function getOrCreateUser(
     );
 
   if (!tgUser) {
-
     console.error(
       'GET USER ERROR: Telegram initData noto‘g‘ri'
     );
@@ -328,7 +317,6 @@ async function getOrCreateUser(
 async function getAdminByTelegramId(
   telegramId
 ) {
-
   const result =
     await pool.query(
       `
@@ -354,21 +342,23 @@ async function getAdminByTelegramId(
 // ======================================================
 // ADMIN AUTH
 // ======================================================
+//
+// MUHIM:
+// Asosiy Super Admin ADMIN_TELEGRAM_ID orqali
+// admins jadvalida bo‘lmasa ham kirishi mumkin.
+//
 
 async function requireAdmin(
   req,
   res,
   next
 ) {
-
   try {
-
     const initData =
       req.body?.initData ||
       req.headers['x-telegram-init-data'];
 
     if (!initData) {
-
       return res
         .status(401)
         .json({
@@ -383,7 +373,6 @@ async function requireAdmin(
       );
 
     if (!user) {
-
       return res
         .status(401)
         .json({
@@ -392,15 +381,60 @@ async function requireAdmin(
         });
     }
 
+    const telegramId =
+      String(
+        user.telegram_id
+      );
+
+    // ==================================================
+    // ASOSIY SUPER ADMIN
+    // ==================================================
+
+    if (
+      telegramId ===
+      String(
+        ADMIN_TELEGRAM_ID
+      )
+    ) {
+      req.user =
+        user;
+
+      req.admin = {
+        id: null,
+
+        telegram_id:
+          telegramId,
+
+        first_name:
+          user.first_name ||
+          'Super Admin',
+
+        role:
+          'super_admin',
+
+        created_at:
+          null
+      };
+
+      console.log(
+        `👑 MAIN SUPER ADMIN ACCESS: ${telegramId}`
+      );
+
+      return next();
+    }
+
+    // ==================================================
+    // DATABASEDAN ADMINNI QIDIRISH
+    // ==================================================
+
     const admin =
       await getAdminByTelegramId(
         user.telegram_id
       );
 
     if (!admin) {
-
       console.warn(
-        `ADMIN ACCESS DENIED: ${user.telegram_id}`
+        `ADMIN ACCESS DENIED: ${telegramId}`
       );
 
       return res
@@ -411,13 +445,19 @@ async function requireAdmin(
         });
     }
 
-    req.user = user;
-    req.admin = admin;
+    req.user =
+      user;
+
+    req.admin =
+      admin;
+
+    console.log(
+      `✅ ADMIN ACCESS: ${telegramId} | ROLE: ${admin.role}`
+    );
 
     next();
 
   } catch (error) {
-
     console.error(
       'ADMIN AUTH ERROR:',
       error
@@ -441,11 +481,8 @@ async function requireSuperAdmin(
   res,
   next
 ) {
-
   try {
-
     if (!req.admin) {
-
       return res
         .status(403)
         .json({
@@ -454,22 +491,33 @@ async function requireSuperAdmin(
         });
     }
 
-    const isMainAdmin =
+    const currentTelegramId =
       String(
         req.admin.telegram_id
-      ) ===
+      );
+
+    const mainAdminId =
       String(
         ADMIN_TELEGRAM_ID
       );
 
+    const isMainAdmin =
+      currentTelegramId ===
+      mainAdminId;
+
     const isSuperAdmin =
-      req.admin.role ===
+      String(
+        req.admin.role
+      ) ===
       'super_admin';
 
     if (
       !isMainAdmin &&
       !isSuperAdmin
     ) {
+      console.warn(
+        `SUPER ADMIN ACCESS DENIED: ${currentTelegramId}`
+      );
 
       return res
         .status(403)
@@ -479,10 +527,13 @@ async function requireSuperAdmin(
         });
     }
 
+    console.log(
+      `👑 SUPER ADMIN ACCESS: ${currentTelegramId}`
+    );
+
     next();
 
   } catch (error) {
-
     console.error(
       'SUPER ADMIN AUTH ERROR:',
       error
@@ -504,9 +555,7 @@ async function requireSuperAdmin(
 app.post(
   '/api/register',
   async (req, res) => {
-
     try {
-
       const initData =
         req.body?.initData;
 
@@ -525,12 +574,7 @@ app.post(
           req.body?.phone || ''
         ).trim();
 
-      // ------------------------------------------
-      // VALIDATION
-      // ------------------------------------------
-
       if (!initData) {
-
         return res
           .status(401)
           .json({
@@ -540,7 +584,6 @@ app.post(
       }
 
       if (!firstName) {
-
         return res
           .status(400)
           .json({
@@ -550,7 +593,6 @@ app.post(
       }
 
       if (!lastName) {
-
         return res
           .status(400)
           .json({
@@ -560,7 +602,6 @@ app.post(
       }
 
       if (!phone) {
-
         return res
           .status(400)
           .json({
@@ -569,10 +610,6 @@ app.post(
           });
       }
 
-      // ------------------------------------------
-      // TELEGRAM USERNI TEKSHIRISH
-      // ------------------------------------------
-
       const tgUser =
         verifyInitData(
           initData,
@@ -580,7 +617,6 @@ app.post(
         );
 
       if (!tgUser) {
-
         return res
           .status(401)
           .json({
@@ -588,10 +624,6 @@ app.post(
               'Telegram maʼlumotlari noto‘g‘ri'
           });
       }
-
-      // ------------------------------------------
-      // TELEFONNI TOZALASH
-      // ------------------------------------------
 
       const normalizedPhone =
         phone
@@ -601,7 +633,6 @@ app.post(
       if (
         normalizedPhone.length < 9
       ) {
-
         return res
           .status(400)
           .json({
@@ -609,10 +640,6 @@ app.post(
               'Telefon raqamini to‘g‘ri kiriting'
           });
       }
-
-      // ------------------------------------------
-      // DATABASE
-      // ------------------------------------------
 
       const result =
         await pool.query(
@@ -697,7 +724,6 @@ app.post(
       );
 
       return res.json({
-
         ok: true,
 
         registered: true,
@@ -706,7 +732,6 @@ app.post(
           'Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi',
 
         user: {
-
           id:
             user.id,
 
@@ -730,13 +755,10 @@ app.post(
 
           access_until:
             user.access_until || null
-
         }
-
       });
 
     } catch (error) {
-
       console.error(
         'REGISTRATION ERROR:',
         error
@@ -759,16 +781,13 @@ app.post(
 app.post(
   '/api/auth',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -782,8 +801,15 @@ app.post(
           user.telegram_id
         );
 
-      return res.json({
+      const isMainAdmin =
+        String(
+          user.telegram_id
+        ) ===
+        String(
+          ADMIN_TELEGRAM_ID
+        );
 
+      return res.json({
         telegram_id:
           user.telegram_id.toString(),
 
@@ -810,15 +836,18 @@ app.post(
           user.access_until || null,
 
         is_admin:
-          Boolean(admin),
+          Boolean(
+            admin ||
+            isMainAdmin
+          ),
 
         admin_role:
-          admin?.role || null
-
+          isMainAdmin
+            ? 'super_admin'
+            : admin?.role || null
       });
 
     } catch (error) {
-
       console.error(
         'AUTH ERROR:',
         error
@@ -841,16 +870,13 @@ app.post(
 app.post(
   '/api/content',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -923,7 +949,6 @@ app.post(
               userHasAccess;
 
             return {
-
               id:
                 module.id,
 
@@ -953,7 +978,6 @@ app.post(
                         moduleUnlocked;
 
                       return {
-
                         id:
                           lesson.id,
 
@@ -970,19 +994,14 @@ app.post(
 
                         available:
                           available
-
                       };
-
                     }
                   )
-
             };
-
           }
         );
 
       return res.json({
-
         has_access:
           userHasAccess,
 
@@ -1010,11 +1029,9 @@ app.post(
 
         modules:
           data
-
       });
 
     } catch (error) {
-
       console.error(
         'CONTENT ERROR:',
         error
@@ -1037,16 +1054,13 @@ app.post(
 app.post(
   '/api/lesson/:id',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -1082,7 +1096,6 @@ app.post(
         lessonResult.rows[0];
 
       if (!lesson) {
-
         return res
           .status(404)
           .json({
@@ -1112,7 +1125,6 @@ app.post(
         moduleResult.rows[0];
 
       if (!module) {
-
         return res
           .status(404)
           .json({
@@ -1154,24 +1166,20 @@ app.post(
         userHasAccess;
 
       if (!lessonAvailable) {
-
         return res
           .status(403)
           .json({
-
             error:
               'locked',
 
             message:
               'Bu dars yopiq. Kursga kirish uchun to‘lov qilishingiz kerak.'
-
           });
       }
 
       let files = [];
 
       try {
-
         const filesResult =
           await pool.query(
             `
@@ -1194,7 +1202,6 @@ app.post(
           filesResult.rows;
 
       } catch (fileError) {
-
         console.error(
           'LESSON FILES ERROR:',
           fileError
@@ -1204,7 +1211,6 @@ app.post(
       }
 
       try {
-
         await pool.query(
           `
           INSERT INTO progress
@@ -1237,7 +1243,6 @@ app.post(
         );
 
       } catch (progressError) {
-
         console.error(
           'PROGRESS ERROR:',
           progressError
@@ -1265,9 +1270,7 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
         );
 
       if (youtubePlayerUrl) {
-
         return res.json({
-
           id:
             lesson.id,
 
@@ -1291,7 +1294,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 
           files:
             files
-
         });
       }
 
@@ -1299,7 +1301,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
         lesson.bunny_video_id &&
         process.env.BUNNY_LIBRARY_ID
       ) {
-
         const bunnyPlayerUrl =
           generateBunnyPlayerUrl(
             process.env.BUNNY_LIBRARY_ID,
@@ -1307,7 +1308,6 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
           );
 
         return res.json({
-
           id:
             lesson.id,
 
@@ -1334,12 +1334,10 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 
           files:
             files
-
         });
       }
 
       return res.json({
-
         id:
           lesson.id,
 
@@ -1357,11 +1355,9 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 
         files:
           files
-
       });
 
     } catch (error) {
-
       console.error(
         'LESSON ERROR:',
         error
@@ -1370,10 +1366,8 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
       return res
         .status(500)
         .json({
-
           error:
             'Darsni ochishda server xatosi'
-
         });
     }
   }
@@ -1386,16 +1380,13 @@ Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
 app.post(
   '/api/module/:id/test',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -1425,14 +1416,11 @@ app.post(
         );
 
       return res.json({
-
         questions:
           questionsResult.rows
-
       });
 
     } catch (error) {
-
       console.error(
         'TEST ERROR:',
         error
@@ -1441,10 +1429,8 @@ app.post(
       return res
         .status(500)
         .json({
-
           error:
             'Server xatosi'
-
         });
     }
   }
@@ -1457,16 +1443,13 @@ app.post(
 app.post(
   '/api/module/:id/submit',
   async (req, res) => {
-
     try {
-
       const user =
         await getOrCreateUser(
           req.body.initData
         );
 
       if (!user) {
-
         return res
           .status(401)
           .json({
@@ -1503,7 +1486,6 @@ app.post(
       for (
         const question of questions
       ) {
-
         if (
           Number(
             answers[question.id]
@@ -1512,11 +1494,8 @@ app.post(
             question.correct_index
           )
         ) {
-
           correct++;
-
         }
-
       }
 
       const score =
@@ -1570,15 +1549,11 @@ app.post(
       );
 
       return res.json({
-
         score,
-
         passed
-
       });
 
     } catch (error) {
-
       console.error(
         'SUBMIT TEST ERROR:',
         error
@@ -1587,10 +1562,8 @@ app.post(
       return res
         .status(500)
         .json({
-
           error:
             'Server xatosi'
-
         });
     }
   }
@@ -1628,12 +1601,9 @@ app.post(
         return res
           .status(401)
           .json({
-
             ok: false,
-
             error:
               'Telegram foydalanuvchisi aniqlanmadi'
-
           });
       }
 
@@ -1661,12 +1631,10 @@ app.post(
       if (hasAccess(user)) {
 
         return res.json({
-
           ok: true,
 
           message:
             'Sizda allaqachon kursga kirish huquqi mavjud'
-
         });
       }
 
@@ -1732,7 +1700,6 @@ app.post(
         );
 
         return res.json({
-
           ok: true,
 
           already_pending:
@@ -1740,7 +1707,6 @@ app.post(
 
           message:
             'So‘rovingiz adminga yuborildi'
-
         });
       }
 
@@ -1819,7 +1785,6 @@ app.post(
       );
 
       return res.json({
-
         ok: true,
 
         already_pending:
@@ -1827,7 +1792,6 @@ app.post(
 
         message:
           'So‘rov adminga yuborildi'
-
       });
 
     } catch (error) {
@@ -1845,13 +1809,11 @@ app.post(
       return res
         .status(500)
         .json({
-
           ok: false,
 
           error:
             'Adminga murojaat yuborishda xatolik: ' +
             error.message
-
         });
     }
   }
@@ -1871,7 +1833,6 @@ app.post(
   async (req, res) => {
 
     return res.json({
-
       ok: true,
 
       admin: {
@@ -1889,7 +1850,6 @@ app.post(
           req.admin.role
 
       }
-
     });
   }
 );
@@ -3274,36 +3234,79 @@ app.post(
           FROM admins
 
           ORDER BY
-            created_at ASC,
+            created_at ASC NULLS FIRST,
             id ASC
           `
         );
+
+      const admins =
+        result.rows.map(
+          admin => ({
+
+            id:
+              admin.id,
+
+            telegram_id:
+              admin.telegram_id.toString(),
+
+            first_name:
+              admin.first_name || '',
+
+            role:
+              admin.role,
+
+            created_at:
+              admin.created_at
+
+          })
+        );
+
+      // ==================================================
+      // ASOSIY SUPER ADMIN DATABASEDA BO‘LMASA
+      // RO‘YXATGA VIRTUAL QO‘SHAMIZ
+      // ==================================================
+
+      const mainAdminExists =
+        admins.some(
+          admin =>
+            String(
+              admin.telegram_id
+            ) ===
+            String(
+              ADMIN_TELEGRAM_ID
+            )
+        );
+
+      if (!mainAdminExists) {
+
+        admins.unshift({
+
+          id:
+            null,
+
+          telegram_id:
+            String(
+              ADMIN_TELEGRAM_ID
+            ),
+
+          first_name:
+            'Super Admin',
+
+          role:
+            'super_admin',
+
+          created_at:
+            null
+
+        });
+      }
 
       return res.json({
 
         ok: true,
 
         admins:
-          result.rows.map(
-            admin => ({
-
-              id:
-                admin.id,
-
-              telegram_id:
-                admin.telegram_id.toString(),
-
-              first_name:
-                admin.first_name || '',
-
-              role:
-                admin.role,
-
-              created_at:
-                admin.created_at
-
-            })
-          )
+          admins
 
       });
 
@@ -3335,13 +3338,26 @@ app.post(
 
     try {
 
-      const {
-        telegram_id,
-        first_name,
-        role
-      } = req.body;
+      const telegramId =
+        String(
+          req.body?.telegram_id || ''
+        ).trim();
 
-      if (!telegram_id) {
+      const firstName =
+        String(
+          req.body?.first_name || ''
+        ).trim();
+
+      const requestedRole =
+        String(
+          req.body?.role || 'admin'
+        ).trim();
+
+      // ==================================================
+      // TELEGRAM ID MAJBURIY
+      // ==================================================
+
+      if (!telegramId) {
 
         return res
           .status(400)
@@ -3351,10 +3367,9 @@ app.post(
           });
       }
 
-      const telegramId =
-        String(
-          telegram_id
-        ).trim();
+      // ==================================================
+      // TELEGRAM ID FAQAT RAQAMLAR
+      // ==================================================
 
       if (
         !/^\d+$/.test(
@@ -3370,10 +3385,19 @@ app.post(
           });
       }
 
+      // ==================================================
+      // ROLE
+      // ==================================================
+
       const selectedRole =
-        role === 'super_admin'
+        requestedRole ===
+        'super_admin'
           ? 'super_admin'
           : 'admin';
+
+      // ==================================================
+      // ASOSIY SUPER ADMINNI QAYTA QO‘SHISH YO‘Q
+      // ==================================================
 
       if (
         telegramId ===
@@ -3386,9 +3410,13 @@ app.post(
           .status(400)
           .json({
             error:
-              'Asosiy super adminni qayta qo‘shish shart emas'
+              'Bu Telegram ID allaqachon asosiy Super Admin hisoblanadi'
           });
       }
+
+      // ==================================================
+      // DATABASE
+      // ==================================================
 
       const result =
         await pool.query(
@@ -3414,18 +3442,55 @@ app.post(
 
           DO UPDATE SET
 
-            first_name = EXCLUDED.first_name,
+            first_name =
+              EXCLUDED.first_name,
 
-            role = EXCLUDED.role
+            role =
+              EXCLUDED.role
 
-          RETURNING *
+          RETURNING
+            id,
+            telegram_id,
+            first_name,
+            role,
+            created_at
           `,
           [
             telegramId,
-            first_name || '',
+            firstName,
             selectedRole
           ]
         );
+
+      const admin =
+        result.rows[0];
+
+      console.log(
+        '========================================'
+      );
+
+      console.log(
+        '👑 ADMIN ADDED / UPDATED'
+      );
+
+      console.log(
+        '🆔 Telegram ID:',
+        admin.telegram_id.toString()
+      );
+
+      console.log(
+        '👤 Name:',
+        admin.first_name
+      );
+
+      console.log(
+        '🔐 Role:',
+        admin.role
+      );
+
+      console.log(
+        '========================================'
+      );
 
       return res.json({
 
@@ -3437,16 +3502,19 @@ app.post(
         admin: {
 
           id:
-            result.rows[0].id,
+            admin.id,
 
           telegram_id:
-            result.rows[0].telegram_id.toString(),
+            admin.telegram_id.toString(),
 
           first_name:
-            result.rows[0].first_name || '',
+            admin.first_name || '',
 
           role:
-            result.rows[0].role
+            admin.role,
+
+          created_at:
+            admin.created_at
 
         }
 
@@ -3459,11 +3527,29 @@ app.post(
         error
       );
 
+      // ==================================================
+      // UNIQUE CONSTRAINT
+      // ==================================================
+
+      if (
+        error.code ===
+        '23505'
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Bu Telegram ID bilan admin allaqachon mavjud'
+          });
+      }
+
       return res
         .status(500)
         .json({
           error:
-            'Admin qo‘shishda xato'
+            'Admin qo‘shishda xato: ' +
+            error.message
         });
     }
   }
@@ -3485,12 +3571,26 @@ app.post(
           req.params.id
         );
 
+      if (
+        !Number.isInteger(adminId) ||
+        adminId <= 0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Admin ID noto‘g‘ri'
+          });
+      }
+
       const targetResult =
         await pool.query(
           `
           SELECT
             id,
             telegram_id,
+            first_name,
             role
 
           FROM admins
@@ -3515,10 +3615,17 @@ app.post(
           });
       }
 
-      if (
+      const targetTelegramId =
         String(
           target.telegram_id
-        ) ===
+        );
+
+      // ==================================================
+      // ASOSIY SUPER ADMINNI O‘CHIRISH MUMKIN EMAS
+      // ==================================================
+
+      if (
+        targetTelegramId ===
         String(
           ADMIN_TELEGRAM_ID
         )
@@ -3528,7 +3635,24 @@ app.post(
           .status(400)
           .json({
             error:
-              'Asosiy super adminni o‘chirib bo‘lmaydi'
+              'Asosiy Super Adminni o‘chirib bo‘lmaydi'
+          });
+      }
+
+      // ==================================================
+      // SUPER ADMINNI O‘CHIRISH MUMKIN EMAS
+      // ==================================================
+
+      if (
+        target.role ===
+        'super_admin'
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Super Adminni o‘chirib bo‘lmaydi'
           });
       }
 
@@ -3539,6 +3663,10 @@ app.post(
         WHERE id = $1
         `,
         [adminId]
+      );
+
+      console.log(
+        `🗑 ADMIN DELETED: ${targetTelegramId}`
       );
 
       return res.json({
