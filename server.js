@@ -466,19 +466,6 @@ app.post(
       // FIRST MODULE
       // ==================================================
 
-      /*
-       * Eng birinchi modul doimo ochiq.
-       *
-       * Bu yerda:
-       *
-       * order_index = 1
-       *
-       * deb taxmin qilmaymiz.
-       *
-       * Bazadagi ORDER BY bo‘yicha
-       * birinchi modulni olamiz.
-       */
-
       const firstModuleId =
         modules.length
           ? modules[0].id
@@ -495,14 +482,6 @@ app.post(
             const isFirstModule =
               module.id ===
               firstModuleId;
-
-            /*
-             * MODUL OCHILISHI
-             *
-             * 1-modul -> doimo ochiq
-             *
-             * 2+ modul -> faqat to‘lovdan keyin
-             */
 
             const moduleUnlocked =
               isFirstModule ||
@@ -531,19 +510,6 @@ app.post(
                   )
                   .map(
                     lesson => {
-
-                      /*
-                       * DARS OCHILISHI
-                       *
-                       * is_free = true
-                       * -> doimo ochiq
-                       *
-                       * 1-modul
-                       * -> doimo ochiq
-                       *
-                       * paid user
-                       * -> barcha darslar ochiq
-                       */
 
                       const available =
                         Boolean(
@@ -657,7 +623,15 @@ app.post(
         await pool.query(
           `
           SELECT
-            *
+            id,
+            module_id,
+            title,
+            order_index,
+            youtube_url,
+            task_text,
+            is_free,
+            bunny_video_id,
+            warning_text
 
           FROM lessons
 
@@ -726,11 +700,6 @@ app.post(
       // FIRST MODULE
       // ==================================================
 
-      /*
-       * Eng birinchi modulni
-       * bazadan aniqlaymiz.
-       */
-
       const firstModuleResult =
         await pool.query(
           `
@@ -784,29 +753,48 @@ app.post(
       }
 
       // ==================================================
-      // FILES
+      // LESSON FILES
       // ==================================================
 
-      const filesResult =
-        await pool.query(
-          `
-          SELECT
-            id,
-            file_name,
-            file_url
+      let files = [];
 
-          FROM lesson_files
+      try {
 
-          WHERE lesson_id = $1
+        const filesResult =
+          await pool.query(
+            `
+            SELECT
+              id,
+              file_name,
+              file_url
 
-          ORDER BY
-            id ASC
-          `,
-          [lesson.id]
+            FROM lesson_files
+
+            WHERE lesson_id = $1
+
+            ORDER BY
+              id ASC
+            `,
+            [lesson.id]
+          );
+
+        files =
+          filesResult.rows;
+
+      } catch (fileError) {
+
+        console.error(
+          'LESSON FILES ERROR:',
+          fileError
         );
 
-      const files =
-        filesResult.rows;
+        /*
+         * Fayllar jadvalida muammo bo‘lsa,
+         * darsning o‘zi baribir ochiladi.
+         */
+
+        files = [];
+      }
 
       // ==================================================
       // PROGRESS
@@ -847,17 +835,31 @@ app.post(
 
       } catch (progressError) {
 
-        /*
-         * Progress jadvalida muammo bo‘lsa,
-         * darsni ochishga to‘sqinlik qilmaymiz.
-         */
-
         console.error(
           'PROGRESS ERROR:',
           progressError
         );
 
       }
+
+      // ==================================================
+      // WARNING TEXT
+      // ==================================================
+
+      const defaultWarning =
+        `⚠️ MUHIM OGOHLANTIRISH
+
+Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.
+
+Darsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qat'iyan taqiqlanadi.
+
+Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.`;
+
+      const warningText =
+        lesson.warning_text &&
+        lesson.warning_text.trim()
+          ? lesson.warning_text
+          : defaultWarning;
 
       // ==================================================
       // YOUTUBE
@@ -888,7 +890,10 @@ app.post(
             youtubePlayerUrl,
 
           task_text:
-            lesson.task_text,
+            lesson.task_text || '',
+
+          warning_text:
+            warningText,
 
           files:
             files
@@ -932,7 +937,10 @@ app.post(
             bunnyPlayerUrl,
 
           task_text:
-            lesson.task_text,
+            lesson.task_text || '',
+
+          warning_text:
+            warningText,
 
           files:
             files
@@ -944,14 +952,27 @@ app.post(
       // VIDEO NOT FOUND
       // ==================================================
 
-      return res
-        .status(500)
-        .json({
+      return res.json({
 
-          error:
-            'Bu dars uchun video sozlanmagan'
+        id:
+          lesson.id,
 
-        });
+        title:
+          lesson.title,
+
+        video_type:
+          null,
+
+        task_text:
+          lesson.task_text || '',
+
+        warning_text:
+          warningText,
+
+        files:
+          files
+
+      });
 
     } catch (error) {
 
@@ -1097,13 +1118,6 @@ app.post(
         const question of questions
       ) {
 
-        /*
-         * Telegram/JS JSON orqali
-         * raqam ba'zida string bo‘lib kelishi mumkin.
-         *
-         * Shuning uchun Number() ishlatamiz.
-         */
-
         if (
           Number(
             answers[question.id]
@@ -1169,18 +1183,6 @@ app.post(
         ]
       );
 
-      /*
-       * MUHIM:
-       *
-       * Testdan o'tish modulni ochmaydi.
-       *
-       * Modulga kirish faqat:
-       *
-       * access_until
-       *
-       * orqali boshqariladi.
-       */
-
       return res.json({
 
         score,
@@ -1225,10 +1227,6 @@ app.post(
     );
 
     try {
-
-      // ==================================================
-      // USER
-      // ==================================================
 
       const user =
         await getOrCreateUser(
@@ -1427,10 +1425,6 @@ app.post(
       console.log(
         '✅ ADMINGA XABAR YUBORILDI'
       );
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
 
       return res.json({
 
