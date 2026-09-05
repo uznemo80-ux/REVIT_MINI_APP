@@ -53,6 +53,10 @@ pool.on('error', function (error) {
   console.error('DATABASE POOL ERROR:', error);
 });
 
+// Xavfsiz avto-migratsiya (agar jadvalda ustun yo'q bo'lsa xatosiz qo'shib qo'yadi)
+pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()').catch(function () {});
+
+
 // ======================================================
 // BUNNY STREAM
 // ======================================================
@@ -403,11 +407,16 @@ app.post('/api/content', async function (req, res) {
       };
     });
 
-    var lastLessonResult = await pool.query(
-      'SELECT p.lesson_id, p.watched_at, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id WHERE p.user_id = $1 ORDER BY p.watched_at DESC NULLS LAST LIMIT 1',
-      [user.id]
-    );
-    var lastLesson = lastLessonResult.rows[0] || null;
+    var lastLesson = null;
+    try {
+      var lastLessonResult = await pool.query(
+        'SELECT p.lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id WHERE p.user_id = $1 AND p.watched = true ORDER BY p.id DESC LIMIT 1',
+        [user.id]
+      );
+      lastLesson = lastLessonResult.rows[0] || null;
+    } catch (llError) {
+      console.warn('LAST LESSON QUERY WARNING:', llError.message);
+    }
 
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
@@ -420,7 +429,7 @@ app.post('/api/content', async function (req, res) {
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
-    return res.status(500).json({ error: 'Server xatosi' });
+    return res.status(500).json({ error: 'Server xatosi: ' + error.message });
   }
 });
 
@@ -472,11 +481,11 @@ app.post('/api/lesson/:id', async function (req, res) {
 
     try {
       await pool.query(
-        'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true, watched_at = NOW()',
+        'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
         [user.id, lesson.id]
       );
     } catch (progressError) {
-      console.error('PROGRESS ERROR:', progressError);
+      console.error('PROGRESS ERROR:', progressError.message);
     }
 
     var defaultWarning = 'Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.\n\nDarsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qatiyan taqiqlanadi.\n\nIltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.';
@@ -525,7 +534,7 @@ app.post('/api/progress/mark', async function (req, res) {
     if (!lessonId) return res.status(400).json({ error: 'lesson_id majburiy' });
 
     await pool.query(
-      'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true, watched_at = NOW()',
+      'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
       [user.id, lessonId]
     );
 
