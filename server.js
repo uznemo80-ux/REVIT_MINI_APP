@@ -53,8 +53,94 @@ pool.on('error', function (error) {
   console.error('DATABASE POOL ERROR:', error);
 });
 
-// Xavfsiz avto-migratsiya (agar jadvalda ustun yo'q bo'lsa xatosiz qo'shib qo'yadi)
-pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()').catch(function () {});
+// Xavfsiz avto-migratsiya (agar jadvallar yoki ustunlar yo'q bo'lsa avtomatik yaratiladi)
+async function initExtendedTables() {
+  try {
+    await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
+    
+    // Sozlamalar jadvali (telefon, telegram link, admin rasm)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS academy_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT
+      )
+    `);
+
+    // Kurslar jadvali (Talab 3)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        subtitle TEXT,
+        price VARCHAR(100),
+        total_modules INT DEFAULT 0,
+        total_lessons INT DEFAULT 0,
+        release_date VARCHAR(100),
+        cover_url TEXT,
+        status VARCHAR(50) DEFAULT 'active',
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    // FAQ savol-javoblar jadvali (Talab 2)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS faqs (
+        id SERIAL PRIMARY KEY,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        author VARCHAR(255) DEFAULT 'Admin',
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    // Default kurs mavjudligini tekshiramiz
+    var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
+    if (cCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, order_index)
+        VALUES (
+          'INTPRO — Revit dasturida interyer loyihalash',
+          'Interyer Loyihalash & BIM Modellashtirish',
+          '1 500 000 so''m',
+          11,
+          140,
+          'Faol kurs',
+          '',
+          'active',
+          1
+        )
+      `);
+    }
+
+    // Default FAQ lar
+    var fCount = await pool.query('SELECT COUNT(*)::int AS count FROM faqs');
+    if (fCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO faqs (question, answer, author, order_index) VALUES
+        ('Kursga qanday to''lov qilaman?', 'Chat bo''limidan adminga murojaat qiling yoki Telegram orqali to''g''ridan-to''g''ri bog''laning.', 'Admin', 1),
+        ('Kirish huquqi qancha muddatga beriladi?', 'To''lov tasdiqlangandan so''ng darslarga 1 yil (365 kun) davomida to''liq kirish huquqi beriladi.', 'Admin', 2),
+        ('Namuna darslarni ko''ra olamanmi?', 'Ha, ba''zi darslar hammaga bepul ochiq — Namuna belgisi bilan ko''rsatilgan.', 'Admin', 3)
+      `);
+    }
+
+    // Default aloqa sozlamalari
+    await pool.query(`
+      INSERT INTO academy_settings (key, value) VALUES
+      ('contact_telegram', 'yoshuzbekk'),
+      ('contact_phone', '+998900000000'),
+      ('admin_photo_url', '/admin.jpg')
+      ON CONFLICT (key) DO NOTHING
+    `);
+
+    console.log('✅ DATABASE AVTO-MIGRATSIYA MUVAFFAQIYATLI YAKUNLANDI');
+  } catch (err) {
+    console.warn('⚠️ AVTO-MIGRATSIYA OGOHLANTIRISH:', err.message);
+  }
+}
+
+initExtendedTables();
 
 
 // ======================================================
@@ -418,6 +504,35 @@ app.post('/api/content', async function (req, res) {
       console.warn('LAST LESSON QUERY WARNING:', llError.message);
     }
 
+    // Kurslar ro'yxati (Talab 3)
+    var courses = [];
+    try {
+      var coursesRes = await pool.query('SELECT * FROM courses ORDER BY order_index ASC, id ASC');
+      courses = coursesRes.rows;
+    } catch (cErr) {
+      console.warn('COURSES QUERY WARNING:', cErr.message);
+    }
+
+    // FAQ savol-javoblar (Talab 2)
+    var faqs = [];
+    try {
+      var faqsRes = await pool.query('SELECT * FROM faqs ORDER BY order_index ASC, id ASC');
+      faqs = faqsRes.rows;
+    } catch (fErr) {
+      console.warn('FAQS QUERY WARNING:', fErr.message);
+    }
+
+    // Sozlamalar (Talab 1 & 5)
+    var settings = {};
+    try {
+      var setRes = await pool.query('SELECT key, value FROM academy_settings');
+      setRes.rows.forEach(function (r) {
+        settings[r.key] = r.value;
+      });
+    } catch (sErr) {
+      console.warn('SETTINGS QUERY WARNING:', sErr.message);
+    }
+
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
       telegram_id: user.telegram_id.toString(),
@@ -425,7 +540,10 @@ app.post('/api/content', async function (req, res) {
       phone: user.phone || '', username: user.username || '',
       registered: Boolean(user.first_name && user.last_name && user.phone),
       modules: data,
-      last_lesson: lastLesson
+      last_lesson: lastLesson,
+      courses: courses,
+      faqs: faqs,
+      settings: settings
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
@@ -1261,11 +1379,190 @@ app.post('/api/admin/admins/:id/delete', requireAdmin, requireSuperAdmin, async 
     console.log('ADMIN DELETED: ' + targetTelegramId);
 
     return res.json({ ok: true, message: 'Admin ochirildi' });
+// ======================================================
+// ADMIN FAQS CRUD (Talab 2)
+// ======================================================
+
+app.post('/api/admin/faq/add', requireAdmin, async function (req, res) {
+  try {
+    var question = String(req.body.question || '').trim();
+    var answer = String(req.body.answer || '').trim();
+    var author = String(req.body.author || 'Admin').trim();
+
+    if (!question || !answer) return res.status(400).json({ error: 'Savol va javob majburiy' });
+
+    var result = await pool.query(
+      'INSERT INTO faqs (question, answer, author, order_index) VALUES ($1, $2, $3, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM faqs)) RETURNING *',
+      [question, answer, author]
+    );
+
+    return res.json({ ok: true, faq: result.rows[0] });
   } catch (error) {
-    console.error('DELETE ADMIN ERROR:', error);
-    return res.status(500).json({ error: 'Adminni ochirishda xato' });
+    console.error('ADD FAQ ERROR:', error);
+    return res.status(500).json({ error: 'Savol qo‘shishda xatolik' });
   }
 });
+
+app.post('/api/admin/faq/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var question = String(req.body.question || '').trim();
+    var answer = String(req.body.answer || '').trim();
+    var author = String(req.body.author || 'Admin').trim();
+
+    if (!question || !answer) return res.status(400).json({ error: 'Savol va javob majburiy' });
+
+    var result = await pool.query(
+      'UPDATE faqs SET question = $1, answer = $2, author = $3 WHERE id = $4 RETURNING *',
+      [question, answer, author, Number(req.params.id)]
+    );
+
+    return res.json({ ok: true, faq: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE FAQ ERROR:', error);
+    return res.status(500).json({ error: 'Savolni yangilashda xato' });
+  }
+});
+
+app.post('/api/admin/faq/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    await pool.query('DELETE FROM faqs WHERE id = $1', [Number(req.params.id)]);
+    return res.json({ ok: true, message: 'Savol o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE FAQ ERROR:', error);
+    return res.status(500).json({ error: 'Savolni o‘chirishda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN COURSES CRUD (Talab 3)
+// ======================================================
+
+app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
+  try {
+    var title = String(req.body.title || '').trim();
+    var subtitle = String(req.body.subtitle || '').trim();
+    var price = String(req.body.price || '1 500 000 so‘m').trim();
+    var totalModules = Number(req.body.total_modules) || 0;
+    var totalLessons = Number(req.body.total_lessons) || 0;
+    var releaseDate = String(req.body.release_date || 'Faol kurs').trim();
+    var coverUrl = String(req.body.cover_url || '').trim();
+    var status = String(req.body.status || 'active').trim();
+
+    if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
+
+    var result = await pool.query(
+      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status]
+    );
+
+    return res.json({ ok: true, course: result.rows[0] });
+  } catch (error) {
+    console.error('ADD COURSE ERROR:', error);
+    return res.status(500).json({ error: 'Kurs qo‘shishda xato' });
+  }
+});
+
+app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var title = String(req.body.title || '').trim();
+    var subtitle = String(req.body.subtitle || '').trim();
+    var price = String(req.body.price || '').trim();
+    var totalModules = Number(req.body.total_modules) || 0;
+    var totalLessons = Number(req.body.total_lessons) || 0;
+    var releaseDate = String(req.body.release_date || '').trim();
+    var coverUrl = String(req.body.cover_url || '').trim();
+    var status = String(req.body.status || 'active').trim();
+
+    if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
+
+    var result = await pool.query(
+      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8 WHERE id = $9 RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, Number(req.params.id)]
+    );
+
+    return res.json({ ok: true, course: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE COURSE ERROR:', error);
+    return res.status(500).json({ error: 'Kursni yangilashda xato' });
+  }
+});
+
+app.post('/api/admin/courses/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    await pool.query('DELETE FROM courses WHERE id = $1', [Number(req.params.id)]);
+    return res.json({ ok: true, message: 'Kurs o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE COURSE ERROR:', error);
+    return res.status(500).json({ error: 'Kursni o‘chirishda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN SETTINGS (Talab 1 & 5: Aloqa & Rasm)
+// ======================================================
+
+app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
+  try {
+    var contactTelegram = String(req.body.contact_telegram || '').trim().replace(/^@/, '');
+    var contactPhone = String(req.body.contact_phone || '').trim();
+    var adminPhotoUrl = String(req.body.admin_photo_url || '').trim();
+
+    if (contactTelegram) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'contact_telegram\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [contactTelegram]);
+    }
+    if (contactPhone) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'contact_phone\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [contactPhone]);
+    }
+    if (adminPhotoUrl) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'admin_photo_url\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [adminPhotoUrl]);
+    }
+
+    return res.json({ ok: true, message: 'Sozlamalar saqlandi' });
+  } catch (error) {
+    console.error('SETTINGS UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Sozlamalarni saqlashda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN TESTS CRUD (Talab 4)
+// ======================================================
+
+app.post('/api/admin/tests/add', requireAdmin, async function (req, res) {
+  try {
+    var moduleId = Number(req.body.module_id);
+    var question = String(req.body.question || '').trim();
+    var options = req.body.options;
+    var correctIndex = Number(req.body.correct_index) || 0;
+
+    if (!moduleId || !question || !options) {
+      return res.status(400).json({ error: 'Modul, savol va variantlar majburiy' });
+    }
+
+    var optionsJson = typeof options === 'string' ? options : JSON.stringify(options);
+
+    var result = await pool.query(
+      'INSERT INTO module_tests (module_id, question, options, correct_index, order_index) VALUES ($1, $2, $3, $4, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM module_tests WHERE module_id = $1)) RETURNING *',
+      [moduleId, question, optionsJson, correctIndex]
+    );
+
+    return res.json({ ok: true, test: result.rows[0] });
+  } catch (error) {
+    console.error('ADD TEST ERROR:', error);
+    return res.status(500).json({ error: 'Test qo‘shishda xato' });
+  }
+});
+
+app.post('/api/admin/test/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    await pool.query('DELETE FROM module_tests WHERE id = $1', [Number(req.params.id)]);
+    return res.json({ ok: true, message: 'Test o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE TEST ERROR:', error);
+    return res.status(500).json({ error: 'Testni o‘chirishda xato' });
+  }
+});
+
 
 // ======================================================
 // ADMIN TEST NOTIFICATION
