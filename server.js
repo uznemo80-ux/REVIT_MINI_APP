@@ -403,13 +403,20 @@ app.post('/api/content', async function (req, res) {
       };
     });
 
+    var lastLessonResult = await pool.query(
+      'SELECT p.lesson_id, p.watched_at, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id WHERE p.user_id = $1 ORDER BY p.watched_at DESC NULLS LAST LIMIT 1',
+      [user.id]
+    );
+    var lastLesson = lastLessonResult.rows[0] || null;
+
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
       telegram_id: user.telegram_id.toString(),
       first_name: user.first_name || '', last_name: user.last_name || '',
       phone: user.phone || '', username: user.username || '',
       registered: Boolean(user.first_name && user.last_name && user.phone),
-      modules: data
+      modules: data,
+      last_lesson: lastLesson
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
@@ -626,6 +633,38 @@ app.post('/api/request-access', async function (req, res) {
     return res.status(500).json({ ok: false, error: 'Adminga murojaat yuborishda xatolik: ' + error.message });
   }
 });
+
+// ======================================================
+// USER CHAT MESSAGE TO ADMIN
+// ======================================================
+
+app.post('/api/chat/send', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ ok: false, error: 'Foydalanuvchi aniqlanmadi' });
+
+    var text = String(req.body.text || '').trim();
+    if (!text) return res.status(400).json({ ok: false, error: 'Xabar matnini kiriting' });
+
+    var fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Foydalanuvchi';
+    var tgUserLink = user.username ? '@' + user.username : 'ID: ' + user.telegram_id;
+
+    var adminMsg = '💬 CHATDAN YANGI XABAR!\n\n' +
+      '👤 Kimdan: ' + fullName + ' (' + tgUserLink + ')\n' +
+      '📱 Telefon: ' + (user.phone || 'Kiritilmagan') + '\n' +
+      '🆔 Telegram ID: ' + user.telegram_id + '\n\n' +
+      '📝 Xabar:\n' + text;
+
+    await notifyAdmin(adminMsg);
+
+    console.log('CHAT MESSAGE SENT TO ADMIN from: ' + user.telegram_id);
+    return res.json({ ok: true, message: 'Xabaringiz adminga yetkazildi!' });
+  } catch (error) {
+    console.error('CHAT SEND ERROR:', error);
+    return res.status(500).json({ ok: false, error: 'Xabarni yuborishda server xatosi' });
+  }
+});
+
 
 // ======================================================
 // ADMIN API
@@ -907,9 +946,11 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
     var moduleId = req.body.module_id;
     var title = req.body.title;
     var orderIndex = req.body.order_index;
+    var fileName = req.body.file_name;
+    var fileUrl = req.body.file_url;
 
-    if (!moduleId || !title || orderIndex === undefined) {
-      return res.status(400).json({ error: 'module_id, title va order_index majburiy' });
+    if (!moduleId || !title || orderIndex === undefined || orderIndex === null) {
+      return res.status(400).json({ error: 'Modul, dars nomi va tartib raqami majburiy' });
     }
 
     var moduleResult = await pool.query('SELECT id FROM modules WHERE id = $1 LIMIT 1', [moduleId]);
@@ -917,7 +958,7 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
 
     var duplicateResult = await pool.query(
       'SELECT id FROM lessons WHERE module_id = $1 AND order_index = $2 LIMIT 1',
-      [moduleId, Number(orderIndex)]
+      [Number(moduleId), Number(orderIndex)]
     );
     if (duplicateResult.rows.length > 0) {
       return res.status(400).json({ error: 'Bu modulda ushbu dars raqami allaqachon mavjud' });
@@ -928,10 +969,20 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
       [Number(moduleId), title.trim(), Number(orderIndex), req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null]
     );
 
-    return res.json({ ok: true, message: 'Dars muvaffaqiyatli yaratildi', lesson: result.rows[0] });
+    var createdLesson = result.rows[0];
+
+    // Agar dars yaratilayotganda fayl ham berilgan bo'lsa, birdaniga biriktiramiz
+    if (fileName && fileUrl && String(fileName).trim() && String(fileUrl).trim()) {
+      await pool.query(
+        'INSERT INTO lesson_files (lesson_id, file_name, file_url) VALUES ($1, $2, $3)',
+        [createdLesson.id, String(fileName).trim(), String(fileUrl).trim()]
+      );
+    }
+
+    return res.json({ ok: true, message: 'Dars muvaffaqiyatli yaratildi', lesson: createdLesson });
   } catch (error) {
     console.error('CREATE LESSON ERROR:', error);
-    return res.status(500).json({ error: 'Dars yaratishda server xatosi' });
+    return res.status(500).json({ error: 'Dars yaratishda server xatosi: ' + error.message });
   }
 });
 
@@ -941,34 +992,46 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
 
 app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res) {
   try {
-    var moduleId = req.body.module_id;
-    var title = req.body.title;
-    var orderIndex = req.body.order_index;
-
-    if (!moduleId || !title || orderIndex === undefined) {
-      return res.status(400).json({ error: 'module_id, title va order_index majburiy' });
-    }
-
-    var existingResult = await pool.query('SELECT id FROM lessons WHERE id = $1 LIMIT 1', [req.params.id]);
+    var existingResult = await pool.query('SELECT * FROM lessons WHERE id = $1 LIMIT 1', [req.params.id]);
     if (existingResult.rows.length === 0) return res.status(404).json({ error: 'Dars topilmadi' });
+    var existing = existingResult.rows[0];
+
+    var moduleId = req.body.module_id !== undefined ? Number(req.body.module_id) : existing.module_id;
+    var title = req.body.title ? String(req.body.title).trim() : existing.title;
+    var orderIndex = req.body.order_index !== undefined ? Number(req.body.order_index) : existing.order_index;
+    var youtubeUrl = req.body.youtube_url !== undefined ? (req.body.youtube_url || null) : existing.youtube_url;
+    var bunnyVideoId = req.body.bunny_video_id !== undefined ? (req.body.bunny_video_id || null) : existing.bunny_video_id;
+    var taskText = req.body.task_text !== undefined ? (req.body.task_text || null) : existing.task_text;
+    var warningText = req.body.warning_text !== undefined ? (req.body.warning_text || null) : existing.warning_text;
+    var isFree = req.body.is_free !== undefined ? Boolean(req.body.is_free) : existing.is_free;
 
     var duplicateResult = await pool.query(
       'SELECT id FROM lessons WHERE module_id = $1 AND order_index = $2 AND id <> $3 LIMIT 1',
-      [Number(moduleId), Number(orderIndex), Number(req.params.id)]
+      [moduleId, orderIndex, Number(req.params.id)]
     );
     if (duplicateResult.rows.length > 0) {
-      return res.status(400).json({ error: 'Bu modulda ushbu dars raqami allaqachon mavjud' });
+      return res.status(400).json({ error: 'Bu modulda ushbu tartib raqamli boshqa dars mavjud' });
     }
 
     var result = await pool.query(
       'UPDATE lessons SET module_id = $1, title = $2, order_index = $3, youtube_url = $4, task_text = $5, is_free = $6, bunny_video_id = $7, warning_text = $8 WHERE id = $9 RETURNING *',
-      [Number(moduleId), title.trim(), Number(orderIndex), req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null, Number(req.params.id)]
+      [moduleId, title, orderIndex, youtubeUrl, taskText, isFree, bunnyVideoId, warningText, Number(req.params.id)]
     );
+
+    // Agar yangilayotganda yangi fayl ham kiritilgan bo'lsa
+    var fileName = req.body.file_name;
+    var fileUrl = req.body.file_url;
+    if (fileName && fileUrl && String(fileName).trim() && String(fileUrl).trim()) {
+      await pool.query(
+        'INSERT INTO lesson_files (lesson_id, file_name, file_url) VALUES ($1, $2, $3)',
+        [Number(req.params.id), String(fileName).trim(), String(fileUrl).trim()]
+      );
+    }
 
     return res.json({ ok: true, message: 'Dars muvaffaqiyatli yangilandi', lesson: result.rows[0] });
   } catch (error) {
     console.error('UPDATE LESSON ERROR:', error);
-    return res.status(500).json({ error: 'Darsni yangilashda xato' });
+    return res.status(500).json({ error: 'Darsni yangilashda xato: ' + error.message });
   }
 });
 
