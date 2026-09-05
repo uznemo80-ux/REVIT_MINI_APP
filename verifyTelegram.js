@@ -1,24 +1,68 @@
-// Telegram Mini App'dan kelgan initData'ni tekshirish (soxta so'rovlarning oldini olish)
 const crypto = require('crypto');
 
+/**
+ * Telegram WebApp initData ni tekshiradi.
+ *
+ * @param {string} initData — Telegram WebApp'dan kelgan initData string
+ * @param {string} botToken — Bot token (.env dan)
+ * @returns {object|null} — Tekshirilgan user object yoki null
+ */
 function verifyInitData(initData, botToken) {
-  const urlParams = new URLSearchParams(initData);
-  const hash = urlParams.get('hash');
-  urlParams.delete('hash');
+  try {
+    if (!initData || !botToken) {
+      return null;
+    }
 
-  const dataCheckArr = [];
-  for (const [key, value] of [...urlParams.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-    dataCheckArr.push(`${key}=${value}`);
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+
+    if (!hash) {
+      return null;
+    }
+
+    params.delete('hash');
+
+    const sortedEntries = Array.from(params.entries()).sort(
+      (a, b) => a[0].localeCompare(b[0])
+    );
+
+    const dataCheckString = sortedEntries
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+
+    const computedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    if (computedHash !== hash) {
+      console.warn('VERIFY TELEGRAM: Hash mismatch');
+      return null;
+    }
+
+    const userStr = params.get('user');
+
+    if (!userStr) {
+      return null;
+    }
+
+    const user = JSON.parse(userStr);
+
+    if (!user || !user.id) {
+      return null;
+    }
+
+    return user;
+
+  } catch (error) {
+    console.error('VERIFY TELEGRAM ERROR:', error.message);
+    return null;
   }
-  const dataCheckString = dataCheckArr.join('\n');
-
-  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-  const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-
-  if (calculatedHash !== hash) return null;
-
-  const userJson = urlParams.get('user');
-  return userJson ? JSON.parse(userJson) : null;
 }
 
 module.exports = { verifyInitData };
