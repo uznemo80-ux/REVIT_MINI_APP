@@ -336,11 +336,38 @@ async function notifyAdmin(text, telegramId = null) {
 }
 
 // ======================================================
-// BOT ERROR HANDLER
+// BOT ERROR HANDLER & FALLBACK
 // ======================================================
+
+bot.use(function (ctx, next) {
+  if (ctx.from) {
+    console.log('📨 BOTGA XABAR KELDI:', ctx.updateType, 'from:', ctx.from.id, ctx.from.username || '');
+  }
+  return next();
+});
 
 bot.catch(function (error, ctx) {
   console.error('❌ BOT ERROR [' + (ctx?.updateType || 'unknown') + ']:', error.message);
+});
+
+// Oddiy xabarlarga ham javob berish
+bot.on('text', async function (ctx) {
+  if (ctx.message.text.startsWith('/')) return; // Komandalar alohida ishlaydi
+  try {
+    const freshUrl = getFreshAppUrl();
+    await ctx.reply(
+      'Assalomu alaykum! Kurs darslarini ko‘rish uchun quyidagi tugmani bosing:',
+      freshUrl ? {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '📚 Darslarni ochish', web_app: { url: freshUrl } }]
+          ]
+        }
+      } : undefined
+    );
+  } catch (e) {
+    console.warn('Fallback reply error:', e.message);
+  }
 });
 
 // ======================================================
@@ -352,27 +379,37 @@ let botStarted = false;
 async function startBot() {
   if (botStarted) return;
   if (!process.env.BOT_TOKEN) {
-    console.warn('⚠️ BOT_TOKEN yo‘q, bot ishga tushirilmadi.');
+    console.error('❌ BOT_TOKEN yo‘q! Bot ishga tushirilmadi.');
     return;
   }
 
   try {
     console.log('🤖 Telegram bot ishga tushirilmoqda...');
+
+    // 1. Agar oldin webhook qolib ketgan bo'lsa, uni o'chiramiz (aks holda polling ishlamaydi!)
+    try {
+      await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+      console.log('🧹 Eski webhook tozalandi.');
+    } catch (whErr) {
+      console.warn('Webhook tozalashda ogohlantirish:', whErr.message);
+    }
+
+    // 2. Menu tugmasini sozlash
     await setupMenuButton();
 
-    // dropPendingUpdates: true — bu 409 Conflict va eski so'rovlarni tozalaydi!
+    // 3. Botni ishga tushirish (dropPendingUpdates: true)
     await bot.launch({
       dropPendingUpdates: true
     });
 
     botStarted = true;
     console.log('==========================================');
-    console.log('🤖 TELEGRAM BOT ISHGA TUSHDI ✅');
+    console.log('🤖 TELEGRAM BOT ISHGA TUSHDI VA TAYYOR ✅');
     console.log('==========================================');
   } catch (error) {
     console.error('❌ BOT LAUNCH ERROR:', error.message);
     if (error.message && error.message.includes('409')) {
-      console.error('⚠️ 409 CONFLICT: Bot boshqa jarayonda yoki eski deploymentda ishlab turibdi.');
+      console.error('⚠️ 409 CONFLICT: Bot boshqa jarayonda ishlab turibdi. Railway qayta ishga tushganda o‘zi to‘g‘rilanadi.');
     }
   }
 }
