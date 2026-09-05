@@ -1379,6 +1379,12 @@ app.post('/api/admin/admins/:id/delete', requireAdmin, requireSuperAdmin, async 
     console.log('ADMIN DELETED: ' + targetTelegramId);
 
     return res.json({ ok: true, message: 'Admin ochirildi' });
+  } catch (error) {
+    console.error('DELETE ADMIN ERROR:', error);
+    return res.status(500).json({ error: 'Adminni ochirishda xato: ' + error.message });
+  }
+});
+
 // ======================================================
 // ADMIN FAQS CRUD (Talab 2)
 // ======================================================
