@@ -10,7 +10,7 @@ const tg = window.Telegram?.WebApp || {
   initDataUnsafe: {},
   HapticFeedback: { impactOccurred: () => {} },
   showAlert: (msg) => alert(msg),
-  openTelegramLink: (url) => window.open(url, '_blank')
+  openTelegramLink: (url) => window.open(url, "_blank")
 };
 
 try {
@@ -142,6 +142,13 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
 let state = {
   has_access: false,
   modules: [],
+  courses: [],
+  faqs: [],
+  settings: {
+    contact_telegram: "yoshuzbekk",
+    contact_phone: "+998900000000",
+    admin_photo_url: "/admin.jpg"
+  },
   access_until: null,
   first_name: "",
   last_name: "",
@@ -155,9 +162,8 @@ let state = {
 };
 
 let activeTab = "home";
-let selectedCourseId = null; // null bo'lsa kurslar ro'yxati, "intpro" bo'lsa modullar
+let selectedCourseId = null;
 let currentView = null;
-let openFaq = null;
 let aboutOpen = false;
 window._answers = {};
 
@@ -233,7 +239,10 @@ async function loadContent() {
       registered: data.registered ?? state.registered ?? false,
       is_admin: state.is_admin,
       admin_role: state.admin_role,
-      last_lesson: data.last_lesson || null
+      last_lesson: data.last_lesson || null,
+      courses: Array.isArray(data.courses) ? data.courses : [],
+      faqs: Array.isArray(data.faqs) ? data.faqs : [],
+      settings: data.settings || state.settings
     };
     render();
   } catch (error) {
@@ -455,7 +464,7 @@ async function submitProfileEdit() {
 }
 
 // ======================================================
-// STATIC DATA (Academy & Courses)
+// STATIC DATA & AUTHOR INFO
 // ======================================================
 
 const ABOUT_TEXT = `
@@ -470,52 +479,10 @@ const ABOUT_SHORT = `
 Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi mutaxassisman. Revit dasturida professional interyer loyihalashni amaliyotda o'rgataman.
 `;
 
-const AVAILABLE_COURSES = [
-  {
-    id: "intpro",
-    title: "INTPRO — Revit dasturida interyer loyihalash",
-    subtitle: "Interyer Loyihalash & BIM Modellashtirish",
-    price: "1 500 000 so'm",
-    totalModules: 11,
-    totalLessons: 140,
-    status: "active",
-    badge: "Asosiy Kurs"
-  },
-  {
-    id: "bim_arch",
-    title: "BIM Arxitektura va Ishchi Chizmalar",
-    subtitle: "Ko'p qavatli binolarni loyihalash",
-    price: "Tez kunda",
-    totalModules: 8,
-    totalLessons: 95,
-    status: "coming_soon",
-    badge: "Tez Kunda"
-  }
-];
-
 const TESTIMONIALS = [
   { text: "Kurs juda tushunarli va amaliy. Revitda ishlash tezligim 2 barobar oshdi!", name: "Jasur R." },
   { text: "Har bir dars eng kichik detallarigacha professional tushuntirilgan.", name: "Madina K." },
   { text: "Vazifalar orqali real loyiha chizishni o'rganib oldim.", name: "Sardor B." }
-];
-
-const FAQ = [
-  {
-    q: "Kursga qanday to'lov qilaman?",
-    a: "Pastki 'Chat' bo'limiga o'ting va 'Kursga kirish uchun murojaat' tugmasini bosing yoki bevosita chatda adminga yozing. Admin sizga to'lov tafsilotlarini taqdim etadi."
-  },
-  {
-    q: "Kirish huquqi qancha muddatga beriladi?",
-    a: "To'lov tasdiqlangandan so'ng kurs darslariga 1 yil (365 kun) davomida to'liq va cheksiz kirish huquqi taqdim etiladi."
-  },
-  {
-    q: "Namuna darslarni ko'ra olamanmi?",
-    a: "Ha, 1-modul va ba'zi belgilangan namuna darslar hammaga bepul ochiq. Ularni darslar bo'limida 'Namuna' belgisi bilan ko'rishingiz mumkin."
-  },
-  {
-    q: "Dars materiallari qanday yuklanadi?",
-    a: "Har bir dars sahifasida o'sha dars uchun Revit oilalari (families), chizmalar yoki shablonlar yuklab olish tugmasi orqali bevosita ochiladi."
-  }
 ];
 
 function toggleAbout() {
@@ -524,7 +491,7 @@ function toggleAbout() {
 }
 
 // ======================================================
-// TAB 1: HOME PAGE
+// TAB 1: HOME PAGE (Talab 1 & Talab 2)
 // ======================================================
 
 function renderHome() {
@@ -533,6 +500,10 @@ function renderHome() {
   const myWatched = modules.reduce((tot, m) => tot + (m.watched_count || 0), 0);
   const pct = myTotal ? Math.round((myWatched / myTotal) * 100) : 0;
 
+  // Talab 1: Admin rasmi
+  const adminPhoto = state.settings?.admin_photo_url || "/admin.jpg";
+  const faqsList = state.faqs && state.faqs.length ? state.faqs : [];
+
   return `
     <div class="page">
       <div class="welcome-hero">
@@ -540,7 +511,7 @@ function renderHome() {
         <div class="welcome-title">
           Xush kelibsiz${state.first_name ? ", " + escapeHtml(state.first_name) : ""}!
         </div>
-        <div class="welcome-sub">Revit dasturida interyer loyihalash professional kursi</div>
+        <div class="welcome-sub">Revit dasturida interyer loyihalash professional akademiyasi</div>
       </div>
 
       ${myTotal ? `
@@ -555,19 +526,26 @@ function renderHome() {
         </div>
       ` : ""}
 
-      <!-- O'zim haqimda (Admin rasmi bilan) -->
+      <!-- 1-TALAB: O'ZIM HAQIMDA (Mobil telefonda 100% ko'rinadigan rasm) -->
       <div class="about-card">
-        <div class="about-photo-wrap">
-          <img
-            src="/admin.jpg"
-            alt="Abdulloh"
-            class="about-photo"
-            onerror="this.style.display='none'; document.getElementById('admin-placeholder').style.display='flex';"
-          />
-          <div id="admin-placeholder" class="splash-logo" style="width: 58px; height: 58px; font-size: 24px; display: none;">A</div>
+        <div class="about-photo-wrap" style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+          <div style="position:relative; width:64px; height:64px; flex-shrink:0;">
+            <img
+              src="${escapeHtml(adminPhoto)}"
+              alt="Abdulloh"
+              class="about-photo"
+              style="width:64px; height:64px; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--accent); box-shadow:0 4px 14px var(--accent-glow);"
+              onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Abdulloh&background=2979ff&color=fff&size=128&bold=true';"
+            />
+            ${state.is_admin ? `
+              <div onclick="openAdminSettingsModal()" title="Rasmni o'zgartirish" style="position:absolute; bottom:-2px; right:-2px; background:var(--accent); color:#fff; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+                📷
+              </div>
+            ` : ""}
+          </div>
           <div>
-            <div class="about-author-name">Abdulloh</div>
-            <div class="about-author-role">BIM & Revit Mutaxassis · YOSHUZBEKK</div>
+            <div class="about-author-name" style="font-size:16.5px; font-weight:750;">Abdulloh</div>
+            <div class="about-author-role" style="font-size:12px; color:var(--text-secondary);">BIM & Revit Instruktor · YOSHUZBEKK</div>
           </div>
         </div>
         <div class="about-text">
@@ -622,16 +600,34 @@ function renderHome() {
         `).join("")}
       </div>
 
-      <div class="section-title">Ko'p beriladigan savollar</div>
+      <!-- 2-TALAB: KO'P BERILADIGAN SAVOLLAR (SILLIQ AKKORDEON VA ADMIN BOSHQARUVI) -->
+      <div class="section-title" style="margin-top:24px;">
+        <span>Ko'p beriladigan savollar</span>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddFaqModal()" style="font-size:11px; padding:6px 10px;">
+            ➕ Yangi savol
+          </button>
+        ` : ""}
+      </div>
+
       <div class="faq-list">
-        ${FAQ.map((f, i) => `
-          <div class="faq-item ${openFaq === i ? "open" : ""}" data-faq="${i}">
+        ${faqsList.map((f, i) => `
+          <div class="faq-item" data-faq="${i}">
             <div class="faq-q" onclick="toggleFaq(${i})">
-              <span>${escapeHtml(f.q)}</span>
-              <span class="faq-plus">${openFaq === i ? "−" : "+"}</span>
+              <span>${escapeHtml(f.question)}</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${state.is_admin ? `
+                  <span onclick="event.stopPropagation(); openEditFaqModal(${Number(f.id)}, '${escapeJsString(f.question)}', '${escapeJsString(f.answer)}', '${escapeJsString(f.author || 'Admin')}')" title="Tahrirlash" style="font-size:13px; opacity:0.8;">✏️</span>
+                  <span onclick="event.stopPropagation(); deleteFaqItem(${Number(f.id)})" title="O'chirish" style="font-size:13px; opacity:0.8;">🗑️</span>
+                ` : ""}
+                <span class="faq-plus">+</span>
+              </div>
             </div>
-            <div class="faq-a" style="${openFaq === i ? 'max-height: 200px; opacity: 1;' : ''}">
-              <div class="faq-a-inner">${escapeHtml(f.a)}</div>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                ${escapeHtml(f.answer)}
+                ${f.author ? `<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">— Muallif: ${escapeHtml(f.author)}</div>` : ""}
+              </div>
             </div>
           </div>
         `).join("")}
@@ -640,57 +636,139 @@ function renderHome() {
   `;
 }
 
-function toggleFaq(i) {
+// 2-TALAB: SILLIQ OCHILADIGAN FAQ (DOM qayta chizilmaydi, otilib ochilmaydi!)
+function toggleFaq(index) {
   haptic("light");
-  openFaq = openFaq === i ? null : i;
-  render();
+  const item = document.querySelector(`.faq-item[data-faq="${index}"]`);
+  if (!item) return;
+
+  const wasOpen = item.classList.contains("open");
+  // Barcha ochiqlarni yopamiz
+  document.querySelectorAll(".faq-item").forEach(el => el.classList.remove("open"));
+
+  // Agar yopiq bo'lgan bo'lsa ochamiz
+  if (!wasOpen) {
+    item.classList.add("open");
+  }
+}
+
+// Admin uchun FAQ boshqaruvi
+function openAddFaqModal() {
+  const q = prompt("Savolni kiriting:");
+  if (!q || !q.trim()) return;
+  const a = prompt("Ushbu savolga to'liq javobni kiriting:");
+  if (!a || !a.trim()) return;
+  const author = prompt("Muallif / Kim yozgan (masalan: Admin):", "Admin") || "Admin";
+
+  adminApi("/api/admin/faq/add", {
+    question: q.trim(),
+    answer: a.trim(),
+    author: author.trim()
+  }).then(() => {
+    showToast("Savol muvaffaqiyatli qo'shildi!");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function openEditFaqModal(id, oldQ, oldA, oldAuthor) {
+  const q = prompt("Savolni tahrirlang:", oldQ);
+  if (!q || !q.trim()) return;
+  const a = prompt("Javobni tahrirlang:", oldA);
+  if (!a || !a.trim()) return;
+  const author = prompt("Muallif:", oldAuthor) || "Admin";
+
+  adminApi(`/api/admin/faq/${Number(id)}/update`, {
+    question: q.trim(),
+    answer: a.trim(),
+    author: author.trim()
+  }).then(() => {
+    showToast("Savol yangilandi!");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function deleteFaqItem(id) {
+  showConfirm("Savol o'chirilsinmi?", "Ushbu savol-javob ro'yxatdan o'chiriladi.", "O'chirish", async () => {
+    await adminApi(`/api/admin/faq/${Number(id)}/delete`);
+    showToast("Savol o'chirildi!");
+    loadContent();
+  });
 }
 
 // ======================================================
-// TAB 2: LESSONS & COURSES CATALOG (Talab 4)
+// TAB 2: LESSONS & COURSES CATALOG (Talab 3)
 // ======================================================
 
 function renderLessons() {
-  // Agar foydalanuvchi hali kursni tanlamagan bo'lsa -> Kurslar ro'yxatini chiqaramiz
   if (!selectedCourseId) {
     return renderCoursesList();
   }
-
-  // Kurs tanlangan bo'lsa -> Ushbu kursning Modullari va Darslari chiqadi
   return renderCourseModules();
 }
 
+// Kurslar ro'yxati va Admin uchun "Yangi Kurs Qo'shish" (Talab 3)
 function renderCoursesList() {
+  const coursesList = state.courses && state.courses.length ? state.courses : [
+    {
+      id: 1,
+      title: "INTPRO — Revit dasturida interyer loyihalash",
+      subtitle: "Interyer Loyihalash & BIM Modellashtirish",
+      price: "1 500 000 so'm",
+      total_modules: 11,
+      total_lessons: 140,
+      status: "active",
+      release_date: "Faol kurs",
+      cover_url: ""
+    }
+  ];
+
   return `
     <div class="page">
-      <div class="page-title">Kurslar Katalogi</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="page-title" style="margin-bottom:0;">Kurslar Katalogi</div>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddCourseModal()">
+            ➕ Yangi Kurs
+          </button>
+        ` : ""}
+      </div>
+
       <p style="color:var(--text-secondary); margin-bottom:18px; font-size:13.5px;">
         O'rganmoqchi bo'lgan kursingizni tanlang va darslarni boshlang:
       </p>
 
-      ${AVAILABLE_COURSES.map(course => `
-        <div class="course-card" onclick="openCourseCatalog('${course.id}')" style="cursor:pointer;">
-          <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, ${course.id === 'intpro' ? '#0d47a1, #1976d2' : '#263238, #37474f'});">
-            <div class="course-banner-text">
+      ${coursesList.map(course => `
+        <div class="course-card" onclick="openCourseCatalog('intpro')" style="cursor:pointer; position:relative;">
+          ${state.is_admin ? `
+            <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.6);" onclick="event.stopPropagation(); openEditCourseModal(${Number(course.id)})">✏️ Tahrirlash</button>
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(235,59,59,0.8);" onclick="event.stopPropagation(); deleteCourseModal(${Number(course.id)})">🗑️</button>
+            </div>
+          ` : ""}
+
+          <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, #0d47a1, #1976d2);">
+            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
               <h3>${escapeHtml(course.title)}</h3>
-              <p>${escapeHtml(course.subtitle)}</p>
+              <p>${escapeHtml(course.subtitle || '')}</p>
             </div>
           </div>
           <div class="course-body">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <div class="tag ${course.status === 'active' ? 'passed' : ''}">
-                ${escapeHtml(course.badge)}
+                ${course.status === 'active' ? 'Faol Kurs' : 'Tez Kunda'}
               </div>
-              <div style="font-weight:700; color:var(--accent);">
-                ${escapeHtml(course.price)}
+              <div style="font-weight:750; color:var(--accent); font-size:15px;">
+                ${escapeHtml(course.price || '')}
               </div>
             </div>
             <div class="course-meta" style="margin-bottom:12px;">
-              <span>📚 ${course.totalModules} Modul</span>
-              <span>🎬 ${course.totalLessons} Dars</span>
+              <span>📚 ${course.total_modules || 0} Modul</span>
+              <span>🎬 ${course.total_lessons || 0} Dars</span>
+              ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
             </div>
             <button class="btn" style="margin-bottom:0; padding:10px 16px;">
-              ${course.status === 'active' ? 'Darslarni ochish →' : 'Kutilmoqda ⏳'}
+              ${course.status === 'active' ? 'Darslarni ochish →' : 'Tez kunda chiqadi ⏳'}
             </button>
           </div>
         </div>
@@ -699,16 +777,178 @@ function renderCoursesList() {
   `;
 }
 
+// Kurs qo'shish va tahrirlash (Talab 3)
+function openAddCourseModal() {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Kurs Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Kurs nomi *</label>
+            <input id="c-title" class="apple-input" placeholder="Masalan: Revit Interyer Masterclass" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Qisqa tavsif</label>
+            <input id="c-sub" class="apple-input" placeholder="BIM loyihalash va vizualizatsiya" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Kurs narxi</label>
+            <input id="c-price" class="apple-input" placeholder="1 500 000 so'm" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Jami modullar soni</label>
+            <input id="c-mod" class="apple-input" placeholder="11" type="number">
+          </div>
+          <div class="apple-field">
+            <label>Jami darslar soni</label>
+            <input id="c-less" class="apple-input" placeholder="140" type="number">
+          </div>
+          <div class="apple-field">
+            <label>Chiqish sanasi / Holati</label>
+            <input id="c-rel" class="apple-input" placeholder="Masalan: Faol kurs yoki 15-sentabr" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Obloshka (muqova) rasm linki</label>
+            <input id="c-cover" class="apple-input" placeholder="https://... rasm havolasi" type="url">
+          </div>
+
+          <button class="btn" onclick="submitCreateCourse()">
+            💾 Kursni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateCourse() {
+  const title = document.getElementById("c-title")?.value.trim();
+  const sub = document.getElementById("c-sub")?.value.trim();
+  const price = document.getElementById("c-price")?.value.trim();
+  const mod = document.getElementById("c-mod")?.value;
+  const less = document.getElementById("c-less")?.value;
+  const rel = document.getElementById("c-rel")?.value.trim();
+  const cover = document.getElementById("c-cover")?.value.trim();
+
+  if (!title) return showAlert("Kurs nomi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/courses/add", {
+      title,
+      subtitle: sub,
+      price,
+      total_modules: Number(mod) || 0,
+      total_lessons: Number(less) || 0,
+      release_date: rel,
+      cover_url: cover
+    });
+    showToast("Yangi kurs muvaffaqiyatli qo'shildi!");
+    closeDetail();
+    loadContent();
+  } catch (err) {
+    showAlert(err.message || "Kurs qo'shishda xato.");
+  }
+}
+
+async function openEditCourseModal(id) {
+  const course = state.courses.find(c => Number(c.id) === Number(id));
+  if (!course) return;
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Kursni Tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Kurs nomi *</label>
+            <input id="ec-title" class="apple-input" value="${escapeHtml(course.title)}" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Qisqa tavsif</label>
+            <input id="ec-sub" class="apple-input" value="${escapeHtml(course.subtitle || '')}" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Kurs narxi</label>
+            <input id="ec-price" class="apple-input" value="${escapeHtml(course.price || '')}" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Modullar soni</label>
+            <input id="ec-mod" class="apple-input" value="${Number(course.total_modules || 0)}" type="number">
+          </div>
+          <div class="apple-field">
+            <label>Darslar soni</label>
+            <input id="ec-less" class="apple-input" value="${Number(course.total_lessons || 0)}" type="number">
+          </div>
+          <div class="apple-field">
+            <label>Chiqish sanasi / Holati</label>
+            <input id="ec-rel" class="apple-input" value="${escapeHtml(course.release_date || '')}" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Obloshka (muqova) rasm linki</label>
+            <input id="ec-cover" class="apple-input" value="${escapeHtml(course.cover_url || '')}" type="url">
+          </div>
+
+          <button class="btn" onclick="submitUpdateCourse(${Number(id)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateCourse(id) {
+  const title = document.getElementById("ec-title")?.value.trim();
+  const sub = document.getElementById("ec-sub")?.value.trim();
+  const price = document.getElementById("ec-price")?.value.trim();
+  const mod = document.getElementById("ec-mod")?.value;
+  const less = document.getElementById("ec-less")?.value;
+  const rel = document.getElementById("ec-rel")?.value.trim();
+  const cover = document.getElementById("ec-cover")?.value.trim();
+
+  if (!title) return showAlert("Kurs nomi majburiy!");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/courses/${Number(id)}/update`, {
+      title,
+      subtitle: sub,
+      price,
+      total_modules: Number(mod) || 0,
+      total_lessons: Number(less) || 0,
+      release_date: rel,
+      cover_url: cover
+    });
+    showToast("Kurs muvaffaqiyatli yangilandi!");
+    closeDetail();
+    loadContent();
+  } catch (err) {
+    showAlert(err.message || "Kursni yangilashda xato.");
+  }
+}
+
+function deleteCourseModal(id) {
+  showConfirm("Kurs o'chirilsinmi?", "Ushbu kurs kartasi o'chiriladi.", "O'chirish", async () => {
+    await adminApi(`/api/admin/courses/${Number(id)}/delete`);
+    showToast("Kurs o'chirildi!");
+    loadContent();
+  });
+}
+
 function openCourseCatalog(courseId) {
   haptic("light");
-  if (courseId === "intpro") {
-    selectedCourseId = "intpro";
-    activeTab = "lessons";
-    currentView = null;
-    render();
-  } else {
-    showAlert("Ushbu kurs ustida ish olib borilmoqda. Tez orada e'lon qilinadi!");
-  }
+  selectedCourseId = courseId;
+  activeTab = "lessons";
+  currentView = null;
+  render();
 }
 
 function backToCoursesList() {
@@ -725,12 +965,12 @@ function renderCourseModules() {
       <div class="back-btn" onclick="backToCoursesList()">← Kurslar katalogiga qaytish</div>
       <div class="page-title" style="margin-bottom:6px;">INTPRO — Revit Darslari</div>
       <p style="color:var(--text-secondary); font-size:13px; margin-bottom:18px;">
-        Kerakli modulni tanlang va videodarsliklarni ko'ring:
+        Kerakli modulni tanlang va darslarni boshlang:
       </p>
   `;
 
   if (!modules.length) {
-    html += `<div class="empty-box">Hozircha modullar qo'shilmagan.</div>`;
+    html += `<div class="empty-box">Hozircha modullar mavjud emas.</div>`;
   } else {
     modules.forEach((mod, idx) => {
       const lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
@@ -825,7 +1065,6 @@ async function openLesson(id) {
       return showLockedInfo();
     }
 
-    // Progressni yangilab qo'yamiz (oxirgi ko'rilgan dars sifatida)
     state.last_lesson = {
       lesson_id: lesson.id,
       lesson_title: lesson.title
@@ -923,52 +1162,150 @@ function renderLessonWarning(warningText) {
 }
 
 // ======================================================
-// TAB 3: TASKS
+// TAB 3: TASKS & TESTS MANAGEMENT (Talab 4)
 // ======================================================
 
 function renderTasks() {
   const modules = Array.isArray(state.modules) ? state.modules : [];
-  const allTasks = [];
 
-  modules.forEach(m => {
-    (m.lessons || []).forEach(l => {
-      if (l.task_text && l.task_text.trim()) {
-        allTasks.push({
-          ...l,
-          moduleTitle: m.title
-        });
-      }
-    });
-  });
-
-  let html = `
+  return `
     <div class="page">
-      <div class="page-title">Amaliy Vazifalar</div>
-  `;
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="page-title" style="margin-bottom:0;">Vazifalar va Testlar</div>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddTestModal()">
+            ➕ Test Qo'shish
+          </button>
+        ` : ""}
+      </div>
 
-  if (!allTasks.length) {
-    html += `<div class="empty-box">Hozircha biriktirilgan amaliy vazifalar yo'q.</div>`;
-  } else {
-    allTasks.forEach(task => {
-      html += `
-        <div class="task-card" onclick="${task.available ? `openLesson(${Number(task.id)})` : `showLockedInfo()`}">
-          <div class="task-module">${escapeHtml(task.moduleTitle)}</div>
-          <div class="task-title">${escapeHtml(task.title)}</div>
-          <div class="task-text">${escapeHtml(task.task_text).replace(/\n/g, "<br>")}</div>
+      <p style="color:var(--text-secondary); margin-bottom:18px; font-size:13px;">
+        Har bir modul bo'yicha berilgan amaliy vazifalar va bilimni tekshirish testlari:
+      </p>
+
+      ${modules.length ? modules.map((mod, idx) => {
+        const tasks = (mod.lessons || []).filter(l => l.task_text && l.task_text.trim());
+
+        return `
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+              <div>
+                <span class="idx">${String(idx + 1).padStart(2, "0")}</span>
+                <span style="font-weight:750; font-size:15px; margin-left:6px;">${escapeHtml(mod.title)}</span>
+              </div>
+              <button class="admin-small-btn" style="padding:6px 12px; font-size:11.5px;" onclick="openTest(${Number(mod.id)})">
+                📝 Test Topshirish
+              </button>
+            </div>
+
+            ${tasks.length ? tasks.map(t => `
+              <div class="task-card" style="margin-bottom:10px;" onclick="${t.available ? `openLesson(${Number(t.id)})` : `showLockedInfo()`}">
+                <div class="task-title" style="font-size:14.5px;">${escapeHtml(t.title)}</div>
+                <div class="task-text">${escapeHtml(t.task_text).replace(/\n/g, "<br>")}</div>
+              </div>
+            `).join("") : `<div style="font-size:13px; color:var(--text-secondary); padding:6px 0;">Ushbu modulda alohida dars vazifalari belgilanmagan. Modul testi orqali bilimingizni sinab ko'ring.</div>`}
+          </div>
+        `;
+      }).join("") : `<div class="empty-box">Hozircha modullar kiritilmagan.</div>`}
+    </div>
+  `;
+}
+
+function openAddTestModal() {
+  const modules = state.modules || [];
+  if (!modules.length) return showAlert("Avval modul yarating!");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Test Savoli Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Modulni tanlang *</label>
+            <select id="t-mod" class="apple-input">
+              ${modules.map(m => `<option value="${Number(m.id)}">${escapeHtml(m.title)}</option>`).join("")}
+            </select>
+          </div>
+          <div class="apple-field">
+            <label>Savol matni *</label>
+            <textarea id="t-q" class="apple-input apple-textarea" placeholder="Savol matnini kiriting..."></textarea>
+          </div>
+          <div class="apple-field">
+            <label>Variant A (to'g'ri bo'lishi mumkin)</label>
+            <input id="t-opt-0" class="apple-input" placeholder="Variant 1" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Variant B</label>
+            <input id="t-opt-1" class="apple-input" placeholder="Variant 2" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Variant C</label>
+            <input id="t-opt-2" class="apple-input" placeholder="Variant 3" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Variant D</label>
+            <input id="t-opt-3" class="apple-input" placeholder="Variant 4" type="text">
+          </div>
+          <div class="apple-field">
+            <label>To'g'ri javob qaysi biri?</label>
+            <select id="t-correct" class="apple-input">
+              <option value="0">Variant A</option>
+              <option value="1">Variant B</option>
+              <option value="2">Variant C</option>
+              <option value="3">Variant D</option>
+            </select>
+          </div>
+
+          <button class="btn" onclick="submitCreateTest()">
+            💾 Test savolini saqlash
+          </button>
         </div>
-      `;
-    });
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateTest() {
+  const modId = document.getElementById("t-mod")?.value;
+  const q = document.getElementById("t-q")?.value.trim();
+  const o0 = document.getElementById("t-opt-0")?.value.trim();
+  const o1 = document.getElementById("t-opt-1")?.value.trim();
+  const o2 = document.getElementById("t-opt-2")?.value.trim();
+  const o3 = document.getElementById("t-opt-3")?.value.trim();
+  const correct = document.getElementById("t-correct")?.value;
+
+  if (!modId || !q || !o0 || !o1) {
+    return showAlert("Savol va kamida 2 ta javob varianti majburiy!");
   }
 
-  html += `</div>`;
-  return html;
+  const options = [o0, o1, o2, o3].filter(Boolean);
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/tests/add", {
+      module_id: Number(modId),
+      question: q,
+      options: options,
+      correct_index: Number(correct) || 0
+    });
+    showToast("Test savoli muvaffaqiyatli qo'shildi!");
+    closeDetail();
+  } catch (err) {
+    showAlert(err.message || "Test qo'shishda xato.");
+  }
 }
 
 // ======================================================
-// TAB 4: CHAT & LIVE MESSAGING (Talab 5)
+// TAB 4: CHAT & DIRECT LICHKA (Talab 5)
 // ======================================================
 
 function renderChat() {
+  const contactTg = state.settings?.contact_telegram || "yoshuzbekk";
+  const contactPhone = state.settings?.contact_phone || "+998900000000";
+
   return `
     <div class="page">
       <div class="page-title">Admin Bilan Aloqa</div>
@@ -976,78 +1313,99 @@ function renderChat() {
       <div class="chat-box">
         <div class="chat-box-icon">💬</div>
         <div class="chat-box-title">
-          ${state.has_access ? "Obunangiz faol holatda!" : "Savol yoki to'lov bo'yicha murojaat"}
+          ${state.has_access ? "Obunangiz faol holatda!" : "Revit kursi bo'yicha savol yoki to'lov"}
         </div>
         <p>
           ${state.has_access
             ? `Kirish muddati: <b>${escapeHtml(fmtDate(state.access_until) || "Muddatsiz")}</b> gacha.`
-            : "Kursga kirish, to'lov yoki o'quv jarayoni bo'yicha admin bilan to'g'ridan-to'g'ri bog'lanishingiz mumkin."}
+            : "Savol, to'lov yoki texnik masalalar bo'yicha to'g'ridan-to'g'ri adminning shaxsiy chatiga yozing yoki telefon orqali bog'laning."}
         </p>
       </div>
 
+      <!-- 5-TALAB: SHAXSIY CHATGA YO'NALTIRISH VA TELEFON RAQAMI -->
+      <button class="btn" style="background:linear-gradient(135deg, #0088cc 0%, #2979ff 100%); margin-bottom:14px;" onclick="openDirectAdminTelegram('${escapeJsString(contactTg)}')">
+        💬 Admin bilan Telegramda shaxsiy chat ochish
+      </button>
+
+      <a href="tel:${escapeHtml(contactPhone)}" class="btn secondary" style="text-decoration:none; margin-bottom:18px;">
+        📞 Telefon orqali qo'ng'iroq qilish (${escapeHtml(contactPhone)})
+      </a>
+
       <!-- To'lov so'rovi yuborish -->
-      <button class="btn" style="margin-bottom:16px;" onclick="requestAccess()">
+      <button class="btn secondary" style="margin-bottom:18px;" onclick="requestAccess()">
         ${state.has_access ? "🔄 Muddatni uzaytirish so'rovi" : "💳 Kursga kirish so'rovini yuborish"}
       </button>
 
-      <!-- Chat ichida to'g'ridan-to'g'ri xabar yozish (Talab 5) -->
-      <div class="section-title" style="margin-top:20px;">Adminga xabar yozish</div>
-      <div class="apple-registration-form" style="background:var(--bg-surface); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:16px;">
-        <label style="font-size:13px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:8px;">
-          Xabaringizni yozing (savol, taklif yoki to'lov cheki):
-        </label>
-        <textarea id="chat-user-message" class="apple-input apple-textarea" placeholder="Assalomu alaykum, men kurs bo'yicha..." style="min-height:90px;"></textarea>
-        <button id="chat-send-btn" class="btn" style="margin-top:12px; margin-bottom:0;" onclick="sendChatMessage()">
-          Xabarni yuborish ✈️
+      ${state.is_admin ? `
+        <button class="btn secondary" style="border-style:dashed;" onclick="openAdminSettingsModal()">
+          ⚙️ Aloqa ma'lumotlarini (Telegram, Tel, Rasm) sozlash
         </button>
-      </div>
-
-      <!-- Telegramda to'g'ridan-to'g'ri bog'lanish tugmasi -->
-      <button class="btn secondary" onclick="openDirectTelegramChat()">
-        💬 Telegramda shaxsiy chatni ochish
-      </button>
+      ` : ""}
     </div>
   `;
 }
 
-async function sendChatMessage() {
-  const input = document.getElementById("chat-user-message");
-  const text = input?.value.trim();
-
-  if (!text) return showAlert("Iltimos, xabar matnini kiriting.");
-
-  const btn = document.getElementById("chat-send-btn");
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "Yuborilmoqda...";
-  }
-
+function openDirectAdminTelegram(username) {
+  haptic("light");
+  const cleanUser = username.replace(/^@/, "").trim();
+  const url = `https://t.me/${cleanUser}`;
   try {
-    haptic("medium");
-    const res = await api("/api/chat/send", { text });
-    if (res.ok) {
-      showToast("Xabaringiz adminga muvaffaqiyatli yetkazildi! Tez orada javob beramiz.");
-      if (input) input.value = "";
-    } else {
-      showAlert(res.error || "Xatolik yuz berdi.");
-    }
-  } catch (error) {
-    showAlert(error.message || "Xabar yuborishda xatolik.");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = "Xabarni yuborish ✈️";
-    }
+    tg.openTelegramLink(url);
+  } catch (e) {
+    window.open(url, "_blank");
   }
 }
 
-function openDirectTelegramChat() {
-  haptic("light");
+// Admin Sozlamalar oynasi (Talab 1 & Talab 5)
+function openAdminSettingsModal() {
+  const s = state.settings || {};
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Aloqa va Rasm Sozlamalari</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Admin Telegram Usernamesi (shaxsiy lichka)</label>
+            <input id="set-tg" class="apple-input" value="${escapeHtml(s.contact_telegram || '')}" placeholder="yoshuzbekk (boshida @ siz)" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Admin Telefon Raqami (qo'ng'iroq qilish uchun)</label>
+            <input id="set-phone" class="apple-input" value="${escapeHtml(s.contact_phone || '')}" placeholder="+998901234567" type="tel">
+          </div>
+          <div class="apple-field">
+            <label>Admin Rasm Linki (bosh sahifada ko'rinishi uchun)</label>
+            <input id="set-photo" class="apple-input" value="${escapeHtml(s.admin_photo_url || '')}" placeholder="/admin.jpg yoki https://... rasm havolasi" type="url">
+          </div>
+
+          <button class="btn" onclick="submitAdminSettings()">
+            💾 Sozlamalarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitAdminSettings() {
+  const tgVal = document.getElementById("set-tg")?.value.trim();
+  const phoneVal = document.getElementById("set-phone")?.value.trim();
+  const photoVal = document.getElementById("set-photo")?.value.trim();
+
   try {
-    // Bot orqali yoki admin Telegram username
-    tg.openTelegramLink("https://t.me/YOSHUZBEKK");
-  } catch (e) {
-    window.open("https://t.me/YOSHUZBEKK", "_blank");
+    haptic("medium");
+    await adminApi("/api/admin/settings/update", {
+      contact_telegram: tgVal,
+      contact_phone: phoneVal,
+      admin_photo_url: photoVal
+    });
+    showToast("Aloqa va rasm sozlamalari saqlandi!");
+    closeDetail();
+    loadContent();
+  } catch (err) {
+    showAlert(err.message || "Sozlamalarni saqlashda xato.");
   }
 }
 
@@ -1072,7 +1430,7 @@ async function requestAccess() {
 }
 
 // ======================================================
-// TAB 5: PROFILE & LAST LESSON TRACKING (Talab 3)
+// TAB 5: PROFILE
 // ======================================================
 
 function renderProfile() {
@@ -1091,7 +1449,7 @@ function renderProfile() {
         <div class="profile-id">Telegram ID: ${escapeHtml(state.telegram_id)}</div>
       </div>
 
-      <!-- Oxirgi ko'rilgan dars kartasi (faqat to'lov qilganlarga - Talab 3) -->
+      <!-- Oxirgi ko'rilgan dars kartasi -->
       ${state.has_access && lastLesson ? `
         <div class="card" style="background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-elevated) 100%); border: 1px solid var(--accent-glow); margin-bottom: 18px; padding: 18px; border-radius: var(--radius-md);">
           <div style="font-size: 11.5px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
@@ -1240,7 +1598,7 @@ async function submitModuleTest(moduleId) {
 }
 
 // ======================================================
-// ADMIN PANEL (Talab 2 & 6: Mukammal CRUD va Fayllar)
+// ADMIN PANEL (Talab 6: Darslar va Fayllar, Talab 7: Modullar o'chirilgan)
 // ======================================================
 
 let adminView = "dashboard";
@@ -1282,6 +1640,7 @@ async function openAdminPanel() {
   }
 }
 
+// 7-TALAB: "MODULLAR" QATORI BUTUNLAY OLIB TASHLANDI
 function renderAdminPanel() {
   currentView = {
     html: `
@@ -1300,9 +1659,6 @@ function renderAdminPanel() {
           <button class="${adminView === "students" ? "active" : ""}" onclick="adminSetTab('students')">
             👨‍🎓 O'quvchilar
           </button>
-          <button class="${adminView === "modules" ? "active" : ""}" onclick="adminSetTab('modules')">
-            📦 Modullar
-          </button>
           <button class="${adminView === "lessons" ? "active" : ""}" onclick="adminSetTab('lessons')">
             🎬 Darslar
           </button>
@@ -1316,7 +1672,6 @@ function renderAdminPanel() {
         <div class="page" style="padding-top: 0;">
           ${adminView === "dashboard" ? renderAdminDashboard() : ""}
           ${adminView === "students" ? renderAdminStudents() : ""}
-          ${adminView === "modules" ? renderAdminModules() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
         </div>
@@ -1337,7 +1692,7 @@ async function adminSetTab(tab) {
     } else if (tab === "students") {
       const data = await adminApi("/api/admin/students");
       adminData.students = data.students || [];
-    } else if (tab === "modules" || tab === "lessons") {
+    } else if (tab === "lessons") {
       const data = await adminApi("/api/admin/modules");
       adminData.modules = data.modules || [];
     } else if (tab === "admins") {
@@ -1350,9 +1705,7 @@ async function adminSetTab(tab) {
   }
 }
 
-// ------------------------------------------------------
 // Admin Dashboard
-// ------------------------------------------------------
 function renderAdminDashboard() {
   const s = adminData.stats || {};
   return `
@@ -1384,9 +1737,7 @@ function renderAdminDashboard() {
   `;
 }
 
-// ------------------------------------------------------
 // Admin Students
-// ------------------------------------------------------
 function renderAdminStudents() {
   const students = adminData.students || [];
   if (!students.length) return `<div class="empty-box">O'quvchilar ro'yxati bo'sh.</div>`;
@@ -1489,80 +1840,7 @@ async function grantStudentAccess(id) {
   }
 }
 
-// ------------------------------------------------------
-// Admin Modules CRUD
-// ------------------------------------------------------
-function renderAdminModules() {
-  const modules = adminData.modules || [];
-
-  return `
-    <div class="admin-section-header">
-      <div class="admin-section-title">Modullar ro'yxati (${modules.length})</div>
-      <button class="admin-small-btn" onclick="openAddModuleModal()">➕ Yangi Modul</button>
-    </div>
-
-    ${modules.length ? modules.map((m, idx) => `
-      <div class="admin-module-card">
-        <div class="admin-module-title">
-          <span>${idx + 1}. ${escapeHtml(m.title)} (${m.lesson_count || 0} dars)</span>
-          <div class="admin-lesson-actions">
-            <button onclick="openEditModuleModal(${Number(m.id)}, '${escapeJsString(m.title)}', ${Number(m.order_index)})">✏️</button>
-            <button onclick="deleteAdminModule(${Number(m.id)})">🗑️</button>
-          </div>
-        </div>
-      </div>
-    `).join("") : `<div class="empty-box">Hozircha modullar yo'q.</div>`}
-  `;
-}
-
-function openAddModuleModal() {
-  const title = prompt("Yangi modul nomini kiriting:");
-  if (!title || !title.trim()) return;
-
-  const orderIndex = prompt("Modul tartib raqami (masalan, 1):", String((adminData.modules?.length || 0) + 1));
-  if (orderIndex === null) return;
-
-  adminApi("/api/admin/modules/add", {
-    title: title.trim(),
-    order_index: Number(orderIndex) || 1
-  }).then(() => {
-    showToast("Modul qo'shildi!");
-    adminSetTab("modules");
-  }).catch(err => showAlert(err.message));
-}
-
-function openEditModuleModal(id, currentTitle, currentOrder) {
-  const title = prompt("Modul yangi nomi:", currentTitle);
-  if (!title || !title.trim()) return;
-
-  const orderIndex = prompt("Modul tartib raqami:", String(currentOrder));
-  if (orderIndex === null) return;
-
-  adminApi(`/api/admin/modules/${Number(id)}/update`, {
-    title: title.trim(),
-    order_index: Number(orderIndex)
-  }).then(() => {
-    showToast("Modul yangilandi!");
-    adminSetTab("modules");
-  }).catch(err => showAlert(err.message));
-}
-
-function deleteAdminModule(id) {
-  showConfirm(
-    "Modul o'chirilsinmi?",
-    "DIQQAT: Modul o'chirilsa, uning ichidagi barcha darslar va fayllar ham to'liq o'chiriladi!",
-    "Ha, o'chirish",
-    async () => {
-      await adminApi(`/api/admin/modules/${Number(id)}/delete`);
-      showToast("Modul o'chirildi!");
-      adminSetTab("modules");
-    }
-  );
-}
-
-// ------------------------------------------------------
-// Admin Lessons CRUD (Talab 2 & 6: Dars va Fayllarni boshqarish)
-// ------------------------------------------------------
+// 6-TALAB: DARSLAR QATORIDA YANGI DARS QO'SHISH YOKI BOR DARSNI TAHRIRLASH
 function renderAdminLessons() {
   const modules = adminData.modules || [];
 
@@ -1580,7 +1858,7 @@ function renderAdminLessons() {
         </div>
         <div id="admin-module-lessons-${Number(m.id)}" style="display:none;"></div>
       </div>
-    `).join("") : `<div class="empty-box">Dars qo'shishdan oldin kamida bitta modul yarating.</div>`}
+    `).join("") : `<div class="empty-box">Dars qo'shishdan oldin modul mavjudligiga ishonch hosil qiling.</div>`}
   `;
 }
 
@@ -1629,7 +1907,7 @@ async function loadModuleLessonsForAdmin(moduleId) {
 
 function openAddLessonView() {
   const modules = adminData.modules || [];
-  if (!modules.length) return showAlert("Avval kamida bitta modul yarating.");
+  if (!modules.length) return showAlert("Avval modul mavjud bo'lishi kerak!");
 
   currentView = {
     html: `
@@ -1639,7 +1917,7 @@ function openAddLessonView() {
 
         <div class="admin-form">
           <div class="apple-field">
-            <label>Modulni tanlang *</label>
+            <label>Qaysi modulga qo'shiladi? *</label>
             <select id="new-l-module" class="apple-input">
               ${modules.map(m => `<option value="${Number(m.id)}">${escapeHtml(m.title)}</option>`).join("")}
             </select>
@@ -1665,28 +1943,25 @@ function openAddLessonView() {
             <input id="new-l-bunny" class="apple-input" type="text" placeholder="Video ID">
           </div>
 
-          <!-- Darsga tegishli fayl (manba) qo'shish (Talab 2) -->
+          <!-- Darsga tegishli manba / fayl (Talab 6) -->
           <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); padding:14px; border-radius:var(--radius-sm); margin-bottom:16px;">
             <div style="font-weight:700; font-size:13px; margin-bottom:8px; color:var(--accent);">
-              📥 Darsga tegishli fayl / manba (ixtiyoriy):
+              📥 Darsga tegishli kerakli manba / fayl (ixtiyoriy):
             </div>
             <input id="new-l-filename" class="apple-input" type="text" placeholder="Fayl nomi (masalan: 1-dars_materiallari.rar)" style="margin-bottom:8px;">
-            <input id="new-l-fileurl" class="apple-input" type="url" placeholder="Fayl yuklab olish linki (Google Drive...)">
+            <input id="new-l-fileurl" class="apple-input" type="url" placeholder="Yuklab olish linki (Google Drive, Dropbox...)">
           </div>
 
-          <!-- Dars vazifasi -->
           <div class="apple-field">
             <label>Dars vazifasi (amaliy topshiriq)</label>
-            <textarea id="new-l-task" class="apple-input apple-textarea" placeholder="O'quvchi bugungi darsda bajarishi kerak bo'lgan vazifa matni..."></textarea>
+            <textarea id="new-l-task" class="apple-input apple-textarea" placeholder="O'quvchi uchun amaliy topshiriq matni..."></textarea>
           </div>
 
-          <!-- Dars tagidagi eslatma (Warning) matni -->
           <div class="apple-field">
-            <label>⚠️ Dars tagidagi eslatma / ogohlantirish matni</label>
-            <textarea id="new-l-warning" class="apple-input apple-textarea" placeholder="⚠️ Ushbu darslik va materiallar faqat shaxsiy foydalanish uchun berilgan omonatdir..."></textarea>
+            <label>⚠️ Eslatma / Ogohlantirish matni</label>
+            <textarea id="new-l-warning" class="apple-input apple-textarea" placeholder="⚠️ Ushbu darslik faqat shaxsiy foydalanish uchun omonatdir..."></textarea>
           </div>
 
-          <!-- Namuna yoki pullik dars (Talab 2) -->
           <label class="apple-check-row">
             <input id="new-l-free" type="checkbox">
             <div>
@@ -1743,9 +2018,7 @@ async function submitCreateLesson() {
   }
 }
 
-// ------------------------------------------------------
-// Darsni tahrirlash (Talab 2 & 6: Nomi, raqami, linki, fayli, eslatmasi)
-// ------------------------------------------------------
+// 6-TALAB: DARSNI TAHRIRLASH (Modul, dars nomi, raqami, linki, manbalar)
 async function openEditLessonView(lessonId) {
   try {
     haptic("light");
@@ -1762,7 +2035,7 @@ async function openEditLessonView(lessonId) {
 
           <div class="admin-form">
             <div class="apple-field">
-              <label>Modul</label>
+              <label>Qaysi modulga tegishli?</label>
               <select id="edit-l-module" class="apple-input">
                 ${modules.map(m => `
                   <option value="${Number(m.id)}" ${Number(m.id) === Number(lesson.module_id) ? "selected" : ""}>
@@ -1815,7 +2088,7 @@ async function openEditLessonView(lessonId) {
             </button>
           </div>
 
-          <!-- Dars Materiallari / Fayllari boshqaruvi (Talab 6) -->
+          <!-- Dars Materiallari / Manbalari boshqaruvi -->
           <div class="section-title" style="margin-top:24px;">📁 Kerakli Manbalar va Fayllar</div>
           <div class="lesson-files">
             ${files.map(f => `
@@ -1925,9 +2198,7 @@ async function deleteLessonFile(fileId, lessonId) {
   );
 }
 
-// ------------------------------------------------------
-// Admin Admins (Super Admin Only)
-// ------------------------------------------------------
+// Admin Admins
 function renderAdminAdmins() {
   const admins = adminData.admins || [];
 
