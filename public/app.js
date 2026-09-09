@@ -1303,7 +1303,7 @@ async function submitCreateTest() {
 // ======================================================
 
 function renderChat() {
-  const contactTg = state.settings?.contact_telegram || "yoshuzbekk";
+  const contactTg = state.settings?.contact_telegram || "texnikuzb";
   const contactPhone = state.settings?.contact_phone || "+998900000000";
 
   return `

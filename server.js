@@ -128,10 +128,17 @@ async function initExtendedTables() {
     // Default aloqa sozlamalari
     await pool.query(`
       INSERT INTO academy_settings (key, value) VALUES
-      ('contact_telegram', 'yoshuzbekk'),
+      ('contact_telegram', 'texnikuzb'),
       ('contact_phone', '+998900000000'),
       ('admin_photo_url', '/admin.jpg')
       ON CONFLICT (key) DO NOTHING
+    `);
+
+    // Eski standart qiymatni ('yoshuzbekk') haqiqiy admin nikiga bir martalik yangilash
+    await pool.query(`
+      UPDATE academy_settings
+      SET value = 'texnikuzb'
+      WHERE key = 'contact_telegram' AND (value = 'yoshuzbekk' OR value = '' OR value IS NULL)
     `);
 
     console.log('✅ DATABASE AVTO-MIGRATSIYA MUVAFFAQIYATLI YAKUNLANDI');
