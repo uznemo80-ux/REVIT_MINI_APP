@@ -297,7 +297,7 @@ bot.action(/^reject_(\d+)$/, async function (ctx) {
     try {
       await bot.telegram.sendMessage(
         telegramId,
-        '❌ Afsuski, to‘lov so‘rovingiz rad etildi.\n\nAgar bu xato deb hisoblasangiz, administrator bilan bog‘laning.'
+        '❌ Afsuski, to‘lov so‘rovingiz rad etildi.\n\nAgar bu xato deb hisoblasangiz, administrator bilan bog‘laning: @texnikuzb'
       );
     } catch (error) {
       console.warn('Userga rad xabari bormadi:', error.message);
