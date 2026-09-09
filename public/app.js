@@ -1070,17 +1070,27 @@ async function openLesson(id) {
       lesson_title: lesson.title
     };
 
+    const watermarkText = `${state.first_name || ""} · ID ${escapeHtml(String(state.telegram_id || ""))}`.trim();
+    const watermarkHtml = `
+      <div class="video-watermark">
+        <span>${watermarkText}</span>
+        <span>${watermarkText}</span>
+      </div>
+    `;
+
     let videoHtml = "";
     if (lesson.youtube_player_url) {
       videoHtml = `
         <div class="video-container">
           <iframe src="${escapeHtml(lesson.youtube_player_url)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          ${watermarkHtml}
         </div>
       `;
     } else if (lesson.bunny_player_url) {
       videoHtml = `
         <div class="video-container">
           <iframe src="${escapeHtml(lesson.bunny_player_url)}" title="${escapeHtml(lesson.title)}" allowfullscreen></iframe>
+          ${watermarkHtml}
         </div>
       `;
     } else {
