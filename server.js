@@ -57,6 +57,7 @@ pool.on('error', function (error) {
 async function initExtendedTables() {
   try {
     await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
+    await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     
     // Sozlamalar jadvali (telefon, telegram link, admin rasm)
     await pool.query(`
