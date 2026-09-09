@@ -252,6 +252,13 @@ html.light .nav {
 .nav-icon {
   font-size: 20px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg {
+  display: block;
 }
 
 .nav-label {

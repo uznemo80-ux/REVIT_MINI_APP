@@ -1304,7 +1304,9 @@ async function submitCreateTest() {
 
 function renderChat() {
   const contactTg = state.settings?.contact_telegram || "texnikuzb";
-  const contactPhone = state.settings?.contact_phone || "+998900000000";
+  const rawPhone = state.settings?.contact_phone || "";
+  const hasPhone = rawPhone.trim() !== "" && rawPhone.trim() !== "+998900000000";
+  const contactPhone = rawPhone;
 
   return `
     <div class="page">
@@ -1327,9 +1329,11 @@ function renderChat() {
         💬 Admin bilan Telegramda shaxsiy chat ochish
       </button>
 
+      ${hasPhone ? `
       <a href="tel:${escapeHtml(contactPhone)}" class="btn secondary" style="text-decoration:none; margin-bottom:18px;">
         📞 Telefon orqali qo'ng'iroq qilish (${escapeHtml(contactPhone)})
       </a>
+      ` : ""}
 
       <!-- To'lov so'rovi yuborish -->
       <button class="btn secondary" style="margin-bottom:18px;" onclick="requestAccess()">
@@ -2266,23 +2270,54 @@ function deleteAdmin(adminId) {
 // CORE NAVIGATION & RENDER
 // ======================================================
 
+const NAV_ICONS = {
+  home: {
+    outline: `<path d="M4 11.5 12 4l8 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v8.2c0 .44.36.8.8.8H10a.8.8 0 0 0 .8-.8v-3.4c0-.44.36-.8.8-.8h1c.44 0 .8.36.8.8V18.2c0 .44.36.8.8.8h3.2c.44 0 .8-.36.8-.8V10" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<path d="M12 3.2 3 11.2c-.4.35-.13 1 .4 1h1.6v6.9c0 .6.49 1.1 1.1 1.1H9.5a.9.9 0 0 0 .9-.9v-3.9c0-.5.4-.9.9-.9h1.4c.5 0 .9.4.9.9v3.9c0 .5.4.9.9.9h3.4c.61 0 1.1-.5 1.1-1.1v-6.9h1.6c.53 0 .8-.65.4-1L12 3.2Z"/>`
+  },
+  lessons: {
+    outline: `<path d="M4 5.2c2.2-.9 4.9-.9 8 0v13.6c-3.1-.9-5.8-.9-8 0V5.2Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 5.2c-2.2-.9-4.9-.9-8 0v13.6c3.1-.9 5.8-.9 8 0V5.2Z" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<path d="M3.4 4.6c2.5-.9 5.4-.85 8.1.2v14.1c-2.6-1-5.5-1-8.1-.15a.75.75 0 0 1-1-.7V5.3c0-.32.2-.6.5-.7Z"/><path d="M20.6 4.6c-2.5-.9-5.4-.85-8.1.2v14.1c2.6-1 5.5-1 8.1-.15.44.14 1-.15 1-.7V5.3c0-.32-.2-.6-.5-.7Z"/>`
+  },
+  tasks: {
+    outline: `<rect x="5" y="3.6" width="14" height="16.8" rx="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 8.6h7.2M8.4 12h7.2M8.4 15.4h4.6" stroke-linecap="round"/>`,
+    filled: `<rect x="4.4" y="3" width="15.2" height="18" rx="2.8" opacity="0.22"/><rect x="7.4" y="7.4" width="9.2" height="1.8" rx="0.9"/><rect x="7.4" y="11" width="9.2" height="1.8" rx="0.9"/><rect x="7.4" y="14.6" width="5.8" height="1.8" rx="0.9"/>`
+  },
+  chat: {
+    outline: `<path d="M4 6.4A2.4 2.4 0 0 1 6.4 4h11.2A2.4 2.4 0 0 1 20 6.4v8a2.4 2.4 0 0 1-2.4 2.4H9.6L5.2 20v-3.6H6.4A2.4 2.4 0 0 1 4 14V6.4Z" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<path d="M4 6.6A2.6 2.6 0 0 1 6.6 4h10.8A2.6 2.6 0 0 1 20 6.6v7.6a2.6 2.6 0 0 1-2.6 2.6H9.9L5 20.6v-3.9a2.6 2.6 0 0 1-1-2V6.6Z"/>`
+  },
+  profile: {
+    outline: `<circle cx="12" cy="8.2" r="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.8 19.6c1.1-3.4 4-5.1 7.2-5.1s6.1 1.7 7.2 5.1" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<circle cx="12" cy="7.8" r="3.8"/><path d="M4.4 20.2c1-3.9 4.1-6 7.6-6s6.6 2.1 7.6 6c.13.5-.25 1-.8 1H5.2c-.55 0-.93-.5-.8-1Z"/>`
+  }
+};
+
 function renderNav() {
   const tabs = [
-    { id: "home", label: "Bosh sahifa", icon: "⌂" },
-    { id: "lessons", label: "Darslar", icon: "▤" },
-    { id: "tasks", label: "Vazifalar", icon: "✎" },
-    { id: "chat", label: "Chat", icon: "◈" },
-    { id: "profile", label: "Profil", icon: "◍" }
+    { id: "home", label: "Bosh sahifa" },
+    { id: "lessons", label: "Darslar" },
+    { id: "tasks", label: "Vazifalar" },
+    { id: "chat", label: "Chat" },
+    { id: "profile", label: "Profil" }
   ];
 
   return `
     <div class="nav">
-      ${tabs.map(t => `
-        <div class="nav-item ${activeTab === t.id ? "active" : ""}" onclick="setTab('${t.id}')">
-          <div class="nav-icon">${t.icon}</div>
+      ${tabs.map(t => {
+        const isActive = activeTab === t.id;
+        const icon = NAV_ICONS[t.id];
+        const svgInner = isActive ? icon.filled : icon.outline;
+        const strokeProps = isActive ? "" : `fill="none" stroke="currentColor" stroke-width="1.6"`;
+        return `
+        <div class="nav-item ${isActive ? "active" : ""}" onclick="setTab('${t.id}')">
+          <div class="nav-icon">
+            <svg width="23" height="23" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
+          </div>
           <div class="nav-label">${t.label}</div>
         </div>
-      `).join("")}
+      `;
+      }).join("")}
     </div>
   `;
 }
