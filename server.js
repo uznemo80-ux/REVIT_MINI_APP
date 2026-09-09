@@ -58,6 +58,8 @@ async function initExtendedTables() {
   try {
     await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
     
     // Sozlamalar jadvali (telefon, telegram link, admin rasm)
     await pool.query(`
@@ -213,6 +215,30 @@ function hasAccess(user) {
   if (String(user.telegram_id) === String(ADMIN_TELEGRAM_ID)) return true;
   if (!user.access_until) return false;
   return new Date(user.access_until) > new Date();
+}
+
+// Bitta hisob — bitta faol qurilma nazorati.
+// Agar hisobga boshqa qurilmadan (10 daqiqa ichida faol bo'lgan) kirilgan bo'lsa, video berilmaydi.
+var DEVICE_LOCK_MINUTES = 10;
+
+async function checkDeviceLock(user, deviceId) {
+  if (!deviceId) return null; // eski frontend versiyasi bilan orqaga moslik uchun bloklanmaydi
+
+  var lastSeen = user.device_last_seen ? new Date(user.device_last_seen) : null;
+  var isStale = !lastSeen || (Date.now() - lastSeen.getTime()) > DEVICE_LOCK_MINUTES * 60 * 1000;
+
+  if (user.active_device_id && user.active_device_id !== deviceId && !isStale) {
+    return {
+      error: 'device_locked',
+      message: 'Ushbu hisob hozir boshqa qurilmada faol. Bir hisobdan faqat bitta qurilmada video ko\'rish mumkin. Bir necha daqiqadan so\'ng qayta urinib ko\'ring yoki administrator bilan bog\'laning: @texnikuzb'
+    };
+  }
+
+  await pool.query(
+    'UPDATE users SET active_device_id = $1, device_last_seen = NOW() WHERE id = $2',
+    [deviceId, user.id]
+  );
+  return null;
 }
 
 // ======================================================
@@ -594,6 +620,15 @@ app.post('/api/lesson/:id', async function (req, res) {
 
     if (!lessonAvailable) {
       return res.status(403).json({ error: 'locked', message: 'Bu dars yopiq. Kursga kirish uchun tolov qilishingiz kerak.' });
+    }
+
+    // Bitta hisob — bitta qurilma nazorati (faqat haqiqiy to'lovchi o'quvchilar uchun, admin bundan mustasno)
+    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    if (userHasAccess && !isMainAdminUser) {
+      var deviceLockResult = await checkDeviceLock(user, req.body.device_id);
+      if (deviceLockResult) {
+        return res.status(403).json(deviceLockResult);
+      }
     }
 
     var files = [];

@@ -23,6 +23,21 @@ try {
 const initData = tg.initData || "";
 const app = document.getElementById("app");
 
+// Har bir qurilma uchun doimiy identifikator (bitta hisob = bitta faol qurilma nazorati uchun)
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem("revit_device_id");
+    if (!id) {
+      id = (crypto.randomUUID ? crypto.randomUUID() : "dev-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+      localStorage.setItem("revit_device_id", id);
+    }
+    return id;
+  } catch (e) {
+    return "dev-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+}
+const deviceId = getDeviceId();
+
 // ======================================================
 // HTML & JS ESCAPE UTILITIES
 // ======================================================
@@ -179,6 +194,7 @@ async function api(path, body = {}) {
     },
     body: JSON.stringify({
       initData,
+      device_id: deviceId,
       ...body
     })
   });
