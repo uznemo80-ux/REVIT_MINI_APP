@@ -60,6 +60,17 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS course_id INT REFERENCES courses(id) ON DELETE SET NULL');
+
+    // Eski modullarni (course_id bo'lmagan) birinchi kursga bog'lab qo'yamiz, ma'lumot yo'qolmasligi uchun
+    var orphanModulesResult = await pool.query('SELECT COUNT(*)::int AS count FROM modules WHERE course_id IS NULL');
+    if (orphanModulesResult.rows[0].count > 0) {
+      var firstCourseResult = await pool.query('SELECT id FROM courses ORDER BY order_index ASC, id ASC LIMIT 1');
+      if (firstCourseResult.rows[0]) {
+        await pool.query('UPDATE modules SET course_id = $1 WHERE course_id IS NULL', [firstCourseResult.rows[0].id]);
+        console.log('MIGRATION: eski modullar birinchi kursga bogolandi');
+      }
+    }
     
     // Sozlamalar jadvali (telefon, telegram link, admin rasm)
     await pool.query(`
@@ -588,6 +599,76 @@ app.post('/api/content', async function (req, res) {
 });
 
 // ======================================================
+// COURSE MODULES (bitta kursga tegishli modul/darslar)
+// ======================================================
+
+app.post('/api/course/:id/modules', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var courseId = Number(req.params.id);
+    var courseResult = await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [courseId]);
+    var course = courseResult.rows[0];
+    if (!course) return res.status(404).json({ error: 'Kurs topilmadi' });
+
+    var userHasAccess = hasAccess(user);
+
+    var modulesResult = await pool.query(
+      'SELECT id, title, order_index FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
+      [courseId]
+    );
+    var modules = modulesResult.rows;
+    var moduleIds = modules.map(function (m) { return m.id; });
+
+    var lessons = [];
+    if (moduleIds.length) {
+      var lessonsResult = await pool.query(
+        'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free FROM lessons WHERE module_id = ANY($1) ORDER BY module_id ASC, order_index ASC, id ASC',
+        [moduleIds]
+      );
+      lessons = lessonsResult.rows;
+    }
+
+    var progressResult = await pool.query(
+      'SELECT lesson_id FROM progress WHERE user_id = $1 AND watched = true',
+      [user.id]
+    );
+    var watchedSet = new Set(progressResult.rows.map(function (r) { return r.lesson_id; }));
+
+    var firstModuleId = modules.length ? modules[0].id : null;
+
+    var data = modules.map(function (mod) {
+      var isFirstModule = mod.id === firstModuleId;
+      var moduleUnlocked = isFirstModule || userHasAccess;
+      var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
+      var watchedCount = 0;
+
+      var mappedLessons = moduleLessons.map(function (lesson) {
+        var available = Boolean(lesson.is_free) || moduleUnlocked;
+        var watched = watchedSet.has(lesson.id);
+        if (watched) watchedCount++;
+        return {
+          id: lesson.id, title: lesson.title, is_free: Boolean(lesson.is_free),
+          task_text: lesson.task_text, available: available, watched: watched
+        };
+      });
+
+      return {
+        id: mod.id, title: mod.title, order_index: mod.order_index,
+        unlocked: moduleUnlocked, lessons: mappedLessons,
+        watched_count: watchedCount, total_count: moduleLessons.length
+      };
+    });
+
+    return res.json({ ok: true, course: course, modules: data });
+  } catch (error) {
+    console.error('COURSE MODULES ERROR:', error);
+    return res.status(500).json({ error: 'Kurs modullarini olishda xato' });
+  }
+});
+
+// ======================================================
 // LESSON
 // ======================================================
 
@@ -990,9 +1071,15 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
 
 app.post('/api/admin/modules', requireAdmin, async function (req, res) {
   try {
-    var result = await pool.query(
-      'SELECT m.id, m.title, m.description, m.order_index, COUNT(l.id)::int AS lesson_count FROM modules m LEFT JOIN lessons l ON l.module_id = m.id GROUP BY m.id ORDER BY m.order_index ASC, m.id ASC'
-    );
+    var courseId = req.body.course_id;
+    var query = 'SELECT m.id, m.title, m.description, m.order_index, m.course_id, COUNT(l.id)::int AS lesson_count FROM modules m LEFT JOIN lessons l ON l.module_id = m.id';
+    var params = [];
+    if (courseId) {
+      query += ' WHERE m.course_id = $1';
+      params.push(Number(courseId));
+    }
+    query += ' GROUP BY m.id ORDER BY m.order_index ASC, m.id ASC';
+    var result = await pool.query(query, params);
     return res.json({ ok: true, modules: result.rows });
   } catch (error) {
     console.error('ADMIN MODULES ERROR:', error);
@@ -1006,16 +1093,19 @@ app.post('/api/admin/modules', requireAdmin, async function (req, res) {
 
 app.post('/api/admin/modules/add', requireAdmin, async function (req, res) {
   try {
+    var courseId = req.body.course_id;
     var title = String(req.body.title || '').trim();
     var description = String(req.body.description || '').trim();
-    var orderIndex = req.body.order_index;
 
+    if (!courseId) return res.status(400).json({ error: 'Kurs tanlanishi majburiy' });
     if (!title) return res.status(400).json({ error: 'Modul nomi majburiy' });
-    if (orderIndex === undefined || orderIndex === null) return res.status(400).json({ error: 'Tartib raqami majburiy' });
+
+    var courseCheck = await pool.query('SELECT id FROM courses WHERE id = $1 LIMIT 1', [Number(courseId)]);
+    if (courseCheck.rows.length === 0) return res.status(404).json({ error: 'Kurs topilmadi' });
 
     var result = await pool.query(
-      'INSERT INTO modules (title, description, order_index) VALUES ($1, $2, $3) RETURNING *',
-      [title, description || null, Number(orderIndex)]
+      'INSERT INTO modules (course_id, title, description, order_index) VALUES ($1, $2, $3, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM modules WHERE course_id = $1)) RETURNING *',
+      [Number(courseId), title, description || null]
     );
 
     console.log('MODULE ADDED: ' + result.rows[0].id);
@@ -1033,16 +1123,22 @@ app.post('/api/admin/modules/add', requireAdmin, async function (req, res) {
 app.post('/api/admin/modules/:id/update', requireAdmin, async function (req, res) {
   try {
     var title = String(req.body.title || '').trim();
-    var description = String(req.body.description || '').trim();
     var orderIndex = req.body.order_index;
+    var hasDescription = req.body.description !== undefined;
+    var description = hasDescription ? String(req.body.description || '').trim() : null;
 
     if (!title) return res.status(400).json({ error: 'Modul nomi majburiy' });
     if (orderIndex === undefined || orderIndex === null) return res.status(400).json({ error: 'Tartib raqami majburiy' });
 
-    var result = await pool.query(
-      'UPDATE modules SET title = $1, description = $2, order_index = $3 WHERE id = $4 RETURNING *',
-      [title, description || null, Number(orderIndex), req.params.id]
-    );
+    var result = hasDescription
+      ? await pool.query(
+          'UPDATE modules SET title = $1, description = $2, order_index = $3 WHERE id = $4 RETURNING *',
+          [title, description || null, Number(orderIndex), req.params.id]
+        )
+      : await pool.query(
+          'UPDATE modules SET title = $1, order_index = $2 WHERE id = $3 RETURNING *',
+          [title, Number(orderIndex), req.params.id]
+        );
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Modul topilmadi' });
 

@@ -178,6 +178,7 @@ let state = {
 
 let activeTab = "home";
 let selectedCourseId = null;
+let courseModulesData = null;
 let currentView = null;
 let aboutOpen = false;
 window._answers = {};
@@ -754,7 +755,7 @@ function renderCoursesList() {
       </p>
 
       ${coursesList.map(course => `
-        <div class="course-card" onclick="openCourseCatalog('intpro')" style="cursor:pointer; position:relative;">
+        <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
           ${state.is_admin ? `
             <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
               <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.6);" onclick="event.stopPropagation(); openEditCourseModal(${Number(course.id)})">✏️ Tahrirlash</button>
@@ -959,30 +960,85 @@ function deleteCourseModal(id) {
   });
 }
 
-function openCourseCatalog(courseId) {
+function goToCourseManagement() {
   haptic("light");
-  selectedCourseId = courseId;
+  selectedCourseId = null;
+  courseModulesData = null;
   activeTab = "lessons";
   currentView = null;
   render();
 }
 
+async function openCourseCatalog(courseId) {
+  haptic("light");
+  selectedCourseId = Number(courseId);
+  activeTab = "lessons";
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="backToCoursesList()">← Kurslar katalogiga qaytish</div>
+        <div class="loading-state" style="padding:60px 0; text-align:center;">
+          <div class="spinner"></div>
+          <div>Modullar yuklanmoqda...</div>
+        </div>
+      </div>
+    `
+  };
+  render();
+
+  try {
+    const data = await api(`/api/course/${Number(courseId)}/modules`);
+    courseModulesData = data;
+    currentView = null;
+    render();
+  } catch (error) {
+    showAlert(error.message || "Kurs modullarini yuklashda xatolik.");
+    backToCoursesList();
+  }
+}
+
 function backToCoursesList() {
   haptic("light");
   selectedCourseId = null;
+  courseModulesData = null;
+  currentView = null;
   render();
 }
 
+async function reloadCourseModules() {
+  if (!selectedCourseId) return;
+  try {
+    const data = await api(`/api/course/${Number(selectedCourseId)}/modules`);
+    courseModulesData = data;
+    render();
+  } catch (error) {
+    showAlert(error.message || "Yangilashda xatolik.");
+  }
+}
+
 function renderCourseModules() {
-  const modules = Array.isArray(state.modules) ? state.modules : [];
+  if (!courseModulesData) {
+    return `<div class="page"><div class="loading-state" style="padding:60px 0; text-align:center;"><div class="spinner"></div></div></div>`;
+  }
+
+  const course = courseModulesData.course || {};
+  const modules = Array.isArray(courseModulesData.modules) ? courseModulesData.modules : [];
 
   let html = `
     <div class="page">
       <div class="back-btn" onclick="backToCoursesList()">← Kurslar katalogiga qaytish</div>
-      <div class="page-title" style="margin-bottom:6px;">INTPRO — Revit Darslari</div>
-      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:18px;">
-        Kerakli modulni tanlang va darslarni boshlang:
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:10px;">
+        <div class="page-title" style="margin-bottom:0;">${escapeHtml(course.title || "Kurs")}</div>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">
+        ${modules.length} ta modul · Kerakli modulni tanlang va darslarni boshlang:
       </p>
+
+      ${state.is_admin ? `
+        <button class="admin-small-btn" style="margin-bottom:16px;" onclick="openAddModuleModal(${Number(course.id)})">
+          ➕ Yangi Modul Qo'shish
+        </button>
+      ` : ""}
   `;
 
   if (!modules.length) {
@@ -1004,8 +1060,14 @@ function renderCourseModules() {
                 </div>
               </div>
             </div>
-            <div class="tag ${mod.unlocked ? "" : "locked-tag"}">
-              ${mod.unlocked ? "Ochiq" : "🔒 Qulflangan"}
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${state.is_admin ? `
+                <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); openEditModuleModal(${Number(mod.id)})">✏️</button>
+                <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(235,59,59,0.8);" onclick="event.stopPropagation(); deleteModuleConfirm(${Number(mod.id)})">🗑️</button>
+              ` : ""}
+              <div class="tag ${mod.unlocked ? "" : "locked-tag"}">
+                ${mod.unlocked ? "Ochiq" : "🔒 Qulflangan"}
+              </div>
             </div>
           </div>
 
@@ -1016,11 +1078,19 @@ function renderCourseModules() {
                   <span class="lesson-status-icon">${lesson.watched ? "✅" : (lesson.available ? "▶" : "🔒")}</span>
                   <span>${escapeHtml(lesson.title)}</span>
                 </div>
-                ${lesson.is_free ? `<span class="free-badge">Namuna</span>` : ""}
+                <div style="display:flex; align-items:center; gap:8px;">
+                  ${lesson.is_free ? `<span class="free-badge">Namuna</span>` : ""}
+                  ${state.is_admin ? `<button class="admin-small-btn" style="padding:3px 7px; font-size:10.5px;" onclick="event.stopPropagation(); openEditLessonView(${Number(lesson.id)})">✏️</button>` : ""}
+                </div>
               </div>
             `).join("") : `<div class="empty-box">Bu modulda darslar hali yuklanmagan.</div>`}
-            
-            <div style="padding: 12px 18px; border-top: 1px solid var(--border);">
+
+            <div style="padding: 12px 18px; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
+              ${state.is_admin ? `
+                <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openAddLessonView(${Number(mod.id)})">
+                  ➕ Dars Qo'shish
+                </button>
+              ` : ""}
               <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
                 📝 Modul bo'yicha test topshirish
               </button>
@@ -1043,6 +1113,114 @@ function renderCourseModules() {
 
   html += `</div>`;
   return html;
+}
+
+// ==== MODUL QO'SHISH / TAHRIRLASH / O'CHIRISH ====
+
+function openAddModuleModal(courseId) {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Modul Qo'shish</div>
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Modul nomi *</label>
+            <input id="new-mod-title" class="apple-input" type="text" placeholder="Masalan: 1-Modul. Revit asoslari">
+          </div>
+          <div class="apple-field">
+            <label>Modul tavsifi (ixtiyoriy)</label>
+            <textarea id="new-mod-desc" class="apple-input apple-textarea" placeholder="Qisqacha izoh..."></textarea>
+          </div>
+          <button class="btn" onclick="submitCreateModule(${Number(courseId)})">
+            💾 Modulni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateModule(courseId) {
+  const title = document.getElementById("new-mod-title")?.value.trim();
+  const description = document.getElementById("new-mod-desc")?.value.trim();
+  if (!title) return showAlert("Modul nomi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/modules/add", {
+      course_id: Number(courseId),
+      title,
+      description: description || null
+    });
+    showToast("Modul muvaffaqiyatli qo'shildi!");
+    currentView = null;
+    await reloadCourseModules();
+  } catch (error) {
+    showAlert(error.message || "Modul qo'shishda xatolik.");
+  }
+}
+
+function openEditModuleModal(moduleId) {
+  const modules = (courseModulesData && courseModulesData.modules) || [];
+  const mod = modules.find(m => Number(m.id) === Number(moduleId));
+  if (!mod) return showAlert("Modul topilmadi.");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Modulni Tahrirlash</div>
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Modul nomi *</label>
+            <input id="edit-mod-title" class="apple-input" type="text" value="${escapeHtml(mod.title)}">
+          </div>
+          <div class="apple-field">
+            <label>Tartib raqami *</label>
+            <input id="edit-mod-order" class="apple-input" type="number" value="${Number(mod.order_index || 1)}">
+          </div>
+          <button class="btn" onclick="submitUpdateModule(${Number(moduleId)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateModule(moduleId) {
+  const title = document.getElementById("edit-mod-title")?.value.trim();
+  const orderIndex = document.getElementById("edit-mod-order")?.value;
+  if (!title) return showAlert("Modul nomi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/modules/${Number(moduleId)}/update`, {
+      title,
+      order_index: Number(orderIndex)
+    });
+    showToast("Modul yangilandi!");
+    currentView = null;
+    await reloadCourseModules();
+  } catch (error) {
+    showAlert(error.message || "Modulni yangilashda xatolik.");
+  }
+}
+
+function deleteModuleConfirm(moduleId) {
+  showConfirm(
+    "Modul o'chirilsinmi?",
+    "Ushbu modul va undagi barcha darslar butunlay o'chiriladi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/modules/${Number(moduleId)}/delete`);
+      showToast("Modul o'chirildi!");
+      await reloadCourseModules();
+    }
+  );
 }
 
 function toggleModule(id) {
@@ -1689,7 +1867,7 @@ function renderAdminPanel() {
           <button class="${adminView === "students" ? "active" : ""}" onclick="adminSetTab('students')">
             👨‍🎓 O'quvchilar
           </button>
-          <button class="${adminView === "lessons" ? "active" : ""}" onclick="adminSetTab('lessons')">
+          <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
             🎬 Darslar
           </button>
           ${state.admin_role === "super_admin" ? `
@@ -1935,21 +2113,21 @@ async function loadModuleLessonsForAdmin(moduleId) {
   }
 }
 
-function openAddLessonView() {
-  const modules = adminData.modules || [];
+function openAddLessonView(moduleId) {
+  const modules = (courseModulesData && courseModulesData.modules) || [];
   if (!modules.length) return showAlert("Avval modul mavjud bo'lishi kerak!");
 
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="adminSetTab('lessons')">← Darslarga qaytish</div>
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
         <div class="page-title">Yangi Dars Qo'shish</div>
 
         <div class="admin-form">
           <div class="apple-field">
             <label>Qaysi modulga qo'shiladi? *</label>
             <select id="new-l-module" class="apple-input">
-              ${modules.map(m => `<option value="${Number(m.id)}">${escapeHtml(m.title)}</option>`).join("")}
+              ${modules.map(m => `<option value="${Number(m.id)}" ${Number(m.id) === Number(moduleId) ? "selected" : ""}>${escapeHtml(m.title)}</option>`).join("")}
             </select>
           </div>
 
@@ -2042,7 +2220,8 @@ async function submitCreateLesson() {
     });
 
     showToast("Dars muvaffaqiyatli yaratildi!");
-    adminSetTab("lessons");
+    currentView = null;
+    await reloadCourseModules();
   } catch (error) {
     showAlert(error.message || "Dars yaratishda xatolik.");
   }
@@ -2055,12 +2234,12 @@ async function openEditLessonView(lessonId) {
     const lesson = await api(`/api/lesson/${Number(lessonId)}`);
     const filesData = await adminApi(`/api/admin/lesson/${Number(lessonId)}/files`);
     const files = filesData.files || [];
-    const modules = adminData.modules || [];
+    const modules = (courseModulesData && courseModulesData.modules) || [];
 
     currentView = {
       html: `
         <div class="page">
-          <div class="back-btn" onclick="adminSetTab('lessons')">← Darslar ro'yxatiga qaytish</div>
+          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
           <div class="page-title">Darsni tahrirlash</div>
 
           <div class="admin-form">
@@ -2178,7 +2357,8 @@ async function submitUpdateLesson(lessonId) {
       is_free: isFree
     });
     showToast("Dars muvaffaqiyatli yangilandi!");
-    adminSetTab("lessons");
+    currentView = null;
+    await reloadCourseModules();
   } catch (error) {
     showAlert(error.message || "Darsni yangilashda xatolik.");
   }
@@ -2192,7 +2372,8 @@ function deleteAdminLesson(lessonId, moduleId) {
     async () => {
       await adminApi(`/api/admin/lesson/${Number(lessonId)}/delete`);
       showToast("Dars o'chirildi!");
-      loadModuleLessonsForAdmin(moduleId);
+      currentView = null;
+      await reloadCourseModules();
     }
   );
 }
