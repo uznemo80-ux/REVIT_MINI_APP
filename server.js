@@ -209,6 +209,8 @@ function generateYouTubePlayerUrl(youtubeUrl) {
 
 function hasAccess(user) {
   if (!user) return false;
+  // Asosiy admin har doim barcha darslarga to'liq kirisha oladi
+  if (String(user.telegram_id) === String(ADMIN_TELEGRAM_ID)) return true;
   if (!user.access_until) return false;
   return new Date(user.access_until) > new Date();
 }
