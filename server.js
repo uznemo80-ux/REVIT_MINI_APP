@@ -994,11 +994,21 @@ app.post('/api/request-access', async function (req, res) {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ ok: false, error: 'Telegram foydalanuvchisi aniqlanmadi' });
 
-    if (hasAccess(user)) {
-      return res.json({ ok: true, message: 'Sizda allaqachon kursga kirish huquqi mavjud' });
+    var fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Nomalum';
+
+    var courseLine = '';
+    if (req.body.course_id) {
+      try {
+        var courseResult = await pool.query('SELECT title FROM courses WHERE id = $1 LIMIT 1', [Number(req.body.course_id)]);
+        if (courseResult.rows[0]) {
+          courseLine = '\nKurs: ' + courseResult.rows[0].title;
+        }
+      } catch (courseError) {
+        console.error('REQUEST ACCESS COURSE LOOKUP ERROR:', courseError);
+      }
     }
 
-    var fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Nomalum';
+    var isRenewal = hasAccess(user);
 
     var existingResult = await pool.query(
       "SELECT id FROM payment_requests WHERE user_id = $1 AND status = 'pending' LIMIT 1",
@@ -1006,7 +1016,9 @@ app.post('/api/request-access', async function (req, res) {
     );
 
     if (existingResult.rows.length > 0) {
-      var adminMsg1 = 'TOLOV SOROVI!\n\nIsm: ' + fullName + '\nTelefon: ' + (user.phone || 'Telefon yoq') + '\nUsername: @' + (user.username || 'username yoq') + '\nTelegram ID: ' + user.telegram_id + '\n\nBu foydalanuvchi oldin ham sorov yuborgan.';
+      var adminMsg1 = (isRenewal ? 'MUDDATNI UZAYTIRISH SOROVI!' : 'TOLOV SOROVI!') +
+        '\n\nIsm: ' + fullName + '\nTelefon: ' + (user.phone || 'Telefon yoq') + '\nUsername: @' + (user.username || 'username yoq') + '\nTelegram ID: ' + user.telegram_id + courseLine +
+        '\n\nBu foydalanuvchi oldin ham sorov yuborgan.';
       await notifyAdmin(adminMsg1, user.telegram_id.toString());
       return res.json({ ok: true, already_pending: true, message: 'Sorovingiz adminga yuborildi' });
     }
@@ -1016,7 +1028,11 @@ app.post('/api/request-access', async function (req, res) {
       [user.id]
     );
 
-    var adminMsg2 = 'YANGI TOLOV SOROVI!\n\nIsm: ' + fullName + '\nTelefon: ' + (user.phone || 'Telefon yoq') + '\nUsername: @' + (user.username || 'username yoq') + '\nTelegram ID: ' + user.telegram_id + '\n\nKursga kirish uchun sorov yuborildi.';
+    var adminMsg2 = (isRenewal ? 'MUDDATNI UZAYTIRISH SOROVI!' : 'YANGI TOLOV SOROVI!') +
+      '\n\nIsm: ' + fullName + '\nTelefon: ' + (user.phone || 'Telefon yoq') + '\nUsername: @' + (user.username || 'username yoq') + '\nTelegram ID: ' + user.telegram_id + courseLine +
+      (isRenewal
+        ? ('\nJoriy muddat: ' + new Date(user.access_until).toLocaleDateString('uz-UZ') + ' sanasigacha\n\nO\'quvchi kirish muddatini uzaytirishni soramoqda.')
+        : '\n\nKursga kirish uchun sorov yuborildi.');
     await notifyAdmin(adminMsg2, user.telegram_id.toString());
 
     return res.json({ ok: true, already_pending: false, message: 'Sorov adminga yuborildi' });
@@ -1181,14 +1197,16 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
     if (!accessUntil) return res.status(400).json({ error: 'access_until majburiy' });
 
     var studentResult = await pool.query(
-      'SELECT id FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     if (studentResult.rows.length === 0) return res.status(404).json({ error: 'Oquvchi topilmadi' });
 
+    var newAccessUntil = new Date(accessUntil);
+
     await pool.query(
       'UPDATE users SET access_until = $1 WHERE id = $2',
-      [new Date(accessUntil), req.params.id]
+      [newAccessUntil, req.params.id]
     );
 
     await pool.query(
@@ -1197,6 +1215,14 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
     );
 
     console.log('STUDENT ACCESS GRANTED: user_id=' + req.params.id);
+
+    var studentTelegramId = studentResult.rows[0].telegram_id;
+    if (studentTelegramId) {
+      botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil).catch(function (e) {
+        console.warn('Access granted xabari yuborilmadi:', e.message);
+      });
+    }
+
     return res.json({ ok: true, message: 'Kirish huquqi berildi' });
   } catch (error) {
     console.error('ADMIN STUDENT ACCESS ERROR:', error);

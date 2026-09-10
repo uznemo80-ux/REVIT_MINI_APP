@@ -1789,7 +1789,7 @@ async function requestAccess() {
     "Ha, yuborish",
     async () => {
       try {
-        const result = await api("/api/request-access");
+        const result = await api("/api/request-access", { course_id: selectedCourseId || null });
         if (result.ok) {
           showAlert(result.message || "So'rovingiz adminga muvaffaqiyatli yuborildi!");
         } else {
