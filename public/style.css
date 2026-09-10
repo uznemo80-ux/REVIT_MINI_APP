@@ -415,6 +415,20 @@ html.light .nav {
   transition: transform var(--transition-fast);
 }
 
+.continue-card {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-elevated) 100%);
+  border: 1px solid var(--accent-glow);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.continue-card:active {
+  transform: scale(0.98);
+}
+
 .course-card-header {
   position: relative;
   width: 100%;

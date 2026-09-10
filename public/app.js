@@ -591,39 +591,50 @@ function renderHome() {
         </div>
       </div>
 
+      ${state.last_lesson ? `
+        <div class="section-title">Davom ettirish</div>
+        <div class="continue-card" onclick="resumeLastLesson()">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:11.5px; color:var(--text-secondary); font-weight:650; margin-bottom:4px;">
+                ${escapeHtml(state.last_lesson.course_title || "")} · ${escapeHtml(state.last_lesson.module_title || "")}
+              </div>
+              <div style="font-weight:750; font-size:15px;">${escapeHtml(state.last_lesson.lesson_title || "")}</div>
+            </div>
+            <div style="font-size:22px;">▶</div>
+          </div>
+        </div>
+      ` : ""}
+
       <div class="section-title">
         <span>Mavjud Kurslar</span>
         <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
       </div>
 
-      <div class="course-card" onclick="openCourseCatalog('intpro')">
-        <div class="course-card-header">
-          <div class="course-banner-text">
-            <h3>INTPRO Revit</h3>
-            <p>Interyer Loyihalash & BIM Modellashtirish</p>
+      ${(state.courses || []).slice(0, 3).map(course => `
+        <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
+          <div class="course-card-header">
+            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
+              <h3>${escapeHtml(course.title)}</h3>
+              <p>${escapeHtml(course.subtitle || '')}</p>
+            </div>
+          </div>
+          <div class="course-body">
+            <div class="course-title">${escapeHtml(course.title)}</div>
+            <div class="course-meta">
+              <span>📚 ${course.total_modules || 0} Modul</span>
+              <span>🎬 ${course.total_lessons || 0} Dars</span>
+            </div>
+            <div class="course-price-wrap">
+              <div class="course-price">${escapeHtml(course.price || '')}</div>
+              <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
+                ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
+              </button>
+            </div>
           </div>
         </div>
-        <div class="course-body">
-          <div class="course-title">INTPRO — Revit dasturida interyer loyihalash</div>
-          <div class="course-meta">
-            <span>📚 11 Modul</span>
-            <span>🎬 140 Dars</span>
-            <span>⏱️ 1 Yil kirish</span>
-          </div>
-          <div class="course-price-wrap">
-            <div class="course-price">1 500 000 so'm</div>
-            <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
-              ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="section-title">Namuna Darslar</div>
-      <div class="quick-item" onclick="openCourseCatalog('intpro')">
-        <span>▶ Bepul namuna darslarni ko'rish</span>
-        <span>→</span>
-      </div>
+      `).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
 
       <div class="section-title">O'quvchilar fikri</div>
       <div class="testi-scroll">
@@ -1321,6 +1332,22 @@ function showLockedInfo() {
 // LESSON DETAIL
 // ======================================================
 
+async function resumeLastLesson() {
+  if (!state.last_lesson) return;
+  const courseId = state.last_lesson.course_id;
+  if (courseId) {
+    selectedCourseId = Number(courseId);
+    activeTab = "lessons";
+    try {
+      const data = await api(`/api/course/${Number(courseId)}/modules`);
+      courseModulesData = data;
+    } catch (error) {
+      // sokin xato — baribir darsni ochishga urinamiz
+    }
+  }
+  openLesson(state.last_lesson.lesson_id);
+}
+
 async function openLesson(id) {
   try {
     haptic("light");
@@ -1342,9 +1369,17 @@ async function openLesson(id) {
       return showLockedInfo();
     }
 
+    const currentCourse = (state.courses || []).find(c => Number(c.id) === Number(selectedCourseId));
+    const currentModuleData = courseModulesData && Array.isArray(courseModulesData.modules)
+      ? courseModulesData.modules.find(m => (m.lessons || []).some(l => Number(l.id) === Number(lesson.id)))
+      : null;
+
     state.last_lesson = {
       lesson_id: lesson.id,
-      lesson_title: lesson.title
+      lesson_title: lesson.title,
+      module_title: currentModuleData ? currentModuleData.title : (state.last_lesson?.module_title || null),
+      course_id: selectedCourseId || state.last_lesson?.course_id || null,
+      course_title: currentCourse ? currentCourse.title : (state.last_lesson?.course_title || null)
     };
 
     const watermarkText = `${state.first_name || ""} · ID ${escapeHtml(String(state.telegram_id || ""))}`.trim();
@@ -1906,7 +1941,7 @@ function renderProfile() {
               Modul: ${escapeHtml(lastLesson.module_title)}
             </div>
           ` : ""}
-          <button class="btn" style="margin-bottom: 0; padding: 10px;" onclick="openLesson(${Number(lastLesson.lesson_id)})">
+          <button class="btn" style="margin-bottom: 0; padding: 10px;" onclick="resumeLastLesson()">
             Darsni davom ettirish ▶
           </button>
         </div>

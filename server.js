@@ -577,7 +577,7 @@ app.post('/api/content', async function (req, res) {
     var lastLesson = null;
     try {
       var lastLessonResult = await pool.query(
-        'SELECT p.lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id WHERE p.user_id = $1 AND p.watched = true ORDER BY p.id DESC LIMIT 1',
+        'SELECT p.lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title, c.id AS course_id, c.title AS course_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id LEFT JOIN courses c ON c.id = m.course_id WHERE p.user_id = $1 AND p.watched = true ORDER BY p.id DESC LIMIT 1',
         [user.id]
       );
       lastLesson = lastLessonResult.rows[0] || null;
