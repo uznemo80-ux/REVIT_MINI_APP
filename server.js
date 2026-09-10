@@ -1202,6 +1202,12 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
     var activeResult = await pool.query('SELECT COUNT(DISTINCT user_id)::int AS active FROM progress WHERE watched = true');
     var lessonsResult = await pool.query('SELECT COUNT(*)::int AS total FROM lessons');
     var modulesResult = await pool.query('SELECT COUNT(*)::int AS total FROM modules');
+    var pendingNewResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM payment_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'pending' AND u.access_until IS NULL"
+    );
+    var pendingRenewalResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM payment_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'pending' AND u.access_until IS NOT NULL"
+    );
 
     return res.json({
       ok: true,
@@ -1211,12 +1217,76 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
         unpaid_students: unpaidResult.rows[0].unpaid,
         active_students: activeResult.rows[0].active,
         total_lessons: lessonsResult.rows[0].total,
-        total_modules: modulesResult.rows[0].total
+        total_modules: modulesResult.rows[0].total,
+        pending_new: pendingNewResult.rows[0].c,
+        pending_renewal: pendingRenewalResult.rows[0].c
       }
     });
   } catch (error) {
     console.error('ADMIN STATS ERROR:', error);
     return res.status(500).json({ error: 'Statistikani olishda xato' });
+  }
+});
+
+app.post('/api/admin/students/detail-list', requireAdmin, async function (req, res) {
+  try {
+    var filter = req.body.filter;
+    var query = '';
+    var params = [];
+
+    if (filter === 'active') {
+      query = `
+        SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.access_until,
+               lr.created_at AS requested_at, lr.approved_at
+        FROM users u
+        LEFT JOIN LATERAL (
+          SELECT created_at, approved_at FROM payment_requests
+          WHERE user_id = u.id AND status = 'approved'
+          ORDER BY approved_at DESC NULLS LAST LIMIT 1
+        ) lr ON true
+        WHERE u.access_until > NOW()
+        ORDER BY u.access_until DESC
+      `;
+    } else if (filter === 'expired') {
+      query = `
+        SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.access_until,
+               lr.created_at AS requested_at, lr.approved_at
+        FROM users u
+        LEFT JOIN LATERAL (
+          SELECT created_at, approved_at FROM payment_requests
+          WHERE user_id = u.id AND status = 'approved'
+          ORDER BY approved_at DESC NULLS LAST LIMIT 1
+        ) lr ON true
+        WHERE u.access_until IS NULL OR u.access_until <= NOW()
+        ORDER BY u.access_until DESC NULLS LAST
+      `;
+    } else if (filter === 'pending_new') {
+      query = `
+        SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.access_until,
+               pr.created_at AS requested_at, NULL::timestamptz AS approved_at
+        FROM payment_requests pr
+        JOIN users u ON u.id = pr.user_id
+        WHERE pr.status = 'pending' AND u.access_until IS NULL
+        ORDER BY pr.created_at DESC
+      `;
+    } else if (filter === 'pending_renewal') {
+      query = `
+        SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.access_until,
+               pr.created_at AS requested_at, NULL::timestamptz AS approved_at
+        FROM payment_requests pr
+        JOIN users u ON u.id = pr.user_id
+        WHERE pr.status = 'pending' AND u.access_until IS NOT NULL
+        ORDER BY pr.created_at DESC
+      `;
+    } else {
+      return res.status(400).json({ error: 'Notogri filter' });
+    }
+
+    var result = await pool.query(query, params);
+    return res.json({ ok: true, students: result.rows });
+  } catch (error) {
+    console.error('ADMIN STUDENTS DETAIL LIST ERROR:', error);
+    return res.status(500).json({ error: 'Royxatni olishda xato' });
   }
 });
 
@@ -1540,28 +1610,26 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
   try {
     var moduleId = req.body.module_id;
     var title = req.body.title;
-    var orderIndex = req.body.order_index;
     var fileName = req.body.file_name;
     var fileUrl = req.body.file_url;
 
-    if (!moduleId || !title || orderIndex === undefined || orderIndex === null) {
-      return res.status(400).json({ error: 'Modul, dars nomi va tartib raqami majburiy' });
+    if (!moduleId || !title) {
+      return res.status(400).json({ error: 'Modul va dars nomi majburiy' });
     }
 
     var moduleResult = await pool.query('SELECT id FROM modules WHERE id = $1 LIMIT 1', [moduleId]);
     if (moduleResult.rows.length === 0) return res.status(404).json({ error: 'Modul topilmadi' });
 
-    var duplicateResult = await pool.query(
-      'SELECT id FROM lessons WHERE module_id = $1 AND order_index = $2 LIMIT 1',
-      [Number(moduleId), Number(orderIndex)]
+    // Tartib raqami avtomatik: shu moduldagi eng oxirgi dars raqamidan keyingisi
+    var maxOrderResult = await pool.query(
+      'SELECT COALESCE(MAX(order_index), 0) AS max_order FROM lessons WHERE module_id = $1',
+      [moduleId]
     );
-    if (duplicateResult.rows.length > 0) {
-      return res.status(400).json({ error: 'Bu modulda ushbu dars raqami allaqachon mavjud' });
-    }
+    var orderIndex = Number(maxOrderResult.rows[0].max_order) + 1;
 
     var result = await pool.query(
       'INSERT INTO lessons (module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [Number(moduleId), title.trim(), Number(orderIndex), req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null]
+      [Number(moduleId), title.trim(), orderIndex, req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null]
     );
 
     var createdLesson = result.rows[0];

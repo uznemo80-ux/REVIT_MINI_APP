@@ -1539,11 +1539,29 @@ function renderLessonWarning(warningText) {
 // ======================================================
 
 function renderTasks() {
-  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const courses = state.courses || [];
+
+  if (!selectedCourseId || !courseModulesData) {
+    return `
+      <div class="page">
+        <div class="page-title">Vazifalar va Testlar</div>
+        <p style="color:var(--text-secondary); margin-bottom:14px; font-size:13px;">
+          Avval qaysi kurs bo'yicha vazifa va testlarni ko'rmoqchi ekaningizni tanlang:
+        </p>
+        <select class="apple-input" style="margin-bottom:14px;" onchange="selectTasksCourse(this.value)">
+          <option value="">— Kursni tanlang —</option>
+          ${courses.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.title)}</option>`).join("")}
+        </select>
+      </div>
+    `;
+  }
+
+  const course = courseModulesData.course || {};
+  const modules = Array.isArray(courseModulesData.modules) ? courseModulesData.modules : [];
 
   return `
     <div class="page">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <div class="page-title" style="margin-bottom:0;">Vazifalar va Testlar</div>
         ${state.is_admin ? `
           <button class="admin-small-btn" onclick="openAddTestModal()">
@@ -1552,9 +1570,14 @@ function renderTasks() {
         ` : ""}
       </div>
 
-      <p style="color:var(--text-secondary); margin-bottom:18px; font-size:13px;">
-        Har bir modul bo'yicha berilgan amaliy vazifalar va bilimni tekshirish testlari:
-      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <p style="color:var(--text-secondary); font-size:13px; margin:0;">
+          ${escapeHtml(course.title || "")}
+        </p>
+        <div class="chip" onclick="selectedCourseId = null; courseModulesData = null; render();">
+          🔄 Boshqa kurs
+        </div>
+      </div>
 
       ${modules.length ? modules.map((mod, idx) => {
         const tasks = (mod.lessons || []).filter(l => l.task_text && l.task_text.trim());
@@ -1579,13 +1602,26 @@ function renderTasks() {
             `).join("") : `<div style="font-size:13px; color:var(--text-secondary); padding:6px 0;">Ushbu modulda alohida dars vazifalari belgilanmagan. Modul testi orqali bilimingizni sinab ko'ring.</div>`}
           </div>
         `;
-      }).join("") : `<div class="empty-box">Hozircha modullar kiritilmagan.</div>`}
+      }).join("") : `<div class="empty-box">Bu kursda hozircha modullar kiritilmagan.</div>`}
     </div>
   `;
 }
 
+async function selectTasksCourse(courseId) {
+  if (!courseId) return;
+  try {
+    haptic("light");
+    const data = await api(`/api/course/${Number(courseId)}/modules`);
+    courseModulesData = data;
+    selectedCourseId = Number(courseId);
+    render();
+  } catch (error) {
+    showAlert(error.message || "Kursni yuklashda xatolik.");
+  }
+}
+
 function openAddTestModal() {
-  const modules = state.modules || [];
+  const modules = (courseModulesData && courseModulesData.modules) || [];
   if (!modules.length) return showAlert("Avval modul yarating!");
 
   currentView = {
@@ -2129,15 +2165,25 @@ function renderAdminDashboard() {
         <div class="admin-stat-value">${s.total_students || 0}</div>
         <div class="admin-stat-label">Jami O'quvchilar</div>
       </div>
-      <div class="admin-stat-card">
+      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
         <div class="admin-stat-icon">💳</div>
         <div class="admin-stat-value">${s.paid_students || 0}</div>
-        <div class="admin-stat-label">Faol Obunachilar</div>
+        <div class="admin-stat-label">Faol Obunachilar →</div>
       </div>
-      <div class="admin-stat-card">
+      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('expired', 'Muddati Tugaganlar')">
         <div class="admin-stat-icon">⏳</div>
         <div class="admin-stat-value">${s.unpaid_students || 0}</div>
-        <div class="admin-stat-label">Muddati Tugaganlar</div>
+        <div class="admin-stat-label">Muddati Tugaganlar →</div>
+      </div>
+      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\\'ragan')">
+        <div class="admin-stat-icon">🆕</div>
+        <div class="admin-stat-value">${s.pending_new || 0}</div>
+        <div class="admin-stat-label">Yangi So'rovlar →</div>
+      </div>
+      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\\'ragan')">
+        <div class="admin-stat-icon">🔄</div>
+        <div class="admin-stat-value">${s.pending_renewal || 0}</div>
+        <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
       </div>
       <div class="admin-stat-card">
         <div class="admin-stat-icon">🎬</div>
@@ -2149,6 +2195,47 @@ function renderAdminDashboard() {
       🔄 Statistikani yangilash
     </button>
   `;
+}
+
+async function openStudentsDetailList(filter, title) {
+  try {
+    haptic("light");
+    currentView = {
+      html: `<div class="page"><div class="back-btn" onclick="closeDetail()">← Ortga</div><div class="loading-state" style="padding:60px 0; text-align:center;"><div class="spinner"></div></div></div>`
+    };
+    render();
+
+    const data = await adminApi("/api/admin/students/detail-list", { filter });
+    const students = data.students || [];
+
+    currentView = {
+      html: `
+        <div class="page">
+          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+          <div class="page-title">${escapeHtml(title)}</div>
+          <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">${students.length} ta natija</p>
+
+          ${students.length ? students.map(st => {
+            const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "Nomalum";
+            return `
+              <div class="card" style="margin-bottom:10px;" onclick="openAdminStudentModal(${Number(st.id)})">
+                <div style="font-weight:700; font-size:14.5px; margin-bottom:6px;">${escapeHtml(fullName)}</div>
+                <div style="font-size:12.5px; color:var(--text-secondary);">
+                  ${st.username ? "@" + escapeHtml(st.username) : "ID: " + escapeHtml(st.telegram_id)}
+                </div>
+                ${st.requested_at ? `<div style="font-size:12.5px; margin-top:6px;">📨 So'rov yuborgan: ${escapeHtml(fmtDate(st.requested_at) || '')}</div>` : ""}
+                ${st.approved_at ? `<div style="font-size:12.5px;">✅ Ruxsat berilgan: ${escapeHtml(fmtDate(st.approved_at) || '')}</div>` : ""}
+                ${st.access_until ? `<div style="font-size:12.5px;">📅 Muddati: ${escapeHtml(fmtDate(st.access_until) || '')}</div>` : ""}
+              </div>
+            `;
+          }).join("") : `<div class="empty-box">Hech kim topilmadi.</div>`}
+        </div>
+      `
+    };
+    render();
+  } catch (error) {
+    showAlert(error.message || "Ro'yxatni yuklashda xatolik.");
+  }
 }
 
 // Admin Students
@@ -2419,11 +2506,6 @@ function openAddLessonView(moduleId) {
           </div>
 
           <div class="apple-field">
-            <label>Dars tartib raqami (nomeri) *</label>
-            <input id="new-l-order" class="apple-input" type="number" placeholder="Masalan: 1">
-          </div>
-
-          <div class="apple-field">
             <label>Dars nomi *</label>
             <input id="new-l-title" class="apple-input" type="text" placeholder="Masalan: 1-Dars. Revit interfeysi">
           </div>
@@ -2477,7 +2559,6 @@ function openAddLessonView(moduleId) {
 
 async function submitCreateLesson() {
   const moduleId = document.getElementById("new-l-module")?.value;
-  const orderIndex = document.getElementById("new-l-order")?.value;
   const title = document.getElementById("new-l-title")?.value.trim();
   const ytUrl = document.getElementById("new-l-yt")?.value.trim();
   const bunnyId = document.getElementById("new-l-bunny")?.value.trim();
@@ -2487,15 +2568,14 @@ async function submitCreateLesson() {
   const warning = document.getElementById("new-l-warning")?.value.trim();
   const isFree = document.getElementById("new-l-free")?.checked;
 
-  if (!moduleId || !orderIndex || !title) {
-    return showAlert("Modul, tartib raqami va dars nomi kiritilishi shart!");
+  if (!moduleId || !title) {
+    return showAlert("Modul va dars nomi kiritilishi shart!");
   }
 
   try {
     haptic("medium");
     await adminApi("/api/admin/lesson", {
       module_id: Number(moduleId),
-      order_index: Number(orderIndex),
       title,
       youtube_url: ytUrl || null,
       bunny_video_id: bunnyId || null,
