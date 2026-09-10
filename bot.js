@@ -141,6 +141,7 @@ bot.command('approve', async function (ctx) {
     }
 
     const user = userResult.rows[0];
+    const wasAlreadyActive = user.access_until && new Date(user.access_until) > new Date();
     const accessUntil = new Date(Date.now() + ONE_YEAR_MS);
 
     await pool.query(
@@ -160,7 +161,7 @@ bot.command('approve', async function (ctx) {
       '📅 Amal qilish muddati: ' + accessUntil.toLocaleDateString('uz-UZ')
     );
 
-    await sendAccessGrantedMessage(telegramId, accessUntil);
+    await sendAccessGrantedMessage(telegramId, accessUntil, wasAlreadyActive);
   } catch (error) {
     console.error('❌ /approve ERROR:', error);
     try { await ctx.reply('❌ Ruxsat berishda xatolik yuz berdi.'); } catch (e) {}
@@ -171,16 +172,23 @@ bot.command('approve', async function (ctx) {
 // SEND ACCESS GRANTED MESSAGE
 // ======================================================
 
-async function sendAccessGrantedMessage(telegramId, accessUntil) {
+async function sendAccessGrantedMessage(telegramId, accessUntil, isRenewal) {
   try {
     var dateStr = accessUntil ? accessUntil.toLocaleDateString('uz-UZ') : '';
+    var headerLine = isRenewal
+      ? '🎉 Tabriklaymiz! Kirish huquqingiz muddati uzaytirildi!'
+      : '🎉 Tabriklaymiz! To‘lovingiz tasdiqlandi!';
+    var bodyLine = isRenewal
+      ? '✅ Kursga kirish muddatingiz muvaffaqiyatli uzaytirildi.\n'
+      : '✅ Kursga to‘liq kirish huquqi berildi.\n📚 Endi barcha darslarni ko‘rishingiz mumkin.\n';
+
     await bot.telegram.sendMessage(
       telegramId,
-      '🎉 Tabriklaymiz! To‘lovingiz tasdiqlandi!\n\n' +
-      '✅ Kursga to‘liq kirish huquqi berildi.\n' +
-      '📚 Endi barcha darslarni ko‘rishingiz mumkin.\n' +
+      headerLine + '\n\n' +
+      bodyLine +
       (dateStr ? ('📅 Kirish huquqi muddati: ' + dateStr + ' sanasigacha\n') : '') +
       '\n⚠️ Muhim ogohlantirish: darslik va materiallarni boshqa shaxslarga yuborish, tarqatish yoki sotish qatiyan taqiqlanadi. Bu sizning shaxsiy foydalanishingiz uchun berilgan omonat.\n\n' +
+      'Savol bo\'lsa admin bilan bog\'lanishingiz mumkin: @texnikuzb\n\n' +
       'Mini Appni ochish uchun pastdagi «📚 Darslarni ochish» tugmasini bosing.'
     );
     console.log('✅ Userga ruxsat xabari yuborildi: ' + telegramId);
@@ -216,6 +224,7 @@ bot.action(/^approve_(\d+)$/, async function (ctx) {
     }
 
     const user = userResult.rows[0];
+    const wasAlreadyActive = user.access_until && new Date(user.access_until) > new Date();
     const accessUntil = new Date(Date.now() + ONE_YEAR_MS);
 
     await pool.query(
@@ -243,7 +252,7 @@ bot.action(/^approve_(\d+)$/, async function (ctx) {
       console.warn('Admin message edit warning:', error.message);
     }
 
-    await sendAccessGrantedMessage(telegramId, accessUntil);
+    await sendAccessGrantedMessage(telegramId, accessUntil, wasAlreadyActive);
   } catch (error) {
     console.error('❌ APPROVE ERROR:', error);
     try { await ctx.answerCbQuery('Xatolik yuz berdi.', { show_alert: true }); } catch (e) {}

@@ -1705,6 +1705,14 @@ function renderChat() {
       ` : ""}
 
       <!-- To'lov so'rovi yuborish -->
+      ${(state.courses && state.courses.length) ? `
+        <div class="apple-field" style="margin-bottom:10px;">
+          <label>Qaysi kurs bo'yicha so'rov yubormoqchisiz?</label>
+          <select id="request-course-select" class="apple-input">
+            ${state.courses.map(c => `<option value="${Number(c.id)}" ${selectedCourseId === c.id ? "selected" : ""}>${escapeHtml(c.title)}</option>`).join("")}
+          </select>
+        </div>
+      ` : ""}
       <button class="btn secondary" style="margin-bottom:18px;" onclick="requestAccess()">
         ${state.has_access ? "🔄 Muddatni uzaytirish so'rovi" : "💳 Kursga kirish so'rovini yuborish"}
       </button>
@@ -1783,13 +1791,20 @@ async function submitAdminSettings() {
 }
 
 async function requestAccess() {
+  const courseSelect = document.getElementById("request-course-select");
+  const chosenCourseId = courseSelect ? Number(courseSelect.value) : (selectedCourseId || null);
+  const chosenCourse = (state.courses || []).find(c => Number(c.id) === Number(chosenCourseId));
+  const courseName = chosenCourse ? chosenCourse.title : null;
+
   showConfirm(
     "So'rov yuborilsinmi?",
-    "Adminga to'lovni tasdiqlash uchun xabar yuboriladi.",
+    courseName
+      ? `"${courseName}" kursi bo'yicha adminga xabar yuboriladi.`
+      : "Adminga to'lovni tasdiqlash uchun xabar yuboriladi.",
     "Ha, yuborish",
     async () => {
       try {
-        const result = await api("/api/request-access", { course_id: selectedCourseId || null });
+        const result = await api("/api/request-access", { course_id: chosenCourseId });
         if (result.ok) {
           showAlert(result.message || "So'rovingiz adminga muvaffaqiyatli yuborildi!");
         } else {
@@ -2138,6 +2153,7 @@ function renderAdminStudents() {
             </div>
             <div class="admin-student-progress">
               Darslar: ${st.watched_lessons || 0} / ${st.total_lessons || 0}
+              ${st.current_position ? `<br>📍 ${escapeHtml(st.current_position.course_title || '')} — ${escapeHtml(st.current_position.module_title || '')} / ${escapeHtml(st.current_position.lesson_title || '')}` : ""}
             </div>
           </div>
           <div>${st.has_access ? "🟢" : "🔴"}</div>
@@ -2152,8 +2168,18 @@ async function openAdminStudentModal(id) {
     haptic("light");
     const data = await adminApi(`/api/admin/student/${Number(id)}`);
     const st = data.student || {};
+    const progress = Array.isArray(data.progress) ? data.progress : [];
+    const courses = Array.isArray(data.courses) ? data.courses : [];
+    const modules = Array.isArray(data.modules) ? data.modules : [];
+    const grantedModuleIds = (data.granted_module_ids || []).map(Number);
 
     const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "O'quvchi";
+
+    // "Hozirgi holati" — eng oxirgi ko'rilgan darsdan keyingisi (yoki eng oxirgi ko'rilgani, agar hammasi tugagan bo'lsa)
+    const watchedRows = progress.filter(p => p.watched);
+    const lastWatched = watchedRows.length ? watchedRows[watchedRows.length - 1] : null;
+    const nextIndex = lastWatched ? progress.findIndex(p => p.lesson_id === lastWatched.lesson_id) + 1 : 0;
+    const currentRow = progress[nextIndex] || lastWatched;
 
     currentView = {
       html: `
@@ -2184,6 +2210,12 @@ async function openAdminStudentModal(id) {
               <span class="info-label">Amal qilish muddati</span>
               <span class="info-val">${escapeHtml(fmtDate(st.access_until) || "Belgilanmagan")}</span>
             </div>
+            <div class="info-row">
+              <span class="info-label">📍 Hozirgi holati</span>
+              <span class="info-val">
+                ${currentRow ? `${escapeHtml(currentRow.module_title)} — ${escapeHtml(currentRow.lesson_title)}` : "Hali boshlamagan"}
+              </span>
+            </div>
           </div>
 
           <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
@@ -2195,12 +2227,76 @@ async function openAdminStudentModal(id) {
               ✅ Saqlash va Ruxsat berish
             </button>
           </div>
+
+          <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
+            <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 8px;">
+              🔑 Modullarga alohida kirish huquqi (ketma-ketlikdan tashqari)
+            </label>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+              Kursni tanlang, so'ng shu o'quvchiga ochiq bo'lishi kerak bo'lgan modullarni belgilang. Bu ketma-ket ochilish tartibini chetlab o'tadi.
+            </p>
+            <select id="grant-module-course" class="apple-input" style="margin-bottom:10px;" onchange="renderStudentModuleGrantList(${Number(st.id)})">
+              <option value="">— Kursni tanlang —</option>
+              ${courses.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.title)}</option>`).join("")}
+            </select>
+            <div id="grant-module-list"></div>
+          </div>
         </div>
       `
     };
+    window.__studentGrantData = { modules, grantedModuleIds };
     render();
   } catch (error) {
     showAlert(error.message || "O'quvchi ma'lumotlarini yuklashda xato.");
+  }
+}
+
+function renderStudentModuleGrantList(studentId) {
+  const courseId = Number(document.getElementById("grant-module-course")?.value);
+  const container = document.getElementById("grant-module-list");
+  if (!container) return;
+
+  if (!courseId) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const { modules, grantedModuleIds } = window.__studentGrantData || { modules: [], grantedModuleIds: [] };
+  const courseModules = modules.filter(m => Number(m.course_id) === courseId);
+
+  if (!courseModules.length) {
+    container.innerHTML = `<div class="empty-box">Bu kursda modullar mavjud emas.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="category-checkbox-group" style="margin-bottom:10px;">
+      ${courseModules.map(m => `
+        <label class="category-checkbox">
+          <input type="checkbox" name="grant-mod-cb" value="${Number(m.id)}" ${grantedModuleIds.includes(Number(m.id)) ? "checked" : ""}>
+          <span>${escapeHtml(m.title)}</span>
+        </label>
+      `).join("")}
+    </div>
+    <button class="btn secondary" style="margin-bottom:0;" onclick="saveStudentModuleGrants(${Number(studentId)}, ${courseId})">
+      💾 Ruxsatlarni saqlash
+    </button>
+  `;
+}
+
+async function saveStudentModuleGrants(studentId, courseId) {
+  const checked = Array.from(document.querySelectorAll('input[name="grant-mod-cb"]:checked')).map(el => Number(el.value));
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/module-access/set", {
+      user_id: Number(studentId),
+      course_id: Number(courseId),
+      module_ids: checked
+    });
+    showToast("Modul ruxsatlari saqlandi!");
+    openAdminStudentModal(studentId);
+  } catch (error) {
+    showAlert(error.message || "Saqlashda xatolik.");
   }
 }
 

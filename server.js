@@ -132,6 +132,17 @@ async function initExtendedTables() {
       )
     `);
 
+    // Admin tomonidan o'quvchiga alohida modulga (ketma-ketlikdan tashqari) beriladigan ruxsat
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS module_access_grants (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        module_id INT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+        granted_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, module_id)
+      )
+    `);
+
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
     if (cCount.rows[0].count === 0) {
@@ -636,6 +647,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
     if (!course) return res.status(404).json({ error: 'Kurs topilmadi' });
 
     var userHasAccess = hasAccess(user);
+    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
 
     var modulesResult = await pool.query(
       'SELECT id, title, order_index FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
@@ -647,7 +659,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var lessons = [];
     if (moduleIds.length) {
       var lessonsResult = await pool.query(
-        'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free FROM lessons WHERE module_id = ANY($1) ORDER BY module_id ASC, order_index ASC, id ASC',
+        'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free FROM lessons WHERE module_id = ANY($1) ORDER BY order_index ASC, id ASC',
         [moduleIds]
       );
       lessons = lessonsResult.rows;
@@ -659,16 +671,47 @@ app.post('/api/course/:id/modules', async function (req, res) {
     );
     var watchedSet = new Set(progressResult.rows.map(function (r) { return r.lesson_id; }));
 
+    var grantedModuleIds = new Set();
+    if (moduleIds.length) {
+      var grantsResult = await pool.query(
+        'SELECT module_id FROM module_access_grants WHERE user_id = $1 AND module_id = ANY($2)',
+        [user.id, moduleIds]
+      );
+      grantsResult.rows.forEach(function (r) { grantedModuleIds.add(r.module_id); });
+    }
+
     var firstModuleId = modules.length ? modules[0].id : null;
+
+    // Kurs bo'yicha darslarni modul tartibida "tekislab" chiqamiz — ketma-ket ochilish shu tartibga asoslanadi
+    var flatLessons = [];
+    modules.forEach(function (mod) {
+      lessons.filter(function (l) { return l.module_id === mod.id; }).forEach(function (l) {
+        flatLessons.push(l);
+      });
+    });
+
+    // Har bir darsning "ketma-ketlikda ochiqmi" holatini hisoblaymiz:
+    // birinchi dars har doim ochiq, keyingisi — oldingisi ko'rilgandan keyingina ochiladi
+    var sequentialUnlockedSet = new Set();
+    var chainOpen = true;
+    flatLessons.forEach(function (l) {
+      if (chainOpen) {
+        sequentialUnlockedSet.add(l.id);
+        if (!watchedSet.has(l.id)) chainOpen = false;
+      }
+    });
 
     var data = modules.map(function (mod) {
       var isFirstModule = mod.id === firstModuleId;
-      var moduleUnlocked = isFirstModule || userHasAccess;
+      var isGranted = grantedModuleIds.has(mod.id);
+      var moduleUnlocked = isFirstModule || userHasAccess || isGranted || isMainAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var available = Boolean(lesson.is_free) || moduleUnlocked;
+        var available = Boolean(lesson.is_free) || isMainAdminUser || isGranted ||
+          (!userHasAccess && isFirstModule) ||
+          (userHasAccess && sequentialUnlockedSet.has(lesson.id));
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
         return {
@@ -708,26 +751,74 @@ app.post('/api/lesson/:id', async function (req, res) {
     if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
 
     var moduleResult = await pool.query(
-      'SELECT id, title, order_index FROM modules WHERE id = $1 LIMIT 1',
+      'SELECT id, title, order_index, course_id FROM modules WHERE id = $1 LIMIT 1',
       [lesson.module_id]
     );
     var mod = moduleResult.rows[0];
     if (!mod) return res.status(404).json({ error: 'Darsga tegishli modul topilmadi' });
 
     var userHasAccess = hasAccess(user);
+    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+
     var firstModuleResult = await pool.query(
-      'SELECT id FROM modules ORDER BY order_index ASC, id ASC LIMIT 1'
+      'SELECT id FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC LIMIT 1',
+      [mod.course_id]
     );
     var firstModule = firstModuleResult.rows[0];
     var isFirstModule = firstModule && Number(firstModule.id) === Number(mod.id);
-    var lessonAvailable = Boolean(lesson.is_free) || isFirstModule || userHasAccess;
+
+    var isGranted = false;
+    try {
+      var grantCheck = await pool.query(
+        'SELECT 1 FROM module_access_grants WHERE user_id = $1 AND module_id = $2 LIMIT 1',
+        [user.id, mod.id]
+      );
+      isGranted = grantCheck.rows.length > 0;
+    } catch (grantError) {
+      console.error('MODULE GRANT CHECK ERROR:', grantError);
+    }
+
+    var lessonAvailable = Boolean(lesson.is_free) || isMainAdminUser || isGranted || (!userHasAccess && isFirstModule);
+
+    if (!lessonAvailable && userHasAccess) {
+      // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
+      var courseModulesResult = await pool.query(
+        'SELECT id FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
+        [mod.course_id]
+      );
+      var courseModuleIds = courseModulesResult.rows.map(function (r) { return r.id; });
+
+      var courseLessonsResult = await pool.query(
+        'SELECT id, module_id FROM lessons WHERE module_id = ANY($1) ORDER BY order_index ASC, id ASC',
+        [courseModuleIds]
+      );
+      var flatLessonsForCheck = [];
+      courseModuleIds.forEach(function (mid) {
+        courseLessonsResult.rows.filter(function (l) { return l.module_id === mid; }).forEach(function (l) {
+          flatLessonsForCheck.push(l);
+        });
+      });
+
+      var watchedForCheckResult = await pool.query(
+        'SELECT lesson_id FROM progress WHERE user_id = $1 AND watched = true',
+        [user.id]
+      );
+      var watchedForCheckSet = new Set(watchedForCheckResult.rows.map(function (r) { return r.lesson_id; }));
+
+      var chainOpenForCheck = true;
+      for (var i = 0; i < flatLessonsForCheck.length; i++) {
+        var l = flatLessonsForCheck[i];
+        if (!chainOpenForCheck) break;
+        if (Number(l.id) === Number(lesson.id)) { lessonAvailable = true; break; }
+        if (!watchedForCheckSet.has(l.id)) { chainOpenForCheck = false; }
+      }
+    }
 
     if (!lessonAvailable) {
-      return res.status(403).json({ error: 'locked', message: 'Bu dars yopiq. Kursga kirish uchun tolov qilishingiz kerak.' });
+      return res.status(403).json({ error: 'locked', message: 'Bu dars hali yopiq. Avvalgi darslarni ketma-ket tugatishingiz kerak, yoki kursga kirish uchun tolov qilishingiz kerak.' });
     }
 
     // Bitta hisob — bitta qurilma nazorati (faqat haqiqiy to'lovchi o'quvchilar uchun, admin bundan mustasno)
-    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
     if (userHasAccess && !isMainAdminUser) {
       var deviceLockResult = await checkDeviceLock(user, req.body.device_id);
       if (deviceLockResult) {
@@ -1128,14 +1219,28 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
       'SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.phone, u.username, u.access_until, u.created_at, COUNT(DISTINCT CASE WHEN p.watched = true THEN p.lesson_id END)::int AS watched_lessons, (SELECT COUNT(*)::int FROM lessons) AS total_lessons FROM users u LEFT JOIN progress p ON p.user_id = u.id GROUP BY u.id ORDER BY u.created_at DESC'
     );
 
+    var lastPositionResult = await pool.query(`
+      SELECT DISTINCT ON (p.user_id) p.user_id, l.title AS lesson_title, m.title AS module_title, c.title AS course_title, p.watched_at
+      FROM progress p
+      JOIN lessons l ON l.id = p.lesson_id
+      JOIN modules m ON m.id = l.module_id
+      LEFT JOIN courses c ON c.id = m.course_id
+      WHERE p.watched = true
+      ORDER BY p.user_id, p.watched_at DESC
+    `);
+    var lastPositionMap = {};
+    lastPositionResult.rows.forEach(function (r) { lastPositionMap[r.user_id] = r; });
+
     var students = result.rows.map(function (s) {
+      var pos = lastPositionMap[s.id];
       return {
         id: s.id, telegram_id: s.telegram_id.toString(),
         first_name: s.first_name || '', last_name: s.last_name || '',
         phone: s.phone || null, username: s.username || null,
         access_until: s.access_until || null, created_at: s.created_at,
         watched_lessons: s.watched_lessons, total_lessons: s.total_lessons,
-        has_access: s.access_until && new Date(s.access_until) > new Date()
+        has_access: s.access_until && new Date(s.access_until) > new Date(),
+        current_position: pos ? { course_title: pos.course_title, module_title: pos.module_title, lesson_title: pos.lesson_title, watched_at: pos.watched_at } : null
       };
     });
 
@@ -1160,7 +1265,7 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
     if (!student) return res.status(404).json({ error: 'Oquvchi topilmadi' });
 
     var progressResult = await pool.query(
-      'SELECT m.id AS module_id, m.title AS module_title, m.order_index AS module_order, l.id AS lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, COALESCE(p.watched, false) AS watched FROM modules m LEFT JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 ORDER BY m.order_index ASC, l.order_index ASC, l.id ASC',
+      'SELECT m.id AS module_id, m.title AS module_title, m.order_index AS module_order, m.course_id AS course_id, l.id AS lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, COALESCE(p.watched, false) AS watched FROM modules m LEFT JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 ORDER BY m.order_index ASC, l.order_index ASC, l.id ASC',
       [student.id]
     );
 
@@ -1168,6 +1273,11 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
       'SELECT mr.module_id, m.title AS module_title, mr.passed, mr.score, mr.attempted_at FROM module_results mr JOIN modules m ON m.id = mr.module_id WHERE mr.user_id = $1 ORDER BY m.order_index ASC',
       [student.id]
     );
+
+    var coursesResult = await pool.query('SELECT id, title FROM courses ORDER BY order_index ASC, id ASC');
+    var modulesForGrantResult = await pool.query('SELECT id, course_id, title, order_index FROM modules ORDER BY order_index ASC, id ASC');
+    var grantsResult = await pool.query('SELECT module_id FROM module_access_grants WHERE user_id = $1', [student.id]);
+    var grantedModuleIds = grantsResult.rows.map(function (r) { return r.module_id; });
 
     return res.json({
       ok: true,
@@ -1179,7 +1289,10 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
         has_access: student.access_until && new Date(student.access_until) > new Date()
       },
       progress: progressResult.rows,
-      tests: testResult.rows
+      tests: testResult.rows,
+      courses: coursesResult.rows,
+      modules: modulesForGrantResult.rows,
+      granted_module_ids: grantedModuleIds
     });
   } catch (error) {
     console.error('ADMIN STUDENT DETAIL ERROR:', error);
@@ -1197,11 +1310,12 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
     if (!accessUntil) return res.status(400).json({ error: 'access_until majburiy' });
 
     var studentResult = await pool.query(
-      'SELECT id, telegram_id FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id, access_until FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     if (studentResult.rows.length === 0) return res.status(404).json({ error: 'Oquvchi topilmadi' });
 
+    var wasAlreadyActive = studentResult.rows[0].access_until && new Date(studentResult.rows[0].access_until) > new Date();
     var newAccessUntil = new Date(accessUntil);
 
     await pool.query(
@@ -1218,7 +1332,7 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
 
     var studentTelegramId = studentResult.rows[0].telegram_id;
     if (studentTelegramId) {
-      botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil).catch(function (e) {
+      botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil, wasAlreadyActive).catch(function (e) {
         console.warn('Access granted xabari yuborilmadi:', e.message);
       });
     }
@@ -1227,6 +1341,43 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
   } catch (error) {
     console.error('ADMIN STUDENT ACCESS ERROR:', error);
     return res.status(500).json({ error: 'Kirish huquqini berishda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN MODULE ACCESS GRANTS (ketma-ketlikdan tashqari alohida ruxsat)
+// ======================================================
+
+app.post('/api/admin/module-access/set', requireAdmin, async function (req, res) {
+  try {
+    var userId = Number(req.body.user_id);
+    var moduleIds = Array.isArray(req.body.module_ids) ? req.body.module_ids.map(Number) : [];
+
+    if (!userId) return res.status(400).json({ error: 'user_id majburiy' });
+
+    var courseId = req.body.course_id ? Number(req.body.course_id) : null;
+
+    if (courseId) {
+      // Faqat shu kursga tegishli grantlarni almashtiramiz, boshqa kurslarnikiga tegmaymiz
+      await pool.query(
+        'DELETE FROM module_access_grants WHERE user_id = $1 AND module_id IN (SELECT id FROM modules WHERE course_id = $2)',
+        [userId, courseId]
+      );
+    } else {
+      await pool.query('DELETE FROM module_access_grants WHERE user_id = $1', [userId]);
+    }
+
+    for (var i = 0; i < moduleIds.length; i++) {
+      await pool.query(
+        'INSERT INTO module_access_grants (user_id, module_id) VALUES ($1, $2) ON CONFLICT (user_id, module_id) DO NOTHING',
+        [userId, moduleIds[i]]
+      );
+    }
+
+    return res.json({ ok: true, message: 'Modul ruxsatlari yangilandi' });
+  } catch (error) {
+    console.error('MODULE ACCESS SET ERROR:', error);
+    return res.status(500).json({ error: 'Modul ruxsatlarini saqlashda xato' });
   }
 });
 
