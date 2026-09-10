@@ -471,7 +471,8 @@ html.light .nav {
 
 .course-meta {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 14px;
@@ -690,6 +691,35 @@ html.light .nav {
 .tag.locked-tag {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.chip {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-elevated);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  user-select: none;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.category-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .lesson-list {

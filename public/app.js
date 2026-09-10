@@ -62,6 +62,21 @@ function escapeJsString(value) {
     .replace(/>/g, "\\u003E");
 }
 
+// Fayl nomi kengaytmasiga qarab mos ikonka qaytaradi (resurs kartalarida)
+function getResourceIcon(fileName) {
+  const ext = String(fileName || "").split(".").pop().toLowerCase();
+  const map = {
+    rvt: "📐", rfa: "📐", rte: "📐",
+    pdf: "📄",
+    dwg: "📐", dxf: "📐",
+    zip: "📦", rar: "📦", "7z": "📦",
+    xlsx: "📊", xls: "📊", csv: "📊",
+    doc: "📃", docx: "📃",
+    jpg: "🖼️", jpeg: "🖼️", png: "🖼️"
+  };
+  return map[ext] || "📁";
+}
+
 // ======================================================
 // THEME HANDLING (Apple Dark / Light)
 // ======================================================
@@ -179,6 +194,9 @@ let state = {
 let activeTab = "home";
 let selectedCourseId = null;
 let courseModulesData = null;
+let courseSearchQuery = "";
+let selectedCourseCategory = "Barchasi";
+const COURSE_CATEGORIES = ["Revit", "AutoCAD", "3ds Max", "BIM", "Interyer", "Arxitektura", "Boshqa"];
 let currentView = null;
 let aboutOpen = false;
 window._answers = {};
@@ -725,12 +743,13 @@ function renderLessons() {
 
 // Kurslar ro'yxati va Admin uchun "Yangi Kurs Qo'shish" (Talab 3)
 function renderCoursesList() {
-  const coursesList = state.courses && state.courses.length ? state.courses : [
+  const allCourses = state.courses && state.courses.length ? state.courses : [
     {
       id: 1,
       title: "INTPRO — Revit dasturida interyer loyihalash",
       subtitle: "Interyer Loyihalash & BIM Modellashtirish",
       price: "1 500 000 so'm",
+      category: "Revit",
       total_modules: 11,
       total_lessons: 140,
       status: "active",
@@ -738,6 +757,15 @@ function renderCoursesList() {
       cover_url: ""
     }
   ];
+
+  const q = courseSearchQuery.trim().toLowerCase();
+  const coursesList = allCourses.filter(c => {
+    const matchesCategory = selectedCourseCategory === "Barchasi" || (c.category || "Boshqa") === selectedCourseCategory;
+    const matchesSearch = !q || (c.title || "").toLowerCase().includes(q) || (c.subtitle || "").toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
+
+  const categoryChips = ["Barchasi", ...COURSE_CATEGORIES];
 
   return `
     <div class="page">
@@ -750,11 +778,24 @@ function renderCoursesList() {
         ` : ""}
       </div>
 
-      <p style="color:var(--text-secondary); margin-bottom:18px; font-size:13.5px;">
-        O'rganmoqchi bo'lgan kursingizni tanlang va darslarni boshlang:
-      </p>
+      <input
+        class="apple-input"
+        style="margin-bottom:12px;"
+        type="text"
+        placeholder="🔍 Kurs qidirish..."
+        value="${escapeHtml(courseSearchQuery)}"
+        oninput="setCourseSearch(this.value)"
+      >
 
-      ${coursesList.map(course => `
+      <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
+        ${categoryChips.map(cat => `
+          <div class="chip ${selectedCourseCategory === cat ? "active" : ""}" onclick="setCourseCategory('${escapeJsString(cat)}')">
+            ${escapeHtml(cat)}
+          </div>
+        `).join("")}
+      </div>
+
+      ${coursesList.length ? coursesList.map(course => `
         <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
           ${state.is_admin ? `
             <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
@@ -780,6 +821,7 @@ function renderCoursesList() {
               </div>
             </div>
             <div class="course-meta" style="margin-bottom:12px;">
+              <span>🏷️ ${escapeHtml(course.category || 'Boshqa')}</span>
               <span>📚 ${course.total_modules || 0} Modul</span>
               <span>🎬 ${course.total_lessons || 0} Dars</span>
               ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
@@ -789,9 +831,20 @@ function renderCoursesList() {
             </button>
           </div>
         </div>
-      `).join("")}
+      `).join("") : `<div class="empty-box">Hech narsa topilmadi. Boshqa so'z yoki kategoriya bilan sinab ko'ring.</div>`}
     </div>
   `;
+}
+
+function setCourseSearch(value) {
+  courseSearchQuery = value;
+  render();
+}
+
+function setCourseCategory(cat) {
+  haptic("light");
+  selectedCourseCategory = cat;
+  render();
 }
 
 // Kurs qo'shish va tahrirlash (Talab 3)
@@ -814,6 +867,12 @@ function openAddCourseModal() {
           <div class="apple-field">
             <label>Kurs narxi</label>
             <input id="c-price" class="apple-input" placeholder="1 500 000 so'm" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Kategoriya</label>
+            <select id="c-category" class="apple-input">
+              ${COURSE_CATEGORIES.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("")}
+            </select>
           </div>
           <div class="apple-field">
             <label>Jami modullar soni</label>
@@ -846,6 +905,7 @@ async function submitCreateCourse() {
   const title = document.getElementById("c-title")?.value.trim();
   const sub = document.getElementById("c-sub")?.value.trim();
   const price = document.getElementById("c-price")?.value.trim();
+  const category = document.getElementById("c-category")?.value;
   const mod = document.getElementById("c-mod")?.value;
   const less = document.getElementById("c-less")?.value;
   const rel = document.getElementById("c-rel")?.value.trim();
@@ -859,6 +919,7 @@ async function submitCreateCourse() {
       title,
       subtitle: sub,
       price,
+      category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,
@@ -896,6 +957,12 @@ async function openEditCourseModal(id) {
             <input id="ec-price" class="apple-input" value="${escapeHtml(course.price || '')}" type="text">
           </div>
           <div class="apple-field">
+            <label>Kategoriya</label>
+            <select id="ec-category" class="apple-input">
+              ${COURSE_CATEGORIES.map(cat => `<option value="${escapeHtml(cat)}" ${course.category === cat ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("")}
+            </select>
+          </div>
+          <div class="apple-field">
             <label>Modullar soni</label>
             <input id="ec-mod" class="apple-input" value="${Number(course.total_modules || 0)}" type="number">
           </div>
@@ -926,6 +993,7 @@ async function submitUpdateCourse(id) {
   const title = document.getElementById("ec-title")?.value.trim();
   const sub = document.getElementById("ec-sub")?.value.trim();
   const price = document.getElementById("ec-price")?.value.trim();
+  const category = document.getElementById("ec-category")?.value;
   const mod = document.getElementById("ec-mod")?.value;
   const less = document.getElementById("ec-less")?.value;
   const rel = document.getElementById("ec-rel")?.value.trim();
@@ -939,6 +1007,7 @@ async function submitUpdateCourse(id) {
       title,
       subtitle: sub,
       price,
+      category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,
@@ -1341,7 +1410,7 @@ function renderLessonFiles(files) {
         ${files.map(f => `
           <div class="lesson-file">
             <div class="lesson-file-info">
-              <span class="lesson-file-icon">📁</span>
+              <span class="lesson-file-icon">${getResourceIcon(f.file_name)}</span>
               <span class="lesson-file-name">${escapeHtml(f.file_name || "Material")}</span>
             </div>
             <a class="download-file-btn" href="${escapeHtml(f.file_url)}" target="_blank" rel="noopener noreferrer">
@@ -2303,7 +2372,7 @@ async function openEditLessonView(lessonId) {
             ${files.map(f => `
               <div class="lesson-file">
                 <div class="lesson-file-info">
-                  <span>📄</span>
+                  <span>${getResourceIcon(f.file_name)}</span>
                   <span>${escapeHtml(f.file_name)}</span>
                 </div>
                 <button class="btn danger" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="deleteLessonFile(${Number(f.id)}, ${Number(lessonId)})">
