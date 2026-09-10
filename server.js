@@ -848,6 +848,17 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('MY SUBMISSION ERROR:', submissionError);
     }
 
+    var isWatched = false;
+    try {
+      var watchedResult = await pool.query(
+        'SELECT watched FROM progress WHERE lesson_id = $1 AND user_id = $2 LIMIT 1',
+        [lesson.id, user.id]
+      );
+      isWatched = Boolean(watchedResult.rows[0] && watchedResult.rows[0].watched);
+    } catch (watchedError) {
+      console.error('LESSON WATCHED CHECK ERROR:', watchedError);
+    }
+
     try {
       await pool.query(
         'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
@@ -866,7 +877,7 @@ app.post('/api/lesson/:id', async function (req, res) {
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'youtube',
         youtube_url: lesson.youtube_url, youtube_player_url: youtubePlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
       });
     }
 
@@ -876,13 +887,13 @@ app.post('/api/lesson/:id', async function (req, res) {
         id: lesson.id, title: lesson.title, video_type: 'bunny',
         bunny_video_id: lesson.bunny_video_id, bunny_library_id: process.env.BUNNY_LIBRARY_ID,
         bunny_player_url: bunnyPlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
       });
     }
 
     return res.json({
       id: lesson.id, title: lesson.title, video_type: null,
-      task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
+      task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
     });
   } catch (error) {
     console.error('LESSON ERROR:', error);

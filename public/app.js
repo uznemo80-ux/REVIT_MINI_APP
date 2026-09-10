@@ -1398,7 +1398,11 @@ async function openLesson(id) {
             ${renderLessonFiles(lesson.files)}
             ${renderLessonWarning(lesson.warning_text)}
 
-            <button class="btn secondary" style="margin-top: 18px;" onclick="closeDetail()">
+            <button class="btn" style="margin-top: 18px; ${lesson.watched ? 'opacity:0.6;' : ''}" onclick="${lesson.watched ? '' : `markLessonWatched(${Number(lesson.id)})`}">
+              ${lesson.watched ? "✅ Tugallangan" : "✅ Darsni tugatdim, keyingisiga o'tish"}
+            </button>
+
+            <button class="btn secondary" style="margin-top: 10px;" onclick="closeDetail()">
               ← Barcha darslarga qaytish
             </button>
           </div>
@@ -1787,6 +1791,21 @@ async function submitAdminSettings() {
     loadContent();
   } catch (err) {
     showAlert(err.message || "Sozlamalarni saqlashda xato.");
+  }
+}
+
+async function markLessonWatched(lessonId) {
+  try {
+    haptic("medium");
+    await api("/api/progress/mark", { lesson_id: Number(lessonId) });
+    showToast("Dars tugallandi! Keyingi dars ochildi ✅");
+    if (selectedCourseId) {
+      const data = await api(`/api/course/${Number(selectedCourseId)}/modules`);
+      courseModulesData = data;
+    }
+    openLesson(lessonId);
+  } catch (error) {
+    showAlert(error.message || "Belgilashda xatolik.");
   }
 }
 
