@@ -760,7 +760,8 @@ function renderCoursesList() {
 
   const q = courseSearchQuery.trim().toLowerCase();
   const coursesList = allCourses.filter(c => {
-    const matchesCategory = selectedCourseCategory === "Barchasi" || (c.category || "Boshqa") === selectedCourseCategory;
+    const courseCats = Array.isArray(c.categories) && c.categories.length ? c.categories : [c.category || "Boshqa"];
+    const matchesCategory = selectedCourseCategory === "Barchasi" || courseCats.includes(selectedCourseCategory);
     const matchesSearch = !q || (c.title || "").toLowerCase().includes(q) || (c.subtitle || "").toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
@@ -821,7 +822,7 @@ function renderCoursesList() {
               </div>
             </div>
             <div class="course-meta" style="margin-bottom:12px;">
-              <span>🏷️ ${escapeHtml(course.category || 'Boshqa')}</span>
+              <span>🏷️ ${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
               <span>📚 ${course.total_modules || 0} Modul</span>
               <span>🎬 ${course.total_lessons || 0} Dars</span>
               ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
@@ -869,10 +870,15 @@ function openAddCourseModal() {
             <input id="c-price" class="apple-input" placeholder="1 500 000 so'm" type="text">
           </div>
           <div class="apple-field">
-            <label>Kategoriya</label>
-            <select id="c-category" class="apple-input">
-              ${COURSE_CATEGORIES.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("")}
-            </select>
+            <label>Kategoriyalar (bir nechtasini tanlash mumkin)</label>
+            <div class="category-checkbox-group">
+              ${COURSE_CATEGORIES.map(cat => `
+                <label class="category-checkbox">
+                  <input type="checkbox" name="c-category-cb" value="${escapeHtml(cat)}">
+                  <span>${escapeHtml(cat)}</span>
+                </label>
+              `).join("")}
+            </div>
           </div>
           <div class="apple-field">
             <label>Jami modullar soni</label>
@@ -905,7 +911,7 @@ async function submitCreateCourse() {
   const title = document.getElementById("c-title")?.value.trim();
   const sub = document.getElementById("c-sub")?.value.trim();
   const price = document.getElementById("c-price")?.value.trim();
-  const category = document.getElementById("c-category")?.value;
+  const category = Array.from(document.querySelectorAll('input[name="c-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("c-mod")?.value;
   const less = document.getElementById("c-less")?.value;
   const rel = document.getElementById("c-rel")?.value.trim();
@@ -919,7 +925,7 @@ async function submitCreateCourse() {
       title,
       subtitle: sub,
       price,
-      category,
+      categories: category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,
@@ -957,10 +963,18 @@ async function openEditCourseModal(id) {
             <input id="ec-price" class="apple-input" value="${escapeHtml(course.price || '')}" type="text">
           </div>
           <div class="apple-field">
-            <label>Kategoriya</label>
-            <select id="ec-category" class="apple-input">
-              ${COURSE_CATEGORIES.map(cat => `<option value="${escapeHtml(cat)}" ${course.category === cat ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("")}
-            </select>
+            <label>Kategoriyalar (bir nechtasini tanlash mumkin)</label>
+            <div class="category-checkbox-group">
+              ${COURSE_CATEGORIES.map(cat => {
+                const isChecked = Array.isArray(course.categories) ? course.categories.includes(cat) : course.category === cat;
+                return `
+                  <label class="category-checkbox">
+                    <input type="checkbox" name="ec-category-cb" value="${escapeHtml(cat)}" ${isChecked ? "checked" : ""}>
+                    <span>${escapeHtml(cat)}</span>
+                  </label>
+                `;
+              }).join("")}
+            </div>
           </div>
           <div class="apple-field">
             <label>Modullar soni</label>
@@ -993,7 +1007,7 @@ async function submitUpdateCourse(id) {
   const title = document.getElementById("ec-title")?.value.trim();
   const sub = document.getElementById("ec-sub")?.value.trim();
   const price = document.getElementById("ec-price")?.value.trim();
-  const category = document.getElementById("ec-category")?.value;
+  const category = Array.from(document.querySelectorAll('input[name="ec-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("ec-mod")?.value;
   const less = document.getElementById("ec-less")?.value;
   const rel = document.getElementById("ec-rel")?.value.trim();
@@ -1007,7 +1021,7 @@ async function submitUpdateCourse(id) {
       title,
       subtitle: sub,
       price,
-      category,
+      categories: category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,

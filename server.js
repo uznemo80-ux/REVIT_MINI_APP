@@ -62,6 +62,12 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS course_id INT REFERENCES courses(id) ON DELETE SET NULL');
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Boshqa'");
+    await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS categories TEXT[]");
+    await pool.query(`
+      UPDATE courses
+      SET categories = ARRAY[category]
+      WHERE (categories IS NULL OR array_length(categories, 1) IS NULL) AND category IS NOT NULL
+    `);
 
     // Eski modullarni (course_id bo'lmagan) birinchi kursga bog'lab qo'yamiz, ma'lumot yo'qolmasligi uchun
     var orphanModulesResult = await pool.query('SELECT COUNT(*)::int AS count FROM modules WHERE course_id IS NULL');
@@ -1727,13 +1733,16 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var releaseDate = String(req.body.release_date || 'Faol kurs').trim();
     var coverUrl = String(req.body.cover_url || '').trim();
     var status = String(req.body.status || 'active').trim();
-    var category = String(req.body.category || 'Boshqa').trim();
+    var categories = Array.isArray(req.body.categories) && req.body.categories.length
+      ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
+      : ['Boshqa'];
+    var category = categories[0];
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category]
+      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -1753,13 +1762,16 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     var releaseDate = String(req.body.release_date || '').trim();
     var coverUrl = String(req.body.cover_url || '').trim();
     var status = String(req.body.status || 'active').trim();
-    var category = String(req.body.category || 'Boshqa').trim();
+    var categories = Array.isArray(req.body.categories) && req.body.categories.length
+      ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
+      : ['Boshqa'];
+    var category = categories[0];
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9 WHERE id = $10 RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, Number(req.params.id)]
+      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10 WHERE id = $11 RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, Number(req.params.id)]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
