@@ -1378,6 +1378,7 @@ async function openLesson(id) {
                 <div class="task-box-title">📋 Dars Vazifasi</div>
                 <div class="task-box-content">${escapeHtml(lesson.task_text).replace(/\n/g, "<br>")}</div>
               </div>
+              ${renderPracticeBox(lesson.id, lesson.my_submission)}
             ` : ""}
 
             ${renderLessonFiles(lesson.files)}
@@ -1397,6 +1398,87 @@ async function openLesson(id) {
     currentView = null;
     render();
     showAlert(error.message || "Darsni ochishda xatolik yuz berdi.");
+  }
+}
+
+const PRACTICE_STATUS_META = {
+  submitted: { label: "🕓 Tekshirilmoqda", cls: "" },
+  approved: { label: "✅ Qabul qilindi", cls: "passed" },
+  needs_revision: { label: "🔁 Qayta ishlash kerak", cls: "locked-tag" }
+};
+
+function renderPracticeBox(lessonId, submission) {
+  if (!submission) {
+    return `
+      <div class="task-box" style="margin-top:12px;">
+        <div class="task-box-title">📤 Vazifani Topshirish</div>
+        <div class="apple-field" style="margin-top:10px;">
+          <label>Ishingiz linki (Google Drive, Dropbox...) *</label>
+          <input id="practice-url-${Number(lessonId)}" class="apple-input" type="url" placeholder="https://drive.google.com/...">
+        </div>
+        <div class="apple-field">
+          <label>Izoh (ixtiyoriy)</label>
+          <textarea id="practice-comment-${Number(lessonId)}" class="apple-input apple-textarea" placeholder="Qo'shimcha izoh..."></textarea>
+        </div>
+        <button class="btn secondary" style="margin-bottom:0;" onclick="submitPractice(${Number(lessonId)})">
+          📤 Vazifani yuborish
+        </button>
+      </div>
+    `;
+  }
+
+  const meta = PRACTICE_STATUS_META[submission.status] || PRACTICE_STATUS_META.submitted;
+  const canResubmit = submission.status !== "approved";
+
+  return `
+    <div class="task-box" style="margin-top:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="task-box-title" style="margin:0;">📤 Sizning Topshiriqingiz</div>
+        <div class="tag ${meta.cls}">${meta.label}</div>
+      </div>
+      <div style="font-size:13.5px; margin-bottom:6px;">
+        🔗 <a href="${escapeHtml(submission.submission_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${escapeHtml(submission.submission_url)}</a>
+      </div>
+      ${submission.comment ? `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">💬 ${escapeHtml(submission.comment)}</div>` : ""}
+      ${submission.admin_comment ? `<div style="font-size:13px; color:var(--accent); margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">👨‍🏫 Admin izohi: ${escapeHtml(submission.admin_comment)}</div>` : ""}
+
+      ${canResubmit ? `
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+          <div class="apple-field">
+            <label>Qayta topshirish (yangi link)</label>
+            <input id="practice-url-${Number(lessonId)}" class="apple-input" type="url" placeholder="https://drive.google.com/...">
+          </div>
+          <div class="apple-field">
+            <label>Izoh (ixtiyoriy)</label>
+            <textarea id="practice-comment-${Number(lessonId)}" class="apple-input apple-textarea" placeholder="Qo'shimcha izoh..."></textarea>
+          </div>
+          <button class="btn secondary" style="margin-bottom:0;" onclick="submitPractice(${Number(lessonId)})">
+            🔁 Qayta yuborish
+          </button>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+async function submitPractice(lessonId) {
+  const urlInput = document.getElementById(`practice-url-${Number(lessonId)}`);
+  const commentInput = document.getElementById(`practice-comment-${Number(lessonId)}`);
+  const url = urlInput?.value.trim();
+  const comment = commentInput?.value.trim();
+
+  if (!url) return showAlert("Ishingiz linkini kiriting!");
+
+  try {
+    haptic("medium");
+    await api(`/api/practice/${Number(lessonId)}/submit`, {
+      submission_url: url,
+      comment: comment || ""
+    });
+    showToast("Vazifa muvaffaqiyatli yuborildi!");
+    openLesson(lessonId);
+  } catch (error) {
+    showAlert(error.message || "Vazifani yuborishda xatolik.");
   }
 }
 
@@ -1939,6 +2021,9 @@ function renderAdminPanel() {
           <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
             🎬 Darslar
           </button>
+          <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
+            📤 Vazifalar
+          </button>
           ${state.admin_role === "super_admin" ? `
             <button class="${adminView === "admins" ? "active" : ""}" onclick="adminSetTab('admins')">
               👥 Adminlar
@@ -1951,6 +2036,7 @@ function renderAdminPanel() {
           ${adminView === "students" ? renderAdminStudents() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
+          ${adminView === "practice" ? renderAdminPractice() : ""}
         </div>
       </div>
     `
@@ -1975,6 +2061,9 @@ async function adminSetTab(tab) {
     } else if (tab === "admins") {
       const data = await adminApi("/api/admin/admins");
       adminData.admins = data.admins || [];
+    } else if (tab === "practice") {
+      const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
+      adminData.practice = data.submissions || [];
     }
     renderAdminPanel();
   } catch (error) {
@@ -2476,6 +2565,89 @@ async function deleteLessonFile(fileId, lessonId) {
       openEditLessonView(lessonId);
     }
   );
+}
+
+// Admin Practice (vazifa topshiriqlari)
+const PRACTICE_FILTERS = [
+  { key: "", label: "Barchasi" },
+  { key: "submitted", label: "🕓 Tekshirilmoqda" },
+  { key: "approved", label: "✅ Qabul qilingan" },
+  { key: "needs_revision", label: "🔁 Qaytarilgan" }
+];
+
+function renderAdminPractice() {
+  const submissions = adminData.practice || [];
+  const activeFilter = adminData.practiceFilter || "";
+
+  return `
+    <div>
+      <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
+        ${PRACTICE_FILTERS.map(f => `
+          <div class="chip ${activeFilter === f.key ? "active" : ""}" onclick="setPracticeFilter('${f.key}')">
+            ${f.label}
+          </div>
+        `).join("")}
+      </div>
+
+      ${submissions.length ? submissions.map(s => {
+        const meta = PRACTICE_STATUS_META[s.status] || PRACTICE_STATUS_META.submitted;
+        const studentName = [s.first_name, s.last_name].filter(Boolean).join(" ") || s.username || ("ID " + s.telegram_id);
+        return `
+          <div class="card" style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+              <div>
+                <div style="font-weight:700; font-size:14.5px;">${escapeHtml(studentName)}</div>
+                <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">${escapeHtml(s.lesson_title)}</div>
+              </div>
+              <div class="tag ${meta.cls}">${meta.label}</div>
+            </div>
+            <div style="font-size:13px; margin-bottom:6px;">
+              🔗 <a href="${escapeHtml(s.submission_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${escapeHtml(s.submission_url)}</a>
+            </div>
+            ${s.comment ? `<div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:8px;">💬 ${escapeHtml(s.comment)}</div>` : ""}
+            ${s.admin_comment ? `<div style="font-size:12.5px; color:var(--accent); margin-bottom:8px;">👨‍🏫 ${escapeHtml(s.admin_comment)}</div>` : ""}
+
+            ${s.status === "submitted" ? `
+              <div class="apple-field" style="margin-top:6px;">
+                <textarea id="review-comment-${Number(s.id)}" class="apple-input apple-textarea" placeholder="Izoh (ixtiyoriy)..." style="min-height:60px;"></textarea>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn" style="margin:0; padding:9px;" onclick="reviewPractice(${Number(s.id)}, 'approved')">
+                  ✅ Qabul qilish
+                </button>
+                <button class="btn danger" style="margin:0; padding:9px;" onclick="reviewPractice(${Number(s.id)}, 'needs_revision')">
+                  🔁 Qaytarish
+                </button>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }).join("") : `<div class="empty-box">Hozircha topshiriqlar yo'q.</div>`}
+    </div>
+  `;
+}
+
+function setPracticeFilter(status) {
+  haptic("light");
+  adminData.practiceFilter = status;
+  adminSetTab("practice");
+}
+
+async function reviewPractice(submissionId, status) {
+  const commentInput = document.getElementById(`review-comment-${Number(submissionId)}`);
+  const comment = commentInput?.value.trim();
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/practice/${Number(submissionId)}/review`, {
+      status,
+      admin_comment: comment || ""
+    });
+    showToast(status === "approved" ? "Vazifa qabul qilindi!" : "Vazifa qaytarildi!");
+    adminSetTab("practice");
+  } catch (error) {
+    showAlert(error.message || "Baholashda xatolik.");
+  }
 }
 
 // Admin Admins

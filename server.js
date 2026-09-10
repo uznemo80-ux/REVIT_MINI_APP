@@ -110,6 +110,22 @@ async function initExtendedTables() {
       )
     `);
 
+    // Amaliy vazifa topshiriqlari (Practice)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS practice_submissions (
+        id SERIAL PRIMARY KEY,
+        lesson_id INT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        submission_url TEXT NOT NULL,
+        comment TEXT,
+        status VARCHAR(30) NOT NULL DEFAULT 'submitted',
+        admin_comment TEXT,
+        submitted_at TIMESTAMPTZ DEFAULT NOW(),
+        reviewed_at TIMESTAMPTZ,
+        UNIQUE(lesson_id, user_id)
+      )
+    `);
+
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
     if (cCount.rows[0].count === 0) {
@@ -724,6 +740,17 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('LESSON FILES ERROR:', fileError);
     }
 
+    var mySubmission = null;
+    try {
+      var submissionResult = await pool.query(
+        'SELECT id, submission_url, comment, status, admin_comment, submitted_at, reviewed_at FROM practice_submissions WHERE lesson_id = $1 AND user_id = $2 LIMIT 1',
+        [lesson.id, user.id]
+      );
+      mySubmission = submissionResult.rows[0] || null;
+    } catch (submissionError) {
+      console.error('MY SUBMISSION ERROR:', submissionError);
+    }
+
     try {
       await pool.query(
         'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
@@ -742,7 +769,7 @@ app.post('/api/lesson/:id', async function (req, res) {
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'youtube',
         youtube_url: lesson.youtube_url, youtube_player_url: youtubePlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
       });
     }
 
@@ -752,17 +779,122 @@ app.post('/api/lesson/:id', async function (req, res) {
         id: lesson.id, title: lesson.title, video_type: 'bunny',
         bunny_video_id: lesson.bunny_video_id, bunny_library_id: process.env.BUNNY_LIBRARY_ID,
         bunny_player_url: bunnyPlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
       });
     }
 
     return res.json({
       id: lesson.id, title: lesson.title, video_type: null,
-      task_text: lesson.task_text || '', warning_text: warningText, files: files
+      task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission
     });
   } catch (error) {
     console.error('LESSON ERROR:', error);
     return res.status(500).json({ error: 'Darsni ochishda server xatosi' });
+  }
+});
+
+// ======================================================
+// PRACTICE — VAZIFA TOPSHIRISH
+// ======================================================
+
+app.post('/api/practice/:lessonId/submit', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var lessonId = Number(req.params.lessonId);
+    var submissionUrl = String(req.body.submission_url || '').trim();
+    var comment = String(req.body.comment || '').trim();
+
+    if (!submissionUrl) return res.status(400).json({ error: 'Ishingiz linki kiritilishi shart' });
+
+    var lessonResult = await pool.query('SELECT id, title FROM lessons WHERE id = $1 LIMIT 1', [lessonId]);
+    var lesson = lessonResult.rows[0];
+    if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
+
+    var result = await pool.query(
+      `INSERT INTO practice_submissions (lesson_id, user_id, submission_url, comment, status, admin_comment, submitted_at, reviewed_at)
+       VALUES ($1, $2, $3, $4, 'submitted', NULL, NOW(), NULL)
+       ON CONFLICT (lesson_id, user_id)
+       DO UPDATE SET submission_url = $3, comment = $4, status = 'submitted', admin_comment = NULL, submitted_at = NOW(), reviewed_at = NULL
+       RETURNING *`,
+      [lessonId, user.id, submissionUrl, comment || null]
+    );
+
+    var studentName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || ('ID ' + user.telegram_id);
+    await notifyAdmin(
+      `📥 Yangi vazifa topshirildi!\n\n👤 ${studentName}\n📚 Dars: ${lesson.title}\n🔗 ${submissionUrl}${comment ? `\n💬 ${comment}` : ''}`,
+      user.telegram_id.toString()
+    );
+
+    return res.json({ ok: true, message: 'Vazifa muvaffaqiyatli yuborildi', submission: result.rows[0] });
+  } catch (error) {
+    console.error('PRACTICE SUBMIT ERROR:', error);
+    return res.status(500).json({ error: 'Vazifani yuborishda xatolik' });
+  }
+});
+
+app.post('/api/admin/practice/submissions', requireAdmin, async function (req, res) {
+  try {
+    var statusFilter = req.body.status;
+    var query = `
+      SELECT ps.id, ps.lesson_id, ps.submission_url, ps.comment, ps.status, ps.admin_comment, ps.submitted_at, ps.reviewed_at,
+             l.title AS lesson_title, u.telegram_id, u.first_name, u.last_name, u.username
+      FROM practice_submissions ps
+      JOIN lessons l ON l.id = ps.lesson_id
+      JOIN users u ON u.id = ps.user_id
+    `;
+    var params = [];
+    if (statusFilter) {
+      query += ' WHERE ps.status = $1';
+      params.push(statusFilter);
+    }
+    query += ' ORDER BY ps.submitted_at DESC';
+
+    var result = await pool.query(query, params);
+    return res.json({ ok: true, submissions: result.rows });
+  } catch (error) {
+    console.error('ADMIN PRACTICE LIST ERROR:', error);
+    return res.status(500).json({ error: 'Vazifalarni olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/practice/:id/review', requireAdmin, async function (req, res) {
+  try {
+    var status = String(req.body.status || '').trim();
+    var adminComment = String(req.body.admin_comment || '').trim();
+
+    if (!['approved', 'needs_revision'].includes(status)) {
+      return res.status(400).json({ error: 'Status notogri (approved yoki needs_revision bolishi kerak)' });
+    }
+
+    var result = await pool.query(
+      `UPDATE practice_submissions SET status = $1, admin_comment = $2, reviewed_at = NOW()
+       WHERE id = $3 RETURNING *`,
+      [status, adminComment || null, Number(req.params.id)]
+    );
+    var submission = result.rows[0];
+    if (!submission) return res.status(404).json({ error: 'Topshiriq topilmadi' });
+
+    var lessonResult = await pool.query('SELECT title FROM lessons WHERE id = $1', [submission.lesson_id]);
+    var userResult = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [submission.user_id]);
+    var lessonTitle = lessonResult.rows[0] ? lessonResult.rows[0].title : 'Dars';
+    var telegramId = userResult.rows[0] ? userResult.rows[0].telegram_id : null;
+
+    if (telegramId) {
+      var statusText = status === 'approved' ? '✅ Vazifangiz qabul qilindi!' : '🔁 Vazifangiz qayta ko\'rib chiqish uchun qaytarildi.';
+      var msg = `${statusText}\n\n📚 Dars: ${lessonTitle}${adminComment ? `\n💬 Izoh: ${adminComment}` : ''}`;
+      try {
+        await botModule.bot.telegram.sendMessage(telegramId, msg);
+      } catch (notifyError) {
+        console.warn('Practice review xabari yuborilmadi:', notifyError.message);
+      }
+    }
+
+    return res.json({ ok: true, message: 'Baholandi', submission: submission });
+  } catch (error) {
+    console.error('ADMIN PRACTICE REVIEW ERROR:', error);
+    return res.status(500).json({ error: 'Baholashda xatolik' });
   }
 });
 
