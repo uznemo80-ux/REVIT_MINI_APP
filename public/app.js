@@ -632,7 +632,7 @@ function renderHome() {
               <span>🎬 ${course.total_lessons || 0} Dars</span>
             </div>
             <div class="course-price-wrap">
-              <div class="course-price">${escapeHtml(course.price || '')}</div>
+              ${renderCoursePriceBlock(course)}
               <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
                 ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
               </button>
@@ -757,6 +757,22 @@ function renderLessons() {
   return renderCourseModules();
 }
 
+function renderCoursePriceBlock(course) {
+  if (course.is_discount_active && course.discount_price) {
+    const daysLeft = course.discount_until ? Math.max(0, Math.ceil((new Date(course.discount_until) - new Date()) / (1000 * 60 * 60 * 24))) : null;
+    return `
+      <div>
+        <div style="display:flex; align-items:baseline; gap:8px;">
+          <div class="course-price" style="color:var(--danger);">${escapeHtml(course.discount_price)}</div>
+          <div style="font-size:13px; color:var(--text-secondary); text-decoration:line-through;">${escapeHtml(course.original_price || course.price || '')}</div>
+        </div>
+        ${daysLeft !== null ? `<div style="font-size:11px; color:var(--danger); font-weight:700;">🔥 Chegirma ${daysLeft} kun qoldi</div>` : ""}
+      </div>
+    `;
+  }
+  return `<div class="course-price">${escapeHtml(course.price || '')}</div>`;
+}
+
 // Kurslar ro'yxati va Admin uchun "Yangi Kurs Qo'shish" (Talab 3)
 function renderCoursesList() {
   const allCourses = state.courses && state.courses.length ? state.courses : [
@@ -834,9 +850,17 @@ function renderCoursesList() {
                 ${course.status === 'active' ? 'Faol Kurs' : 'Tez Kunda'}
               </div>
               <div style="font-weight:750; color:var(--accent); font-size:15px;">
-                ${escapeHtml(course.price || '')}
+                ${course.is_discount_active && course.discount_price ? `
+                  <span style="color:var(--danger);">${escapeHtml(course.discount_price)}</span>
+                  <span style="font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px;">${escapeHtml(course.original_price || course.price || '')}</span>
+                ` : escapeHtml(course.price || '')}
               </div>
             </div>
+            ${course.is_discount_active && course.discount_until ? `
+              <div style="font-size:11px; color:var(--danger); font-weight:700; margin-bottom:8px;">
+                🔥 Chegirma ${Math.max(0, Math.ceil((new Date(course.discount_until) - new Date()) / (1000*60*60*24)))} kun qoldi
+              </div>
+            ` : ""}
             <div class="course-meta" style="margin-bottom:12px;">
               <span>🏷️ ${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
               <span>📚 ${course.total_modules || 0} Modul</span>
@@ -886,6 +910,14 @@ function openAddCourseModal() {
             <input id="c-price" class="apple-input" placeholder="1 500 000 so'm" type="text">
           </div>
           <div class="apple-field">
+            <label>Chegirma narxi (ixtiyoriy)</label>
+            <input id="c-discount-price" class="apple-input" placeholder="990 000 so'm" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Chegirma qachongacha (ixtiyoriy)</label>
+            <input id="c-discount-until" class="apple-input" type="date">
+          </div>
+          <div class="apple-field">
             <label>Kategoriyalar (bir nechtasini tanlash mumkin)</label>
             <div class="category-checkbox-group">
               ${COURSE_CATEGORIES.map(cat => `
@@ -927,6 +959,8 @@ async function submitCreateCourse() {
   const title = document.getElementById("c-title")?.value.trim();
   const sub = document.getElementById("c-sub")?.value.trim();
   const price = document.getElementById("c-price")?.value.trim();
+  const discountPrice = document.getElementById("c-discount-price")?.value.trim();
+  const discountUntil = document.getElementById("c-discount-until")?.value;
   const category = Array.from(document.querySelectorAll('input[name="c-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("c-mod")?.value;
   const less = document.getElementById("c-less")?.value;
@@ -941,6 +975,8 @@ async function submitCreateCourse() {
       title,
       subtitle: sub,
       price,
+      discount_price: discountPrice || null,
+      discount_until: discountUntil || null,
       categories: category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
@@ -977,6 +1013,14 @@ async function openEditCourseModal(id) {
           <div class="apple-field">
             <label>Kurs narxi</label>
             <input id="ec-price" class="apple-input" value="${escapeHtml(course.price || '')}" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Chegirma narxi (ixtiyoriy, bo'sh qoldirsangiz chegirma o'chadi)</label>
+            <input id="ec-discount-price" class="apple-input" value="${escapeHtml(course.discount_price || '')}" placeholder="990 000 so'm" type="text">
+          </div>
+          <div class="apple-field">
+            <label>Chegirma qachongacha</label>
+            <input id="ec-discount-until" class="apple-input" type="date" value="${course.discount_until ? new Date(course.discount_until).toISOString().split('T')[0] : ''}">
           </div>
           <div class="apple-field">
             <label>Kategoriyalar (bir nechtasini tanlash mumkin)</label>
@@ -1023,6 +1067,8 @@ async function submitUpdateCourse(id) {
   const title = document.getElementById("ec-title")?.value.trim();
   const sub = document.getElementById("ec-sub")?.value.trim();
   const price = document.getElementById("ec-price")?.value.trim();
+  const discountPrice = document.getElementById("ec-discount-price")?.value.trim();
+  const discountUntil = document.getElementById("ec-discount-until")?.value;
   const category = Array.from(document.querySelectorAll('input[name="ec-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("ec-mod")?.value;
   const less = document.getElementById("ec-less")?.value;
@@ -1037,6 +1083,8 @@ async function submitUpdateCourse(id) {
       title,
       subtitle: sub,
       price,
+      discount_price: discountPrice || null,
+      discount_until: discountUntil || null,
       categories: category,
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
@@ -1070,6 +1118,9 @@ function goToCourseManagement() {
 
 async function openCourseCatalog(courseId) {
   haptic("light");
+  if (Number(courseId) !== Number(selectedCourseId)) {
+    expandedModuleIds = new Set();
+  }
   selectedCourseId = Number(courseId);
   activeTab = "lessons";
   currentView = {
@@ -1100,6 +1151,7 @@ function backToCoursesList() {
   haptic("light");
   selectedCourseId = null;
   courseModulesData = null;
+  expandedModuleIds = new Set();
   currentView = null;
   render();
 }
@@ -1171,7 +1223,7 @@ function renderCourseModules() {
             </div>
           </div>
 
-          <div class="lesson-list" id="mod-${Number(mod.id)}">
+          <div class="lesson-list ${expandedModuleIds.has(Number(mod.id)) ? "open" : ""}" id="mod-${Number(mod.id)}">
             ${lessons.length ? lessons.map(lesson => `
               <div class="lesson ${lesson.available ? "" : "disabled"}" onclick="${lesson.available ? `openLesson(${Number(lesson.id)})` : `showLockedInfo()`}">
                 <div class="lesson-left">
@@ -1191,14 +1243,20 @@ function renderCourseModules() {
                   ➕ Dars Qo'shish
                 </button>
               ` : ""}
-              ${mod.has_test ? `
+              ${mod.has_test && (state.has_access || state.is_admin) ? `
                 <div style="font-size:12px; color:${mod.test_passed ? "var(--success)" : "var(--text-secondary)"}; text-align:center;">
                   ${mod.test_passed ? "✅ Test topshirilgan — keyingi modul ochiq" : "⚠️ Keyingi modulga o'tish uchun testdan 65%+ ball kerak"}
                 </div>
               ` : ""}
-              <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
-                📝 Modul bo'yicha test topshirish
-              </button>
+              ${state.has_access || state.is_admin ? `
+                <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
+                  📝 Modul bo'yicha test topshirish
+                </button>
+              ` : `
+                <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:6px 0;">
+                  🔒 Testlar faqat kursga kirish huquqi bor o'quvchilar uchun
+                </div>
+              `}
             </div>
           </div>
         </div>
@@ -1328,9 +1386,17 @@ function deleteModuleConfirm(moduleId) {
   );
 }
 
+let expandedModuleIds = new Set();
+
 function toggleModule(id) {
   haptic("light");
-  const el = document.getElementById(`mod-${Number(id)}`);
+  const numId = Number(id);
+  if (expandedModuleIds.has(numId)) {
+    expandedModuleIds.delete(numId);
+  } else {
+    expandedModuleIds.add(numId);
+  }
+  const el = document.getElementById(`mod-${numId}`);
   if (el) el.classList.toggle("open");
 }
 
@@ -1384,6 +1450,10 @@ async function openLesson(id) {
     const currentModuleData = courseModulesData && Array.isArray(courseModulesData.modules)
       ? courseModulesData.modules.find(m => (m.lessons || []).some(l => Number(l.id) === Number(lesson.id)))
       : null;
+
+    if (currentModuleData) {
+      expandedModuleIds.add(Number(currentModuleData.id));
+    }
 
     state.last_lesson = {
       lesson_id: lesson.id,
@@ -1641,9 +1711,13 @@ function renderTasks() {
                 <span class="idx">${String(idx + 1).padStart(2, "0")}</span>
                 <span style="font-weight:750; font-size:15px; margin-left:6px;">${escapeHtml(mod.title)}</span>
               </div>
-              <button class="admin-small-btn" style="padding:6px 12px; font-size:11.5px;" onclick="openTest(${Number(mod.id)})">
-                📝 Test Topshirish
-              </button>
+              ${state.has_access || state.is_admin ? `
+                <button class="admin-small-btn" style="padding:6px 12px; font-size:11.5px;" onclick="openTest(${Number(mod.id)})">
+                  📝 Test Topshirish
+                </button>
+              ` : `
+                <span style="font-size:11px; color:var(--text-secondary);">🔒 Kirish huquqi kerak</span>
+              `}
             </div>
 
             ${tasks.length ? tasks.map(t => `
@@ -2087,8 +2161,30 @@ function renderProfile() {
       <button class="btn secondary" onclick="openEditProfile()">
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
+
+      <button class="btn danger" style="margin-top:24px;" onclick="confirmDeleteAccount()">
+        🗑️ Hisobni o'chirish
+      </button>
     </div>
   `;
+}
+
+function confirmDeleteAccount() {
+  showConfirm(
+    "Hisobni o'chirmoqchimisiz?",
+    "Bu amal orqali sizning barcha darslar progressingiz, test natijalaringiz va kursga kirish huquqingiz butunlay o'chiriladi. Agar to'lov qilgan bo'lsangiz ham, qayta kirganingizda yangi o'quvchi sifatida boshlaysiz va darslar hamda testlarga kirish uchun qaytadan ruxsat so'rashingiz kerak bo'ladi. Bu amalni ortga qaytarib bo'lmaydi.",
+    "Ha, hisobni o'chirish",
+    async () => {
+      try {
+        await api("/api/account/reset");
+        showToast("Hisobingiz tozalandi.");
+        await loadContent();
+        setTab("home");
+      } catch (error) {
+        showAlert(error.message || "Hisobni o'chirishda xatolik yuz berdi.");
+      }
+    }
+  );
 }
 
 // ======================================================
@@ -2344,7 +2440,7 @@ async function openStudentsDetailList(filter, title) {
   try {
     haptic("light");
     currentView = {
-      html: `<div class="page"><div class="back-btn" onclick="closeDetail()">← Ortga</div><div class="loading-state" style="padding:60px 0; text-align:center;"><div class="spinner"></div></div></div>`
+      html: `<div class="page"><div class="back-btn" onclick="adminSetTab('dashboard')">← Ortga</div><div class="loading-state" style="padding:60px 0; text-align:center;"><div class="spinner"></div></div></div>`
     };
     render();
 
@@ -2354,7 +2450,7 @@ async function openStudentsDetailList(filter, title) {
     currentView = {
       html: `
         <div class="page">
-          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+          <div class="back-btn" onclick="adminSetTab('dashboard')">← Ortga qaytish</div>
           <div class="page-title">${escapeHtml(title)}</div>
           <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">${students.length} ta natija</p>
 

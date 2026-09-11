@@ -197,6 +197,20 @@ async function sendAccessGrantedMessage(telegramId, accessUntil, isRenewal) {
   }
 }
 
+async function sendAccessLimitedMessage(telegramId) {
+  try {
+    await bot.telegram.sendMessage(
+      telegramId,
+      '⏸️ Diqqat!\n\n' +
+      'Kurslarga kirish huquqingiz administrator tomonidan cheklandi yoki tugatildi.\n\n' +
+      'Agar bu xato deb hisoblasangiz yoki muddatni uzaytirmoqchi bo\'lsangiz, administrator bilan bog\'laning: @texnikuzb'
+    );
+    console.log('⏸️ Userga cheklash xabari yuborildi: ' + telegramId);
+  } catch (error) {
+    console.error('Userga cheklash xabari yuborilmadi ' + telegramId + ':', error.message);
+  }
+}
+
 // ======================================================
 // APPROVE BUTTON (CALLBACK)
 // ======================================================
@@ -433,4 +447,4 @@ startBot();
 process.once('SIGINT', () => { bot.stop('SIGINT'); });
 process.once('SIGTERM', () => { bot.stop('SIGTERM'); });
 
-module.exports = { bot, notifyAdmin, startBot, sendAccessGrantedMessage };
+module.exports = { bot, notifyAdmin, startBot, sendAccessGrantedMessage, sendAccessLimitedMessage };

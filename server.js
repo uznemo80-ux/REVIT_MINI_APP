@@ -99,6 +99,8 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS course_id INT REFERENCES courses(id) ON DELETE SET NULL');
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Boshqa'");
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS categories TEXT[]");
+    await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS discount_price VARCHAR(100)");
+    await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS discount_until TIMESTAMPTZ");
     await pool.query(`
       UPDATE courses
       SET categories = ARRAY[category]
@@ -660,7 +662,14 @@ app.post('/api/content', async function (req, res) {
     var courses = [];
     try {
       var coursesRes = await pool.query('SELECT * FROM courses ORDER BY order_index ASC, id ASC');
-      courses = coursesRes.rows;
+      courses = coursesRes.rows.map(function (c) {
+        var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
+        return Object.assign({}, c, {
+          is_discount_active: isDiscountActive,
+          original_price: c.price,
+          display_price: isDiscountActive ? c.discount_price : c.price
+        });
+      });
     } catch (cErr) {
       console.warn('COURSES QUERY WARNING:', cErr.message);
     }
@@ -1160,6 +1169,11 @@ app.post('/api/module/:id/test', async function (req, res) {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
+    var isMainAdminForTest = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    if (!hasAccess(user) && !isMainAdminForTest) {
+      return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
+    }
+
     var questionsResult = await pool.query(
       'SELECT id, question, options, order_index FROM module_tests WHERE module_id = $1 ORDER BY order_index ASC, id ASC',
       [req.params.id]
@@ -1180,6 +1194,11 @@ app.post('/api/module/:id/submit', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var isMainAdminForSubmit = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    if (!hasAccess(user) && !isMainAdminForSubmit) {
+      return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
+    }
 
     var answers = req.body.answers || {};
     var questionsResult = await pool.query(
@@ -1205,6 +1224,36 @@ app.post('/api/module/:id/submit', async function (req, res) {
   } catch (error) {
     console.error('SUBMIT TEST ERROR:', error);
     return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// ======================================================
+// ACCOUNT RESET (O'quvchi o'zi hisobini "o'chiradi" — yangi o'quvchi holatiga qaytaradi)
+// ======================================================
+
+app.post('/api/account/reset', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    await pool.query(
+      'UPDATE users SET access_until = NULL, active_device_id = NULL, device_last_seen = NULL WHERE id = $1',
+      [user.id]
+    );
+    await pool.query('DELETE FROM progress WHERE user_id = $1', [user.id]);
+    await pool.query('DELETE FROM module_results WHERE user_id = $1', [user.id]);
+    await pool.query('DELETE FROM module_access_grants WHERE user_id = $1', [user.id]);
+    await pool.query('DELETE FROM practice_submissions WHERE user_id = $1', [user.id]);
+    await pool.query(
+      "UPDATE payment_requests SET status = 'cancelled' WHERE user_id = $1 AND status = 'pending'",
+      [user.id]
+    );
+
+    console.log('ACCOUNT RESET: user_id=' + user.id);
+    return res.json({ ok: true, message: 'Hisobingiz tozalandi' });
+  } catch (error) {
+    console.error('ACCOUNT RESET ERROR:', error);
+    return res.status(500).json({ error: 'Hisobni ochirishda xatolik' });
   }
 });
 
@@ -1519,27 +1568,38 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
 
     var wasAlreadyActive = studentResult.rows[0].access_until && new Date(studentResult.rows[0].access_until) > new Date();
     var newAccessUntil = new Date(accessUntil);
+    var isGrantingOrExtending = newAccessUntil > new Date();
 
     await pool.query(
       'UPDATE users SET access_until = $1 WHERE id = $2',
       [newAccessUntil, req.params.id]
     );
 
-    await pool.query(
-      "UPDATE payment_requests SET status = 'approved', approved_at = NOW() WHERE user_id = $1 AND status = 'pending'",
-      [req.params.id]
-    );
-
-    console.log('STUDENT ACCESS GRANTED: user_id=' + req.params.id);
-
     var studentTelegramId = studentResult.rows[0].telegram_id;
-    if (studentTelegramId) {
-      botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil, wasAlreadyActive).catch(function (e) {
-        console.warn('Access granted xabari yuborilmadi:', e.message);
-      });
+
+    if (isGrantingOrExtending) {
+      await pool.query(
+        "UPDATE payment_requests SET status = 'approved', approved_at = NOW() WHERE user_id = $1 AND status = 'pending'",
+        [req.params.id]
+      );
+      console.log('STUDENT ACCESS GRANTED: user_id=' + req.params.id);
+
+      if (studentTelegramId) {
+        botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil, wasAlreadyActive).catch(function (e) {
+          console.warn('Access granted xabari yuborilmadi:', e.message);
+        });
+      }
+    } else {
+      console.log('STUDENT ACCESS LIMITED: user_id=' + req.params.id);
+
+      if (studentTelegramId) {
+        botModule.sendAccessLimitedMessage(studentTelegramId).catch(function (e) {
+          console.warn('Access limited xabari yuborilmadi:', e.message);
+        });
+      }
     }
 
-    return res.json({ ok: true, message: 'Kirish huquqi berildi' });
+    return res.json({ ok: true, message: isGrantingOrExtending ? 'Kirish huquqi berildi' : 'Kirish huquqi cheklandi' });
   } catch (error) {
     console.error('ADMIN STUDENT ACCESS ERROR:', error);
     return res.status(500).json({ error: 'Kirish huquqini berishda xato' });
@@ -2114,12 +2174,14 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
     var category = categories[0];
+    var discountPrice = req.body.discount_price ? String(req.body.discount_price).trim() : null;
+    var discountUntil = req.body.discount_until ? new Date(req.body.discount_until) : null;
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories]
+      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, discount_price, discount_until, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -2143,12 +2205,14 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
     var category = categories[0];
+    var discountPrice = req.body.discount_price ? String(req.body.discount_price).trim() : null;
+    var discountUntil = req.body.discount_until ? new Date(req.body.discount_until) : null;
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10 WHERE id = $11 RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, Number(req.params.id)]
+      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10, discount_price = $11, discount_until = $12 WHERE id = $13 RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, Number(req.params.id)]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
