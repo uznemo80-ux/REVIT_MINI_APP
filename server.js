@@ -181,6 +181,17 @@ async function initExtendedTables() {
       )
     `);
 
+    // Kursni to'liq tugatgani (barcha testlardan o'tgani) haqida bir martalik tabrik xabari yuborilganini kuzatish
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS course_completions (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+        notified_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, course_id)
+      )
+    `);
+
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
     if (cCount.rows[0].count === 0) {
@@ -1174,6 +1185,25 @@ app.post('/api/module/:id/test', async function (req, res) {
       return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
     }
 
+    if (!isMainAdminForTest) {
+      var prevResultCheck = await pool.query(
+        'SELECT passed, attempted_at FROM module_results WHERE user_id = $1 AND module_id = $2 LIMIT 1',
+        [user.id, req.params.id]
+      );
+      var prevResult = prevResultCheck.rows[0];
+      if (prevResult && prevResult.passed) {
+        var daysSincePass = (Date.now() - new Date(prevResult.attempted_at).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSincePass < 15) {
+          var daysLeftForRetake = Math.ceil(15 - daysSincePass);
+          return res.status(403).json({
+            error: 'cooldown',
+            message: 'Siz bu testdan allaqachon muvaffaqiyatli o\'tgansiz. Qayta topshirish uchun yana ' + daysLeftForRetake + ' kun kutishingiz kerak.',
+            days_left: daysLeftForRetake
+          });
+        }
+      }
+    }
+
     var questionsResult = await pool.query(
       'SELECT id, question, options, order_index FROM module_tests WHERE module_id = $1 ORDER BY order_index ASC, id ASC',
       [req.params.id]
@@ -1219,6 +1249,59 @@ app.post('/api/module/:id/submit', async function (req, res) {
       'INSERT INTO module_results (user_id, module_id, passed, score) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, module_id) DO UPDATE SET passed = $3, score = $4, attempted_at = now()',
       [user.id, req.params.id, passed, score]
     );
+
+    // Agar shu urinishda o'tgan bo'lsa — shu modul tegishli kursning BARCHA testlaridan o'tganmi tekshiramiz
+    if (passed) {
+      try {
+        var moduleInfoResult = await pool.query('SELECT course_id FROM modules WHERE id = $1', [req.params.id]);
+        var courseId = moduleInfoResult.rows[0] ? moduleInfoResult.rows[0].course_id : null;
+
+        if (courseId) {
+          var courseModuleIdsResult = await pool.query('SELECT id FROM modules WHERE course_id = $1', [courseId]);
+          var courseModuleIds = courseModuleIdsResult.rows.map(function (r) { return r.id; });
+
+          var modulesWithTestsResult = await pool.query(
+            'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
+            [courseModuleIds]
+          );
+          var moduleIdsWithTests = modulesWithTestsResult.rows.map(function (r) { return r.module_id; });
+
+          var allPassed = true;
+          if (moduleIdsWithTests.length > 0) {
+            var passedResultsResult = await pool.query(
+              'SELECT module_id FROM module_results WHERE user_id = $1 AND module_id = ANY($2) AND passed = true',
+              [user.id, moduleIdsWithTests]
+            );
+            var passedModuleIdSet = new Set(passedResultsResult.rows.map(function (r) { return r.module_id; }));
+            allPassed = moduleIdsWithTests.every(function (mid) { return passedModuleIdSet.has(mid); });
+          }
+
+          if (allPassed && moduleIdsWithTests.length > 0) {
+            var insertCompletionResult = await pool.query(
+              'INSERT INTO course_completions (user_id, course_id) VALUES ($1, $2) ON CONFLICT (user_id, course_id) DO NOTHING RETURNING id',
+              [user.id, courseId]
+            );
+            if (insertCompletionResult.rows.length > 0) {
+              var courseTitleResult = await pool.query('SELECT title FROM courses WHERE id = $1', [courseId]);
+              var courseTitle = courseTitleResult.rows[0] ? courseTitleResult.rows[0].title : 'Kurs';
+              try {
+                await botModule.bot.telegram.sendMessage(
+                  user.telegram_id,
+                  '🎉🎓 TABRIKLAYMIZ!\n\n' +
+                  '"' + courseTitle + '" kursini muvaffaqiyatli yakunladingiz — barcha darslar va testlardan muvaffaqiyatli o\'tdingiz!\n\n' +
+                  '👏 Bilim va mehnatingiz uchun tabriklaymiz. Sizni yangi kurslarimizda ham kutamiz!\n\n' +
+                  'Yangiliklardan xabardor bo\'lish uchun kanalimizga obuna bo\'ling: @Yosh_uzbekk'
+                );
+              } catch (notifyErr) {
+                console.warn('Kurs tugatish xabari yuborilmadi:', notifyErr.message);
+              }
+            }
+          }
+        }
+      } catch (completionError) {
+        console.error('COURSE COMPLETION CHECK ERROR:', completionError);
+      }
+    }
 
     return res.json({ score: score, passed: passed });
   } catch (error) {

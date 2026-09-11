@@ -2067,3 +2067,30 @@ html.light .nav {
 .drawer-lesson-item.locked {
   opacity: 0.5;
 }
+
+/* ------------------------------------------------------
+   Quiz — one-question-at-a-time timer bar
+   ------------------------------------------------------ */
+.quiz-timer-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.quiz-timer-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--danger));
+  border-radius: 3px;
+}
+
+@keyframes quizTimerShrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.quiz-nav-locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

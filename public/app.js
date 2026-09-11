@@ -2191,6 +2191,8 @@ function confirmDeleteAccount() {
 // TESTS SYSTEM
 // ======================================================
 
+const QUIZ_PREV_LOCK_SECONDS = 15;
+
 async function openTest(moduleId) {
   try {
     haptic("light");
@@ -2201,52 +2203,114 @@ async function openTest(moduleId) {
       return showAlert("Ushbu modul uchun test savollari hali kiritilmagan.");
     }
 
-    window._answers = {};
-
-    currentView = {
-      html: `
-        <div class="page">
-          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
-          <div class="page-title">Modul Testi</div>
-
-          <div id="test-questions">
-            ${questions.map((q, qIdx) => {
-              let opts = q.options;
-              if (typeof opts === "string") {
-                try { opts = JSON.parse(opts); } catch (e) { opts = []; }
-              }
-              if (!Array.isArray(opts)) opts = [];
-
-              return `
-                <div class="test-question">
-                  <p>${qIdx + 1}. ${escapeHtml(q.question)}</p>
-                  ${opts.map((opt, oIdx) => `
-                    <div class="option" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
-                      ${escapeHtml(opt)}
-                    </div>
-                  `).join("")}
-                </div>
-              `;
-            }).join("")}
-          </div>
-
-          <button class="btn" onclick="submitModuleTest(${Number(moduleId)})">
-            Natijani tekshirish 📊
-          </button>
-        </div>
-      `
+    window._quizState = {
+      moduleId: Number(moduleId),
+      questions: questions.map(q => {
+        let opts = q.options;
+        if (typeof opts === "string") {
+          try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+        }
+        if (!Array.isArray(opts)) opts = [];
+        return { id: q.id, question: q.question, options: opts };
+      }),
+      currentIndex: 0,
+      answers: {},
+      canGoBack: true,
+      lockTimer: null
     };
-    render();
-    window.scrollTo(0, 0);
+
+    renderQuizQuestion();
   } catch (error) {
     console.error("OPEN TEST ERROR:", error);
     showAlert(error.message || "Testni yuklashda xatolik.");
   }
 }
 
+function renderQuizQuestion() {
+  const qs = window._quizState;
+  if (!qs) return;
+
+  const total = qs.questions.length;
+  const idx = qs.currentIndex;
+  const q = qs.questions[idx];
+  const isLast = idx === total - 1;
+  const selectedAnswer = qs.answers[q.id];
+
+  qs.canGoBack = true;
+  if (qs.lockTimer) clearTimeout(qs.lockTimer);
+  qs.lockTimer = setTimeout(() => {
+    qs.canGoBack = false;
+    const prevBtn = document.getElementById("quiz-prev-btn");
+    if (prevBtn) {
+      prevBtn.disabled = true;
+      prevBtn.classList.add("quiz-nav-locked");
+    }
+  }, QUIZ_PREV_LOCK_SECONDS * 1000);
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Testdan chiqish</div>
+        <div class="page-title" style="margin-bottom:4px;">Modul Testi</div>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">Savol ${idx + 1} / ${total}</p>
+
+        <div class="quiz-timer-track">
+          <div class="quiz-timer-bar" id="quiz-timer-bar" style="animation: quizTimerShrink ${QUIZ_PREV_LOCK_SECONDS}s linear forwards;"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:16px;">
+          ⏱️ Avvalgi savolga qaytish uchun ${QUIZ_PREV_LOCK_SECONDS} soniyangiz bor
+        </p>
+
+        <div class="test-question">
+          <p>${idx + 1}. ${escapeHtml(q.question)}</p>
+          ${q.options.map((opt, oIdx) => `
+            <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
+              ${escapeHtml(opt)}
+            </div>
+          `).join("")}
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:18px;">
+          <button id="quiz-prev-btn" class="btn secondary" style="margin-bottom:0; flex:1;" ${idx === 0 ? "disabled" : ""} onclick="quizGoPrev()">
+            ← Oldingi
+          </button>
+          <button class="btn" style="margin-bottom:0; flex:1;" onclick="${isLast ? `submitModuleTest(${qs.moduleId})` : "quizGoNext()"}">
+            ${isLast ? "✅ Yakunlash" : "Keyingi →"}
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function quizGoNext() {
+  const qs = window._quizState;
+  if (!qs) return;
+  haptic("light");
+  if (qs.currentIndex < qs.questions.length - 1) {
+    qs.currentIndex++;
+    renderQuizQuestion();
+  }
+}
+
+function quizGoPrev() {
+  const qs = window._quizState;
+  if (!qs || !qs.canGoBack) {
+    return showAlert(`Vaqt tugagani uchun avvalgi savolga qaytib bo'lmaydi.`);
+  }
+  haptic("light");
+  if (qs.currentIndex > 0) {
+    qs.currentIndex--;
+    renderQuizQuestion();
+  }
+}
+
 function selectTestOption(qId, idx) {
   haptic("light");
-  window._answers[qId] = idx;
+  const qs = window._quizState;
+  if (qs) qs.answers[qId] = idx;
   document.querySelectorAll(`.option[data-qid="${Number(qId)}"]`).forEach(el => {
     el.classList.remove("selected");
   });
@@ -2256,16 +2320,18 @@ function selectTestOption(qId, idx) {
 async function submitModuleTest(moduleId) {
   try {
     haptic("medium");
+    const qs = window._quizState;
     const result = await api(`/api/module/${Number(moduleId)}/submit`, {
-      answers: window._answers || {}
+      answers: (qs && qs.answers) || {}
     });
 
     if (result.passed) {
-      showAlert(`🎉 Tabriklaymiz! Siz testdan o'tdingiz!\nNatijangiz: ${result.score}%\n\nKeyingi modul endi ochiq.`);
+      showAlert(`🎉 Tabriklaymiz! Siz testdan o'tdingiz!\nNatijangiz: ${result.score}%\n\nKeyingi modul endi ochiq. Qayta topshirmoqchi bo'lsangiz, 15 kundan so'ng bu imkoniyat qayta ochiladi.`);
     } else {
-      showAlert(`Afsuski, o'tish chegarasiga yetmadingiz.\nNatijangiz: ${result.score}%\n(Minimal: 65%)\n\nKeyingi modulga o'tish uchun testni qayta topshiring.`);
+      showAlert(`Afsuski, o'tish chegarasiga yetmadingiz.\nNatijangiz: ${result.score}%\n(Minimal: 65%)\n\nKeyingi modulga o'tish uchun testni hoziroq qayta topshirishingiz mumkin.`);
     }
 
+    window._quizState = null;
     closeDetail();
     if (selectedCourseId) {
       try {
@@ -3228,6 +3294,10 @@ function setTab(id) {
 
 function closeDetail() {
   haptic("light");
+  if (window._quizState) {
+    if (window._quizState.lockTimer) clearTimeout(window._quizState.lockTimer);
+    window._quizState = null;
+  }
   currentView = null;
   render();
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
