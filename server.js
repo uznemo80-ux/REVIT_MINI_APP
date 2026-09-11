@@ -54,6 +54,39 @@ pool.on('error', function (error) {
 });
 
 // Xavfsiz avto-migratsiya (agar jadvallar yoki ustunlar yo'q bo'lsa avtomatik yaratiladi)
+const MODULE2_TEST_SEED = [
+  { q: "Revit-da ishchi loyiha faylining asosiy formati qaysi?", options: ["RTE", "RVT", "RFA", "RFT"], correct: 1 },
+  { q: "Yangi loyiha boshlash uchun ishlatiladigan, birliklar va standartlar sozlangan shablon fayli formati qaysi?", options: ["RFA", "RFT", "RTE", "RVT"], correct: 2 },
+  { q: "Tashqaridan loyihaga yuklanadigan komponentlar (eshik, deraza, mebel) qaysi fayl formatida bo'ladi?", options: ["RFA", "RVT", "RTE", "RFT"], correct: 0 },
+  { q: "Vitraj (Curtain Wall) elementi Revit-da qaysi bazaviy kategoriya asosida chiziladi?", options: ["Okno (Deraza)", "Ograzhdeniye (To'siq)", "Karkas nesushchiy", "Stena (Devor)"], correct: 3 },
+  { q: "Vitraj paneliga standart eshik o'rnatish uchun qanday ketma-ketlik bajariladi?", options: ["Eshik komandasini tanlab, vitraj oynasiga keltirib bosiladi", "Vitraj panelini tanlab, unpin qilinadi va maxsus vitraj eshik family-si tanlanadi", "Vitraj balandligini kamida 4 metrga oshirish kerak", "Vitraj paneli o'chirib tashlanib, o'rniga oddiy devor chiziladi"], correct: 1 },
+  { q: "Loyihadagi mavjud (obmer), buziladigan (demontaj) va yangi quriladigan (montaj) elementlarni ajratish uchun Revit-da qaysi funksiya ishlatiladi?", options: ["Worksets", "Design Options", "View Range", "Phasing (Stadiya)"], correct: 3 },
+  { q: "Phasing sozlamalariga ko'ra demontaj rejasida (Plan demontaj) buziladigan devor va elementlar odatda qaysi rangda ko'rsatiladi?", options: ["Qizil", "Yashil", "Ko'k", "Sariq"], correct: 0 },
+  { q: "Plan etaj ko'rinishida qavat rejasini hosil qilish uchun kesim tekisligi (Cut plane) poldan odatda qancha balandlikda o'tkaziladi?", options: ["500 mm", "2500 mm", "1200 mm", "3000 mm"], correct: 2 },
+  { q: "Plan patalog (Reflected Ceiling Plan) ko'rinishining Plan etajdan asosiy farqi nimada?", options: ["Kesim tekisligidan pastga emas, tepaga qaraladi", "Kesim tekisligi poldan 0 mm balandlikda o'tkaziladi", "Faqat 3D ko'rinishda ishlaydi", "Elementlar qizil rangda ko'rsatiladi"], correct: 0 },
+  { q: "2-qavat rejasini yaratishda 1-qavat vididan shunchaki Copy detalizatsiya olish nima uchun noto'g'ri hisoblanadi?", options: ["Fayl hajmi 10 baravar oshib ketadi", "Revit dasturi kutilmaganda yopilib ketadi", "Barcha devorlar avtomatik ravishda o'chib ketadi", "Yangi vid 1-qavat balandligi (Level 1) bilan bog'liq bo'lib qoladi va Sekushchiy diapazon xato ishlaydi"], correct: 3 },
+  { q: "Revit-da barcha vidlar, spesifikatsiyalar, listlar va family-lar mundarijasi joylashgan oyna qanday nomlanadi?", options: ["Svoystva (Properties)", "Ribbon", "Dispetcher proyekt (Project Browser)", "Navigatsiya paneli"], correct: 2 },
+  { q: "Tanlangan elementning balandligi, materiali, o'lchamlari kabi xususiyatlarini ko'rish va o'zgartirish uchun qaysi oyna ishlatiladi?", options: ["Svoystva (Properties)", "Dispetcher proyekt (Project Browser)", "Phasing menyusi", "View Range oyna"], correct: 0 },
+  { q: "AutoCAD faylini (DWG) Revit-ga \"Svyaz SAPR\" (Link CAD) orqali olib kirishning \"Import SAPR\"dan asosiy afzalligi nimada?", options: ["3D modelni avtomatik ravishda yaratib beradi", "DWG fayli AutoCAD-da o'zgarganda Revit-dagi chizma ham avtomatik yangilanadi", "Fayl hajmini 0 MB ga tushiradi", "Devorlarni avtomatik ravishda bo'yab beradi"], correct: 1 },
+  { q: "Nima uchun interyer loyihalarida devorlar uchun oddiy GKL o'rniga namlikka chidamli GKLV gipsokarton ishlatish tavsiya etiladi?", options: ["GKLV faqat qizil rangda bo'ladi", "GKLV devor og'irligini 5 baravar kamaytiradi", "Boyash va gruntovka jarayonida qog'oz qatlamida to'lqin (valna) hosil bo'lishining oldini oladi", "GKLV narxi oddiy GKLdan 10 baravar arzon"], correct: 2 },
+  { q: "Revit-da yuqori versiyada (masalan, Revit 2025) saqlangan loyiha faylini pastki versiyada (masalan, Revit 2023) ochish mumkinmi?", options: ["Ha, Save As menyusidan versiyani pasaytirib saqlash kerak", "Ha, faqat AutoCAD orqali o'tkazilsa ochiladi", "Yo'q, Revit-da versiyani pasaytirib saqlash imkoniyati yo'q va pastki versiya yuqori versiyani ocholmaydi", "Ha, fayl kengaytmasini .DWG ga o'zgartirilsa ochiladi"], correct: 2 },
+  { q: "Bir nechta vidlarda grafik sozlamalarni (mashtab, detalizatsiya, filtrlar) bir xil holatda saqlash va markazlashgan holda boshqarish uchun qaysi vositadan foydalaniladi?", options: ["Filter (Filtr)", "View Range", "Phasing", "Shablon vid (View Template)"], correct: 3 },
+  { q: "Elementlarga muayyan mantiqiy qoida (masalan, Kommentariy k tiporazmeru = GKLV) bo'yicha alohida grafik va rang berish uchun qaysi vosita ishlatiladi?", options: ["Filter (Filtr)", "Worksets", "Design Options", "Material Editor"], correct: 0 },
+  { q: "Devol, Pol, Potolok, Krysha kabi loyihaning ichida mavjud bo'lib, tashqaridan RFA fayli sifatida yuklab bo'lmaydigan family-lar qanday nomlanadi?", options: ["Loadable Families (Yuklanadigan)", "System Families (Tizimli)", "In-Place Families (Kontekstdagi)", "Annotation Families"], correct: 1 },
+  { q: "Eshik, deraza va mebel kabi tashqaridan loyihaga RFA formatida yuklanadigan parametrik modellar qanday nomlanadi?", options: ["System Families", "In-Place Families", "Loadable Families (Yuklanadigan)", "Internal Templates"], correct: 2 },
+  { q: "Bevosita loyiha ichida (Model in Place) yaratiladigan family-larning asosiy kamchiligi nimada?", options: ["Ularni spesifikatsiyaga qo'shib bo'lmaydi", "Ular faqat 2D ko'rinishda ko'rinadi", "Ularning rangini o'zgartirib bo'lmaydi", "Boshqa loyihalarga RFA sifatida o'tkazib bo'lmaydi va ko'p ishlatilsa loyihani og'irlashtiradi"], correct: 3 },
+  { q: "Devor chizishda \"Tsep\" (Chain) funksiyasi o'chirib qo'yilsa nima sodir bo'ladi?", options: ["Har bir devor segmenti chizilgach, komanda to'xtaydi va keyingi segment avtomatik ulanmaydi", "Devorlar umuman chizilmaydi", "Devorlar shaffof bo'lib qoladi", "Devor balandligi 0 ga tushib qoladi"], correct: 0 },
+  { q: "Loyihani saqlashda har safar qo'shimcha zaxira fayllari (0001, 0002) ko'payib ketmasligi uchun saqlash parametrlarida nima sozlanadi?", options: ["Fayl nomi o'zgartiriladi", "Maksimum bakkaplar (Maximum backups) soni 1 ga tushiriladi", "Revit dasturi qayta o'rnatiladi", "AutoCAD marshruti o'chiriladi"], correct: 1 },
+  { q: "Arxitektura va interyer loyihalarida 0.000 sathi (marka) sifatida qaysi pol darajasi qabul qilinadi?", options: ["Poydevor tubi", "Chernovoy pol (beton/monolit plita)", "Chistovoy pol (yakuniy toza tayyor pol sathi)", "Ko'cha asfaltdagi sathi"], correct: 2 },
+  { q: "Chernovoy pol (monolit plita) odatda Chistovoy poldan qancha masofa pastda joylashadi?", options: ["10-20 mm", "300-400 mm", "1000 mm", "80-100 mm (8-10 sm)"], correct: 3 },
+  { q: "Revit-ning standart ruscha kutubxonasi (Russian Libraries) kompyuterda qaysi papkada joylashadi?", options: ["C:\\Program Files\\Autodesk\\Revit", "C:\\ProgramData\\Autodesk\\RVT 2024\\Libraries\\Russian", "C:\\Windows\\System32", "C:\\Users\\Public\\Desktop"], correct: 1 },
+  { q: "Listda (Sheet) proyekt parametrlariga bog'langan va avtomatik o'zgaradigan matn bloki nima deb ataladi?", options: ["Tekst (Text)", "Shtamp", "Metka (Label)", "Annotatsiya"], correct: 2 },
+  { q: "Devor chizishda Space (Probel) tugmasi bosilsa nima sodir bo'ladi?", options: ["Devor o'chib ketadi", "Devor balandligi ikki baravar ortadi", "Devor vitrajga aylanadi", "Devorning joylashish yo'nalishi va tarafi (privyazkasi) qarama-qarshisiga o'zgaradi"], correct: 3 },
+  { q: "Devor balandligini qavat balandligiga (Level) bog'lab chizishning asosiy afzalligi nimada?", options: ["Qavat balandligi o'zgarganda devorlar balandligi ham avtomatik moslashib o'zgaradi", "Devor avtomatik bo'yaladi", "Devor materiali o'zgarmaydi", "Devor faqat 3D-da ko'rinadi"], correct: 0 },
+  { q: "Revit-da AutoCAD-dagidek \"Sloy\" (Layer) tushunchasi o'rniga elementlar ko'rinishi va grafikasi nima orqali boshqariladi?", options: ["Faqat ranglar palitrasi orqali", "Vidlar va Kategoriyalar (Visibility/Graphics) orqali", "Faqat teksturalar orqali", "Faqat bloklar orqali"], correct: 1 },
+  { q: "Model elementlari (devor, eshik, mebel) va Anotatsion elementlar (tekst, o'lcham, chiziq) orasidagi asosiy grafik farq nimada?", options: ["Model elementlari faqat 2D-da, Anotatsion elementlar esa 3D-da ko'rinadi", "Anotatsion elementlar avtomatik ravishda 3D modelga aylanadi", "Model elementlari barcha vidlarda ko'rinadi, Anotatsion elementlar faqat o'zi chizilgan vidda ko'rinadi", "Ularning orasida hech qanday farq yo'q"], correct: 2 }
+];
+
 async function initExtendedTables() {
   try {
     await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
@@ -191,6 +224,41 @@ async function initExtendedTables() {
       SET value = 'texnikuzb'
       WHERE key = 'contact_telegram' AND (value = 'yoshuzbekk' OR value = '' OR value IS NULL)
     `);
+
+    // 2-Modul uchun test savollarini bir martalik joylash (agar hali test kiritilmagan bo'lsa)
+    try {
+      var m2Result = await pool.query(`
+        SELECT m.id FROM modules m
+        JOIN courses c ON c.id = m.course_id
+        WHERE m.order_index = 2 AND c.title ILIKE '%revit%'
+        ORDER BY m.id ASC
+      `);
+
+      if (m2Result.rows.length === 1) {
+        var module2Id = m2Result.rows[0].id;
+        var existingM2TestCount = await pool.query(
+          'SELECT COUNT(*)::int AS c FROM module_tests WHERE module_id = $1',
+          [module2Id]
+        );
+
+        if (existingM2TestCount.rows[0].c === 0) {
+          for (var qi = 0; qi < MODULE2_TEST_SEED.length; qi++) {
+            var qItem = MODULE2_TEST_SEED[qi];
+            await pool.query(
+              'INSERT INTO module_tests (module_id, question, options, correct_index, order_index) VALUES ($1, $2, $3, $4, $5)',
+              [module2Id, qItem.q, JSON.stringify(qItem.options), qItem.correct, qi + 1]
+            );
+          }
+          console.log('✅ 2-MODUL TEST SEED: ' + MODULE2_TEST_SEED.length + ' ta savol module_id=' + module2Id + ' ga joylandi');
+        }
+      } else if (m2Result.rows.length > 1) {
+        console.warn('⚠️ 2-MODUL TEST SEED: bir nechta mos modul topildi (' + m2Result.rows.length + ' ta), aniqlik uchun avtomatik joylanmadi');
+      } else {
+        console.warn('⚠️ 2-MODUL TEST SEED: mos modul topilmadi (order_index=2, Revit kursi)');
+      }
+    } catch (seedError) {
+      console.error('2-MODUL TEST SEED ERROR:', seedError.message);
+    }
 
     console.log('✅ DATABASE AVTO-MIGRATSIYA MUVAFFAQIYATLI YAKUNLANDI');
   } catch (err) {
