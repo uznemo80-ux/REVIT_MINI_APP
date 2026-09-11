@@ -1191,6 +1191,11 @@ function renderCourseModules() {
                   ➕ Dars Qo'shish
                 </button>
               ` : ""}
+              ${mod.has_test ? `
+                <div style="font-size:12px; color:${mod.test_passed ? "var(--success)" : "var(--text-secondary)"}; text-align:center;">
+                  ${mod.test_passed ? "✅ Test topshirilgan — keyingi modul ochiq" : "⚠️ Keyingi modulga o'tish uchun testdan 65%+ ball kerak"}
+                </div>
+              ` : ""}
               <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
                 📝 Modul bo'yicha test topshirish
               </button>
@@ -1441,6 +1446,12 @@ async function openLesson(id) {
 
             <button class="btn" style="margin-top: 18px; ${lesson.watched ? 'opacity:0.6;' : ''}" onclick="${lesson.watched ? '' : `markLessonWatched(${Number(lesson.id)})`}">
               ${lesson.watched ? "✅ Tugallangan" : "✅ Darsni tugatdim, keyingisiga o'tish"}
+            </button>
+
+            ${renderLessonNavButtons(lesson.id)}
+
+            <button class="btn secondary" style="margin-top: 10px;" onclick="openLessonDrawer(${Number(lesson.id)})">
+              📚 Darslar ro'yxati
             </button>
 
             <button class="btn secondary" style="margin-top: 10px;" onclick="closeDetail()">
@@ -1871,6 +1882,91 @@ async function submitAdminSettings() {
   }
 }
 
+function getAdjacentLessons(lessonId) {
+  if (!courseModulesData || !Array.isArray(courseModulesData.modules)) return { prev: null, next: null };
+  const flat = [];
+  courseModulesData.modules.forEach(m => (m.lessons || []).forEach(l => flat.push(l)));
+  const idx = flat.findIndex(l => Number(l.id) === Number(lessonId));
+  if (idx === -1) return { prev: null, next: null };
+  return { prev: flat[idx - 1] || null, next: flat[idx + 1] || null };
+}
+
+function renderLessonNavButtons(lessonId) {
+  const { prev, next } = getAdjacentLessons(lessonId);
+  if (!prev && !next) return "";
+
+  return `
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      ${prev ? `
+        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="openLesson(${Number(prev.id)})">
+          ← Oldingi dars
+        </button>
+      ` : `<div style="flex:1;"></div>`}
+      ${next ? `
+        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="${next.available ? `openLesson(${Number(next.id)})` : "showLockedInfo()"}">
+          Keyingi dars →
+        </button>
+      ` : `<div style="flex:1;"></div>`}
+    </div>
+  `;
+}
+
+function openLessonDrawer(lessonId) {
+  if (!courseModulesData) return showAlert("Kurs ma'lumotlari topilmadi.");
+
+  const course = courseModulesData.course || {};
+  const modules = courseModulesData.modules || [];
+  const currentModule = modules.find(m => (m.lessons || []).some(l => Number(l.id) === Number(lessonId)));
+  if (!currentModule) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "drawer-overlay";
+  overlay.innerHTML = `
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div>
+          <div class="drawer-course">${escapeHtml(course.title || "")}</div>
+          <div class="drawer-module">${escapeHtml(currentModule.title || "")}</div>
+        </div>
+        <div class="drawer-close">✕</div>
+      </div>
+      <div class="drawer-lessons">
+        ${(currentModule.lessons || []).map(l => `
+          <div class="drawer-lesson-item ${Number(l.id) === Number(lessonId) ? "current" : ""} ${!l.available ? "locked" : ""}" data-lesson-id="${Number(l.id)}" data-available="${l.available ? "1" : "0"}">
+            <span>${l.watched ? "✅" : (l.available ? "▶" : "🔒")}</span>
+            <span>${escapeHtml(l.title)}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const closeDrawer = () => {
+    overlay.classList.add("closing");
+    setTimeout(() => overlay.remove(), 220);
+  };
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeDrawer();
+  });
+  overlay.querySelector(".drawer-close")?.addEventListener("click", closeDrawer);
+
+  overlay.querySelectorAll(".drawer-lesson-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const id = Number(item.dataset.lessonId);
+      const available = item.dataset.available === "1";
+      overlay.remove();
+      if (available) {
+        haptic("light");
+        openLesson(id);
+      } else {
+        showLockedInfo();
+      }
+    });
+  });
+}
+
 async function markLessonWatched(lessonId) {
   try {
     haptic("medium");
@@ -2069,12 +2165,18 @@ async function submitModuleTest(moduleId) {
     });
 
     if (result.passed) {
-      showAlert(`🎉 Tabriklaymiz! Siz testdan o'tdingiz!\nNatijangiz: ${result.score}%`);
+      showAlert(`🎉 Tabriklaymiz! Siz testdan o'tdingiz!\nNatijangiz: ${result.score}%\n\nKeyingi modul endi ochiq.`);
     } else {
-      showAlert(`Afsuski, o'tish chegarasiga yetmadingiz.\nNatijangiz: ${result.score}%\n(Minimal: 70%)`);
+      showAlert(`Afsuski, o'tish chegarasiga yetmadingiz.\nNatijangiz: ${result.score}%\n(Minimal: 65%)\n\nKeyingi modulga o'tish uchun testni qayta topshiring.`);
     }
 
     closeDetail();
+    if (selectedCourseId) {
+      try {
+        const data = await api(`/api/course/${Number(selectedCourseId)}/modules`);
+        courseModulesData = data;
+      } catch (e) {}
+    }
     await loadContent();
   } catch (error) {
     showAlert(error.message || "Test natijasini yuborishda xatolik.");

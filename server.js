@@ -60,6 +60,9 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
+    await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_by BIGINT');
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS course_id INT REFERENCES courses(id) ON DELETE SET NULL');
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Boshqa'");
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS categories TEXT[]");
@@ -680,6 +683,23 @@ app.post('/api/course/:id/modules', async function (req, res) {
       grantsResult.rows.forEach(function (r) { grantedModuleIds.add(r.module_id); });
     }
 
+    // Modul testlaridan o'tish holati: keyingi modulga o'tish uchun oldingi modul testidan (agar mavjud bo'lsa) 65%+ ball kerak
+    var passedModulesSet = new Set();
+    var modulesWithTestsSet = new Set();
+    if (moduleIds.length) {
+      var testResultsResult = await pool.query(
+        'SELECT module_id, passed FROM module_results WHERE user_id = $1 AND module_id = ANY($2)',
+        [user.id, moduleIds]
+      );
+      testResultsResult.rows.forEach(function (r) { if (r.passed) passedModulesSet.add(r.module_id); });
+
+      var modulesWithTestsResult = await pool.query(
+        'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
+        [moduleIds]
+      );
+      modulesWithTestsResult.rows.forEach(function (r) { modulesWithTestsSet.add(r.module_id); });
+    }
+
     var firstModuleId = modules.length ? modules[0].id : null;
 
     // Kurs bo'yicha darslarni modul tartibida "tekislab" chiqamiz — ketma-ket ochilish shu tartibga asoslanadi
@@ -691,14 +711,22 @@ app.post('/api/course/:id/modules', async function (req, res) {
     });
 
     // Har bir darsning "ketma-ketlikda ochiqmi" holatini hisoblaymiz:
-    // birinchi dars har doim ochiq, keyingisi — oldingisi ko'rilgandan keyingina ochiladi
+    // birinchi dars har doim ochiq, keyingisi — oldingisi ko'rilgandan keyingina ochiladi;
+    // modul chegarasidan o'tishda esa oldingi modul testi (bo'lsa) 65%+ o'tilgan bo'lishi shart
     var sequentialUnlockedSet = new Set();
     var chainOpen = true;
+    var prevModuleId = null;
     flatLessons.forEach(function (l) {
+      if (chainOpen && prevModuleId !== null && l.module_id !== prevModuleId) {
+        if (modulesWithTestsSet.has(prevModuleId) && !passedModulesSet.has(prevModuleId)) {
+          chainOpen = false;
+        }
+      }
       if (chainOpen) {
         sequentialUnlockedSet.add(l.id);
         if (!watchedSet.has(l.id)) chainOpen = false;
       }
+      prevModuleId = l.module_id;
     });
 
     var data = modules.map(function (mod) {
@@ -723,7 +751,8 @@ app.post('/api/course/:id/modules', async function (req, res) {
       return {
         id: mod.id, title: mod.title, order_index: mod.order_index,
         unlocked: moduleUnlocked, lessons: mappedLessons,
-        watched_count: watchedCount, total_count: moduleLessons.length
+        watched_count: watchedCount, total_count: moduleLessons.length,
+        has_test: modulesWithTestsSet.has(mod.id), test_passed: passedModulesSet.has(mod.id)
       };
     });
 
@@ -805,12 +834,36 @@ app.post('/api/lesson/:id', async function (req, res) {
       );
       var watchedForCheckSet = new Set(watchedForCheckResult.rows.map(function (r) { return r.lesson_id; }));
 
+      var passedModulesForCheckSet = new Set();
+      var modulesWithTestsForCheckSet = new Set();
+      if (courseModuleIds.length) {
+        var testResultsForCheckResult = await pool.query(
+          'SELECT module_id, passed FROM module_results WHERE user_id = $1 AND module_id = ANY($2)',
+          [user.id, courseModuleIds]
+        );
+        testResultsForCheckResult.rows.forEach(function (r) { if (r.passed) passedModulesForCheckSet.add(r.module_id); });
+
+        var modulesWithTestsForCheckResult = await pool.query(
+          'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
+          [courseModuleIds]
+        );
+        modulesWithTestsForCheckResult.rows.forEach(function (r) { modulesWithTestsForCheckSet.add(r.module_id); });
+      }
+
       var chainOpenForCheck = true;
+      var prevModuleIdForCheck = null;
       for (var i = 0; i < flatLessonsForCheck.length; i++) {
         var l = flatLessonsForCheck[i];
         if (!chainOpenForCheck) break;
+        if (prevModuleIdForCheck !== null && l.module_id !== prevModuleIdForCheck) {
+          if (modulesWithTestsForCheckSet.has(prevModuleIdForCheck) && !passedModulesForCheckSet.has(prevModuleIdForCheck)) {
+            chainOpenForCheck = false;
+            break;
+          }
+        }
         if (Number(l.id) === Number(lesson.id)) { lessonAvailable = true; break; }
         if (!watchedForCheckSet.has(l.id)) { chainOpenForCheck = false; }
+        prevModuleIdForCheck = l.module_id;
       }
     }
 
@@ -1073,7 +1126,7 @@ app.post('/api/module/:id/submit', async function (req, res) {
       }
     }
     var score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0;
-    var passed = score >= 70;
+    var passed = score >= 65;
 
     await pool.query(
       'INSERT INTO module_results (user_id, module_id, passed, score) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, module_id) DO UPDATE SET passed = $3, score = $4, attempted_at = now()',
