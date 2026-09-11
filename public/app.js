@@ -2903,7 +2903,8 @@ async function submitCreateLesson() {
 async function openEditLessonView(lessonId) {
   try {
     haptic("light");
-    const lesson = await api(`/api/lesson/${Number(lessonId)}`);
+    const lessonData = await adminApi(`/api/admin/lesson/${Number(lessonId)}`);
+    const lesson = lessonData.lesson || {};
     const filesData = await adminApi(`/api/admin/lesson/${Number(lessonId)}/files`);
     const files = filesData.files || [];
     const modules = (courseModulesData && courseModulesData.modules) || [];

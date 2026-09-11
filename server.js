@@ -1987,6 +1987,20 @@ app.post('/api/admin/lesson/:id/delete', requireAdmin, async function (req, res)
 // GET LESSON FILES
 // ======================================================
 
+app.post('/api/admin/lesson/:id', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      'SELECT id, module_id, title, order_index, youtube_url, bunny_video_id, task_text, warning_text, is_free FROM lessons WHERE id = $1 LIMIT 1',
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Dars topilmadi' });
+    return res.json({ ok: true, lesson: result.rows[0] });
+  } catch (error) {
+    console.error('ADMIN LESSON DETAIL ERROR:', error);
+    return res.status(500).json({ error: 'Darsni olishda xato' });
+  }
+});
+
 app.post('/api/admin/lesson/:id/files', requireAdmin, async function (req, res) {
   try {
     var lessonResult = await pool.query('SELECT id, title FROM lessons WHERE id = $1 LIMIT 1', [req.params.id]);
