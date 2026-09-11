@@ -412,7 +412,12 @@ html.light .nav {
   overflow: hidden;
   margin-bottom: 18px;
   box-shadow: var(--shadow-md);
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.course-card:active {
+  transform: scale(0.985);
+  box-shadow: var(--shadow-sm);
 }
 
 .continue-card {
@@ -669,6 +674,11 @@ html.light .nav {
   font-weight: 650;
   font-size: 15px;
   background: var(--bg-surface);
+  transition: background var(--transition-fast);
+}
+
+.module-head:active {
+  background: var(--bg-surface-hover);
 }
 
 .module-head-left {
@@ -676,6 +686,19 @@ html.light .nav {
   align-items: center;
   gap: 10px;
   flex: 1;
+}
+
+.module-chevron {
+  font-size: 18px;
+  color: var(--text-secondary);
+  line-height: 1;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: rotate(0deg);
+}
+
+.module-head:has(+ .lesson-list.open) .module-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
 }
 
 .idx {
@@ -770,13 +793,18 @@ html.light .nav {
 }
 
 .lesson-list {
-  display: none;
-  border-top: 1px solid var(--border);
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  border-top: 1px solid transparent;
   background: var(--bg-surface-elevated);
+  transition: max-height 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.32s ease, border-color 0.3s ease;
 }
 
 .lesson-list.open {
-  display: block;
+  max-height: 3000px;
+  opacity: 1;
+  border-top: 1px solid var(--border);
 }
 
 .lesson {
@@ -1413,6 +1441,15 @@ html.light .nav {
   animation: fadeIn 0.2s ease;
 }
 
+.modal-overlay.closing {
+  animation: modalOverlayOut 0.18s ease forwards;
+}
+
+@keyframes modalOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .modal-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -1422,6 +1459,21 @@ html.light .nav {
   width: 100%;
   text-align: center;
   box-shadow: var(--shadow-lg);
+  animation: modalPopIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal-overlay.closing .modal-card {
+  animation: modalPopOut 0.18s ease forwards;
+}
+
+@keyframes modalPopIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modalPopOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.94); }
 }
 
 .modal-title {
@@ -1450,6 +1502,12 @@ html.light .nav {
   font-weight: 700;
   cursor: pointer;
   border: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.modal-btn:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 .modal-btn.cancel {
@@ -1701,6 +1759,12 @@ html.light .nav {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.admin-small-btn:active {
+  transform: scale(0.94);
+  opacity: 0.85;
 }
 
 .admin-module-card {
@@ -1872,3 +1936,24 @@ html.light .nav {
   box-shadow: var(--shadow-sm);
 }
 
+.card-clickable {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card-clickable:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------------
+   Reduced Motion — accessibility: user's OS-level preference
+   ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

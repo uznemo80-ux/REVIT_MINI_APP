@@ -148,14 +148,19 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
 
   document.body.appendChild(overlay);
 
+  const closeOverlay = () => {
+    overlay.classList.add("closing");
+    setTimeout(() => overlay.remove(), 180);
+  };
+
   overlay.querySelector(".cancel")?.addEventListener("click", () => {
     haptic();
-    overlay.remove();
+    closeOverlay();
   });
 
   overlay.querySelector(".confirm")?.addEventListener("click", async () => {
     haptic("medium");
-    overlay.remove();
+    closeOverlay();
     try {
       await onConfirm();
     } catch (error) {
@@ -1162,6 +1167,7 @@ function renderCourseModules() {
               <div class="tag ${mod.unlocked ? "" : "locked-tag"}">
                 ${mod.unlocked ? "Ochiq" : "🔒 Qulflangan"}
               </div>
+              <span class="module-chevron">⌄</span>
             </div>
           </div>
 
@@ -2253,7 +2259,7 @@ async function openStudentsDetailList(filter, title) {
           ${students.length ? students.map(st => {
             const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "Nomalum";
             return `
-              <div class="card" style="margin-bottom:10px;" onclick="openAdminStudentModal(${Number(st.id)})">
+              <div class="card card-clickable" style="margin-bottom:10px;" onclick="openAdminStudentModal(${Number(st.id)})">
                 <div style="font-weight:700; font-size:14.5px; margin-bottom:6px;">${escapeHtml(fullName)}</div>
                 <div style="font-size:12.5px; color:var(--text-secondary);">
                   ${st.username ? "@" + escapeHtml(st.username) : "ID: " + escapeHtml(st.telegram_id)}
