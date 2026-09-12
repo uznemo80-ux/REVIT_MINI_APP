@@ -192,6 +192,24 @@ async function initExtendedTables() {
       )
     `);
 
+    // Darslar bo'yicha savol-javoblar (Q&A) jadvali
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lesson_questions (
+        id SERIAL PRIMARY KEY,
+        lesson_id INT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        question TEXT NOT NULL,
+        answer TEXT,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        answered_at TIMESTAMPTZ,
+        answered_by BIGINT
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status)');
+
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
     if (cCount.rows[0].count === 0) {
@@ -1041,13 +1059,31 @@ app.post('/api/lesson/:id', async function (req, res) {
     var defaultWarning = 'Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.\n\nDarsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qatiyan taqiqlanadi.\n\nIltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.';
     var warningText = (lesson.warning_text && lesson.warning_text.trim()) ? lesson.warning_text : defaultWarning;
 
+    var questions = [];
+    try {
+      var qRes = await pool.query(
+        `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+                u.first_name, u.last_name, u.username,
+                (lq.user_id = $2) AS is_mine
+         FROM lesson_questions lq
+         JOIN users u ON u.id = lq.user_id
+         WHERE lq.lesson_id = $1
+         ORDER BY lq.created_at DESC`,
+        [lesson.id, user.id]
+      );
+      questions = qRes.rows;
+    } catch (qErr) {
+      console.error('LESSON QUESTIONS QUERY ERROR:', qErr);
+    }
+
     var youtubePlayerUrl = generateYouTubePlayerUrl(lesson.youtube_url);
 
     if (youtubePlayerUrl) {
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'youtube',
         youtube_url: lesson.youtube_url, youtube_player_url: youtubePlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+        questions: questions
       });
     }
 
@@ -1057,13 +1093,15 @@ app.post('/api/lesson/:id', async function (req, res) {
         id: lesson.id, title: lesson.title, video_type: 'bunny',
         bunny_video_id: lesson.bunny_video_id, bunny_library_id: process.env.BUNNY_LIBRARY_ID,
         bunny_player_url: bunnyPlayerUrl,
-        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+        questions: questions
       });
     }
 
     return res.json({
       id: lesson.id, title: lesson.title, video_type: null,
-      task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched
+      task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+      questions: questions
     });
   } catch (error) {
     console.error('LESSON ERROR:', error);
@@ -1173,6 +1211,175 @@ app.post('/api/admin/practice/:id/review', requireAdmin, async function (req, re
   } catch (error) {
     console.error('ADMIN PRACTICE REVIEW ERROR:', error);
     return res.status(500).json({ error: 'Baholashda xatolik' });
+  }
+});
+
+// ======================================================
+// LESSON Q&A (SAVOL-JAVOBLAR TIZIMI)
+// ======================================================
+
+// O'quvchi dars bo'yicha savol yuborishi
+app.post('/api/lesson/:id/question', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var lessonId = Number(req.params.id);
+    var questionText = String(req.body.question || '').trim();
+    if (!questionText) {
+      return res.status(400).json({ error: 'Savol matni kiritilishi shart' });
+    }
+
+    var lessonRes = await pool.query(
+      `SELECT l.id, l.title AS lesson_title, m.title AS module_title, c.title AS course_title
+       FROM lessons l
+       JOIN modules m ON m.id = l.module_id
+       LEFT JOIN courses c ON c.id = m.course_id
+       WHERE l.id = $1 LIMIT 1`,
+      [lessonId]
+    );
+    var lessonInfo = lessonRes.rows[0];
+    if (!lessonInfo) return res.status(404).json({ error: 'Dars topilmadi' });
+
+    var result = await pool.query(
+      `INSERT INTO lesson_questions (lesson_id, user_id, question, status, created_at)
+       VALUES ($1, $2, $3, 'pending', NOW())
+       RETURNING *`,
+      [lessonId, user.id, questionText]
+    );
+    var newQuestion = result.rows[0];
+
+    // Telegram Bot orqali adminga zudlik bilan bildirishnoma yuborish
+    try {
+      var studentName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Noma‘lum';
+      var studentUsername = user.username ? `@${user.username}` : 'mavjud emas';
+      var studentPhone = user.phone || 'yo‘q';
+      var adminNotice =
+        `❓ <b>Yangi dars savoli keldi!</b>\n\n` +
+        `👤 <b>O'quvchi:</b> ${studentName} (${studentUsername})\n` +
+        `📱 <b>Tel:</b> ${studentPhone}\n` +
+        `📚 <b>Kurs:</b> ${lessonInfo.course_title || 'Kurs'}\n` +
+        `📑 <b>Modul:</b> ${lessonInfo.module_title || ''}\n` +
+        `🎬 <b>Dars:</b> ${lessonInfo.lesson_title}\n\n` +
+        `💬 <b>Savol:</b>\n<i>"${questionText}"</i>\n\n` +
+        `<i>Mini App ichidagi "Chat" bo‘limidan javob qaytarishingiz mumkin.</i>`;
+      await notifyAdmin(adminNotice);
+    } catch (notifErr) {
+      console.warn('ADMIN Q NOTIFY WARNING:', notifErr.message);
+    }
+
+    return res.json({
+      ok: true,
+      message: 'Savolingiz adminga yuborildi. Ustoz javob bergach xabar beramiz!',
+      question: Object.assign({}, newQuestion, {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        username: user.username,
+        is_mine: true
+      })
+    });
+  } catch (error) {
+    console.error('SUBMIT QUESTION ERROR:', error);
+    return res.status(500).json({ error: 'Savolni yuborishda xatolik yuz berdi' });
+  }
+});
+
+// O'quvchi o'zining barcha savollari va javoblarini ko'rishi (Chat bo'limi uchun)
+app.post('/api/chat/my-questions', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var result = await pool.query(
+      `SELECT lq.id, lq.lesson_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+              l.title AS lesson_title, m.title AS module_title, c.title AS course_title, c.id AS course_id
+       FROM lesson_questions lq
+       JOIN lessons l ON l.id = lq.lesson_id
+       JOIN modules m ON m.id = l.module_id
+       LEFT JOIN courses c ON c.id = m.course_id
+       WHERE lq.user_id = $1
+       ORDER BY lq.created_at DESC`,
+      [user.id]
+    );
+
+    return res.json({ ok: true, questions: result.rows });
+  } catch (error) {
+    console.error('MY QUESTIONS ERROR:', error);
+    return res.status(500).json({ error: 'Savollarni yuklashda xatolik' });
+  }
+});
+
+// Admin barcha o'quvchilar savollarini ko'rishi (Chat bo'limidagi Admin Hub)
+app.post('/api/admin/questions', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+              u.first_name, u.last_name, u.username, u.phone, u.telegram_id,
+              l.title AS lesson_title, m.title AS module_title, c.title AS course_title, c.id AS course_id
+       FROM lesson_questions lq
+       JOIN users u ON u.id = lq.user_id
+       JOIN lessons l ON l.id = lq.lesson_id
+       JOIN modules m ON m.id = l.module_id
+       LEFT JOIN courses c ON c.id = m.course_id
+       ORDER BY (CASE WHEN lq.status = 'pending' THEN 0 ELSE 1 END) ASC, lq.created_at DESC`
+    );
+
+    return res.json({ ok: true, questions: result.rows });
+  } catch (error) {
+    console.error('ADMIN QUESTIONS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Savollar ro‘yxatini olishda xatolik' });
+  }
+});
+
+// Admin o'quvchi savoliga Mini App ichida javob berishi
+app.post('/api/admin/questions/:id/reply', requireAdmin, async function (req, res) {
+  try {
+    var questionId = Number(req.params.id);
+    var answerText = String(req.body.answer || '').trim();
+    if (!answerText) {
+      return res.status(400).json({ error: 'Javob matni bo‘sh bo‘lishi mumkin emas' });
+    }
+
+    var result = await pool.query(
+      `UPDATE lesson_questions
+       SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2
+       WHERE id = $3
+       RETURNING *`,
+      [answerText, req.user.telegram_id, questionId]
+    );
+    var updated = result.rows[0];
+    if (!updated) return res.status(404).json({ error: 'Savol topilmadi' });
+
+    // O'quvchining Telegram botiga avtomatik xabar yuborish
+    try {
+      var detailsRes = await pool.query(
+        `SELECT u.telegram_id, l.title AS lesson_title, c.title AS course_title
+         FROM users u
+         JOIN lesson_questions lq ON lq.user_id = u.id
+         JOIN lessons l ON l.id = lq.lesson_id
+         JOIN modules m ON m.id = l.module_id
+         LEFT JOIN courses c ON c.id = m.course_id
+         WHERE lq.id = $1 LIMIT 1`,
+        [questionId]
+      );
+      var details = detailsRes.rows[0];
+      if (details && details.telegram_id) {
+        var replyMsg =
+          `💬 <b>Ustoz savolingizga javob berdi!</b>\n\n` +
+          `📚 <b>Dars:</b> ${details.lesson_title}\n` +
+          `❓ <b>Sizning savolingiz:</b>\n<i>"${updated.question}"</i>\n\n` +
+          `✅ <b>Ustoz javobi:</b>\n${answerText}\n\n` +
+          `<i>Mini Appga kirib dars materiallarini ko‘rishingiz mumkin.</i>`;
+        await botModule.bot.telegram.sendMessage(details.telegram_id, replyMsg, { parse_mode: 'HTML' });
+      }
+    } catch (notifErr) {
+      console.warn('STUDENT REPLY NOTIFY WARNING:', notifErr.message);
+    }
+
+    return res.json({ ok: true, message: 'Javob saqlandi va o‘quvchiga yuborildi', question: updated });
+  } catch (error) {
+    console.error('REPLY QUESTION ERROR:', error);
+    return res.status(500).json({ error: 'Javobni yuborishda xatolik yuz berdi' });
   }
 });
 

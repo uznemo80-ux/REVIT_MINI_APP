@@ -219,6 +219,9 @@ let selectedCourseCategory = "Barchasi";
 const COURSE_CATEGORIES = ["Revit", "AutoCAD", "3ds Max", "BIM", "Interyer", "Arxitektura", "Boshqa"];
 let currentView = null;
 let aboutOpen = false;
+let adminQuestionsList = null;
+let adminQuestionsFilter = "pending";
+let studentQuestionsList = null;
 window._answers = {};
 
 // ======================================================
@@ -330,6 +333,21 @@ function fmtDate(d) {
     month: "long",
     year: "numeric"
   });
+}
+
+function fmtTimeAgo(d) {
+  if (!d) return "";
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return "";
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return "Hozirgina";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} daqiqa oldin`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} soat oldin`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay} kun oldin`;
+  return date.toLocaleDateString("uz-UZ");
 }
 
 // ======================================================
@@ -1722,6 +1740,7 @@ async function openLesson(id) {
 
             ${renderLessonFiles(lesson.files)}
             ${renderLessonWarning(lesson.warning_text)}
+            ${renderLessonQABox(lesson.id, lesson.questions)}
 
             <button class="btn" style="margin-top: 18px; ${lesson.watched ? 'opacity:0.6;' : ''}" onclick="${lesson.watched ? '' : `markLessonWatched(${Number(lesson.id)})`}">
               ${lesson.watched ? "✅ Tugallangan" : "✅ Darsni tugatdim, keyingisiga o'tish"}
@@ -1863,6 +1882,116 @@ function renderLessonWarning(warningText) {
       <div class="lesson-warning-text">${escapeHtml(text).replace(/\n/g, "<br>")}</div>
     </div>
   `;
+}
+
+function renderLessonQABox(lessonId, questions) {
+  const qList = Array.isArray(questions) ? questions : [];
+
+  return `
+    <div class="lesson-qa-box" id="lesson-qa-box-${lessonId}">
+      <div class="lesson-qa-header">
+        <div class="lesson-qa-title">
+          <span>💬 Dars Bo'yicha Savol Berish</span>
+        </div>
+        <span class="tag">${qList.length} ta savol</span>
+      </div>
+      <div class="lesson-qa-desc">
+        Ushbu darsda tushunmagan joyingiz bo‘lsa, savolingizni yozing. Ustoz sizga javob qaytaradi.
+      </div>
+
+      <div class="qa-form">
+        <textarea
+          id="qa-input-${lessonId}"
+          class="qa-textarea"
+          placeholder="Dars yuzasidan savolingizni aniq yozing..."
+        ></textarea>
+        <button
+          type="button"
+          class="qa-submit-btn"
+          onclick="submitLessonQuestion(${Number(lessonId)})"
+        >
+          🚀 Savolni ustozga yuborish
+        </button>
+      </div>
+
+      <div class="qa-list" id="qa-list-${lessonId}">
+        ${qList.length ? qList.map(q => `
+          <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+            <div class="qa-card-head">
+              <span class="qa-author">
+                👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+                ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
+              </span>
+              <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+            </div>
+            <div class="qa-question-text">${escapeHtml(q.question)}</div>
+
+            ${q.status === 'answered' && q.answer ? `
+              <div class="qa-answer-block">
+                <div class="qa-answer-title">
+                  <span>👑 Ustoz javobi:</span>
+                  <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+                </div>
+                <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+              </div>
+            ` : `
+              <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
+                ⏳ Ustoz ko‘rib chiqmoqda...
+              </div>
+            `}
+          </div>
+        `).join("") : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`}
+      </div>
+    </div>
+  `;
+}
+
+async function submitLessonQuestion(lessonId) {
+  const input = document.getElementById(`qa-input-${lessonId}`);
+  const text = input ? input.value.trim() : "";
+  if (!text) {
+    return showAlert("Iltimos, dars yuzasidan savolingizni yozing!");
+  }
+
+  try {
+    haptic("medium");
+    const res = await api(`/api/lesson/${Number(lessonId)}/question`, { question: text });
+    input.value = "";
+    showToast(res.message || "Savolingiz adminga yuborildi!");
+
+    // Refresh questions in view
+    const updatedLesson = await api(`/api/lesson/${Number(lessonId)}`);
+    const qaListEl = document.getElementById(`qa-list-${lessonId}`);
+    if (qaListEl && updatedLesson && Array.isArray(updatedLesson.questions)) {
+      qaListEl.innerHTML = updatedLesson.questions.map(q => `
+        <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+          <div class="qa-card-head">
+            <span class="qa-author">
+              👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+              ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
+            </span>
+            <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+          </div>
+          <div class="qa-question-text">${escapeHtml(q.question)}</div>
+          ${q.status === 'answered' && q.answer ? `
+            <div class="qa-answer-block">
+              <div class="qa-answer-title">
+                <span>👑 Ustoz javobi:</span>
+                <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+              </div>
+              <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+            </div>
+          ` : `
+            <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
+              ⏳ Ustoz ko‘rib chiqmoqda...
+            </div>
+          `}
+        </div>
+      `).join("");
+    }
+  } catch (err) {
+    showAlert(err.message || "Savol yuborishda xatolik yuz berdi.");
+  }
 }
 
 // ======================================================
@@ -2052,8 +2181,91 @@ function renderChat() {
   const hasPhone = rawPhone.trim() !== "" && rawPhone.trim() !== "+998900000000";
   const contactPhone = rawPhone;
 
-  return `
-    <div class="page">
+  let contentHtml = "";
+
+  if (state.is_admin) {
+    // ADMIN Q&A CENTER
+    const allQuestions = adminQuestionsList || [];
+    const pendingCount = allQuestions.filter(q => q.status === "pending").length;
+    const filteredQuestions = adminQuestionsFilter === "pending"
+      ? allQuestions.filter(q => q.status === "pending")
+      : allQuestions;
+
+    contentHtml = `
+      <div class="admin-qa-center">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div class="page-title" style="margin-bottom:0;">Savollar Markazi</div>
+          ${pendingCount > 0 ? `<span class="tag warning">⚡ ${pendingCount} ta kutilmoqda</span>` : '<span class="tag passed">Barchasi javoblangan</span>'}
+        </div>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+          O‘quvchilar darslar ostida qoldirgan savollari. Savolga javob yozsangiz, o‘quvchiga darhol xabar boradi.
+        </p>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <button class="chip ${adminQuestionsFilter === 'pending' ? 'active' : ''}" onclick="setAdminQuestionsFilter('pending')">
+            ⏳ Kutilmoqda (${pendingCount})
+          </button>
+          <button class="chip ${adminQuestionsFilter === 'all' ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
+            📋 Barcha savollar (${allQuestions.length})
+          </button>
+        </div>
+
+        ${filteredQuestions.length ? filteredQuestions.map(q => `
+          <div class="admin-qa-item ${q.status === 'pending' ? 'pending' : ''}">
+            <div class="admin-qa-item-head">
+              <div class="admin-qa-user-info">
+                <span class="admin-qa-user-name">
+                  👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+                  ${q.username ? `<span style="font-weight:normal; color:var(--accent); font-size:12px;">@${escapeHtml(q.username)}</span>` : ""}
+                </span>
+                <span class="admin-qa-user-meta">
+                  📞 ${escapeHtml(q.phone || "Telefon yo‘q")} · 🕒 ${fmtTimeAgo(q.created_at)}
+                </span>
+              </div>
+              <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
+                ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
+              </div>
+            </div>
+
+            <div class="admin-qa-lesson-tag" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})" style="cursor:pointer;">
+              📚 ${escapeHtml(q.course_title || "Kurs")} → ${escapeHtml(q.module_title || "Modul")} → <b>${escapeHtml(q.lesson_title || "Dars")}</b> ↗
+            </div>
+
+            <div class="admin-qa-bubble">
+              <b>Savol:</b> ${escapeHtml(q.question)}
+            </div>
+
+            ${q.status === 'answered' && q.answer ? `
+              <div class="qa-answer-block" style="margin-bottom:10px;">
+                <div class="qa-answer-title">
+                  <span>👑 Yuborilgan javobingiz:</span>
+                  <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+                </div>
+                <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+              </div>
+            ` : ""}
+
+            <div class="admin-reply-box">
+              <textarea id="admin-reply-input-${q.id}" class="qa-textarea" placeholder="${q.status === 'answered' ? 'Javobni qayta tahrirlash...' : 'Ushbu o‘quvchiga javob yozing...'}">${escapeHtml(q.answer || '')}</textarea>
+              <div class="admin-reply-actions">
+                <button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="submitAdminReply(${Number(q.id)})">
+                  💬 ${q.status === 'answered' ? 'Javobni yangilash' : 'Javobni yuborish'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join("") : `
+          <div class="empty-box">
+            ${adminQuestionsFilter === 'pending' ? 'Hozircha javob kutayotgan savollar yo‘q! Barcha savollarga javob berilgan.' : 'Hozircha hech qanday savollar kelib tushmagan.'}
+          </div>
+        `}
+      </div>
+    `;
+  } else {
+    // STUDENT VIEW
+    const myQuestions = studentQuestionsList || [];
+
+    contentHtml = `
       <div class="page-title">Admin Bilan Aloqa</div>
 
       <div class="chat-box">
@@ -2068,7 +2280,6 @@ function renderChat() {
         </p>
       </div>
 
-      <!-- 5-TALAB: SHAXSIY CHATGA YO'NALTIRISH VA TELEFON RAQAMI -->
       <button class="btn" style="background:linear-gradient(135deg, #0088cc 0%, #2979ff 100%); margin-bottom:14px;" onclick="openDirectAdminTelegram('${escapeJsString(contactTg)}')">
         💬 Admin bilan Telegramda shaxsiy chat ochish
       </button>
@@ -2079,7 +2290,41 @@ function renderChat() {
       </a>
       ` : ""}
 
-      <!-- To'lov so'rovi yuborish -->
+      ${myQuestions.length ? `
+        <div style="margin-top:20px; margin-bottom:12px; font-weight:750; font-size:15px; display:flex; justify-content:space-between; align-items:center;">
+          <span>📝 Darslardagi savollaringiz</span>
+          <span class="tag">${myQuestions.length} ta</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+          ${myQuestions.map(q => `
+            <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+              <div class="qa-card-head">
+                <span class="admin-qa-lesson-tag" style="margin-bottom:0; font-size:11px; cursor:pointer;" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})">
+                  🎬 ${escapeHtml(q.lesson_title || 'Dars')} ↗
+                </span>
+                <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+              </div>
+              <div class="qa-question-text" style="margin-top:6px;">
+                <b>Savol:</b> ${escapeHtml(q.question)}
+              </div>
+              ${q.status === 'answered' && q.answer ? `
+                <div class="qa-answer-block">
+                  <div class="qa-answer-title">
+                    <span>👑 Ustoz javobi:</span>
+                    <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+                  </div>
+                  <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+                </div>
+              ` : `
+                <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px; margin-top:4px;">
+                  ⏳ Ustoz ko‘rib chiqmoqda...
+                </div>
+              `}
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+
       ${(state.courses && state.courses.length) ? `
         <div class="apple-field" style="margin-bottom:10px;">
           <label>Qaysi kurs bo'yicha so'rov yubormoqchisiz?</label>
@@ -2091,14 +2336,73 @@ function renderChat() {
       <button class="btn secondary" style="margin-bottom:18px;" onclick="requestAccess()">
         ${state.has_access ? "🔄 Muddatni uzaytirish so'rovi" : "💳 Kursga kirish so'rovini yuborish"}
       </button>
+    `;
+  }
 
+  return `
+    <div class="page">
+      ${contentHtml}
       ${state.is_admin ? `
-        <button class="btn secondary" style="border-style:dashed;" onclick="openAdminSettingsModal()">
+        <button class="btn secondary" style="border-style:dashed; margin-top:14px;" onclick="openAdminSettingsModal()">
           ⚙️ Aloqa ma'lumotlarini (Telegram, Tel, Rasm) sozlash
         </button>
       ` : ""}
     </div>
   `;
+}
+
+async function openLessonFromChat(courseId, lessonId) {
+  if (courseId) {
+    selectedCourseId = Number(courseId);
+  }
+  await openLesson(lessonId);
+}
+
+async function loadChatQuestions() {
+  try {
+    if (state.is_admin) {
+      const res = await adminApi("/api/admin/questions");
+      if (res && Array.isArray(res.questions)) {
+        adminQuestionsList = res.questions;
+        if (activeTab === "chat" && !currentView) {
+          render();
+        }
+      }
+    } else {
+      const res = await api("/api/chat/my-questions");
+      if (res && Array.isArray(res.questions)) {
+        studentQuestionsList = res.questions;
+        if (activeTab === "chat" && !currentView) {
+          render();
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("LOAD CHAT QUESTIONS ERROR:", e);
+  }
+}
+
+async function submitAdminReply(questionId) {
+  const input = document.getElementById(`admin-reply-input-${questionId}`);
+  const answer = input ? input.value.trim() : "";
+  if (!answer) {
+    return showAlert("Iltimos, o‘quvchiga javob matnini yozing!");
+  }
+
+  try {
+    haptic("medium");
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, { answer: answer });
+    showToast(res.message || "Javob yuborildi!");
+    await loadChatQuestions();
+  } catch (err) {
+    showAlert(err.message || "Javob yuborishda xato yuz berdi.");
+  }
+}
+
+function setAdminQuestionsFilter(filter) {
+  haptic("light");
+  adminQuestionsFilter = filter;
+  render();
 }
 
 function openDirectAdminTelegram(username) {
@@ -3578,6 +3882,9 @@ function setTab(id) {
   currentView = null;
   render();
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  if (id === "chat") {
+    loadChatQuestions();
+  }
 }
 
 // Chegirma muddati uchun jonli sanoq (har soniyada barcha .discount-countdown elementlarini yangilaydi)

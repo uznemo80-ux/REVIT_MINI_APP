@@ -2266,3 +2266,243 @@ html.light .nav {
   box-shadow: var(--shadow-md);
 }
 
+/* ------------------------------------------------------
+   Lesson Q&A & In-App Support Chat System
+   ------------------------------------------------------ */
+.lesson-qa-box {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.lesson-qa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.lesson-qa-title {
+  font-size: 14.5px;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+
+.lesson-qa-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.qa-textarea {
+  width: 100%;
+  min-height: 72px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.qa-textarea:focus {
+  border-color: var(--border-focus);
+}
+
+.qa-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background var(--transition-fast), transform 0.12s ease;
+}
+
+.qa-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.qa-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qa-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.qa-card.answered {
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.qa-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.qa-author {
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.qa-time {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.qa-question-text {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.qa-answer-block {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: 8px 12px;
+  border-radius: 4px 8px 8px 4px;
+  margin-top: 6px;
+}
+
+.qa-answer-title {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.qa-answer-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Chat Tab — Admin Q&A Center */
+.admin-qa-center {
+  margin-bottom: 24px;
+}
+
+.admin-qa-item {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-qa-item.pending {
+  border-color: rgba(255, 171, 0, 0.4);
+  background: linear-gradient(180deg, rgba(255, 171, 0, 0.04) 0%, var(--bg-surface-elevated) 100%);
+}
+
+.admin-qa-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.admin-qa-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-qa-user-name {
+  font-weight: 750;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.admin-qa-user-meta {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.admin-qa-lesson-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.admin-qa-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.admin-reply-box {
+  margin-top: 10px;
+}
+
+.admin-reply-box textarea {
+  width: 100%;
+  min-height: 64px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.admin-reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+

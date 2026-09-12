@@ -95,6 +95,19 @@ CREATE TABLE IF NOT EXISTS payment_requests (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- LESSON QUESTIONS & ANSWERS (Q&A)
+CREATE TABLE IF NOT EXISTS lesson_questions (
+  id            SERIAL PRIMARY KEY,
+  lesson_id     INT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  user_id       INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  question      TEXT NOT NULL,
+  answer        TEXT,
+  status        VARCHAR(30) NOT NULL DEFAULT 'pending',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  answered_at   TIMESTAMPTZ,
+  answered_by   BIGINT
+);
+
 -- INDEXES
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_admins_telegram_id ON admins(telegram_id);
@@ -105,3 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_progress_lesson_id ON progress(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_module_tests_module_id ON module_tests(module_id);
 CREATE INDEX IF NOT EXISTS idx_module_results_user_id ON module_results(user_id);
 CREATE INDEX IF NOT EXISTS idx_payment_requests_user_id ON payment_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status);
+
