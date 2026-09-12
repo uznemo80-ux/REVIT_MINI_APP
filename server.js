@@ -346,6 +346,14 @@ function hasAccess(user) {
   return new Date(user.access_until) > new Date();
 }
 
+// Hech qachon kirish huquqi berilmagan (hali to'lov qilmagan / yangi) foydalanuvchimi?
+// Bunday foydalanuvchiga 1-modul bepul namuna sifatida ochiq bo'ladi.
+// Lekin agar admin avval ruxsat berib, keyin bekor qilgan/tugatgan bo'lsa (access_until mavjud, lekin o'tgan),
+// bu endi "yangi mehmon" hisoblanmaydi va 1-modul ham yopiladi.
+function isNeverPaidUser(user) {
+  return !user || !user.access_until;
+}
+
 // Bitta hisob — bitta faol qurilma nazorati.
 // Agar hisobga boshqa qurilmadan (10 daqiqa ichida faol bo'lgan) kirilgan bo'lsa, video berilmaydi.
 var DEVICE_LOCK_MINUTES = 10;
@@ -820,13 +828,13 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var data = modules.map(function (mod) {
       var isFirstModule = mod.id === firstModuleId;
       var isGranted = grantedModuleIds.has(mod.id);
-      var moduleUnlocked = isFirstModule || userHasAccess || isGranted || isMainAdminUser;
+      var moduleUnlocked = (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
         var available = Boolean(lesson.is_free) || isMainAdminUser || isGranted ||
-          (!userHasAccess && isFirstModule) ||
+          (isNeverPaidUser(user) && isFirstModule) ||
           (userHasAccess && sequentialUnlockedSet.has(lesson.id));
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
@@ -895,7 +903,7 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('MODULE GRANT CHECK ERROR:', grantError);
     }
 
-    var lessonAvailable = Boolean(lesson.is_free) || isMainAdminUser || isGranted || (!userHasAccess && isFirstModule);
+    var lessonAvailable = Boolean(lesson.is_free) || isMainAdminUser || isGranted || (isNeverPaidUser(user) && isFirstModule);
 
     if (!lessonAvailable && userHasAccess) {
       // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
