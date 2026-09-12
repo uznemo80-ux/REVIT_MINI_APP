@@ -2345,14 +2345,8 @@ async function submitModuleTest(moduleId) {
       answers: (qs && qs.answers) || {}
     });
 
-    if (result.passed) {
-      showAlert(`🎉 Tabriklaymiz! Siz testdan o'tdingiz!\nNatijangiz: ${result.score}%\n\nKeyingi modul endi ochiq. Qayta topshirmoqchi bo'lsangiz, 15 kundan so'ng bu imkoniyat qayta ochiladi.`);
-    } else {
-      showAlert(`Afsuski, o'tish chegarasiga yetmadingiz.\nNatijangiz: ${result.score}%\n(Minimal: 65%)\n\nKeyingi modulga o'tish uchun testni hoziroq qayta topshirishingiz mumkin.`);
-    }
-
     window._quizState = null;
-    closeDetail();
+
     if (selectedCourseId) {
       try {
         const data = await api(`/api/course/${Number(selectedCourseId)}/modules`);
@@ -2360,9 +2354,78 @@ async function submitModuleTest(moduleId) {
       } catch (e) {}
     }
     await loadContent();
+
+    renderQuizResults(moduleId, result);
   } catch (error) {
     showAlert(error.message || "Test natijasini yuborishda xatolik.");
   }
+}
+
+function renderQuizResults(moduleId, result) {
+  const breakdown = Array.isArray(result.breakdown) ? result.breakdown : [];
+  const correctCount = breakdown.filter(b => b.is_correct).length;
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Darslarga qaytish</div>
+        <div class="page-title" style="margin-bottom:6px;">Test Natijasi</div>
+
+        <div class="card" style="text-align:center; margin-bottom:18px; background:${result.passed ? "var(--success-soft)" : "var(--danger-soft)"};">
+          <div style="font-size:32px; font-weight:800; color:${result.passed ? "var(--success)" : "var(--danger)"};">
+            ${result.score}%
+          </div>
+          <div style="font-size:14px; font-weight:700; margin-top:4px;">
+            ${result.passed ? "🎉 Tabriklaymiz, o'tdingiz!" : "😔 O'tish chegarasiga yetmadingiz (kerak: 65%)"}
+          </div>
+          <div style="font-size:12.5px; color:var(--text-secondary); margin-top:4px;">
+            ${correctCount} / ${breakdown.length} savolga to'g'ri javob berdingiz
+          </div>
+        </div>
+
+        <div class="section-title">Savollar bo'yicha natija</div>
+
+        ${breakdown.map((b, i) => {
+          let opts = b.options;
+          if (typeof opts === "string") { try { opts = JSON.parse(opts); } catch (e) { opts = []; } }
+          if (!Array.isArray(opts)) opts = [];
+
+          return `
+            <div class="card" style="margin-bottom:10px; border-left: 3px solid ${b.is_correct ? "var(--success)" : "var(--danger)"};">
+              <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:8px;">
+                <div style="font-size:13.5px; font-weight:650;">${i + 1}. ${escapeHtml(b.question)}</div>
+                <div style="font-size:16px;">${b.is_correct ? "✅" : "❌"}</div>
+              </div>
+              ${opts.map((opt, oIdx) => {
+                let style = "";
+                let icon = "";
+                if (oIdx === b.correct_index) {
+                  style = "background:var(--success-soft); color:var(--success); font-weight:700;";
+                  icon = " ✓";
+                } else if (oIdx === b.your_answer_index && !b.is_correct) {
+                  style = "background:var(--danger-soft); color:var(--danger); font-weight:700;";
+                  icon = " ✗";
+                }
+                return `<div style="padding:8px 10px; border-radius:8px; font-size:12.5px; margin-bottom:4px; ${style}">${escapeHtml(opt)}${icon}</div>`;
+              }).join("")}
+              ${b.your_answer_index === null ? `<div style="font-size:11.5px; color:var(--text-secondary); margin-top:4px;">Siz bu savolga javob bermagansiz</div>` : ""}
+            </div>
+          `;
+        }).join("")}
+
+        <button class="btn" style="margin-top:10px;" onclick="closeDetail()">
+          Darslarga qaytish
+        </button>
+        ${!result.passed ? `
+          <button class="btn secondary" onclick="openTest(${Number(moduleId)})">
+            🔁 Testni qayta topshirish
+          </button>
+        ` : ""}
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
 }
 
 // ======================================================

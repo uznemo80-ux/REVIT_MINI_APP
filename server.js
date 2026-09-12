@@ -1240,15 +1240,25 @@ app.post('/api/module/:id/submit', async function (req, res) {
 
     var answers = req.body.answers || {};
     var questionsResult = await pool.query(
-      'SELECT id, correct_index FROM module_tests WHERE module_id = $1 ORDER BY id ASC',
+      'SELECT id, question, options, correct_index FROM module_tests WHERE module_id = $1 ORDER BY order_index ASC, id ASC',
       [req.params.id]
     );
     var questions = questionsResult.rows;
     var correct = 0;
+    var breakdown = [];
     for (var i = 0; i < questions.length; i++) {
-      if (Number(answers[questions[i].id]) === Number(questions[i].correct_index)) {
-        correct++;
-      }
+      var q = questions[i];
+      var userAnswerIdx = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : null;
+      var correctIdx = Number(q.correct_index);
+      var isCorrect = userAnswerIdx !== null && userAnswerIdx === correctIdx;
+      if (isCorrect) correct++;
+      breakdown.push({
+        question: q.question,
+        options: q.options,
+        your_answer_index: userAnswerIdx,
+        correct_index: correctIdx,
+        is_correct: isCorrect
+      });
     }
     var score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0;
     var passed = score >= 65;
@@ -1311,7 +1321,7 @@ app.post('/api/module/:id/submit', async function (req, res) {
       }
     }
 
-    return res.json({ score: score, passed: passed });
+    return res.json({ score: score, passed: passed, breakdown: breakdown });
   } catch (error) {
     console.error('SUBMIT TEST ERROR:', error);
     return res.status(500).json({ error: 'Server xatosi' });
