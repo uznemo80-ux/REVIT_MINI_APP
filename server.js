@@ -677,10 +677,17 @@ app.post('/api/content', async function (req, res) {
       console.warn('LAST LESSON QUERY WARNING:', llError.message);
     }
 
+    var admin = await getAdminByTelegramId(user.telegram_id);
+    var isMainAdmin = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var isAdminUser = Boolean(admin || isMainAdmin);
+
     // Kurslar ro'yxati (Talab 3)
     var courses = [];
     try {
-      var coursesRes = await pool.query('SELECT * FROM courses ORDER BY order_index ASC, id ASC');
+      var coursesQuery = isAdminUser
+        ? 'SELECT * FROM courses ORDER BY order_index ASC, id ASC'
+        : "SELECT * FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC";
+      var coursesRes = await pool.query(coursesQuery);
       courses = coursesRes.rows.map(function (c) {
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
         return Object.assign({}, c, {
@@ -747,6 +754,12 @@ app.post('/api/course/:id/modules', async function (req, res) {
 
     var userHasAccess = hasAccess(user);
     var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var adminUser = await getAdminByTelegramId(user.telegram_id);
+    var isAdmin = Boolean(isMainAdminUser || adminUser);
+
+    if (course.status !== 'active' && !isAdmin) {
+      return res.status(403).json({ error: 'Ushbu kurs hali sotuvga chiqmagan yoki tayyorlanmoqda' });
+    }
 
     var modulesResult = await pool.query(
       'SELECT id, title, order_index FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
@@ -2318,9 +2331,10 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var price = String(req.body.price || '1 500 000 so‘m').trim();
     var totalModules = Number(req.body.total_modules) || 0;
     var totalLessons = Number(req.body.total_lessons) || 0;
-    var releaseDate = String(req.body.release_date || 'Faol kurs').trim();
+    var releaseDate = String(req.body.release_date || 'Qoralama').trim();
     var coverUrl = String(req.body.cover_url || '').trim();
-    var status = String(req.body.status || 'active').trim();
+    var status = String(req.body.status || 'draft').trim();
+    if (status !== 'active' && status !== 'draft') status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
@@ -2351,7 +2365,8 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     var totalLessons = Number(req.body.total_lessons) || 0;
     var releaseDate = String(req.body.release_date || '').trim();
     var coverUrl = String(req.body.cover_url || '').trim();
-    var status = String(req.body.status || 'active').trim();
+    var status = String(req.body.status || 'draft').trim();
+    if (status !== 'active' && status !== 'draft') status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
@@ -2370,6 +2385,27 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
   } catch (error) {
     console.error('UPDATE COURSE ERROR:', error);
     return res.status(500).json({ error: 'Kursni yangilashda xato' });
+  }
+});
+
+app.post('/api/admin/courses/:id/status', requireAdmin, async function (req, res) {
+  try {
+    var courseId = Number(req.params.id);
+    var status = String(req.body.status || 'draft').trim();
+    if (status !== 'active' && status !== 'draft') {
+      status = 'draft';
+    }
+    var result = await pool.query(
+      'UPDATE courses SET status = $1 WHERE id = $2 RETURNING *',
+      [status, courseId]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: 'Kurs topilmadi' });
+    }
+    return res.json({ ok: true, course: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE COURSE STATUS ERROR:', error);
+    return res.status(500).json({ error: 'Kurs holatini o‘zgartirishda xato' });
   }
 });
 

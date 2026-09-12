@@ -860,8 +860,8 @@ function renderCoursesList() {
           </div>
           <div class="course-body">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div class="tag ${course.status === 'active' ? 'passed' : ''}">
-                ${course.status === 'active' ? 'Faol Kurs' : 'Tez Kunda'}
+              <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
+                ${course.status === 'active' ? 'Faol Kurs' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Tez Kunda')}
               </div>
               <div style="font-weight:750; color:var(--accent); font-size:15px;">
                 ${course.is_discount_active && course.discount_price ? `
@@ -881,8 +881,8 @@ function renderCoursesList() {
               <span>🎬 ${course.total_lessons || 0} Dars</span>
               ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
             </div>
-            <button class="btn" style="margin-bottom:0; padding:10px 16px;">
-              ${course.status === 'active' ? 'Darslarni ochish →' : 'Tez kunda chiqadi ⏳'}
+            <button class="btn" style="margin-bottom:0; padding:10px 16px; ${course.status !== 'active' && state.is_admin ? 'background:var(--bg-surface-elevated); border:1px solid var(--border); color:var(--text-primary);' : ''}">
+              ${course.status === 'active' ? 'Darslarni ochish →' : (state.is_admin ? '⚙️ Kursni ochish va to‘ldirish →' : 'Tez kunda chiqadi ⏳')}
             </button>
           </div>
         </div>
@@ -959,6 +959,28 @@ function openAddCourseModal() {
             <input id="c-cover" class="apple-input" placeholder="https://... rasm havolasi" type="url">
           </div>
 
+          <div class="apple-field" style="margin-top:14px; margin-bottom:18px;">
+            <label style="font-weight:750; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span>Kurs holati (O'quvchilarga ko'rinishi)</span>
+              <span id="modal-c-status-badge" class="course-status-badge draft">🔒 Hali chiqmadi</span>
+            </label>
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; line-height:1.4;">
+              O'quvchilar chala darslarni ko'rib qolmasligi uchun sukut bo'yicha yopiq turadi.
+            </div>
+            <input type="hidden" id="c-status" value="draft">
+            <div class="status-slide-toggle" id="modal-c-status-toggle" data-status="draft" onclick="handleFormStatusClick(event, 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+              <div class="status-slide-pill"></div>
+              <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setFormStatus('draft', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+                <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
+                <span class="status-slide-opt-desc">Qoralama (yopiq)</span>
+              </button>
+              <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setFormStatus('active', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+                <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
+                <span class="status-slide-opt-desc">Barchaga ochiq</span>
+              </button>
+            </div>
+          </div>
+
           <button class="btn" onclick="submitCreateCourse()">
             💾 Kursni saqlash
           </button>
@@ -980,6 +1002,7 @@ async function submitCreateCourse() {
   const less = document.getElementById("c-less")?.value;
   const rel = document.getElementById("c-rel")?.value.trim();
   const cover = document.getElementById("c-cover")?.value.trim();
+  const status = document.getElementById("c-status")?.value || "draft";
 
   if (!title) return showAlert("Kurs nomi kiritilishi shart!");
 
@@ -998,9 +1021,10 @@ async function submitCreateCourse() {
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,
-      cover_url: cover
+      cover_url: cover,
+      status: status
     });
-    showToast("Yangi kurs muvaffaqiyatli qo'shildi!");
+    showToast(status === "active" ? "Yangi kurs sotuvda yaratildi!" : "Yangi kurs qoralamada saqlandi (o‘quvchilarga ko‘rinmaydi)!");
     closeDetail();
     loadContent();
   } catch (err) {
@@ -1070,6 +1094,30 @@ async function openEditCourseModal(id) {
             <input id="ec-cover" class="apple-input" value="${escapeHtml(course.cover_url || '')}" type="url">
           </div>
 
+          <div class="apple-field" style="margin-top:14px; margin-bottom:18px;">
+            <label style="font-weight:750; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span>Kurs holati (O'quvchilarga ko'rinishi)</span>
+              <span id="modal-ec-status-badge" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
+                ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali chiqmadi (Qoralama)'}
+              </span>
+            </label>
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; line-height:1.4;">
+              O'quvchilarga ko'rinish holatini o'ngga yoki chapga o'tkazib boshqaring.
+            </div>
+            <input type="hidden" id="ec-status" value="${course.status || 'draft'}">
+            <div class="status-slide-toggle" id="modal-ec-status-toggle" data-status="${course.status || 'draft'}" onclick="handleFormStatusClick(event, 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+              <div class="status-slide-pill"></div>
+              <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setFormStatus('draft', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+                <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
+                <span class="status-slide-opt-desc">Qoralama (yopiq)</span>
+              </button>
+              <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setFormStatus('active', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+                <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
+                <span class="status-slide-opt-desc">Barchaga ochiq</span>
+              </button>
+            </div>
+          </div>
+
           <button class="btn" onclick="submitUpdateCourse(${Number(id)})">
             💾 O'zgarishlarni saqlash
           </button>
@@ -1091,6 +1139,7 @@ async function submitUpdateCourse(id) {
   const less = document.getElementById("ec-less")?.value;
   const rel = document.getElementById("ec-rel")?.value.trim();
   const cover = document.getElementById("ec-cover")?.value.trim();
+  const status = document.getElementById("ec-status")?.value || "draft";
 
   if (!title) return showAlert("Kurs nomi majburiy!");
 
@@ -1109,7 +1158,8 @@ async function submitUpdateCourse(id) {
       total_modules: Number(mod) || 0,
       total_lessons: Number(less) || 0,
       release_date: rel,
-      cover_url: cover
+      cover_url: cover,
+      status: status
     });
     showToast("Kurs muvaffaqiyatli yangilandi!");
     closeDetail();
@@ -1125,6 +1175,87 @@ function deleteCourseModal(id) {
     showToast("Kurs o'chirildi!");
     loadContent();
   });
+}
+
+// ======================================================
+// COURSE PUBLICATION STATUS CONTROLS
+// ======================================================
+
+async function setCourseStatus(courseId, newStatus) {
+  haptic("medium");
+  const toggles = [
+    document.getElementById(`course-status-toggle-${courseId}`),
+    document.getElementById(`course-status-toggle-btm-${courseId}`)
+  ].filter(Boolean);
+  toggles.forEach(t => t.setAttribute("data-status", newStatus));
+
+  const badges = [
+    document.getElementById(`course-status-badge-${courseId}`),
+    document.getElementById(`course-status-badge-btm-${courseId}`)
+  ].filter(Boolean);
+  badges.forEach(b => {
+    b.className = `course-status-badge ${newStatus === 'active' ? 'active' : 'draft'}`;
+    b.innerHTML = newStatus === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)';
+  });
+
+  const cardEl = document.getElementById(`course-status-card-${courseId}`);
+  if (cardEl) {
+    cardEl.className = `course-status-card ${newStatus === 'active' ? 'active-mode' : 'draft-mode'}`;
+  }
+  const hintEl = document.getElementById(`course-status-hint-${courseId}`);
+  if (hintEl) {
+    hintEl.textContent = newStatus === 'active'
+      ? "Ushbu kurs hozir barcha o‘quvchilarga ko‘rinmoqda va sotuvga chiqarilgan."
+      : "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi. Modullar va darslarni to‘ldirib bo‘lgach, o‘ngga surib sotuvga chiqarishingiz mumkin.";
+  }
+
+  try {
+    const res = await adminApi(`/api/admin/courses/${Number(courseId)}/status`, { status: newStatus });
+    if (res && res.course) {
+      if (courseModulesData && courseModulesData.course && Number(courseModulesData.course.id) === Number(courseId)) {
+        courseModulesData.course.status = newStatus;
+      }
+      const existingInState = (state.courses || []).find(c => Number(c.id) === Number(courseId));
+      if (existingInState) {
+        existingInState.status = newStatus;
+      }
+    }
+    if (newStatus === "active") {
+      showToast("🚀 Kurs muvaffaqiyatli sotuvga chiqarildi!");
+    } else {
+      showToast("🔒 Kurs qoralamaga olindi (o'quvchilarga ko'rinmaydi).");
+    }
+  } catch (err) {
+    showAlert(err.message || "Kurs holatini o'zgartirishda xato yuz berdi.");
+    render();
+  }
+}
+
+function handleCourseStatusClick(e, courseId) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const newStatus = clickX > rect.width / 2 ? "active" : "draft";
+  setCourseStatus(courseId, newStatus);
+}
+
+function setFormStatus(status, inputId, toggleId, badgeId) {
+  haptic("light");
+  const input = document.getElementById(inputId);
+  if (input) input.value = status;
+  const toggle = document.getElementById(toggleId);
+  if (toggle) toggle.setAttribute("data-status", status);
+  const badge = document.getElementById(badgeId);
+  if (badge) {
+    badge.className = `course-status-badge ${status === 'active' ? 'active' : 'draft'}`;
+    badge.innerHTML = status === 'active' ? '🚀 Sotuvga chiqish' : '🔒 Hali chiqmadi';
+  }
+}
+
+function handleFormStatusClick(e, inputId, toggleId, badgeId) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const newStatus = clickX > rect.width / 2 ? "active" : "draft";
+  setFormStatus(newStatus, inputId, toggleId, badgeId);
 }
 
 function goToCourseManagement() {
@@ -1206,6 +1337,33 @@ function renderCourseModules() {
       </p>
 
       ${state.is_admin ? `
+        <div id="course-status-card-${course.id}" class="course-status-card ${course.status === 'active' ? 'active-mode' : 'draft-mode'}">
+          <div class="course-status-header">
+            <div class="course-status-title">
+              <span>📡 Kurs Ko'rinishi (Status)</span>
+            </div>
+            <div id="course-status-badge-${course.id}" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
+              ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)'}
+            </div>
+          </div>
+          <div id="course-status-hint-${course.id}" class="course-status-hint">
+            ${course.status === 'active'
+              ? "Ushbu kurs hozir barcha o‘quvchilarga ko‘rinmoqda va sotuvga chiqarilgan."
+              : "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi. Modullar va darslarni to‘ldirib bo‘lgach, o‘ngga surib sotuvga chiqarishingiz mumkin."}
+          </div>
+          <div class="status-slide-toggle" id="course-status-toggle-${course.id}" data-status="${course.status || 'draft'}" onclick="handleCourseStatusClick(event, ${Number(course.id)})">
+            <div class="status-slide-pill"></div>
+            <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'draft')">
+              <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
+              <span class="status-slide-opt-desc">O'quvchilarga yopiq</span>
+            </button>
+            <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'active')">
+              <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
+              <span class="status-slide-opt-desc">Barchaga ochiq</span>
+            </button>
+          </div>
+        </div>
+
         <button class="admin-small-btn" style="margin-bottom:16px;" onclick="openAddModuleModal(${Number(course.id)})">
           ➕ Yangi Modul Qo'shish
         </button>
@@ -1295,6 +1453,32 @@ function renderCourseModules() {
         <button class="btn" onclick="setTab('chat')">
           🔓 Kursga to'liq kirish huquqini olish
         </button>
+      </div>
+    `;
+  }
+
+  if (state.is_admin) {
+    html += `
+      <div class="course-bottom-action-bar">
+        <div class="course-status-header">
+          <div class="course-status-title">
+            <span>⚙️ Pastki boshqaruv: Kursni sotuvga chiqarish</span>
+          </div>
+          <div id="course-status-badge-btm-${course.id}" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
+            ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)'}
+          </div>
+        </div>
+        <div class="status-slide-toggle" id="course-status-toggle-btm-${course.id}" data-status="${course.status || 'draft'}" onclick="handleCourseStatusClick(event, ${Number(course.id)})">
+          <div class="status-slide-pill"></div>
+          <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'draft')">
+            <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
+            <span class="status-slide-opt-desc">Qoralama (o‘quvchilarga yopiq)</span>
+          </button>
+          <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'active')">
+            <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
+            <span class="status-slide-opt-desc">Faol (barchaga ochiq)</span>
+          </button>
+        </div>
       </div>
     `;
   }
