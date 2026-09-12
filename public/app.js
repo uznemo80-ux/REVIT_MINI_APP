@@ -62,6 +62,21 @@ function escapeJsString(value) {
     .replace(/>/g, "\\u003E");
 }
 
+// Narx maydonlari uchun: faqat raqam qoldiradi va har 3 xonadan keyin bo'shliq qo'yadi (1500000 -> 1 500 000)
+function formatPriceInput(el) {
+  const digits = el.value.replace(/\D/g, "").slice(0, 12);
+  el.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function extractPriceDigits(rawValue) {
+  return String(rawValue || "").replace(/\D/g, "");
+}
+
+function formatPriceDigitsForDisplay(rawValue) {
+  const digits = extractPriceDigits(rawValue);
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
 // Fayl nomi kengaytmasiga qarab mos ikonka qaytaradi (resurs kartalarida)
 function getResourceIcon(fileName) {
   const ext = String(fileName || "").split(".").pop().toLowerCase();
@@ -759,14 +774,13 @@ function renderLessons() {
 
 function renderCoursePriceBlock(course) {
   if (course.is_discount_active && course.discount_price) {
-    const daysLeft = course.discount_until ? Math.max(0, Math.ceil((new Date(course.discount_until) - new Date()) / (1000 * 60 * 60 * 24))) : null;
     return `
       <div>
         <div style="display:flex; align-items:baseline; gap:8px;">
           <div class="course-price" style="color:var(--danger);">${escapeHtml(course.discount_price)}</div>
           <div style="font-size:13px; color:var(--text-secondary); text-decoration:line-through;">${escapeHtml(course.original_price || course.price || '')}</div>
         </div>
-        ${daysLeft !== null ? `<div style="font-size:11px; color:var(--danger); font-weight:700;">🔥 Chegirma ${daysLeft} kun qoldi</div>` : ""}
+        <div class="discount-countdown" data-until="${escapeHtml(course.discount_until || '')}" style="font-size:11px; color:var(--danger); font-weight:700;">🔥 Hisoblanmoqda...</div>
       </div>
     `;
   }
@@ -857,8 +871,8 @@ function renderCoursesList() {
               </div>
             </div>
             ${course.is_discount_active && course.discount_until ? `
-              <div style="font-size:11px; color:var(--danger); font-weight:700; margin-bottom:8px;">
-                🔥 Chegirma ${Math.max(0, Math.ceil((new Date(course.discount_until) - new Date()) / (1000*60*60*24)))} kun qoldi
+              <div class="discount-countdown" data-until="${escapeHtml(course.discount_until)}" style="font-size:11px; color:var(--danger); font-weight:700; margin-bottom:8px;">
+                🔥 Hisoblanmoqda...
               </div>
             ` : ""}
             <div class="course-meta" style="margin-bottom:12px;">
@@ -906,12 +920,12 @@ function openAddCourseModal() {
             <input id="c-sub" class="apple-input" placeholder="BIM loyihalash va vizualizatsiya" type="text">
           </div>
           <div class="apple-field">
-            <label>Kurs narxi</label>
-            <input id="c-price" class="apple-input" placeholder="1 500 000 so'm" type="text">
+            <label>Kurs narxi (so'mda, faqat raqam)</label>
+            <input id="c-price" class="apple-input" placeholder="1 500 000" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
           <div class="apple-field">
-            <label>Chegirma narxi (ixtiyoriy)</label>
-            <input id="c-discount-price" class="apple-input" placeholder="990 000 so'm" type="text">
+            <label>Chegirma narxi (ixtiyoriy, faqat raqam)</label>
+            <input id="c-discount-price" class="apple-input" placeholder="990 000" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
           <div class="apple-field">
             <label>Chegirma qachongacha (ixtiyoriy)</label>
@@ -958,8 +972,8 @@ function openAddCourseModal() {
 async function submitCreateCourse() {
   const title = document.getElementById("c-title")?.value.trim();
   const sub = document.getElementById("c-sub")?.value.trim();
-  const price = document.getElementById("c-price")?.value.trim();
-  const discountPrice = document.getElementById("c-discount-price")?.value.trim();
+  const priceDigits = document.getElementById("c-price")?.value.trim();
+  const discountPriceDigits = document.getElementById("c-discount-price")?.value.trim();
   const discountUntil = document.getElementById("c-discount-until")?.value;
   const category = Array.from(document.querySelectorAll('input[name="c-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("c-mod")?.value;
@@ -968,6 +982,9 @@ async function submitCreateCourse() {
   const cover = document.getElementById("c-cover")?.value.trim();
 
   if (!title) return showAlert("Kurs nomi kiritilishi shart!");
+
+  const price = priceDigits ? `${priceDigits} so'm` : "";
+  const discountPrice = discountPriceDigits ? `${discountPriceDigits} so'm` : "";
 
   try {
     haptic("medium");
@@ -1011,12 +1028,12 @@ async function openEditCourseModal(id) {
             <input id="ec-sub" class="apple-input" value="${escapeHtml(course.subtitle || '')}" type="text">
           </div>
           <div class="apple-field">
-            <label>Kurs narxi</label>
-            <input id="ec-price" class="apple-input" value="${escapeHtml(course.price || '')}" type="text">
+            <label>Kurs narxi (so'mda, faqat raqam)</label>
+            <input id="ec-price" class="apple-input" value="${formatPriceDigitsForDisplay(course.price)}" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
           <div class="apple-field">
             <label>Chegirma narxi (ixtiyoriy, bo'sh qoldirsangiz chegirma o'chadi)</label>
-            <input id="ec-discount-price" class="apple-input" value="${escapeHtml(course.discount_price || '')}" placeholder="990 000 so'm" type="text">
+            <input id="ec-discount-price" class="apple-input" value="${formatPriceDigitsForDisplay(course.discount_price)}" placeholder="990 000" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
           <div class="apple-field">
             <label>Chegirma qachongacha</label>
@@ -1066,8 +1083,8 @@ async function openEditCourseModal(id) {
 async function submitUpdateCourse(id) {
   const title = document.getElementById("ec-title")?.value.trim();
   const sub = document.getElementById("ec-sub")?.value.trim();
-  const price = document.getElementById("ec-price")?.value.trim();
-  const discountPrice = document.getElementById("ec-discount-price")?.value.trim();
+  const priceDigits = document.getElementById("ec-price")?.value.trim();
+  const discountPriceDigits = document.getElementById("ec-discount-price")?.value.trim();
   const discountUntil = document.getElementById("ec-discount-until")?.value;
   const category = Array.from(document.querySelectorAll('input[name="ec-category-cb"]:checked')).map(el => el.value);
   const mod = document.getElementById("ec-mod")?.value;
@@ -1076,6 +1093,9 @@ async function submitUpdateCourse(id) {
   const cover = document.getElementById("ec-cover")?.value.trim();
 
   if (!title) return showAlert("Kurs nomi majburiy!");
+
+  const price = priceDigits ? `${priceDigits} so'm` : "";
+  const discountPrice = discountPriceDigits ? `${discountPriceDigits} so'm` : "";
 
   try {
     haptic("medium");
@@ -3292,6 +3312,27 @@ function setTab(id) {
   render();
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
+
+// Chegirma muddati uchun jonli sanoq (har soniyada barcha .discount-countdown elementlarini yangilaydi)
+setInterval(() => {
+  document.querySelectorAll(".discount-countdown").forEach(el => {
+    const until = el.dataset.until ? new Date(el.dataset.until) : null;
+    if (!until || isNaN(until.getTime())) return;
+    const diff = until.getTime() - Date.now();
+    if (diff <= 0) {
+      el.textContent = "⏰ Chegirma muddati tugadi";
+      return;
+    }
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2, "0");
+    el.textContent = days > 0
+      ? `🔥 Chegirma tugashiga: ${days} kun ${pad(hours)}:${pad(mins)}:${pad(secs)}`
+      : `🔥 Chegirma tugashiga: ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  });
+}, 1000);
 
 function closeDetail() {
   haptic("light");
