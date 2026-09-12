@@ -782,12 +782,19 @@ app.post('/api/course/:id/modules', async function (req, res) {
     // Modul testlaridan o'tish holati: keyingi modulga o'tish uchun oldingi modul testidan (agar mavjud bo'lsa) 65%+ ball kerak
     var passedModulesSet = new Set();
     var modulesWithTestsSet = new Set();
+    var retakeAvailableAtMap = {};
     if (moduleIds.length) {
       var testResultsResult = await pool.query(
-        'SELECT module_id, passed FROM module_results WHERE user_id = $1 AND module_id = ANY($2)',
+        'SELECT module_id, passed, attempted_at FROM module_results WHERE user_id = $1 AND module_id = ANY($2)',
         [user.id, moduleIds]
       );
-      testResultsResult.rows.forEach(function (r) { if (r.passed) passedModulesSet.add(r.module_id); });
+      testResultsResult.rows.forEach(function (r) {
+        if (r.passed) {
+          passedModulesSet.add(r.module_id);
+          var retakeDate = new Date(new Date(r.attempted_at).getTime() + 15 * 24 * 60 * 60 * 1000);
+          retakeAvailableAtMap[r.module_id] = retakeDate;
+        }
+      });
 
       var modulesWithTestsResult = await pool.query(
         'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
@@ -848,7 +855,8 @@ app.post('/api/course/:id/modules', async function (req, res) {
         id: mod.id, title: mod.title, order_index: mod.order_index,
         unlocked: moduleUnlocked, lessons: mappedLessons,
         watched_count: watchedCount, total_count: moduleLessons.length,
-        has_test: modulesWithTestsSet.has(mod.id), test_passed: passedModulesSet.has(mod.id)
+        has_test: modulesWithTestsSet.has(mod.id), test_passed: passedModulesSet.has(mod.id),
+        retake_available_at: retakeAvailableAtMap[mod.id] || null
       };
     });
 
@@ -1294,7 +1302,19 @@ app.post('/api/module/:id/submit', async function (req, res) {
             allPassed = moduleIdsWithTests.every(function (mid) { return passedModuleIdSet.has(mid); });
           }
 
-          if (allPassed && moduleIdsWithTests.length > 0) {
+          // Kursning BARCHA darslari ko'rilganmi (nafaqat test bor modullar, balki hamma modullar)?
+          var courseLessonsResult = await pool.query('SELECT id FROM lessons WHERE module_id = ANY($1)', [courseModuleIds]);
+          var courseLessonIds = courseLessonsResult.rows.map(function (r) { return r.id; });
+          var allLessonsWatched = false;
+          if (courseLessonIds.length > 0) {
+            var watchedCountResult = await pool.query(
+              'SELECT COUNT(*)::int AS c FROM progress WHERE user_id = $1 AND lesson_id = ANY($2) AND watched = true',
+              [user.id, courseLessonIds]
+            );
+            allLessonsWatched = watchedCountResult.rows[0].c === courseLessonIds.length;
+          }
+
+          if (allPassed && allLessonsWatched && courseLessonIds.length > 0) {
             var insertCompletionResult = await pool.query(
               'INSERT INTO course_completions (user_id, course_id) VALUES ($1, $2) ON CONFLICT (user_id, course_id) DO NOTHING RETURNING id',
               [user.id, courseId]
@@ -1671,14 +1691,14 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
     var newAccessUntil = new Date(accessUntil);
     var isGrantingOrExtending = newAccessUntil > new Date();
 
-    await pool.query(
-      'UPDATE users SET access_until = $1 WHERE id = $2',
-      [newAccessUntil, req.params.id]
-    );
-
     var studentTelegramId = studentResult.rows[0].telegram_id;
 
     if (isGrantingOrExtending) {
+      await pool.query(
+        'UPDATE users SET access_until = $1 WHERE id = $2',
+        [newAccessUntil, req.params.id]
+      );
+
       await pool.query(
         "UPDATE payment_requests SET status = 'approved', approved_at = NOW() WHERE user_id = $1 AND status = 'pending'",
         [req.params.id]
@@ -1691,7 +1711,23 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
         });
       }
     } else {
-      console.log('STUDENT ACCESS LIMITED: user_id=' + req.params.id);
+      // Kirish huquqi cheklansa/tugatilsa — o'quvchi boshidagi ("yangi o'quvchi") holatiga to'liq qaytariladi:
+      // muddat, progress, test natijalari, alohida modul ruxsatlari va qurilma bog'lanishi tozalanadi
+      await pool.query(
+        'UPDATE users SET access_until = NULL, active_device_id = NULL, device_last_seen = NULL WHERE id = $1',
+        [req.params.id]
+      );
+      await pool.query('DELETE FROM progress WHERE user_id = $1', [req.params.id]);
+      await pool.query('DELETE FROM module_results WHERE user_id = $1', [req.params.id]);
+      await pool.query('DELETE FROM module_access_grants WHERE user_id = $1', [req.params.id]);
+      await pool.query('DELETE FROM practice_submissions WHERE user_id = $1', [req.params.id]);
+      await pool.query('DELETE FROM course_completions WHERE user_id = $1', [req.params.id]);
+      await pool.query(
+        "UPDATE payment_requests SET status = 'cancelled' WHERE user_id = $1 AND status = 'pending'",
+        [req.params.id]
+      );
+
+      console.log('STUDENT ACCESS LIMITED (full reset): user_id=' + req.params.id);
 
       if (studentTelegramId) {
         botModule.sendAccessLimitedMessage(studentTelegramId).catch(function (e) {
@@ -1700,7 +1736,7 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
       }
     }
 
-    return res.json({ ok: true, message: isGrantingOrExtending ? 'Kirish huquqi berildi' : 'Kirish huquqi cheklandi' });
+    return res.json({ ok: true, message: isGrantingOrExtending ? 'Kirish huquqi berildi' : 'Kirish huquqi cheklandi va oquvchi boshlangich holatga qaytarildi' });
   } catch (error) {
     console.error('ADMIN STUDENT ACCESS ERROR:', error);
     return res.status(500).json({ error: 'Kirish huquqini berishda xato' });

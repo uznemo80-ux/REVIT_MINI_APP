@@ -1267,6 +1267,11 @@ function renderCourseModules() {
                 <div style="font-size:12px; color:${mod.test_passed ? "var(--success)" : "var(--text-secondary)"}; text-align:center;">
                   ${mod.test_passed ? "✅ Test topshirilgan — keyingi modul ochiq" : "⚠️ Keyingi modulga o'tish uchun testdan 65%+ ball kerak"}
                 </div>
+                ${mod.test_passed && mod.retake_available_at ? `
+                  <div class="retake-countdown" data-until="${escapeHtml(mod.retake_available_at)}" style="font-size:11px; color:var(--text-secondary); text-align:center;">
+                    Hisoblanmoqda...
+                  </div>
+                ` : ""}
               ` : ""}
               ${state.has_access || state.is_admin ? `
                 <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
@@ -2798,15 +2803,30 @@ async function grantStudentAccess(id) {
   const dateVal = document.getElementById("grant-access-date")?.value;
   if (!dateVal) return showAlert("Iltimos, sanani tanlang.");
 
-  try {
-    haptic("medium");
-    await adminApi(`/api/admin/student/${Number(id)}/access`, {
-      access_until: dateVal
-    });
-    showToast("Kirish muddati muvaffaqiyatli saqlandi!");
-    adminSetTab("students");
-  } catch (error) {
-    showAlert(error.message || "Kirish muddatini saqlashda xato.");
+  const isRevoking = new Date(dateVal) <= new Date();
+
+  const doSave = async () => {
+    try {
+      haptic("medium");
+      await adminApi(`/api/admin/student/${Number(id)}/access`, {
+        access_until: dateVal
+      });
+      showToast(isRevoking ? "Kirish huquqi cheklandi, o'quvchi boshlang'ich holatga qaytarildi!" : "Kirish muddati muvaffaqiyatli saqlandi!");
+      adminSetTab("students");
+    } catch (error) {
+      showAlert(error.message || "Kirish muddatini saqlashda xato.");
+    }
+  };
+
+  if (isRevoking) {
+    showConfirm(
+      "Kirish huquqi cheklansinmi?",
+      "Diqqat: bu o'quvchining barcha darslar progressi, test natijalari va alohida modul ruxsatlari butunlay o'chiriladi — u qayta kirganida xuddi yangi (hech qachon to'lamagan) o'quvchi kabi boshlaydi. Bu amalni ortga qaytarib bo'lmaydi.",
+      "Ha, cheklash",
+      doSave
+    );
+  } else {
+    await doSave();
   }
 }
 
@@ -3394,6 +3414,24 @@ setInterval(() => {
     el.textContent = days > 0
       ? `🔥 Chegirma tugashiga: ${days} kun ${pad(hours)}:${pad(mins)}:${pad(secs)}`
       : `🔥 Chegirma tugashiga: ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  });
+
+  document.querySelectorAll(".retake-countdown").forEach(el => {
+    const until = el.dataset.until ? new Date(el.dataset.until) : null;
+    if (!until || isNaN(until.getTime())) return;
+    const diff = until.getTime() - Date.now();
+    if (diff <= 0) {
+      el.textContent = "🔓 Testni qayta topshirish mumkin";
+      return;
+    }
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2, "0");
+    el.textContent = days > 0
+      ? `⏳ Qayta topshirish uchun: ${days} kun ${pad(hours)}:${pad(mins)}:${pad(secs)}`
+      : `⏳ Qayta topshirish uchun: ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
   });
 }, 1000);
 
