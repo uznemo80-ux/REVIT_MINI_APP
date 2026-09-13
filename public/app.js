@@ -3031,6 +3031,7 @@ function confirmDeleteAccount() {
 // ======================================================
 
 const QUIZ_PREV_LOCK_SECONDS = 15;
+const QUIZ_QUESTION_SECONDS = 30;
 
 async function openTest(moduleId) {
   try {
@@ -3055,7 +3056,8 @@ async function openTest(moduleId) {
       currentIndex: 0,
       answers: {},
       canGoBack: true,
-      lockTimer: null
+      lockTimer: null,
+      questionTimer: null
     };
 
     renderQuizQuestion();
@@ -3063,6 +3065,13 @@ async function openTest(moduleId) {
     console.error("OPEN TEST ERROR:", error);
     showAlert(error.message || "Testni yuklashda xatolik.");
   }
+}
+
+function clearQuizTimers(qs) {
+  if (qs.lockTimer) clearTimeout(qs.lockTimer);
+  if (qs.questionTimer) clearTimeout(qs.questionTimer);
+  qs.lockTimer = null;
+  qs.questionTimer = null;
 }
 
 function renderQuizQuestion() {
@@ -3073,34 +3082,47 @@ function renderQuizQuestion() {
   const idx = qs.currentIndex;
   const q = qs.questions[idx];
   const isLast = idx === total - 1;
+  const isFirst = idx === 0;
   const selectedAnswer = qs.answers[q.id];
 
+  clearQuizTimers(qs);
+
+  // 15 soniyadan keyin "Oldingi savol" tugmasi qulflanadi (birinchi savolda bu tugma umuman ko'rsatilmaydi)
   qs.canGoBack = true;
-  if (qs.lockTimer) clearTimeout(qs.lockTimer);
-  qs.lockTimer = setTimeout(() => {
-    qs.canGoBack = false;
-    const prevBtn = document.getElementById("quiz-prev-btn");
-    if (prevBtn) {
-      prevBtn.disabled = true;
-      prevBtn.classList.add("quiz-nav-locked");
+  if (!isFirst) {
+    qs.lockTimer = setTimeout(() => {
+      qs.canGoBack = false;
+      const prevBtn = document.getElementById("quiz-prev-btn");
+      if (prevBtn) {
+        prevBtn.disabled = true;
+        prevBtn.classList.add("quiz-nav-locked");
+      }
+    }, QUIZ_PREV_LOCK_SECONDS * 1000);
+  }
+
+  // Har bir savol uchun 30 soniyalik javob berish vaqti — tugasa, javobsiz keyingi savolga o'tadi
+  qs.questionTimer = setTimeout(() => {
+    haptic("medium");
+    if (qs.currentIndex === qs.questions.length - 1) {
+      submitModuleTest(qs.moduleId);
+    } else {
+      qs.currentIndex++;
+      renderQuizQuestion();
     }
-  }, QUIZ_PREV_LOCK_SECONDS * 1000);
+  }, QUIZ_QUESTION_SECONDS * 1000);
 
   currentView = {
     html: `
       <div class="page">
         <div class="back-btn" onclick="closeDetail()">← Testdan chiqish</div>
         <div class="page-title" style="margin-bottom:4px;">Modul Testi</div>
-        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">Savol ${idx + 1} / ${total}</p>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:10px;">Savol ${idx + 1} / ${total}</p>
 
         <div class="quiz-timer-track">
-          <div class="quiz-timer-bar" id="quiz-timer-bar" style="animation: quizTimerShrink ${QUIZ_PREV_LOCK_SECONDS}s linear forwards;"></div>
+          <div class="quiz-timer-bar" style="animation: quizTimerShrink ${QUIZ_QUESTION_SECONDS}s linear forwards;"></div>
         </div>
-        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:16px;">
-          ⏱️ Avvalgi savolga qaytish uchun ${QUIZ_PREV_LOCK_SECONDS} soniyangiz bor
-        </p>
 
-        <div class="test-question">
+        <div class="test-question" style="margin-top:14px;">
           <p>${idx + 1}. ${escapeHtml(q.question)}</p>
           ${q.options.map((opt, oIdx) => `
             <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
@@ -3110,9 +3132,12 @@ function renderQuizQuestion() {
         </div>
 
         <div style="display:flex; gap:10px; margin-top:18px;">
-          <button id="quiz-prev-btn" class="btn secondary" style="margin-bottom:0; flex:1;" ${idx === 0 ? "disabled" : ""} onclick="quizGoPrev()">
-            ← Oldingi
-          </button>
+          ${!isFirst ? `
+            <button id="quiz-prev-btn" class="btn secondary quiz-prev-btn-anim" style="margin-bottom:0; flex:1;" onclick="quizGoPrev()">
+              <span class="quiz-prev-fill"></span>
+              <span style="position:relative; z-index:1;">← Oldingi</span>
+            </button>
+          ` : ""}
           <button class="btn" style="margin-bottom:0; flex:1;" onclick="${isLast ? `submitModuleTest(${qs.moduleId})` : "quizGoNext()"}">
             ${isLast ? "✅ Yakunlash" : "Keyingi →"}
           </button>
@@ -3160,6 +3185,7 @@ async function submitModuleTest(moduleId) {
   try {
     haptic("medium");
     const qs = window._quizState;
+    if (qs) clearQuizTimers(qs);
     const result = await api(`/api/module/${Number(moduleId)}/submit`, {
       answers: (qs && qs.answers) || {}
     });
@@ -4152,20 +4178,20 @@ function deleteAdmin(adminId) {
 
 const NAV_ICONS = {
   home: {
-    outline: `<path d="M4 11.5 12 4l8 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v8.2c0 .44.36.8.8.8H10a.8.8 0 0 0 .8-.8v-3.4c0-.44.36-.8.8-.8h1c.44 0 .8.36.8.8V18.2c0 .44.36.8.8.8h3.2c.44 0 .8-.36.8-.8V10" stroke-linecap="round" stroke-linejoin="round"/>`,
-    filled: `<path d="M12 3.2 3 11.2c-.4.35-.13 1 .4 1h1.6v6.9c0 .6.49 1.1 1.1 1.1H9.5a.9.9 0 0 0 .9-.9v-3.9c0-.5.4-.9.9-.9h1.4c.5 0 .9.4.9.9v3.9c0 .5.4.9.9.9h3.4c.61 0 1.1-.5 1.1-1.1v-6.9h1.6c.53 0 .8-.65.4-1L12 3.2Z"/>`
+    outline: `<path d="M3.6 10.8 12 4l8.4 6.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.6 9.8V18.6c0 .77.63 1.4 1.4 1.4h2.6a.6.6 0 0 0 .6-.6v-4.2c0-.66.54-1.2 1.2-1.2h1.2c.66 0 1.2.54 1.2 1.2v4.2a.6.6 0 0 0 .6.6H17c.77 0 1.4-.63 1.4-1.4V9.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<path d="M12 3.4 2.6 11c-.5.4-.18 1.2.45 1.2H4.9v6.6c0 .66.54 1.2 1.2 1.2h3.1a.85.85 0 0 0 .85-.85v-4.1c0-.6.48-1.08 1.08-1.08h1.74c.6 0 1.08.48 1.08 1.08v4.1c0 .47.38.85.85.85h3.1c.66 0 1.2-.54 1.2-1.2v-6.6h1.85c.63 0 .95-.8.45-1.2L12 3.4Z"/>`
   },
   lessons: {
-    outline: `<path d="M4 5.2c2.2-.9 4.9-.9 8 0v13.6c-3.1-.9-5.8-.9-8 0V5.2Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 5.2c-2.2-.9-4.9-.9-8 0v13.6c3.1-.9 5.8-.9 8 0V5.2Z" stroke-linecap="round" stroke-linejoin="round"/>`,
-    filled: `<path d="M3.4 4.6c2.5-.9 5.4-.85 8.1.2v14.1c-2.6-1-5.5-1-8.1-.15a.75.75 0 0 1-1-.7V5.3c0-.32.2-.6.5-.7Z"/><path d="M20.6 4.6c-2.5-.9-5.4-.85-8.1.2v14.1c2.6-1 5.5-1 8.1-.15.44.14 1-.15 1-.7V5.3c0-.32-.2-.6-.5-.7Z"/>`
+    outline: `<path d="M12 4.2 21 8l-9 3.8L3 8l9-3.8Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 10.2v4.3c0 1.3 2.15 2.4 4.8 2.4s4.8-1.1 4.8-2.4v-4.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 8v5.3" stroke-linecap="round"/>`,
+    filled: `<path d="M12 3.3 22.3 8 12 12.7 1.7 8 12 3.3Z"/><path d="M6.4 9.9l5.6 2.55V17c-.03 0-.06 0-.1 0-2.66 0-4.8-1.08-4.8-2.42.13-1.13-.07-3.55-.7-4.68Z" opacity="0.55"/><path d="M17.6 9.9c-.63 1.13-.83 3.55-.7 4.68 0 1.34-2.14 2.42-4.8 2.42-.04 0-.07 0-.1 0v-4.55L17.6 9.9Z" opacity="0.85"/><rect x="20.3" y="8.4" width="1.4" height="6.4" rx="0.7"/>`
   },
   tasks: {
-    outline: `<rect x="5" y="3.6" width="14" height="16.8" rx="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 8.6h7.2M8.4 12h7.2M8.4 15.4h4.6" stroke-linecap="round"/>`,
-    filled: `<rect x="4.4" y="3" width="15.2" height="18" rx="2.8" opacity="0.22"/><rect x="7.4" y="7.4" width="9.2" height="1.8" rx="0.9"/><rect x="7.4" y="11" width="9.2" height="1.8" rx="0.9"/><rect x="7.4" y="14.6" width="5.8" height="1.8" rx="0.9"/>`
+    outline: `<rect x="4.8" y="3.6" width="14.4" height="16.8" rx="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 8.6h7.2M8.4 12h5.6" stroke-linecap="round"/><path d="M8.2 15.6l1.3 1.3 2.5-2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+    filled: `<rect x="4.2" y="3" width="15.6" height="18" rx="3.4" opacity="0.22"/><rect x="7.4" y="7.6" width="9.2" height="1.7" rx="0.85"/><rect x="7.4" y="11" width="6.4" height="1.7" rx="0.85"/><path d="M7.4 15.3l1.7 1.7 3.3-3.4" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
   },
   chat: {
-    outline: `<path d="M4 6.4A2.4 2.4 0 0 1 6.4 4h11.2A2.4 2.4 0 0 1 20 6.4v8a2.4 2.4 0 0 1-2.4 2.4H9.6L5.2 20v-3.6H6.4A2.4 2.4 0 0 1 4 14V6.4Z" stroke-linecap="round" stroke-linejoin="round"/>`,
-    filled: `<path d="M4 6.6A2.6 2.6 0 0 1 6.6 4h10.8A2.6 2.6 0 0 1 20 6.6v7.6a2.6 2.6 0 0 1-2.6 2.6H9.9L5 20.6v-3.9a2.6 2.6 0 0 1-1-2V6.6Z"/>`
+    outline: `<path d="M4 6.4A2.4 2.4 0 0 1 6.4 4h11.2A2.4 2.4 0 0 1 20 6.4v8a2.4 2.4 0 0 1-2.4 2.4H9.6L5.2 20v-3.6H6.4A2.4 2.4 0 0 1 4 14V6.4Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.6" cy="10.2" r="0.9"/><circle cx="12" cy="10.2" r="0.9"/><circle cx="15.4" cy="10.2" r="0.9"/>`,
+    filled: `<path d="M4 6.6A2.6 2.6 0 0 1 6.6 4h10.8A2.6 2.6 0 0 1 20 6.6v7.6a2.6 2.6 0 0 1-2.6 2.6H9.9L5 20.6v-3.9a2.6 2.6 0 0 1-1-2V6.6Z"/><circle cx="8.7" cy="10.3" r="1" opacity="0.4"/><circle cx="12.1" cy="10.3" r="1" opacity="0.4"/><circle cx="15.5" cy="10.3" r="1" opacity="0.4"/>`
   },
   profile: {
     outline: `<circle cx="12" cy="8.2" r="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.8 19.6c1.1-3.4 4-5.1 7.2-5.1s6.1 1.7 7.2 5.1" stroke-linecap="round" stroke-linejoin="round"/>`,
@@ -4191,8 +4217,10 @@ function renderNav() {
         const strokeProps = isActive ? "" : `fill="none" stroke="currentColor" stroke-width="1.6"`;
         return `
         <div class="nav-item ${isActive ? "active" : ""}" onclick="setTab('${t.id}')">
-          <div class="nav-icon">
-            <svg width="23" height="23" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
+          <div class="nav-icon-wrap">
+            <div class="nav-icon">
+              <svg width="23" height="23" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
+            </div>
           </div>
           <div class="nav-label">${t.label}</div>
         </div>
@@ -4256,7 +4284,7 @@ setInterval(() => {
 function closeDetail() {
   haptic("light");
   if (window._quizState) {
-    if (window._quizState.lockTimer) clearTimeout(window._quizState.lockTimer);
+    clearQuizTimers(window._quizState);
     window._quizState = null;
   }
   currentView = null;

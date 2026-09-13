@@ -249,6 +249,36 @@ html.light .nav {
   color: var(--accent);
 }
 
+.nav-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 30px;
+  border-radius: 14px;
+}
+
+.nav-item.active .nav-icon-wrap {
+  background: var(--accent-soft);
+  animation: navPillIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes navPillIn {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.nav-item.active .nav-icon svg {
+  animation: navIconPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes navIconPop {
+  0% { transform: scale(0.65) translateY(2px); }
+  60% { transform: scale(1.18) translateY(-1px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
 .nav-icon {
   font-size: 20px;
   line-height: 1;
@@ -2093,6 +2123,23 @@ html.light .nav {
 .quiz-nav-locked {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.quiz-prev-btn-anim {
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-prev-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.22);
+  animation: quizTimerShrink 15s linear forwards;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ------------------------------------------------------
