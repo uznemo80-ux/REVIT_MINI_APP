@@ -211,6 +211,20 @@ async function initExtendedTables() {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status)');
     await pool.query('ALTER TABLE lesson_questions ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false');
 
+    // Kurs mentorlari — har bir kursga biriktirilgan javobgar shaxs, ish kunlari va soatlari bilan
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mentors (
+        id SERIAL PRIMARY KEY,
+        course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        telegram_username VARCHAR(255),
+        work_days TEXT[] NOT NULL DEFAULT '{}',
+        work_hours_start VARCHAR(10),
+        work_hours_end VARCHAR(10),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
     if (cCount.rows[0].count === 0) {
@@ -1340,22 +1354,135 @@ app.post('/api/chat/my-questions', async function (req, res) {
 // Admin barcha o'quvchilar savollarini ko'rishi (Chat bo'limidagi Admin Hub)
 app.post('/api/admin/questions', requireAdmin, async function (req, res) {
   try {
-    var result = await pool.query(
-      `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+    var courseIdFilter = req.body.course_id ? Number(req.body.course_id) : null;
+    var query = `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
               u.first_name, u.last_name, u.username, u.phone, u.telegram_id,
               l.title AS lesson_title, m.title AS module_title, c.title AS course_title, c.id AS course_id
        FROM lesson_questions lq
        JOIN users u ON u.id = lq.user_id
        JOIN lessons l ON l.id = lq.lesson_id
        JOIN modules m ON m.id = l.module_id
-       LEFT JOIN courses c ON c.id = m.course_id
-       ORDER BY (CASE WHEN lq.status = 'pending' THEN 0 ELSE 1 END) ASC, lq.created_at DESC`
-    );
+       LEFT JOIN courses c ON c.id = m.course_id`;
+    var params = [];
+    if (courseIdFilter) {
+      query += ' WHERE c.id = $1';
+      params.push(courseIdFilter);
+    }
+    query += ' ORDER BY (CASE WHEN lq.status = \'pending\' THEN 0 ELSE 1 END) ASC, lq.created_at DESC';
+
+    var result = await pool.query(query, params);
 
     return res.json({ ok: true, questions: result.rows });
   } catch (error) {
     console.error('ADMIN QUESTIONS LIST ERROR:', error);
     return res.status(500).json({ error: 'Savollar ro‘yxatini olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/questions/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('DELETE FROM lesson_questions WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Savol topilmadi' });
+    return res.json({ ok: true, message: 'Savol o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE QUESTION ERROR:', error);
+    return res.status(500).json({ error: 'Savolni o‘chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// MENTORLAR
+// ======================================================
+
+app.post('/api/mentors', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var courseId = req.body.course_id ? Number(req.body.course_id) : null;
+    var query = 'SELECT id, course_id, name, telegram_username, work_days, work_hours_start, work_hours_end FROM mentors';
+    var params = [];
+    if (courseId) {
+      query += ' WHERE course_id = $1';
+      params.push(courseId);
+    }
+    query += ' ORDER BY id ASC';
+
+    var result = await pool.query(query, params);
+    return res.json({ ok: true, mentors: result.rows });
+  } catch (error) {
+    console.error('MENTORS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Mentorlarni olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/mentors', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      `SELECT mt.id, mt.course_id, mt.name, mt.telegram_username, mt.work_days, mt.work_hours_start, mt.work_hours_end, c.title AS course_title
+       FROM mentors mt LEFT JOIN courses c ON c.id = mt.course_id
+       ORDER BY mt.id ASC`
+    );
+    return res.json({ ok: true, mentors: result.rows });
+  } catch (error) {
+    console.error('ADMIN MENTORS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Mentorlarni olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/mentors/add', requireAdmin, async function (req, res) {
+  try {
+    var courseId = Number(req.body.course_id);
+    var name = String(req.body.name || '').trim();
+    var telegramUsername = String(req.body.telegram_username || '').trim().replace(/^@/, '');
+    var workDays = Array.isArray(req.body.work_days) ? req.body.work_days.map(function (d) { return String(d).trim(); }) : [];
+    var workHoursStart = String(req.body.work_hours_start || '').trim();
+    var workHoursEnd = String(req.body.work_hours_end || '').trim();
+
+    if (!courseId || !name) return res.status(400).json({ error: 'Kurs va mentor ismi majburiy' });
+
+    var result = await pool.query(
+      'INSERT INTO mentors (course_id, name, telegram_username, work_days, work_hours_start, work_hours_end) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [courseId, name, telegramUsername || null, workDays, workHoursStart || null, workHoursEnd || null]
+    );
+
+    return res.json({ ok: true, message: 'Mentor qoshildi', mentor: result.rows[0] });
+  } catch (error) {
+    console.error('ADD MENTOR ERROR:', error);
+    return res.status(500).json({ error: 'Mentor qoshishda xatolik' });
+  }
+});
+
+app.post('/api/admin/mentors/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var name = String(req.body.name || '').trim();
+    var telegramUsername = String(req.body.telegram_username || '').trim().replace(/^@/, '');
+    var workDays = Array.isArray(req.body.work_days) ? req.body.work_days.map(function (d) { return String(d).trim(); }) : [];
+    var workHoursStart = String(req.body.work_hours_start || '').trim();
+    var workHoursEnd = String(req.body.work_hours_end || '').trim();
+
+    if (!name) return res.status(400).json({ error: 'Mentor ismi majburiy' });
+
+    var result = await pool.query(
+      'UPDATE mentors SET name = $1, telegram_username = $2, work_days = $3, work_hours_start = $4, work_hours_end = $5 WHERE id = $6 RETURNING *',
+      [name, telegramUsername || null, workDays, workHoursStart || null, workHoursEnd || null, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Mentor topilmadi' });
+
+    return res.json({ ok: true, message: 'Mentor yangilandi', mentor: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE MENTOR ERROR:', error);
+    return res.status(500).json({ error: 'Mentorni yangilashda xatolik' });
+  }
+});
+
+app.post('/api/admin/mentors/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    await pool.query('DELETE FROM mentors WHERE id = $1', [req.params.id]);
+    return res.json({ ok: true, message: 'Mentor ochirildi' });
+  } catch (error) {
+    console.error('DELETE MENTOR ERROR:', error);
+    return res.status(500).json({ error: 'Mentorni ochirishda xatolik' });
   }
 });
 

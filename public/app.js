@@ -221,6 +221,8 @@ let currentView = null;
 let aboutOpen = false;
 let adminQuestionsList = null;
 let adminQuestionsFilter = "pending";
+let adminQuestionsCourseId = null;
+let mentorsList = null;
 let studentQuestionsList = null;
 window._answers = {};
 
@@ -2200,93 +2202,120 @@ function renderChat() {
 
   if (state.is_admin) {
     // ADMIN Q&A CENTER
+    const courses = state.courses || [];
     const allQuestions = adminQuestionsList || [];
     const pendingCount = allQuestions.filter(q => q.status === "pending").length;
     const filteredQuestions = adminQuestionsFilter === "pending"
       ? allQuestions.filter(q => q.status === "pending")
       : allQuestions;
+    const selectedCourseTitle = adminQuestionsCourseId
+      ? (courses.find(c => Number(c.id) === Number(adminQuestionsCourseId))?.title || "")
+      : "";
 
     contentHtml = `
       <div class="admin-qa-center">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
           <div class="page-title" style="margin-bottom:0;">Savollar Markazi</div>
-          ${pendingCount > 0 ? `<span class="tag warning">⚡ ${pendingCount} ta kutilmoqda</span>` : '<span class="tag passed">Barchasi javoblangan</span>'}
-        </div>
-        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
-          O‘quvchilar darslar ostida qoldirgan savollari. Savolga javob yozsangiz, o‘quvchiga darhol xabar boradi.
-        </p>
-
-        <div style="display:flex; gap:8px; margin-bottom:16px;">
-          <button class="chip ${adminQuestionsFilter === 'pending' ? 'active' : ''}" onclick="setAdminQuestionsFilter('pending')">
-            ⏳ Kutilmoqda (${pendingCount})
-          </button>
-          <button class="chip ${adminQuestionsFilter === 'all' ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
-            📋 Barcha savollar (${allQuestions.length})
+          <button class="admin-small-btn" onclick="openAddMentorModal()">
+            ➕ Yangi Mentor
           </button>
         </div>
 
-        ${filteredQuestions.length ? filteredQuestions.map(q => `
-          <div class="admin-qa-item ${q.status === 'pending' ? 'pending' : ''}">
-            <div class="admin-qa-item-head">
-              <div class="admin-qa-user-info">
-                <span class="admin-qa-user-name">
-                  👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
-                  ${q.username ? `<span style="font-weight:normal; color:var(--accent); font-size:12px;">@${escapeHtml(q.username)}</span>` : ""}
-                </span>
-                <span class="admin-qa-user-meta">
-                  📞 ${escapeHtml(q.phone || "Telefon yo‘q")} · 🕒 ${fmtTimeAgo(q.created_at)}
-                </span>
-              </div>
-              <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
-                ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
-              </div>
-            </div>
+        <div class="apple-field" style="margin-bottom:18px;">
+          <label>Qaysi kurs bo'yicha savollarni ko'rmoqchisiz?</label>
+          <select class="apple-input" onchange="setAdminQuestionsCourse(this.value)">
+            <option value="">— Avval kursni tanlang —</option>
+            ${courses.map(c => `<option value="${Number(c.id)}" ${Number(adminQuestionsCourseId) === Number(c.id) ? "selected" : ""}>${escapeHtml(c.title)}</option>`).join("")}
+          </select>
+        </div>
 
-            <div class="admin-qa-lesson-tag" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})" style="cursor:pointer;">
-              📚 ${escapeHtml(q.course_title || "Kurs")} → ${escapeHtml(q.module_title || "Modul")} → <b>${escapeHtml(q.lesson_title || "Dars")}</b> ↗
-            </div>
+        ${renderMentorsForCourse(adminQuestionsCourseId)}
 
-            <div class="admin-qa-bubble">
-              <b>Savol:</b> ${escapeHtml(q.question)}
-            </div>
+        ${!adminQuestionsCourseId ? `
+          <div class="empty-box">Savollarni ko'rish uchun avval yuqoridan kursni tanlang.</div>
+        ` : `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; margin-top:8px;">
+            <div style="font-size:14px; font-weight:750;">${escapeHtml(selectedCourseTitle)}</div>
+            ${pendingCount > 0 ? `<span class="tag warning">⚡ ${pendingCount} ta kutilmoqda</span>` : '<span class="tag passed">Barchasi javoblangan</span>'}
+          </div>
 
-            ${q.status === 'answered' && q.answer ? `
-              <div class="qa-answer-block" style="margin-bottom:10px;">
-                <div class="qa-answer-title">
-                  <span>👑 Yuborilgan javobingiz:</span>
-                  <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+          <div style="display:flex; gap:8px; margin-bottom:18px;">
+            <button class="chip ${adminQuestionsFilter === 'pending' ? 'active' : ''}" onclick="setAdminQuestionsFilter('pending')">
+              ⏳ Kutilmoqda (${pendingCount})
+            </button>
+            <button class="chip ${adminQuestionsFilter === 'all' ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
+              📋 Barcha savollar (${allQuestions.length})
+            </button>
+          </div>
+
+          ${filteredQuestions.length ? filteredQuestions.map(q => `
+            <div class="admin-qa-item ${q.status === 'pending' ? 'pending' : ''}">
+              <div class="admin-qa-item-head">
+                <div class="admin-qa-user-info">
+                  <span class="admin-qa-user-name">
+                    👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+                    ${q.username ? `<span style="font-weight:normal; color:var(--accent); font-size:12px;">@${escapeHtml(q.username)}</span>` : ""}
+                  </span>
+                  <span class="admin-qa-user-meta">
+                    📞 ${escapeHtml(q.phone || "Telefon yo‘q")} · 🕒 ${fmtTimeAgo(q.created_at)}
+                  </span>
                 </div>
-                <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                  <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
+                    ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
+                  </div>
+                  <button class="admin-small-btn" style="padding:4px 8px; font-size:10px; background:rgba(235,59,59,0.8);" onclick="deleteAdminQuestion(${Number(q.id)})">
+                    🗑️ O'chirish
+                  </button>
+                </div>
               </div>
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                <span class="tag ${q.is_public ? "passed" : "locked-tag"}" style="font-size:10px;">
-                  ${q.is_public ? "🌍 Ommaviy" : "🔒 Shaxsiy (faqat shu o'quvchiga)"}
-                </span>
-                <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px;" onclick="toggleAdminQuestionPublic(${Number(q.id)})">
-                  ${q.is_public ? "Ommadan yashirish" : "Ommaga chiqarish"}
-                </button>
-              </div>
-            ` : ""}
 
-            <div class="admin-reply-box">
-              <textarea id="admin-reply-input-${q.id}" class="qa-textarea" placeholder="${q.status === 'answered' ? 'Javobni qayta tahrirlash...' : 'Ushbu o‘quvchiga javob yozing...'}">${escapeHtml(q.answer || '')}</textarea>
-              ${q.status !== 'answered' ? `
-                <label class="category-checkbox" style="margin: 8px 0; width:fit-content;">
-                  <input type="checkbox" id="admin-reply-public-${q.id}">
-                  <span>🌍 Javobni ommaga ham ko'rsatish</span>
-                </label>
+              <div class="admin-qa-lesson-tag" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})" style="cursor:pointer; margin-top:10px; margin-bottom:10px;">
+                📚 ${escapeHtml(q.course_title || "Kurs")} → ${escapeHtml(q.module_title || "Modul")} → <b>${escapeHtml(q.lesson_title || "Dars")}</b> ↗
+              </div>
+
+              <div class="admin-qa-bubble" style="margin-bottom:12px;">
+                <b>Savol:</b> ${escapeHtml(q.question)}
+              </div>
+
+              ${q.status === 'answered' && q.answer ? `
+                <div class="qa-answer-block" style="margin-bottom:12px;">
+                  <div class="qa-answer-title">
+                    <span>👑 Yuborilgan javobingiz:</span>
+                    <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+                  </div>
+                  <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                  <span class="tag ${q.is_public ? "passed" : "locked-tag"}" style="font-size:10px;">
+                    ${q.is_public ? "🌍 Ommaviy" : "🔒 Shaxsiy (faqat shu o'quvchiga)"}
+                  </span>
+                  <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px;" onclick="toggleAdminQuestionPublic(${Number(q.id)})">
+                    ${q.is_public ? "Ommadan yashirish" : "Ommaga chiqarish"}
+                  </button>
+                </div>
               ` : ""}
-              <div class="admin-reply-actions">
-                <button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="submitAdminReply(${Number(q.id)})">
-                  💬 ${q.status === 'answered' ? 'Javobni yangilash' : 'Javobni yuborish'}
-                </button>
+
+              <div class="admin-reply-box">
+                <textarea id="admin-reply-input-${q.id}" class="qa-textarea" placeholder="${q.status === 'answered' ? 'Javobni qayta tahrirlash...' : 'Ushbu o‘quvchiga javob yozing...'}">${escapeHtml(q.answer || '')}</textarea>
+                ${q.status !== 'answered' ? `
+                  <label class="category-checkbox" style="margin: 10px 0; width:fit-content;">
+                    <input type="checkbox" id="admin-reply-public-${q.id}">
+                    <span>🌍 Javobni ommaga ham ko'rsatish</span>
+                  </label>
+                ` : ""}
+                <div class="admin-reply-actions" style="margin-top:8px;">
+                  <button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="submitAdminReply(${Number(q.id)})">
+                    💬 ${q.status === 'answered' ? 'Javobni yangilash' : 'Javobni yuborish'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        `).join("") : `
-          <div class="empty-box">
-            ${adminQuestionsFilter === 'pending' ? 'Hozircha javob kutayotgan savollar yo‘q! Barcha savollarga javob berilgan.' : 'Hozircha hech qanday savollar kelib tushmagan.'}
-          </div>
+          `).join("") : `
+            <div class="empty-box">
+              ${adminQuestionsFilter === 'pending' ? 'Hozircha javob kutayotgan savollar yo‘q! Barcha savollarga javob berilgan.' : 'Hozircha hech qanday savollar kelib tushmagan.'}
+            </div>
+          `}
         `}
       </div>
     `;
@@ -2317,6 +2346,25 @@ function renderChat() {
       <a href="tel:${escapeHtml(contactPhone)}" class="btn secondary" style="text-decoration:none; margin-bottom:18px;">
         📞 Telefon orqali qo'ng'iroq qilish (${escapeHtml(contactPhone)})
       </a>
+      ` : ""}
+
+      ${state.has_access && mentorsList && mentorsList.length ? `
+        <div style="margin-top:8px; margin-bottom:12px; font-weight:750; font-size:15px;">
+          🧑‍🏫 Kurs Mentorlari
+        </div>
+        <div class="mentor-list">
+          ${mentorsList.map(m => `
+            <div class="mentor-card">
+              <div class="mentor-card-head">
+                <div class="mentor-name">${escapeHtml(m.name)}</div>
+                <span class="tag">${escapeHtml(m.course_title || "")}</span>
+              </div>
+              ${m.telegram_username ? `<div class="mentor-detail">💬 @${escapeHtml(m.telegram_username)}</div>` : ""}
+              ${m.work_days && m.work_days.length ? `<div class="mentor-detail">📅 ${m.work_days.map(escapeHtml).join(", ")}</div>` : ""}
+              ${m.work_hours_start && m.work_hours_end ? `<div class="mentor-detail">🕒 ${escapeHtml(m.work_hours_start)} — ${escapeHtml(m.work_hours_end)}</div>` : ""}
+            </div>
+          `).join("")}
+        </div>
       ` : ""}
 
       ${myQuestions.length ? `
@@ -2390,7 +2438,7 @@ async function openLessonFromChat(courseId, lessonId) {
 async function loadChatQuestions() {
   try {
     if (state.is_admin) {
-      const res = await adminApi("/api/admin/questions");
+      const res = await adminApi("/api/admin/questions", { course_id: adminQuestionsCourseId || null });
       if (res && Array.isArray(res.questions)) {
         adminQuestionsList = res.questions;
         if (activeTab === "chat" && !currentView) {
@@ -2409,6 +2457,241 @@ async function loadChatQuestions() {
   } catch (e) {
     console.warn("LOAD CHAT QUESTIONS ERROR:", e);
   }
+}
+
+const WEEKDAYS = ["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yak"];
+
+async function loadMentors() {
+  try {
+    const res = state.is_admin
+      ? await adminApi("/api/admin/mentors")
+      : await api("/api/mentors");
+    if (res && Array.isArray(res.mentors)) {
+      mentorsList = res.mentors;
+      if (activeTab === "chat" && !currentView) render();
+    }
+  } catch (e) {
+    console.warn("LOAD MENTORS ERROR:", e);
+  }
+}
+
+function renderMentorsForCourse(courseId) {
+  if (!courseId) return "";
+  const mentors = (mentorsList || []).filter(m => Number(m.course_id) === Number(courseId));
+  if (!mentors.length) {
+    return `
+      <div class="mentor-empty-box">
+        Bu kursga hali mentor biriktirilmagan. Yuqoridagi "➕ Yangi Mentor" tugmasi orqali qo'shing.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="mentor-list">
+      ${mentors.map(m => `
+        <div class="mentor-card">
+          <div class="mentor-card-head">
+            <div class="mentor-name">🧑‍🏫 ${escapeHtml(m.name)}</div>
+            <div style="display:flex; gap:6px;">
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px;" onclick="openEditMentorModal(${Number(m.id)})">✏️</button>
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px; background:rgba(235,59,59,0.8);" onclick="deleteMentorConfirm(${Number(m.id)})">🗑️</button>
+            </div>
+          </div>
+          ${m.telegram_username ? `<div class="mentor-detail">💬 @${escapeHtml(m.telegram_username)}</div>` : ""}
+          ${m.work_days && m.work_days.length ? `<div class="mentor-detail">📅 ${m.work_days.map(escapeHtml).join(", ")}</div>` : ""}
+          ${m.work_hours_start && m.work_hours_end ? `<div class="mentor-detail">🕒 ${escapeHtml(m.work_hours_start)} — ${escapeHtml(m.work_hours_end)}</div>` : ""}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function openAddMentorModal() {
+  const courses = state.courses || [];
+  if (!courses.length) return showAlert("Avval kamida bitta kurs yaratishingiz kerak!");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Mentor Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Qaysi kursga biriktirilsin? *</label>
+            <select id="mt-course" class="apple-input">
+              ${courses.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.title)}</option>`).join("")}
+            </select>
+          </div>
+          <div class="apple-field">
+            <label>Mentor ismi *</label>
+            <input id="mt-name" class="apple-input" type="text" placeholder="Masalan: Aziz Rahimov">
+          </div>
+          <div class="apple-field">
+            <label>Telegram username (@ belgisisiz)</label>
+            <input id="mt-tg" class="apple-input" type="text" placeholder="texnikuzb">
+          </div>
+          <div class="apple-field">
+            <label>Ish kunlari</label>
+            <div class="category-checkbox-group">
+              ${WEEKDAYS.map(d => `
+                <label class="category-checkbox">
+                  <input type="checkbox" name="mt-day-cb" value="${d}">
+                  <span>${d}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+          <div class="apple-field">
+            <label>Ish vaqti — boshlanishi</label>
+            <input id="mt-start" class="apple-input" type="time">
+          </div>
+          <div class="apple-field">
+            <label>Ish vaqti — tugashi</label>
+            <input id="mt-end" class="apple-input" type="time">
+          </div>
+          <button class="btn" onclick="submitCreateMentor()">
+            💾 Mentorni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateMentor() {
+  const courseId = document.getElementById("mt-course")?.value;
+  const name = document.getElementById("mt-name")?.value.trim();
+  const tg = document.getElementById("mt-tg")?.value.trim();
+  const days = Array.from(document.querySelectorAll('input[name="mt-day-cb"]:checked')).map(el => el.value);
+  const start = document.getElementById("mt-start")?.value;
+  const end = document.getElementById("mt-end")?.value;
+
+  if (!courseId || !name) return showAlert("Kurs va mentor ismi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/mentors/add", {
+      course_id: Number(courseId),
+      name,
+      telegram_username: tg,
+      work_days: days,
+      work_hours_start: start,
+      work_hours_end: end
+    });
+    showToast("Mentor muvaffaqiyatli qo'shildi!");
+    closeDetail();
+    await loadMentors();
+  } catch (error) {
+    showAlert(error.message || "Mentor qo'shishda xatolik.");
+  }
+}
+
+function openEditMentorModal(mentorId) {
+  const mentor = (mentorsList || []).find(m => Number(m.id) === Number(mentorId));
+  if (!mentor) return showAlert("Mentor topilmadi.");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Mentorni Tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Mentor ismi *</label>
+            <input id="mt-edit-name" class="apple-input" type="text" value="${escapeHtml(mentor.name)}">
+          </div>
+          <div class="apple-field">
+            <label>Telegram username (@ belgisisiz)</label>
+            <input id="mt-edit-tg" class="apple-input" type="text" value="${escapeHtml(mentor.telegram_username || '')}">
+          </div>
+          <div class="apple-field">
+            <label>Ish kunlari</label>
+            <div class="category-checkbox-group">
+              ${WEEKDAYS.map(d => `
+                <label class="category-checkbox">
+                  <input type="checkbox" name="mt-edit-day-cb" value="${d}" ${(mentor.work_days || []).includes(d) ? "checked" : ""}>
+                  <span>${d}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+          <div class="apple-field">
+            <label>Ish vaqti — boshlanishi</label>
+            <input id="mt-edit-start" class="apple-input" type="time" value="${escapeHtml(mentor.work_hours_start || '')}">
+          </div>
+          <div class="apple-field">
+            <label>Ish vaqti — tugashi</label>
+            <input id="mt-edit-end" class="apple-input" type="time" value="${escapeHtml(mentor.work_hours_end || '')}">
+          </div>
+          <button class="btn" onclick="submitUpdateMentor(${Number(mentorId)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateMentor(mentorId) {
+  const name = document.getElementById("mt-edit-name")?.value.trim();
+  const tg = document.getElementById("mt-edit-tg")?.value.trim();
+  const days = Array.from(document.querySelectorAll('input[name="mt-edit-day-cb"]:checked')).map(el => el.value);
+  const start = document.getElementById("mt-edit-start")?.value;
+  const end = document.getElementById("mt-edit-end")?.value;
+
+  if (!name) return showAlert("Mentor ismi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/mentors/${Number(mentorId)}/update`, {
+      name,
+      telegram_username: tg,
+      work_days: days,
+      work_hours_start: start,
+      work_hours_end: end
+    });
+    showToast("Mentor yangilandi!");
+    closeDetail();
+    await loadMentors();
+  } catch (error) {
+    showAlert(error.message || "Mentorni yangilashda xatolik.");
+  }
+}
+
+function deleteMentorConfirm(mentorId) {
+  showConfirm(
+    "Mentor o'chirilsinmi?",
+    "Ushbu mentor kurs ro'yxatidan butunlay olib tashlanadi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/mentors/${Number(mentorId)}/delete`);
+      showToast("Mentor o'chirildi!");
+      await loadMentors();
+    }
+  );
+}
+
+function setAdminQuestionsCourse(courseId) {
+  haptic("light");
+  adminQuestionsCourseId = courseId ? Number(courseId) : null;
+  loadChatQuestions();
+}
+
+async function deleteAdminQuestion(questionId) {
+  showConfirm(
+    "Savol o'chirilsinmi?",
+    "Ushbu savol va unga berilgan javob butunlay o'chiriladi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/questions/${Number(questionId)}/delete`);
+      showToast("Savol o'chirildi!");
+      await loadChatQuestions();
+    }
+  );
 }
 
 async function submitAdminReply(questionId) {
@@ -3927,6 +4210,7 @@ function setTab(id) {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   if (id === "chat") {
     loadChatQuestions();
+    loadMentors();
   }
 }
 
