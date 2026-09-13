@@ -2276,6 +2276,7 @@ html.light .nav {
   padding: 16px;
   margin-top: 16px;
   box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.35s ease both;
 }
 
 .lesson-qa-header {
@@ -2354,6 +2355,17 @@ html.light .nav {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
+  animation: qaCardIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: border-color var(--transition-normal), transform var(--transition-fast);
+}
+
+@keyframes qaCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qa-card:active {
+  transform: scale(0.99);
 }
 
 .qa-card.answered {
@@ -2395,6 +2407,7 @@ html.light .nav {
   padding: 8px 12px;
   border-radius: 4px 8px 8px 4px;
   margin-top: 6px;
+  animation: qaCardIn 0.35s ease 0.05s both;
 }
 
 .qa-answer-title {

@@ -1930,8 +1930,8 @@ function renderQACardsList(qList, lessonId) {
     return `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`;
   }
 
-  return qList.map(q => `
-    <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+  return qList.map((q, i) => `
+    <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}" style="animation-delay:${Math.min(i * 60, 400)}ms;">
       <div class="qa-card-head">
         <span class="qa-author">
           👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
@@ -2325,8 +2325,8 @@ function renderChat() {
           <span class="tag">${myQuestions.length} ta</span>
         </div>
         <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-          ${myQuestions.map(q => `
-            <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+          ${myQuestions.map((q, i) => `
+            <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}" style="animation-delay:${Math.min(i * 60, 400)}ms;">
               <div class="qa-card-head">
                 <span class="admin-qa-lesson-tag" style="margin-bottom:0; font-size:11px; cursor:pointer;" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})">
                   🎬 ${escapeHtml(q.lesson_title || 'Dars')} ↗
