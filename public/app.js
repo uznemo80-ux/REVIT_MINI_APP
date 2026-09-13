@@ -1740,7 +1740,7 @@ async function openLesson(id) {
 
             ${renderLessonFiles(lesson.files)}
             ${renderLessonWarning(lesson.warning_text)}
-            ${renderLessonQABox(lesson.id, lesson.questions)}
+            ${renderLessonQABox(lesson.id, lesson.questions, lesson.can_ask)}
 
             <button class="btn" style="margin-top: 18px; ${lesson.watched ? 'opacity:0.6;' : ''}" onclick="${lesson.watched ? '' : `markLessonWatched(${Number(lesson.id)})`}">
               ${lesson.watched ? "✅ Tugallangan" : "✅ Darsni tugatdim, keyingisiga o'tish"}
@@ -1884,8 +1884,12 @@ function renderLessonWarning(warningText) {
   `;
 }
 
-function renderLessonQABox(lessonId, questions) {
+function renderLessonQABox(lessonId, questions, canAsk) {
   const qList = Array.isArray(questions) ? questions : [];
+
+  if (!canAsk) {
+    return "";
+  }
 
   return `
     <div class="lesson-qa-box" id="lesson-qa-box-${lessonId}">
@@ -1896,7 +1900,7 @@ function renderLessonQABox(lessonId, questions) {
         <span class="tag">${qList.length} ta savol</span>
       </div>
       <div class="lesson-qa-desc">
-        Ushbu darsda tushunmagan joyingiz bo‘lsa, savolingizni yozing. Ustoz sizga javob qaytaradi.
+        Ushbu darsda tushunmagan joyingiz bo‘lsa, savolingizni yozing. Ustoz sizga javob qaytaradi. Savolingiz faqat sizga va adminga ko'rinadi.
       </div>
 
       <div class="qa-form">
@@ -1915,35 +1919,70 @@ function renderLessonQABox(lessonId, questions) {
       </div>
 
       <div class="qa-list" id="qa-list-${lessonId}">
-        ${qList.length ? qList.map(q => `
-          <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
-            <div class="qa-card-head">
-              <span class="qa-author">
-                👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
-                ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
-              </span>
-              <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
-            </div>
-            <div class="qa-question-text">${escapeHtml(q.question)}</div>
-
-            ${q.status === 'answered' && q.answer ? `
-              <div class="qa-answer-block">
-                <div class="qa-answer-title">
-                  <span>👑 Ustoz javobi:</span>
-                  <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
-                </div>
-                <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
-              </div>
-            ` : `
-              <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
-                ⏳ Ustoz ko‘rib chiqmoqda...
-              </div>
-            `}
-          </div>
-        `).join("") : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`}
+        ${renderQACardsList(qList, lessonId)}
       </div>
     </div>
   `;
+}
+
+function renderQACardsList(qList, lessonId) {
+  if (!qList.length) {
+    return `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`;
+  }
+
+  return qList.map(q => `
+    <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
+      <div class="qa-card-head">
+        <span class="qa-author">
+          👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+          ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
+        </span>
+        <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+      </div>
+      <div class="qa-question-text">${escapeHtml(q.question)}</div>
+
+      ${q.status === 'answered' && q.answer ? `
+        <div class="qa-answer-block">
+          <div class="qa-answer-title">
+            <span>👑 Ustoz javobi:</span>
+            <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+          </div>
+          <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+        </div>
+      ` : `
+        <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
+          ⏳ Ustoz ko‘rib chiqmoqda...
+        </div>
+      `}
+
+      ${state.is_admin ? `
+        <div style="display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+          <span class="tag ${q.is_public ? "passed" : "locked-tag"}" style="font-size:10px;">
+            ${q.is_public ? "🌍 Ommaviy" : "🔒 Shaxsiy"}
+          </span>
+          ${q.status === 'answered' ? `
+            <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px;" onclick="toggleQuestionPublicStatus(${Number(q.id)}, ${Number(lessonId)})">
+              ${q.is_public ? "Ommadan yashirish" : "Ommaga chiqarish"}
+            </button>
+          ` : ""}
+        </div>
+      ` : ""}
+    </div>
+  `).join("");
+}
+
+async function toggleQuestionPublicStatus(questionId, lessonId) {
+  try {
+    haptic("light");
+    await adminApi(`/api/admin/questions/${Number(questionId)}/toggle-public`);
+    const updatedLesson = await api(`/api/lesson/${Number(lessonId)}`);
+    const qaListEl = document.getElementById(`qa-list-${lessonId}`);
+    if (qaListEl && updatedLesson && Array.isArray(updatedLesson.questions)) {
+      qaListEl.innerHTML = renderQACardsList(updatedLesson.questions, lessonId);
+    }
+  } catch (error) {
+    showAlert(error.message || "Holatni ozgartirishda xatolik.");
+  }
 }
 
 async function submitLessonQuestion(lessonId) {
@@ -1963,31 +2002,7 @@ async function submitLessonQuestion(lessonId) {
     const updatedLesson = await api(`/api/lesson/${Number(lessonId)}`);
     const qaListEl = document.getElementById(`qa-list-${lessonId}`);
     if (qaListEl && updatedLesson && Array.isArray(updatedLesson.questions)) {
-      qaListEl.innerHTML = updatedLesson.questions.map(q => `
-        <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
-          <div class="qa-card-head">
-            <span class="qa-author">
-              👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
-              ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
-            </span>
-            <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
-          </div>
-          <div class="qa-question-text">${escapeHtml(q.question)}</div>
-          ${q.status === 'answered' && q.answer ? `
-            <div class="qa-answer-block">
-              <div class="qa-answer-title">
-                <span>👑 Ustoz javobi:</span>
-                <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
-              </div>
-              <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
-            </div>
-          ` : `
-            <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
-              ⏳ Ustoz ko‘rib chiqmoqda...
-            </div>
-          `}
-        </div>
-      `).join("");
+      qaListEl.innerHTML = renderQACardsList(updatedLesson.questions, lessonId);
     }
   } catch (err) {
     showAlert(err.message || "Savol yuborishda xatolik yuz berdi.");
@@ -2243,10 +2258,24 @@ function renderChat() {
                 </div>
                 <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
               </div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <span class="tag ${q.is_public ? "passed" : "locked-tag"}" style="font-size:10px;">
+                  ${q.is_public ? "🌍 Ommaviy" : "🔒 Shaxsiy (faqat shu o'quvchiga)"}
+                </span>
+                <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px;" onclick="toggleAdminQuestionPublic(${Number(q.id)})">
+                  ${q.is_public ? "Ommadan yashirish" : "Ommaga chiqarish"}
+                </button>
+              </div>
             ` : ""}
 
             <div class="admin-reply-box">
               <textarea id="admin-reply-input-${q.id}" class="qa-textarea" placeholder="${q.status === 'answered' ? 'Javobni qayta tahrirlash...' : 'Ushbu o‘quvchiga javob yozing...'}">${escapeHtml(q.answer || '')}</textarea>
+              ${q.status !== 'answered' ? `
+                <label class="category-checkbox" style="margin: 8px 0; width:fit-content;">
+                  <input type="checkbox" id="admin-reply-public-${q.id}">
+                  <span>🌍 Javobni ommaga ham ko'rsatish</span>
+                </label>
+              ` : ""}
               <div class="admin-reply-actions">
                 <button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="submitAdminReply(${Number(q.id)})">
                   💬 ${q.status === 'answered' ? 'Javobni yangilash' : 'Javobni yuborish'}
@@ -2384,6 +2413,7 @@ async function loadChatQuestions() {
 
 async function submitAdminReply(questionId) {
   const input = document.getElementById(`admin-reply-input-${questionId}`);
+  const publicCheckbox = document.getElementById(`admin-reply-public-${questionId}`);
   const answer = input ? input.value.trim() : "";
   if (!answer) {
     return showAlert("Iltimos, o‘quvchiga javob matnini yozing!");
@@ -2391,11 +2421,24 @@ async function submitAdminReply(questionId) {
 
   try {
     haptic("medium");
-    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, { answer: answer });
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, {
+      answer: answer,
+      is_public: Boolean(publicCheckbox?.checked)
+    });
     showToast(res.message || "Javob yuborildi!");
     await loadChatQuestions();
   } catch (err) {
     showAlert(err.message || "Javob yuborishda xato yuz berdi.");
+  }
+}
+
+async function toggleAdminQuestionPublic(questionId) {
+  try {
+    haptic("light");
+    await adminApi(`/api/admin/questions/${Number(questionId)}/toggle-public`);
+    await loadChatQuestions();
+  } catch (err) {
+    showAlert(err.message || "Holatni ozgartirishda xatolik.");
   }
 }
 

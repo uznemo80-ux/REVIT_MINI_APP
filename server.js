@@ -209,6 +209,7 @@ async function initExtendedTables() {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status)');
+    await pool.query('ALTER TABLE lesson_questions ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false');
 
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
@@ -1060,17 +1061,38 @@ app.post('/api/lesson/:id', async function (req, res) {
     var warningText = (lesson.warning_text && lesson.warning_text.trim()) ? lesson.warning_text : defaultWarning;
 
     var questions = [];
+    var canAskQuestion = false;
     try {
-      var qRes = await pool.query(
-        `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
-                u.first_name, u.last_name, u.username,
-                (lq.user_id = $2) AS is_mine
-         FROM lesson_questions lq
-         JOIN users u ON u.id = lq.user_id
-         WHERE lq.lesson_id = $1
-         ORDER BY lq.created_at DESC`,
-        [lesson.id, user.id]
-      );
+      var adminForQA = await getAdminByTelegramId(user.telegram_id);
+      var isAdminForQA = Boolean(adminForQA || isMainAdminUser);
+      canAskQuestion = Boolean(userHasAccess || isAdminForQA);
+
+      var qRes;
+      if (isAdminForQA) {
+        qRes = await pool.query(
+          `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
+                  u.first_name, u.last_name, u.username,
+                  (lq.user_id = $2) AS is_mine
+           FROM lesson_questions lq
+           JOIN users u ON u.id = lq.user_id
+           WHERE lq.lesson_id = $1
+           ORDER BY lq.created_at DESC`,
+          [lesson.id, user.id]
+        );
+      } else if (canAskQuestion) {
+        qRes = await pool.query(
+          `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
+                  u.first_name, u.last_name, u.username,
+                  (lq.user_id = $2) AS is_mine
+           FROM lesson_questions lq
+           JOIN users u ON u.id = lq.user_id
+           WHERE lq.lesson_id = $1 AND (lq.user_id = $2 OR lq.is_public = true)
+           ORDER BY lq.created_at DESC`,
+          [lesson.id, user.id]
+        );
+      } else {
+        qRes = { rows: [] };
+      }
       questions = qRes.rows;
     } catch (qErr) {
       console.error('LESSON QUESTIONS QUERY ERROR:', qErr);
@@ -1083,7 +1105,7 @@ app.post('/api/lesson/:id', async function (req, res) {
         id: lesson.id, title: lesson.title, video_type: 'youtube',
         youtube_url: lesson.youtube_url, youtube_player_url: youtubePlayerUrl,
         task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
-        questions: questions
+        questions: questions, can_ask: canAskQuestion
       });
     }
 
@@ -1094,14 +1116,14 @@ app.post('/api/lesson/:id', async function (req, res) {
         bunny_video_id: lesson.bunny_video_id, bunny_library_id: process.env.BUNNY_LIBRARY_ID,
         bunny_player_url: bunnyPlayerUrl,
         task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
-        questions: questions
+        questions: questions, can_ask: canAskQuestion
       });
     }
 
     return res.json({
       id: lesson.id, title: lesson.title, video_type: null,
       task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
-      questions: questions
+      questions: questions, can_ask: canAskQuestion
     });
   } catch (error) {
     console.error('LESSON ERROR:', error);
@@ -1224,6 +1246,12 @@ app.post('/api/lesson/:id/question', async function (req, res) {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
+    var isMainAdminForAsk = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var adminCheckForAsk = await getAdminByTelegramId(user.telegram_id);
+    if (!hasAccess(user) && !isMainAdminForAsk && !adminCheckForAsk) {
+      return res.status(403).json({ error: 'Savol berish faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
+    }
+
     var lessonId = Number(req.params.id);
     var questionText = String(req.body.question || '').trim();
     if (!questionText) {
@@ -1336,16 +1364,17 @@ app.post('/api/admin/questions/:id/reply', requireAdmin, async function (req, re
   try {
     var questionId = Number(req.params.id);
     var answerText = String(req.body.answer || '').trim();
+    var makePublic = Boolean(req.body.is_public);
     if (!answerText) {
       return res.status(400).json({ error: 'Javob matni bo‘sh bo‘lishi mumkin emas' });
     }
 
     var result = await pool.query(
       `UPDATE lesson_questions
-       SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2
+       SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2, is_public = $4
        WHERE id = $3
        RETURNING *`,
-      [answerText, req.user.telegram_id, questionId]
+      [answerText, req.user.telegram_id, questionId, makePublic]
     );
     var updated = result.rows[0];
     if (!updated) return res.status(404).json({ error: 'Savol topilmadi' });
@@ -1380,6 +1409,20 @@ app.post('/api/admin/questions/:id/reply', requireAdmin, async function (req, re
   } catch (error) {
     console.error('REPLY QUESTION ERROR:', error);
     return res.status(500).json({ error: 'Javobni yuborishda xatolik yuz berdi' });
+  }
+});
+
+app.post('/api/admin/questions/:id/toggle-public', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      'UPDATE lesson_questions SET is_public = NOT is_public WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Savol topilmadi' });
+    return res.json({ ok: true, question: result.rows[0] });
+  } catch (error) {
+    console.error('TOGGLE PUBLIC QUESTION ERROR:', error);
+    return res.status(500).json({ error: 'Holatni ozgartirishda xatolik' });
   }
 });
 
