@@ -353,6 +353,8 @@ function getYouTubeVideoId(url) {
       if (embedMatch) return embedMatch[1];
       var shortsMatch = parsedUrl.pathname.match(/^\/shorts\/([^/]+)/);
       if (shortsMatch) return shortsMatch[1];
+      var liveMatch = parsedUrl.pathname.match(/^\/live\/([^/]+)/);
+      if (liveMatch) return liveMatch[1];
     }
     return null;
   } catch (error) {

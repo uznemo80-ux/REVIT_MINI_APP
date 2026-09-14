@@ -42,6 +42,19 @@ const deviceId = getDeviceId();
 // HTML & JS ESCAPE UTILITIES
 // ======================================================
 
+// Google Drive "share" linklarini (masalan .../file/d/ID/view) to'g'ridan-to'g'ri
+// <img> uchun ishlaydigan ko'rinishga o'giradi. Boshqa manzillar o'zgarishsiz qoladi.
+function getDirectImageUrl(url) {
+  if (!url) return url;
+  try {
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+    if (url.includes("drive.google.com") && driveMatch && driveMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000`;
+    }
+  } catch (e) {}
+  return url;
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -654,7 +667,7 @@ function renderHome() {
       ${(state.courses || []).slice(0, 3).map(course => `
         <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
           <div class="course-card-header">
-            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            ${course.cover_url ? `<img src="${escapeHtml(getDirectImageUrl(course.cover_url))}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
             <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
               <h3>${escapeHtml(course.title)}</h3>
               <p>${escapeHtml(course.subtitle || '')}</p>
@@ -846,6 +859,7 @@ function renderCoursesList() {
       </div>
 
       <input
+        id="course-search-input"
         class="apple-input"
         style="margin-bottom:12px;"
         type="text"
@@ -872,7 +886,7 @@ function renderCoursesList() {
           ` : ""}
 
           <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, #0d47a1, #1976d2);">
-            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            ${course.cover_url ? `<img src="${escapeHtml(getDirectImageUrl(course.cover_url))}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
             <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
               <h3>${escapeHtml(course.title)}</h3>
               <p>${escapeHtml(course.subtitle || '')}</p>
@@ -914,6 +928,12 @@ function renderCoursesList() {
 function setCourseSearch(value) {
   courseSearchQuery = value;
   render();
+  const input = document.getElementById("course-search-input");
+  if (input) {
+    input.focus();
+    const pos = value.length;
+    try { input.setSelectionRange(pos, pos); } catch (e) {}
+  }
 }
 
 function setCourseCategory(cat) {
@@ -4331,7 +4351,7 @@ function render() {
     if (app) {
       app.innerHTML = `
         <div class="page" style="padding-top: 60px; text-align: center;">
-          <div class="splash-logo" style="margin: 0 auto 16px;">!</div>
+          <div style="width:72px; height:72px; border-radius:var(--radius-lg); background:linear-gradient(135deg, var(--danger) 0%, #7b1fa2 100%); color:#fff; font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px var(--accent-glow); margin:0 auto 16px;">!</div>
           <h3>Bog'lanishda xatolik</h3>
           <p style="color: var(--text-secondary); margin: 10px 0 20px;">
             ${escapeHtml(error.message || "Mini App faqat Telegram ichida ishlaydi.")}
