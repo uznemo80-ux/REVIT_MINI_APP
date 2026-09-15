@@ -101,6 +101,19 @@ async function initExtendedTables() {
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS categories TEXT[]");
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS discount_price VARCHAR(100)");
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS discount_until TIMESTAMPTZ");
+    await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false");
+
+    // Bosh sahifa yangiliklari (rasm + matn, rejalashtirilgan chop etish vaqti bilan)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255),
+        body TEXT NOT NULL,
+        image_url TEXT,
+        publish_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
     await pool.query(`
       UPDATE courses
       SET categories = ARRAY[category]
@@ -744,6 +757,17 @@ app.post('/api/content', async function (req, res) {
       console.warn('FAQS QUERY WARNING:', fErr.message);
     }
 
+    // Bosh sahifa yangiliklari — faqat chop etish vaqti kelganlari
+    var announcements = [];
+    try {
+      var annRes = await pool.query(
+        'SELECT id, title, body, image_url, publish_at FROM announcements WHERE publish_at <= NOW() ORDER BY publish_at DESC LIMIT 10'
+      );
+      announcements = annRes.rows;
+    } catch (aErr) {
+      console.warn('ANNOUNCEMENTS QUERY WARNING:', aErr.message);
+    }
+
     // Sozlamalar (Talab 1 & 5)
     var settings = {};
     try {
@@ -765,6 +789,7 @@ app.post('/api/content', async function (req, res) {
       last_lesson: lastLesson,
       courses: courses,
       faqs: faqs,
+      announcements: announcements,
       settings: settings
     });
   } catch (error) {
@@ -2720,12 +2745,13 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var category = categories[0];
     var discountPrice = req.body.discount_price ? String(req.body.discount_price).trim() : null;
     var discountUntil = req.body.discount_until ? new Date(req.body.discount_until) : null;
+    var isFeatured = Boolean(req.body.is_featured);
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, discount_price, discount_until, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil]
+      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, discount_price, discount_until, is_featured, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, isFeatured]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -2752,12 +2778,13 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     var category = categories[0];
     var discountPrice = req.body.discount_price ? String(req.body.discount_price).trim() : null;
     var discountUntil = req.body.discount_until ? new Date(req.body.discount_until) : null;
+    var isFeatured = Boolean(req.body.is_featured);
 
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10, discount_price = $11, discount_until = $12 WHERE id = $13 RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, Number(req.params.id)]
+      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10, discount_price = $11, discount_until = $12, is_featured = $13 WHERE id = $14 RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, isFeatured, Number(req.params.id)]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -2785,6 +2812,87 @@ app.post('/api/admin/courses/:id/status', requireAdmin, async function (req, res
   } catch (error) {
     console.error('UPDATE COURSE STATUS ERROR:', error);
     return res.status(500).json({ error: 'Kurs holatini o‘zgartirishda xato' });
+  }
+});
+
+app.post('/api/admin/courses/:id/toggle-featured', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      'UPDATE courses SET is_featured = NOT COALESCE(is_featured, false) WHERE id = $1 RETURNING *',
+      [Number(req.params.id)]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Kurs topilmadi' });
+    return res.json({ ok: true, course: result.rows[0] });
+  } catch (error) {
+    console.error('TOGGLE FEATURED ERROR:', error);
+    return res.status(500).json({ error: 'Holatni ozgartirishda xato' });
+  }
+});
+
+// ======================================================
+// YANGILIKLAR (bosh sahifa e'lonlari)
+// ======================================================
+
+app.post('/api/admin/announcements', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM announcements ORDER BY publish_at DESC');
+    return res.json({ ok: true, announcements: result.rows });
+  } catch (error) {
+    console.error('ADMIN ANNOUNCEMENTS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Yangiliklarni olishda xato' });
+  }
+});
+
+app.post('/api/admin/announcements/add', requireAdmin, async function (req, res) {
+  try {
+    var title = String(req.body.title || '').trim();
+    var body = String(req.body.body || '').trim();
+    var imageUrl = String(req.body.image_url || '').trim();
+    var publishAt = req.body.publish_at ? new Date(req.body.publish_at) : new Date();
+
+    if (!body) return res.status(400).json({ error: 'Yangilik matni majburiy' });
+
+    var result = await pool.query(
+      'INSERT INTO announcements (title, body, image_url, publish_at) VALUES ($1, $2, $3, $4) RETURNING *',
+      [title || null, body, imageUrl || null, publishAt]
+    );
+
+    return res.json({ ok: true, message: 'Yangilik saqlandi', announcement: result.rows[0] });
+  } catch (error) {
+    console.error('ADD ANNOUNCEMENT ERROR:', error);
+    return res.status(500).json({ error: 'Yangilik qoshishda xato' });
+  }
+});
+
+app.post('/api/admin/announcements/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var title = String(req.body.title || '').trim();
+    var body = String(req.body.body || '').trim();
+    var imageUrl = String(req.body.image_url || '').trim();
+    var publishAt = req.body.publish_at ? new Date(req.body.publish_at) : new Date();
+
+    if (!body) return res.status(400).json({ error: 'Yangilik matni majburiy' });
+
+    var result = await pool.query(
+      'UPDATE announcements SET title = $1, body = $2, image_url = $3, publish_at = $4 WHERE id = $5 RETURNING *',
+      [title || null, body, imageUrl || null, publishAt, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Yangilik topilmadi' });
+
+    return res.json({ ok: true, message: 'Yangilik yangilandi', announcement: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE ANNOUNCEMENT ERROR:', error);
+    return res.status(500).json({ error: 'Yangilikni yangilashda xato' });
+  }
+});
+
+app.post('/api/admin/announcements/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    await pool.query('DELETE FROM announcements WHERE id = $1', [req.params.id]);
+    return res.json({ ok: true, message: 'Yangilik ochirildi' });
+  } catch (error) {
+    console.error('DELETE ANNOUNCEMENT ERROR:', error);
+    return res.status(500).json({ error: 'Yangilikni ochirishda xato' });
   }
 });
 

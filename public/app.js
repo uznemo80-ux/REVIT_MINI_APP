@@ -659,35 +659,70 @@ function renderHome() {
         </div>
       ` : ""}
 
-      <div class="section-title">
-        <span>Mavjud Kurslar</span>
-        <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
-      </div>
-
-      ${(state.courses || []).slice(0, 3).map(course => `
-        <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
-          <div class="course-card-header">
-            ${course.cover_url ? `<img src="${escapeHtml(getDirectImageUrl(course.cover_url))}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
-            <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
-              <h3>${escapeHtml(course.title)}</h3>
-              <p>${escapeHtml(course.subtitle || '')}</p>
-            </div>
-          </div>
-          <div class="course-body">
-            <div class="course-title">${escapeHtml(course.title)}</div>
-            <div class="course-meta">
-              <span>📚 ${course.total_modules || 0} Modul</span>
-              <span>🎬 ${course.total_lessons || 0} Dars</span>
-            </div>
-            <div class="course-price-wrap">
-              ${renderCoursePriceBlock(course)}
-              <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
-                ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
-              </button>
-            </div>
-          </div>
+      ${state.is_admin || (state.announcements && state.announcements.length) ? `
+        <div class="section-title">
+          <span>📢 Yangiliklar</span>
+          ${state.is_admin ? `<span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="openAnnouncementsAdmin()">Boshqarish →</span>` : ""}
         </div>
-      `).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
+      ` : ""}
+
+      ${(state.announcements && state.announcements.length) ? `
+        <div class="announcement-scroll">
+          ${state.announcements.map(a => `
+            <div class="announcement-card">
+              ${a.image_url ? `<img src="${escapeHtml(getDirectImageUrl(a.image_url))}" class="announcement-img" />` : ""}
+              <div class="announcement-body">
+                ${a.title ? `<div class="announcement-title">${escapeHtml(a.title)}</div>` : ""}
+                <div class="announcement-text">${escapeHtml(a.body).replace(/\n/g, "<br>")}</div>
+                <div class="announcement-date">${fmtDate(a.publish_at) || ""}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      ` : (state.is_admin ? `<div class="empty-box" style="margin-bottom:18px;">Hozircha yangilik yo'q. "Boshqarish" orqali birinchi yangilikni qo'shing.</div>` : "")}
+
+      ${(() => {
+        const featured = (state.courses || []).filter(c => c.is_featured);
+        if (!featured.length) {
+          return state.is_admin ? `
+            <div class="section-title">
+              <span>Mavjud Kurslar</span>
+              <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
+            </div>
+            <div class="empty-box">Hozircha bosh sahifada ko'rsatiladigan kurs tanlanmagan. Kursni tahrirlashda "🏠 Bosh sahifada ko'rsatilsin" belgisini yoqing.</div>
+          ` : "";
+        }
+        return `
+          <div class="section-title">
+            <span>Mavjud Kurslar</span>
+            <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
+          </div>
+          ${featured.map(course => `
+            <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
+              <div class="course-card-header">
+                ${course.cover_url ? `<img src="${escapeHtml(getDirectImageUrl(course.cover_url))}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+                <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
+                  <h3>${escapeHtml(course.title)}</h3>
+                  <p>${escapeHtml(course.subtitle || '')}</p>
+                </div>
+              </div>
+              <div class="course-body">
+                <div class="course-title">${escapeHtml(course.title)}</div>
+                <div class="course-meta">
+                  <span>📚 ${course.total_modules || 0} Modul</span>
+                  <span>🎬 ${course.total_lessons || 0} Dars</span>
+                </div>
+                <div class="course-price-wrap">
+                  ${renderCoursePriceBlock(course)}
+                  <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
+                    ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join("")}
+        `;
+      })()}
 
       <div class="section-title">O'quvchilar fikri</div>
       <div class="testi-scroll">
@@ -1021,6 +1056,11 @@ function openAddCourseModal() {
             </div>
           </div>
 
+          <label class="category-checkbox" style="width:100%; margin-bottom:18px; padding:12px 14px;">
+            <input type="checkbox" id="c-featured">
+            <span>🏠 Bosh sahifada ko'rsatilsin</span>
+          </label>
+
           <button class="btn" onclick="submitCreateCourse()">
             💾 Kursni saqlash
           </button>
@@ -1043,6 +1083,7 @@ async function submitCreateCourse() {
   const rel = document.getElementById("c-rel")?.value.trim();
   const cover = document.getElementById("c-cover")?.value.trim();
   const status = document.getElementById("c-status")?.value || "draft";
+  const isFeatured = document.getElementById("c-featured")?.checked || false;
 
   if (!title) return showAlert("Kurs nomi kiritilishi shart!");
 
@@ -1062,7 +1103,8 @@ async function submitCreateCourse() {
       total_lessons: Number(less) || 0,
       release_date: rel,
       cover_url: cover,
-      status: status
+      status: status,
+      is_featured: isFeatured
     });
     showToast(status === "active" ? "Yangi kurs sotuvda yaratildi!" : "Yangi kurs qoralamada saqlandi (o‘quvchilarga ko‘rinmaydi)!");
     closeDetail();
@@ -1158,6 +1200,11 @@ async function openEditCourseModal(id) {
             </div>
           </div>
 
+          <label class="category-checkbox" style="width:100%; margin-bottom:18px; padding:12px 14px;">
+            <input type="checkbox" id="ec-featured" ${course.is_featured ? "checked" : ""}>
+            <span>🏠 Bosh sahifada ko'rsatilsin</span>
+          </label>
+
           <button class="btn" onclick="submitUpdateCourse(${Number(id)})">
             💾 O'zgarishlarni saqlash
           </button>
@@ -1180,6 +1227,7 @@ async function submitUpdateCourse(id) {
   const rel = document.getElementById("ec-rel")?.value.trim();
   const cover = document.getElementById("ec-cover")?.value.trim();
   const status = document.getElementById("ec-status")?.value || "draft";
+  const isFeatured = document.getElementById("ec-featured")?.checked || false;
 
   if (!title) return showAlert("Kurs nomi majburiy!");
 
@@ -1199,7 +1247,8 @@ async function submitUpdateCourse(id) {
       total_lessons: Number(less) || 0,
       release_date: rel,
       cover_url: cover,
-      status: status
+      status: status,
+      is_featured: isFeatured
     });
     showToast("Kurs muvaffaqiyatli yangilandi!");
     closeDetail();
@@ -2691,6 +2740,198 @@ function deleteMentorConfirm(mentorId) {
       await adminApi(`/api/admin/mentors/${Number(mentorId)}/delete`);
       showToast("Mentor o'chirildi!");
       await loadMentors();
+    }
+  );
+}
+
+function toLocalDatetimeInputValue(date) {
+  const d = date ? new Date(date) : new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function openAnnouncementsAdmin() {
+  try {
+    haptic("light");
+    currentView = {
+      html: `<div class="page"><div class="back-btn" onclick="closeDetail()">← Ortga</div><div class="loading-state" style="padding:60px 0; text-align:center;"><div class="spinner"></div></div></div>`
+    };
+    render();
+
+    const data = await adminApi("/api/admin/announcements");
+    const items = data.announcements || [];
+    window._announcementsAdminList = items;
+
+    currentView = {
+      html: `
+        <div class="page">
+          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="page-title" style="margin-bottom:0;">Yangiliklar</div>
+            <button class="admin-small-btn" onclick="openAddAnnouncementModal()">➕ Yangi</button>
+          </div>
+
+          ${items.length ? items.map(a => {
+            const isPublished = new Date(a.publish_at) <= new Date();
+            return `
+              <div class="card" style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;">
+                  <div style="font-weight:750; font-size:14.5px;">${escapeHtml(a.title || "(Sarlavhasiz)")}</div>
+                  <span class="tag ${isPublished ? "passed" : "locked-tag"}">
+                    ${isPublished ? "✅ Chop etilgan" : "⏳ Rejalashtirilgan"}
+                  </span>
+                </div>
+                ${a.image_url ? `<img src="${escapeHtml(getDirectImageUrl(a.image_url))}" style="width:100%; border-radius:10px; margin-bottom:8px; max-height:140px; object-fit:cover;">` : ""}
+                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">${escapeHtml(a.body).slice(0, 140)}${a.body.length > 140 ? "..." : ""}</div>
+                <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:10px;">🗓️ ${fmtDate(a.publish_at) || ""}</div>
+                <div style="display:flex; gap:8px;">
+                  <button class="admin-small-btn" onclick="openEditAnnouncementModal(${Number(a.id)})">✏️ Tahrirlash</button>
+                  <button class="admin-small-btn" style="background:rgba(235,59,59,0.8);" onclick="deleteAnnouncementConfirm(${Number(a.id)})">🗑️ O'chirish</button>
+                </div>
+              </div>
+            `;
+          }).join("") : `<div class="empty-box">Hozircha yangiliklar yo'q.</div>`}
+        </div>
+      `
+    };
+    render();
+  } catch (error) {
+    showAlert(error.message || "Yangiliklarni yuklashda xatolik.");
+  }
+}
+
+function openAddAnnouncementModal() {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="openAnnouncementsAdmin()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Yangilik</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Sarlavha (ixtiyoriy)</label>
+            <input id="an-title" class="apple-input" type="text" placeholder="Masalan: Yangi kurs chiqdi!">
+          </div>
+          <div class="apple-field">
+            <label>Matn *</label>
+            <textarea id="an-body" class="apple-input apple-textarea" placeholder="Yangilik matni..." style="min-height:90px;"></textarea>
+          </div>
+          <div class="apple-field">
+            <label>Rasm linki (ixtiyoriy)</label>
+            <input id="an-image" class="apple-input" type="url" placeholder="https://... yoki Google Drive havolasi">
+          </div>
+          <div class="apple-field">
+            <label>Qachon chop etilsin?</label>
+            <input id="an-publish-at" class="apple-input" type="datetime-local" value="${toLocalDatetimeInputValue(new Date())}">
+            <div style="font-size:11.5px; color:var(--text-secondary); margin-top:6px;">
+              Kelajakdagi sana/vaqt tanlasangiz, yangilik aynan o'sha payt kelganda avtomatik chiqadi.
+            </div>
+          </div>
+          <button class="btn" onclick="submitCreateAnnouncement()">
+            💾 Yangilikni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateAnnouncement() {
+  const title = document.getElementById("an-title")?.value.trim();
+  const body = document.getElementById("an-body")?.value.trim();
+  const image = document.getElementById("an-image")?.value.trim();
+  const publishAt = document.getElementById("an-publish-at")?.value;
+
+  if (!body) return showAlert("Yangilik matni kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/announcements/add", {
+      title,
+      body,
+      image_url: image,
+      publish_at: publishAt ? new Date(publishAt).toISOString() : null
+    });
+    showToast("Yangilik saqlandi!");
+    await loadContent();
+    openAnnouncementsAdmin();
+  } catch (error) {
+    showAlert(error.message || "Yangilik qo'shishda xatolik.");
+  }
+}
+
+function openEditAnnouncementModal(id) {
+  const item = (window._announcementsAdminList || []).find(a => Number(a.id) === Number(id));
+  if (!item) return showAlert("Yangilik topilmadi.");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="openAnnouncementsAdmin()">← Ortga qaytish</div>
+        <div class="page-title">Yangilikni Tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Sarlavha (ixtiyoriy)</label>
+            <input id="an-edit-title" class="apple-input" type="text" value="${escapeHtml(item.title || '')}">
+          </div>
+          <div class="apple-field">
+            <label>Matn *</label>
+            <textarea id="an-edit-body" class="apple-input apple-textarea" style="min-height:90px;">${escapeHtml(item.body || '')}</textarea>
+          </div>
+          <div class="apple-field">
+            <label>Rasm linki (ixtiyoriy)</label>
+            <input id="an-edit-image" class="apple-input" type="url" value="${escapeHtml(item.image_url || '')}">
+          </div>
+          <div class="apple-field">
+            <label>Qachon chop etilsin?</label>
+            <input id="an-edit-publish-at" class="apple-input" type="datetime-local" value="${toLocalDatetimeInputValue(item.publish_at)}">
+          </div>
+          <button class="btn" onclick="submitUpdateAnnouncement(${Number(id)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateAnnouncement(id) {
+  const title = document.getElementById("an-edit-title")?.value.trim();
+  const body = document.getElementById("an-edit-body")?.value.trim();
+  const image = document.getElementById("an-edit-image")?.value.trim();
+  const publishAt = document.getElementById("an-edit-publish-at")?.value;
+
+  if (!body) return showAlert("Yangilik matni kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/announcements/${Number(id)}/update`, {
+      title,
+      body,
+      image_url: image,
+      publish_at: publishAt ? new Date(publishAt).toISOString() : null
+    });
+    showToast("Yangilik yangilandi!");
+    await loadContent();
+    openAnnouncementsAdmin();
+  } catch (error) {
+    showAlert(error.message || "Yangilikni yangilashda xatolik.");
+  }
+}
+
+function deleteAnnouncementConfirm(id) {
+  showConfirm(
+    "Yangilik o'chirilsinmi?",
+    "Bu amalni ortga qaytarib bo'lmaydi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/announcements/${Number(id)}/delete`);
+      showToast("Yangilik o'chirildi!");
+      await loadContent();
+      openAnnouncementsAdmin();
     }
   );
 }

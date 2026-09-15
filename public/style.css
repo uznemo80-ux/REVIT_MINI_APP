@@ -2634,3 +2634,51 @@ html.light .nav {
   border-radius: var(--radius-md);
   margin-bottom: 18px;
 }
+
+/* ------------------------------------------------------
+   Announcements — bosh sahifa yangiliklari
+   ------------------------------------------------------ */
+.announcement-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.announcement-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: qaCardIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.announcement-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.announcement-body {
+  padding: 14px 16px;
+}
+
+.announcement-title {
+  font-size: 15px;
+  font-weight: 750;
+  margin-bottom: 6px;
+}
+
+.announcement-text {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+.announcement-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+}
