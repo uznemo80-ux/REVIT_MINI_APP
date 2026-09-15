@@ -2428,6 +2428,7 @@ function renderChat() {
                 <div class="mentor-name">${escapeHtml(m.name)}</div>
                 <span class="tag">${escapeHtml(m.course_title || "")}</span>
               </div>
+              ${m.specialization && m.specialization.length ? `<div class="mentor-specs">${m.specialization.map(s => `<span class="mentor-spec-chip">${escapeHtml(s)}</span>`).join("")}</div>` : ""}
               ${m.telegram_username ? `<div class="mentor-detail">💬 @${escapeHtml(m.telegram_username)}</div>` : ""}
               ${m.work_days && m.work_days.length ? `<div class="mentor-detail">📅 ${m.work_days.map(escapeHtml).join(", ")}</div>` : ""}
               ${m.work_hours_start && m.work_hours_end ? `<div class="mentor-detail">🕒 ${escapeHtml(m.work_hours_start)} — ${escapeHtml(m.work_hours_end)}</div>` : ""}
@@ -2529,6 +2530,7 @@ async function loadChatQuestions() {
 }
 
 const WEEKDAYS = ["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yak"];
+const MENTOR_SPECIALIZATIONS = ["Revit", "AutoCAD", "3ds Max", "Corona", "SketchUp", "BIM", "Interyer", "Arxitektura"];
 
 async function loadMentors() {
   try {
@@ -2566,7 +2568,8 @@ function renderMentorsForCourse(courseId) {
               <button class="admin-small-btn" style="padding:4px 8px; font-size:10.5px; background:rgba(235,59,59,0.8);" onclick="deleteMentorConfirm(${Number(m.id)})">🗑️</button>
             </div>
           </div>
-          ${m.telegram_username ? `<div class="mentor-detail">💬 @${escapeHtml(m.telegram_username)}</div>` : ""}
+          ${m.specialization && m.specialization.length ? `<div class="mentor-specs">${m.specialization.map(s => `<span class="mentor-spec-chip">${escapeHtml(s)}</span>`).join("")}</div>` : ""}
+              ${m.telegram_username ? `<div class="mentor-detail">💬 @${escapeHtml(m.telegram_username)}</div>` : ""}
           ${m.work_days && m.work_days.length ? `<div class="mentor-detail">📅 ${m.work_days.map(escapeHtml).join(", ")}</div>` : ""}
           ${m.work_hours_start && m.work_hours_end ? `<div class="mentor-detail">🕒 ${escapeHtml(m.work_hours_start)} — ${escapeHtml(m.work_hours_end)}</div>` : ""}
         </div>
@@ -2601,6 +2604,17 @@ function openAddMentorModal() {
             <input id="mt-tg" class="apple-input" type="text" placeholder="texnikuzb">
           </div>
           <div class="apple-field">
+            <label>Mutaxassisligi (bir nechtasini tanlash mumkin)</label>
+            <div class="category-checkbox-group">
+              ${MENTOR_SPECIALIZATIONS.map(s => `
+                <label class="category-checkbox">
+                  <input type="checkbox" name="mt-spec-cb" value="${escapeHtml(s)}">
+                  <span>${escapeHtml(s)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+          <div class="apple-field">
             <label>Ish kunlari</label>
             <div class="category-checkbox-group">
               ${WEEKDAYS.map(d => `
@@ -2633,6 +2647,7 @@ async function submitCreateMentor() {
   const courseId = document.getElementById("mt-course")?.value;
   const name = document.getElementById("mt-name")?.value.trim();
   const tg = document.getElementById("mt-tg")?.value.trim();
+  const specs = Array.from(document.querySelectorAll('input[name="mt-spec-cb"]:checked')).map(el => el.value);
   const days = Array.from(document.querySelectorAll('input[name="mt-day-cb"]:checked')).map(el => el.value);
   const start = document.getElementById("mt-start")?.value;
   const end = document.getElementById("mt-end")?.value;
@@ -2645,6 +2660,7 @@ async function submitCreateMentor() {
       course_id: Number(courseId),
       name,
       telegram_username: tg,
+      specialization: specs,
       work_days: days,
       work_hours_start: start,
       work_hours_end: end
@@ -2675,6 +2691,17 @@ function openEditMentorModal(mentorId) {
           <div class="apple-field">
             <label>Telegram username (@ belgisisiz)</label>
             <input id="mt-edit-tg" class="apple-input" type="text" value="${escapeHtml(mentor.telegram_username || '')}">
+          </div>
+          <div class="apple-field">
+            <label>Mutaxassisligi (bir nechtasini tanlash mumkin)</label>
+            <div class="category-checkbox-group">
+              ${MENTOR_SPECIALIZATIONS.map(s => `
+                <label class="category-checkbox">
+                  <input type="checkbox" name="mt-edit-spec-cb" value="${escapeHtml(s)}" ${(mentor.specialization || []).includes(s) ? "checked" : ""}>
+                  <span>${escapeHtml(s)}</span>
+                </label>
+              `).join("")}
+            </div>
           </div>
           <div class="apple-field">
             <label>Ish kunlari</label>
@@ -2708,6 +2735,7 @@ function openEditMentorModal(mentorId) {
 async function submitUpdateMentor(mentorId) {
   const name = document.getElementById("mt-edit-name")?.value.trim();
   const tg = document.getElementById("mt-edit-tg")?.value.trim();
+  const specs = Array.from(document.querySelectorAll('input[name="mt-edit-spec-cb"]:checked')).map(el => el.value);
   const days = Array.from(document.querySelectorAll('input[name="mt-edit-day-cb"]:checked')).map(el => el.value);
   const start = document.getElementById("mt-edit-start")?.value;
   const end = document.getElementById("mt-edit-end")?.value;
@@ -2719,6 +2747,7 @@ async function submitUpdateMentor(mentorId) {
     await adminApi(`/api/admin/mentors/${Number(mentorId)}/update`, {
       name,
       telegram_username: tg,
+      specialization: specs,
       work_days: days,
       work_hours_start: start,
       work_hours_end: end
@@ -4564,15 +4593,26 @@ function renderTab() {
   }
 }
 
+// Navigatsiya animatsiyasi faqat tab HAQIQATAN o'zgarganda o'ynashi uchun
+// oxirgi chizilgan tabni eslab qolamiz. Aks holda ma'lumot yuklangach
+// qayta chizilganda animatsiya bir necha marta takrorlanib ketadi.
+let lastRenderedNavTab = null;
+
 function render() {
   if (!app) return;
   const body = currentView ? currentView.html : renderTab();
+  const existingNav = app.querySelector(".nav");
+  const canReuseNav = Boolean(existingNav) && !currentView && lastRenderedNavTab === activeTab;
+  const preservedNavHtml = canReuseNav ? existingNav.outerHTML : null;
+
   app.innerHTML = `
     <div class="screen">
       ${body}
     </div>
-    ${!currentView ? renderNav() : ""}
+    ${!currentView ? (preservedNavHtml || renderNav()) : ""}
   `;
+
+  lastRenderedNavTab = currentView ? lastRenderedNavTab : activeTab;
 }
 
 // ======================================================

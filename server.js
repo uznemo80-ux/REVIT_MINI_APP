@@ -237,6 +237,7 @@ async function initExtendedTables() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await pool.query("ALTER TABLE mentors ADD COLUMN IF NOT EXISTS specialization TEXT[] DEFAULT '{}'");
 
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
@@ -1427,7 +1428,7 @@ app.post('/api/mentors', async function (req, res) {
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
     var courseId = req.body.course_id ? Number(req.body.course_id) : null;
-    var query = 'SELECT id, course_id, name, telegram_username, work_days, work_hours_start, work_hours_end FROM mentors';
+    var query = 'SELECT id, course_id, name, telegram_username, specialization, work_days, work_hours_start, work_hours_end FROM mentors';
     var params = [];
     if (courseId) {
       query += ' WHERE course_id = $1';
@@ -1446,7 +1447,7 @@ app.post('/api/mentors', async function (req, res) {
 app.post('/api/admin/mentors', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query(
-      `SELECT mt.id, mt.course_id, mt.name, mt.telegram_username, mt.work_days, mt.work_hours_start, mt.work_hours_end, c.title AS course_title
+      `SELECT mt.id, mt.course_id, mt.name, mt.telegram_username, mt.specialization, mt.work_days, mt.work_hours_start, mt.work_hours_end, c.title AS course_title
        FROM mentors mt LEFT JOIN courses c ON c.id = mt.course_id
        ORDER BY mt.id ASC`
     );
@@ -1465,12 +1466,13 @@ app.post('/api/admin/mentors/add', requireAdmin, async function (req, res) {
     var workDays = Array.isArray(req.body.work_days) ? req.body.work_days.map(function (d) { return String(d).trim(); }) : [];
     var workHoursStart = String(req.body.work_hours_start || '').trim();
     var workHoursEnd = String(req.body.work_hours_end || '').trim();
+    var specialization = Array.isArray(req.body.specialization) ? req.body.specialization.map(function (s) { return String(s).trim(); }).filter(Boolean) : [];
 
     if (!courseId || !name) return res.status(400).json({ error: 'Kurs va mentor ismi majburiy' });
 
     var result = await pool.query(
-      'INSERT INTO mentors (course_id, name, telegram_username, work_days, work_hours_start, work_hours_end) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [courseId, name, telegramUsername || null, workDays, workHoursStart || null, workHoursEnd || null]
+      'INSERT INTO mentors (course_id, name, telegram_username, specialization, work_days, work_hours_start, work_hours_end) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [courseId, name, telegramUsername || null, specialization, workDays, workHoursStart || null, workHoursEnd || null]
     );
 
     return res.json({ ok: true, message: 'Mentor qoshildi', mentor: result.rows[0] });
@@ -1488,11 +1490,13 @@ app.post('/api/admin/mentors/:id/update', requireAdmin, async function (req, res
     var workHoursStart = String(req.body.work_hours_start || '').trim();
     var workHoursEnd = String(req.body.work_hours_end || '').trim();
 
+    var specialization = Array.isArray(req.body.specialization) ? req.body.specialization.map(function (s) { return String(s).trim(); }).filter(Boolean) : [];
+
     if (!name) return res.status(400).json({ error: 'Mentor ismi majburiy' });
 
     var result = await pool.query(
-      'UPDATE mentors SET name = $1, telegram_username = $2, work_days = $3, work_hours_start = $4, work_hours_end = $5 WHERE id = $6 RETURNING *',
-      [name, telegramUsername || null, workDays, workHoursStart || null, workHoursEnd || null, req.params.id]
+      'UPDATE mentors SET name = $1, telegram_username = $2, specialization = $3, work_days = $4, work_hours_start = $5, work_hours_end = $6 WHERE id = $7 RETURNING *',
+      [name, telegramUsername || null, specialization, workDays, workHoursStart || null, workHoursEnd || null, req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Mentor topilmadi' });
 
