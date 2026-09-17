@@ -106,10 +106,11 @@ function getResourceIcon(fileName) {
 }
 
 // ======================================================
-// THEME HANDLING (Apple Dark / Light)
+// THEME HANDLING (Apple Dark / Light + Telegram Native Theme Bridge)
 // ======================================================
 
-let currentTheme = localStorage.getItem("theme") || "dark";
+const savedTheme = localStorage.getItem("theme");
+let currentTheme = savedTheme || (tg.colorScheme === "light" ? "light" : "dark");
 
 function applyTheme(theme) {
   document.documentElement.classList.toggle("light", theme === "light");
@@ -124,6 +125,41 @@ function toggleTheme() {
   haptic("light");
   render();
 }
+
+// Telegram'ning haqiqiy interfeys ranglarini (foydalanuvchi tanlagan tema) ilovaga ko'chiradi.
+// Faqat Telegram taqdim etgan qiymatlar mavjud bo'lsa qo'llaniladi — aks holda joriy
+// standart ranglar (dark/light) o'zgarishsiz qoladi, shuning uchun brauzerda ham xavfsiz ishlaydi.
+function applyTelegramThemeParams() {
+  try {
+    const p = tg.themeParams || {};
+    const root = document.documentElement.style;
+    if (p.button_color) root.setProperty("--accent", p.button_color);
+    if (p.button_color) root.setProperty("--border-focus", p.button_color);
+    if (p.text_color) root.setProperty("--text-primary", p.text_color);
+    if (p.hint_color) root.setProperty("--text-secondary", p.hint_color);
+    if (p.bg_color) root.setProperty("--bg-primary", p.bg_color);
+    if (p.secondary_bg_color) root.setProperty("--bg-surface", p.secondary_bg_color);
+    if (p.section_bg_color) root.setProperty("--bg-surface-elevated", p.section_bg_color);
+  } catch (e) {
+    console.warn("Telegram theme params qollashda xatolik", e);
+  }
+}
+
+// Foydalanuvchi Profilda qo'lda tema tanlamagan bo'lsa, Telegram'ning o'zidagi ranglarini ishlatamiz.
+if (!savedTheme) {
+  applyTelegramThemeParams();
+}
+
+try {
+  tg.onEvent?.("themeChanged", () => {
+    if (!localStorage.getItem("theme")) {
+      currentTheme = tg.colorScheme === "light" ? "light" : "dark";
+      applyTheme(currentTheme);
+      applyTelegramThemeParams();
+      render();
+    }
+  });
+} catch (e) {}
 
 // ======================================================
 // HAPTIC FEEDBACK & NOTIFICATIONS
@@ -619,7 +655,7 @@ function renderHome() {
         <div class="about-photo-wrap" style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
           <div style="position:relative; width:64px; height:64px; flex-shrink:0;">
             <img
-              src="${escapeHtml(adminPhoto)}"
+              src="${escapeHtml(getDirectImageUrl(adminPhoto))}"
               alt="Abdulloh"
               class="about-photo"
               style="width:64px; height:64px; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--accent); box-shadow:0 4px 14px var(--accent-glow);"
@@ -4593,26 +4629,37 @@ function renderTab() {
   }
 }
 
-// Navigatsiya animatsiyasi faqat tab HAQIQATAN o'zgarganda o'ynashi uchun
-// oxirgi chizilgan tabni eslab qolamiz. Aks holda ma'lumot yuklangach
-// qayta chizilganda animatsiya bir necha marta takrorlanib ketadi.
+// Navigatsiya paneli DOM elementi sifatida DOIM saqlanadi — faqat "screen" (asosiy
+// tarkib) yangilanadi. Shu orqali fon ma'lumotlari (savollar, mentorlar va h.k.)
+// yuklanib sahifa qayta chizilganda ham navigatsiya qayta yaratilmaydi va ikonka
+// animatsiyasi faqat HAQIQIY tab almashinuvida bir marta o'ynaydi.
 let lastRenderedNavTab = null;
+let navWasVisible = null;
 
 function render() {
   if (!app) return;
+
+  if (!document.getElementById("screen-root")) {
+    app.innerHTML = `<div id="screen-root"></div><div id="nav-root"></div>`;
+  }
+
+  const screenRoot = document.getElementById("screen-root");
+  const navRoot = document.getElementById("nav-root");
+
   const body = currentView ? currentView.html : renderTab();
-  const existingNav = app.querySelector(".nav");
-  const canReuseNav = Boolean(existingNav) && !currentView && lastRenderedNavTab === activeTab;
-  const preservedNavHtml = canReuseNav ? existingNav.outerHTML : null;
+  screenRoot.innerHTML = `<div class="screen">${body}</div>`;
 
-  app.innerHTML = `
-    <div class="screen">
-      ${body}
-    </div>
-    ${!currentView ? (preservedNavHtml || renderNav()) : ""}
-  `;
-
-  lastRenderedNavTab = currentView ? lastRenderedNavTab : activeTab;
+  const shouldShowNav = !currentView;
+  if (shouldShowNav) {
+    if (!navWasVisible || lastRenderedNavTab !== activeTab) {
+      navRoot.innerHTML = renderNav();
+      lastRenderedNavTab = activeTab;
+    }
+    // aks holda navRoot ichidagi mavjud DOM elementiga tegilmaydi — animatsiya qayta o'ynamaydi
+  } else {
+    navRoot.innerHTML = "";
+  }
+  navWasVisible = shouldShowNav;
 }
 
 // ======================================================
