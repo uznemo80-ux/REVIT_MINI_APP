@@ -94,7 +94,7 @@ bot.start(async function (ctx) {
     } : undefined;
 
     await ctx.reply(
-      'Assalomu alaykum! INTPRO Academy — Arxitektura, BIM & 3D Dizayn taʼlim va resurslar platformasiga xush kelibsiz 👋\n\n' +
+      'Assalomu alaykum! YOSHUZBEKK Academy — Arxitektura, BIM & 3D Dizayn taʼlim va resurslar platformasiga xush kelibsiz 👋\n\n' +
       'Platformada siz quyidagi imkoniyatlarga ega bo‘lasiz:\n' +
       '• Autodesk Revit — Professional BIM va interyer loyihalash\n' +
       '• 3ds Max + Corona — Fotorealistik vizualizatsiya & interyer modellash\n' +
@@ -409,7 +409,7 @@ bot.on('text', async function (ctx) {
   try {
     const freshUrl = getFreshAppUrl();
     await ctx.reply(
-      'Assalomu alaykum! INTPRO Academy darslari va resurslarini ko‘rish uchun quyidagi tugmani bosing:',
+      'Assalomu alaykum! YOSHUZBEKK Academy darslari va resurslarini ko‘rish uchun quyidagi tugmani bosing:',
       freshUrl ? {
         reply_markup: {
           inline_keyboard: [

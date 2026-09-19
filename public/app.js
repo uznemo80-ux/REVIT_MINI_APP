@@ -768,7 +768,7 @@ function renderHome() {
   return `
     <div class="page">
       <div class="welcome-hero">
-        <div class="welcome-badge">🏛 INTPRO Academy</div>
+        <div class="welcome-badge">🏛 YOSHUZBEKK Academy</div>
         <div class="welcome-title">
           Xush kelibsiz${state.first_name ? ", " + escapeHtml(state.first_name) : ""}!
         </div>
@@ -822,7 +822,7 @@ function renderHome() {
           </div>
           <div>
             <div class="about-author-name" style="font-size:16.5px; font-weight:750;">Abdulloh</div>
-            <div class="about-author-role" style="font-size:12px; color:var(--text-secondary);">BIM & Revit Instruktor · INTPRO</div>
+            <div class="about-author-role" style="font-size:12px; color:var(--text-secondary);">BIM & Revit Instruktor · YOSHUZBEKK</div>
           </div>
         </div>
         <div class="about-text">
@@ -1048,7 +1048,7 @@ function startFreeCourse() {
 // Shablonlar va 3D Modellar kartochkasi
 function renderMarketProductCard(p) {
   const contactNick = state.settings?.contact_telegram || "texnikuzb";
-  const orderMsg = encodeURIComponent(`Assalomu alaykum! INTPRO platformasidagi "${p.title}" (${p.price || ''}) mahsulotiga qiziqayotgan edim.`);
+  const orderMsg = encodeURIComponent(`Assalomu alaykum! YOSHUZBEKK platformasidagi "${p.title}" (${p.price || ''}) mahsulotiga qiziqayotgan edim.`);
   const orderUrl = `https://t.me/${contactNick}?text=${orderMsg}`;
 
   return `
