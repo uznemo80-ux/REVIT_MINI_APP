@@ -70,7 +70,7 @@ async function setupMenuButton() {
     await bot.telegram.callApi('setChatMenuButton', {
       menu_button: {
         type: 'web_app',
-        text: '📚 Darslarni ochish',
+        text: '🏛 Platformani ochish',
         web_app: { url: APP_URL }
       }
     });
@@ -89,13 +89,18 @@ bot.start(async function (ctx) {
     const freshUrl = getFreshAppUrl();
     const replyMarkup = freshUrl ? {
       inline_keyboard: [
-        [{ text: '📚 Darslarni ochish', web_app: { url: freshUrl } }]
+        [{ text: '🏛 Platformani ochish', web_app: { url: freshUrl } }]
       ]
     } : undefined;
 
     await ctx.reply(
-      'Assalomu alaykum! YOSHUZBEKK Academy — Revit darslariga xush kelibsiz 👋\n\n' +
-      'Kurs darslarini ko‘rish uchun quyidagi tugmani bosing:',
+      'Assalomu alaykum! INTPRO Academy — Arxitektura, BIM & 3D Dizayn taʼlim va resurslar platformasiga xush kelibsiz 👋\n\n' +
+      'Platformada siz quyidagi imkoniyatlarga ega bo‘lasiz:\n' +
+      '• Autodesk Revit — Professional BIM va interyer loyihalash\n' +
+      '• 3ds Max + Corona — Fotorealistik vizualizatsiya & interyer modellash\n' +
+      '• Twinmotion & D5 Render — Tezkor animatsiya & interaktiv render\n' +
+      '• Professional Revit shablonlari (RTE) va tayyor 3D modellar bazasi\n\n' +
+      'Kurs darslari va resurslarni ko‘rish uchun quyidagi tugmani bosing:',
       {
         reply_markup: replyMarkup
       }
@@ -365,9 +370,29 @@ async function notifyAdmin(text, telegramId = null) {
 // BOT ERROR HANDLER & FALLBACK
 // ======================================================
 
-bot.use(function (ctx, next) {
+bot.use(async function (ctx, next) {
   if (ctx.from) {
     console.log('📨 BOTGA XABAR KELDI:', ctx.updateType, 'from:', ctx.from.id, ctx.from.username || '');
+    if (pool) {
+      try {
+        const banCheck = await pool.query(
+          'SELECT is_banned, banned_reason FROM users WHERE telegram_id = $1 LIMIT 1',
+          [ctx.from.id]
+        );
+        if (banCheck.rows[0] && banCheck.rows[0].is_banned) {
+          const reason = banCheck.rows[0].banned_reason || 'Qoidabuzarlik';
+          await ctx.reply(
+            '⛔️ DIQQAT!\n\n' +
+            'Sizning hisobingiz platformadan foydalanish qoidalarini buzganlik sababli cheklandi va botdan foydalanish to\'xtatildi.\n\n' +
+            'Sabab: ' + reason + '\n\n' +
+            'Administrator bilan bog\'lanish: @texnikuzb'
+          );
+          return;
+        }
+      } catch (dbErr) {
+        console.warn('Bot ban check warning:', dbErr.message);
+      }
+    }
   }
   return next();
 });
@@ -382,11 +407,11 @@ bot.on('text', async function (ctx) {
   try {
     const freshUrl = getFreshAppUrl();
     await ctx.reply(
-      'Assalomu alaykum! Kurs darslarini ko‘rish uchun quyidagi tugmani bosing:',
+      'Assalomu alaykum! INTPRO Academy darslari va resurslarini ko‘rish uchun quyidagi tugmani bosing:',
       freshUrl ? {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📚 Darslarni ochish', web_app: { url: freshUrl } }]
+            [{ text: '🏛 Platformani ochish', web_app: { url: freshUrl } }]
           ]
         }
       } : undefined

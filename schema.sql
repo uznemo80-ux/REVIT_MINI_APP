@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   username      VARCHAR(255),
   phone         VARCHAR(50),
   access_until  TIMESTAMPTZ,
+  is_banned     BOOLEAN DEFAULT FALSE,
+  banned_reason TEXT,
+  banned_at     TIMESTAMPTZ,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -110,6 +113,7 @@ CREATE TABLE IF NOT EXISTS lesson_questions (
 
 -- INDEXES
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_is_banned ON users(is_banned);
 CREATE INDEX IF NOT EXISTS idx_admins_telegram_id ON admins(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_lessons_module_id ON lessons(module_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_files_lesson_id ON lesson_files(lesson_id);
@@ -121,4 +125,56 @@ CREATE INDEX IF NOT EXISTS idx_payment_requests_user_id ON payment_requests(user
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status);
+
+-- ======================================================
+-- LIVE ACTIVITY TRACKING & ANALYTICS
+-- ======================================================
+
+-- USER ACTIVITY (REAL-TIME HEARTBEAT, WATCHING & TEST TRACKING)
+CREATE TABLE IF NOT EXISTS user_activity (
+  user_id               INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  status                VARCHAR(30) NOT NULL DEFAULT 'online',
+  current_page          VARCHAR(100),
+  lesson_id             INT REFERENCES lessons(id) ON DELETE SET NULL,
+  video_progress        INT DEFAULT 0,
+  video_duration        INT DEFAULT 0,
+  video_status          VARCHAR(20) DEFAULT 'watching',
+  module_id             INT REFERENCES modules(id) ON DELETE SET NULL,
+  quiz_question_current INT DEFAULT 0,
+  quiz_question_total   INT DEFAULT 0,
+  last_heartbeat_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  started_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ACTIVITY EVENTS (HISTORICAL METRICS: TODAY, YESTERDAY, 7 DAYS, 30 DAYS)
+CREATE TABLE IF NOT EXISTS activity_events (
+  id          SERIAL PRIMARY KEY,
+  user_id     INT REFERENCES users(id) ON DELETE CASCADE,
+  event_type  VARCHAR(50) NOT NULL,
+  details     JSONB DEFAULT '{}',
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- MARKET PRODUCTS (REVIT SHABLONLARI, BIM OILALARI, 3DS MAX MODELLARI)
+CREATE TABLE IF NOT EXISTS market_products (
+  id            SERIAL PRIMARY KEY,
+  title         VARCHAR(255) NOT NULL,
+  category      VARCHAR(100) NOT NULL,
+  software      VARCHAR(100) NOT NULL,
+  price         VARCHAR(100),
+  description   TEXT,
+  preview_url   TEXT,
+  file_format   VARCHAR(50),
+  is_available  BOOLEAN DEFAULT TRUE,
+  order_index   INT DEFAULT 0,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- PERFORMANCE INDEXES FOR 1,000 - 10,000 CONCURRENT ACTIVITY QUERIES
+CREATE INDEX IF NOT EXISTS idx_user_activity_last_heartbeat ON user_activity(last_heartbeat_at);
+CREATE INDEX IF NOT EXISTS idx_user_activity_status ON user_activity(status);
+CREATE INDEX IF NOT EXISTS idx_activity_events_type_created ON activity_events(event_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_activity_events_user_id ON activity_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_market_products_available ON market_products(is_available, order_index);
+
 

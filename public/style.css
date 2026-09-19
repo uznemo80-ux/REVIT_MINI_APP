@@ -2700,3 +2700,452 @@ html.light .nav {
   color: var(--accent);
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------
+   Banned Screen UI
+   ------------------------------------------------------ */
+.banned-screen {
+  min-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  animation: qaCardIn 0.3s ease;
+}
+
+.banned-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.15);
+  border: 2px solid rgba(255, 59, 48, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.2);
+}
+
+.banned-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ff453a;
+  margin-bottom: 10px;
+}
+
+.banned-desc {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+.banned-reason-box {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.banned-reason-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ff453a;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.banned-reason-text {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------
+   Live Activity Monitoring UI
+   ------------------------------------------------------ */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34c759;
+  box-shadow: 0 0 0 rgba(52, 199, 89, 0.7);
+  animation: livePulse 1.8s infinite;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(52, 199, 89, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+  }
+}
+
+.live-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.live-metric-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.live-metric-val {
+  font-size: 22px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.live-metric-lbl {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.live-user-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.live-user-card.watching {
+  border-color: rgba(41, 121, 255, 0.4);
+}
+
+.live-user-card.test_active {
+  border-color: rgba(255, 149, 0, 0.4);
+}
+
+.live-user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.live-user-name {
+  font-size: 14.5px;
+  font-weight: 750;
+}
+
+.live-user-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.live-activity-detail {
+  font-size: 12.5px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.live-user-status-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-online {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+}
+
+.status-watching {
+  background: rgba(41, 121, 255, 0.15);
+  color: #2979ff;
+}
+
+.status-test {
+  background: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+}
+
+/* ------------------------------------------------------
+   Analytics History UI
+   ------------------------------------------------------ */
+.analytics-switcher {
+  display: flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 2px;
+}
+
+.analytics-tab-btn {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.analytics-tab-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 11.5px;
+}
+
+.chart-bar-date {
+  width: 65px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.chart-bar-track {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-input);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.fill-users { background: #2979ff; }
+.fill-lessons { background: #34c759; }
+.fill-tests { background: #ff9500; }
+
+.chart-bar-val {
+  width: 30px;
+  text-align: right;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------
+   Blacklist Management UI
+   ------------------------------------------------------ */
+.blacklist-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.blacklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.blacklist-reason {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+/* ------------------------------------------------------
+   Market Products (Shablonlar va Modellar) UI
+   ------------------------------------------------------ */
+.market-category-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+}
+
+.market-chip {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.market-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.market-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.market-card-header {
+  padding: 14px 16px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.market-card-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.market-meta-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 16px 8px;
+}
+
+.market-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.market-desc {
+  padding: 0 16px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.market-footer {
+  padding: 12px 16px;
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.market-price {
+  font-size: 17px;
+  font-weight: 850;
+  color: #34c759;
+}
+
+/* ------------------------------------------------------
+   Free Course Hero Card UI
+   ------------------------------------------------------ */
+.free-course-hero {
+  background: linear-gradient(135deg, rgba(41, 121, 255, 0.15) 0%, rgba(0, 210, 255, 0.1) 100%);
+  border: 1.5px solid rgba(41, 121, 255, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.free-course-badge {
+  display: inline-block;
+  background: #2979ff;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.free-course-title {
+  font-size: 18px;
+  font-weight: 850;
+  margin-bottom: 4px;
+}
+
+.free-course-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.45;
+}
+
+.free-course-features {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.free-course-feat {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}

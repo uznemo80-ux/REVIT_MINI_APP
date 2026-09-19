@@ -93,6 +93,10 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_reason TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_at TIMESTAMPTZ');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_is_banned ON users(is_banned)');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_by BIGINT');
@@ -130,13 +134,64 @@ async function initExtendedTables() {
       }
     }
     
-    // Sozlamalar jadvali (telefon, telegram link, admin rasm)
+    // Sozlamalar jadvali (telefon, telegram link, admin rasm, bepul mini kurs)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS academy_settings (
         key VARCHAR(100) PRIMARY KEY,
         value TEXT
       )
     `);
+
+    // Jonli faollik kuzatish jadvali (user_activity)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_activity (
+        user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(30) NOT NULL DEFAULT 'online',
+        current_page VARCHAR(100),
+        lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
+        video_progress INT DEFAULT 0,
+        video_duration INT DEFAULT 0,
+        video_status VARCHAR(20) DEFAULT 'watching',
+        module_id INT REFERENCES modules(id) ON DELETE SET NULL,
+        quiz_question_current INT DEFAULT 0,
+        quiz_question_total INT DEFAULT 0,
+        last_heartbeat_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        started_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_last_heartbeat ON user_activity(last_heartbeat_at)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_status ON user_activity(status)');
+
+    // Tarixiy analitika voqealari (activity_events)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_events (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        event_type VARCHAR(50) NOT NULL,
+        details JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_events_type_created ON activity_events(event_type, created_at)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_events_user_id ON activity_events(user_id)');
+
+    // Shablonlar va 3D modellar do'koni (market_products)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS market_products (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        software VARCHAR(100) NOT NULL,
+        price VARCHAR(100),
+        description TEXT,
+        preview_url TEXT,
+        file_format VARCHAR(50),
+        is_available BOOLEAN DEFAULT TRUE,
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_market_products_available ON market_products(is_available, order_index)');
 
     // Kurslar jadvali (Talab 3)
     await pool.query(`
@@ -284,6 +339,29 @@ async function initExtendedTables() {
       SET value = 'texnikuzb'
       WHERE key = 'contact_telegram' AND (value = 'yoshuzbekk' OR value = '' OR value IS NULL)
     `);
+
+    // Bepul mini-kurs sozlamalari (Talab 3)
+    await pool.query(`
+      INSERT INTO academy_settings (key, value) VALUES
+      ('free_course_title', 'REVIT 0 DAN'),
+      ('free_course_subtitle', 'Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs'),
+      ('free_course_badge', '🎁 6 ta bepul dars'),
+      ('free_course_features', '["Revit nima ekanini tushunasiz", "Birinchi loyihani yaratasiz", "Devor, eshik, deraza chizasiz", "Birinchi 3D modelingizni yaratasiz"]'),
+      ('free_course_enabled', 'true')
+      ON CONFLICT (key) DO NOTHING
+    `);
+
+    // Boshlang'ich shablon va modellar (Market Products)
+    var pCount = await pool.query('SELECT COUNT(*)::int AS count FROM market_products');
+    if (pCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO market_products (title, category, software, price, description, preview_url, file_format, order_index)
+        VALUES
+        ('INTPRO Master Template v2.5', 'Shablon', 'Revit', '450 000 so''m', 'Interyer va arxitektura uchun to''liq sozlangan professional Revit shabloni (Gost standartlari, barcha vidlar, spesifikatsiyalar va materiallar tayyor)', '', 'RTE (Revit 2024)', 1),
+        ('Parametrik Oshxona & Mebel Oilalari Paketi', 'BIM Family', 'Revit', '350 000 so''m', '80+ parametrik zamonaviy oshxona shkaflari, jihozlari va furnituralari to''plami', '', 'RFA', 2),
+        ('Zamonaviy Mehmonxona (Living Room) Sahna & Render', '3D Model', '3ds Max', '290 000 so''m', 'Corona Render uchun to''liq sozlangan yorug''lik, materiallar va yuqori poligonli modellar sahasi', '', 'MAX, Corona', 3)
+      `);
+    }
 
     // 2-Modul uchun test savollarini bir martalik joylash (agar hali test kiritilmagan bo'lsa)
     try {
@@ -583,6 +661,15 @@ app.post('/api/auth', async function (req, res) {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
+    if (user.is_banned) {
+      return res.status(403).json({
+        error: 'banned',
+        is_banned: true,
+        banned_reason: user.banned_reason || 'Qoidabuzarlik sababli hisobingiz bloklangan',
+        message: 'Sizning hisobingiz platforma qoidalarini buzganlik sababli cheklandi. Administrator bilan bog\'laning: @texnikuzb'
+      });
+    }
+
     var admin = await getAdminByTelegramId(user.telegram_id);
     var isMainAdmin = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
 
@@ -595,6 +682,7 @@ app.post('/api/auth', async function (req, res) {
       registered: Boolean(user.first_name && user.last_name && user.phone),
       has_access: hasAccess(user),
       access_until: user.access_until || null,
+      is_banned: Boolean(user.is_banned),
       is_admin: Boolean(admin || isMainAdmin),
       admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null)
     });
@@ -671,6 +759,15 @@ app.post('/api/content', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    if (user.is_banned) {
+      return res.status(403).json({
+        error: 'banned',
+        is_banned: true,
+        banned_reason: user.banned_reason || 'Qoidabuzarlik sababli hisobingiz bloklangan',
+        message: 'Sizning hisobingiz platforma qoidalarini buzganlik sababli cheklandi. Administrator bilan bog\'laning: @texnikuzb'
+      });
+    }
 
     var userHasAccess = hasAccess(user);
 
@@ -769,16 +866,38 @@ app.post('/api/content', async function (req, res) {
       console.warn('ANNOUNCEMENTS QUERY WARNING:', aErr.message);
     }
 
-    // Sozlamalar (Talab 1 & 5)
-    var settings = {};
+    // Shablon va modellar (Marketplace)
+    var products = [];
     try {
-      var setRes = await pool.query('SELECT key, value FROM academy_settings');
-      setRes.rows.forEach(function (r) {
-        settings[r.key] = r.value;
-      });
-    } catch (sErr) {
-      console.warn('SETTINGS QUERY WARNING:', sErr.message);
+      var prodRes = await pool.query(
+        "SELECT id, title, category, software, price, description, preview_url, file_format, order_index FROM market_products WHERE is_available = true ORDER BY order_index ASC, id ASC"
+      );
+      products = prodRes.rows;
+    } catch (pErr) {
+      console.warn('PRODUCTS QUERY WARNING:', pErr.message);
     }
+
+    var freeCourseFeatures = [];
+    try {
+      if (settings.free_course_features) {
+        freeCourseFeatures = JSON.parse(settings.free_course_features);
+      }
+    } catch (e) {
+      freeCourseFeatures = [
+        "Revit nima ekanini tushunasiz",
+        "Birinchi loyihani yaratasiz",
+        "Devor, eshik, deraza chizasiz",
+        "Birinchi 3D modelingizni yaratasiz"
+      ];
+    }
+
+    var freeCourse = {
+      title: settings.free_course_title || 'REVIT 0 DAN',
+      subtitle: settings.free_course_subtitle || 'Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs',
+      badge: settings.free_course_badge || '🎁 6 ta bepul dars',
+      features: freeCourseFeatures,
+      enabled: settings.free_course_enabled !== 'false'
+    };
 
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
@@ -786,12 +905,15 @@ app.post('/api/content', async function (req, res) {
       first_name: user.first_name || '', last_name: user.last_name || '',
       phone: user.phone || '', username: user.username || '',
       registered: Boolean(user.first_name && user.last_name && user.phone),
+      is_banned: Boolean(user.is_banned),
       modules: data,
       last_lesson: lastLesson,
       courses: courses,
       faqs: faqs,
       announcements: announcements,
-      settings: settings
+      settings: settings,
+      products: products,
+      free_course: freeCourse
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
@@ -950,12 +1072,27 @@ app.post('/api/lesson/:id', async function (req, res) {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
+    if (user.is_banned) {
+      return res.status(403).json({
+        error: 'banned',
+        is_banned: true,
+        message: 'Sizning hisobingiz qoidabuzarlik sababli cheklandi'
+      });
+    }
+
     var lessonResult = await pool.query(
       'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text FROM lessons WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     var lesson = lessonResult.rows[0];
     if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
+
+    try {
+      await pool.query(
+        "INSERT INTO activity_events (user_id, event_type, details, created_at) VALUES ($1, 'lesson_view', $2, NOW())",
+        [user.id, JSON.stringify({ lesson_id: lesson.id, title: lesson.title })]
+      );
+    } catch (aeErr) {}
 
     var moduleResult = await pool.query(
       'SELECT id, title, order_index, course_id FROM modules WHERE id = $1 LIMIT 1',
@@ -1616,6 +1753,9 @@ app.post('/api/module/:id/test', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (user.is_banned) {
+      return res.status(403).json({ error: 'banned', is_banned: true, message: 'Hisobingiz cheklangan' });
+    }
 
     var isMainAdminForTest = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
     if (!hasAccess(user) && !isMainAdminForTest) {
@@ -1661,6 +1801,9 @@ app.post('/api/module/:id/submit', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (user.is_banned) {
+      return res.status(403).json({ error: 'banned', is_banned: true, message: 'Hisobingiz cheklangan' });
+    }
 
     var isMainAdminForSubmit = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
     if (!hasAccess(user) && !isMainAdminForSubmit) {
@@ -1696,6 +1839,14 @@ app.post('/api/module/:id/submit', async function (req, res) {
       'INSERT INTO module_results (user_id, module_id, passed, score) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, module_id) DO UPDATE SET passed = $3, score = $4, attempted_at = now()',
       [user.id, req.params.id, passed, score]
     );
+
+    // Activity event qayd etish
+    try {
+      await pool.query(
+        "INSERT INTO activity_events (user_id, event_type, details, created_at) VALUES ($1, 'test_attempt', $2, NOW())",
+        [user.id, JSON.stringify({ module_id: req.params.id, score: score, passed: passed })]
+      );
+    } catch (aeErr) {}
 
     // Agar shu urinishda o'tgan bo'lsa — shu modul tegishli kursning BARCHA testlaridan o'tganmi tekshiramiz
     if (passed) {
@@ -1887,6 +2038,102 @@ app.post('/api/chat/send', async function (req, res) {
   }
 });
 
+// ======================================================
+// ACTIVITY TRACKING & HEARTBEAT (USER)
+// ======================================================
+
+app.post('/api/activity/heartbeat', async function (req, res) {
+  try {
+    var initData = (req.body && req.body.initData) || req.headers['x-telegram-init-data'];
+    if (!initData) return res.status(401).json({ error: 'Telegram initData yuborilmagan' });
+
+    var user = await getOrCreateUser(initData);
+    if (!user) return res.status(401).json({ error: 'Foydalanuvchi tekshirilmadi' });
+    if (user.is_banned) {
+      return res.status(403).json({
+        error: 'banned',
+        is_banned: true,
+        message: 'Sizning hisobingiz qoidabuzarlik sababli cheklandi'
+      });
+    }
+
+    var status = String(req.body.status || 'online').trim().toLowerCase();
+    if (!['online', 'watching', 'test_active', 'idle'].includes(status)) {
+      status = 'online';
+    }
+
+    var currentPage = req.body.current_page ? String(req.body.current_page).slice(0, 100) : null;
+    var lessonId = req.body.lesson_id ? Number(req.body.lesson_id) : null;
+    var videoProgress = Math.max(0, Math.floor(Number(req.body.video_progress) || 0));
+    var videoDuration = Math.max(0, Math.floor(Number(req.body.video_duration) || 0));
+    var videoStatus = req.body.video_status ? String(req.body.video_status).slice(0, 20) : 'watching';
+    var moduleId = req.body.module_id ? Number(req.body.module_id) : null;
+    var quizQuestionCurrent = Math.max(0, Math.floor(Number(req.body.quiz_question_current) || 0));
+    var quizQuestionTotal = Math.max(0, Math.floor(Number(req.body.quiz_question_total) || 0));
+
+    // UPSERT into user_activity
+    await pool.query(`
+      INSERT INTO user_activity (
+        user_id, status, current_page, lesson_id, video_progress, video_duration,
+        video_status, module_id, quiz_question_current, quiz_question_total,
+        last_heartbeat_at, started_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        status = EXCLUDED.status,
+        current_page = EXCLUDED.current_page,
+        lesson_id = EXCLUDED.lesson_id,
+        video_progress = EXCLUDED.video_progress,
+        video_duration = EXCLUDED.video_duration,
+        video_status = EXCLUDED.video_status,
+        module_id = EXCLUDED.module_id,
+        quiz_question_current = EXCLUDED.quiz_question_current,
+        quiz_question_total = EXCLUDED.quiz_question_total,
+        last_heartbeat_at = NOW()
+    `, [
+      user.id, status, currentPage, lessonId, videoProgress, videoDuration,
+      videoStatus, moduleId, quizQuestionCurrent, quizQuestionTotal
+    ]);
+
+    // Update device_last_seen
+    await pool.query('UPDATE users SET device_last_seen = NOW() WHERE id = $1', [user.id]);
+
+    // Record daily visit in activity_events (once per calendar day)
+    var todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    await pool.query(`
+      INSERT INTO activity_events (user_id, event_type, details, created_at)
+      SELECT $1, 'visit', '{"source": "heartbeat"}', NOW()
+      WHERE NOT EXISTS (
+        SELECT 1 FROM activity_events
+        WHERE user_id = $1 AND event_type = 'visit' AND created_at >= $2
+      )
+    `, [user.id, todayStart]);
+
+    return res.json({ ok: true, timestamp: Date.now() });
+  } catch (error) {
+    console.error('HEARTBEAT ERROR:', error);
+    return res.status(500).json({ error: 'Heartbeat server xatosi' });
+  }
+});
+
+// ======================================================
+// MARKETPLACE / RESURSLAR & SHABLONLAR (USER API)
+// ======================================================
+
+async function getAvailableProducts(req, res) {
+  try {
+    var result = await pool.query(
+      'SELECT id, title, category, software, price, description, preview_url, file_format, order_index FROM market_products WHERE is_available = true ORDER BY order_index ASC, id ASC'
+    );
+    return res.json({ ok: true, products: result.rows });
+  } catch (error) {
+    console.error('GET PRODUCTS ERROR:', error);
+    return res.status(500).json({ error: 'Mahsulotlarni olishda server xatosi' });
+  }
+}
+
+app.get('/api/products', getAvailableProducts);
+app.post('/api/products', getAvailableProducts);
 
 // ======================================================
 // ADMIN API
@@ -1921,6 +2168,40 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       "SELECT COUNT(*)::int AS c FROM payment_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'pending' AND u.access_until IS NOT NULL"
     );
 
+    // Live online, watching va testing (oxirgi 60 soniya)
+    var onlineResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM user_activity WHERE last_heartbeat_at >= NOW() - INTERVAL '60 seconds'"
+    );
+    var watchingResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM user_activity WHERE status = 'watching' AND lesson_id IS NOT NULL AND last_heartbeat_at >= NOW() - INTERVAL '60 seconds'"
+    );
+    var testingResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM user_activity WHERE status = 'test_active' AND last_heartbeat_at >= NOW() - INTERVAL '60 seconds'"
+    );
+
+    // Bugungi statistika
+    var todayActiveResult = await pool.query(`
+      SELECT COUNT(DISTINCT uid)::int AS c FROM (
+        SELECT user_id AS uid FROM activity_events WHERE created_at >= CURRENT_DATE
+        UNION
+        SELECT user_id AS uid FROM user_activity WHERE last_heartbeat_at >= CURRENT_DATE
+        UNION
+        SELECT id AS uid FROM users WHERE device_last_seen >= CURRENT_DATE
+      ) t
+    `);
+    var todayViewsResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM progress WHERE watched_at >= CURRENT_DATE"
+    );
+    var todayTestsResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM module_results WHERE attempted_at >= CURRENT_DATE"
+    );
+    var bannedResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM users WHERE is_banned = true"
+    );
+    var productsResult = await pool.query(
+      "SELECT COUNT(*)::int AS c FROM market_products WHERE is_available = true"
+    );
+
     return res.json({
       ok: true,
       stats: {
@@ -1931,12 +2212,382 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
         total_lessons: lessonsResult.rows[0].total,
         total_modules: modulesResult.rows[0].total,
         pending_new: pendingNewResult.rows[0].c,
-        pending_renewal: pendingRenewalResult.rows[0].c
+        pending_renewal: pendingRenewalResult.rows[0].c,
+        // Live ko'rsatkichlar
+        online_now: onlineResult.rows[0].c,
+        watching_now: watchingResult.rows[0].c,
+        testing_now: testingResult.rows[0].c,
+        // Bugungi ko'rsatkichlar
+        today_active: todayActiveResult.rows[0].c,
+        today_lesson_views: todayViewsResult.rows[0].c,
+        today_test_attempts: todayTestsResult.rows[0].c,
+        banned_students: bannedResult.rows[0].c,
+        total_products: productsResult.rows[0].c
       }
     });
   } catch (error) {
     console.error('ADMIN STATS ERROR:', error);
     return res.status(500).json({ error: 'Statistikani olishda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN LIVE ACTIVITY (REAL-TIME POLLING: ONLINE, WATCHING, TESTING)
+// ======================================================
+
+app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
+  try {
+    // 60 soniya ichida faol bo'lganlar
+    var threshold = new Date(Date.now() - 60 * 1000);
+
+    var activeUsersRes = await pool.query(`
+      SELECT
+        ua.user_id,
+        ua.status,
+        ua.current_page,
+        ua.lesson_id,
+        ua.video_progress,
+        ua.video_duration,
+        ua.video_status,
+        ua.module_id,
+        ua.quiz_question_current,
+        ua.quiz_question_total,
+        ua.last_heartbeat_at,
+        ROUND(EXTRACT(EPOCH FROM (NOW() - ua.last_heartbeat_at)))::int AS seconds_ago,
+        u.telegram_id,
+        u.first_name,
+        u.last_name,
+        u.username,
+        u.phone,
+        u.access_until,
+        u.is_banned,
+        u.banned_reason,
+        u.created_at AS user_created_at,
+        l.title AS lesson_title,
+        l.order_index AS lesson_order,
+        m.title AS module_title,
+        m.order_index AS module_order,
+        qm.title AS quiz_module_title,
+        qm.order_index AS quiz_module_order
+      FROM user_activity ua
+      JOIN users u ON u.id = ua.user_id
+      LEFT JOIN lessons l ON l.id = ua.lesson_id
+      LEFT JOIN modules m ON m.id = l.module_id
+      LEFT JOIN modules qm ON qm.id = ua.module_id
+      WHERE ua.last_heartbeat_at >= $1
+      ORDER BY ua.last_heartbeat_at DESC
+      LIMIT 100
+    `, [threshold]);
+
+    var activeList = activeUsersRes.rows;
+    var onlineNow = activeList.length;
+    var watchingNow = activeList.filter(function (u) { return u.status === 'watching' && u.lesson_id; }).length;
+    var testingNow = activeList.filter(function (u) { return u.status === 'test_active'; }).length;
+
+    // Oxirgi 10 ta faol foydalanuvchilar (umuman oxirgi kirganlar)
+    var recentUsersRes = await pool.query(`
+      SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.phone,
+             u.device_last_seen, ua.last_heartbeat_at, ua.status, ua.current_page,
+             ROUND(EXTRACT(EPOCH FROM (NOW() - COALESCE(ua.last_heartbeat_at, u.device_last_seen, u.created_at))))::int AS seconds_ago
+      FROM users u
+      LEFT JOIN user_activity ua ON ua.user_id = u.id
+      ORDER BY COALESCE(ua.last_heartbeat_at, u.device_last_seen, u.created_at) DESC
+      LIMIT 10
+    `);
+
+    return res.json({
+      ok: true,
+      timestamp: Date.now(),
+      summary: {
+        online_now: onlineNow,
+        watching_now: watchingNow,
+        testing_now: testingNow
+      },
+      users: activeList,
+      recent_users: recentUsersRes.rows
+    });
+  } catch (error) {
+    console.error('LIVE ACTIVITY ERROR:', error);
+    return res.status(500).json({ error: 'Jonli faollikni yuklashda xato: ' + error.message });
+  }
+});
+
+// ======================================================
+// ADMIN ANALYTICS HISTORY (TODAY, YESTERDAY, 7 DAYS, 30 DAYS)
+// ======================================================
+
+app.post('/api/admin/analytics/history', requireAdmin, async function (req, res) {
+  try {
+    var range = String(req.body.range || '7days').trim();
+    var days = 7;
+    var startDate = new Date();
+
+    if (range === 'today') {
+      days = 1;
+      startDate.setHours(0, 0, 0, 0);
+    } else if (range === 'yesterday') {
+      days = 2;
+      startDate.setDate(startDate.getDate() - 1);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (range === '30days') {
+      days = 30;
+      startDate.setDate(startDate.getDate() - 30);
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      // default: 7days
+      days = 7;
+      startDate.setDate(startDate.getDate() - 7);
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    // Yangi foydalanuvchilar soni
+    var newUsersRes = await pool.query(
+      'SELECT COUNT(*)::int AS c FROM users WHERE created_at >= $1',
+      [startDate]
+    );
+
+    // Darslar ko'rilishi soni
+    var lessonViewsRes = await pool.query(
+      'SELECT COUNT(*)::int AS c FROM progress WHERE watched_at >= $1',
+      [startDate]
+    );
+
+    // Test urinishlari soni
+    var testAttemptsRes = await pool.query(
+      'SELECT COUNT(*)::int AS c FROM module_results WHERE attempted_at >= $1',
+      [startDate]
+    );
+
+    // Faol foydalanuvchilar (unikal)
+    var activeUsersRes = await pool.query(`
+      SELECT COUNT(DISTINCT uid)::int AS c FROM (
+        SELECT user_id AS uid FROM activity_events WHERE created_at >= $1
+        UNION
+        SELECT user_id AS uid FROM user_activity WHERE last_heartbeat_at >= $1
+        UNION
+        SELECT user_id AS uid FROM progress WHERE watched_at >= $1
+      ) t
+    `, [startDate]);
+
+    // Kunlik grafik taqsimoti (chart data)
+    var chartQuery = `
+      WITH date_series AS (
+        SELECT generate_series(
+          DATE_TRUNC('day', $1::timestamptz),
+          DATE_TRUNC('day', NOW()),
+          '1 day'::interval
+        )::date AS day
+      )
+      SELECT
+        ds.day::text AS date,
+        COALESCE(u.new_users, 0)::int AS new_users,
+        COALESCE(p.lesson_views, 0)::int AS lesson_views,
+        COALESCE(t.test_attempts, 0)::int AS test_attempts
+      FROM date_series ds
+      LEFT JOIN (
+        SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*) AS new_users
+        FROM users
+        WHERE created_at >= $1
+        GROUP BY 1
+      ) u ON u.day = ds.day
+      LEFT JOIN (
+        SELECT DATE_TRUNC('day', watched_at)::date AS day, COUNT(*) AS lesson_views
+        FROM progress
+        WHERE watched_at >= $1
+        GROUP BY 1
+      ) p ON p.day = ds.day
+      LEFT JOIN (
+        SELECT DATE_TRUNC('day', attempted_at)::date AS day, COUNT(*) AS test_attempts
+        FROM module_results
+        WHERE attempted_at >= $1
+        GROUP BY 1
+      ) t ON t.day = ds.day
+      ORDER BY ds.day ASC
+    `;
+    var chartRes = await pool.query(chartQuery, [startDate]);
+
+    return res.json({
+      ok: true,
+      range: range,
+      metrics: {
+        new_users: newUsersRes.rows[0].c,
+        active_users: activeUsersRes.rows[0].c,
+        lesson_views: lessonViewsRes.rows[0].c,
+        test_attempts: testAttemptsRes.rows[0].c
+      },
+      chart_data: chartRes.rows
+    });
+  } catch (error) {
+    console.error('ANALYTICS HISTORY ERROR:', error);
+    return res.status(500).json({ error: 'Tarixiy statistikani olishda xato: ' + error.message });
+  }
+});
+
+// ======================================================
+// BLACKLIST / QORA RO'YXAT ADMIN ENDPOINTS
+// ======================================================
+
+app.post('/api/admin/blacklist', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(`
+      SELECT id, telegram_id, first_name, last_name, username, phone,
+             is_banned, banned_reason, banned_at, created_at
+      FROM users
+      WHERE is_banned = true
+      ORDER BY banned_at DESC NULLS LAST
+    `);
+    return res.json({ ok: true, banned_users: result.rows });
+  } catch (error) {
+    console.error('BLACKLIST ERROR:', error);
+    return res.status(500).json({ error: 'Qora ro\'yxatni yuklashda xato' });
+  }
+});
+
+app.post('/api/admin/student/:id/ban', requireAdmin, async function (req, res) {
+  try {
+    var studentId = Number(req.params.id);
+    var reason = String(req.body.reason || 'Dars materiallarini tarqatish yoki qoidalarni buzish').trim();
+
+    var userRes = await pool.query('SELECT id, telegram_id, first_name FROM users WHERE id = $1 LIMIT 1', [studentId]);
+    if (userRes.rows.length === 0) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    var targetUser = userRes.rows[0];
+
+    await pool.query(
+      'UPDATE users SET is_banned = true, banned_reason = $1, banned_at = NOW(), access_until = NULL WHERE id = $2',
+      [reason, studentId]
+    );
+
+    // User activity'ni ham tozalaymiz
+    await pool.query('DELETE FROM user_activity WHERE user_id = $1', [studentId]);
+
+    try {
+      await botModule.bot.telegram.sendMessage(
+        targetUser.telegram_id,
+        '⛔️ DIQQAT!\n\n' +
+        'Sizning hisobingiz platformadan foydalanish qoidalarini buzganlik sababli bloklandi va barcha ruxsatlar bekor qilindi.\n\n' +
+        'Sabab: ' + reason + '\n\n' +
+        'Savollar bo‘lsa administrator bilan bog‘laning: @texnikuzb'
+      );
+    } catch (msgErr) {
+      console.warn('BAN NOTIFICATION WARNING:', msgErr.message);
+    }
+
+    console.log('USER BANNED: ' + targetUser.telegram_id + ' | Reason: ' + reason);
+    return res.json({ ok: true, message: 'Foydalanuvchi muvaffaqiyatli qora ro\'yxatga kiritildi' });
+  } catch (error) {
+    console.error('BAN ERROR:', error);
+    return res.status(500).json({ error: 'Qora ro\'yxatga kiritishda xato' });
+  }
+});
+
+app.post('/api/admin/student/:id/unban', requireAdmin, async function (req, res) {
+  try {
+    var studentId = Number(req.params.id);
+    var userRes = await pool.query('SELECT id, telegram_id, first_name FROM users WHERE id = $1 LIMIT 1', [studentId]);
+    if (userRes.rows.length === 0) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    var targetUser = userRes.rows[0];
+
+    await pool.query(
+      'UPDATE users SET is_banned = false, banned_reason = NULL, banned_at = NULL WHERE id = $1',
+      [studentId]
+    );
+
+    try {
+      await botModule.bot.telegram.sendMessage(
+        targetUser.telegram_id,
+        '✅ Xushxabar!\n\n' +
+        'Sizning hisobingiz administrator tomonidan qora ro\'yxatdan chiqarildi va faollashtirildi.\n\n' +
+        'Mini Appni ochish uchun «📚 Darslarni ochish» tugmasini bosing.'
+      );
+    } catch (msgErr) {
+      console.warn('UNBAN NOTIFICATION WARNING:', msgErr.message);
+    }
+
+    console.log('USER UNBANNED: ' + targetUser.telegram_id);
+    return res.json({ ok: true, message: 'Foydalanuvchi qora ro\'yxatdan chiqarildi' });
+  } catch (error) {
+    console.error('UNBAN ERROR:', error);
+    return res.status(500).json({ error: 'Qora ro\'yxatdan chiqarishda xato' });
+  }
+});
+
+// ======================================================
+// MARKET PRODUCTS (SHABLONLAR VA MODELLAR) ADMIN ENDPOINTS
+// ======================================================
+
+app.post('/api/admin/products', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM market_products ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, products: result.rows });
+  } catch (error) {
+    console.error('ADMIN PRODUCTS ERROR:', error);
+    return res.status(500).json({ error: 'Mahsulotlarni yuklashda xato' });
+  }
+});
+
+app.post('/api/admin/products/add', requireAdmin, async function (req, res) {
+  try {
+    var title = String(req.body.title || '').trim();
+    var category = String(req.body.category || 'Shablon').trim();
+    var software = String(req.body.software || 'Revit').trim();
+    var price = String(req.body.price || '').trim();
+    var description = String(req.body.description || '').trim();
+    var previewUrl = String(req.body.preview_url || '').trim();
+    var fileFormat = String(req.body.file_format || '').trim();
+    var orderIndex = Number(req.body.order_index) || 0;
+
+    if (!title) return res.status(400).json({ error: 'Mahsulot nomini kiriting' });
+
+    var result = await pool.query(`
+      INSERT INTO market_products (title, category, software, price, description, preview_url, file_format, order_index)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [title, category, software, price, description, previewUrl, fileFormat, orderIndex]);
+
+    return res.json({ ok: true, product: result.rows[0] });
+  } catch (error) {
+    console.error('PRODUCT ADD ERROR:', error);
+    return res.status(500).json({ error: 'Mahsulot qo\'shishda xato' });
+  }
+});
+
+app.post('/api/admin/products/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var productId = Number(req.params.id);
+    var title = String(req.body.title || '').trim();
+    var category = String(req.body.category || 'Shablon').trim();
+    var software = String(req.body.software || 'Revit').trim();
+    var price = String(req.body.price || '').trim();
+    var description = String(req.body.description || '').trim();
+    var previewUrl = String(req.body.preview_url || '').trim();
+    var fileFormat = String(req.body.file_format || '').trim();
+    var isAvailable = req.body.is_available !== undefined ? Boolean(req.body.is_available) : true;
+    var orderIndex = Number(req.body.order_index) || 0;
+
+    var result = await pool.query(`
+      UPDATE market_products
+      SET title = $1, category = $2, software = $3, price = $4, description = $5,
+          preview_url = $6, file_format = $7, is_available = $8, order_index = $9
+      WHERE id = $10
+      RETURNING *
+    `, [title, category, software, price, description, previewUrl, fileFormat, isAvailable, orderIndex, productId]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Mahsulot topilmadi' });
+    return res.json({ ok: true, product: result.rows[0] });
+  } catch (error) {
+    console.error('PRODUCT UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Mahsulotni yangilashda xato' });
+  }
+});
+
+app.post('/api/admin/products/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var productId = Number(req.params.id);
+    await pool.query('DELETE FROM market_products WHERE id = $1', [productId]);
+    return res.json({ ok: true, message: 'Mahsulot o\'chirildi' });
+  } catch (error) {
+    console.error('PRODUCT DELETE ERROR:', error);
+    return res.status(500).json({ error: 'Mahsulotni o\'chirishda xato' });
   }
 });
 
@@ -2051,7 +2702,7 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
 app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
   try {
     var studentResult = await pool.query(
-      'SELECT id, telegram_id, first_name, last_name, phone, username, access_until, created_at FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id, first_name, last_name, phone, username, access_until, is_banned, banned_reason, banned_at, device_last_seen, created_at FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     var student = studentResult.rows[0];
@@ -2067,6 +2718,19 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
       [student.id]
     );
 
+    var activityResult = await pool.query(`
+      SELECT ua.*,
+             l.title AS lesson_title, m.title AS module_title,
+             qm.title AS quiz_module_title,
+             ROUND(EXTRACT(EPOCH FROM (NOW() - ua.last_heartbeat_at)))::int AS seconds_ago
+      FROM user_activity ua
+      LEFT JOIN lessons l ON l.id = ua.lesson_id
+      LEFT JOIN modules m ON m.id = l.module_id
+      LEFT JOIN modules qm ON qm.id = ua.module_id
+      WHERE ua.user_id = $1
+      LIMIT 1
+    `, [student.id]);
+
     var coursesResult = await pool.query('SELECT id, title FROM courses ORDER BY order_index ASC, id ASC');
     var modulesForGrantResult = await pool.query('SELECT id, course_id, title, order_index FROM modules ORDER BY order_index ASC, id ASC');
     var grantsResult = await pool.query('SELECT module_id FROM module_access_grants WHERE user_id = $1', [student.id]);
@@ -2079,8 +2743,13 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
         first_name: student.first_name || '', last_name: student.last_name || '',
         phone: student.phone || null, username: student.username || null,
         access_until: student.access_until || null, created_at: student.created_at,
-        has_access: student.access_until && new Date(student.access_until) > new Date()
+        has_access: student.access_until && new Date(student.access_until) > new Date(),
+        is_banned: Boolean(student.is_banned),
+        banned_reason: student.banned_reason || null,
+        banned_at: student.banned_at || null,
+        device_last_seen: student.device_last_seen || null
       },
+      activity: activityResult.rows[0] || null,
       progress: progressResult.rows,
       tests: testResult.rows,
       courses: coursesResult.rows,

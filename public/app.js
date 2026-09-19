@@ -243,8 +243,12 @@ let state = {
   modules: [],
   courses: [],
   faqs: [],
+  products: [],
+  free_course: null,
+  is_banned: false,
+  banned_reason: null,
   settings: {
-    contact_telegram: "yoshuzbekk",
+    contact_telegram: "texnikuzb",
     contact_phone: "+998900000000",
     admin_photo_url: "/admin.jpg"
   },
@@ -266,6 +270,7 @@ let courseModulesData = null;
 let courseSearchQuery = "";
 let selectedCourseCategory = "Barchasi";
 const COURSE_CATEGORIES = ["Revit", "AutoCAD", "3ds Max", "BIM", "Interyer", "Arxitektura", "Boshqa"];
+let marketCategoryFilter = "Barchasi";
 let currentView = null;
 let aboutOpen = false;
 let adminQuestionsList = null;
@@ -274,6 +279,13 @@ let adminQuestionsCourseId = null;
 let mentorsList = null;
 let studentQuestionsList = null;
 window._answers = {};
+
+// Heartbeat va real-vaqt kuzatuv holatlari
+let heartbeatTimer = null;
+let currentTrackingLessonId = null;
+let currentTrackingModuleId = null;
+let currentTrackingQuiz = { current: 0, total: 0 };
+let ytPlayerInstance = null;
 
 // ======================================================
 // API CLIENT
@@ -300,10 +312,125 @@ async function api(path, body = {}) {
   }
 
   if (!res.ok) {
+    if (data.is_banned || data.error === "banned" || (res.status === 403 && data.is_banned)) {
+      state.is_banned = true;
+      if (data.message || data.banned_reason) {
+        state.banned_reason = data.banned_reason || data.message;
+      }
+      render();
+    }
     throw new Error(data.message || data.error || "Server xatosi");
   }
 
+  if (data && data.is_banned) {
+    state.is_banned = true;
+    if (data.banned_reason) state.banned_reason = data.banned_reason;
+    render();
+  }
+
   return data;
+}
+
+// ======================================================
+// BANNED SCREEN
+// ======================================================
+
+function renderBannedScreen() {
+  const contactNick = state.settings?.contact_telegram || "texnikuzb";
+  const reason = state.banned_reason || "Platformadan foydalanish qoidalarini buzganlik yoki ruxsatsiz harakat";
+
+  return `
+    <div class="banned-screen">
+      <div class="banned-icon-wrap">⛔️</div>
+      <div class="banned-title">Hisobingiz cheklangan</div>
+      <div class="banned-desc">
+        Sizning profilingiz platformadan foydalanish qoidalarini buzganlik sababli administrator tomonidan vaqtincha yoki butunlay cheklandi.
+      </div>
+      <div class="banned-reason-box">
+        <div class="banned-reason-lbl">Bloklash sababi:</div>
+        <div class="banned-reason-text">${escapeHtml(reason)}</div>
+      </div>
+      <button class="btn" style="max-width: 290px; margin-bottom: 12px;" onclick="tg.openTelegramLink('https://t.me/${contactNick}')">
+        💬 Administratorga yozish (@${escapeHtml(contactNick)})
+      </button>
+      <button class="btn secondary" style="max-width: 290px;" onclick="location.reload()">
+        🔄 Qayta tekshirish
+      </button>
+    </div>
+  `;
+}
+
+// ======================================================
+// ACTIVITY TRACKING & HEARTBEAT
+// ======================================================
+
+function sendHeartbeat(forceStatus = null) {
+  if (!initData || state.is_banned) return;
+
+  let status = forceStatus || "online";
+  let currentPage = activeTab;
+  let lessonId = null;
+  let videoProgress = 0;
+  let videoDuration = 0;
+  let videoStatus = "watching";
+  let moduleId = null;
+  let quizQCur = 0;
+  let quizQTot = 0;
+
+  if (currentTrackingLessonId) {
+    status = "watching";
+    currentPage = "lesson";
+    lessonId = currentTrackingLessonId;
+    if (ytPlayerInstance && typeof ytPlayerInstance.getCurrentTime === "function") {
+      try {
+        videoProgress = Math.floor(ytPlayerInstance.getCurrentTime() || 0);
+        videoDuration = Math.floor(ytPlayerInstance.getDuration() || 0);
+        const pState = ytPlayerInstance.getPlayerState();
+        videoStatus = (pState === 1) ? "playing" : (pState === 2 ? "paused" : "watching");
+      } catch (e) {}
+    }
+  } else if (currentTrackingModuleId && currentTrackingQuiz.total > 0) {
+    status = "test_active";
+    currentPage = "quiz";
+    moduleId = currentTrackingModuleId;
+    quizQCur = currentTrackingQuiz.current;
+    quizQTot = currentTrackingQuiz.total;
+  }
+
+  fetch("/api/activity/heartbeat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      initData,
+      device_id: deviceId,
+      status,
+      current_page: currentPage,
+      lesson_id: lessonId,
+      video_progress: videoProgress,
+      video_duration: videoDuration,
+      video_status: videoStatus,
+      module_id: moduleId,
+      quiz_question_current: quizQCur,
+      quiz_question_total: quizQTot
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.is_banned) {
+      state.is_banned = true;
+      if (data.message) state.banned_reason = data.message;
+      render();
+    }
+  })
+  .catch(err => console.debug("Heartbeat warning:", err.message));
+}
+
+function startHeartbeatLoop() {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  sendHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    sendHeartbeat();
+  }, 25000);
 }
 
 // ======================================================
@@ -324,8 +451,14 @@ async function loadAuth() {
       registered: Boolean(data.registered),
       has_access: Boolean(data.has_access),
       is_admin: Boolean(data.is_admin),
-      admin_role: data.admin_role || null
+      admin_role: data.admin_role || null,
+      is_banned: Boolean(data.is_banned),
+      banned_reason: data.banned_reason || null
     };
+    if (state.is_banned) {
+      render();
+      return data;
+    }
     return data;
   } catch (error) {
     console.error("AUTH ERROR:", error);
@@ -348,11 +481,15 @@ async function loadContent() {
       registered: data.registered ?? state.registered ?? false,
       is_admin: state.is_admin,
       admin_role: state.admin_role,
+      is_banned: Boolean(data.is_banned || state.is_banned),
       last_lesson: data.last_lesson || null,
       courses: Array.isArray(data.courses) ? data.courses : [],
       faqs: Array.isArray(data.faqs) ? data.faqs : [],
+      products: Array.isArray(data.products) ? data.products : [],
+      free_course: data.free_course || state.free_course,
       settings: data.settings || state.settings
     };
+    startHeartbeatLoop();
     render();
   } catch (error) {
     console.error("CONTENT LOAD ERROR:", error);
@@ -631,12 +768,28 @@ function renderHome() {
   return `
     <div class="page">
       <div class="welcome-hero">
-        <div class="welcome-badge">✨ YOSHUZBEKK Academy</div>
+        <div class="welcome-badge">🏛 INTPRO Academy</div>
         <div class="welcome-title">
           Xush kelibsiz${state.first_name ? ", " + escapeHtml(state.first_name) : ""}!
         </div>
-        <div class="welcome-sub">Revit dasturida interyer loyihalash professional akademiyasi</div>
+        <div class="welcome-sub">Arxitektura, BIM & 3D Dizayn taʼlim va professional resurslar platformasi</div>
       </div>
+
+      ${state.free_course && state.free_course.enabled ? `
+        <div class="free-course-hero">
+          <div class="free-course-badge">${escapeHtml(state.free_course.badge || '🎁 6 ta bepul dars')}</div>
+          <div class="free-course-title">${escapeHtml(state.free_course.title || 'REVIT 0 DAN')}</div>
+          <div class="free-course-subtitle">${escapeHtml(state.free_course.subtitle || '')}</div>
+          <div class="free-course-features">
+            ${(state.free_course.features || []).map(f => `
+              <div class="free-course-feat"><span style="color:#34c759; font-weight:800;">✓</span> ${escapeHtml(f)}</div>
+            `).join("")}
+          </div>
+          <button class="btn" style="margin-bottom:0;" onclick="startFreeCourse()">
+            🚀 Bepul darslarni boshlash
+          </button>
+        </div>
+      ` : ""}
 
       ${myTotal ? `
         <div class="progress-wrap">
@@ -669,7 +822,7 @@ function renderHome() {
           </div>
           <div>
             <div class="about-author-name" style="font-size:16.5px; font-weight:750;">Abdulloh</div>
-            <div class="about-author-role" style="font-size:12px; color:var(--text-secondary);">BIM & Revit Instruktor · YOSHUZBEKK</div>
+            <div class="about-author-role" style="font-size:12px; color:var(--text-secondary);">BIM & Revit Instruktor · INTPRO</div>
           </div>
         </div>
         <div class="about-text">
@@ -759,6 +912,22 @@ function renderHome() {
           `).join("")}
         `;
       })()}
+
+      ${(state.products && state.products.length) ? `
+        <div class="section-title">
+          <span>🏛 Shablonlar & 3D Modellar</span>
+          <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="openMarketCatalog('Barchasi')">Barchasi (${state.products.length}) →</span>
+        </div>
+        <div class="market-category-scroll">
+          <button class="market-chip active" onclick="openMarketCatalog('Barchasi')">Barchasi</button>
+          <button class="market-chip" onclick="openMarketCatalog('Shablon')">Revit Shablon</button>
+          <button class="market-chip" onclick="openMarketCatalog('BIM Family')">BIM Oilalar</button>
+          <button class="market-chip" onclick="openMarketCatalog('3D Model')">3ds Max Modellar</button>
+        </div>
+        <div class="market-list">
+          ${state.products.slice(0, 3).map(p => renderMarketProductCard(p)).join("")}
+        </div>
+      ` : ""}
 
       <div class="section-title">O'quvchilar fikri</div>
       <div class="testi-scroll">
@@ -863,6 +1032,84 @@ function deleteFaqItem(id) {
     showToast("Savol o'chirildi!");
     loadContent();
   });
+}
+
+// Bepul mini-kursni boshlash
+function startFreeCourse() {
+  haptic("medium");
+  const revitCourse = (state.courses || []).find(c => (c.title || "").toLowerCase().includes("revit")) || state.courses?.[0];
+  if (revitCourse) {
+    openCourseCatalog(Number(revitCourse.id));
+  } else {
+    setTab("lessons");
+  }
+}
+
+// Shablonlar va 3D Modellar kartochkasi
+function renderMarketProductCard(p) {
+  const contactNick = state.settings?.contact_telegram || "texnikuzb";
+  const orderMsg = encodeURIComponent(`Assalomu alaykum! INTPRO platformasidagi "${p.title}" (${p.price || ''}) mahsulotiga qiziqayotgan edim.`);
+  const orderUrl = `https://t.me/${contactNick}?text=${orderMsg}`;
+
+  return `
+    <div class="market-card">
+      <div class="market-card-header">
+        <div>
+          <div class="market-card-title">${escapeHtml(p.title)}</div>
+        </div>
+        <span class="market-badge" style="background:rgba(52,199,89,0.15); color:#34c759;">${escapeHtml(p.software)}</span>
+      </div>
+      <div class="market-meta-row">
+        <span class="market-badge">${escapeHtml(p.category)}</span>
+        ${p.file_format ? `<span class="market-badge" style="background:rgba(255,149,0,0.15); color:#ff9500;">${escapeHtml(p.file_format)}</span>` : ""}
+      </div>
+      ${p.description ? `<div class="market-desc">${escapeHtml(p.description)}</div>` : ""}
+      <div class="market-footer">
+        <div class="market-price">${escapeHtml(p.price || "Kelishilgan")}</div>
+        <button class="btn" style="width:auto; margin-bottom:0; padding:8px 16px; font-size:12.5px;" onclick="event.stopPropagation(); tg.openTelegramLink('${orderUrl}')">
+          🛒 Buyurtma berish
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// Shablonlar va Modellar to'liq katalogi
+function openMarketCatalog(filter = "Barchasi") {
+  haptic("light");
+  marketCategoryFilter = filter;
+  const products = Array.isArray(state.products) ? state.products : [];
+  const filtered = (filter === "Barchasi")
+    ? products
+    : products.filter(p => (p.category || "").toLowerCase().includes(filter.toLowerCase()) || (p.software || "").toLowerCase().includes(filter.toLowerCase()));
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Bosh sahifaga qaytish</div>
+        <div class="page-title" style="margin-bottom:6px;">🏛 Shablonlar & 3D Modellar</div>
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
+          Revit arxitektura va interyer shablonlari (RTE), parametrik BIM oilalari (RFA) hamda fotorealistik 3ds Max sahnalari.
+        </p>
+
+        <div class="market-category-scroll">
+          <button class="market-chip ${marketCategoryFilter === "Barchasi" ? "active" : ""}" onclick="openMarketCatalog('Barchasi')">Barchasi (${products.length})</button>
+          <button class="market-chip ${marketCategoryFilter === "Shablon" ? "active" : ""}" onclick="openMarketCatalog('Shablon')">Revit Shablonlar</button>
+          <button class="market-chip ${marketCategoryFilter === "BIM Family" ? "active" : ""}" onclick="openMarketCatalog('BIM Family')">BIM Oilalar</button>
+          <button class="market-chip ${marketCategoryFilter === "3D Model" ? "active" : ""}" onclick="openMarketCatalog('3D Model')">3ds Max Modellar</button>
+        </div>
+
+        ${!filtered.length ? `
+          <div class="empty-box">Ushbu toifada hozircha mahsulotlar mavjud emas.</div>
+        ` : `
+          <div class="market-products-grid">
+            ${filtered.map(p => renderMarketProductCard(p)).join("")}
+          </div>
+        `}
+      </div>
+    `
+  };
+  render();
 }
 
 // ======================================================
@@ -1805,11 +2052,18 @@ async function openLesson(id) {
       </div>
     `;
 
+    currentTrackingLessonId = Number(lesson.id);
+    currentTrackingModuleId = null;
+
     let videoHtml = "";
     if (lesson.youtube_player_url) {
+      let ytSrc = lesson.youtube_player_url;
+      if (!ytSrc.includes("enablejsapi=1")) {
+        ytSrc += (ytSrc.includes("?") ? "&" : "?") + "enablejsapi=1";
+      }
       videoHtml = `
         <div class="video-container">
-          <iframe src="${escapeHtml(lesson.youtube_player_url)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe id="lesson-yt-iframe" src="${escapeHtml(ytSrc)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           ${watermarkHtml}
         </div>
       `;
@@ -1868,6 +2122,19 @@ async function openLesson(id) {
     };
     render();
     window.scrollTo(0, 0);
+
+    sendHeartbeat("watching");
+    try {
+      if (window.YT && window.YT.Player && document.getElementById("lesson-yt-iframe")) {
+        ytPlayerInstance = new YT.Player("lesson-yt-iframe", {
+          events: {
+            onStateChange: () => sendHeartbeat("watching")
+          }
+        });
+      }
+    } catch (ytErr) {
+      console.debug("YT init error", ytErr);
+    }
   } catch (error) {
     console.error("OPEN LESSON ERROR:", error);
     currentView = null;
@@ -3441,38 +3708,46 @@ function renderQuizQuestion() {
     html: `
       <div class="page">
         <div class="back-btn" onclick="closeDetail()">← Testdan chiqish</div>
-        <div class="page-title" style="margin-bottom:4px;">Modul Testi</div>
-        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:10px;">Savol ${idx + 1} / ${total}</p>
-
-        <div class="quiz-timer-track">
-          <div class="quiz-timer-bar" style="animation: quizTimerShrink ${QUIZ_QUESTION_SECONDS}s linear forwards;"></div>
+        <div class="test-header">
+          <div class="test-title">Modul Testi</div>
+          <div class="test-progress">Savol ${idx + 1} / ${total}</div>
         </div>
 
-        <div class="test-question" style="margin-top:14px;">
-          <p>${idx + 1}. ${escapeHtml(q.question)}</p>
-          ${q.options.map((opt, oIdx) => `
-            <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
-              ${escapeHtml(opt)}
-            </div>
-          `).join("")}
+        <div class="quiz-timer-bar-wrap">
+          <div id="quiz-question-bar" class="quiz-timer-bar"></div>
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:18px;">
+        <div class="test-question">
+          <p>${escapeHtml(q.question)}</p>
+          <div class="options">
+            ${q.options.map((opt, oIdx) => `
+              <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
+                ${escapeHtml(opt)}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:14px;">
           ${!isFirst ? `
-            <button id="quiz-prev-btn" class="btn secondary quiz-prev-btn-anim" style="margin-bottom:0; flex:1;" onclick="quizGoPrev()">
-              <span class="quiz-prev-fill"></span>
-              <span style="position:relative; z-index:1;">← Oldingi</span>
+            <button id="quiz-prev-btn" class="btn secondary" style="flex:1; margin-bottom:0;" onclick="quizGoPrev()">
+              <span id="quiz-prev-bar" class="quiz-prev-fill"></span>
+              <span class="quiz-prev-label">← Oldingi</span>
             </button>
           ` : ""}
-          <button class="btn" style="margin-bottom:0; flex:1;" onclick="${isLast ? `submitModuleTest(${qs.moduleId})` : "quizGoNext()"}">
-            ${isLast ? "✅ Yakunlash" : "Keyingi →"}
+          <button class="btn" style="flex:1; margin-bottom:0;" onclick="${isLast ? `submitModuleTest(${Number(qs.moduleId)})` : "quizGoNext()"}">
+            ${isLast ? "Yakunlash ✅" : "Keyingisi →"}
           </button>
         </div>
       </div>
     `
   };
   render();
-  window.scrollTo(0, 0);
+
+  currentTrackingLessonId = null;
+  currentTrackingModuleId = qs.moduleId;
+  currentTrackingQuiz = { current: idx + 1, total: total };
+  sendHeartbeat("test_active");
 }
 
 function quizGoNext() {
@@ -3512,6 +3787,10 @@ async function submitModuleTest(moduleId) {
     haptic("medium");
     const qs = window._quizState;
     if (qs) clearQuizTimers(qs);
+    currentTrackingModuleId = null;
+    currentTrackingQuiz = { current: 0, total: 0 };
+    sendHeartbeat("online");
+
     const result = await api(`/api/module/${Number(moduleId)}/submit`, {
       answers: (qs && qs.answers) || {}
     });
@@ -3608,7 +3887,14 @@ let adminData = {
   stats: null,
   students: [],
   modules: [],
-  admins: []
+  admins: [],
+  practice: [],
+  live: null,
+  analytics: null,
+  analyticsRange: "7days",
+  blacklist: [],
+  products: [],
+  liveTimer: null
 };
 
 async function adminApi(path, body = {}) {
@@ -3642,7 +3928,6 @@ async function openAdminPanel() {
   }
 }
 
-// 7-TALAB: "MODULLAR" QATORI BUTUNLAY OLIB TASHLANDI
 function renderAdminPanel() {
   currentView = {
     html: `
@@ -3658,8 +3943,20 @@ function renderAdminPanel() {
           <button class="${adminView === "dashboard" ? "active" : ""}" onclick="adminSetTab('dashboard')">
             📊 Statistika
           </button>
+          <button class="${adminView === "live" ? "active" : ""}" onclick="adminSetTab('live')">
+            🟢 Jonli
+          </button>
+          <button class="${adminView === "analytics" ? "active" : ""}" onclick="adminSetTab('analytics')">
+            📈 Analitika
+          </button>
           <button class="${adminView === "students" ? "active" : ""}" onclick="adminSetTab('students')">
             👨‍🎓 O'quvchilar
+          </button>
+          <button class="${adminView === "blacklist" ? "active" : ""}" onclick="adminSetTab('blacklist')">
+            ⛔️ Qora ro'yxat
+          </button>
+          <button class="${adminView === "products" ? "active" : ""}" onclick="adminSetTab('products')">
+            📦 Resurslar
           </button>
           <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
             🎬 Darslar
@@ -3676,7 +3973,11 @@ function renderAdminPanel() {
 
         <div class="page" style="padding-top: 0;">
           ${adminView === "dashboard" ? renderAdminDashboard() : ""}
+          ${adminView === "live" ? renderAdminLive() : ""}
+          ${adminView === "analytics" ? renderAdminAnalytics() : ""}
           ${adminView === "students" ? renderAdminStudents() : ""}
+          ${adminView === "blacklist" ? renderAdminBlacklist() : ""}
+          ${adminView === "products" ? renderAdminProducts() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
           ${adminView === "practice" ? renderAdminPractice() : ""}
@@ -3691,13 +3992,32 @@ async function adminSetTab(tab) {
   haptic("light");
   adminView = tab;
 
+  if (adminData.liveTimer) {
+    clearInterval(adminData.liveTimer);
+    adminData.liveTimer = null;
+  }
+
   try {
     if (tab === "dashboard") {
       const data = await adminApi("/api/admin/stats");
       adminData.stats = data.stats || {};
+    } else if (tab === "live") {
+      const data = await adminApi("/api/admin/live-activity");
+      adminData.live = data || {};
+      startAdminLivePolling();
+    } else if (tab === "analytics") {
+      const range = adminData.analyticsRange || "7days";
+      const data = await adminApi("/api/admin/analytics/history", { range });
+      adminData.analytics = data || {};
     } else if (tab === "students") {
       const data = await adminApi("/api/admin/students");
       adminData.students = data.students || [];
+    } else if (tab === "blacklist") {
+      const data = await adminApi("/api/admin/blacklist");
+      adminData.blacklist = data.banned_users || [];
+    } else if (tab === "products") {
+      const data = await adminApi("/api/admin/products");
+      adminData.products = data.products || [];
     } else if (tab === "lessons") {
       const data = await adminApi("/api/admin/modules");
       adminData.modules = data.modules || [];
@@ -3712,6 +4032,446 @@ async function adminSetTab(tab) {
   } catch (error) {
     showAlert(error.message || "Ma'lumotlarni yuklashda xatolik.");
   }
+}
+
+// ------------------------------------------------------
+// ADMIN: LIVE ACTIVITY MONITORING
+// ------------------------------------------------------
+
+function startAdminLivePolling() {
+  if (adminData.liveTimer) clearInterval(adminData.liveTimer);
+  adminData.liveTimer = setInterval(async () => {
+    if (adminView !== "live" || !currentView) {
+      clearInterval(adminData.liveTimer);
+      adminData.liveTimer = null;
+      return;
+    }
+    try {
+      const data = await adminApi("/api/admin/live-activity");
+      adminData.live = data || {};
+      const container = document.getElementById("admin-live-content");
+      if (container) {
+        container.innerHTML = renderAdminLiveInner();
+      }
+    } catch (e) {}
+  }, 7000);
+}
+
+function refreshAdminLive() {
+  haptic("light");
+  adminApi("/api/admin/live-activity").then(data => {
+    adminData.live = data || {};
+    renderAdminPanel();
+    showToast("Jonli ma'lumotlar yangilandi");
+  }).catch(err => showAlert(err.message));
+}
+
+function renderAdminLive() {
+  return `<div id="admin-live-content">${renderAdminLiveInner()}</div>`;
+}
+
+function renderAdminLiveInner() {
+  const live = adminData.live || {};
+  const summary = live.summary || { online_now: 0, watching_now: 0, testing_now: 0 };
+  const users = Array.isArray(live.users) ? live.users : [];
+  const recentUsers = Array.isArray(live.recent_users) ? live.recent_users : [];
+
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="live-badge">
+        <span class="live-pulse-dot"></span> Jonli Monitoring (Avto-yangilanish)
+      </div>
+      <button class="admin-small-btn" onclick="refreshAdminLive()">🔄 Yangilash</button>
+    </div>
+
+    <div class="live-summary-grid">
+      <div class="live-metric-card">
+        <div class="live-metric-val" style="color:#34c759;">${summary.online_now}</div>
+        <div class="live-metric-lbl">🟢 Hozir Online</div>
+      </div>
+      <div class="live-metric-card">
+        <div class="live-metric-val" style="color:#2979ff;">${summary.watching_now}</div>
+        <div class="live-metric-lbl">🎬 Dars Ko'rmoqda</div>
+      </div>
+      <div class="live-metric-card">
+        <div class="live-metric-val" style="color:#ff9500;">${summary.testing_now}</div>
+        <div class="live-metric-lbl">📝 Testda</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:10px;">
+      <span>Faol o'quvchilar (${users.length})</span>
+    </div>
+
+    ${!users.length ? `
+      <div class="empty-box">Hozirda hech kim faol emas (oxirgi 60 soniya ichida).</div>
+    ` : `
+      <div class="live-users-list">
+        ${users.map(u => {
+          const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || "O'quvchi";
+          let statusText = "🟢 Online";
+          let statusClass = "status-online";
+          let detailHtml = "";
+
+          if (u.status === "watching" && u.lesson_title) {
+            statusText = "🎬 Dars ko'rmoqda";
+            statusClass = "status-watching";
+            const min = Math.floor((u.video_progress || 0) / 60);
+            const sec = (u.video_progress || 0) % 60;
+            const timeStr = `${min}:${String(sec).padStart(2, '0')}`;
+            detailHtml = `
+              <div class="live-activity-detail">
+                <b>Dars:</b> ${escapeHtml(u.lesson_title)}<br>
+                <span style="color:var(--text-secondary); font-size:11.5px;">
+                  Modul: ${escapeHtml(u.module_title || '-')} · Video: ${timeStr} (${u.video_status || 'watching'})
+                </span>
+              </div>
+            `;
+          } else if (u.status === "test_active") {
+            statusText = "📝 Test topshirmoqda";
+            statusClass = "status-test";
+            detailHtml = `
+              <div class="live-activity-detail">
+                <b>Modul:</b> ${escapeHtml(u.quiz_module_title || '-')}<br>
+                <span style="color:var(--text-secondary); font-size:11.5px;">
+                  Savol: ${u.quiz_question_current} / ${u.quiz_question_total}
+                </span>
+              </div>
+            `;
+          } else {
+            detailHtml = `
+              <div class="live-activity-detail" style="color:var(--text-secondary);">
+                Sahifa: ${escapeHtml(u.current_page || 'Ilova')}
+              </div>
+            `;
+          }
+
+          return `
+            <div class="live-user-card ${u.status || ''}" onclick="openAdminStudentModal(${Number(u.user_id)})" style="cursor:pointer;">
+              <div class="live-user-header">
+                <div>
+                  <div class="live-user-name">${escapeHtml(fullName)}</div>
+                  <div class="live-user-meta">ID: ${escapeHtml(u.telegram_id)} ${u.username ? `· @${escapeHtml(u.username)}` : ''} · ${u.seconds_ago ?? 0}s oldin</div>
+                </div>
+                <span class="live-user-status-pill ${statusClass}">${statusText}</span>
+              </div>
+              ${detailHtml}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `}
+
+    <div class="section-title" style="margin-top:20px;">
+      <span>Oxirgi kirganlar</span>
+    </div>
+    <div class="live-recent-list">
+      ${recentUsers.map(ru => {
+        const name = [ru.first_name, ru.last_name].filter(Boolean).join(" ") || "O'quvchi";
+        return `
+          <div class="admin-student-card" onclick="openAdminStudentModal(${Number(ru.id)})" style="cursor:pointer; margin-bottom:8px; padding:10px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:700; font-size:13.5px;">${escapeHtml(name)}</div>
+                <div style="font-size:11px; color:var(--text-secondary);">ID: ${escapeHtml(ru.telegram_id)} ${ru.username ? `· @${escapeHtml(ru.username)}` : ''}</div>
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); text-align:right;">
+                ${ru.seconds_ago ? `${ru.seconds_ago < 60 ? ru.seconds_ago + 's oldin' : Math.floor(ru.seconds_ago / 60) + ' daqiqa oldin'}` : 'Yaqinda'}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// ------------------------------------------------------
+// ADMIN: ANALYTICS HISTORY
+// ------------------------------------------------------
+
+function setAnalyticsRange(range) {
+  haptic("light");
+  adminData.analyticsRange = range;
+  adminApi("/api/admin/analytics/history", { range }).then(data => {
+    adminData.analytics = data || {};
+    renderAdminPanel();
+  }).catch(err => showAlert(err.message));
+}
+
+function renderAdminAnalytics() {
+  const an = adminData.analytics || {};
+  const currentRange = adminData.analyticsRange || "7days";
+  const summary = an.summary || { new_users: 0, lesson_views: 0, test_attempts: 0, active_users: 0 };
+  const chart = Array.isArray(an.chart) ? an.chart : [];
+
+  const maxVal = Math.max(...chart.map(c => Math.max(c.lesson_views || 0, c.new_users || 0, c.test_attempts || 0)), 1);
+
+  return `
+    <div class="analytics-switcher">
+      <button class="analytics-tab-btn ${currentRange === "today" ? "active" : ""}" onclick="setAnalyticsRange('today')">Bugun</button>
+      <button class="analytics-tab-btn ${currentRange === "yesterday" ? "active" : ""}" onclick="setAnalyticsRange('yesterday')">Kecha</button>
+      <button class="analytics-tab-btn ${currentRange === "7days" ? "active" : ""}" onclick="setAnalyticsRange('7days')">7 kun</button>
+      <button class="analytics-tab-btn ${currentRange === "30days" ? "active" : ""}" onclick="setAnalyticsRange('30days')">30 kun</button>
+    </div>
+
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">👥</div>
+        <div class="admin-stat-value">${summary.active_users}</div>
+        <div class="admin-stat-label">Faol o'quvchilar</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">✨</div>
+        <div class="admin-stat-value">${summary.new_users}</div>
+        <div class="admin-stat-label">Yangi a'zolar</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">🎬</div>
+        <div class="admin-stat-value">${summary.lesson_views}</div>
+        <div class="admin-stat-label">Dars ko'rishlar</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">📝</div>
+        <div class="admin-stat-value">${summary.test_attempts}</div>
+        <div class="admin-stat-label">Test topshirishlar</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:16px;">
+      <span>Kunlik faollik dinamikasi</span>
+    </div>
+
+    <div style="display:flex; gap:12px; font-size:11px; margin-bottom:12px;">
+      <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; background:#34c759; border-radius:2px; display:inline-block;"></span> Darslar</span>
+      <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; background:#2979ff; border-radius:2px; display:inline-block;"></span> Yangi a'zolar</span>
+      <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; background:#ff9500; border-radius:2px; display:inline-block;"></span> Testlar</span>
+    </div>
+
+    ${!chart.length ? `
+      <div class="empty-box">Ushbu oraliqda hali statistika mavjud emas.</div>
+    ` : `
+      <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); border:1px solid var(--border);">
+        ${chart.map(row => {
+          const lPct = Math.round(((row.lesson_views || 0) / maxVal) * 100);
+          const uPct = Math.round(((row.new_users || 0) / maxVal) * 100);
+          const tPct = Math.round(((row.test_attempts || 0) / maxVal) * 100);
+          const shortDate = row.date ? row.date.slice(5) : "";
+          return `
+            <div class="chart-bar-row">
+              <div class="chart-bar-date">${shortDate}</div>
+              <div class="chart-bar-track">
+                <div class="chart-bar-fill fill-lessons" style="width: ${lPct}%" title="Darslar: ${row.lesson_views}"></div>
+                <div class="chart-bar-fill fill-users" style="width: ${uPct}%" title="Yangi: ${row.new_users}"></div>
+                <div class="chart-bar-fill fill-tests" style="width: ${tPct}%" title="Testlar: ${row.test_attempts}"></div>
+              </div>
+              <div class="chart-bar-val">${row.lesson_views + row.new_users + row.test_attempts}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `}
+  `;
+}
+
+// ------------------------------------------------------
+// ADMIN: BLACKLIST MANAGEMENT
+// ------------------------------------------------------
+
+function refreshAdminBlacklist() {
+  haptic("light");
+  adminApi("/api/admin/blacklist").then(data => {
+    adminData.blacklist = data.banned_users || [];
+    renderAdminPanel();
+    showToast("Qora ro'yxat yangilandi");
+  }).catch(err => showAlert(err.message));
+}
+
+function renderAdminBlacklist() {
+  const banned = Array.isArray(adminData.blacklist) ? adminData.blacklist : [];
+
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" style="margin-bottom:0;">
+        <span>⛔️ Qora ro'yxat (${banned.length})</span>
+      </div>
+      <button class="admin-small-btn" onclick="refreshAdminBlacklist()">🔄 Yangilash</button>
+    </div>
+    <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+      Ushbu foydalanuvchilar platformadan va botdan foydalana olmaydi. O'quvchini qora ro'yxatga kiritish uchun "O'quvchilar" bo'limida talaba profiliga kiring.
+    </p>
+
+    ${!banned.length ? `
+      <div class="empty-box">Hozirda hech kim qora ro'yxatda emas. Barcha o'quvchilar faol.</div>
+    ` : `
+      <div class="blacklist-items">
+        ${banned.map(u => {
+          const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Foydalanuvchi";
+          return `
+            <div class="blacklist-card">
+              <div class="blacklist-header">
+                <div>
+                  <div style="font-weight:750; font-size:14.5px;">${escapeHtml(name)}</div>
+                  <div style="font-size:11px; color:var(--text-secondary);">ID: ${escapeHtml(u.telegram_id)} ${u.username ? `· @${escapeHtml(u.username)}` : ''} · ${escapeHtml(u.phone || '')}</div>
+                </div>
+                <button class="admin-small-btn" style="background:rgba(52,199,89,0.15); color:#34c759; border-color:rgba(52,199,89,0.3);" onclick="unbanStudent(${Number(u.id)})">
+                  ✅ Bandan chiqarish
+                </button>
+              </div>
+              <div class="blacklist-reason">
+                <b>Sabab:</b> ${escapeHtml(u.banned_reason || 'Sabab ko\'rsatilmagan')}<br>
+                <span style="font-size:10.5px; opacity:0.8;">Sana: ${fmtDate(u.banned_at) || '-'}</span>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `}
+  `;
+}
+
+function banStudentPrompt(studentId, studentName) {
+  const reason = prompt(`${studentName}ni qora ro'yxatga kiritish sababini yozing:`);
+  if (reason === null) return;
+  if (!reason.trim()) return showAlert("Sababni kiritish shart!");
+
+  showConfirm(
+    "Qora ro'yxatga kiritish",
+    `${studentName} platformadan va botdan bloklanadi. Davom ettirasizmi?`,
+    "Ha, bloklash",
+    async () => {
+      await adminApi(`/api/admin/student/${Number(studentId)}/ban`, { reason: reason.trim() });
+      showAlert("O'quvchi muvaffaqiyatli qora ro'yxatga kiritildi.");
+      openAdminStudentModal(studentId);
+    }
+  );
+}
+
+async function unbanStudent(studentId) {
+  showConfirm(
+    "Qora ro'yxatdan chiqarish",
+    "Foydalanuvchini qora ro'yxatdan chiqarib, kirishini tiklaysizmi?",
+    "Ha, chiqarish",
+    async () => {
+      await adminApi(`/api/admin/student/${Number(studentId)}/unban`);
+      showAlert("O'quvchi qora ro'yxatdan chiqarildi.");
+      if (adminView === "blacklist") {
+        const data = await adminApi("/api/admin/blacklist");
+        adminData.blacklist = data.banned_users || [];
+        renderAdminPanel();
+      } else {
+        openAdminStudentModal(studentId);
+      }
+    }
+  );
+}
+
+// ------------------------------------------------------
+// ADMIN: MARKET PRODUCTS MANAGEMENT
+// ------------------------------------------------------
+
+function renderAdminProducts() {
+  const products = Array.isArray(adminData.products) ? adminData.products : [];
+
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" style="margin-bottom:0;">
+        <span>📦 Shablonlar & Modellar (${products.length})</span>
+      </div>
+      <button class="admin-small-btn" onclick="openAddProductModal()">➕ Yangi mahsulot</button>
+    </div>
+
+    ${!products.length ? `
+      <div class="empty-box">Hozircha birorta mahsulot qo'shilmagan. "Yangi mahsulot" tugmasi orqali shablon yoki 3D model qo'shing.</div>
+    ` : `
+      <div class="admin-products-list">
+        ${products.map(p => `
+          <div class="admin-student-card" style="margin-bottom:10px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+              <div>
+                <div style="font-weight:750; font-size:15px;">${escapeHtml(p.title)}</div>
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                  <span class="market-badge">${escapeHtml(p.category)}</span>
+                  <span class="market-badge" style="background:rgba(52,199,89,0.15); color:#34c759;">${escapeHtml(p.software)}</span>
+                  ${p.file_format ? `<span class="market-badge" style="background:rgba(255,149,0,0.15); color:#ff9500;">${escapeHtml(p.file_format)}</span>` : ''}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:800; font-size:15px; color:#34c759;">${escapeHtml(p.price || 'Bepul')}</div>
+                <span style="font-size:10.5px; color:${p.is_available ? '#34c759' : '#ff453a'}; font-weight:700;">
+                  ${p.is_available ? '● Mavjud' : '● Nofaol'}
+                </span>
+              </div>
+            </div>
+            ${p.description ? `<div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px; line-height:1.4;">${escapeHtml(p.description)}</div>` : ''}
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button class="admin-small-btn" onclick="openEditProductModal(${Number(p.id)})">✏️ Tahrirlash</button>
+              <button class="admin-small-btn" style="color:#ff453a; border-color:rgba(255,59,48,0.3);" onclick="deleteProductItem(${Number(p.id)})">🗑️ O'chirish</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `}
+  `;
+}
+
+function openAddProductModal() {
+  const title = prompt("Mahsulot / Shablon nomini kiriting:");
+  if (!title || !title.trim()) return;
+  const category = prompt("Kategoriya (Shablon, BIM Family, 3D Model yoki boshqa):", "Shablon") || "Shablon";
+  const software = prompt("Dastur (Revit, 3ds Max, AutoCAD, Corona va h.k.):", "Revit") || "Revit";
+  const fileFormat = prompt("Fayl formati (RTE, RFA, MAX, DWG va h.k.):", "RTE") || "RTE";
+  const price = prompt("Narxi (masalan: 350 000 so'm yoki Bepul):", "350 000 so'm") || "";
+  const desc = prompt("Qisqacha tavsif:") || "";
+
+  adminApi("/api/admin/products/add", {
+    title: title.trim(),
+    category: category.trim(),
+    software: software.trim(),
+    file_format: fileFormat.trim(),
+    price: price.trim(),
+    description: desc.trim()
+  }).then(() => {
+    showToast("Mahsulot muvaffaqiyatli qo'shildi!");
+    adminSetTab("products");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function openEditProductModal(id) {
+  const p = (adminData.products || []).find(item => Number(item.id) === Number(id));
+  if (!p) return;
+
+  const title = prompt("Mahsulot nomi:", p.title);
+  if (!title || !title.trim()) return;
+  const category = prompt("Kategoriya:", p.category || "Shablon") || p.category;
+  const software = prompt("Dastur:", p.software || "Revit") || p.software;
+  const fileFormat = prompt("Fayl formati:", p.file_format || "") || p.file_format;
+  const price = prompt("Narxi:", p.price || "") || p.price;
+  const desc = prompt("Tavsif:", p.description || "") || p.description;
+
+  adminApi(`/api/admin/products/${Number(id)}/update`, {
+    title: title.trim(),
+    category: category.trim(),
+    software: software.trim(),
+    file_format: fileFormat.trim(),
+    price: price.trim(),
+    description: desc.trim(),
+    is_available: p.is_available
+  }).then(() => {
+    showToast("Mahsulot yangilandi!");
+    adminSetTab("products");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function deleteProductItem(id) {
+  showConfirm("Mahsulot o'chirilsinmi?", "Ushbu resurs bazadan butunlay o'chiriladi.", "O'chirish", async () => {
+    await adminApi(`/api/admin/products/${Number(id)}/delete`);
+    showToast("Mahsulot o'chirildi!");
+    adminSetTab("products");
+    loadContent();
+  });
 }
 
 // Admin Dashboard
@@ -3876,6 +4636,22 @@ async function openAdminStudentModal(id) {
               <span class="info-val">${escapeHtml(fmtDate(st.access_until) || "Belgilanmagan")}</span>
             </div>
             <div class="info-row">
+              <span class="info-label">Qora ro'yxat</span>
+              <span class="info-val ${st.is_banned ? "warn" : "ok"}">
+                ${st.is_banned ? `⛔️ Qora ro'yxatda (${escapeHtml(st.banned_reason || 'Sabab yo\'q')})` : "✅ Ruxsat berilgan"}
+              </span>
+            </div>
+            ${data.activity ? `
+              <div class="info-row">
+                <span class="info-label">⚡️ Jonli faollik</span>
+                <span class="info-val" style="color:#2979ff;">
+                  ${data.activity.status === 'watching' ? `🎬 Ko'rmoqda: ${escapeHtml(data.activity.lesson_title || '')} (${data.activity.seconds_ago ?? 0}s oldin)` :
+                    data.activity.status === 'test_active' ? `📝 Testda: ${escapeHtml(data.activity.quiz_module_title || '')} (${data.activity.seconds_ago ?? 0}s oldin)` :
+                    `🟢 ${escapeHtml(data.activity.status)} (${data.activity.seconds_ago ?? 0}s oldin)`}
+                </span>
+              </div>
+            ` : ""}
+            <div class="info-row">
               <span class="info-label">📍 Hozirgi holati</span>
               <span class="info-val">
                 ${currentRow ? `${escapeHtml(currentRow.module_title)} — ${escapeHtml(currentRow.lesson_title)}` : "Hali boshlamagan"}
@@ -3891,6 +4667,24 @@ async function openAdminStudentModal(id) {
             <button class="btn" style="margin-top: 12px;" onclick="grantStudentAccess(${Number(st.id)})">
               ✅ Saqlash va Ruxsat berish
             </button>
+          </div>
+
+          <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
+            <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">
+              ⛔️ Qora ro'yxat (Ban) boshqaruvi:
+            </label>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+              ${st.is_banned ? `Ushbu o'quvchi bloklangan. Sababi: ${escapeHtml(st.banned_reason || '-')}` : "O'quvchini qoidabuzarlik uchun qora ro'yxatga kiritish va botdan uzish."}
+            </p>
+            ${st.is_banned ? `
+              <button class="btn" style="background:#34c759; margin-bottom:0;" onclick="unbanStudent(${Number(st.id)})">
+                ✅ Qora ro'yxatdan chiqarish
+              </button>
+            ` : `
+              <button class="btn" style="background:#ff453a; margin-bottom:0;" onclick="banStudentPrompt(${Number(st.id)}, '${escapeJsString(fullName)}')">
+                🚫 Qora ro'yxatga kiritish
+              </button>
+            `}
           </div>
 
           <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
@@ -4560,7 +5354,16 @@ function setTab(id) {
   haptic("light");
   activeTab = id;
   currentView = null;
+  currentTrackingLessonId = null;
+  currentTrackingModuleId = null;
+  currentTrackingQuiz = { current: 0, total: 0 };
+  ytPlayerInstance = null;
+  if (adminData && adminData.liveTimer) {
+    clearInterval(adminData.liveTimer);
+    adminData.liveTimer = null;
+  }
   render();
+  sendHeartbeat();
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   if (id === "chat") {
     loadChatQuestions();
@@ -4613,8 +5416,17 @@ function closeDetail() {
     clearQuizTimers(window._quizState);
     window._quizState = null;
   }
+  currentTrackingLessonId = null;
+  currentTrackingModuleId = null;
+  currentTrackingQuiz = { current: 0, total: 0 };
+  ytPlayerInstance = null;
+  if (adminData && adminData.liveTimer) {
+    clearInterval(adminData.liveTimer);
+    adminData.liveTimer = null;
+  }
   currentView = null;
   render();
+  sendHeartbeat("online");
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
@@ -4645,6 +5457,13 @@ function render() {
 
   const screenRoot = document.getElementById("screen-root");
   const navRoot = document.getElementById("nav-root");
+
+  if (state.is_banned) {
+    screenRoot.innerHTML = `<div class="screen">${renderBannedScreen()}</div>`;
+    navRoot.innerHTML = "";
+    navWasVisible = false;
+    return;
+  }
 
   const body = currentView ? currentView.html : renderTab();
   screenRoot.innerHTML = `<div class="screen">${body}</div>`;
