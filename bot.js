@@ -449,19 +449,23 @@ async function startBot() {
     await setupMenuButton();
 
     // 3. Botni ishga tushirish (dropPendingUpdates: true)
-    await bot.launch({
-      dropPendingUpdates: true
+    // Telegraf 4.x da launch() polling to'xtaguncha qaytmaydi, shuning uchun
+    // "tayyor" logi onLaunch callback ichida yoziladi.
+    await bot.launch({ dropPendingUpdates: true }, function () {
+      botStarted = true;
+      console.log('==========================================');
+      console.log('🤖 TELEGRAM BOT ISHGA TUSHDI VA TAYYOR ✅');
+      console.log('==========================================');
     });
-
-    botStarted = true;
-    console.log('==========================================');
-    console.log('🤖 TELEGRAM BOT ISHGA TUSHDI VA TAYYOR ✅');
-    console.log('==========================================');
   } catch (error) {
     console.error('❌ BOT LAUNCH ERROR:', error.message);
     if (error.message && error.message.includes('409')) {
-      console.error('⚠️ 409 CONFLICT: Bot boshqa jarayonda ishlab turibdi. Railway qayta ishga tushganda o‘zi to‘g‘rilanadi.');
+      console.error('⚠️ 409 CONFLICT: Bot boshqa joyda ham ishlayapti (eski deploy yoki lokal kompyuter).');
     }
+    // Server tirik qolib, bot o'lik bo'lib qolmasligi uchun jarayonni yopamiz —
+    // Railway uni avtomatik qayta ishga tushiradi.
+    console.error('🔁 10 soniyadan keyin jarayon qayta ishga tushiriladi...');
+    setTimeout(function () { process.exit(1); }, 10000);
   }
 }
 

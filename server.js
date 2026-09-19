@@ -877,6 +877,15 @@ app.post('/api/content', async function (req, res) {
       console.warn('PRODUCTS QUERY WARNING:', pErr.message);
     }
 
+    // Akademiya sozlamalari (aloqa, admin rasmi, bepul mini-kurs) — key/value obyektga yig'iladi
+    var settings = {};
+    try {
+      var setRes = await pool.query('SELECT key, value FROM academy_settings');
+      setRes.rows.forEach(function (r) { settings[r.key] = r.value; });
+    } catch (sErr) {
+      console.warn('SETTINGS QUERY WARNING:', sErr.message);
+    }
+
     var freeCourseFeatures = [];
     try {
       if (settings.free_course_features) {
