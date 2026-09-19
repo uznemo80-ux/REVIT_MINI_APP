@@ -1249,15 +1249,77 @@ async function saveFreeCourse() {
   }
 }
 
-// Bepul mini-kursni boshlash
+// Bepul mini-kursni boshlash — faqat admin bepul deb belgilagan darslar ko'rsatiladi
+let freeLessonsMode = false;
+
+function getFreeLessonsFlat() {
+  const flat = [];
+  (Array.isArray(state.modules) ? state.modules : []).forEach(m => {
+    (m.lessons || []).forEach(l => {
+      if (l.is_free) flat.push({ ...l, module_id: m.id, module_title: m.title });
+    });
+  });
+  return flat;
+}
+
 function startFreeCourse() {
   haptic("medium");
-  const revitCourse = (state.courses || []).find(c => (c.title || "").toLowerCase().includes("revit")) || state.courses?.[0];
-  if (revitCourse) {
-    openCourseCatalog(Number(revitCourse.id));
-  } else {
-    setTab("lessons");
-  }
+  openFreeLessonsList();
+}
+
+function openFreeLessonsList() {
+  haptic("light");
+  currentTrackingLessonId = null;
+  currentTrackingModuleId = null;
+  currentTrackingQuiz = { current: 0, total: 0 };
+  ytPlayerInstance = null;
+
+  const fc = state.free_course || {};
+  const groups = (Array.isArray(state.modules) ? state.modules : [])
+    .map(m => ({ m, lessons: (m.lessons || []).filter(l => l.is_free) }))
+    .filter(g => g.lessons.length);
+  const total = groups.reduce((sum, g) => sum + g.lessons.length, 0);
+  const watched = groups.reduce((sum, g) => sum + g.lessons.filter(l => l.watched).length, 0);
+  let n = 0;
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Bosh sahifaga qaytish</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+          <div class="page-title" style="margin-bottom:4px;">${escapeHtml(fc.title || "Bepul darslar")}</div>
+          ${state.is_admin ? `<button class="admin-small-btn" onclick="openFreeCourseEditor()">✏️ Tahrirlash</button>` : ""}
+        </div>
+        ${fc.subtitle ? `<p style="color:var(--text-secondary); font-size:13px; margin-bottom:6px;">${escapeHtml(fc.subtitle)}</p>` : ""}
+        ${total ? `<p style="color:var(--text-secondary); font-size:12.5px; margin-bottom:14px;">${watched} / ${total} dars ko'rilgan</p>` : ""}
+
+        ${!total ? `
+          <div class="empty-box">Hozircha bepul darslar qo'shilmagan.</div>
+        ` : groups.map(g => `
+          <div class="module">
+            <div style="padding:14px 18px; font-weight:700; font-size:14.5px;">${escapeHtml(g.m.title)}</div>
+            <div class="lesson-list open">
+              ${g.lessons.map(l => {
+                n++;
+                return `
+                  <div class="lesson" onclick="openLesson(${Number(l.id)}, true)">
+                    <div class="lesson-left">
+                      <span class="lesson-status-icon">${l.watched ? "✅" : "▶"}</span>
+                      <span>${n}. ${escapeHtml(l.title)}</span>
+                    </div>
+                    <span class="free-badge">Bepul</span>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+  sendHeartbeat("online");
 }
 
 // Shablonlar va 3D Modellar kartochkasi
@@ -2221,8 +2283,9 @@ async function resumeLastLesson() {
   openLesson(state.last_lesson.lesson_id);
 }
 
-async function openLesson(id) {
+async function openLesson(id, fromFree = false) {
   try {
+    freeLessonsMode = Boolean(fromFree);
     haptic("light");
     currentView = {
       html: `
@@ -2300,7 +2363,7 @@ async function openLesson(id) {
     currentView = {
       html: `
         <div class="lesson-detail">
-          <div class="back-btn" onclick="closeDetail()">← Darslar ro'yxatiga qaytish</div>
+          <div class="back-btn" onclick="${freeLessonsMode ? 'openFreeLessonsList()' : 'closeDetail()'}">← Darslar ro'yxatiga qaytish</div>
           ${videoHtml}
 
           <div class="lesson-detail-body">
@@ -2324,11 +2387,11 @@ async function openLesson(id) {
 
             ${renderLessonNavButtons(lesson.id)}
 
-            <button class="btn secondary" style="margin-top: 10px;" onclick="openLessonDrawer(${Number(lesson.id)})">
+            <button class="btn secondary" style="margin-top: 10px;" onclick="${freeLessonsMode ? "openFreeLessonsList()" : `openLessonDrawer(${Number(lesson.id)})`}">
               📚 Darslar ro'yxati
             </button>
 
-            <button class="btn secondary" style="margin-top: 10px;" onclick="closeDetail()">
+            <button class="btn secondary" style="margin-top: 10px;" onclick="${freeLessonsMode ? "openFreeLessonsList()" : "closeDetail()"}">
               ← Barcha darslarga qaytish
             </button>
           </div>
@@ -3604,6 +3667,12 @@ async function submitAdminSettings() {
 }
 
 function getAdjacentLessons(lessonId) {
+  if (freeLessonsMode) {
+    const flatFree = getFreeLessonsFlat().map(l => ({ id: l.id, available: true }));
+    const fi = flatFree.findIndex(l => Number(l.id) === Number(lessonId));
+    if (fi === -1) return { prev: null, next: null };
+    return { prev: flatFree[fi - 1] || null, next: flatFree[fi + 1] || null };
+  }
   if (!courseModulesData || !Array.isArray(courseModulesData.modules)) return { prev: null, next: null };
   const flat = [];
   courseModulesData.modules.forEach(m => (m.lessons || []).forEach(l => flat.push(l)));
@@ -3615,16 +3684,17 @@ function getAdjacentLessons(lessonId) {
 function renderLessonNavButtons(lessonId) {
   const { prev, next } = getAdjacentLessons(lessonId);
   if (!prev && !next) return "";
+  const fm = freeLessonsMode ? ", true" : "";
 
   return `
     <div style="display:flex; gap:10px; margin-top:10px;">
       ${prev ? `
-        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="openLesson(${Number(prev.id)})">
+        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="openLesson(${Number(prev.id)}${fm})">
           ← Oldingi dars
         </button>
       ` : `<div style="flex:1;"></div>`}
       ${next ? `
-        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="${next.available ? `openLesson(${Number(next.id)})` : "showLockedInfo()"}">
+        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="${next.available ? `openLesson(${Number(next.id)}${fm})` : "showLockedInfo()"}">
           Keyingi dars →
         </button>
       ` : `<div style="flex:1;"></div>`}
@@ -3691,13 +3761,17 @@ function openLessonDrawer(lessonId) {
 async function markLessonWatched(lessonId) {
   try {
     haptic("medium");
+    const inFree = freeLessonsMode;
     await api("/api/progress/mark", { lesson_id: Number(lessonId) });
     showToast("Dars tugallandi! Keyingi dars ochildi ✅");
+    (Array.isArray(state.modules) ? state.modules : []).forEach(m => {
+      (m.lessons || []).forEach(l => { if (Number(l.id) === Number(lessonId)) l.watched = true; });
+    });
     if (selectedCourseId) {
       const data = await api(`/api/course/${Number(selectedCourseId)}/modules`);
       courseModulesData = data;
     }
-    openLesson(lessonId);
+    openLesson(lessonId, inFree);
   } catch (error) {
     showAlert(error.message || "Belgilashda xatolik.");
   }
