@@ -1671,34 +1671,89 @@ html.light .nav {
 }
 
 .admin-tabs {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 0 16px 14px;
-  margin-bottom: 14px;
-}
-
-.admin-tabs::-webkit-scrollbar {
-  display: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 16px;
+  margin-bottom: 16px;
 }
 
 .admin-tabs button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 58px;
+  padding: 8px 4px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: 9px 15px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
   font-weight: 650;
-  white-space: nowrap;
+  line-height: 1.15;
+  text-align: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease,
+              transform 0.14s ease, box-shadow 0.22s ease;
+}
+
+.admin-tabs button:active {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) {
+  .admin-tabs button:hover:not(.active) {
+    border-color: var(--accent);
+    color: var(--text-primary, var(--accent));
+  }
 }
 
 .admin-tabs button.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(41, 121, 255, 0.28);
+}
+
+.admin-tab-ico {
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (min-width: 520px) {
+  .admin-tabs {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Tab almashganda kontent silliq xiralashadi va yangisi silliq paydo bo'ladi */
+#admin-content {
+  transition: opacity 0.18s ease;
+}
+
+#admin-content.admin-content-loading {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@keyframes adminContentIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.admin-content-enter {
+  animation: adminContentIn 0.28s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-content-enter { animation: none; }
+  .admin-tabs button { transition: none; }
 }
 
 .admin-stats-grid {

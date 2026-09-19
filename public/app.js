@@ -3925,7 +3925,7 @@ async function openAdminPanel() {
   }
 }
 
-function renderAdminPanel() {
+function renderAdminPanel(animate = false) {
   currentView = {
     html: `
       <div class="admin-page">
@@ -3937,38 +3937,24 @@ function renderAdminPanel() {
         </div>
 
         <div class="admin-tabs">
-          <button class="${adminView === "dashboard" ? "active" : ""}" onclick="adminSetTab('dashboard')">
-            📊 Statistika
-          </button>
-          <button class="${adminView === "live" ? "active" : ""}" onclick="adminSetTab('live')">
-            🟢 Jonli
-          </button>
-          <button class="${adminView === "analytics" ? "active" : ""}" onclick="adminSetTab('analytics')">
-            📈 Analitika
-          </button>
-          <button class="${adminView === "students" ? "active" : ""}" onclick="adminSetTab('students')">
-            👨‍🎓 O'quvchilar
-          </button>
-          <button class="${adminView === "blacklist" ? "active" : ""}" onclick="adminSetTab('blacklist')">
-            ⛔️ Qora ro'yxat
-          </button>
-          <button class="${adminView === "products" ? "active" : ""}" onclick="adminSetTab('products')">
-            📦 Resurslar
-          </button>
-          <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
-            🎬 Darslar
-          </button>
-          <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
-            📤 Vazifalar
-          </button>
-          ${state.admin_role === "super_admin" ? `
-            <button class="${adminView === "admins" ? "active" : ""}" onclick="adminSetTab('admins')">
-              👥 Adminlar
+          ${[
+            ["dashboard", "📊", "Statistika", "adminSetTab('dashboard')"],
+            ["live", "🟢", "Jonli", "adminSetTab('live')"],
+            ["analytics", "📈", "Analitika", "adminSetTab('analytics')"],
+            ["students", "👨‍🎓", "O'quvchilar", "adminSetTab('students')"],
+            ["blacklist", "⛔️", "Qora ro'yxat", "adminSetTab('blacklist')"],
+            ["products", "📦", "Resurslar", "adminSetTab('products')"],
+            ["lessons", "🎬", "Darslar", "goToCourseManagement()"],
+            ["practice", "📤", "Vazifalar", "adminSetTab('practice')"]
+          ].concat(state.admin_role === "super_admin" ? [["admins", "👥", "Adminlar", "adminSetTab('admins')"]] : []).map(t => `
+            <button type="button" data-tab="${t[0]}" class="${adminView === t[0] ? "active" : ""}" onclick="${t[3]}">
+              <span class="admin-tab-ico">${t[1]}</span>
+              <span class="admin-tab-txt">${t[2]}</span>
             </button>
-          ` : ""}
+          `).join("")}
         </div>
 
-        <div class="page" style="padding-top: 0;">
+        <div id="admin-content" class="page${animate ? " admin-content-enter" : ""}" style="padding-top: 0;">
           ${adminView === "dashboard" ? renderAdminDashboard() : ""}
           ${adminView === "live" ? renderAdminLive() : ""}
           ${adminView === "analytics" ? renderAdminAnalytics() : ""}
@@ -3985,9 +3971,24 @@ function renderAdminPanel() {
   render();
 }
 
+let adminTabSeq = 0;
+
+function markAdminTabActive(tab) {
+  document.querySelectorAll(".admin-tabs button").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+  });
+}
+
 async function adminSetTab(tab) {
   haptic("light");
+  const prevView = adminView;
+  const seq = ++adminTabSeq;
   adminView = tab;
+
+  // Bosilgan zahoti tanlangan tab belgilanadi va kontent xira bo'ladi (server javobini kutmasdan)
+  markAdminTabActive(tab);
+  const contentEl = document.getElementById("admin-content");
+  if (contentEl) contentEl.classList.add("admin-content-loading");
 
   if (adminData.liveTimer) {
     clearInterval(adminData.liveTimer);
@@ -4026,8 +4027,14 @@ async function adminSetTab(tab) {
       const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
       adminData.practice = data.submissions || [];
     }
-    renderAdminPanel();
+    if (seq !== adminTabSeq) return; // tezda boshqa tab bosilgan bo'lsa, eskisini chizmaymiz
+    renderAdminPanel(true);
   } catch (error) {
+    if (seq !== adminTabSeq) return;
+    adminView = prevView;
+    markAdminTabActive(prevView);
+    const el = document.getElementById("admin-content");
+    if (el) el.classList.remove("admin-content-loading");
     showAlert(error.message || "Ma'lumotlarni yuklashda xatolik.");
   }
 }
