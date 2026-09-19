@@ -3708,41 +3708,38 @@ function renderQuizQuestion() {
     html: `
       <div class="page">
         <div class="back-btn" onclick="closeDetail()">← Testdan chiqish</div>
-        <div class="test-header">
-          <div class="test-title">Modul Testi</div>
-          <div class="test-progress">Savol ${idx + 1} / ${total}</div>
+        <div class="page-title" style="margin-bottom:4px;">Modul Testi</div>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:10px;">Savol ${idx + 1} / ${total}</p>
+
+        <div class="quiz-timer-track">
+          <div class="quiz-timer-bar" style="animation: quizTimerShrink ${QUIZ_QUESTION_SECONDS}s linear forwards;"></div>
         </div>
 
-        <div class="quiz-timer-bar-wrap">
-          <div id="quiz-question-bar" class="quiz-timer-bar"></div>
+        <div class="test-question" style="margin-top:14px;">
+          <p>${idx + 1}. ${escapeHtml(q.question)}</p>
+          ${q.options.map((opt, oIdx) => `
+            <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
+              ${escapeHtml(opt)}
+            </div>
+          `).join("")}
         </div>
 
-        <div class="test-question">
-          <p>${escapeHtml(q.question)}</p>
-          <div class="options">
-            ${q.options.map((opt, oIdx) => `
-              <div class="option ${selectedAnswer === oIdx ? "selected" : ""}" data-qid="${Number(q.id)}" data-idx="${oIdx}" onclick="selectTestOption(${Number(q.id)}, ${oIdx})">
-                ${escapeHtml(opt)}
-              </div>
-            `).join("")}
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-top:14px;">
+        <div style="display:flex; gap:10px; margin-top:18px;">
           ${!isFirst ? `
-            <button id="quiz-prev-btn" class="btn secondary" style="flex:1; margin-bottom:0;" onclick="quizGoPrev()">
-              <span id="quiz-prev-bar" class="quiz-prev-fill"></span>
-              <span class="quiz-prev-label">← Oldingi</span>
+            <button id="quiz-prev-btn" class="btn secondary quiz-prev-btn-anim" style="margin-bottom:0; flex:1;" onclick="quizGoPrev()">
+              <span class="quiz-prev-fill"></span>
+              <span style="position:relative; z-index:1;">← Oldingi</span>
             </button>
           ` : ""}
-          <button class="btn" style="flex:1; margin-bottom:0;" onclick="${isLast ? `submitModuleTest(${Number(qs.moduleId)})` : "quizGoNext()"}">
-            ${isLast ? "Yakunlash ✅" : "Keyingisi →"}
+          <button class="btn" style="margin-bottom:0; flex:1;" onclick="${isLast ? `submitModuleTest(${Number(qs.moduleId)})` : "quizGoNext()"}">
+            ${isLast ? "✅ Yakunlash" : "Keyingi →"}
           </button>
         </div>
       </div>
     `
   };
   render();
+  window.scrollTo(0, 0);
 
   currentTrackingLessonId = null;
   currentTrackingModuleId = qs.moduleId;
