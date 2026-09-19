@@ -4015,6 +4015,7 @@ async function adminSetTab(tab) {
     } else if (tab === "products") {
       const data = await adminApi("/api/admin/products");
       adminData.products = data.products || [];
+      adminData.marketEnabled = Boolean(data.market_enabled);
     } else if (tab === "lessons") {
       const data = await adminApi("/api/admin/modules");
       adminData.modules = data.modules || [];
@@ -4369,8 +4370,36 @@ async function unbanStudent(studentId) {
 
 function renderAdminProducts() {
   const products = Array.isArray(adminData.products) ? adminData.products : [];
+  const on = Boolean(adminData.marketEnabled);
 
   return `
+    <div id="market-status-card" class="course-status-card ${on ? 'active-mode' : 'draft-mode'}">
+      <div class="course-status-header">
+        <div class="course-status-title">
+          <span>📡 Bo'lim Ko'rinishi (Status)</span>
+        </div>
+        <div id="market-status-badge" class="course-status-badge ${on ? 'active' : 'draft'}">
+          ${on ? '🚀 Ommaga chiqarilgan' : '🔒 Qoralama'}
+        </div>
+      </div>
+      <div id="market-status-hint" class="course-status-hint">
+        ${on
+          ? "“Shablonlar & 3D Modellar” bo‘limi hozir barcha o‘quvchilarga ko‘rinmoqda."
+          : "“Shablonlar & 3D Modellar” bo‘limi hozircha o‘quvchilarga ko‘rinmaydi. Mahsulotlarni qo‘shib bo‘lgach, o‘ngga surib ommaga chiqarasiz."}
+      </div>
+      <div class="status-slide-toggle" id="market-status-toggle" data-status="${on ? 'active' : 'draft'}" onclick="handleMarketStatusClick(event)">
+        <div class="status-slide-pill"></div>
+        <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setMarketStatus(false)">
+          <span class="status-slide-opt-title">🔒 Qoralama</span>
+          <span class="status-slide-opt-desc">O'quvchilarga yopiq</span>
+        </button>
+        <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setMarketStatus(true)">
+          <span class="status-slide-opt-title">🚀 Ommaga chiqarish</span>
+          <span class="status-slide-opt-desc">Barchaga ochiq</span>
+        </button>
+      </div>
+    </div>
+
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
       <div class="section-title" style="margin-bottom:0;">
         <span>📦 Shablonlar & Modellar (${products.length})</span>
@@ -4410,6 +4439,52 @@ function renderAdminProducts() {
       </div>
     `}
   `;
+}
+
+function handleMarketStatusClick(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  setMarketStatus((e.clientX - rect.left) > rect.width / 2);
+}
+
+async function setMarketStatus(enabled) {
+  haptic("medium");
+  const prev = Boolean(adminData.marketEnabled);
+  adminData.marketEnabled = enabled;
+
+  const toggle = document.getElementById("market-status-toggle");
+  if (toggle) toggle.setAttribute("data-status", enabled ? "active" : "draft");
+  const badge = document.getElementById("market-status-badge");
+  if (badge) {
+    badge.className = `course-status-badge ${enabled ? 'active' : 'draft'}`;
+    badge.innerHTML = enabled ? '🚀 Ommaga chiqarilgan' : '🔒 Qoralama';
+  }
+  const card = document.getElementById("market-status-card");
+  if (card) card.className = `course-status-card ${enabled ? 'active-mode' : 'draft-mode'}`;
+  const hint = document.getElementById("market-status-hint");
+  if (hint) {
+    hint.textContent = enabled
+      ? "“Shablonlar & 3D Modellar” bo‘limi hozir barcha o‘quvchilarga ko‘rinmoqda."
+      : "“Shablonlar & 3D Modellar” bo‘limi hozircha o‘quvchilarga ko‘rinmaydi. Mahsulotlarni qo‘shib bo‘lgach, o‘ngga surib ommaga chiqarasiz.";
+  }
+
+  try {
+    await adminApi("/api/admin/market/status", { enabled });
+    // Bosh sahifadagi bo'lim darhol yangilansin (sahifani qayta chizmasdan)
+    try {
+      const r = await api("/api/products");
+      state.products = Array.isArray(r.products) ? r.products : [];
+    } catch (e) {}
+    showToast(enabled ? "🚀 Bo'lim ommaga chiqarildi!" : "🔒 Bo'lim qoralamaga olindi (o'quvchilarga ko'rinmaydi).");
+  } catch (err) {
+    adminData.marketEnabled = prev;
+    if (toggle) toggle.setAttribute("data-status", prev ? "active" : "draft");
+    if (badge) {
+      badge.className = `course-status-badge ${prev ? 'active' : 'draft'}`;
+      badge.innerHTML = prev ? '🚀 Ommaga chiqarilgan' : '🔒 Qoralama';
+    }
+    if (card) card.className = `course-status-card ${prev ? 'active-mode' : 'draft-mode'}`;
+    showAlert(err.message || "Holatni saqlashda xatolik.");
+  }
 }
 
 function openAddProductModal() {

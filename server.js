@@ -347,7 +347,8 @@ async function initExtendedTables() {
       ('free_course_subtitle', 'Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs'),
       ('free_course_badge', '🎁 6 ta bepul dars'),
       ('free_course_features', '["Revit nima ekanini tushunasiz", "Birinchi loyihani yaratasiz", "Devor, eshik, deraza chizasiz", "Birinchi 3D modelingizni yaratasiz"]'),
-      ('free_course_enabled', 'true')
+      ('free_course_enabled', 'true'),
+      ('market_enabled', 'false')
       ON CONFLICT (key) DO NOTHING
     `);
 
@@ -904,6 +905,11 @@ app.post('/api/content', async function (req, res) {
       setRes.rows.forEach(function (r) { settings[r.key] = r.value; });
     } catch (sErr) {
       console.warn('SETTINGS QUERY WARNING:', sErr.message);
+    }
+
+    // Shablon & 3D modellar bo'limi qoralamada bo'lsa, o'quvchilarga umuman yuborilmaydi
+    if (settings.market_enabled !== 'true') {
+      products = [];
     }
 
     var freeCourseFeatures = [];
@@ -2149,8 +2155,20 @@ app.post('/api/activity/heartbeat', async function (req, res) {
 // MARKETPLACE / RESURSLAR & SHABLONLAR (USER API)
 // ======================================================
 
+async function isMarketEnabled() {
+  try {
+    var r = await pool.query("SELECT value FROM academy_settings WHERE key = 'market_enabled' LIMIT 1");
+    return r.rows.length > 0 && r.rows[0].value === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
 async function getAvailableProducts(req, res) {
   try {
+    if (!(await isMarketEnabled())) {
+      return res.json({ ok: true, products: [], market_enabled: false });
+    }
     var result = await pool.query(
       'SELECT id, title, category, software, price, description, preview_url, file_format, order_index FROM market_products WHERE is_available = true ORDER BY order_index ASC, id ASC'
     );
@@ -2551,10 +2569,24 @@ app.post('/api/admin/student/:id/unban', requireAdmin, async function (req, res)
 app.post('/api/admin/products', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query('SELECT * FROM market_products ORDER BY order_index ASC, id ASC');
-    return res.json({ ok: true, products: result.rows });
+    return res.json({ ok: true, products: result.rows, market_enabled: await isMarketEnabled() });
   } catch (error) {
     console.error('ADMIN PRODUCTS ERROR:', error);
     return res.status(500).json({ error: 'Mahsulotlarni yuklashda xato' });
+  }
+});
+
+app.post('/api/admin/market/status', requireAdmin, async function (req, res) {
+  try {
+    var enabled = req.body.enabled === true || req.body.enabled === 'true';
+    await pool.query(
+      "INSERT INTO academy_settings (key, value) VALUES ('market_enabled', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+      [enabled ? 'true' : 'false']
+    );
+    return res.json({ ok: true, market_enabled: enabled });
+  } catch (error) {
+    console.error('MARKET STATUS ERROR:', error);
+    return res.status(500).json({ error: 'Bo‘lim holatini saqlashda xato' });
   }
 });
 
