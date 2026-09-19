@@ -777,7 +777,10 @@ function renderHome() {
 
       ${state.free_course && state.free_course.enabled ? `
         <div class="free-course-hero">
-          <div class="free-course-badge">${escapeHtml(state.free_course.badge || '🎁 6 ta bepul dars')}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div class="free-course-badge">${escapeHtml(state.free_course.badge || '🎁 6 ta bepul dars')}</div>
+            ${state.is_admin ? `<button class="admin-small-btn" onclick="openFreeCourseEditor()">✏️ Tahrirlash</button>` : ""}
+          </div>
           <div class="free-course-title">${escapeHtml(state.free_course.title || 'REVIT 0 DAN')}</div>
           <div class="free-course-subtitle">${escapeHtml(state.free_course.subtitle || '')}</div>
           <div class="free-course-features">
@@ -788,6 +791,13 @@ function renderHome() {
           <button class="btn" style="margin-bottom:0;" onclick="startFreeCourse()">
             🚀 Bepul darslarni boshlash
           </button>
+        </div>
+      ` : ""}
+
+      ${state.is_admin && state.free_course && !state.free_course.enabled ? `
+        <div class="course-status-card draft-mode" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div style="font-size:13px; font-weight:650;">🎁 Bepul darslar bo'limi o'chiq (o'quvchilarga ko'rinmaydi)</div>
+          <button class="admin-small-btn" onclick="openFreeCourseEditor()">✏️ Tahrirlash</button>
         </div>
       ` : ""}
 
@@ -1032,6 +1042,211 @@ function deleteFaqItem(id) {
     showToast("Savol o'chirildi!");
     loadContent();
   });
+}
+
+// ------------------------------------------------------
+// ADMIN: BEPUL DARSLAR BO'LIMINI TAHRIRLASH (matnlar + darslar tanlash)
+// ------------------------------------------------------
+
+let freeCourseEditor = null;
+
+async function openFreeCourseEditor() {
+  if (!state.is_admin) return showAlert("Sizda admin huquqi yo'q.");
+  haptic("medium");
+
+  currentView = {
+    html: `
+      <div class="lesson-loading">
+        <div class="spinner"></div>
+        <div>Yuklanmoqda...</div>
+      </div>
+    `
+  };
+  render();
+
+  try {
+    const data = await adminApi("/api/admin/free-course");
+    const lessons = Array.isArray(data.lessons) ? data.lessons : [];
+    freeCourseEditor = {
+      settings: data.settings || {},
+      lessons: lessons,
+      selected: new Set(lessons.filter(l => l.is_free).map(l => Number(l.id))),
+      initialCount: lessons.filter(l => l.is_free).length
+    };
+    renderFreeCourseEditor();
+  } catch (error) {
+    showAlert(error.message || "Yuklashda xatolik.");
+    closeDetail();
+  }
+}
+
+function renderFreeCourseEditor() {
+  const fe = freeCourseEditor;
+  if (!fe) return;
+  const st = fe.settings || {};
+
+  // Darslarni modullar bo'yicha guruhlash (tartibi saqlanadi)
+  const groups = [];
+  const byKey = {};
+  fe.lessons.forEach(l => {
+    const key = String(l.module_id || 0);
+    if (!byKey[key]) {
+      byKey[key] = { id: key, title: l.module_title || "Modulsiz darslar", course: l.course_title || "", lessons: [] };
+      groups.push(byKey[key]);
+    }
+    byKey[key].lessons.push(l);
+  });
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Bosh sahifaga qaytish</div>
+        <div class="page-title" style="margin-bottom:4px;">🎁 Bepul darslar bo'limi</div>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">
+          Bosh sahifadagi bepul darslar kartochkasi matnlari va qaysi darslar hammaga bepul ochiq bo'lishini shu yerdan boshqarasiz.
+        </p>
+
+        <div class="apple-registration-form" style="background:var(--bg-surface); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border);">
+          <label class="apple-check-row">
+            <input id="fc-enabled" type="checkbox" ${st.enabled ? "checked" : ""}>
+            <div>
+              <div class="apple-check-title">👁 Bosh sahifada ko'rsatish</div>
+              <div class="apple-check-text">O'chirilsa, o'quvchilar bu kartochkani ko'rmaydi</div>
+            </div>
+          </label>
+
+          <div class="apple-field">
+            <label>Yuqoridagi yozuv (belgi)</label>
+            <input id="fc-badge" class="apple-input" type="text" maxlength="80" value="${escapeHtml(st.badge || "")}" placeholder="🎁 6 ta bepul dars">
+          </div>
+
+          <div class="apple-field">
+            <label>Sarlavha *</label>
+            <input id="fc-title" class="apple-input" type="text" maxlength="120" value="${escapeHtml(st.title || "")}" placeholder="REVIT 0 DAN">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqa izoh</label>
+            <textarea id="fc-subtitle" class="apple-input apple-textarea" maxlength="300">${escapeHtml(st.subtitle || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Nimalarni o'rganishadi (har bir qator alohida band, ko'pi bilan 10 ta)</label>
+            <textarea id="fc-features" class="apple-input apple-textarea" style="min-height:110px;">${escapeHtml((st.features || []).join("\n"))}</textarea>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:22px;">
+          <span>📚 Qaysi darslar bepul bo'lsin?</span>
+          <span id="fc-sel-count" class="free-mod-count">Tanlangan: ${fe.selected.size} ta</span>
+        </div>
+
+        ${!groups.length ? `<div class="empty-box">Hozircha birorta dars qo'shilmagan.</div>` : groups.map(g => {
+          const selInGroup = g.lessons.filter(l => fe.selected.has(Number(l.id))).length;
+          return `
+            <details class="free-mod" ${selInGroup ? "open" : ""}>
+              <summary>
+                <div style="min-width:0;">
+                  <div>${escapeHtml(g.title)}</div>
+                  ${g.course ? `<div style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-top:2px;">${escapeHtml(g.course)}</div>` : ""}
+                </div>
+                <span id="fc-mod-count-${g.id}" class="free-mod-count">${selInGroup} / ${g.lessons.length}</span>
+              </summary>
+              <div class="free-mod-actions">
+                <button type="button" class="admin-small-btn" onclick="freeSelectModule('${g.id}', true)">✔ Hammasi</button>
+                <button type="button" class="admin-small-btn" onclick="freeSelectModule('${g.id}', false)">✖ Tozalash</button>
+              </div>
+              ${g.lessons.map((l, i) => `
+                <label class="free-lesson-row">
+                  <input type="checkbox" data-mod="${g.id}" data-lid="${Number(l.id)}" ${fe.selected.has(Number(l.id)) ? "checked" : ""} onchange="toggleFreeLesson(${Number(l.id)}, this.checked)">
+                  <span class="free-lesson-num">${Number(l.order_index) || i + 1}.</span>
+                  <span class="free-lesson-title">${escapeHtml(l.title)}</span>
+                </label>
+              `).join("")}
+            </details>
+          `;
+        }).join("")}
+
+        <button class="btn" style="margin-top:16px;" onclick="saveFreeCourse()">💾 Saqlash</button>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function updateFreeCounts() {
+  const fe = freeCourseEditor;
+  if (!fe) return;
+  const total = document.getElementById("fc-sel-count");
+  if (total) total.textContent = `Tanlangan: ${fe.selected.size} ta`;
+
+  const perMod = {};
+  fe.lessons.forEach(l => {
+    const key = String(l.module_id || 0);
+    if (!perMod[key]) perMod[key] = { sel: 0, all: 0 };
+    perMod[key].all++;
+    if (fe.selected.has(Number(l.id))) perMod[key].sel++;
+  });
+  Object.keys(perMod).forEach(key => {
+    const el = document.getElementById(`fc-mod-count-${key}`);
+    if (el) el.textContent = `${perMod[key].sel} / ${perMod[key].all}`;
+  });
+}
+
+function toggleFreeLesson(lessonId, checked) {
+  const fe = freeCourseEditor;
+  if (!fe) return;
+  haptic("light");
+  if (checked) fe.selected.add(Number(lessonId));
+  else fe.selected.delete(Number(lessonId));
+  updateFreeCounts();
+}
+
+function freeSelectModule(moduleKey, select) {
+  const fe = freeCourseEditor;
+  if (!fe) return;
+  haptic("light");
+  document.querySelectorAll(`.free-lesson-row input[data-mod="${moduleKey}"]`).forEach(cb => {
+    cb.checked = select;
+    const id = Number(cb.getAttribute("data-lid"));
+    if (select) fe.selected.add(id);
+    else fe.selected.delete(id);
+  });
+  updateFreeCounts();
+}
+
+async function saveFreeCourse() {
+  const fe = freeCourseEditor;
+  if (!fe) return;
+
+  const title = (document.getElementById("fc-title")?.value || "").trim();
+  if (!title) return showAlert("Sarlavhani kiriting.");
+
+  if (fe.selected.size === 0 && fe.initialCount > 0) {
+    if (!confirm("Birorta ham bepul dars tanlanmadi. Hozirgi bepul darslar pullik bo'lib qoladi. Davom etilsinmi?")) return;
+  }
+
+  const features = (document.getElementById("fc-features")?.value || "")
+    .split("\n").map(x => x.trim()).filter(Boolean);
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/free-course/save", {
+      title: title,
+      subtitle: (document.getElementById("fc-subtitle")?.value || "").trim(),
+      badge: (document.getElementById("fc-badge")?.value || "").trim(),
+      features: features,
+      enabled: Boolean(document.getElementById("fc-enabled")?.checked),
+      lesson_ids: Array.from(fe.selected)
+    });
+    freeCourseEditor = null;
+    await loadContent();
+    closeDetail();
+    showToast("✅ Bepul darslar bo'limi saqlandi!");
+  } catch (error) {
+    showAlert(error.message || "Saqlashda xatolik.");
+  }
 }
 
 // Bepul mini-kursni boshlash

@@ -2576,6 +2576,101 @@ app.post('/api/admin/products', requireAdmin, async function (req, res) {
   }
 });
 
+// ======================================================
+// ADMIN: BOSH SAHIFADAGI "BEPUL DARSLAR" BO'LIMINI TAHRIRLASH
+// ======================================================
+
+var FREE_COURSE_KEYS = ['free_course_title', 'free_course_subtitle', 'free_course_badge', 'free_course_features', 'free_course_enabled'];
+
+app.post('/api/admin/free-course', requireAdmin, async function (req, res) {
+  try {
+    var sRes = await pool.query('SELECT key, value FROM academy_settings WHERE key = ANY($1)', [FREE_COURSE_KEYS]);
+    var st = {};
+    sRes.rows.forEach(function (r) { st[r.key] = r.value; });
+
+    var features = [];
+    try {
+      var parsed = JSON.parse(st.free_course_features || '[]');
+      if (Array.isArray(parsed)) features = parsed.map(String);
+    } catch (e) {}
+
+    var lessonsRes = await pool.query(
+      'SELECT l.id, l.title, l.order_index, l.is_free, l.module_id, ' +
+      'm.title AS module_title, c.title AS course_title ' +
+      'FROM lessons l ' +
+      'LEFT JOIN modules m ON m.id = l.module_id ' +
+      'LEFT JOIN courses c ON c.id = m.course_id ' +
+      'ORDER BY c.order_index ASC NULLS LAST, m.order_index ASC NULLS LAST, m.id ASC NULLS LAST, l.order_index ASC, l.id ASC'
+    );
+
+    return res.json({
+      ok: true,
+      settings: {
+        title: st.free_course_title || 'REVIT 0 DAN',
+        subtitle: st.free_course_subtitle || '',
+        badge: st.free_course_badge || '',
+        features: features,
+        enabled: st.free_course_enabled !== 'false'
+      },
+      lessons: lessonsRes.rows
+    });
+  } catch (error) {
+    console.error('ADMIN FREE COURSE LOAD ERROR:', error);
+    return res.status(500).json({ error: 'Bepul darslar sozlamasini yuklashda xato' });
+  }
+});
+
+app.post('/api/admin/free-course/save', requireAdmin, async function (req, res) {
+  var client = null;
+  try {
+    var b = req.body || {};
+    var title = String(b.title || '').trim().slice(0, 120);
+    var subtitle = String(b.subtitle || '').trim().slice(0, 300);
+    var badge = String(b.badge || '').trim().slice(0, 80);
+    var features = (Array.isArray(b.features) ? b.features : [])
+      .map(function (f) { return String(f || '').trim().slice(0, 160); })
+      .filter(Boolean)
+      .slice(0, 10);
+    var enabled = b.enabled === true || b.enabled === 'true';
+    var lessonIds = (Array.isArray(b.lesson_ids) ? b.lesson_ids : [])
+      .map(Number)
+      .filter(function (n) { return Number.isInteger(n) && n > 0; });
+
+    if (!title) return res.status(400).json({ error: 'Sarlavhani kiriting' });
+
+    var entries = [
+      ['free_course_title', title],
+      ['free_course_subtitle', subtitle],
+      ['free_course_badge', badge],
+      ['free_course_features', JSON.stringify(features)],
+      ['free_course_enabled', enabled ? 'true' : 'false']
+    ];
+
+    client = await pool.connect();
+    await client.query('BEGIN');
+    for (var i = 0; i < entries.length; i++) {
+      await client.query(
+        'INSERT INTO academy_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        [entries[i][0], entries[i][1]]
+      );
+    }
+    // Tanlangan darslar bepul (is_free = true), qolganlari pullik bo'ladi
+    var upd = await client.query(
+      'UPDATE lessons SET is_free = (id = ANY($1::int[])) WHERE is_free IS DISTINCT FROM (id = ANY($1::int[]))',
+      [lessonIds]
+    );
+    await client.query('COMMIT');
+
+    return res.json({ ok: true, updated_lessons: upd.rowCount });
+  } catch (error) {
+    if (client) { try { await client.query('ROLLBACK'); } catch (e) {} }
+    console.error('ADMIN FREE COURSE SAVE ERROR:', error);
+    return res.status(500).json({ error: 'Bepul darslarni saqlashda xato' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.post('/api/admin/market/status', requireAdmin, async function (req, res) {
   try {
     var enabled = req.body.enabled === true || req.body.enabled === 'true';
