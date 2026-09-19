@@ -523,19 +523,39 @@ function fmtDate(d) {
   });
 }
 
+// Soniyalarni "2 soat 15 daqiqa oldin", "3 kun 4 soat oldin", "2 oy 5 kun oldin", "1 yil 3 oy oldin" ko'rinishiga o'giradi
+function fmtSecondsAgo(totalSec) {
+  const sec = Math.max(0, Math.floor(Number(totalSec) || 0));
+  if (sec < 1) return "hozirgina";
+
+  const units = [
+    ["yil", 365 * 86400],
+    ["oy", 30 * 86400],
+    ["kun", 86400],
+    ["soat", 3600],
+    ["daqiqa", 60],
+    ["soniya", 1]
+  ];
+
+  const i = units.findIndex(u => sec >= u[1]);
+  const main = Math.floor(sec / units[i][1]);
+  const parts = [`${main} ${units[i][0]}`];
+
+  if (units[i + 1]) {
+    const rest = sec - main * units[i][1];
+    const sub = Math.floor(rest / units[i + 1][1]);
+    if (sub > 0) parts.push(`${sub} ${units[i + 1][0]}`);
+  }
+  return parts.join(" ") + " oldin";
+}
+
 function fmtTimeAgo(d) {
   if (!d) return "";
   const date = new Date(d);
   if (Number.isNaN(date.getTime())) return "";
   const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
   if (diffSec < 60) return "Hozirgina";
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} daqiqa oldin`;
-  const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour} soat oldin`;
-  const diffDay = Math.floor(diffHour / 24);
-  if (diffDay < 30) return `${diffDay} kun oldin`;
-  return date.toLocaleDateString("uz-UZ");
+  return fmtSecondsAgo(diffSec);
 }
 
 // ======================================================
@@ -4445,7 +4465,7 @@ function renderAdminLiveInner() {
               <div class="live-user-header">
                 <div>
                   <div class="live-user-name">${escapeHtml(fullName)}</div>
-                  <div class="live-user-meta">ID: ${escapeHtml(u.telegram_id)} ${u.username ? `· @${escapeHtml(u.username)}` : ''} · ${u.seconds_ago ?? 0}s oldin</div>
+                  <div class="live-user-meta">ID: ${escapeHtml(u.telegram_id)} ${u.username ? `· @${escapeHtml(u.username)}` : ''} · ${fmtSecondsAgo(u.seconds_ago)}</div>
                 </div>
                 <span class="live-user-status-pill ${statusClass}">${statusText}</span>
               </div>
@@ -4470,7 +4490,7 @@ function renderAdminLiveInner() {
                 <div style="font-size:11px; color:var(--text-secondary);">ID: ${escapeHtml(ru.telegram_id)} ${ru.username ? `· @${escapeHtml(ru.username)}` : ''}</div>
               </div>
               <div style="font-size:11px; color:var(--text-muted); text-align:right;">
-                ${ru.seconds_ago ? `${ru.seconds_ago < 60 ? ru.seconds_ago + 's oldin' : Math.floor(ru.seconds_ago / 60) + ' daqiqa oldin'}` : 'Yaqinda'}
+                ${ru.seconds_ago != null ? fmtSecondsAgo(ru.seconds_ago) : 'Yaqinda'}
               </div>
             </div>
           </div>
@@ -5013,9 +5033,9 @@ async function openAdminStudentModal(id) {
               <div class="info-row">
                 <span class="info-label">⚡️ Jonli faollik</span>
                 <span class="info-val" style="color:#2979ff;">
-                  ${data.activity.status === 'watching' ? `🎬 Ko'rmoqda: ${escapeHtml(data.activity.lesson_title || '')} (${data.activity.seconds_ago ?? 0}s oldin)` :
-                    data.activity.status === 'test_active' ? `📝 Testda: ${escapeHtml(data.activity.quiz_module_title || '')} (${data.activity.seconds_ago ?? 0}s oldin)` :
-                    `🟢 ${escapeHtml(data.activity.status)} (${data.activity.seconds_ago ?? 0}s oldin)`}
+                  ${data.activity.status === 'watching' ? `🎬 Ko'rmoqda: ${escapeHtml(data.activity.lesson_title || '')} (${fmtSecondsAgo(data.activity.seconds_ago)})` :
+                    data.activity.status === 'test_active' ? `📝 Testda: ${escapeHtml(data.activity.quiz_module_title || '')} (${fmtSecondsAgo(data.activity.seconds_ago)})` :
+                    `🟢 ${escapeHtml(data.activity.status)} (${fmtSecondsAgo(data.activity.seconds_ago)})`}
                 </span>
               </div>
             ` : ""}
