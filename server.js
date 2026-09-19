@@ -404,7 +404,7 @@ async function initExtendedTables() {
   }
 }
 
-initExtendedTables();
+initExtendedTables().then(unbanAllAdmins);
 
 
 // ======================================================
@@ -536,6 +536,26 @@ async function getAdminByTelegramId(telegramId) {
     [telegramId]
   );
   return result.rows[0] || null;
+}
+
+// Admin (asosiy Super Admin yoki admins jadvalidagi istalgan admin) ekanini tekshirish
+async function isAdminTelegramId(telegramId) {
+  if (String(telegramId) === String(ADMIN_TELEGRAM_ID)) return true;
+  var r = await pool.query('SELECT 1 FROM admins WHERE telegram_id = $1 LIMIT 1', [telegramId]);
+  return r.rows.length > 0;
+}
+
+// Adminlar hech qachon qora ro'yxatda turmasligi uchun ularni blokdan chiqaradi
+async function unbanAllAdmins() {
+  try {
+    await pool.query(
+      "UPDATE users SET is_banned = false, banned_reason = NULL, banned_at = NULL " +
+      "WHERE is_banned = true AND (telegram_id::text = $1 OR telegram_id IN (SELECT telegram_id FROM admins))",
+      [String(ADMIN_TELEGRAM_ID)]
+    );
+  } catch (e) {
+    console.warn('UNBAN ADMINS WARNING:', e.message);
+  }
 }
 
 // ======================================================
@@ -2461,6 +2481,10 @@ app.post('/api/admin/student/:id/ban', requireAdmin, async function (req, res) {
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
     var targetUser = userRes.rows[0];
 
+    if (await isAdminTelegramId(targetUser.telegram_id)) {
+      return res.status(403).json({ error: 'Adminlarni qora ro‘yxatga kiritib bo‘lmaydi' });
+    }
+
     await pool.query(
       'UPDATE users SET is_banned = true, banned_reason = $1, banned_at = NOW(), access_until = NULL WHERE id = $2',
       [reason, studentId]
@@ -3298,6 +3322,7 @@ app.post('/api/admin/admins/add', requireAdmin, requireSuperAdmin, async functio
     );
 
     var admin = result.rows[0];
+    await unbanAllAdmins();
     console.log('ADMIN ADDED/UPDATED: ' + admin.telegram_id + ' ROLE: ' + admin.role);
 
     return res.json({

@@ -375,11 +375,13 @@ bot.use(async function (ctx, next) {
     console.log('📨 BOTGA XABAR KELDI:', ctx.updateType, 'from:', ctx.from.id, ctx.from.username || '');
     if (pool) {
       try {
+        const adminRow = await pool.query('SELECT 1 FROM admins WHERE telegram_id = $1 LIMIT 1', [ctx.from.id]);
+        const isAdminUser = ctx.from.id === ADMIN_ID || adminRow.rows.length > 0;
         const banCheck = await pool.query(
           'SELECT is_banned, banned_reason FROM users WHERE telegram_id = $1 LIMIT 1',
           [ctx.from.id]
         );
-        if (banCheck.rows[0] && banCheck.rows[0].is_banned) {
+        if (!isAdminUser && banCheck.rows[0] && banCheck.rows[0].is_banned) {
           const reason = banCheck.rows[0].banned_reason || 'Qoidabuzarlik';
           await ctx.reply(
             '⛔️ DIQQAT!\n\n' +
