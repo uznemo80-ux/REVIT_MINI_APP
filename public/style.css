@@ -4704,6 +4704,794 @@ input, textarea, select {
   white-space: nowrap;
 }
 
+/* ======================================================
+   KUTUBXONA 2.0 & SUPPORT ARXITEKTURASI
+   ====================================================== */
+
+.lib-container {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Header */
+.lib-header-wrap {
+  margin-bottom: 16px;
+}
+
+.lib-main-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.lib-main-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* 4 Asosiy Yo'nalish Tile'lari */
+.library-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+@media (min-width: 768px) {
+  .library-tiles-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+}
+
+.library-tile-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.library-tile-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-surface-elevated);
+}
+
+.library-tile-card:active {
+  transform: scale(0.97);
+}
+
+.library-tile-icon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.library-tile-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.library-tile-arrow {
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.library-tile-card:hover .library-tile-arrow {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.library-tile-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.library-tile-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Bo'lim Sarlavhalari */
+.lib-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 12px 0;
+}
+
+.lib-section-title {
+  font-size: 14px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Sub-screen Navigation Bar */
+.lib-sub-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lib-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.lib-back-btn:active {
+  transform: scale(0.96);
+}
+
+.lib-sub-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Qidiruv va Filter Boshqaruvi */
+.lib-search-container {
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
+  padding: 0 12px;
+  height: 44px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lib-search-container:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(41, 121, 255, 0.2);
+}
+
+.lib-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  margin-left: 8px;
+}
+
+.lib-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.lib-filter-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.lib-course-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full, 9999px);
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* TYPE Badgelari */
+.lib-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.lib-type-badge.badge-book {
+  background: rgba(41, 121, 255, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(41, 121, 255, 0.3);
+}
+
+.lib-type-badge.badge-source {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.lib-type-badge.badge-test {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.lib-type-badge.badge-material {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+/* Kitob Kartasi (KITOBLAR) */
+.lib-book-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 14px;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+  position: relative;
+}
+
+.lib-book-card:hover {
+  border-color: var(--accent);
+}
+
+.lib-book-card:active {
+  transform: scale(0.985);
+}
+
+.lib-book-cover {
+  width: 84px;
+  height: 116px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.lib-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lib-book-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lib-book-title {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lib-book-author {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.lib-book-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lib-book-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Manbalar Kartasi (MANBALAR) */
+.lib-source-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lib-source-card:hover {
+  border-color: var(--accent);
+}
+
+.lib-source-card:active {
+  transform: scale(0.985);
+}
+
+.lib-source-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lib-format-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 850;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.lib-format-icon.dwg {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.lib-format-icon.rvt, .lib-format-icon.rfa {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: rgba(14, 165, 233, 0.25);
+  color: #38bdf8;
+}
+
+.lib-source-title {
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.lib-source-version-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Test Kartasi (TESTLAR) */
+.lib-test-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lib-test-card:hover {
+  border-color: var(--accent);
+}
+
+.lib-test-card:active {
+  transform: scale(0.985);
+}
+
+.lib-test-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lib-test-title {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.lib-test-specs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.lib-test-source-tag {
+  font-size: 11.5px;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Material Kartasi (MATERIALLAR) */
+.lib-material-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+}
+
+.lib-material-card:hover {
+  border-color: var(--accent);
+}
+
+.lib-material-card:active {
+  transform: scale(0.985);
+}
+
+.lib-material-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.lib-material-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lib-material-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lib-material-name {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+
+.lib-material-alt-name {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.lib-material-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Professional Detail Views */
+.lib-detail-header-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+}
+
+.lib-specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.lib-specs-table tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.lib-specs-table tr:last-child {
+  border-bottom: none;
+}
+
+.lib-specs-table td {
+  padding: 10px 0;
+  font-size: 12.5px;
+}
+
+.lib-specs-table td.label {
+  color: var(--text-muted);
+  width: 40%;
+}
+
+.lib-specs-table td.val {
+  color: var(--text-primary);
+  font-weight: 650;
+}
+
+.lib-bullet-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.lib-bullet-list li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.lib-bullet-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: 800;
+}
+
+.lib-bullet-list.con li::before {
+  content: "−";
+  color: #ef4444;
+}
+
+/* Interaktiv Test Quiz UX */
+.lib-quiz-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.lib-quiz-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.lib-quiz-option {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.lib-quiz-option.selected {
+  background: rgba(41, 121, 255, 0.12);
+  border-color: var(--accent);
+}
+
+.lib-quiz-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.lib-quiz-option.selected .lib-quiz-letter {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Support / Donation Minimal UI */
+.profile-support-entry {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.profile-support-entry:hover {
+  border-color: rgba(236, 72, 153, 0.4);
+}
+
+.profile-support-entry:active {
+  transform: scale(0.985);
+}
+
+.profile-support-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(236, 72, 153, 0.12);
+  border: 1px solid rgba(236, 72, 153, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #ec4899;
+  flex-shrink: 0;
+}
+
+.support-modal-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.support-bank-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #ec4899;
+  background: rgba(236, 72, 153, 0.12);
+  border: 1px solid rgba(236, 72, 153, 0.25);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.support-card-digits {
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  font-family: monospace, sans-serif;
+  margin-bottom: 6px;
+}
+
+.support-card-holder {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.support-copy-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 12px);
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.2s;
+  min-height: 44px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.support-copy-cta:active {
+  transform: scale(0.97);
+}
+
+.support-copy-cta.copied {
+  background: #10b981;
+}
+
+/* Micro-interactions & animations */
+@media (prefers-reduced-motion: reduce) {
+  .library-tile-card,
+  .lib-book-card,
+  .lib-source-card,
+  .lib-test-card,
+  .lib-material-card,
+  .support-copy-cta {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+
 
 
 

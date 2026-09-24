@@ -939,8 +939,465 @@ async function ensureUserActivityTable() {
   }
 }
 
+// =================== KUTUBXONA 2.0 & SUPPORT SCHEMA SETUP ===================
+async function ensureLibraryV2Tables() {
+  try {
+    // 1. library_sections table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_sections (
+        id SERIAL PRIMARY KEY,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        name VARCHAR(255) NOT NULL,
+        subtitle TEXT,
+        icon VARCHAR(50) DEFAULT '📁',
+        description TEXT,
+        order_index INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        is_visible BOOLEAN DEFAULT true,
+        settings JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_order ON library_sections(order_index)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_slug ON library_sections(slug)');
+
+    // Seed default 4 sections
+    await pool.query(`
+      INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index) VALUES
+      ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
+      ('sources', 'Manbalar', 'RVT, RFA, DWG va boshqa fayllar', '📦', 'Revit oilalari, shablonlar, chizmalar va 3D modellar', 2),
+      ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
+      ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4)
+      ON CONFLICT (slug) DO UPDATE SET
+        name = EXCLUDED.name,
+        subtitle = EXCLUDED.subtitle,
+        icon = EXCLUDED.icon,
+        order_index = EXCLUDED.order_index
+    `);
+
+    // 2. library_categories with section_slug
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        section_slug VARCHAR(100) DEFAULT 'books',
+        icon VARCHAR(50) DEFAULT '📁',
+        order_index INT DEFAULT 0,
+        parent_id INT REFERENCES library_categories(id) ON DELETE SET NULL,
+        is_active BOOLEAN DEFAULT true
+      )
+    `);
+    await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100) DEFAULT \'books\'');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_categories_section ON library_categories(section_slug)');
+
+    // Seed categories for each section if missing
+    var catSeeds = [
+      // Books
+      { section: 'books', name: 'Barchasi', icon: '🌐', order: 0 },
+      { section: 'books', name: 'Arxitektura', icon: '📐', order: 1 },
+      { section: 'books', name: 'Revit / BIM', icon: '💻', order: 2 },
+      { section: 'books', name: 'Interyer', icon: '🏠', order: 3 },
+      { section: 'books', name: 'Qurilish', icon: '🏗️', order: 4 },
+      { section: 'books', name: 'Loyihalash', icon: '📏', order: 5 },
+      { section: 'books', name: 'Normativ', icon: '📋', order: 6 },
+      { section: 'books', name: 'Boshqa', icon: '📚', order: 7 },
+      // Sources
+      { section: 'sources', name: 'Barchasi', icon: '🌐', order: 0 },
+      { section: 'sources', name: 'Revit', icon: '📦', order: 1 },
+      { section: 'sources', name: 'Families', icon: '🪑', order: 2 },
+      { section: 'sources', name: 'DWG', icon: '📐', order: 3 },
+      { section: 'sources', name: 'CAD', icon: '📏', order: 4 },
+      { section: 'sources', name: 'BIM', icon: '💻', order: 5 },
+      { section: 'sources', name: '3D Models', icon: '🧊', order: 6 },
+      { section: 'sources', name: 'Textures', icon: '🎨', order: 7 },
+      { section: 'sources', name: 'Details', icon: '🔍', order: 8 },
+      { section: 'sources', name: 'Templates', icon: '📑', order: 9 },
+      { section: 'sources', name: 'Blocks', icon: '🧱', order: 10 },
+      { section: 'sources', name: 'Catalogs', icon: '📖', order: 11 },
+      { section: 'sources', name: 'Other', icon: '📁', order: 12 },
+      // Tests
+      { section: 'tests', name: 'Barchasi', icon: '🌐', order: 0 },
+      { section: 'tests', name: 'Revit Asoslari', icon: '💻', order: 1 },
+      { section: 'tests', name: 'BIM Standartlar', icon: '📐', order: 2 },
+      { section: 'tests', name: 'Konstruktsiya', icon: '🏗️', order: 3 },
+      { section: 'tests', name: 'Interyer Dizayn', icon: '🏠', order: 4 },
+      // Materials
+      { section: 'materials', name: 'Barchasi', icon: '🌐', order: 0 },
+      { section: 'materials', name: 'Devor', icon: '🧱', order: 1 },
+      { section: 'materials', name: 'Pol', icon: '🪵', order: 2 },
+      { section: 'materials', name: 'Potolok', icon: '⬜', order: 3 },
+      { section: 'materials', name: 'Mebel', icon: '🛋️', order: 4 },
+      { section: 'materials', name: 'Fasad', icon: '🏢', order: 5 },
+      { section: 'materials', name: 'Izolyatsiya', icon: '🛡️', order: 6 },
+      { section: 'materials', name: 'Elektr', icon: '💡', order: 7 },
+      { section: 'materials', name: 'Sanitary', icon: '🚿', order: 8 },
+      { section: 'materials', name: 'Dekor', icon: '🖼️', order: 9 },
+      { section: 'materials', name: 'Konstruktsiya', icon: '🏗️', order: 10 }
+    ];
+
+    for (var cs of catSeeds) {
+      try {
+        var existCat = await pool.query(
+          'SELECT id FROM library_categories WHERE section_slug = $1 AND name = $2',
+          [cs.section, cs.name]
+        );
+        if (existCat.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO library_categories (section_slug, name, icon, order_index, is_active) VALUES ($1, $2, $3, $4, true)',
+            [cs.section, cs.name, cs.icon, cs.order]
+          );
+        }
+      } catch (catErr) {
+        // ignore duplicate
+      }
+    }
+
+    // 3. Columns on library_resources
+    var lrCols = [
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100)',
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)',
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)',
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT',
+      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false',
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS version VARCHAR(50)',
+      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS versions JSONB DEFAULT '[]'",
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS course_id INT',
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS source_label VARCHAR(255)',
+      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS difficulty VARCHAR(50) DEFAULT 'medium'",
+      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS time_limit_min INT DEFAULT 15'
+    ];
+    for (var cSql of lrCols) {
+      try {
+        await pool.query(cSql);
+      } catch (cErr) {
+        console.warn('library_resources col add:', cErr.message);
+      }
+    }
+    try {
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_section ON library_resources(section_slug)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_featured ON library_resources(is_featured)');
+    } catch (idxE) {}
+
+    // 4. Update section_slug on existing rows if not set
+    await pool.query(`
+      UPDATE library_resources SET section_slug = 'books' WHERE type = 'book' AND (section_slug IS NULL OR section_slug = '');
+      UPDATE library_resources SET section_slug = 'sources' WHERE type IN ('source', 'video', 'file', 'dwg', 'rfa', 'rvt') AND (section_slug IS NULL OR section_slug = '');
+      UPDATE library_resources SET section_slug = 'tests' WHERE type = 'test' AND (section_slug IS NULL OR section_slug = '');
+      UPDATE library_resources SET section_slug = 'materials' WHERE type = 'material' AND (section_slug IS NULL OR section_slug = '');
+    `);
+
+    // 5. PRESERVE & SEED THE 3 CORE BOOKS
+    var book1 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Revit 2024: Rasmiy qo%'");
+    if (book1.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
+          content_url, content_type, content_data, is_featured, order_index, status
+        ) VALUES (
+          'book', 'books', 'Revit 2024: Rasmiy qo''llanma va BIM standartlari (PDF)',
+          'Autodesk rasmiy o''quv qo''llanmasi',
+          'Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo''yicha to''liq o''zbekcha va ruscha qo''llanma kitobi.',
+          'Revit / BIM', 'Autodesk & BIM Experts', '45 MB', 320, 'uz',
+          'https://drive.google.com/file/d/1_Revit_Guide_Book/preview', 'pdf',
+          $1, true, 1, 'published'
+        )
+      `, [JSON.stringify({
+        what_you_learn: [
+          "Revit parametrli elementlar va oilalar (Families) bilan ishlash",
+          "BIM 360 va jamoaviy loyihalash asoslari",
+          "Ishchi chizmalar va spetsifikatsiyalarni avtomatlashtirish",
+          "Xalqaro BIM standartlar va LOD talablari"
+        ],
+        year: 2024,
+        format: "PDF",
+        level: "Boshlang'ich va Professional"
+      })]);
+    } else {
+      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'Autodesk & BIM Experts'), file_size = COALESCE(file_size, '45 MB'), page_count = COALESCE(page_count, 320), language = COALESCE(language, 'uz') WHERE id = $1", [book1.rows[0].id]);
+    }
+
+    var book2 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Arxitektura va bino loyihalash me%'");
+    if (book2.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
+          content_url, content_type, content_data, is_featured, order_index, status
+        ) VALUES (
+          'book', 'books', 'Arxitektura va bino loyihalash me''yorlari (ShNQ & KMK to''plami)',
+          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari',
+          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari: turar-joy va jamoat binolari talablari, xonalar minimal balandligi va maydonlari.',
+          'Normativ', 'O''zbekiston Qurilish Vazirligi', '28 MB', 215, 'uz',
+          'https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview', 'pdf',
+          $1, true, 2, 'published'
+        )
+      `, [JSON.stringify({
+        what_you_learn: [
+          "O'zbekiston shaharsozlik qonun-qoidalari (KMK va ShNQ)",
+          "Yong'in xavfsizligi va evakuatsiya talablari",
+          "Turar-joy xonalari insolyatsiyasi va minimal gabaritlari",
+          "Ekspertizadan o'tish talablari va ruxsatnomalar"
+        ],
+        year: 2023,
+        format: "PDF",
+        level: "Barcha darajalar"
+      })]);
+    } else {
+      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'O''zbekiston Qurilish Vazirligi'), file_size = COALESCE(file_size, '28 MB'), page_count = COALESCE(page_count, 215), language = COALESCE(language, 'uz') WHERE id = $1", [book2.rows[0].id]);
+    }
+
+    var book3 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Interyer dizaynerlari uchun ergonomika%'");
+    if (book3.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
+          content_url, content_type, content_data, is_featured, order_index, status
+        ) VALUES (
+          'book', 'books', 'Interyer dizaynerlari uchun ergonomika va o''lchamlar (Noifert)',
+          'Arxitektura va interyer ergonomikasi ensiklopediyasi',
+          'Mebel joylashuvi, o''tish masofalari, eshik va deraza me''yorlari, oshxona va sanuzel ergonomikasi bo''yicha asosiy spravochnik.',
+          'Interyer', 'Ernst Neufert', '62 MB', 480, 'ru',
+          'https://drive.google.com/file/d/1_Ergonomika_Noifert/preview', 'pdf',
+          $1, true, 3, 'published'
+        )
+      `, [JSON.stringify({
+        what_you_learn: [
+          "Odam antropometriyasi va bino fazoviy ergonomikasi",
+          "Oshxona, yotoqxona va sanuzel funksional zonalari",
+          "Eshik va dahliz o'tish kengliklari qoidalari",
+          "Mebel o'lchamlari va qulaylik standartlari"
+        ],
+        year: 2022,
+        format: "PDF",
+        level: "Arxitektor va Dizaynerlar"
+      })]);
+    } else {
+      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'Ernst Neufert'), file_size = COALESCE(file_size, '62 MB'), page_count = COALESCE(page_count, 480), language = COALESCE(language, 'ru') WHERE id = $1", [book3.rows[0].id]);
+    }
+
+    // 6. SEED SAMPLE MANBALAR (SOURCES)
+    var sCount = await pool.query("SELECT COUNT(*)::int AS c FROM library_resources WHERE section_slug = 'sources'");
+    if (sCount.rows[0].c === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, file_size, version, versions,
+          content_url, content_type, content_data, is_featured, order_index, status
+        ) VALUES
+        (
+          'source', 'sources', 'Oshxona Mebellari RFA To''plami (Kitchen Family 2024-2026)',
+          'Parametrli oshxona shkaflari, jihozlari va fasadlari',
+          'To''liq parametrli Revit oilalari: o''lchamlari erkin o''zgaradi, fasad turlari va materiallari almashtiriladi.',
+          'Families', '24.5 MB', 'Revit 2024 / 2025 / 2026',
+          'https://drive.google.com/uc?export=download&id=1_Kitchen_Family_Pack', 'file',
+          $1, true, 1, 'published'
+        ),
+        (
+          'source', 'sources', 'Ko''p Qavatli Turar Joy Binosi Arxitektura Shablon (RVT)',
+          'ShNQ talablariga mos tayyor listlar, vidlar va spetsifikatsiyalar',
+          'O''zbekiston qurilish me''yorlariga moslashtirilgan to''liq arxitektura shabloni (Template).',
+          'Templates', '118 MB', 'Revit 2025',
+          'https://drive.google.com/uc?export=download&id=1_Building_Template', 'file',
+          $2, true, 2, 'published'
+        ),
+        (
+          'source', 'sources', 'Bosh Reja (Genplan) Chizmasi Standart DWG Bloklari',
+          'Daraxtlar, yo''llar, avtomobillar va ko''kalamzorlashtirish belgilari',
+          'AutoCAD va Revit uchun toza chizilgan genplan va obodonlashtirish DWG bloklari to''plami.',
+          'DWG', '16.2 MB', 'AutoCAD 2024',
+          'https://drive.google.com/uc?export=download&id=1_Genplan_DWG', 'file',
+          $3, false, 3, 'published'
+        )
+      `, [
+        JSON.stringify([
+          { version: 'Revit 2024', format: 'RFA', url: 'https://drive.google.com/uc?export=download&id=1_Kitchen_2024' },
+          { version: 'Revit 2025', format: 'RFA', url: 'https://drive.google.com/uc?export=download&id=1_Kitchen_2025' },
+          { version: 'Revit 2026', format: 'RFA', url: 'https://drive.google.com/uc?export=download&id=1_Kitchen_2026' }
+        ]),
+        JSON.stringify([
+          { version: 'Revit 2025', format: 'RVT', url: 'https://drive.google.com/uc?export=download&id=1_Building_Template' }
+        ]),
+        JSON.stringify([
+          { version: 'AutoCAD 2024', format: 'DWG', url: 'https://drive.google.com/uc?export=download&id=1_Genplan_DWG' }
+        ])
+      ]);
+    }
+
+    // 7. SEED INTERACTIVE TEST (TESTLAR)
+    var tCount = await pool.query("SELECT COUNT(*)::int AS c FROM library_resources WHERE section_slug = 'tests'");
+    if (tCount.rows[0].c === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, source_label, difficulty, time_limit_min,
+          content_type, content_data, is_featured, order_index, status
+        ) VALUES (
+          'test', 'tests', 'Revit & BIM Boshlang''ich Daraja Sinov Testi',
+          '10 ta saralangan interaktiv savol',
+          'Revit dasturining asosiy interfeysi, element turlari, vidlar va chizmalar tayyorlash bo''yicha bilimingizni sinab ko''ring.',
+          'Revit Asoslari', 'INTPRO Kursi / 1-Modul', 'medium', 15,
+          'quiz_json', $1, true, 1, 'published'
+        )
+      `, [JSON.stringify([
+        {
+          q: "Revit-da 'Family' (Oila) nima?",
+          options: [
+            "Faqat tashqi ko'rinish uchun rasm",
+            "Parametrli xususiyatlarga va o'lchamlarga ega 3D/2D model elementi",
+            "Faqat chizma listi",
+            "AutoCAD faylini import qilish usuli"
+          ],
+          correct: 1,
+          explanation: "Revit-da hamma narsa Family hisoblanadi (devor, eshik, mebel). Ular parametrli bo'lib, o'lcham va xususiyatlari erkin o'zgaradi."
+        },
+        {
+          q: "Devor balandligini qavat balandligiga (Level) bog'lab chizishning asosiy afzalligi nimada?",
+          options: [
+            "Qavat balandligi o'zgarganda devorlar balandligi ham avtomatik moslashib o'zgaradi",
+            "Devor rangi avtomatik o'zgaradi",
+            "Devor materiali o'zgarmaydi",
+            "Devor faqat 3D vidda ko'rinadi"
+          ],
+          correct: 0,
+          explanation: "Devor Level'ga bog'langanda, agar arxitektor qavat balandligini 3.00m dan 3.30m ga o'zgartirsa, barcha devorlar avtomatik uzayadi."
+        },
+        {
+          q: "Revit-da View Template nima uchun ishlatiladi?",
+          options: [
+            "Loyiha faylini zip arxiv qilish uchun",
+            "Chizmalar grafikasi, masshtabi va filtrlarini bir xil standartda saqlash va boshqarish uchun",
+            "Faqat render qilish tezligini oshirish uchun",
+            "Kompyuter xotirasini tozalash uchun"
+          ],
+          correct: 1,
+          explanation: "View Template vidlarning ko'rinishi, filtrlari, chiziq qalinliklari va masshtablarini barcha qavatlarda bir xil standartda ushlab turadi."
+        },
+        {
+          q: "Chizmadagi barcha eshik va derazalarning avtomatik hisob-kitob jadvali nima deb ataladi?",
+          options: [
+            "Plan vid",
+            "Spetsifikatsiya (Schedule/Quantities)",
+            "List (Sheet)",
+            "Shablon vid"
+          ],
+          correct: 1,
+          explanation: "Schedule/Quantities orqali Revit barcha elementlarni soni, o'lchamlari va material sarfini soniyalar ichida avtomatik hisoblab beradi."
+        }
+      ])]);
+    }
+
+    // 8. SEED KNOWLEDGE MATERIALS (MATERIALLAR)
+    var mCount = await pool.query("SELECT COUNT(*)::int AS c FROM library_resources WHERE section_slug = 'materials'");
+    if (mCount.rows[0].c === 0) {
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, sub_category,
+          content_type, content_data, is_featured, order_index, status
+        ) VALUES
+        (
+          'material', 'materials', 'LDSP (Laminatsiyalangan Yog''och-Qipirli Plita)',
+          'Ламинированная древесно-стружечная плита (ЛДСП)',
+          'Mebel korpuslari, javonlar va ichki pardozlashda eng keng tarqalgan, tejamkor va qulay material.',
+          'Mebel', 'Plita materiallari',
+          'material_spec', $1, true, 1, 'published'
+        ),
+        (
+          'material', 'materials', 'MDF (O''rta Zichlikdagi Tolali Plita)',
+          'Древесноволокнистая плита средней плотности (MDF)',
+          'Frezalash (naqsh o''yish) va bo''yash uchun mukammal tekis sirtga ega bo''lgan sifatli material.',
+          'Mebel', 'Plita materiallari',
+          'material_spec', $2, true, 2, 'published'
+        ),
+        (
+          'material', 'materials', 'Keramogranit (Katta Formatli Plitka)',
+          'Керамогранит крупноформатный',
+          'Yuqori mustahkamlik, namlikka chidamlilik va estetik jozibaga ega pol va fasad qoplamasi.',
+          'Pol', 'Plitka va Tosh',
+          'material_spec', $3, true, 3, 'published'
+        ),
+        (
+          'material', 'materials', 'Gipsokarton (GKL / GKLV / GKLO)',
+          'Гипсокартонный лист',
+          'Ichki devorlar, peregorodkalar va to''xtatilgan shiftlar qurish uchun asosiy quruq qurilish materiali.',
+          'Devor', 'Quruq qurilish',
+          'material_spec', $4, false, 4, 'published'
+        )
+      `, [
+        JSON.stringify({
+          russian_name: "Ламинированная древесно-стружечная плита (ЛДСП)",
+          english_name: "Melamine Faced Chipboard (MFC)",
+          usage: ["Mebel korpuslari va javonlar", "Oshxona karkaslari", "Ofis mebellari", "Shkaf-kupe devorlari"],
+          dimensions: "2750 x 1830 mm, 2800 x 2070 mm",
+          thickness: "16 mm, 18 mm, 25 mm",
+          density: "650 - 750 kg/m³",
+          advantages: ["Hamyonbop narx", "Ranglar va teksturalar xilma-xilligi", "Ishlov berish qulayligi", "O'lchamlar barqarorligi"],
+          disadvantages: ["Suvga uzoq turmaslik (chetlari bo'rtishi mumkin)", "Murakkab naqshli frezalash qilib bo'lmasligi"],
+          related_materials: ["MDF", "HPL Plastik", "Fanera"],
+          catalog_link: "https://kastamonu.uz"
+        }),
+        JSON.stringify({
+          russian_name: "Древесноволокнистая плита средней плотности (МДФ)",
+          english_name: "Medium Density Fiberboard (MDF)",
+          usage: ["Oshxona fasadlari", "Emal va shpon bilan qoplash", "Eshik polotnolari", "Devor panellari (Reika)"],
+          dimensions: "2800 x 2070 mm",
+          thickness: "6, 8, 10, 16, 18, 22 mm",
+          density: "720 - 850 kg/m³",
+          advantages: ["Bir jinsli zich tuzilma", "Frezalash va bo'yash uchun ideal", "Yuqori mexanik mustahkamlik"],
+          disadvantages: ["LDSP ga nisbatan og'irroq va qimmatroq"],
+          related_materials: ["LDSP", "Shpon", "Emal"],
+          catalog_link: "https://egger.com"
+        }),
+        JSON.stringify({
+          russian_name: "Керамогранит 600x1200 / 1200x2400",
+          english_name: "Porcelain Stoneware Slab",
+          usage: ["Zallar va sanuzellar poli", "Devor panellari", "Stoleshnitsalar", "Ventfasad"],
+          dimensions: "600x600, 600x1200, 1200x2400 mm",
+          thickness: "9 mm, 11 mm, 6 mm (Slim)",
+          density: "2400 kg/m³",
+          advantages: ["Suv singishi 0.05% dan kam (ayozga va namga chidamli)", "Tirnalishga o'ta chidamli", "Issiq pollar uchun ideal"],
+          disadvantages: ["Kesish va o'rnatish uchun maxsus usta talab qiladi", "Og'ir vazn"],
+          related_materials: ["Marmar", "Granit", "Kafel"],
+          catalog_link: ""
+        }),
+        JSON.stringify({
+          russian_name: "Гипсокартонный лист (ГКЛ / ГКЛВ)",
+          english_name: "Gypsum Plasterboard",
+          usage: ["Xonalararo peregorodkalar", "Ko'p bosqichli shiftlar", "Quvurlarni yashirish qutilari"],
+          dimensions: "2500 x 1200 mm, 3000 x 1200 mm",
+          thickness: "9.5 mm (shift uchun), 12.5 mm (devor uchun)",
+          density: "800 kg/m³",
+          advantages: ["Tez va oson montaj", "Ekologik toza va yonmaydi", "Mukammal tekis yuza"],
+          disadvantages: ["Zarbaga nisbatan nozik", "Og'ir yuklarni to'g'ridan-to'g'ri osmab bo'lmaydi (zakladnoy kerak)"],
+          related_materials: ["Gips", "Profil Knauf", "Shpatlyovka"],
+          catalog_link: ""
+        })
+      ]);
+    }
+
+    // 9. SEED ACADEMY SETTINGS FOR SUPPORT / DONATION
+    var donSettings = [
+      ["support_title", "Akademiyani qo'llab-quvvatlash"],
+      ["support_subtitle", "YOSHUZBEKK platformasini rivojlantirishga o'z hissangizni qo'shing"],
+      ["support_description", "Akademiyamiz darslari, ochiq manbalar, BIM standartlari va erkin testlar rivoji uchun ixtiyoriy moliyaviy qo'llab-quvvatlash."],
+      ["donate_card_number", "8600 5304 1234 5678"],
+      ["donate_card_holder", "Abdulloh S. (YOSHUZBEKK)"],
+      ["donate_payment_type", "UZCARD / HUMO"],
+      ["support_telegram_contact", "@yoshuzbekk_admin"]
+    ];
+    for (var ds of donSettings) {
+      await pool.query(`
+        INSERT INTO academy_settings (key, value) VALUES ($1, $2)
+        ON CONFLICT (key) DO NOTHING
+      `, [ds[0], ds[1]]);
+    }
+
+    console.log("✅ KUTUBXONA 2.0 & SUPPORT: Barcha jadvallar, 4 bo'lim, 3 kitob va kategoriyalar muvaffaqiyatli tekshirildi/sozlandi");
+  } catch (err) {
+    console.error('ensureLibraryV2Tables xatosi:', err.message);
+  }
+}
+
 initExtendedTables();
 ensureUserActivityTable();
+ensureLibraryV2Tables();
 
 
 // ======================================================
@@ -4269,20 +4726,97 @@ app.post('/api/admin/library/all-files', requireAdmin, async function (req, res)
 
 
 // ======================================================
-// KUTUBXONA V2: STUDENT API
+// KUTUBXONA V2: STUDENT & PUBLIC API
 // ======================================================
 
-// Kutubxona resurslari (filter, search, pagination)
+// Kutubxona bo'limlari (Kitoblar, Manbalar, Testlar, Materiallar va yangi dinamik bo'limlar)
+app.all(['/api/library/v2/sections'], async function (req, res) {
+  try {
+    var result = await pool.query(`
+      SELECT * FROM library_sections
+      WHERE is_active = true AND is_visible = true
+      ORDER BY order_index ASC, id ASC
+    `);
+    return res.json({ ok: true, sections: result.rows });
+  } catch (err) {
+    console.error('LIBRARY SECTIONS ERROR:', err.message);
+    return res.status(500).json({ error: 'Bo\'limlarni yuklashda xatolik' });
+  }
+});
+
+// Tavsiya etilgan resurslar
+app.post('/api/library/v2/recommended', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var section = req.body.section || req.body.section_slug || null;
+    var conds = ["status = 'published'", "is_featured = true"];
+    var params = [];
+    if (section && section !== 'all') {
+      conds.push('section_slug = $1');
+      params.push(section);
+    }
+    var result = await pool.query(
+      'SELECT * FROM library_resources WHERE ' + conds.join(' AND ') + ' ORDER BY order_index ASC, id DESC LIMIT 10',
+      params
+    );
+    return res.json({ ok: true, resources: result.rows });
+  } catch (err) {
+    console.error('LIBRARY RECOMMENDED ERROR:', err.message);
+    return res.status(500).json({ error: 'Tavsiyalarni yuklashda xatolik' });
+  }
+});
+
+// Kurslar ro'yxati (Test filter dropdown uchun)
+app.post('/api/library/v2/courses', async function (req, res) {
+  try {
+    var result = await pool.query('SELECT id, title FROM courses WHERE is_active = true ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, courses: result.rows });
+  } catch (err) {
+    return res.json({ ok: true, courses: [] });
+  }
+});
+
+// Qo'llab-quvvatlash (Support / Donation) ma'lumotlari
+app.all(['/api/support/info'], async function (req, res) {
+  try {
+    var result = await pool.query("SELECT key, value FROM academy_settings WHERE key LIKE 'support_%' OR key LIKE 'donate_%'");
+    var settings = {};
+    for (var r of result.rows) {
+      settings[r.key] = r.value;
+    }
+    return res.json({
+      ok: true,
+      support: {
+        title: settings.support_title || 'Akademiyani qo\'llab-quvvatlash',
+        subtitle: settings.support_subtitle || 'YOSHUZBEKK platformasini rivojlantirishga o\'z hissangizni qo\'shing',
+        description: settings.support_description || 'Akademiyamiz darslari, ochiq manbalar, BIM standartlari va erkin testlar rivoji uchun ixtiyoriy moliyaviy qo\'llab-quvvatlash.',
+        card_number: settings.donate_card_number || '8600 5304 1234 5678',
+        card_holder: settings.donate_card_holder || 'Abdulloh S. (YOSHUZBEKK)',
+        payment_type: settings.donate_payment_type || 'UZCARD / HUMO',
+        telegram_contact: settings.support_telegram_contact || '@yoshuzbekk_admin'
+      }
+    });
+  } catch (err) {
+    console.error('SUPPORT INFO ERROR:', err.message);
+    return res.status(500).json({ error: 'Qo\'llab-quvvatlash ma\'lumotlarini olishda xatolik' });
+  }
+});
+
+// Kutubxona resurslari (bo'lim, filter, search, course_id, pagination)
 app.post('/api/library/v2/resources', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
 
+    var section = req.body.section || req.body.section_slug || null;
     var type = req.body.type || null;
     var category = req.body.category || null;
     var search = req.body.search || '';
+    var courseId = req.body.course_id ? parseInt(req.body.course_id) : null;
     var page = parseInt(req.body.page) || 1;
-    var limit = Math.min(parseInt(req.body.limit) || 20, 50);
+    var limit = Math.min(parseInt(req.body.limit) || 24, 60);
     var offset = (page - 1) * limit;
     var sort = req.body.sort || 'newest';
 
@@ -4290,19 +4824,30 @@ app.post('/api/library/v2/resources', async function (req, res) {
     var params = [];
     var paramIdx = 1;
 
+    if (section && section !== 'all') {
+      conditions.push('section_slug = $' + paramIdx);
+      params.push(section);
+      paramIdx++;
+    }
     if (type) {
       conditions.push('type = $' + paramIdx);
       params.push(type);
       paramIdx++;
     }
-    if (category) {
+    if (category && category !== 'Barchasi') {
       conditions.push('category = $' + paramIdx);
       params.push(category);
       paramIdx++;
     }
+    if (courseId) {
+      conditions.push('course_id = $' + paramIdx);
+      params.push(courseId);
+      paramIdx++;
+    }
     if (search.trim()) {
-      conditions.push('(LOWER(title) LIKE $' + paramIdx + ' OR LOWER(description) LIKE $' + paramIdx + ' OR LOWER(category) LIKE $' + paramIdx + ')');
-      params.push('%' + search.trim().toLowerCase() + '%');
+      var sTerm = '%' + search.trim().toLowerCase() + '%';
+      conditions.push('(LOWER(title) LIKE $' + paramIdx + ' OR LOWER(COALESCE(description, \'\')) LIKE $' + paramIdx + ' OR LOWER(COALESCE(category, \'\')) LIKE $' + paramIdx + ' OR LOWER(COALESCE(author, \'\')) LIKE $' + paramIdx + ' OR LOWER(COALESCE(content_data::text, \'\')) LIKE $' + paramIdx + ')');
+      params.push(sTerm);
       paramIdx++;
     }
 
@@ -4321,8 +4866,17 @@ app.post('/api/library/v2/resources', async function (req, res) {
       params
     );
 
-    // Kategoriya hisoblagichlari
-    var catResult = await pool.query("SELECT category, COUNT(*)::int AS count FROM library_resources WHERE status = 'published' GROUP BY category ORDER BY count DESC");
+    // Kategoriya hisoblagichlari (shu bo'lim bo'yicha)
+    var catWhere = "WHERE status = 'published'";
+    var catParams = [];
+    if (section && section !== 'all') {
+      catWhere += ' AND section_slug = $1';
+      catParams.push(section);
+    }
+    var catResult = await pool.query(
+      'SELECT category, COUNT(*)::int AS count FROM library_resources ' + catWhere + ' GROUP BY category ORDER BY count DESC',
+      catParams
+    );
 
     return res.json({
       ok: true,
@@ -4459,10 +5013,125 @@ app.post('/api/library/v2/categories', async function (req, res) {
 // KUTUBXONA V2: ADMIN API
 // ======================================================
 
-// Admin: barcha resurslar
+// Admin: Bo'limlar ro'yxati (Sections)
+app.post('/api/admin/library/sections', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM library_sections ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, sections: result.rows });
+  } catch (error) {
+    console.error('ADMIN LIBRARY SECTIONS ERROR:', error);
+    return res.status(500).json({ error: 'Bo\'limlarni yuklashda xatolik' });
+  }
+});
+
+// Admin: Yangi bo'lim qo'shish (Sections Add)
+app.post('/api/admin/library/section/add', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    var name = (b.name || '').trim();
+    var slug = (b.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '_')).trim();
+    var subtitle = (b.subtitle || '').trim();
+    var icon = (b.icon || '📁').trim();
+    var description = (b.description || '').trim();
+
+    if (!name || !slug) return res.status(400).json({ error: 'Bo\'lim nomi va slugi majburiy' });
+
+    var maxOrder = await pool.query('SELECT COALESCE(MAX(order_index), 0) + 1 AS next FROM library_sections');
+    var result = await pool.query(`
+      INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index, is_active, is_visible)
+      VALUES ($1, $2, $3, $4, $5, $6, true, true)
+      RETURNING *
+    `, [slug, name, subtitle, icon, description, maxOrder.rows[0].next]);
+
+    // Also add "Barchasi" category for this new section
+    try {
+      await pool.query('INSERT INTO library_categories (section_slug, name, icon, order_index) VALUES ($1, $2, $3, 0)', [slug, 'Barchasi', '🌐']);
+    } catch(e) {}
+
+    return res.json({ ok: true, section: result.rows[0], message: 'Yangi bo\'lim qo\'shildi' });
+  } catch (error) {
+    if (error.code === '23505') return res.status(400).json({ error: 'Bunday identifikatorli (slug) bo\'lim allaqachon mavjud' });
+    console.error('ADMIN LIBRARY SECTION ADD ERROR:', error);
+    return res.status(500).json({ error: 'Bo\'lim qo\'shishda xatolik: ' + error.message });
+  }
+});
+
+// Admin: Bo'limni tahrirlash (Section Update)
+app.post('/api/admin/library/section/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var sectionId = parseInt(req.params.id);
+    var b = req.body;
+
+    var result = await pool.query(`
+      UPDATE library_sections SET
+        name = COALESCE($1, name),
+        subtitle = COALESCE($2, subtitle),
+        icon = COALESCE($3, icon),
+        description = COALESCE($4, description),
+        order_index = COALESCE($5, order_index),
+        is_active = COALESCE($6, is_active),
+        is_visible = COALESCE($7, is_visible)
+      WHERE id = $8
+      RETURNING *
+    `, [b.name, b.subtitle, b.icon, b.description, b.order_index, b.is_active, b.is_visible, sectionId]);
+
+    if (!result.rows.length) return res.status(404).json({ error: 'Bo\'lim topilmadi' });
+    return res.json({ ok: true, section: result.rows[0], message: 'Bo\'lim muvaffaqiyatli yangilandi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY SECTION UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Bo\'limni yangilashda xatolik' });
+  }
+});
+
+// Admin: Bo'limni o'chirish / arxivlash
+app.post('/api/admin/library/section/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var sectionId = parseInt(req.params.id);
+    var secRes = await pool.query('SELECT slug FROM library_sections WHERE id = $1', [sectionId]);
+    if (!secRes.rows.length) return res.status(404).json({ error: 'Bo\'lim topilmadi' });
+
+    var slug = secRes.rows[0].slug;
+    if (['books', 'sources', 'tests', 'materials'].includes(slug)) {
+      // 4 ta asosiy tizimli bo'limni o'chirib yubormaslik, faqat yashirish
+      await pool.query('UPDATE library_sections SET is_visible = false WHERE id = $1', [sectionId]);
+      return res.json({ ok: true, message: 'Asosiy bo\'lim yashirildi (arxivlandi)' });
+    }
+
+    await pool.query('DELETE FROM library_categories WHERE section_slug = $1', [slug]);
+    await pool.query('DELETE FROM library_sections WHERE id = $1', [sectionId]);
+    return res.json({ ok: true, message: 'Bo\'lim muvaffaqiyatli o\'chirildi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY SECTION DELETE ERROR:', error);
+    return res.status(500).json({ error: 'Bo\'limni o\'chirishda xatolik' });
+  }
+});
+
+// Admin: Bo'limlar tartibini o'zgartirish (Reorder)
+app.post('/api/admin/library/sections/reorder', requireAdmin, async function (req, res) {
+  try {
+    var ids = req.body.ids || [];
+    for (var i = 0; i < ids.length; i++) {
+      await pool.query('UPDATE library_sections SET order_index = $1 WHERE id = $2', [i + 1, parseInt(ids[i])]);
+    }
+    return res.json({ ok: true, message: 'Bo\'limlar tartibi saqlandi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY SECTIONS REORDER ERROR:', error);
+    return res.status(500).json({ error: 'Tartibni saqlashda xatolik' });
+  }
+});
+
+// Admin: barcha resurslar (ixtiyoriy bo'lim filtri bilan)
 app.post('/api/admin/library-v2/resources', requireAdmin, async function (req, res) {
   try {
-    var result = await pool.query('SELECT * FROM library_resources ORDER BY order_index ASC, id DESC');
+    var section = req.body.section || req.body.section_slug || null;
+    var query = 'SELECT * FROM library_resources';
+    var params = [];
+    if (section && section !== 'all') {
+      query += ' WHERE section_slug = $1';
+      params.push(section);
+    }
+    query += ' ORDER BY order_index ASC, id DESC';
+    var result = await pool.query(query, params);
     return res.json({ ok: true, resources: result.rows });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 LIST ERROR:', error);
@@ -4470,26 +5139,40 @@ app.post('/api/admin/library-v2/resources', requireAdmin, async function (req, r
   }
 });
 
-// Admin: resurs qo'shish
+// Admin: resurs qo'shish (Kitob, Manba, Test, Material)
 app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req, res) {
   try {
     var b = req.body;
     if (!b.title || !b.type) return res.status(400).json({ error: 'Nomi va turi majburiy' });
 
+    var section_slug = b.section_slug || (b.type === 'book' ? 'books' : b.type === 'test' ? 'tests' : b.type === 'material' ? 'materials' : 'sources');
+
     var result = await pool.query(`
-      INSERT INTO library_resources (type, title, subtitle, description, category, sub_category, tags, content_url, content_type, content_data, preview_image_url, storage_provider, storage_id, author, file_size, page_count, language, status, course_id, order_index, is_featured)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+      INSERT INTO library_resources (
+        type, section_slug, title, subtitle, description, category, sub_category, tags,
+        content_url, content_type, content_data, preview_image_url, storage_provider, storage_id,
+        author, file_size, page_count, language, version, versions, course_id, source_label,
+        difficulty, time_limit_min, status, order_index, is_featured
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,
+        $9,$10,$11,$12,$13,$14,
+        $15,$16,$17,$18,$19,$20,$21,$22,
+        $23,$24,$25,$26,$27
+      )
       RETURNING *
     `, [
-      b.type, b.title, b.subtitle || null, b.description || null,
-      b.category || 'Boshqa', b.sub_category || null,
-      b.tags || '{}', b.content_url || null, b.content_type || null,
-      b.content_data ? JSON.stringify(b.content_data) : null,
+      b.type, section_slug, b.title, b.subtitle || null, b.description || null,
+      b.category || 'Boshqa', b.sub_category || null, b.tags || '{}',
+      b.content_url || null, b.content_type || null,
+      b.content_data ? (typeof b.content_data === 'string' ? b.content_data : JSON.stringify(b.content_data)) : null,
       b.preview_image_url ? formatDirectImageUrl(b.preview_image_url) : null,
       b.storage_provider || 'url', b.storage_id || null,
       b.author || null, b.file_size || null, b.page_count || null,
-      b.language || 'uz', b.status || 'published',
-      b.course_id || null, b.order_index || 0, b.is_featured || false
+      b.language || 'uz', b.version || null,
+      b.versions ? (typeof b.versions === 'string' ? b.versions : JSON.stringify(b.versions)) : '[]',
+      b.course_id || null, b.source_label || null,
+      b.difficulty || 'medium', b.time_limit_min || 15,
+      b.status || 'published', b.order_index || 0, b.is_featured || false
     ]);
 
     return res.json({ ok: true, resource: result.rows[0], message: 'Resurs muvaffaqiyatli qo\'shildi' });
@@ -4508,42 +5191,69 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     var result = await pool.query(`
       UPDATE library_resources SET
         type = COALESCE($1, type),
-        title = COALESCE($2, title),
-        subtitle = $3,
-        description = $4,
-        category = COALESCE($5, category),
-        sub_category = $6,
-        tags = COALESCE($7, tags),
-        content_url = $8,
-        content_type = $9,
-        content_data = $10,
-        preview_image_url = $11,
-        author = $12,
-        file_size = $13,
-        page_count = $14,
-        status = COALESCE($15, status),
-        order_index = COALESCE($16, order_index),
-        is_featured = COALESCE($17, is_featured),
-        course_id = $18,
+        section_slug = COALESCE($2, section_slug),
+        title = COALESCE($3, title),
+        subtitle = $4,
+        description = $5,
+        category = COALESCE($6, category),
+        sub_category = $7,
+        tags = COALESCE($8, tags),
+        content_url = $9,
+        content_type = $10,
+        content_data = $11,
+        preview_image_url = $12,
+        author = $13,
+        file_size = $14,
+        page_count = $15,
+        language = COALESCE($16, language),
+        version = $17,
+        versions = $18,
+        course_id = $19,
+        source_label = $20,
+        difficulty = COALESCE($21, difficulty),
+        time_limit_min = COALESCE($22, time_limit_min),
+        status = COALESCE($23, status),
+        order_index = COALESCE($24, order_index),
+        is_featured = COALESCE($25, is_featured),
         updated_at = NOW()
-      WHERE id = $19
+      WHERE id = $26
       RETURNING *
     `, [
-      b.type, b.title, b.subtitle || null, b.description || null,
-      b.category, b.sub_category || null,
-      b.tags || '{}', b.content_url || null, b.content_type || null,
-      b.content_data ? JSON.stringify(b.content_data) : null,
+      b.type, b.section_slug, b.title, b.subtitle || null, b.description || null,
+      b.category, b.sub_category || null, b.tags || '{}',
+      b.content_url || null, b.content_type || null,
+      b.content_data ? (typeof b.content_data === 'string' ? b.content_data : JSON.stringify(b.content_data)) : null,
       b.preview_image_url ? formatDirectImageUrl(b.preview_image_url) : null,
       b.author || null, b.file_size || null, b.page_count || null,
+      b.language, b.version || null,
+      b.versions ? (typeof b.versions === 'string' ? b.versions : JSON.stringify(b.versions)) : '[]',
+      b.course_id || null, b.source_label || null,
+      b.difficulty, b.time_limit_min,
       b.status, b.order_index, b.is_featured,
-      b.course_id || null, resourceId
+      resourceId
     ]);
 
     if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
     return res.json({ ok: true, resource: result.rows[0], message: 'Resurs yangilandi' });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 UPDATE ERROR:', error);
-    return res.status(500).json({ error: 'Resursni yangilashda xatolik' });
+    return res.status(500).json({ error: 'Resursni yangilashda xatolik: ' + error.message });
+  }
+});
+
+// Admin: tavsiya holatini o'zgartirish (Toggle Recommend)
+app.post('/api/admin/library-v2/resource/:id/toggle-recommend', requireAdmin, async function (req, res) {
+  try {
+    var resourceId = parseInt(req.params.id);
+    var cur = await pool.query('SELECT is_featured FROM library_resources WHERE id = $1', [resourceId]);
+    if (!cur.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+
+    var nextFeatured = !cur.rows[0].is_featured;
+    await pool.query('UPDATE library_resources SET is_featured = $1, updated_at = NOW() WHERE id = $2', [nextFeatured, resourceId]);
+    return res.json({ ok: true, is_featured: nextFeatured, message: nextFeatured ? 'Tavsiya etilganlarga qo\'shildi' : 'Tavsiyalardan olindi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 TOGGLE RECOMMEND ERROR:', error);
+    return res.status(500).json({ error: 'Tavsiya holatini o\'zgartirishda xatolik' });
   }
 });
 
@@ -4576,10 +5286,18 @@ app.post('/api/admin/library-v2/resource/:id/status', requireAdmin, async functi
   }
 });
 
-// Admin: kategoriyalar CRUD
+// Admin: kategoriyalar (bo'lim bo'yicha)
 app.post('/api/admin/library-v2/categories', requireAdmin, async function (req, res) {
   try {
-    var result = await pool.query('SELECT * FROM library_categories ORDER BY order_index ASC');
+    var section = req.body.section || req.body.section_slug || null;
+    var query = 'SELECT * FROM library_categories';
+    var params = [];
+    if (section && section !== 'all') {
+      query += ' WHERE section_slug = $1';
+      params.push(section);
+    }
+    query += ' ORDER BY order_index ASC, id ASC';
+    var result = await pool.query(query, params);
     return res.json({ ok: true, categories: result.rows });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 CATEGORIES ERROR:', error);
@@ -4589,18 +5307,19 @@ app.post('/api/admin/library-v2/categories', requireAdmin, async function (req, 
 
 app.post('/api/admin/library-v2/category/add', requireAdmin, async function (req, res) {
   try {
-    var name = req.body.name;
-    var icon = req.body.icon || '📁';
+    var name = (req.body.name || '').trim();
+    var icon = (req.body.icon || '📁').trim();
+    var section_slug = (req.body.section_slug || req.body.section || 'books').trim();
     if (!name) return res.status(400).json({ error: 'Kategoriya nomi majburiy' });
 
-    var maxOrder = await pool.query('SELECT COALESCE(MAX(order_index), 0) + 1 AS next FROM library_categories');
+    var maxOrder = await pool.query('SELECT COALESCE(MAX(order_index), 0) + 1 AS next FROM library_categories WHERE section_slug = $1', [section_slug]);
     var result = await pool.query(
-      'INSERT INTO library_categories (name, icon, order_index) VALUES ($1, $2, $3) RETURNING *',
-      [name, icon, maxOrder.rows[0].next]
+      'INSERT INTO library_categories (name, icon, section_slug, order_index) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, icon, section_slug, maxOrder.rows[0].next]
     );
     return res.json({ ok: true, category: result.rows[0], message: 'Kategoriya qo\'shildi' });
   } catch (error) {
-    if (error.code === '23505') return res.status(400).json({ error: 'Bunday kategoriya mavjud' });
+    if (error.code === '23505') return res.status(400).json({ error: 'Ushbu bo\'limda bunday kategoriya mavjud' });
     console.error('ADMIN LIBRARY V2 CAT ADD ERROR:', error);
     return res.status(500).json({ error: 'Kategoriya qo\'shishda xatolik' });
   }
@@ -4614,6 +5333,34 @@ app.post('/api/admin/library-v2/category/:id/delete', requireAdmin, async functi
   } catch (error) {
     console.error('ADMIN LIBRARY V2 CAT DELETE ERROR:', error);
     return res.status(500).json({ error: 'Kategoriya o\'chirishda xatolik' });
+  }
+});
+
+// Admin: Qo'llab-quvvatlash sozlamalarini yangilash (Support / Donation update)
+app.post('/api/admin/support/update', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    var keys = [
+      ['support_title', b.title || 'Akademiyani qo\'llab-quvvatlash'],
+      ['support_subtitle', b.subtitle || 'YOSHUZBEKK platformasini rivojlantirishga o\'z hissangizni qo\'shing'],
+      ['support_description', b.description || 'Akademiyamiz darslari, ochiq manbalar, BIM standartlari va erkin testlar rivoji uchun ixtiyoriy moliyaviy qo\'llab-quvvatlash.'],
+      ['donate_card_number', b.card_number || '8600 5304 1234 5678'],
+      ['donate_card_holder', b.card_holder || 'Abdulloh S. (YOSHUZBEKK)'],
+      ['donate_payment_type', b.payment_type || 'UZCARD / HUMO'],
+      ['support_telegram_contact', b.telegram_contact || '@yoshuzbekk_admin']
+    ];
+
+    for (var k of keys) {
+      await pool.query(`
+        INSERT INTO academy_settings (key, value) VALUES ($1, $2)
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+      `, [k[0], k[1]]);
+    }
+
+    return res.json({ ok: true, message: 'Qo\'llab-quvvatlash sozlamalari muvaffaqiyatli saqlandi' });
+  } catch (error) {
+    console.error('ADMIN SUPPORT UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Sozlamalarni saqlashda xatolik' });
   }
 });
 
