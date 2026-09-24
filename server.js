@@ -345,8 +345,13 @@ async function initExtendedTables() {
         preview_image_url TEXT,
         discount_badge TEXT,
         order_index INT DEFAULT 0,
+        selected_pages TEXT DEFAULT '1, 2, 3, 4, 5',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE course_showcases ADD COLUMN IF NOT EXISTS selected_pages TEXT DEFAULT '1, 2, 3, 4, 5';
     `);
 
     var scCount = await pool.query('SELECT COUNT(*)::int AS c FROM course_showcases');
@@ -3314,6 +3319,7 @@ app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
     var previewImageUrl = req.body.preview_image_url ? String(req.body.preview_image_url).trim() : '';
     var discountBadge = req.body.discount_badge ? String(req.body.discount_badge).trim() : null;
     var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+    var selectedPages = req.body.selected_pages ? String(req.body.selected_pages).trim() : '1, 2, 3, 4, 5';
 
     if (!title || !pdfUrl) {
       return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
@@ -3321,10 +3327,10 @@ app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
 
     var result = await pool.query(`
       INSERT INTO course_showcases
-      (course_id, course_title, title, student_name, description, pdf_url, preview_image_url, discount_badge, order_index)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      (course_id, course_title, title, student_name, description, pdf_url, preview_image_url, discount_badge, order_index, selected_pages)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex]);
+    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, selectedPages]);
 
     return res.json({ ok: true, showcase: result.rows[0] });
   } catch (error) {
@@ -3345,6 +3351,7 @@ app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, r
     var previewImageUrl = req.body.preview_image_url ? String(req.body.preview_image_url).trim() : '';
     var discountBadge = req.body.discount_badge ? String(req.body.discount_badge).trim() : null;
     var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+    var selectedPages = req.body.selected_pages ? String(req.body.selected_pages).trim() : '1, 2, 3, 4, 5';
 
     if (!title || !pdfUrl) {
       return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
@@ -3353,10 +3360,10 @@ app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, r
     var result = await pool.query(`
       UPDATE course_showcases
       SET course_id = $1, course_title = $2, title = $3, student_name = $4, description = $5,
-          pdf_url = $6, preview_image_url = $7, discount_badge = $8, order_index = $9
-      WHERE id = $10
+          pdf_url = $6, preview_image_url = $7, discount_badge = $8, order_index = $9, selected_pages = $10
+      WHERE id = $11
       RETURNING *
-    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, id]);
+    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, selectedPages, id]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Natija topilmadi' });
     return res.json({ ok: true, showcase: result.rows[0] });

@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS course_showcases (
   preview_image_url TEXT,
   discount_badge    TEXT,
   order_index       INT DEFAULT 0,
+  selected_pages    TEXT DEFAULT '1, 2, 3, 4, 5',
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
