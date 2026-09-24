@@ -2071,12 +2071,12 @@ function renderDonateBlock() {
     <div class="profile-support-entry" onclick="openDonateModal()">
       <div style="display:flex; align-items:center; gap:12px;">
         <div class="profile-support-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
           </svg>
         </div>
         <div>
-          <div style="font-size:14px; font-weight:750; color:var(--text-primary); margin-bottom:2px;">
+          <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:2px;">
             ${escapeHtml(title)}
           </div>
           <div style="font-size:12px; color:var(--text-secondary);">
@@ -2084,28 +2084,29 @@ function renderDonateBlock() {
           </div>
         </div>
       </div>
-      <div style="color:var(--text-muted); font-size:16px;">→</div>
+      <div style="color:var(--text-muted); display:flex; align-items:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </div>
     </div>
   `;
 }
 
-function copyDonateCard(cardNumber, successMsg = "Karta raqami nusxalandi!") {
+function copyDonateCard(cardNumber) {
   haptic("medium");
   const clean = String(cardNumber || "").replace(/\s+/g, "");
 
   function setCopiedUi() {
     const btn = document.getElementById("support-copy-btn");
-    const icon = document.getElementById("support-copy-icon");
     const label = document.getElementById("support-copy-label");
     if (btn) btn.classList.add("copied");
-    if (icon) icon.textContent = "✓";
-    if (label) label.textContent = "Nusxalandi";
-    showToast(successMsg);
+    if (label) label.textContent = "Nusxalandi ✓";
     setTimeout(() => {
       if (btn) btn.classList.remove("copied");
-      if (icon) icon.textContent = "📋";
-      if (label) label.textContent = "Karta raqamini nusxalash";
-    }, 2500);
+      if (label) label.textContent = "Nusxalash";
+    }, 2200);
   }
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2123,43 +2124,48 @@ function openDonateModal() {
   haptic("light");
   const settings = state.settings || {};
   const title = settings.support_title || "Qo'llab-quvvatlash";
-  const desc = settings.support_description || "YOSHUZBEKK platformasini rivojlantirishga o'z hissangizni qo'shishingiz mumkin.";
+  const desc = settings.support_description || "YOSHUZBEKK platformasi rivojiga hissa qo'shing";
   const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
-  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
+  const cardHolder = settings.donate_card_holder || "Abdulloh S.";
   const paymentType = settings.donate_payment_type || "UZCARD / HUMO";
   const telegram = settings.support_telegram_contact || "@yoshuzbekk_admin";
 
   const content = `
-    <div style="padding: 6px 0; max-width: 420px; margin: 0 auto;">
-      <div style="text-align:center; margin-bottom:18px;">
-        <div style="font-size:20px; font-weight:800; color:var(--text-primary); margin-bottom:6px;">
-          ${escapeHtml(title)}
-        </div>
-        <p style="font-size:12.5px; color:var(--text-secondary); line-height:1.45; margin:0 auto;">
-          ${escapeHtml(desc)}
-        </p>
+    <div style="padding: 10px 0; max-width: 360px; margin: 0 auto; text-align: center;">
+      <div style="width: 52px; height: 52px; border-radius: 16px; background: var(--bg-surface-elevated); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--text-primary);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
       </div>
 
+      <div style="font-size: 20px; font-weight: 750; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.02em;">
+        ${escapeHtml(title)}
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.45; margin: 0 auto 20px auto; max-width: 290px;">
+        ${escapeHtml(desc)}
+      </p>
+
       <div class="support-modal-card">
-        <div class="support-bank-chip">💳 ${escapeHtml(paymentType)}</div>
+        <div class="support-bank-chip">${escapeHtml(paymentType)}</div>
         <div class="support-card-digits">${escapeHtml(cardNum)}</div>
-        <div class="support-card-holder">Karta egasi: <strong>${escapeHtml(cardHolder)}</strong></div>
+        <div class="support-card-holder">${escapeHtml(cardHolder)}</div>
 
         <button id="support-copy-btn" class="support-copy-cta" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-          <span id="support-copy-icon">📋</span>
-          <span id="support-copy-label">Karta raqamini nusxalash</span>
+          <span id="support-copy-label">Nusxalash</span>
         </button>
       </div>
 
-      <div style="display:flex; justify-content:center; margin-top:14px;">
-        <a href="https://t.me/${telegram.replace('@', '')}" target="_blank" class="admin-small-btn" style="padding:8px 16px; border-radius:999px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:12px;">
-          💬 Aloqa / Chek yuborish (${escapeHtml(telegram)})
-        </a>
-      </div>
+      ${telegram ? `
+        <div style="margin-top: 14px;">
+          <a href="https://t.me/${telegram.replace('@', '')}" target="_blank" class="admin-small-btn" style="padding: 8px 16px; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px;">
+            Aloqa: ${escapeHtml(telegram)} ↗
+          </a>
+        </div>
+      ` : ""}
     </div>
   `;
 
-  openModal("💝 " + title, content);
+  openModal(title, content);
 }
 
 // ----------------------------------------------------
@@ -5375,24 +5381,99 @@ const DEFAULT_LIBRARY_CATEGORIES = [
   "Qurilish"
 ];
 
+// ======================================================
+// KUTUBXONA 2.0 & MOTION DESIGN SYSTEM (APPLE-INSPIRED)
+// ======================================================
+
+const libIcons = {
+  book: (cls = '', size = 20) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 2v20"/></svg>`,
+  sources: (cls = '', size = 20) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`,
+  tests: (cls = '', size = 20) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+  materials: (cls = '', size = 20) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+  search: (cls = '', size = 18) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  filter: (cls = '', size = 18) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  bookmark: (cls = '', size = 20, filled = false) => `<svg class="${cls} ${filled ? 'filled' : ''}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
+  chevronRight: (cls = '', size = 16) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
+  back: (cls = '', size = 18) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+  download: (cls = '', size = 18) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  check: (cls = '', size = 18) => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+};
+
 function getLibraryTypeBadge(type) {
   switch (type) {
     case "book":
     case "normative":
     case "guide":
-      return { label: "KITOB", className: "badge-book", icon: "📚" };
+      return { label: "KITOB", className: "badge-book", iconSvg: libIcons.book('lib-badge-svg', 12) };
     case "source":
     case "family_pack":
     case "family":
-      return { label: "MANBA", className: "badge-source", icon: "📦" };
+      return { label: "MANBA", className: "badge-source", iconSvg: libIcons.sources('lib-badge-svg', 12) };
     case "test":
-      return { label: "TEST", className: "badge-test", icon: "✓" };
+      return { label: "TEST", className: "badge-test", iconSvg: libIcons.tests('lib-badge-svg', 12) };
     case "material":
-      return { label: "MATERIAL", className: "badge-material", icon: "🧱" };
+      return { label: "MATERIAL", className: "badge-material", iconSvg: libIcons.materials('lib-badge-svg', 12) };
     case "video":
-      return { label: "VIDEO", className: "badge-video", icon: "🎬" };
+      return { label: "VIDEO", className: "badge-video", iconSvg: libIcons.sources('lib-badge-svg', 12) };
     default:
-      return { label: "RESURS", className: "badge-default", icon: "📄" };
+      return { label: "MANBA", className: "badge-default", iconSvg: libIcons.sources('lib-badge-svg', 12) };
+  }
+}
+
+async function toggleLibraryBookmark(resId, e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const idNum = Number(resId);
+  const isBookmarked = libraryV2Bookmarks.has(idNum);
+
+  if (isBookmarked) {
+    libraryV2Bookmarks.delete(idNum);
+  } else {
+    libraryV2Bookmarks.add(idNum);
+  }
+
+  const btn = document.getElementById(`lib-bm-btn-${idNum}`);
+  if (btn) {
+    btn.classList.toggle("bookmarked", !isBookmarked);
+    btn.innerHTML = libIcons.bookmark("lib-bm-svg", 20, !isBookmarked);
+    btn.classList.add("anim-pulse");
+    setTimeout(() => btn.classList.remove("anim-pulse"), 250);
+  }
+
+  try {
+    await api("/api/library/v2/bookmark/toggle", { resource_id: idNum }, "POST");
+  } catch (err) {
+    console.warn("Bookmark toggle error:", err);
+  }
+}
+
+function handleLibraryDownload(resId, url, filename, e) {
+  if (e) e.stopPropagation();
+  haptic("medium");
+  const btn = document.getElementById(`lib-dl-btn-${resId}`) || (e && e.currentTarget);
+  if (btn) {
+    btn.classList.add("loading");
+    btn.innerHTML = `<span class="lib-spinner"></span> <span>Yuklanmoqda...</span>`;
+    setTimeout(() => {
+      btn.classList.remove("loading");
+      btn.classList.add("success");
+      btn.innerHTML = `${libIcons.check('lib-check-svg', 16)} <span>Yuklash boshlandi</span>`;
+      setTimeout(() => {
+        btn.classList.remove("success");
+        btn.innerHTML = `${libIcons.download('lib-dl-svg', 16)} <span>Yuklab olish</span>`;
+      }, 2000);
+    }, 550);
+  }
+
+  if (url) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    if (filename) a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
 
@@ -5514,7 +5595,7 @@ function renderTasks() {
 }
 
 // ------------------------------------------------------
-// 1. KUTUBXONA HOME (4 Asosiy Plitka + So'nggi + Tavsiya)
+// 1. KUTUBXONA HOME (Apple-like 4 Plitka + So'nggi + Tavsiya)
 // ------------------------------------------------------
 function renderTasksHomeHtml() {
   const sections = librarySections.filter(s => s.is_active !== false);
@@ -5523,42 +5604,59 @@ function renderTasksHomeHtml() {
     ? libraryV2RecommendedList
     : libraryV2Resources.filter(r => r.is_featured).slice(0, 6);
 
+  // SVG helper for default 4 sections
+  function getSectionSvg(slug) {
+    switch (slug) {
+      case "books": return libIcons.book("lib-sec-svg", 22);
+      case "sources": return libIcons.sources("lib-sec-svg", 22);
+      case "tests": return libIcons.tests("lib-sec-svg", 22);
+      case "materials": return libIcons.materials("lib-sec-svg", 22);
+      default: return libIcons.sources("lib-sec-svg", 22);
+    }
+  }
+
   return `
-    <div class="page lib-container">
+    <div class="page lib-container lib-page-enter">
       <!-- HEADER -->
       <div class="lib-main-header">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h1 class="lib-main-title">Kutubxona</h1>
+        <div class="lib-header-top-row">
+          <h1 class="lib-main-title">KUTUBXONA</h1>
           ${state.is_admin ? `
-            <button class="admin-small-btn" onclick="adminSetTab('library')" title="Kutubxona CMS">
+            <button class="lib-cms-btn" onclick="adminSetTab('library')" title="Kutubxona CMS">
               ⚙️ CMS Boshqaruv
             </button>
           ` : ""}
         </div>
         <p class="lib-main-subtitle">
-          Revit, BIM, arxitektura va qurilish bo‘yicha professional bilimlar, manbalar va standartlar markazi
+          Arxitektura, Revit va qurilish uchun bilimlar bazasi
         </p>
       </div>
 
-      <!-- 4 ASOSIY VIZUAL BO'LIMLAR (TILES 2x2 MOBILE / 4-COL DESKTOP) -->
+      <!-- 4 ASOSIY VIZUAL BO'LIMLAR (2x2 MOBILE / 4-COL DESKTOP) -->
       <div class="library-tiles-grid">
         ${sections.map(sec => `
           <div class="library-tile-card tile-${sec.slug}" onclick="openLibrarySection('${sec.slug}')">
-            <div class="tile-icon-badge">${sec.icon}</div>
-            <div class="tile-content">
-              <div class="tile-title">${escapeHtml(sec.name.toUpperCase())}</div>
-              <div class="tile-desc">${escapeHtml(sec.description || "")}</div>
+            <div class="library-tile-top">
+              <div class="library-tile-icon-box">
+                ${getSectionSvg(sec.slug)}
+              </div>
+              <div class="library-tile-chevron">
+                ${libIcons.chevronRight('lib-chevron-svg', 16)}
+              </div>
             </div>
-            <div class="tile-arrow">→</div>
+            <div class="library-tile-meta">
+              <div class="library-tile-name">${escapeHtml(sec.name)}</div>
+              <div class="library-tile-desc">${escapeHtml(sec.subtitle || sec.description || "")}</div>
+            </div>
           </div>
         `).join("")}
       </div>
 
-      <!-- SO'NGGI KO'RILGANLAR (Horizontal Scroll with Type Badges) -->
+      <!-- SO'NGGI KO'RILGANLAR (Horizontal Scroll with Clean Type Badges) -->
       ${recentList.length ? `
-        <div class="lib-home-section" style="margin-top:24px;">
+        <div class="lib-home-section">
           <div class="lib-section-header-row">
-            <div class="lib-section-heading">🕒 So‘nggi ko‘rilganlar</div>
+            <div class="lib-section-heading">So‘nggi ko‘rilganlar</div>
           </div>
           <div class="lib-horizontal-scroll">
             ${recentList.map(item => {
@@ -5567,13 +5665,11 @@ function renderTasksHomeHtml() {
               return `
                 <div class="lib-recent-card" onclick="openLibraryV2ResourceDetail(${Number(item.id)})">
                   <div class="lib-recent-cover">
-                    ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div class="lib-placeholder-icon">${badge.icon}</div>`}
-                    <span class="lib-type-badge ${badge.className}">${badge.label}</span>
+                    ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div style="color:var(--text-muted);">${badge.iconSvg}</div>`}
+                    <span class="lib-type-badge ${badge.className}" style="position:absolute; bottom:6px; left:6px;">${badge.label}</span>
                   </div>
-                  <div class="lib-recent-body">
-                    <div class="lib-recent-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-                    <div class="lib-recent-cat">${escapeHtml(item.category || "Manba")}</div>
-                  </div>
+                  <div class="lib-recent-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+                  <div class="lib-recent-cat">${escapeHtml(item.category || "Manba")}</div>
                 </div>
               `;
             }).join("")}
@@ -5581,10 +5677,10 @@ function renderTasksHomeHtml() {
         </div>
       ` : ""}
 
-      <!-- TAVSIYA ETILGANLAR (Recommended Grid with Type Badges) -->
-      <div class="lib-home-section" style="margin-top:24px;">
+      <!-- TAVSIYA ETILGANLAR (Recommended Grid) -->
+      <div class="lib-home-section">
         <div class="lib-section-header-row">
-          <div class="lib-section-heading">⭐ Tavsiya etilgan manbalar</div>
+          <div class="lib-section-heading">Tavsiya etilgan manbalar</div>
         </div>
         <div class="lib-recommended-grid">
           ${recommendedList.slice(0, 6).map(item => {
@@ -5593,14 +5689,16 @@ function renderTasksHomeHtml() {
             return `
               <div class="lib-rec-card" onclick="openLibraryV2ResourceDetail(${Number(item.id)})">
                 <div class="lib-rec-thumb">
-                  ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div class="lib-placeholder-icon">${badge.icon}</div>`}
-                  <span class="lib-type-badge ${badge.className}">${badge.label}</span>
+                  ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div style="color:var(--text-muted);">${badge.iconSvg}</div>`}
+                  <span class="lib-type-badge ${badge.className}" style="position:absolute; bottom:4px; left:4px; font-size:8.5px; padding:1px 5px;">${badge.label}</span>
                 </div>
                 <div class="lib-rec-content">
-                  <div class="lib-rec-cat">${escapeHtml(item.category || "Tavsiya")}</div>
-                  <div class="lib-rec-title">${escapeHtml(item.title)}</div>
+                  <div>
+                    <div class="lib-rec-cat">${escapeHtml(item.category || "Tavsiya")}</div>
+                    <div class="lib-rec-title">${escapeHtml(item.title)}</div>
+                  </div>
                   <div class="lib-rec-meta">
-                    <span>👁️ ${item.view_count || 0}</span>
+                    <span>${item.view_count || 0} marta ko‘rilgan</span>
                     <span class="lib-rec-btn-text">Ochish →</span>
                   </div>
                 </div>
@@ -5609,27 +5707,12 @@ function renderTasksHomeHtml() {
           }).join("")}
         </div>
       </div>
-
-      <!-- KURS DARSLIKLARIGA O'TISH BANNERI -->
-      <div class="card" style="margin-top: 28px; padding: 14px 16px; border: 1px dashed var(--border); background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-        <div>
-          <div style="font-weight: 750; font-size: 13.5px; color: var(--text-primary); margin-bottom: 2px;">
-            🎓 Revit & BIM Kurs Darslari
-          </div>
-          <div style="font-size: 11.5px; color: var(--text-secondary);">
-            Amaliy modulli darslar va uy vazifalarini ko'rish
-          </div>
-        </div>
-        <button class="admin-small-btn" style="padding: 7px 14px; white-space: nowrap; flex-shrink: 0;" onclick="setTab('lessons')">
-          Darslar →
-        </button>
-      </div>
     </div>
   `;
 }
 
 // ------------------------------------------------------
-// 2. KITOBLAR EKRANI (Books Screen)
+// 2. KITOBLAR EKRANI (Books Screen — 2:3 Ratio Grid)
 // ------------------------------------------------------
 function renderBooksSectionHtml() {
   const cats = SECTION_CATEGORIES.books;
@@ -5643,7 +5726,7 @@ function renderBooksSectionHtml() {
     r.type === "guide"
   );
 
-  // Standart kitoblar zaxirasi
+  // Standart 3 ta asosiy kitob zaxirasi
   if (!books.length) {
     books = (state.open_resources || []).filter(r => r.type === "book").map(r => ({
       ...r,
@@ -5675,23 +5758,23 @@ function renderBooksSectionHtml() {
   }
 
   return `
-    <div class="page lib-container">
+    <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ← Kutubxona bosh sahifasi
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
       <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">📚 Kitoblar va Normativlar</h2>
+        <h2 class="lib-page-title">Kitoblar va Qo‘llanmalar</h2>
         <p class="lib-page-desc">Revit, BIM standartlari, arxitektura va ShNQ rasmiy qo'llanmalari</p>
       </div>
 
       <!-- SEARCH & SORT -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap">
-          <span class="lib-search-icon">🔍</span>
+          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input type="text"
                  class="apple-input lib-search-field"
-                 placeholder="Kitob yoki normativ qidirish..."
+                 placeholder="Kitob, muallif yoki mavzu qidiring..."
                  value="${escapeHtml(librarySectionSearchQuery)}"
                  oninput="setLibrarySectionSearch(this.value)">
         </div>
@@ -5710,11 +5793,11 @@ function renderBooksSectionHtml() {
         `).join("")}
       </div>
 
-      <!-- KITOBLAR GRIDI -->
+      <!-- KITOBLAR GRIDI (RATIO 2:3) -->
       <div id="lib-section-list-container" class="lib-books-grid">
         ${books.length ? books.map(renderBookCardHtml).join("") : `
           <div class="empty-box" style="grid-column: 1 / -1;">
-            Kitoblar topilmadi. Qidiruvni o'zgartirib ko'ring.
+            Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.
           </div>
         `}
       </div>
@@ -5726,7 +5809,7 @@ function renderBookCardHtml(book) {
   const cover = formatImageUrl(book.preview_image_url || "");
   const badge = getLibraryTypeBadge(book.type || "book");
   const author = book.author || "Autodesk BIM";
-  const pages = book.page_count ? `${book.page_count} bet` : "PDF kitob";
+  const pages = book.page_count ? `${book.page_count} bet` : "PDF";
   const lang = (book.language || "UZ").toUpperCase();
 
   return `
@@ -5734,19 +5817,18 @@ function renderBookCardHtml(book) {
       <div class="lib-book-cover-wrap">
         ${cover ? `<img src="${escapeHtml(cover)}" class="lib-book-cover" onerror="handleImageError(this)" alt="" />` : `
           <div class="lib-book-cover-placeholder">
-            <span style="font-size:38px;">📚</span>
+            ${libIcons.book('lib-cover-svg', 36)}
             <span style="font-size:11px; margin-top:6px; opacity:0.8;">${escapeHtml(book.category || "Kitob")}</span>
           </div>
         `}
-        <span class="lib-type-badge ${badge.className}">${badge.label}</span>
+        <span class="lib-type-badge ${badge.className}" style="position:absolute; top:8px; left:8px;">${badge.label}</span>
       </div>
       <div class="lib-book-info">
         <div class="lib-book-category">${escapeHtml(book.category || "Arxitektura")}</div>
         <div class="lib-book-title">${escapeHtml(book.title)}</div>
-        <div class="lib-book-author">✍️ ${escapeHtml(author)}</div>
+        <div class="lib-book-author">${escapeHtml(author)}</div>
         <div class="lib-book-meta-footer">
-          <span class="lib-meta-chip">📄 ${escapeHtml(pages)}</span>
-          <span class="lib-meta-chip">🌐 ${escapeHtml(lang)}</span>
+          <span>${escapeHtml(pages)} • ${escapeHtml(lang)}</span>
           <span class="lib-book-read-btn">O‘qish →</span>
         </div>
       </div>
@@ -5755,7 +5837,7 @@ function renderBookCardHtml(book) {
 }
 
 // ------------------------------------------------------
-// 3. MANBALAR EKRANI (Sources Screen)
+// 3. MANBALAR EKRANI (Sources Screen — File Types Focus)
 // ------------------------------------------------------
 function renderSourcesSectionHtml() {
   const cats = SECTION_CATEGORIES.sources;
@@ -5783,20 +5865,20 @@ function renderSourcesSectionHtml() {
   }
 
   return `
-    <div class="page lib-container">
+    <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ← Kutubxona bosh sahifasi
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
       <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">📦 Revit Oilalari, Shablonlar & Chizmalar</h2>
-        <p class="lib-page-desc">Revit 2024-2026 parametrik oilalari (.rfa), tayyor shablonlar (.rte) va DWG bloklar</p>
+        <h2 class="lib-page-title">Manbalar va Shablonlar</h2>
+        <p class="lib-page-desc">Revit parametrik oilalari (.rfa), loyiha shablonlari (.rte) va DWG bloklar</p>
       </div>
 
       <!-- SEARCH -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap" style="width:100%;">
-          <span class="lib-search-icon">🔍</span>
+          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input type="text"
                  class="apple-input lib-search-field"
                  placeholder="Oila, mebel, shablon yoki DWG qidirish..."
@@ -5837,19 +5919,26 @@ function renderSourceCardHtml(source) {
       <div class="lib-source-thumb-wrap">
         ${cover ? `<img src="${escapeHtml(cover)}" class="lib-source-thumb" onerror="handleImageError(this)" alt="" />` : `
           <div class="lib-source-thumb-placeholder">
-            <span style="font-size:36px;">📦</span>
-            <span style="font-size:11px; margin-top:4px;">.${escapeHtml(ext)}</span>
+            ${libIcons.sources('lib-source-svg', 32)}
+            <span style="font-size:10px; margin-top:4px; font-weight:700;">.${escapeHtml(ext)}</span>
           </div>
         `}
-        <span class="lib-version-badge">${escapeHtml(version)}</span>
-        <span class="lib-size-badge">${escapeHtml(size)}</span>
       </div>
       <div class="lib-source-content">
-        <div class="lib-source-cat">${escapeHtml(source.category || "Revit Family")}</div>
-        <div class="lib-source-title">${escapeHtml(source.title)}</div>
-        <div class="lib-source-desc">${escapeHtml(source.description || "")}</div>
+        <div>
+          <div class="lib-source-badges-row">
+            <span class="lib-file-badge">${escapeHtml(ext)}</span>
+            <span class="lib-version-badge">${escapeHtml(version)}</span>
+            <span class="lib-version-badge">• ${escapeHtml(size)}</span>
+          </div>
+          <div class="lib-source-cat">${escapeHtml(source.category || "Revit Family")}</div>
+          <div class="lib-source-title">${escapeHtml(source.title)}</div>
+          <div class="lib-source-desc">${escapeHtml(source.description || "")}</div>
+        </div>
         <div class="lib-source-footer">
-          <span class="lib-source-download-cta">Yuklab olish 📥</span>
+          <span class="lib-source-download-cta">
+            ${libIcons.download('lib-dl-cta-svg', 14)} Yuklab olish
+          </span>
         </div>
       </div>
     </div>
@@ -5870,7 +5959,6 @@ function renderTestsSectionHtml() {
     r.content_type === "quiz_json"
   );
 
-  // Kurs bo'yicha filtr
   if (librarySelectedCourseId !== "all") {
     tests = tests.filter(t => Number(t.course_id) === Number(librarySelectedCourseId));
   }
@@ -5883,25 +5971,25 @@ function renderTestsSectionHtml() {
   }
 
   return `
-    <div class="page lib-container">
+    <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ← Kutubxona bosh sahifasi
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
       <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">✓ Bilimni Sinash Testlari</h2>
-        <p class="lib-page-desc">Revit, BIM qoidalari va arxitektura chizmalari bo'yicha interaktiv sinovlar</p>
+        <h2 class="lib-page-title">Bilimingizni Tekshiring</h2>
+        <p class="lib-page-desc">Revit, BIM va arxitektura bo'yicha interaktiv sinov testlari</p>
       </div>
 
-      <!-- KURS SELEKTORI DROPDOWN -->
+      <!-- KURS SELEKTORI -->
       <div class="lib-filter-bar">
         <div class="apple-field" style="width:100%; margin:0;">
-          <label style="font-size:12px; margin-bottom:4px; display:block; color:var(--text-secondary);">Kurs bo'yicha saralash:</label>
-          <select class="apple-input" onchange="setLibrarySelectedCourse(this.value)">
-            <option value="all" ${librarySelectedCourseId === "all" ? "selected" : ""}>[ Barcha kurslar ▼ ]</option>
+          <label style="font-size:12px; margin-bottom:4px; display:block; color:var(--text-secondary);">Kurs bo'yicha filtrlash:</label>
+          <select class="apple-input lib-sort-select" style="width:100%;" onchange="setLibrarySelectedCourse(this.value)">
+            <option value="all" ${librarySelectedCourseId === "all" ? "selected" : ""}>[ Barcha kurslar ▾ ]</option>
             ${courses.map(c => `
               <option value="${Number(c.id)}" ${Number(librarySelectedCourseId) === Number(c.id) ? "selected" : ""}>
-                🎓 ${escapeHtml(c.title)}
+                ${escapeHtml(c.title)}
               </option>
             `).join("")}
           </select>
@@ -5911,8 +5999,8 @@ function renderTestsSectionHtml() {
       <!-- TESTLAR GRIDI -->
       <div id="lib-section-list-container" class="lib-tests-grid" style="margin-top:16px;">
         ${tests.length ? tests.map(renderTestCardHtml).join("") : `
-          <div class="empty-box">
-            Tanlangan kurs yoki qidiruv bo'yicha testlar topilmadi.
+          <div class="empty-box" style="grid-column: 1 / -1;">
+            Tanlangan kurs bo'yicha testlar topilmadi.
           </div>
         `}
       </div>
@@ -5928,20 +6016,19 @@ function renderTestCardHtml(test) {
     else if (data && Array.isArray(data.questions)) qCount = data.questions.length;
   }
   const diff = test.difficulty || "O'rta";
-  const diffBadge = diff === "Oson" ? "badge-easy" : (diff === "Murakkab" ? "badge-hard" : "badge-medium");
   const courseTag = test.course_title || (test.course_id ? "Kurs testi" : "Erkin sinov");
 
   return `
     <div class="lib-test-card" onclick="startLibraryQuiz(${Number(test.id)})">
       <div class="lib-test-header">
-        <span class="lib-test-badge ${diffBadge}">${escapeHtml(diff)}</span>
+        <span class="lib-test-badge">${escapeHtml(diff)}</span>
         <span class="lib-test-course-tag">${escapeHtml(courseTag)}</span>
       </div>
       <div class="lib-test-title">${escapeHtml(test.title)}</div>
       <div class="lib-test-desc">${escapeHtml(test.description || "Ushbu test orqali o'z bilimlaringizni sinab ko'ring.")}</div>
       <div class="lib-test-footer">
-        <span class="lib-test-q-count">❓ ${qCount} ta savol</span>
-        <span class="lib-test-start-cta">Testni boshlash ▶</span>
+        <span>${qCount} ta savol</span>
+        <span class="lib-test-start-cta">Boshlash →</span>
       </div>
     </div>
   `;
@@ -5960,7 +6047,6 @@ function renderMaterialsSectionHtml() {
     r.type === "material"
   );
 
-  // Standart materiallar zaxirasi
   if (!mats.length && DEFAULT_MATERIALS && DEFAULT_MATERIALS.length) {
     mats = DEFAULT_MATERIALS.map(m => ({
       id: Number(m.id) + 1000,
@@ -5992,23 +6078,23 @@ function renderMaterialsSectionHtml() {
   }
 
   return `
-    <div class="page lib-container">
+    <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ← Kutubxona bosh sahifasi
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
       <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">🧱 Qurilish va Pardozlash Materiallari Ensiklopediyasi</h2>
-        <p class="lib-page-desc">Interyer va arxitekturada ishlatiladigan barcha materiallar xususiyatlari, o'lchamlari va tavsiyalari</p>
+        <h2 class="lib-page-title">Qurilish va Interyer Materiallari</h2>
+        <p class="lib-page-desc">Interyer va mebel materiallari ensiklopediyasi, xususiyatlari va tavsiyalari</p>
       </div>
 
       <!-- SEARCH (Multilingual) -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap" style="width:100%;">
-          <span class="lib-search-icon">🔍</span>
+          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input type="text"
                  class="apple-input lib-search-field"
-                 placeholder="Material nomi (LDSP, MDF, GKL, Gazoblok, Keramogranit...)"
+                 placeholder="Material qidiring (LDSP, MDF, GKL, Gazoblok, Keramogranit...)"
                  value="${escapeHtml(librarySectionSearchQuery)}"
                  oninput="setLibrarySectionSearch(this.value)">
         </div>
@@ -6048,14 +6134,16 @@ function renderMaterialCardHtml(mat) {
     <div class="lib-material-card" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
       <div class="lib-material-thumb-wrap">
         ${img ? `<img src="${escapeHtml(img)}" class="lib-material-thumb" onerror="handleImageError(this)" alt="" />` : `
-          <div class="lib-material-thumb-placeholder">🧱</div>
+          <div class="lib-material-thumb-placeholder">${libIcons.materials('lib-mat-svg', 28)}</div>
         `}
-        <span class="lib-type-badge badge-material">MATERIAL</span>
+        <span class="lib-type-badge badge-material" style="position:absolute; bottom:4px; left:4px; font-size:8.5px; padding:1px 5px;">MATERIAL</span>
       </div>
       <div class="lib-material-body">
-        <div class="lib-material-cat">${escapeHtml(cat)} ${subCat ? `• ${escapeHtml(subCat)}` : ""}</div>
-        <div class="lib-material-title">${escapeHtml(mat.title)}</div>
-        <div class="lib-material-desc">${escapeHtml(mat.description || rawData?.short_desc || "")}</div>
+        <div>
+          <div class="lib-material-cat">${escapeHtml(cat)} ${subCat ? `• ${escapeHtml(subCat)}` : ""}</div>
+          <div class="lib-material-title">${escapeHtml(mat.title)}</div>
+          <div class="lib-material-desc">${escapeHtml(mat.description || rawData?.short_desc || "")}</div>
+        </div>
         <div class="lib-material-footer">
           <span class="lib-material-cta">Batafsil ma'lumot →</span>
         </div>
@@ -6065,7 +6153,7 @@ function renderMaterialCardHtml(mat) {
 }
 
 // ------------------------------------------------------
-// 6. DETAIL VIEWS (Kitob, Manba, Material, Quiz)
+// 6. DETAIL VIEWS (Apple-Inspired Sheet & Reader)
 // ------------------------------------------------------
 
 async function openBookDetail(resId) {
@@ -6087,10 +6175,11 @@ async function openBookDetail(resId) {
   if (!book) return showAlert("Kitob ma'lumotlari topilmadi.");
 
   const cover = formatImageUrl(book.preview_image_url || "");
-  const author = book.author || "O'zbekiston BIM va Arxitektura markazi";
-  const pages = book.page_count ? `${book.page_count} bet` : "Elektron nashr";
+  const author = book.author || "Autodesk BIM & Architecture";
+  const pages = book.page_count ? `${book.page_count} bet` : "PDF Kitob";
   const lang = (book.language || "UZ").toUpperCase();
   const isPdf = Boolean(book.content_url && (book.content_url.includes("drive.google.com") || book.content_url.endsWith(".pdf")));
+  const isBookmarked = libraryV2Bookmarks.has(Number(book.id));
 
   let whatLearn = [];
   if (book.content_data) {
@@ -6108,9 +6197,14 @@ async function openBookDetail(resId) {
 
   currentView = {
     html: `
-      <div class="page lib-detail-page">
-        <div class="lib-back-nav" onclick="closeDetail()">
-          ← Orqaga qaytish
+      <div class="page lib-container lib-detail-page">
+        <div class="lib-detail-top-bar">
+          <div class="lib-back-nav" style="margin:0;" onclick="closeDetail()">
+            ${libIcons.back('lib-back-svg', 16)} Orqaga
+          </div>
+          <button id="lib-bm-btn-${Number(book.id)}" class="lib-bookmark-toggle-btn ${isBookmarked ? "bookmarked" : ""}" onclick="toggleLibraryBookmark(${Number(book.id)}, event)" title="Saqlash">
+            ${libIcons.bookmark('lib-bm-svg', 20, isBookmarked)}
+          </button>
         </div>
 
         <div class="lib-detail-hero-card">
@@ -6121,7 +6215,7 @@ async function openBookDetail(resId) {
               </div>
             ` : ""}
             <div class="lib-detail-primary-meta">
-              <span class="lib-type-badge badge-book">📚 ELEKTRON KITOB</span>
+              <span class="lib-type-badge badge-book">KUTUBXONA NASHRI</span>
               <h1 class="lib-detail-title">${escapeHtml(book.title)}</h1>
               ${book.subtitle ? `<div class="lib-detail-sub">${escapeHtml(book.subtitle)}</div>` : ""}
               <div class="lib-detail-author">Muallif: <strong>${escapeHtml(author)}</strong></div>
@@ -6144,31 +6238,31 @@ async function openBookDetail(resId) {
           </div>
 
           <!-- NIMALARNI O'RGANASIZ -->
-          <div class="lib-detail-section" style="margin-top:20px;">
-            <div class="lib-detail-section-title">💡 Nimalarni o'rganasiz?</div>
+          <div class="lib-detail-section">
+            <div class="lib-detail-section-title">Nimalarni o'rganasiz?</div>
             <ul class="lib-bullet-list">
-              ${whatLearn.map(item => `<li><span class="bullet-icon">✓</span> ${escapeHtml(item)}</li>`).join("")}
+              ${whatLearn.map(item => `<li><span class="bullet-icon">✓</span> <span>${escapeHtml(item)}</span></li>`).join("")}
             </ul>
           </div>
 
           <!-- KITOB HAQIDA -->
-          <div class="lib-detail-section" style="margin-top:16px;">
-            <div class="lib-detail-section-title">📖 Kitob haqida</div>
+          <div class="lib-detail-section">
+            <div class="lib-detail-section-title">Kitob haqida</div>
             <div class="lib-detail-text">
               ${escapeHtml(book.description || "Ushbu qo'llanma Revit va BIM mutaxassislari uchun maxsus tayyorlangan bo'lib, loyihalash jarayonini sezilarli darajada yengillashtiradi.")}
             </div>
           </div>
 
           <!-- ACTION BUTTONS -->
-          <div class="lib-detail-actions" style="margin-top:24px;">
+          <div class="lib-detail-actions" style="margin-top:24px; display:flex; flex-direction:column; gap:10px;">
             ${isPdf ? `
-              <button class="btn" onclick="openPdfViewerModal('${escapeJsString(book.content_url)}', '${escapeJsString(book.title)}')">
-                📖 PDF Kitobni Ochish va O'qish
+              <button class="lib-download-btn" style="width:100%;" onclick="openPdfViewerModal('${escapeJsString(book.content_url)}', '${escapeJsString(book.title)}')">
+                ${libIcons.book('lib-btn-svg', 18)} O‘QISHNI BOSHLASH
               </button>
             ` : ""}
             ${book.content_url ? `
-              <a href="${escapeHtml(book.content_url)}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; text-align:center;">
-                🔗 Asl manbani ochish / Yuklab olish ↗
+              <a href="${escapeHtml(book.content_url)}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; text-align:center; min-height:44px; display:flex; align-items:center; justify-content:center;">
+                Asl manbani ochish ↗
               </a>
             ` : ""}
           </div>
@@ -6195,33 +6289,39 @@ async function openSourceDetail(resId) {
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "Revit 2024 / 2025";
   const size = source.file_size || "15 MB";
+  const isBookmarked = libraryV2Bookmarks.has(Number(source.id));
 
   currentView = {
     html: `
-      <div class="page lib-detail-page">
-        <div class="lib-back-nav" onclick="closeDetail()">
-          ← Orqaga qaytish
+      <div class="page lib-container lib-detail-page">
+        <div class="lib-detail-top-bar">
+          <div class="lib-back-nav" style="margin:0;" onclick="closeDetail()">
+            ${libIcons.back('lib-back-svg', 16)} Orqaga
+          </div>
+          <button id="lib-bm-btn-${Number(source.id)}" class="lib-bookmark-toggle-btn ${isBookmarked ? "bookmarked" : ""}" onclick="toggleLibraryBookmark(${Number(source.id)}, event)" title="Saqlash">
+            ${libIcons.bookmark('lib-bm-svg', 20, isBookmarked)}
+          </button>
         </div>
 
         <div class="lib-detail-hero-card">
           ${cover ? `
-            <div style="width:100%; max-height:260px; border-radius:12px; overflow:hidden; margin-bottom:16px;">
+            <div style="width:100%; max-height:260px; border-radius:14px; overflow:hidden; margin-bottom:18px; border:1px solid var(--border);">
               <img src="${escapeHtml(cover)}" style="width:100%; height:100%; object-fit:cover;" onerror="handleImageError(this)" alt="" />
             </div>
           ` : ""}
 
-          <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <span class="lib-type-badge badge-source">📦 REVIT MANBASI</span>
+          <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+            <span class="lib-type-badge badge-source">REVIT MANBASI</span>
             <span class="lib-version-badge">${escapeHtml(version)}</span>
           </div>
 
-          <h1 class="lib-detail-title">${escapeHtml(source.title)}</h1>
-          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+          <h1 class="lib-detail-title" style="margin-top:0;">${escapeHtml(source.title)}</h1>
+          <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:16px;">
             Kategoriya: <strong>${escapeHtml(source.category || "Revit Family")}</strong> • Hajmi: <strong>${escapeHtml(size)}</strong>
           </div>
 
           <div class="lib-detail-section">
-            <div class="lib-detail-section-title">ℹ️ Manba haqida</div>
+            <div class="lib-detail-section-title">Manba haqida</div>
             <div class="lib-detail-text">
               ${escapeHtml(source.description || "Ushbu manba Revit loyihalarida bevosita foydalanish uchun to'liq optimallashgan va parametrlashtirilgan.")}
             </div>
@@ -6229,10 +6329,10 @@ async function openSourceDetail(resId) {
 
           <div class="lib-detail-actions" style="margin-top:24px;">
             ${source.content_url ? `
-              <a href="${escapeHtml(source.content_url)}" target="_blank" rel="noopener noreferrer" class="btn" style="text-decoration:none; text-align:center;">
-                📥 Faylni yuklab olish (${escapeHtml(size)})
-              </a>
-            ` : `<button class="btn" disabled>Yuklash havolasi mavjud emas</button>`}
+              <button id="lib-dl-btn-${Number(source.id)}" class="lib-download-btn" style="width:100%;" onclick="handleLibraryDownload(${Number(source.id)}, '${escapeJsString(source.content_url)}', '${escapeJsString(source.title)}', event)">
+                ${libIcons.download('lib-dl-svg', 18)} Yuklab olish (${escapeHtml(size)})
+              </button>
+            ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Yuklash havolasi mavjud emas</button>`}
           </div>
         </div>
       </div>
@@ -6263,74 +6363,88 @@ async function openMaterialKnowledgeDetail(matId) {
   if (!data) data = {};
 
   const img = formatImageUrl(mat?.preview_image_url || data.image_url || "");
+  const isBookmarked = libraryV2Bookmarks.has(Number(matId));
 
   currentView = {
     html: `
-      <div class="page marketplace-detail-page">
-        <div class="lib-back-nav" onclick="closeDetail()">
-          ← Materiallar ro'yxatiga qaytish
-        </div>
-
-        ${img ? `
-          <img src="${escapeHtml(img)}" class="material-detail-hero" onerror="handleImageError(this)" alt="" />
-        ` : ""}
-
-        <div style="margin-bottom:12px;">
-          <div class="material-card-category">${escapeHtml(mat?.category || data.category || "Material")} ${data.sub_category ? `→ ${escapeHtml(data.sub_category)}` : ""}</div>
-          <h1 class="page-title" style="margin-bottom:4px; font-size:22px;">${escapeHtml(mat?.title || data.title)}</h1>
-        </div>
-
-        ${(mat?.description || data.short_desc) ? `
-          <div class="material-desc-lead" style="font-size:14px; color:var(--text-secondary); line-height:1.5; margin-bottom:16px;">
-            ${escapeHtml(mat?.description || data.short_desc)}
+      <div class="page lib-container lib-detail-page">
+        <div class="lib-detail-top-bar">
+          <div class="lib-back-nav" style="margin:0;" onclick="closeDetail()">
+            ${libIcons.back('lib-back-svg', 16)} Materiallar
           </div>
-        ` : ""}
-
-        <div class="material-info-block">
-          <div class="material-info-title"><span>📋</span> Material nima o'zi u?</div>
-          <div class="material-info-text">${escapeHtml(data.what_is_it || "Ma'lumot keltirilmagan.")}</div>
+          <button id="lib-bm-btn-${Number(matId)}" class="lib-bookmark-toggle-btn ${isBookmarked ? "bookmarked" : ""}" onclick="toggleLibraryBookmark(${Number(matId)}, event)" title="Saqlash">
+            ${libIcons.bookmark('lib-bm-svg', 20, isBookmarked)}
+          </button>
         </div>
 
-        <div class="material-info-block">
-          <div class="material-info-title"><span>📐</span> Standart o'lchamlari va qalinliklari</div>
-          <div class="material-info-text">${escapeHtml(data.dimensions || "Ma'lumot keltirilmagan.")}</div>
+        <div class="lib-detail-hero-card">
+          ${img ? `
+            <div style="width:100%; max-height:280px; border-radius:14px; overflow:hidden; margin-bottom:18px; border:1px solid var(--border);">
+              <img src="${escapeHtml(img)}" style="width:100%; height:100%; object-fit:cover;" onerror="handleImageError(this)" alt="" />
+            </div>
+          ` : ""}
+
+          <div style="margin-bottom:12px;">
+            <div class="material-card-category">${escapeHtml(mat?.category || data.category || "Material")} ${data.sub_category ? `• ${escapeHtml(data.sub_category)}` : ""}</div>
+            <h1 class="lib-detail-title" style="margin:4px 0 6px 0;">${escapeHtml(mat?.title || data.title)}</h1>
+          </div>
+
+          ${(mat?.description || data.short_desc) ? `
+            <div class="material-desc-lead" style="font-size:13.5px; color:var(--text-secondary); line-height:1.55; margin-bottom:16px;">
+              ${escapeHtml(mat?.description || data.short_desc)}
+            </div>
+          ` : ""}
+
+          <div class="lib-detail-section">
+            <div class="lib-detail-section-title">Material nima o'zi u?</div>
+            <div class="lib-detail-text">${escapeHtml(data.what_is_it || "Ushbu material arxitektura va interyer qurilishida keng qo'llaniladi.")}</div>
+          </div>
+
+          <div class="lib-detail-section">
+            <div class="lib-detail-section-title">Standart o'lchamlari va qalinliklari</div>
+            <div class="lib-detail-text">${escapeHtml(data.dimensions || "Standart ishlab chiqarish me'yorlariga muvofiq.")}</div>
+          </div>
+
+          <div class="lib-detail-section">
+            <div class="lib-detail-section-title">Qayerlarga ishlatiladi (Tavsiya)</div>
+            <div class="lib-detail-text">${escapeHtml(data.usage_area || "Ichki va tashqi pardozlash ishlari uchun.")}</div>
+          </div>
+
+          ${(data.pros || data.cons) ? `
+            <div style="display:grid; grid-template-columns: 1fr; gap:10px; margin-top:16px;">
+              ${data.pros ? `
+                <div class="lib-quiz-option" style="cursor:default; border-left:3px solid #10b981;">
+                  <div>
+                    <div style="font-size:12.5px; font-weight:750; color:#10b981; margin-bottom:2px;">Afzalliklari</div>
+                    <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(data.pros)}</div>
+                  </div>
+                </div>
+              ` : ""}
+              ${data.cons ? `
+                <div class="lib-quiz-option" style="cursor:default; border-left:3px solid #ef4444;">
+                  <div>
+                    <div style="font-size:12.5px; font-weight:750; color:#ef4444; margin-bottom:2px;">Kamchiliklari</div>
+                    <div style="font-size:12px; color:var(--text-secondary);">${escapeHtml(data.cons)}</div>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+          ` : ""}
+
+          ${data.uzbekistan_sources ? `
+            <div class="lib-detail-section">
+              <div class="lib-detail-section-title">O'zbekistondagi bozorlar va manbalar</div>
+              <div class="lib-detail-text">${escapeHtml(data.uzbekistan_sources)}</div>
+            </div>
+          ` : ""}
+
+          ${data.bim_tips ? `
+            <div class="lib-detail-section">
+              <div class="lib-detail-section-title">BIM & Revit Maslahati</div>
+              <div class="lib-detail-text">${escapeHtml(data.bim_tips)}</div>
+            </div>
+          ` : ""}
         </div>
-
-        <div class="material-info-block">
-          <div class="material-info-title"><span>🎯</span> Qayerlarga ishlatiladi (Tavsiya)</div>
-          <div class="material-info-text">${escapeHtml(data.usage_area || "Ma'lumot keltirilmagan.")}</div>
-        </div>
-
-        ${(data.pros || data.cons) ? `
-          <div style="display:grid; grid-template-columns: 1fr; gap:10px; margin-bottom:14px;">
-            ${data.pros ? `
-              <div class="material-info-block pros-box" style="border-left: 3px solid var(--success); margin-bottom:0;">
-                <div class="material-info-title" style="color:var(--success);"><span>✅</span> Afzalliklari</div>
-                <div class="material-info-text">${escapeHtml(data.pros)}</div>
-              </div>
-            ` : ""}
-            ${data.cons ? `
-              <div class="material-info-block cons-box" style="border-left: 3px solid var(--danger); margin-bottom:0;">
-                <div class="material-info-title" style="color:var(--danger);"><span>❌</span> Kamchiliklari</div>
-                <div class="material-info-text">${escapeHtml(data.cons)}</div>
-              </div>
-            ` : ""}
-          </div>
-        ` : ""}
-
-        ${data.uzbekistan_sources ? `
-          <div class="material-info-block uzb-market-card">
-            <div class="material-info-title"><span>🇺🇿</span> O'zbekistondagi manbalar va bozorlar</div>
-            <div class="material-info-text">${escapeHtml(data.uzbekistan_sources)}</div>
-          </div>
-        ` : ""}
-
-        ${data.bim_tips ? `
-          <div class="material-info-block" style="border-left: 3px solid var(--accent);">
-            <div class="material-info-title" style="color:var(--accent);"><span>💻</span> BIM & Revit Maslahati</div>
-            <div class="material-info-text">${escapeHtml(data.bim_tips)}</div>
-          </div>
-        ` : ""}
       </div>
     `
   };
@@ -6363,7 +6477,7 @@ function openLibraryV2ResourceDetail(resId) {
 }
 
 // ------------------------------------------------------
-// 7. INTERACTIVE QUIZ ENGINE (Test Runner)
+// 7. INTERACTIVE QUIZ ENGINE (Smooth Motion & Focused UX)
 // ------------------------------------------------------
 
 function startLibraryQuiz(testId) {
@@ -6393,7 +6507,7 @@ function startLibraryQuiz(testId) {
     title: test.title,
     questions: questions,
     currentIndex: 0,
-    answers: {}, // { 0: selectedIndex, 1: selectedIndex, ... }
+    answers: {},
     isSubmitted: false
   };
 
@@ -6410,9 +6524,9 @@ function renderQuizScreen() {
 
   currentView = {
     html: `
-      <div class="page lib-quiz-page">
+      <div class="page lib-container lib-page-enter">
         <div class="lib-back-nav" onclick="closeDetail()">
-          ← Testni to'xtatish
+          ${libIcons.back('lib-back-svg', 16)} Testni to'xtatish
         </div>
 
         <div class="lib-quiz-card">
@@ -6425,34 +6539,36 @@ function renderQuizScreen() {
             <div class="lib-quiz-progress-fill" style="width: ${progressPercent}%;"></div>
           </div>
 
-          <div class="lib-quiz-question-text">
-            ${escapeHtml(q.q || q.question || "Savol")}
+          <div class="lib-quiz-question-box">
+            <div class="lib-quiz-question-text">
+              ${escapeHtml(q.q || q.question || "Savol")}
+            </div>
+
+            <div class="lib-quiz-options-list">
+              ${(q.options || []).map((opt, oIdx) => {
+                const letter = String.fromCharCode(65 + oIdx);
+                const isChosen = selectedOpt === oIdx;
+                return `
+                  <div class="lib-quiz-option ${isChosen ? "selected" : ""}" onclick="selectQuizAnswer(${oIdx})">
+                    <div class="lib-quiz-letter">${letter}</div>
+                    <div class="lib-quiz-opt-text">${escapeHtml(opt)}</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
           </div>
 
-          <div class="lib-quiz-options-list">
-            ${(q.options || []).map((opt, oIdx) => {
-              const letter = String.fromCharCode(65 + oIdx);
-              const isChosen = selectedOpt === oIdx;
-              return `
-                <div class="lib-quiz-option ${isChosen ? "selected" : ""}" onclick="selectQuizAnswer(${oIdx})">
-                  <div class="lib-quiz-letter">${letter}</div>
-                  <div class="lib-quiz-opt-text">${escapeHtml(opt)}</div>
-                </div>
-              `;
-            }).join("")}
-          </div>
-
-          <div class="lib-quiz-nav-row" style="margin-top:20px; display:flex; justify-content:space-between; gap:10px;">
+          <div class="lib-quiz-nav-row" style="margin-top:24px; display:flex; justify-content:space-between; gap:10px;">
             <button class="btn secondary" style="width:auto; margin:0; padding:10px 18px;" onclick="prevQuizQuestion()" ${curIdx === 0 ? "disabled" : ""}>
               ← Oldingisi
             </button>
 
             ${curIdx === total - 1 ? `
-              <button class="btn" style="width:auto; margin:0; padding:10px 24px; background:var(--success);" onclick="finishQuiz()">
+              <button class="lib-download-btn" style="width:auto; margin:0; padding:10px 24px;" onclick="finishQuiz()">
                 ✓ Natijani ko'rish
               </button>
             ` : `
-              <button class="btn" style="width:auto; margin:0; padding:10px 24px;" onclick="nextQuizQuestion()">
+              <button class="lib-download-btn" style="width:auto; margin:0; padding:10px 24px;" onclick="nextQuizQuestion()">
                 Keyingisi →
               </button>
             `}
@@ -6508,40 +6624,30 @@ function finishQuiz() {
 
   currentView = {
     html: `
-      <div class="page lib-quiz-result-page">
+      <div class="page lib-container lib-page-enter">
         <div class="lib-back-nav" onclick="closeDetail()">
-          ← Testlar ro'yxatiga qaytish
+          ${libIcons.back('lib-back-svg', 16)} Testlar
         </div>
 
         <div class="lib-quiz-card" style="text-align:center;">
-          <div style="font-size:54px; margin-bottom:8px;">
-            ${isPassed ? "🎉" : "📚"}
-          </div>
-          <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">
-            ${isPassed ? "A'lo natija!" : "Yana biroz mashq qiling!"}
-          </h2>
-          <div style="font-size:13px; color:var(--text-secondary); margin-bottom:18px;">
-            ${escapeHtml(libraryQuizState.title)}
-          </div>
-
-          <div class="lib-quiz-score-circle" style="font-size:32px; font-weight:900; color:${isPassed ? "var(--success)" : "var(--accent)"}; margin-bottom:12px;">
-            ${correctCount} / ${total}
-            <div style="font-size:16px; font-weight:700; opacity:0.8;">(${percent}%)</div>
+          <div class="lib-quiz-result-score">${percent}%</div>
+          <div class="lib-quiz-result-sub">
+            ${isPassed ? "Muvaffaqiyatli topshirildi" : "Yana biroz tayyorgarlik talab etiladi"} • ${correctCount} / ${total} to'g'ri javob
           </div>
 
           <div style="display:flex; justify-content:center; gap:10px; margin-bottom:24px;">
-            <button class="btn secondary" style="width:auto; padding:10px 16px;" onclick="startLibraryQuiz(${Number(libraryQuizState.testId)})">
-              🔄 Qayta topshirish
+            <button class="btn secondary" style="width:auto; padding:10px 18px;" onclick="startLibraryQuiz(${Number(libraryQuizState.testId)})">
+              Qayta topshirish
             </button>
-            <button class="btn" style="width:auto; padding:10px 16px;" onclick="closeDetail()">
+            <button class="lib-download-btn" style="width:auto; padding:10px 22px;" onclick="closeDetail()">
               Tugatish
             </button>
           </div>
 
           <!-- SAVOLLAR TAHLILI VA IZOHLARI -->
           <div style="text-align:left; border-top:1px solid var(--border); padding-top:18px;">
-            <div style="font-size:15px; font-weight:750; margin-bottom:12px;">
-              📝 Savollar tahlili va to'g'ri javoblar:
+            <div style="font-size:14px; font-weight:750; margin-bottom:12px; color:var(--text-primary);">
+              Savollar tahlili:
             </div>
 
             ${libraryQuizState.questions.map((q, idx) => {
@@ -6551,20 +6657,20 @@ function finishQuiz() {
               const explanation = q.explanation || "Revit va arxitektura standartlariga muvofiq.";
 
               return `
-                <div class="lib-quiz-review-item" style="background:var(--bg-surface-elevated); border-radius:10px; padding:12px; margin-bottom:10px; border-left:4px solid ${isCorrect ? "var(--success)" : "var(--danger)"};">
-                  <div style="font-size:13px; font-weight:700; margin-bottom:4px;">
+                <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; border-left:3px solid ${isCorrect ? "#10b981" : "#ef4444"};">
+                  <div style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
                     ${idx + 1}. ${escapeHtml(q.q || q.question)}
                   </div>
-                  <div style="font-size:12px; color:${isCorrect ? "var(--success)" : "var(--danger)"}; margin-bottom:2px;">
+                  <div style="font-size:12px; color:${isCorrect ? "#10b981" : "#ef4444"}; margin-bottom:2px;">
                     Sizning javobingiz: ${userAns !== undefined ? escapeHtml(q.options[userAns]) : "Javob berilmadi"} ${isCorrect ? "✓" : "✗"}
                   </div>
                   ${!isCorrect ? `
-                    <div style="font-size:12px; color:var(--success); font-weight:600; margin-bottom:4px;">
+                    <div style="font-size:12px; color:#10b981; font-weight:600; margin-bottom:4px;">
                       To'g'ri javob: ${escapeHtml(q.options[correctAns])}
                     </div>
                   ` : ""}
-                  <div style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; font-style:italic;">
-                    💡 Izoh: ${escapeHtml(explanation)}
+                  <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">
+                    Izoh: ${escapeHtml(explanation)}
                   </div>
                 </div>
               `;
