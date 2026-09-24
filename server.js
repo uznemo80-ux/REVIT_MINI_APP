@@ -823,52 +823,124 @@ async function initExtendedTables() {
       }
       console.log('✅ KUTUBXONA V2: Mavjud manbalar va materiallar migratsiya qilindi');
     }
-
-    // =================== LIVE ACTIVITY & ANALYTICS TRACKING ===================
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_activity (
-        user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        last_seen_at TIMESTAMPTZ DEFAULT NOW(),
-        current_tab VARCHAR(50) DEFAULT 'home',
-        status VARCHAR(50) DEFAULT 'online',
-        lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
-        lesson_title VARCHAR(500),
-        module_title VARCHAR(500),
-        course_title VARCHAR(500),
-        video_progress INT DEFAULT 0,
-        video_duration INT DEFAULT 0,
-        video_status VARCHAR(30) DEFAULT 'watching',
-        module_id INT REFERENCES modules(id) ON DELETE SET NULL,
-        test_question_index INT DEFAULT 0,
-        test_total_questions INT DEFAULT 0,
-        device_info VARCHAR(100),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_last_seen ON user_activity(last_seen_at)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_status ON user_activity(status)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_lesson ON user_activity(lesson_id)');
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS activity_history (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        activity_type VARCHAR(50) NOT NULL,
-        lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
-        module_id INT REFERENCES modules(id) ON DELETE SET NULL,
-        duration_seconds INT DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_created ON activity_history(created_at)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_type ON activity_history(activity_type)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_user ON activity_history(user_id)');
   } catch (error) {
     console.error('INIT EXTENDED TABLES ERROR:', error);
   }
 }
 
+// =================== LIVE ACTIVITY & ANALYTICS SCHEMA SETUP ===================
+async function ensureUserActivityTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_activity (
+        user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Check if column last_seen exists and rename to last_seen_at
+    try {
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'user_activity' AND column_name = 'last_seen'
+          ) AND NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'user_activity' AND column_name = 'last_seen_at'
+          ) THEN
+            ALTER TABLE user_activity RENAME COLUMN last_seen TO last_seen_at;
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.warn('user_activity rename check:', e.message);
+    }
+
+    var uaCols = [
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ DEFAULT NOW()',
+      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS current_tab VARCHAR(50) DEFAULT 'home'",
+      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'online'",
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS lesson_id INT',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS lesson_title VARCHAR(500)',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS module_title VARCHAR(500)',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS course_title VARCHAR(500)',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_progress INT DEFAULT 0',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_duration INT DEFAULT 0',
+      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_status VARCHAR(30) DEFAULT 'watching'",
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS module_id INT',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_question_index INT DEFAULT 0',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_total_questions INT DEFAULT 0',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS device_info VARCHAR(100)',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()'
+    ];
+
+    for (var sql of uaCols) {
+      try {
+        await pool.query(sql);
+      } catch (colErr) {
+        console.warn('user_activity col add:', colErr.message);
+      }
+    }
+
+    try {
+      await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id)');
+    } catch (uErr) {
+      console.warn('idx_user_activity_user_id:', uErr.message);
+    }
+
+    try {
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_last_seen ON user_activity(last_seen_at)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_status ON user_activity(status)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_lesson ON user_activity(lesson_id)');
+    } catch (idxErr) {
+      console.warn('user_activity indexes:', idxErr.message);
+    }
+
+    // activity_history table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_history (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        activity_type VARCHAR(50) NOT NULL,
+        lesson_id INT,
+        module_id INT,
+        duration_seconds INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var histCols = [
+      'ALTER TABLE activity_history ADD COLUMN IF NOT EXISTS activity_type VARCHAR(50)',
+      'ALTER TABLE activity_history ADD COLUMN IF NOT EXISTS lesson_id INT',
+      'ALTER TABLE activity_history ADD COLUMN IF NOT EXISTS module_id INT',
+      'ALTER TABLE activity_history ADD COLUMN IF NOT EXISTS duration_seconds INT DEFAULT 0',
+      'ALTER TABLE activity_history ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()'
+    ];
+    for (var hSql of histCols) {
+      try {
+        await pool.query(hSql);
+      } catch (hErr) {
+        console.warn('activity_history col add:', hErr.message);
+      }
+    }
+
+    try {
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_created ON activity_history(created_at)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_type ON activity_history(activity_type)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_user ON activity_history(user_id)');
+    } catch (hIdxErr) {
+      console.warn('activity_history indexes:', hIdxErr.message);
+    }
+
+    console.log('✅ LIVE ACTIVITY: user_activity va activity_history muvaffaqiyatli tekshirildi/sozlandi');
+  } catch (err) {
+    console.error('ensureUserActivityTable xatosi:', err.message);
+  }
+}
+
 initExtendedTables();
+ensureUserActivityTable();
 
 
 // ======================================================
@@ -2414,6 +2486,9 @@ app.post('/api/activity/heartbeat', async function (req, res) {
     return res.json({ ok: true, server_time: new Date() });
   } catch (error) {
     console.error('HEARTBEAT ERROR:', error.message);
+    if (error.message && (error.message.includes('column') || error.message.includes('relation') || error.message.includes('does not exist'))) {
+      ensureUserActivityTable().catch(function(e) { console.error('Auto repair error:', e.message); });
+    }
     return res.status(500).json({ error: 'Heartbeat xatosi' });
   }
 });
@@ -2437,16 +2512,24 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       "SELECT COUNT(*)::int AS c FROM payment_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'pending' AND u.access_until IS NOT NULL"
     );
 
-    // Live counts
-    var liveResult = await pool.query(`
-      SELECT
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
-        COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
-      FROM user_activity
-    `);
-    var la = liveResult.rows[0] || {};
+    // Live counts (safe query with fallback)
+    var la = { online_now: 0, watching_now: 0, testing_now: 0, today_active: 0 };
+    try {
+      var liveResult = await pool.query(`
+        SELECT
+          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
+          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
+          COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
+        FROM user_activity
+      `);
+      if (liveResult.rows[0]) {
+        la = liveResult.rows[0];
+      }
+    } catch (liveErr) {
+      console.error('LIVE STATS QUERY WARNING:', liveErr.message);
+      ensureUserActivityTable().catch(function(e) { console.error('Auto repair error:', e.message); });
+    }
 
     var todayProgressResult = await pool.query(`
       SELECT COUNT(*)::int AS today_views FROM progress WHERE watched = true AND watched_at >= CURRENT_DATE
@@ -2488,7 +2571,10 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
         COUNT(CASE WHEN access_until > NOW() THEN 1 END)::int AS paid_students,
         COUNT(CASE WHEN access_until IS NULL OR access_until <= NOW() THEN 1 END)::int AS unpaid_students
       FROM users
-    `);
+    `).catch(function(e) {
+      console.warn('liveStatsPromise warn:', e.message);
+      return { rows: [{ total_students: 0, paid_students: 0, unpaid_students: 0 }] };
+    });
 
     var liveActivityPromise = pool.query(`
       SELECT
@@ -2497,13 +2583,17 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
         COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
         COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
       FROM user_activity
-    `);
+    `).catch(function(e) {
+      console.warn('liveActivityPromise warn:', e.message);
+      ensureUserActivityTable().catch(function(err) { console.error('Auto repair error:', err.message); });
+      return { rows: [{ online_now: 0, watching_now: 0, testing_now: 0, today_active: 0 }] };
+    });
 
     var todayProgressPromise = pool.query(`
       SELECT COUNT(*)::int AS today_lesson_views
       FROM progress
       WHERE watched = true AND watched_at >= CURRENT_DATE
-    `);
+    `).catch(function() { return { rows: [{ today_lesson_views: 0 }] }; });
 
     var todayTestsPromise = pool.query(`
       SELECT
@@ -2511,7 +2601,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
         COUNT(CASE WHEN passed = true THEN 1 END)::int AS today_test_passed
       FROM module_results
       WHERE attempted_at >= CURRENT_DATE
-    `);
+    `).catch(function() { return { rows: [{ today_test_attempts: 0, today_test_passed: 0 }] }; });
 
     var activeUsersPromise = pool.query(`
       SELECT
@@ -2526,7 +2616,11 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
       WHERE ua.last_seen_at >= NOW() - INTERVAL '20 MINUTES'
       ORDER BY ua.last_seen_at DESC
       LIMIT 60
-    `);
+    `).catch(function(e) {
+      console.warn('activeUsersPromise warn:', e.message);
+      ensureUserActivityTable().catch(function(err) { console.error('Auto repair error:', err.message); });
+      return { rows: [] };
+    });
 
     var [liveStatsRes, liveActRes, todayProgRes, todayTestsRes, activeUsersRes] = await Promise.all([
       liveStatsPromise,
@@ -2555,7 +2649,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
         today_test_attempts: tt.today_test_attempts || 0,
         today_test_passed: tt.today_test_passed || 0
       },
-      active_users: activeUsersRes.rows
+      active_users: activeUsersRes.rows || []
     });
   } catch (error) {
     console.error('LIVE ACTIVITY ERROR:', error);
@@ -2587,7 +2681,11 @@ app.post('/api/admin/analytics/history', requireAdmin, async function (req, res)
         (SELECT COUNT(*)::int FROM progress WHERE watched = true AND watched_at >= ${startDateSql} AND watched_at < ${endDateSql}) AS lesson_views,
         (SELECT COUNT(*)::int FROM module_results WHERE attempted_at >= ${startDateSql} AND attempted_at < ${endDateSql}) AS test_attempts,
         (SELECT COUNT(*)::int FROM module_results WHERE passed = true AND attempted_at >= ${startDateSql} AND attempted_at < ${endDateSql}) AS passed_tests
-    `);
+    `).catch(function(e) {
+      console.warn('summaryPromise error:', e.message);
+      ensureUserActivityTable().catch(function(err) { console.error('Auto repair error:', err.message); });
+      return { rows: [{ new_users: 0, active_users: 0, lesson_views: 0, test_attempts: 0, passed_tests: 0 }] };
+    });
 
     var dailyPromise = pool.query(`
       WITH dates AS (
