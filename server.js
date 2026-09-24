@@ -1067,7 +1067,7 @@ app.post('/api/content', async function (req, res) {
     var userHasAccess = hasAccess(user);
 
     var modulesResult = await pool.query(
-      'SELECT id, title, order_index FROM modules ORDER BY order_index ASC, id ASC'
+      'SELECT id, course_id, title, order_index FROM modules ORDER BY order_index ASC, id ASC'
     );
     var modules = modulesResult.rows;
 
@@ -1101,7 +1101,7 @@ app.post('/api/content', async function (req, res) {
       });
 
       return {
-        id: mod.id, title: mod.title, order_index: mod.order_index,
+        id: mod.id, course_id: mod.course_id || 1, title: mod.title, order_index: mod.order_index,
         unlocked: moduleUnlocked, lessons: mappedLessons,
         watched_count: watchedCount, total_count: moduleLessons.length
       };

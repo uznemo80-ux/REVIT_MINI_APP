@@ -1248,11 +1248,15 @@ function renderShowcaseCarousel() {
             return `
               <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${globalIdx}">
                 <!-- Faqat Google Drive PDF chizmasi (ortiqcha rasmlarsiz) -->
-                <div class="carousel-sheet-card">
+                <div class="carousel-sheet-card" onclick="openShowcaseFullscreenModal(${globalIdx})" title="Kattalashtirib ko'rish" style="cursor:zoom-in;">
                   <canvas id="pdf-canvas-${globalIdx}" class="carousel-pdf-canvas"></canvas>
                   <div class="pdf-sheet-spinner" id="pdf-spinner-${globalIdx}">
                     <div class="spinner"></div>
                     <span style="font-size:11.5px; color:var(--text-secondary); margin-top:8px;">${item.pageNum}-list ochilmoqda...</span>
+                  </div>
+                  <div class="sheet-zoom-overlay-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    <span>Kattalashtirish</span>
                   </div>
                 </div>
 
@@ -1298,6 +1302,189 @@ function renderShowcaseCarousel() {
       </div>
     </div>
   `;
+}
+
+// ----------------------------------------------------
+// SHOWCASE FULLSCREEN ZOOM VIEWER (Faqat ko'rish, ulashish/tarqatishsiz)
+// ----------------------------------------------------
+let fullscreenShowcaseIdx = 0;
+let fullscreenShowcaseScale = 1.0;
+
+function openShowcaseFullscreenModal(slideIdx) {
+  haptic("light");
+  if (showcaseAutoTimer) clearInterval(showcaseAutoTimer);
+  
+  const slides = getShowcaseSlides();
+  if (!slides || !slides.length) return;
+  fullscreenShowcaseIdx = Math.max(0, Math.min(slideIdx, slides.length - 1));
+  fullscreenShowcaseScale = 1.0;
+
+  let modalEl = document.getElementById("showcase-fullscreen-modal");
+  if (!modalEl) {
+    modalEl = document.createElement("div");
+    modalEl.id = "showcase-fullscreen-modal";
+    modalEl.className = "showcase-fullscreen-overlay";
+    document.body.appendChild(modalEl);
+  }
+
+  renderFullscreenModalContent();
+  document.body.style.overflow = "hidden";
+}
+
+function closeShowcaseFullscreenModal() {
+  haptic("light");
+  const modalEl = document.getElementById("showcase-fullscreen-modal");
+  if (modalEl) modalEl.remove();
+  document.body.style.overflow = "";
+  initShowcaseTimer();
+}
+
+function renderFullscreenModalContent() {
+  const modalEl = document.getElementById("showcase-fullscreen-modal");
+  if (!modalEl) return;
+
+  const slides = getShowcaseSlides();
+  const slide = slides[fullscreenShowcaseIdx];
+  if (!slide) return;
+
+  modalEl.innerHTML = `
+    <div class="sf-backdrop" onclick="closeShowcaseFullscreenModal()"></div>
+    <div class="sf-container">
+      <!-- Yuqori boshqaruv paneli -->
+      <div class="sf-header">
+        <div class="sf-info">
+          <div class="sf-title">📄 ${slide.pageNum}-list</div>
+          <div class="sf-subtitle">🎓 ${escapeHtml(slide.sc.course_title || "Revit kursi")} bitiruvchi natijasi</div>
+        </div>
+        <div class="sf-actions">
+          <div class="sf-zoom-controls">
+            <button class="sf-tool-btn" onclick="zoomFullscreenShowcase(-0.35)" title="Kichiklashtirish">➖</button>
+            <button class="sf-tool-btn sf-zoom-label" onclick="resetFullscreenShowcaseZoom()" title="Asl o'lcham (100%)">
+              <span id="sf-zoom-text">${Math.round(fullscreenShowcaseScale * 100)}%</span>
+            </button>
+            <button class="sf-tool-btn" onclick="zoomFullscreenShowcase(0.35)" title="Kattalashtirish">➕</button>
+          </div>
+          <button class="sf-close-btn" onclick="closeShowcaseFullscreenModal()" title="Yopish">✕</button>
+        </div>
+      </div>
+
+      <!-- Asosiy chizma ko'rish maydoni -->
+      <div class="sf-viewport" id="sf-viewport">
+        <div class="sf-canvas-wrap" id="sf-canvas-wrap" style="transform: scale(${fullscreenShowcaseScale});">
+          <canvas id="fullscreen-sheet-canvas"></canvas>
+          <div id="fullscreen-sheet-spinner" class="pdf-sheet-spinner">
+            <div class="spinner"></div>
+            <span style="font-size:12.5px; color:#fff; margin-top:10px;">${slide.pageNum}-list yuqori sifatda yuklanmoqda...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chap/O'ng listga o'tish tugmalari -->
+      ${slides.length > 1 ? `
+        <button class="sf-nav-btn sf-prev" onclick="prevFullscreenSlide(event)" title="Oldingi list">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="sf-nav-btn sf-next" onclick="nextFullscreenSlide(event)" title="Keyingi list">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      ` : ""}
+
+      <!-- Pastki ko'rsatkich -->
+      <div class="sf-footer">
+        <span>${fullscreenShowcaseIdx + 1} / ${slides.length}</span>
+      </div>
+    </div>
+  `;
+
+  renderFullscreenHighResCanvas(slide);
+}
+
+function zoomFullscreenShowcase(delta) {
+  haptic("light");
+  fullscreenShowcaseScale = Math.max(0.6, Math.min(3.5, fullscreenShowcaseScale + delta));
+  applyFullscreenTransform();
+}
+
+function resetFullscreenShowcaseZoom() {
+  haptic("light");
+  fullscreenShowcaseScale = 1.0;
+  applyFullscreenTransform();
+}
+
+function applyFullscreenTransform() {
+  const wrap = document.getElementById("sf-canvas-wrap");
+  const zoomText = document.getElementById("sf-zoom-text");
+  if (wrap) {
+    wrap.style.transform = `scale(${fullscreenShowcaseScale})`;
+  }
+  if (zoomText) {
+    zoomText.textContent = `${Math.round(fullscreenShowcaseScale * 100)}%`;
+  }
+}
+
+function prevFullscreenSlide(e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const slides = getShowcaseSlides();
+  if (!slides || !slides.length) return;
+  fullscreenShowcaseIdx = (fullscreenShowcaseIdx - 1 + slides.length) % slides.length;
+  fullscreenShowcaseScale = 1.0;
+  renderFullscreenModalContent();
+}
+
+function nextFullscreenSlide(e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const slides = getShowcaseSlides();
+  if (!slides || !slides.length) return;
+  fullscreenShowcaseIdx = (fullscreenShowcaseIdx + 1) % slides.length;
+  fullscreenShowcaseScale = 1.0;
+  renderFullscreenModalContent();
+}
+
+async function renderFullscreenHighResCanvas(slide) {
+  const canvas = document.getElementById("fullscreen-sheet-canvas");
+  const spinner = document.getElementById("fullscreen-sheet-spinner");
+  if (!canvas || !slide) return;
+
+  const rawPdfUrl = slide.pdfUrl || "";
+  const proxyUrl = slide.driveId
+    ? `/api/pdf-proxy?id=${slide.driveId}`
+    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
+
+  try {
+    let docPromise = pdfDocPromiseCache.get(proxyUrl);
+    if (!docPromise) {
+      docPromise = window.pdfjsLib.getDocument({
+        url: proxyUrl,
+        cMapUrl: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/",
+        cMapPacked: true
+      }).promise;
+      pdfDocPromiseCache.set(proxyUrl, docPromise);
+    }
+
+    const pdfDoc = await docPromise;
+    const actualPageNum = Math.min(Math.max(1, slide.pageNum), pdfDoc.numPages);
+    const page = await pdfDoc.getPage(actualPageNum);
+
+    // High resolution render for zoom clarity
+    const viewport = page.getViewport({ scale: 2.2 });
+    const ctx = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    if (spinner) {
+      spinner.style.opacity = "0";
+      setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 250);
+    }
+  } catch (err) {
+    console.warn("Fullscreen PDF sheet render error:", err);
+    if (spinner) {
+      spinner.innerHTML = `<span style="color:#ff6b6b; font-size:12px;">Yuklashda xatolik yuz berdi.</span>`;
+    }
+  }
 }
 
 // ----------------------------------------------------
@@ -1347,7 +1534,7 @@ function renderSheetChips() {
   container.innerHTML = html;
 
   const sortedList = Array.from(currentShowcaseSelectedSheets).sort((a, b) => a - b);
-  if (selectedInput) {
+  if (selectedInput && document.activeElement !== selectedInput) {
     selectedInput.value = sortedList.join(", ");
   }
 }
@@ -1859,9 +2046,54 @@ function setMarketplaceSubCategory(subCat) {
   renderMarketplaceView();
 }
 
+function renderMarketplaceGridHtml(filtered) {
+  if (!filtered.length) {
+    return `
+      <div class="empty-box" style="margin-top:20px;">
+        Qidiruv bo'yicha mos materiallar topilmadi.
+      </div>
+    `;
+  }
+  return `
+    <div class="marketplace-grid">
+      ${filtered.map(mat => `
+        <div class="material-card" onclick="openMaterialDetailSheet(${Number(mat.id)})">
+          <img src="${escapeHtml(mat.image_url || 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80')}" alt="${escapeHtml(mat.title)}" class="material-card-img" onerror="this.src='https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80';">
+          <div class="material-card-content">
+            <div class="material-card-category">${escapeHtml(mat.category)} · ${escapeHtml(mat.sub_category)}</div>
+            <div class="material-card-title">${escapeHtml(mat.title)}</div>
+            ${mat.dimensions ? `<div class="material-card-dim">📐 ${escapeHtml(mat.dimensions.split('.')[0])}</div>` : ""}
+            <div class="material-card-footer">
+              <span>Batafsil ko'rish</span>
+              <span>→</span>
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function setMarketplaceSearch(query) {
   marketplaceSearchQuery = query;
-  renderMarketplaceView();
+  const gridContainer = document.getElementById("marketplace-grid-container");
+  if (gridContainer) {
+    const materialsList = state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS;
+    const q = (marketplaceSearchQuery || "").trim().toLowerCase();
+    const filtered = materialsList.filter(m => {
+      const matchCat = marketplaceCategory === "Barchasi" || m.category === marketplaceCategory;
+      const matchSubCat = marketplaceSubCategory === "Barchasi" || m.sub_category === marketplaceSubCategory;
+      const matchQuery = !q ||
+        (m.title || "").toLowerCase().includes(q) ||
+        (m.short_desc || "").toLowerCase().includes(q) ||
+        (m.sub_category || "").toLowerCase().includes(q) ||
+        (m.what_is_it || "").toLowerCase().includes(q);
+      return matchCat && matchSubCat && matchQuery;
+    });
+    gridContainer.innerHTML = renderMarketplaceGridHtml(filtered);
+  } else {
+    renderMarketplaceView();
+  }
 }
 
 function renderMarketplaceView() {
@@ -1901,6 +2133,7 @@ function renderMarketplaceView() {
 
         <!-- Qidiruv paneli -->
         <input
+          id="marketplace-search-input"
           class="apple-input"
           style="margin-bottom:12px;"
           type="text"
@@ -1930,28 +2163,9 @@ function renderMarketplaceView() {
         ` : ""}
 
         <!-- Mahsulotlar Gridi -->
-        ${filtered.length ? `
-          <div class="marketplace-grid">
-            ${filtered.map(mat => `
-              <div class="material-card" onclick="openMaterialDetailSheet(${Number(mat.id)})">
-                <img src="${escapeHtml(mat.image_url || 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80')}" alt="${escapeHtml(mat.title)}" class="material-card-img" onerror="this.src='https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80';">
-                <div class="material-card-content">
-                  <div class="material-card-category">${escapeHtml(mat.category)} · ${escapeHtml(mat.sub_category)}</div>
-                  <div class="material-card-title">${escapeHtml(mat.title)}</div>
-                  ${mat.dimensions ? `<div class="material-card-dim">📐 ${escapeHtml(mat.dimensions.split('.')[0])}</div>` : ""}
-                  <div class="material-card-footer">
-                    <span>Batafsil ko'rish</span>
-                    <span>→</span>
-                  </div>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-        ` : `
-          <div class="empty-box" style="margin-top:20px;">
-            Qidiruv bo'yicha mos materiallar topilmadi.
-          </div>
-        `}
+        <div id="marketplace-grid-container">
+          ${renderMarketplaceGridHtml(filtered)}
+        </div>
       </div>
     `
   };
@@ -3082,10 +3296,12 @@ function renderFreeMiniCourseCard() {
 }
 
 let fmcActiveCourseFilter = "all";
+let fmcSelectedLessonIds = new Set();
 
-function renderFmcLessonsListHtml(selectedIds) {
+function renderFmcLessonsListHtml() {
   const courses = state.courses || [];
   const modules = Array.isArray(state.modules) ? state.modules : [];
+  const firstCourseId = courses.length ? courses[0].id : 1;
 
   const filterCourseId = fmcActiveCourseFilter;
   const filteredCourses = filterCourseId === "all" 
@@ -3098,10 +3314,10 @@ function renderFmcLessonsListHtml(selectedIds) {
         <div style="font-size:12.5px; font-weight:750; color:var(--accent); margin-bottom:8px;">📂 ${escapeHtml(m.title)}</div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           ${(m.lessons || []).map(l => {
-            const isChecked = selectedIds.length ? selectedIds.includes(Number(l.id)) : Boolean(l.is_free);
+            const isChecked = fmcSelectedLessonIds.has(Number(l.id));
             return `
               <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
-                <input type="checkbox" class="fmc-lesson-cb" value="${l.id}" ${isChecked ? "checked" : ""}>
+                <input type="checkbox" class="fmc-lesson-cb" value="${l.id}" ${isChecked ? "checked" : ""} onchange="onFmcLessonCheckboxChange(${l.id}, this.checked)">
                 <span>${escapeHtml(l.title)} ${l.is_free ? '<span style="color:var(--success); font-size:11px;">(Bepul)</span>' : ''}</span>
               </label>
             `;
@@ -3111,8 +3327,8 @@ function renderFmcLessonsListHtml(selectedIds) {
     `).join("");
   }
 
-  return filteredCourses.map(c => {
-    const cModules = modules.filter(m => Number(m.course_id) === Number(c.id));
+  let html = filteredCourses.map(c => {
+    const cModules = modules.filter(m => Number(m.course_id || firstCourseId) === Number(c.id));
     if (!cModules.length) return "";
 
     return `
@@ -3131,10 +3347,10 @@ function renderFmcLessonsListHtml(selectedIds) {
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; padding-left:4px;">
               ${(m.lessons || []).map(l => {
-                const isChecked = selectedIds.length ? selectedIds.includes(Number(l.id)) : Boolean(l.is_free);
+                const isChecked = fmcSelectedLessonIds.has(Number(l.id));
                 return `
                   <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
-                    <input type="checkbox" class="fmc-lesson-cb" data-course-id="${c.id}" value="${l.id}" ${isChecked ? "checked" : ""}>
+                    <input type="checkbox" class="fmc-lesson-cb" data-course-id="${c.id}" value="${l.id}" ${isChecked ? "checked" : ""} onchange="onFmcLessonCheckboxChange(${l.id}, this.checked)">
                     <span>${escapeHtml(l.title)} ${l.is_free ? '<span style="color:var(--success); font-size:11px; font-weight:700;">(Bepul)</span>' : ''}</span>
                   </label>
                 `;
@@ -3145,36 +3361,70 @@ function renderFmcLessonsListHtml(selectedIds) {
       </div>
     `;
   }).join("");
+
+  if (!html.trim()) {
+    html = `<div class="empty-box" style="padding:16px 12px; font-size:12.5px;">Ushbu kursda hali darslar mavjud emas. Boshqa kursni tanlang yoki "Barcha kurslar" filtri orqali ko'ring.</div>`;
+  }
+  return html;
+}
+
+function onFmcLessonCheckboxChange(lessonId, checked) {
+  if (checked) {
+    fmcSelectedLessonIds.add(Number(lessonId));
+  } else {
+    fmcSelectedLessonIds.delete(Number(lessonId));
+  }
 }
 
 function onFmcCourseFilterChange(val) {
   fmcActiveCourseFilter = val;
-  const currentChecked = Array.from(document.querySelectorAll(".fmc-lesson-cb:checked")).map(cb => Number(cb.value));
   const container = document.getElementById("fmc-lessons-grouped-container");
   if (container) {
-    container.innerHTML = renderFmcLessonsListHtml(currentChecked);
+    container.innerHTML = renderFmcLessonsListHtml();
   }
 }
 
 function toggleSelectCourseLessons(courseId) {
   haptic("light");
-  const cbs = document.querySelectorAll(`.fmc-lesson-cb[data-course-id="${courseId}"]`);
-  const anyUnchecked = Array.from(cbs).some(cb => !cb.checked);
-  cbs.forEach(cb => { cb.checked = anyUnchecked; });
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const courses = state.courses || [];
+  const firstCourseId = courses.length ? courses[0].id : 1;
+  const cModules = modules.filter(m => Number(m.course_id || firstCourseId) === Number(courseId));
+  const lessonIds = cModules.flatMap(m => (m.lessons || []).map(l => Number(l.id)));
+  
+  const allAlreadySelected = lessonIds.length > 0 && lessonIds.every(id => fmcSelectedLessonIds.has(id));
+  if (allAlreadySelected) {
+    lessonIds.forEach(id => fmcSelectedLessonIds.delete(id));
+  } else {
+    lessonIds.forEach(id => fmcSelectedLessonIds.add(id));
+  }
+  const container = document.getElementById("fmc-lessons-grouped-container");
+  if (container) {
+    container.innerHTML = renderFmcLessonsListHtml();
+  }
 }
 
 function selectAllFreeLessons() {
   haptic("medium");
   const modules = Array.isArray(state.modules) ? state.modules : [];
-  const freeIds = new Set(modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => Number(l.id))));
-  document.querySelectorAll(".fmc-lesson-cb").forEach(cb => {
-    cb.checked = freeIds.has(Number(cb.value));
+  modules.forEach(m => {
+    (m.lessons || []).forEach(l => {
+      if (l.is_free) fmcSelectedLessonIds.add(Number(l.id));
+    });
   });
+  const container = document.getElementById("fmc-lessons-grouped-container");
+  if (container) {
+    container.innerHTML = renderFmcLessonsListHtml();
+  }
 }
 
 function clearAllFmcLessons() {
   haptic("light");
-  document.querySelectorAll(".fmc-lesson-cb").forEach(cb => { cb.checked = false; });
+  fmcSelectedLessonIds.clear();
+  const container = document.getElementById("fmc-lessons-grouped-container");
+  if (container) {
+    container.innerHTML = renderFmcLessonsListHtml();
+  }
 }
 
 function openEditFreeMiniCourseModal() {
@@ -3185,6 +3435,7 @@ function openEditFreeMiniCourseModal() {
   const currentPoints = s.free_minicourse_points || "Revit nima ekanini tushunasiz\nBirinchi loyihani yaratasiz\nDevor, eshik, deraza chizasiz\nBirinchi 3D modelingizni yaratasiz";
   const selectedIds = (s.free_minicourse_lesson_ids || "").split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
 
+  fmcSelectedLessonIds = new Set(selectedIds);
   fmcActiveCourseFilter = "all";
 
   currentView = {
@@ -3231,7 +3482,7 @@ function openEditFreeMiniCourseModal() {
             </div>
 
             <div id="fmc-lessons-grouped-container" style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-surface);">
-              ${renderFmcLessonsListHtml(selectedIds)}
+              ${renderFmcLessonsListHtml()}
             </div>
             <span style="font-size:11.5px; color:var(--text-secondary); margin-top:6px; display:block;">
               💡 Darslar kurslar va modullar bo'yicha tartiblangan. Qaysi darslarni belgilasangiz, o'quvchi boshlash tugmasini bosganda aynan o'sha darslar ro'yxati ochiladi.
@@ -3252,9 +3503,7 @@ async function submitEditFreeMiniCourse() {
   const title = document.getElementById("edit-fmc-title")?.value.trim() || "REVIT 0 DAN";
   const subtitle = document.getElementById("edit-fmc-subtitle")?.value.trim() || "";
   const points = document.getElementById("edit-fmc-points")?.value.trim() || "";
-
-  const cbs = document.querySelectorAll(".fmc-lesson-cb:checked");
-  const chosenIds = Array.from(cbs).map(cb => cb.value).join(",");
+  const chosenIds = Array.from(fmcSelectedLessonIds).join(",");
 
   const btn = document.getElementById("save-fmc-btn");
   if (btn) btn.classList.add("btn-loading");
@@ -3464,7 +3713,7 @@ function renderHome() {
           <div class="testi-card" style="position:relative;">
             <div class="testi-text">"${escapeHtml(t.text)}"</div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-              <div class="testi-name">— ${escapeHtml(t.name)} ${t.role ? `<span style="font-size:11px; color:var(--text-muted); font-weight:normal;">(${escapeHtml(t.role)})</span>` : ""}</div>
+              <div class="testi-name">— ${escapeHtml(t.name)}</div>
               ${state.is_admin ? `
                 <div style="display:flex; gap:6px;">
                   <span onclick="openEditTestimonialModal(${Number(t.id)}, '${escapeJsString(t.name)}', '${escapeJsString(t.text)}', '${escapeJsString(t.role || 'O\'quvchi')}')" title="Tahrirlash" style="font-size:12px; cursor:pointer; opacity:0.8;">✏️</span>
@@ -3704,8 +3953,7 @@ function renderCoursePriceBlock(course) {
   return `<div class="course-price">${escapeHtml(course.price || '')}</div>`;
 }
 
-// Kurslar ro'yxati va Admin uchun "Yangi Kurs Qo'shish" (Talab 3)
-function renderCoursesList() {
+function getFilteredCoursesList() {
   const allCourses = state.courses && state.courses.length ? state.courses : [
     {
       id: 1,
@@ -3722,13 +3970,73 @@ function renderCoursesList() {
   ];
 
   const q = courseSearchQuery.trim().toLowerCase();
-  const coursesList = allCourses.filter(c => {
+  return allCourses.filter(c => {
     const courseCats = Array.isArray(c.categories) && c.categories.length ? c.categories : [c.category || "Boshqa"];
     const matchesCategory = selectedCourseCategory === "Barchasi" || courseCats.includes(selectedCourseCategory);
     const matchesSearch = !q || (c.title || "").toLowerCase().includes(q) || (c.subtitle || "").toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
+}
 
+function renderCourseCardsListHtml() {
+  const coursesList = getFilteredCoursesList();
+  if (!coursesList.length) {
+    return `<div class="empty-box">Hech narsa topilmadi. Boshqa so'z yoki kategoriya bilan sinab ko'ring.</div>`;
+  }
+
+  return coursesList.map(course => {
+    const coverSrc = formatImageUrl(course.cover_url);
+    const retrySrc = getDriveFallbackUrl(course.cover_url);
+    return `
+    <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
+      ${state.is_admin ? `
+        <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
+          <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.6);" onclick="event.stopPropagation(); openEditCourseModal(${Number(course.id)})">✏️ Tahrirlash</button>
+          <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(235,59,59,0.8);" onclick="event.stopPropagation(); deleteCourseModal(${Number(course.id)})">🗑️</button>
+        </div>
+      ` : ""}
+
+      <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, #0d47a1, #1976d2);">
+        ${coverSrc ? `<img src="${escapeHtml(coverSrc)}" data-retry="${escapeHtml(retrySrc)}" onerror="handleImageError(this)" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+        <div class="course-banner-text" style="${coverSrc ? 'background:rgba(0,0,0,0.5);' : ''}">
+          <h3>${escapeHtml(course.title)}</h3>
+          <p>${escapeHtml(course.subtitle || '')}</p>
+        </div>
+      </div>
+      <div class="course-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
+            ${course.status === 'active' ? 'Faol Kurs' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Tez Kunda')}
+          </div>
+          <div style="font-weight:750; color:var(--accent); font-size:15px;">
+            ${course.is_discount_active && course.discount_price ? `
+              <span style="color:var(--danger);">${escapeHtml(course.discount_price)}</span>
+              <span style="font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px;">${escapeHtml(course.original_price || course.price || '')}</span>
+            ` : escapeHtml(course.price || '')}
+          </div>
+        </div>
+        ${course.is_discount_active && course.discount_until ? `
+          <div class="discount-countdown" data-until="${escapeHtml(course.discount_until)}" style="font-size:11px; color:var(--danger); font-weight:700; margin-bottom:8px;">
+            🔥 Hisoblanmoqda...
+          </div>
+        ` : ""}
+        <div class="course-meta" style="margin-bottom:12px;">
+          <span>🏷️ ${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
+          <span>📚 ${course.total_modules || 0} Modul</span>
+          <span>🎬 ${course.total_lessons || 0} Dars</span>
+          ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
+        </div>
+        <button class="btn" style="margin-bottom:0; padding:10px 16px; ${course.status !== 'active' && state.is_admin ? 'background:var(--bg-surface-elevated); border:1px solid var(--border); color:var(--text-primary);' : ''}">
+          ${course.status === 'active' ? 'Darslarni ochish →' : (state.is_admin ? '⚙️ Kursni ochish va to‘ldirish →' : 'Tez kunda chiqadi ⏳')}
+        </button>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+// Kurslar ro'yxati va Admin uchun "Yangi Kurs Qo'shish" (Talab 3)
+function renderCoursesList() {
   const categoryChips = ["Barchasi", ...COURSE_CATEGORIES];
 
   return `
@@ -3743,6 +4051,7 @@ function renderCoursesList() {
       </div>
 
       <input
+        id="course-search-input"
         class="apple-input"
         style="margin-bottom:12px;"
         type="text"
@@ -3759,62 +4068,21 @@ function renderCoursesList() {
         `).join("")}
       </div>
 
-      ${coursesList.length ? coursesList.map(course => {
-        const coverSrc = formatImageUrl(course.cover_url);
-        const retrySrc = getDriveFallbackUrl(course.cover_url);
-        return `
-        <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
-          ${state.is_admin ? `
-            <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
-              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.6);" onclick="event.stopPropagation(); openEditCourseModal(${Number(course.id)})">✏️ Tahrirlash</button>
-              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(235,59,59,0.8);" onclick="event.stopPropagation(); deleteCourseModal(${Number(course.id)})">🗑️</button>
-            </div>
-          ` : ""}
-
-          <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, #0d47a1, #1976d2);">
-            ${coverSrc ? `<img src="${escapeHtml(coverSrc)}" data-retry="${escapeHtml(retrySrc)}" onerror="handleImageError(this)" style="width:100%; height:100%; object-fit:cover;" />` : ""}
-            <div class="course-banner-text" style="${coverSrc ? 'background:rgba(0,0,0,0.5);' : ''}">
-              <h3>${escapeHtml(course.title)}</h3>
-              <p>${escapeHtml(course.subtitle || '')}</p>
-            </div>
-          </div>
-          <div class="course-body">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
-                ${course.status === 'active' ? 'Faol Kurs' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Tez Kunda')}
-              </div>
-              <div style="font-weight:750; color:var(--accent); font-size:15px;">
-                ${course.is_discount_active && course.discount_price ? `
-                  <span style="color:var(--danger);">${escapeHtml(course.discount_price)}</span>
-                  <span style="font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px;">${escapeHtml(course.original_price || course.price || '')}</span>
-                ` : escapeHtml(course.price || '')}
-              </div>
-            </div>
-            ${course.is_discount_active && course.discount_until ? `
-              <div class="discount-countdown" data-until="${escapeHtml(course.discount_until)}" style="font-size:11px; color:var(--danger); font-weight:700; margin-bottom:8px;">
-                🔥 Hisoblanmoqda...
-              </div>
-            ` : ""}
-            <div class="course-meta" style="margin-bottom:12px;">
-              <span>🏷️ ${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
-              <span>📚 ${course.total_modules || 0} Modul</span>
-              <span>🎬 ${course.total_lessons || 0} Dars</span>
-              ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
-            </div>
-            <button class="btn" style="margin-bottom:0; padding:10px 16px; ${course.status !== 'active' && state.is_admin ? 'background:var(--bg-surface-elevated); border:1px solid var(--border); color:var(--text-primary);' : ''}">
-              ${course.status === 'active' ? 'Darslarni ochish →' : (state.is_admin ? '⚙️ Kursni ochish va to‘ldirish →' : 'Tez kunda chiqadi ⏳')}
-            </button>
-          </div>
-        </div>
-      `;
-      }).join("") : `<div class="empty-box">Hech narsa topilmadi. Boshqa so'z yoki kategoriya bilan sinab ko'ring.</div>`}
+      <div id="course-cards-list">
+        ${renderCourseCardsListHtml()}
+      </div>
     </div>
   `;
 }
 
 function setCourseSearch(value) {
   courseSearchQuery = value;
-  render();
+  const listEl = document.getElementById("course-cards-list");
+  if (listEl) {
+    listEl.innerHTML = renderCourseCardsListHtml();
+  } else {
+    render();
+  }
 }
 
 function setCourseCategory(cat) {
@@ -6883,59 +7151,80 @@ function renderAdminLibrary() {
   `;
 }
 
-function renderAdminLibraryFiles(filteredFiles, search) {
-  return `
-    <div style="margin-bottom:14px;">
-      <input class="apple-input" type="text" placeholder="🔍 Fayl, kurs yoki dars nomi bo'yicha qidirish..." value="${escapeHtml(search)}" oninput="onLibraryFileSearch(this.value)">
-    </div>
-    <div class="admin-section-header" style="margin-bottom:10px;">
-      <div class="admin-section-title">Barcha Dars Fayllari (${filteredFiles.length})</div>
-      <button class="admin-small-btn" onclick="adminSetTab('library')" title="Yangilash">🔄 Yangilash</button>
-    </div>
-    <div class="lesson-files">
-      ${filteredFiles.length ? filteredFiles.map(f => `
-        <div class="lesson-file-row">
-          <div class="lesson-file-header">
-            <div class="lesson-file-title-wrap">
-              <span style="font-size:20px;">${getResourceIcon(f.file_name)}</span>
-              <div>
-                <div class="lesson-file-title-text">${escapeHtml(f.file_name)}</div>
-                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
-                  ${escapeHtml(f.course_title || "Kurs")} → ${escapeHtml(f.lesson_title || "Dars")}
-                </div>
-              </div>
-            </div>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <button class="admin-small-btn" onclick="openEditLibraryFileDirectModal(${Number(f.id)}, '${escapeJsString(f.file_name)}', '${escapeJsString(f.file_url)}')" title="Tahrirlash">
-                ✏️
-              </button>
-              <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteLibraryFileDirect(${Number(f.id)})" title="O'chirish">
-                🗑️
-              </button>
-            </div>
-          </div>
-          <div class="lesson-file-link-wrap">
-            <a href="${escapeHtml(f.file_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
-              ${escapeHtml(f.file_url)}
-            </a>
-            <div style="display:flex; gap:6px; flex-shrink:0;">
-              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="window.open('${escapeJsString(f.file_url)}', '_blank')">
-                🔗 Sinab ko'rish
-              </button>
-              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(f.file_url)}', 'Fayl havolasi nusxalandi!')">
-                📋 Nusxa
-              </button>
+function renderAdminLibraryFilesRowsHtml(filteredFiles) {
+  if (!filteredFiles.length) {
+    return `<div class="empty-box">Fayllar topilmadi.</div>`;
+  }
+  return filteredFiles.map(f => `
+    <div class="lesson-file-row">
+      <div class="lesson-file-header">
+        <div class="lesson-file-title-wrap">
+          <span style="font-size:20px;">${getResourceIcon(f.file_name)}</span>
+          <div>
+            <div class="lesson-file-title-text">${escapeHtml(f.file_name)}</div>
+            <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+              ${escapeHtml(f.course_title || "Kurs")} → ${escapeHtml(f.lesson_title || "Dars")}
             </div>
           </div>
         </div>
-      `).join("") : `<div class="empty-box">Fayllar topilmadi.</div>`}
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="admin-small-btn" onclick="openEditLibraryFileDirectModal(${Number(f.id)}, '${escapeJsString(f.file_name)}', '${escapeJsString(f.file_url)}')" title="Tahrirlash">
+            ✏️
+          </button>
+          <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteLibraryFileDirect(${Number(f.id)})" title="O'chirish">
+            🗑️
+          </button>
+        </div>
+      </div>
+      <div class="lesson-file-link-wrap">
+        <a href="${escapeHtml(f.file_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+          ${escapeHtml(f.file_url)}
+        </a>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="window.open('${escapeJsString(f.file_url)}', '_blank')">
+            🔗 Sinab ko'rish
+          </button>
+          <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(f.file_url)}', 'Fayl havolasi nusxalandi!')">
+            📋 Nusxa
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderAdminLibraryFiles(filteredFiles, search) {
+  return `
+    <div style="margin-bottom:14px;">
+      <input id="admin-library-file-search-input" class="apple-input" type="text" placeholder="🔍 Fayl, kurs yoki dars nomi bo'yicha qidirish..." value="${escapeHtml(search)}" oninput="onLibraryFileSearch(this.value)">
+    </div>
+    <div class="admin-section-header" style="margin-bottom:10px;">
+      <div id="admin-library-files-count" class="admin-section-title">Barcha Dars Fayllari (${filteredFiles.length})</div>
+      <button class="admin-small-btn" onclick="adminSetTab('library')" title="Yangilash">🔄 Yangilash</button>
+    </div>
+    <div id="admin-library-files-rows" class="lesson-files">
+      ${renderAdminLibraryFilesRowsHtml(filteredFiles)}
     </div>
   `;
 }
 
 function onLibraryFileSearch(val) {
   adminData.libraryFileSearch = val;
-  renderAdminPanel();
+  const container = document.getElementById("admin-library-files-rows");
+  if (container) {
+    const rawFiles = adminData.libraryFiles || [];
+    const search = (adminData.libraryFileSearch || "").toLowerCase().trim();
+    const filteredFiles = search ? rawFiles.filter(f =>
+      (f.file_name && f.file_name.toLowerCase().includes(search)) ||
+      (f.lesson_title && f.lesson_title.toLowerCase().includes(search)) ||
+      (f.course_title && f.course_title.toLowerCase().includes(search))
+    ) : rawFiles;
+    container.innerHTML = renderAdminLibraryFilesRowsHtml(filteredFiles);
+    const countTitle = document.getElementById("admin-library-files-count");
+    if (countTitle) countTitle.textContent = `Barcha Dars Fayllari (${filteredFiles.length})`;
+  } else {
+    renderAdminPanel();
+  }
 }
 
 function openEditLibraryFileDirectModal(fileId, fileName, fileUrl) {

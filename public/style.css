@@ -3586,6 +3586,12 @@ html.light ::-webkit-scrollbar-thumb:hover {
 /* ======================================================
    Responsive Desktop & PC Telegram Web App Wrapper
    ====================================================== */
+input, textarea, select {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+}
+
 @media (min-width: 641px) {
   body {
     background-color: #06060a;
@@ -3599,15 +3605,19 @@ html.light ::-webkit-scrollbar-thumb:hover {
 
   #app {
     width: 100%;
-    max-width: 640px;
+    max-width: 768px;
     min-height: 100vh;
     background-color: var(--bg-primary);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     position: relative;
   }
 
+  .page {
+    max-width: 768px;
+  }
+
   .nav {
-    max-width: 640px;
+    max-width: 768px;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%);
@@ -3615,11 +3625,53 @@ html.light ::-webkit-scrollbar-thumb:hover {
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+    height: 68px;
+  }
+
+  .nav-item {
+    font-size: 12.5px;
+    gap: 4px;
+  }
+
+  .nav-item svg {
+    width: 23px;
+    height: 23px;
   }
 
   .admin-page {
-    max-width: 640px;
+    max-width: 768px;
     margin: 0 auto;
+  }
+}
+
+@media (min-width: 992px) {
+  #app {
+    max-width: 880px;
+  }
+
+  .page {
+    max-width: 880px;
+    padding: 24px;
+  }
+
+  .nav {
+    max-width: 880px;
+    height: 72px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .nav-item {
+    font-size: 13px;
+    gap: 5px;
+  }
+
+  .nav-item svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .admin-page {
+    max-width: 880px;
   }
 }
 
@@ -3654,6 +3706,245 @@ html.light ::-webkit-scrollbar-thumb:hover {
 .social-card:hover {
   border-color: var(--accent);
   background: var(--bg-surface-elevated);
+}
+
+/* Sheet Zoom Indicator Badge */
+.sheet-zoom-overlay-hint {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  z-index: 5;
+}
+
+.carousel-sheet-card:hover .sheet-zoom-overlay-hint {
+  background: rgba(41, 121, 255, 0.9);
+  transform: scale(1.05);
+}
+
+/* Showcase Fullscreen Zoom Overlay (Faqat ko'rish uchun, ulashishsiz) */
+.showcase-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sf-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 5, 10, 0.96);
+  z-index: 1;
+}
+
+.sf-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sf-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sf-info .sf-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.sf-info .sf-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+.sf-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sf-zoom-controls {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 30px;
+  padding: 2px 6px;
+  gap: 2px;
+}
+
+.sf-tool-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13.5px;
+  padding: 6px 9px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sf-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sf-tool-btn:active {
+  transform: scale(0.92);
+}
+
+.sf-zoom-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  min-width: 44px;
+  color: #fff;
+}
+
+.sf-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sf-close-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.sf-close-btn:active {
+  transform: scale(0.92);
+}
+
+.sf-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 55px 16px 45px;
+  box-sizing: border-box;
+}
+
+.sf-canvas-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
+  transform-origin: center center;
+  max-width: 96%;
+  max-height: 88vh;
+}
+
+.sf-canvas-wrap canvas {
+  max-width: 100%;
+  max-height: 84vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
+  background: #fff;
+}
+
+.sf-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(20, 20, 30, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sf-nav-btn:hover {
+  background: rgba(41, 121, 255, 0.85);
+}
+
+.sf-nav-btn:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.sf-prev {
+  left: 14px;
+}
+
+.sf-next {
+  right: 14px;
+}
+
+.sf-footer {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 10;
+  pointer-events: none;
 }
 
 
