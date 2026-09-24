@@ -208,7 +208,10 @@ let state = {
   registered: false,
   is_admin: false,
   admin_role: null,
-  last_lesson: null
+  last_lesson: null,
+  showcases: [],
+  open_resources: [],
+  materials: []
 };
 
 let activeTab = "home";
@@ -223,6 +226,19 @@ let adminQuestionsList = null;
 let adminQuestionsFilter = "pending";
 let studentQuestionsList = null;
 window._answers = {};
+
+// Yangi global o'zgaruvchilar (1-6 talablar)
+let specDevice = "desktop"; // "desktop" | "laptop"
+let specLevel = "recommended"; // "minimal" | "recommended" | "professional"
+let showcaseCurrentIndex = 0;
+let showcaseAutoTimer = null;
+let activeOpenResTab = "all"; // "all" | "book" | "source" | "video" | "test"
+let freeQuizState = null;
+let marketplaceSearchQuery = "";
+let marketplaceCategory = "Barchasi";
+let marketplaceSubCategory = "Barchasi";
+let selectedMaterialDetail = null;
+let adminLibraryFilter = "all";
 
 // ======================================================
 // API CLIENT
@@ -300,8 +316,12 @@ async function loadContent() {
       last_lesson: data.last_lesson || null,
       courses: Array.isArray(data.courses) ? data.courses : [],
       faqs: Array.isArray(data.faqs) ? data.faqs : [],
-      settings: data.settings || state.settings
+      settings: data.settings || state.settings,
+      showcases: Array.isArray(data.showcases) && data.showcases.length ? data.showcases : (state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES),
+      open_resources: Array.isArray(data.open_resources) && data.open_resources.length ? data.open_resources : (state.open_resources && state.open_resources.length ? state.open_resources : DEFAULT_OPEN_RESOURCES),
+      materials: Array.isArray(data.materials) && data.materials.length ? data.materials : (state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS)
     };
+    initShowcaseTimer();
     render();
   } catch (error) {
     console.error("CONTENT LOAD ERROR:", error);
@@ -321,8 +341,2000 @@ async function loadContent() {
 }
 
 // ======================================================
-// DATE FORMATTER
+// TALAB 1: 3DS MAX & REVIT UCHUN KOMPYUTER / NOUTBUK PARAMETRLARI
 // ======================================================
+
+const PC_SPECS_DATA = {
+  desktop: {
+    minimal: {
+      title: "Minimal parametrlar (Boshlovchilar / Kichik loyihalar)",
+      badge: "🟢 Boshlang'ich",
+      cpu: "Intel Core i5 (12400F / 13400F) yoki AMD Ryzen 5 (5600X / 7600)",
+      cpu_hint: "Revit uchun bitta yadro chastotasi (Single-core GHz) yuqori bo'lgan protsessor muhim",
+      ram: "16 GB DDR4 (3200MHz) yoki DDR5 (4800MHz) Dual Channel",
+      ram_hint: "Kamida 2 ta planka (2x8GB) bo'lishi shart",
+      gpu: "NVIDIA GeForce RTX 3050 (8GB) yoki GTX 1660 Super (6GB)",
+      gpu_hint: "3ds Max Viewporti va Revit 3D ko'rinishi silliq aylanishi uchun",
+      ssd: "512 GB M.2 NVMe SSD (O'qish tezligi: 3000+ MB/s)",
+      ssd_hint: "Dasturlar va operatsion tizim faqat SSD ga o'rnatilishi zarur",
+      screen: "24 dyuym Full HD (1920x1080) IPS matritsa, 75-100Hz",
+      screen_hint: "Ko'z toliqmasligi uchun IPS panel tanlang",
+      cooling: "600W 80+ Bronze blok pitaniya, yaxshi havo aylanuvchi korpus",
+      advice: "Revitda 10-15 xonali oddiy kvartiralar va kichik kottejlarni chizish, 3ds Maxda modellashtirishni o'rganish uchun yetarli. Katta renderlarda biroz kutish talab etiladi."
+    },
+    recommended: {
+      title: "Tavsiya etilgan parametrlar (Professional interyer & BIM)",
+      badge: "⚡ Optimal & Professional",
+      cpu: "Intel Core i7 (13700F / 14700F) yoki AMD Ryzen 7 (7700X / 7800X3D)",
+      cpu_hint: "Revitda murakkab oilalar va 3ds Max Corona Renderda tezkor hisoblash uchun 16-20 yadro",
+      ram: "32 GB DDR5 (5600MHz - 6000MHz) Dual Channel",
+      ram_hint: "Revitda 100+ MB hajmdagi ishchi loyihalarda qotishning oldini oladi",
+      gpu: "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) yoki RTX 4070 (12GB VRAM)",
+      gpu_hint: "RTX nurlari tezlatkichi va sun'iy intellektli Denoiser uchun ideal",
+      ssd: "1 TB M.2 NVMe PCIe 4.0 SSD (Tezligi: 5000 - 7000 MB/s)",
+      ssd_hint: "Katta teksturalar va kutubxonalar bir zumda ochiladi",
+      screen: "27 dyuym 2K QHD (2560x1440) IPS, 99-100% sRGB rang aniqligi",
+      screen_hint: "Chizmalardagi mayda detallar va interyer ranglari to'g'ri ko'rinadi",
+      cooling: "750W 80+ Gold quvvat bloki, 240mm/360mm suv sovutish tizimi",
+      advice: "Revitda to'liq 40-50 listlik ishchi loyiha (Rabochka) albomini chiqarish, 3ds Maxda fotorealistik Corona vizualizatsiyalarini tezkor olish uchun eng optimal tanlov!"
+    },
+    professional: {
+      title: "Maksimal parametrlar (Yirik BIM majmualar & Og'ir 3D sahnalar)",
+      badge: "🚀 Render Monster",
+      cpu: "Intel Core i9 (13900K / 14900K) yoki AMD Ryzen 9 (7950X / Threadripper)",
+      cpu_hint: "24-32 yadro, 5.8-6.0 GHz gacha quvvat, multi-rendering uchun maksimal tezlik",
+      ram: "64 GB - 128 GB DDR5 (6000MHz+)",
+      ram_hint: "O'n millionlab poligonli va yuzlab yirik teksturali sahnani xotirada ushlaydi",
+      gpu: "NVIDIA GeForce RTX 4070 Ti Super / RTX 4080 Super / RTX 4090 (16-24GB VRAM)",
+      gpu_hint: "V-Ray GPU, Vantage, Unreal Engine 5 real vaqt renderlari uchun eng kuchli karta",
+      ssd: "2 TB Samsung 990 Pro NVMe PCIe 4.0 + 2 TB zaxira loyiha diski",
+      ssd_hint: "Katta ma'lumotlar bazasi va arxitektura arxivi uchun",
+      screen: "32 dyuym 4K IPS yoki Dual 27 dyuym 2K monitorlar (Delta E < 1.5)",
+      screen_hint: "Bir ekranda Revit chizmasi, ikkinchisida 3D model yoki spetsifikatsiyalar",
+      cooling: "1000W-1200W 80+ Platinum, 360mm SVO, shovqinsiz katta korpus",
+      advice: "Ko'p qavatli turar-joy majmualari, yirik tijoriy ob'ektlar, og'ir animatsiyalar va 4K formatdagi yuqori darajali renderlar uchun cheklovlarsiz quvvat."
+    }
+  },
+  laptop: {
+    minimal: {
+      title: "Minimal noutbuk (Talabalar va boshlovchilar uchun)",
+      badge: "🟢 Boshlang'ich",
+      cpu: "Intel Core i5 (12500H / 13500H) yoki AMD Ryzen 5 (6600H / 7535HS)",
+      cpu_hint: "H indeksli kuchaytirilgan protsessor bo'lishi shart (U yoki G seriyalar to'g'ri kelmaydi)",
+      ram: "16 GB DDR4/DDR5 (3200-4800MHz)",
+      ram_hint: "Keyinchalik 32GB ga oshirish uchun bo'sh slot borligini tekshiring",
+      gpu: "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)",
+      gpu_hint: "Integratsiyalangan videokartalar (Intel Iris / AMD Vega) bilan cheklanmang",
+      ssd: "512 GB M.2 NVMe SSD",
+      ssd_hint: "Revit va 3ds Max kutubxonalari uchun yetarli",
+      screen: "15.6 dyuym Full HD (1920x1080) IPS, 144Hz",
+      screen_hint: "Ko'rish burchagi keng va ko'z toliqmaydigan displey",
+      cooling: "2 ta mustaqil ventilatorli gaming korpus (Lenovo LOQ / Asus TUF / Acer Nitro)",
+      advice: "Yupqa ofis noutbuklarini aslo xarid qilmang! Ular og'ir yuklamada qizib, tezligini pasaytiradi (trottling). Gaming seriyalarni tanlang."
+    },
+    recommended: {
+      title: "Tavsiya etilgan noutbuk (Ko'chma professional ish uchun)",
+      badge: "⚡ Optimal & Ishonchli",
+      cpu: "Intel Core i7 (13700H / 14700HX) yoki AMD Ryzen 7 (7745HX / 7840HS)",
+      cpu_hint: "Yuqori takt chastotali kuchli noutbuk protsessori",
+      ram: "32 GB DDR5 (5200MHz / 5600MHz)",
+      ram_hint: "Revitda bir vaqtning o'zida AutoCAD va Photoshop bilan erkin ishlash imkoni",
+      gpu: "NVIDIA GeForce RTX 4060 (8GB VRAM, to'liq 115W-140W TGP)",
+      gpu_hint: "Zamonaviy DLSS 3 va arxitektura vizualizatsiyasi uchun ideal",
+      ssd: "1 TB M.2 NVMe PCIe 4.0 SSD (qo'shimcha 2-chi SSD sloti bilan)",
+      ssd_hint: "Tezkor loyihalarni yuklash va saqlash",
+      screen: "16 dyuym QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (16:10 format chizma uchun juda qulay)",
+      screen_hint: "Vertikal maydon kengroq bo'lib, Ribbon va xususiyatlar paneli sig'adi",
+      cooling: "Bug' kamerali (Vapor Chamber) ilg'or sovutish tizimi (Lenovo Legion 5 / Asus ROG Strix)",
+      advice: "Ofisdan tashqarida, ob'ektlarda mijozlarga loyihani ko'rsatish va uzoq soatlab barqaror ishlash uchun eng qulay noutbuk!"
+    },
+    professional: {
+      title: "Maksimal mobil stansiya (Mobile Workstation)",
+      badge: "🚀 Mobil Superkompyuter",
+      cpu: "Intel Core i9 (13980HX / 14900HX) yoki AMD Ryzen 9 (7945HX)",
+      cpu_hint: "Stol usti protsessorlariga tenglashadigan 24 yadroli quvvat",
+      ram: "64 GB DDR5 5600MHz",
+      ram_hint: "Murakkab BIM koordinatsiyasi va katta shaharlar modeli uchun",
+      gpu: "NVIDIA GeForce RTX 4080 (12GB) yoki RTX 4090 (16GB VRAM, 175W Full Power)",
+      gpu_hint: "Mobil formatdagi eng yuqori grafika quvvati",
+      ssd: "2 TB NVMe PCIe 4.0 SSD (7000+ MB/s)",
+      ssd_hint: "Gigabaytlab og'ir Revit fayllari soniyalarda ochiladi",
+      screen: "16 - 17.3 dyuym Mini-LED yoki 2.5K 240Hz, 100% DCI-P3 rang aniqligi",
+      screen_hint: "Ranglarni chop etishga tayyorlash uchun mutlaq aniqlik",
+      cooling: "Suyuq metall va katta issiqlik trubkalari (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)",
+      advice: "Stol usti kompyuteridan qolishmaydigan, xohlagan joyda og'ir renderlarni hisoblashga qodir flagman qurilma."
+    }
+  }
+};
+
+// ======================================================
+// TALAB 3: O'QUVCHILAR NATIJALARI (SHOWCASES) STANDART BAZASI
+// ======================================================
+
+const DEFAULT_SHOWCASES = [
+  {
+    id: 1,
+    course_id: 1,
+    course_title: "INTPRO — Revit dasturida interyer loyihalash",
+    title: "3 xonali zamonaviy xonadon to'liq ishchi loyihasi (42 list)",
+    student_name: "Azizbek Toshpo'latov",
+    description: "INTPRO kursi bitiruvchisi tomonidan tayyorlangan to'liq interyer rabochkasi: obmer, demontaj, montaj, santexnika, elektr, pol, patalok, razvyortkalar va spesifikatsiyalar.",
+    pdf_url: "https://drive.google.com/file/d/1B_sample_rabochka_revit/preview",
+    preview_image_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
+    discount_badge: "🔥 25% Chegirma: 1 125 000 so'm",
+    order_index: 1
+  },
+  {
+    id: 2,
+    course_id: 1,
+    course_title: "INTPRO — Revit dasturida interyer loyihalash",
+    title: "2 qavatli hovli uyi arxitektura ishchi chizmalari (AR bo'limi)",
+    student_name: "Malika Karimova",
+    description: "Revit Architecture bo'yicha tayyorlangan to'liq ishchi loyiha: fasadlar, kesimlar, listlar, konstruktiv uzellar va fasad pasporti.",
+    pdf_url: "https://drive.google.com/file/d/1C_sample_house_revit/preview",
+    preview_image_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80",
+    discount_badge: "🔥 Maxsus chegirma narxi",
+    order_index: 2
+  },
+  {
+    id: 3,
+    course_id: 1,
+    course_title: "INTPRO — Revit dasturida interyer loyihalash",
+    title: "Loft uslubidagi restoran va qahvaxona loyiha albomi",
+    student_name: "Sardorbek Aliyev",
+    description: "Jamoat binosi interyer loyihalash amaliy natijasi: mebel spetsifikatsiyalari, vitrajlar va yoritish zonalari.",
+    pdf_url: "https://drive.google.com/file/d/1D_sample_cafe_revit/preview",
+    preview_image_url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80",
+    discount_badge: null,
+    order_index: 3
+  }
+];
+
+// ======================================================
+// TALAB 2: KUTUBXONA OCHIQ MANBALARI VA ERKIN TESTLAR STANDART BAZASI
+// ======================================================
+
+const DEFAULT_OPEN_RESOURCES = [
+  {
+    id: 1,
+    type: "book",
+    title: "Revit 2024: Rasmiy qo'llanma va BIM standartlari (PDF)",
+    category: "Adabiyotlar",
+    description: "Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo'yicha to'liq qo'llanma kitobi.",
+    link_url: "https://drive.google.com/file/d/1_Revit_Guide_Book/preview",
+    icon: "📚",
+    order_index: 1
+  },
+  {
+    id: 2,
+    type: "book",
+    title: "Arxitektura va bino loyihalash me'yorlari (ShNQ & KMK to'plami)",
+    category: "Normativlar",
+    description: "O'zbekiston Respublikasi shaharsozlik normalari: xonalar minimal balandligi va maydonlari talablari.",
+    link_url: "https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview",
+    icon: "📐",
+    order_index: 2
+  },
+  {
+    id: 3,
+    type: "book",
+    title: "Interyer dizaynerlari uchun ergonomika va o'lchamlar (Noifert)",
+    category: "Ergonomika",
+    description: "Mebel joylashuvi, o'tish masofalari, eshik va deraza me'yorlari, oshxona va sanuzel ergonomikasi.",
+    link_url: "https://drive.google.com/file/d/1_Ergonomika_Noifert/preview",
+    icon: "📏",
+    order_index: 3
+  },
+  {
+    id: 4,
+    type: "video",
+    title: "Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)",
+    category: "Video dars",
+    description: "Ochiq video darslik: devorlarni darajalarga bog'lash, eshik-derazalar va o'lcham zanjirlarini qo'yish.",
+    link_url: "https://youtu.be/dQw4w9WgXcQ",
+    icon: "🎬",
+    order_index: 4
+  },
+  {
+    id: 5,
+    type: "source",
+    title: "Revit Professional Oilalari (Families) Kutubxonasi",
+    category: "Ochiq manba",
+    description: "O'zbekiston interyerlariga mos eshiklar, zamonaviy derazalar, santexnika jihozlari va mebel oilalari.",
+    link_url: "https://t.me/texnikuzb",
+    icon: "📦",
+    order_index: 5
+  },
+  {
+    id: 6,
+    type: "test",
+    title: "Revit Bazaviy Bilim Testi (Erkin Sinov)",
+    category: "Sinov Testi",
+    description: "Revit dasturidagi asosiy terminlar, fayl turlari va modellashtirish qoidalarini tekshirish uchun bepul test sinovi.",
+    test_data: [
+      { q: "Revit-da ishchi loyiha faylining asosiy formati qaysi?", options: ["RTE", "RVT", "RFA", "RFT"], correct: 1 },
+      { q: "Revit-da yangi qavat balandligini belgilash uchun qaysi elementdan foydalaniladi?", options: ["Grid (O'q)", "Level (Daraja)", "Scope Box", "Section"], correct: 1 },
+      { q: "Devor chizilayotganda uning yo'nalishi va ichki/tashqi tomonini tez almashtirish tugmasi qaysi?", options: ["Tab", "Enter", "Space (Probel)", "Shift"], correct: 2 },
+      { q: "AutoCAD chizmasini Revit-ga yangilanib turadigan havola sifatida olib kirish qaysi buyruq orqali bajariladi?", options: ["Import CAD", "Link CAD (Svyaz SAPR)", "Open CAD", "Attach CAD"], correct: 1 },
+      { q: "Chizmadagi barcha eshik va derazalarning avtomatik hisob-kitob jadvali nima deb ataladi?", options: ["Plan vid", "Spetsifikatsiya (Schedule/Quantities)", "List (Sheet)", "Shablon vid"], correct: 1 }
+    ],
+    icon: "🎯",
+    order_index: 6
+  },
+  {
+    id: 7,
+    type: "test",
+    title: "Arxitektura va Chizmachilik Savodxonligi Testi",
+    category: "Sinov Testi",
+    description: "Loyiha chizmalari, o'lchamlar, eshik-deraza standartlari va shaharsozlik me'yorlari bo'yicha erkin sinov testi.",
+    test_data: [
+      { q: "Standart turar-joy binolarida polning toza sathi qanday belgi bilan ko'rsatiladi?", options: ["±0.000", "+3.000", "-0.150", "100%"], correct: 0 },
+      { q: "Xonadondagi standart kirish eshigining minimal kengligi qancha bo'lishi tavsiya etiladi?", options: ["600 mm", "700 mm", "900 mm", "1200 mm"], correct: 2 },
+      { q: "Interyer loyihalashda 'Demontaj rejasi' nima maqsadda chiziladi?", options: ["Yangi quriladigan devorlarni ko'rsatish", "Buziladigan mavjud devor va konstruksiyalarni aniq ko'rsatish", "Mebel sotib olish uchun", "Bo'yoq rangini tanlash uchun"], correct: 1 },
+      { q: "Oshxona ishchi yuzasi (stol usti) balandligi standart bo'yicha necha sm bo'lishi maqbul hisoblanadi?", options: ["60 sm", "85-90 sm", "110 sm", "130 sm"], correct: 1 }
+    ],
+    icon: "📝",
+    order_index: 7
+  }
+];
+
+// ======================================================
+// TALAB 6: QURILISH MATERIALLARI MARKETPLACE STANDART BAZASI
+// ======================================================
+
+const DEFAULT_MATERIALS = [
+  {
+    id: 1,
+    title: "LDSP (Laminatsiyalangan DSP)",
+    category: "Mebel",
+    sub_category: "LDSP",
+    image_url: "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Mebel korpuslari, javonlar va shkaflar uchun eng ommabop melamin plyonkali plita.",
+    what_is_it: "LDSP — yuqori bosim va harorat ostida qatronlar bilan presslangan yog'och qirindilari (DSP) ustiga melamin smolasi shimdirilgan qog'oz plyonka qoplab tayyorlanadigan mebel plitasi. U turli xil yog'och fakturalari, matoviy va glyanets ranglarga ega.",
+    dimensions: "Standart formatlar: 2800 x 2070 mm, 2750 x 1830 mm. Qalinliklari: 16 mm (asosiy mebel korpusi), 18 mm, 22 mm, 25 mm.",
+    history: "DSP ilk bor 1930-yillarda Germaniyada yog'och chiqindilarini tejash maqsadida yaratilgan. Melamin qoplamali LDSP esa 1960-yillardan boshlab butun dunyo mebel sanoatining asosiy materialiga aylangan.",
+    usage_area: "Oshxona garniturlari karkasi, shkaf-kupe, yotoqxona va bolalar xonasi mebellari, ofis stollari, kiyim javonlari.",
+    pros: "✅ Hamyonbop narx; Ranglar va fakturalar xilma-xilligi; Mexanik yuklamalarga chidamlilik; Oson kesilishi va yig'ilishi.",
+    cons: "❌ Namlikka o'ta ta'sirchan (suv tegsa shishib ketadi); Egiluvchan emas (faqat to'g'ri chiziqli mebellar); Chetlariga (kromka) sifatli PVX yopishtirilishi shart.",
+    uzbekistan_sources: "O'zbekistondagi manbalar: Egger, Kastamonu, Kronospan dilerlari. Bozorlar: O'rikzor bozori 'Mebelchilar' qatori, Chilonzor 'Kastamonu' rasmiy do'koni, Toshkent halqa yo'lidagi mebel furnitura markazlari.",
+    bim_tips: "Revitda mebel oilalarida Material parametri sifatida 'Wood - LDSP Egger' qilib biriktiriladi. 3ds Maxda CoronaPhysicalMtl orqali Diffuse va yengil Roughness (0.4-0.6) kartasi beriladi.",
+    order_index: 1
+  },
+  {
+    id: 2,
+    title: "MDF (O'rta zichlikdagi yog'och tolali plita)",
+    category: "Mebel",
+    sub_category: "MDF",
+    image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Frezalash, bo'yash va profilli fasadlar tayyorlash uchun ideal zich va silliq plita.",
+    what_is_it: "MDF (Medium Density Fibreboard) — mayda yog'och tolalarini tabiiy lignin va parafin bilan yuqori bosimda qizdirib tayyorlanadigan monolit material. Qirindi o'rniga nozik changsimon tolalardan iborat bo'lgani sababli g'ovaksiz va o'ta silliq yuzaga ega.",
+    dimensions: "Plita o'lchami: 2800 x 2070 mm, 2440 x 1220 mm. Qalinliklari: 6, 8, 10, 16, 18, 19, 22, 25, 30 mm.",
+    history: "1965 yilda AQSHning Nyu-York shtatida birinchi MDF zavodi ishga tushirilgan. 1980-yillardan boshlab frezalangan oshxona fasadlari uchun standart materialga aylangan.",
+    usage_area: "Oshxona fasadlari, profilli va klassik naqshli eshiklar, devor panellari (reyka va MDF reykalar), kornizlar, plintuslar.",
+    pros: "✅ Chuqur 3D frezalash (ornament, profil) qilish imkoni; Emal bo'yoq bilan mukammal silliq bo'yalishi; Ekologik toza (smolasiz); Zichligi yuqori va namlikka chidamli.",
+    cons: "❌ LDSPga qaraganda 1.5-2 baravar qimmatroq; Yuqori og'irlik; Bo'yalgan yuzasi o'tkir tirnalishlarga sezgir.",
+    uzbekistan_sources: "Kastamonu Uzbekistan, AGT dilerlik markazlari, Bek To'pi bozori, O'rikzor mebel do'konlari.",
+    bim_tips: "Revitda fasad oilalarida profil chizilib Sweep komandasi bilan chiqariladi. 3ds Maxda bo'yalgan emal effekti uchun yuqori Glossiness beriladi.",
+    order_index: 2
+  },
+  {
+    id: 3,
+    title: "Gazoblok (Avtoklav gazobeton D500)",
+    category: "Devor",
+    sub_category: "Gazoblok",
+    image_url: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Tashqi devorlar va xonalararo to'siqlar uchun engil, issiq va aniq qurilish bloki.",
+    what_is_it: "Gazoblok — kvars qumi, sement, ohak, suv va alyuminiy kukuni aralashmasidan tayyorlanib, avtoklavda 12 atmosfera bosimi va 190°C bug' ostida pishiriladigan g'ovakli sun'iy tosh.",
+    dimensions: "Uzunligi: 600 mm, Balandligi: 200, 250, 300 mm. Qalinligi: 100, 120, 150 mm (pardevor), 200, 250, 300, 400 mm (tashqi devor).",
+    history: "1924 yilda shved arxitektori Aksel Eriksson tomonidan patentlangan. O'zbekistonda so'nggi yillarda eng ommabop devor materialiga aylandi.",
+    usage_area: "Monolit-karkasli binolar to'ldiruvchi tashqi devorlari, kottedjlar va xonalararo pardevorlar.",
+    pros: "✅ A'lo darajadagi issiqlik izolyatsiyasi; Yengil og'irlik (poydevorga kam yuk); Geometrik o'lcham xatosi 1-2 mm (yupqa kley bilan teriladi); Oson arralanadi va shtroba qilinadi.",
+    cons: "❌ To'g'ridan-to'g'ri suv va namlikka uzoq turishi mumkin emas (suvoq talab etiladi); Mo'rtroq (og'ir ankerlar uchun maxsus dyubel kerak).",
+    uzbekistan_sources: "Arton Gazobeton, EkoGazobeton, Drenaj, Jomiy qurilish bozori, Chilonzor qurilish materiallari bozori.",
+    bim_tips: "Revitda 'Basic Wall - Gazoblok D500 200mm' oilasi yaratiladi va issiqlik o'tkazuvchanligi 0.12 W/mK kiritiladi.",
+    order_index: 3
+  },
+  {
+    id: 4,
+    title: "Penoblok (Ko'pikli beton blok)",
+    category: "Devor",
+    sub_category: "Penoblok",
+    image_url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Sement va ko'pik aralashmasidan tabiiy sharoitda quriydigan issiqlik saqlovchi blok.",
+    what_is_it: "Penoblok — sement-qum qorishmasiga organik yoki sintetik ko'pikturgich qo'shib, avtoklavsiz tabiiy qotish orqali ishlab chiqariladigan engil beton bloki.",
+    dimensions: "600 x 300 x 200 mm, 600 x 300 x 100 mm.",
+    history: "XIX asr oxirida ixtiro qilingan, kichik sexlarda ishlab chiqarish osonligi bilan keng tarqalgan.",
+    usage_area: "Xonalararo to'siq devorlari, omborxonalar, kottejlar va issiqlik izolyatsiyasi qatlamlari.",
+    pros: "✅ Arzon narx; Yaxshi tovush va issiqlik yutuvchanlik; Yonmaydi va chirimaydi.",
+    cons: "❌ Geometriyasi noaniqroq (qalinroq qorishma talab qiladi); Siqilishga chidamliligi pastroq.",
+    uzbekistan_sources: "Sergeli qurilish bozori, Rohat bozori, viloyat mahalliy ishlab chiqaruvchi sexlari.",
+    bim_tips: "Revitda devor qalinligi 100mm yoki 200mm bo'lgan ichki devor turi sifatida kiritiladi.",
+    order_index: 4
+  },
+  {
+    id: 5,
+    title: "Pishgan g'isht (M100 - M150 Qizil g'isht)",
+    category: "Devor",
+    sub_category: "G'isht",
+    image_url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Asrlar davomida sinovdan o'tgan mustahkam, namlikka 100% chidamli loy pishig'i.",
+    what_is_it: "Tabiiy loy mineral xomashyosini qoliplab, pechlarda 1000°C yuqori haroratda kuydirish orqali olinadigan to'liq yoki teshikli an'anaviy qurilish toshi.",
+    dimensions: "Standart: 250 x 120 x 65 mm (yakka), 250 x 120 x 88 mm (bir yarimtalik).",
+    history: "Miloddan avvalgi 3000-yillardan beri O'rta Osiyo me'morchiligida ishlatib kelinmoqda.",
+    usage_area: "Yuk ko'taruvchi asosiy devorlar, sanuzel va ho'l xonalar to'siqlari, zaminlar va poydevorlar.",
+    pros: "✅ O'ta yuqori mustahkamlik; 100% namlikka chidamlilik (sanuzellarda birinchi tanlov); Yuqori tovush izolyatsiyasi; 100+ yil xizmat muddati.",
+    cons: "❌ Og'ir vazn; Issiqlikni tez o'tkazadi; Terish ko'p mehnat talab qiladi.",
+    uzbekistan_sources: "Bekobod, Qibray, Bo'stonliq g'isht zavodlari, barcha qurilish mollari bozorlari.",
+    bim_tips: "Revitda 'Wall - Pishgan g'isht 120mm' qilib chiziladi. Sanuzel devorlari doim pishgan g'ishtdan belgilanadi.",
+    order_index: 5
+  },
+  {
+    id: 6,
+    title: "Gipsokarton GKLV (Namlikka chidamli)",
+    category: "Shift",
+    sub_category: "Gipsokarton",
+    image_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Shiftlar, figuriy pataloklar va pardevorlar uchun yashil rangli namlikka chidamli list.",
+    what_is_it: "GKLV — ikki qavat maxsus ishlov berilgan karton orasiga gidrofob qo'shimchalar qo'shilgan gips yadrosi joylashtirilgan list. Rangi doimo och yashil bo'ladi.",
+    dimensions: "Standart o'lcham: 2500 x 1200 mm (maydoni 3 m²), Qalinliklari: 9.5 mm (shift), 12.5 mm (devor).",
+    history: "1894 yilda AQSHda ixtiro qilingan. Knauf kompaniyasi orqali dunyo standartiga aylandi.",
+    usage_area: "Oshxona va sanuzel shiftlari, ikki sathli gipsokarton pataloklar, korniz nishalari, devorlarni tekislash.",
+    pros: "✅ Tez va toza montaj; Har qanday egri chiziqli shakllarni yasash imkoni; Yashil karton qatlami zamburug' va mog'orga chidamli; Bo'yashga tayyor tekis yuza.",
+    cons: "❌ Metall profil karkas talab qiladi; Kuchli zarbaga chidamliligi g'ishtdan past.",
+    uzbekistan_sources: "Knauf Gips Buxoro, Akfa Gipsokarton dilerlari, Jomiy va O'rikzor bozorlari.",
+    bim_tips: "Revitda patalok planida (Reflected Ceiling Plan) 'Compound Ceiling - GKLV 12.5mm' sifatida chiziladi.",
+    order_index: 6
+  },
+  {
+    id: 7,
+    title: "Ottocento (Ipak effektli dekorativ bo'yoq)",
+    category: "Bezak",
+    sub_category: "Ottocento",
+    image_url: "https://images.unsplash.com/photo-1562663474-6cbb3eaa4d14?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Devorlarda tovlanuvchi baxmal va tabiiy ipak matosi ko'rinishini hosil qiluvchi qoplama.",
+    what_is_it: "Ottocento — maxsus metallashgan va marvaridli pigmentlar hamda suvli akril dispersiyasidan iborat nozik pardozlash bo'yog'i. Yorug'lik tushish burchagiga qarab rangi tovlanadi.",
+    dimensions: "1 litr, 2.5 litr, 5 litr bankalarda sotiladi. 1 litr bilan o'rtacha 7-9 m² devor qoplanadi.",
+    history: "Italiyaning Oikos kompaniyasi tomonidan Qadimgi Rim ipak matolari sharafiga yaratilgan.",
+    usage_area: "Mehmonxona, yotoqxona devorlari, TV-zona orqa foni, restoran va mehmonxona zallari.",
+    pros: "✅ Vizual o'ta hashamatli ko'rinish; Choksiz (monolit) yuza; Ekologik toza, hid chiqarmaydi; Uzoq yillar rangini yo'qotmaydi.",
+    cons: "❌ Devor yuzasi oynadek silliq bo'lishi shart; Surkaydigan ustaning yuqori mahorati talab etiladi.",
+    uzbekistan_sources: "Oikos Uzbekistan rasmiy saloni, San Marco, Novacolor do'konlari, Parkent qurilish mollari bozori.",
+    bim_tips: "3ds Maxda CoronaMtl Fresnel IOR=1.6 va Ipak falloff xaritasi bilan teksturalanadi.",
+    order_index: 7
+  },
+  {
+    id: 8,
+    title: "Keramogranit plita (60x120 sm)",
+    category: "Pol",
+    sub_category: "Keramogranit",
+    image_url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Pol va devorlar uchun mustahkam, tirnalmaydigan marmar va beton fakturali yirik plita.",
+    what_is_it: "Keramogranit — loy, dala shpati, kvars va tabiiy pigmentlarni 450 kg/sm² bosimda presslab, 1300°C da monolit qilib eritib olinadigan sun'iy tosh. Suv shimish darajasi deyarli 0% (0.05%).",
+    dimensions: "60 x 120 sm, 80 x 80 sm, 80 x 160 sm. Qalinligi: 9 mm - 11 mm.",
+    history: "1970-yillarda Italiyaning Sassuolo shahrida kafelning mustahkam muqobili sifatida yaratilgan.",
+    usage_area: "Xonadon yo'lagi (prixojka), oshxona poli, sanuzel devor va pollari, dush kabinalari, issiq pol (tyoply pol) usti.",
+    pros: "✅ Suv, namlik va kimyoviy vositalarga 100% chidamli; Tirnalmaydi; Issiq pol uchun eng samarali issiqlik o'tkazuvchi material; Yirik o'lchami tufayli oraliq choklar kam bo'ladi.",
+    cons: "❌ Yalangoyoq yurganda sovuq (issiq pol tavsiya etiladi); Kesish va teshik ochish uchun olmosli maxsus uskuna kerak.",
+    uzbekistan_sources: "Kerasun, Modern Keramika, Eko-Kafel do'konlari, Jomiy plitka bozori, Parkent bozori.",
+    bim_tips: "Revitda 'Floor - Keramogranit 60x120' qilib chiziladi va Pattern orqali 600x1200 model setkasi qo'yiladi.",
+    order_index: 8
+  },
+  {
+    id: 9,
+    title: "Laminat (33-klass, Faskali suvga chidamli)",
+    category: "Pol",
+    sub_category: "Laminat",
+    image_url: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Yotoqxona va mehmonxonalar uchun tabiiy yog'och ko'rinishidagi qulay va iliq pol qoplamasi.",
+    what_is_it: "Laminat — yuqori zichlikdagi HDF plitasi asosida tayyorlangan, ustiga yog'och rasmi tushirilgan va korund himoya qatlami qoplangan pol materiali.",
+    dimensions: "1380 x 193 mm, 1285 x 192 mm. Qalinliklari: 8 mm, 10 mm, 12 mm.",
+    history: "1977 yilda Shvetsiyaning Perstorp kompaniyasi tomonidan ishlab chiqilgan.",
+    usage_area: "Yotoqxona, bolalar xonasi, mehmonxona, kabinet va ofislar.",
+    pros: "✅ Oson va tez qulflanuvchi (Click) montaj; Tabiiy yog'ochga o'xshash iliq his; Ranglar xilma-xilligi; Qayta ko'chirish mumkinligi.",
+    cons: "❌ Suv to'kilib uzoq qolsa choklaridan shishishi mumkin; Tagiga to'g'ri podlojka to'shalishi shart.",
+    uzbekistan_sources: "Tarkett Uzbekistan, Egger, Kronotex dilerlari, O'rikzor va Bek To'pi pol qoplamalari qatori.",
+    bim_tips: "Revitda zamin qatlami qalinligi 8-10 mm qilib kiritiladi va 'Floor finish' sifatida hisoblanadi.",
+    order_index: 9
+  },
+  {
+    id: 10,
+    title: "Polipropilen truba va fitinglar (PPR PN25)",
+    category: "Santexnika",
+    sub_category: "Trubalar",
+    image_url: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Ichki issiq va sovuq suv ta'minoti hamda isitish tizimi uchun chidamli plastik quvurlar.",
+    what_is_it: "Random kopolimer polipropilendan tayyorlangan, ichida shisha tolali (fiberglass) armatura qatlami bo'lgan suv quvuri.",
+    dimensions: "Diametrlari: 20 mm, 25 mm, 32 mm, 40 mm, 50 mm. Standart uzunligi: 4 metr.",
+    history: "1980-yillardan boshlab po'lat va cho'yan quvurlar o'rnini egallagan.",
+    usage_area: "Kvartira ichki vodoprovodi, dush va vanna tarmoqlari, radiatorli isitish va kombi tizimlari.",
+    pros: "✅ Zanglamaydi, chirimaydi, ichida cho'kindi yig'ilmaydi; Diffuzion payvandlash tufayli ulanish joyi monolit bo'ladi; 50 yil xizmat muddati.",
+    cons: "❌ Devor ichiga ko'milishidan oldin bosim ostida sinovdan o'tkazilishi shart.",
+    uzbekistan_sources: "Firat, Kalde, Akfa Plastik, Grand Santexnika do'konlari, O'rikzor santexnika bozori, Jomiy bozori.",
+    bim_tips: "Revit MEP da 'Pipe - Polypropylene PPR' tizimida chiziladi va diametrlari avtomatik hisoblanadi.",
+    order_index: 10
+  },
+  {
+    id: 11,
+    title: "Elektr kabeli VVGng-LS (Mis sim)",
+    category: "Elektr",
+    sub_category: "Kabellar",
+    image_url: "https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=800&auto=format&fit=crop&q=80",
+    short_desc: "Xonadon elektr montaji uchun yong'inga xavfsiz va tutun chiqarmaydigan monolit mis kabel.",
+    what_is_it: "VVGng-LS — har bir tomiri alohida PVX izolyatsiyalangan va yonishni tarqatmaydigan (ng) hamda tutun ajratmaydigan (LS) yaxlit mis kabel.",
+    dimensions: "Rozetkalar: 3 x 2.5 mm²; Yoritish: 3 x 1.5 mm²; Plita va konditsioner: 3 x 4 mm² yoki 3 x 6 mm².",
+    history: "Davlat GOST standartlari bo'yicha turar-joy binolarida xavfsizlik maqsadida mis VVGng-LS standarti joriy qilingan.",
+    usage_area: "Barcha xonalarning devor ichidagi elektr provodkasi, shchitok avtomatlari va rozetkalar.",
+    pros: "✅ 100% yonishni davom ettirmaydi; Yuqori elektr o'tkazuvchanlik; 30+ yil xizmat kafolati.",
+    cons: "❌ Faqat GOST sertifikatli original kabel tanlash shart.",
+    uzbekistan_sources: "Uzkabel, Andijankabel dilerlari, Chilonzor elektrobozori, Jomiy va Yangi Bozor do'konlari.",
+    bim_tips: "Revit Electrical bo'limida yuklamalar quvvati (kW) hisoblanib avtomatik chiqariladi.",
+    order_index: 11
+  }
+];
+
+// ======================================================
+// INTERACTIVE LOGIC: PC SPECS & CAROUSEL & MARKETPLACE
+// ======================================================
+
+function setSpecDevice(device) {
+  haptic("light");
+  specDevice = device;
+  const block = document.getElementById("pc-specs-wrapper");
+  if (block) {
+    block.outerHTML = renderPcSpecsBlock();
+  } else {
+    render();
+  }
+}
+
+function setSpecLevel(level) {
+  haptic("light");
+  specLevel = level;
+  const block = document.getElementById("pc-specs-wrapper");
+  if (block) {
+    block.outerHTML = renderPcSpecsBlock();
+  } else {
+    render();
+  }
+}
+
+function renderPcSpecsBlock() {
+  const currentDevData = PC_SPECS_DATA[specDevice] || PC_SPECS_DATA.desktop;
+  const spec = currentDevData[specLevel] || currentDevData.recommended;
+
+  return `
+    <div id="pc-specs-wrapper" class="specs-section">
+      <div class="specs-title-row">
+        <div class="specs-main-title">
+          <span>💻 Kompyuter & Noutbuk Parametrlari</span>
+        </div>
+        <div class="chip" style="font-size:11px; padding:4px 10px; background:rgba(41,121,255,0.12); color:var(--accent);">
+          3ds Max & Revit
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; line-height:1.4;">
+        Revit va 3ds Max dasturlarida qotmasdan, qulay ishlash va sifatli render olish uchun texnik talablar:
+      </p>
+
+      <!-- Qurilma turi: Kompyuter yoki Noutbuk -->
+      <div class="specs-segment-control">
+        <button class="spec-tab-btn ${specDevice === "desktop" ? "active" : ""}" onclick="setSpecDevice('desktop')">
+          🖥️ Kompyuter (PC / Desktop)
+        </button>
+        <button class="spec-tab-btn ${specDevice === "laptop" ? "active" : ""}" onclick="setSpecDevice('laptop')">
+          💻 Noutbuk (Laptop)
+        </button>
+      </div>
+
+      <!-- Daraja: Minimal, Tavsiya etilgan, Professional -->
+      <div class="spec-level-chips">
+        <div class="spec-level-chip ${specLevel === "minimal" ? "active" : ""}" onclick="setSpecLevel('minimal')">
+          🟢 Minimal (Boshlovchilar)
+        </div>
+        <div class="spec-level-chip ${specLevel === "recommended" ? "active" : ""}" onclick="setSpecLevel('recommended')">
+          ⚡ Tavsiya etilgan (Optimal)
+        </div>
+        <div class="spec-level-chip ${specLevel === "professional" ? "active" : ""}" onclick="setSpecLevel('professional')">
+          🚀 Professional (Render)
+        </div>
+      </div>
+
+      <div style="font-weight:750; font-size:14px; margin-bottom:10px; color:var(--text-primary); display:flex; align-items:center; justify-content:space-between;">
+        <span>${escapeHtml(spec.title)}</span>
+        <span style="font-size:11.5px; color:var(--accent); font-weight:700;">${spec.badge}</span>
+      </div>
+
+      <div class="specs-grid">
+        <div class="spec-item-row">
+          <div class="spec-item-icon">⚙️</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Protsessor (CPU)</div>
+            <div class="spec-item-value">${escapeHtml(spec.cpu)}</div>
+            <div class="spec-item-hint">${escapeHtml(spec.cpu_hint)}</div>
+          </div>
+        </div>
+
+        <div class="spec-item-row">
+          <div class="spec-item-icon">🧠</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Operativ Xotira (RAM)</div>
+            <div class="spec-item-value">${escapeHtml(spec.ram)}</div>
+            <div class="spec-item-hint">${escapeHtml(spec.ram_hint)}</div>
+          </div>
+        </div>
+
+        <div class="spec-item-row">
+          <div class="spec-item-icon">🎮</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Videokarta (GPU)</div>
+            <div class="spec-item-value">${escapeHtml(spec.gpu)}</div>
+            <div class="spec-item-hint">${escapeHtml(spec.gpu_hint)}</div>
+          </div>
+        </div>
+
+        <div class="spec-item-row">
+          <div class="spec-item-icon">💽</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Tezkor Xotira (SSD NVMe)</div>
+            <div class="spec-item-value">${escapeHtml(spec.ssd)}</div>
+            <div class="spec-item-hint">${escapeHtml(spec.ssd_hint)}</div>
+          </div>
+        </div>
+
+        <div class="spec-item-row">
+          <div class="spec-item-icon">🖥️</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Ekran / Displey</div>
+            <div class="spec-item-value">${escapeHtml(spec.screen)}</div>
+            <div class="spec-item-hint">${escapeHtml(spec.screen_hint)}</div>
+          </div>
+        </div>
+
+        <div class="spec-item-row">
+          <div class="spec-item-icon">❄️</div>
+          <div class="spec-item-content">
+            <div class="spec-item-label">Sovutish & Quvvat</div>
+            <div class="spec-item-value">${escapeHtml(spec.cooling)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec-advice-box">
+        <span>💡</span>
+        <div><strong>Ekspert xulosasi:</strong> ${escapeHtml(spec.advice)}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// SHOWCASE / RESULT SLIDER LOGIC (Talab 3)
+// ----------------------------------------------------
+
+function initShowcaseTimer() {
+  if (showcaseAutoTimer) clearInterval(showcaseAutoTimer);
+  showcaseAutoTimer = setInterval(() => {
+    const list = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
+    if (!list.length) return;
+    showcaseCurrentIndex = (showcaseCurrentIndex + 1) % list.length;
+    updateShowcaseDom();
+  }, 5000); // Har 5 sekundda aylanadi
+}
+
+function nextShowcaseSlide(e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const list = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
+  if (!list.length) return;
+  showcaseCurrentIndex = (showcaseCurrentIndex + 1) % list.length;
+  updateShowcaseDom();
+  initShowcaseTimer();
+}
+
+function prevShowcaseSlide(e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const list = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
+  if (!list.length) return;
+  showcaseCurrentIndex = (showcaseCurrentIndex - 1 + list.length) % list.length;
+  updateShowcaseDom();
+  initShowcaseTimer();
+}
+
+function setShowcaseSlide(idx) {
+  haptic("light");
+  showcaseCurrentIndex = idx;
+  updateShowcaseDom();
+  initShowcaseTimer();
+}
+
+function updateShowcaseDom() {
+  const container = document.getElementById("showcase-carousel-inner");
+  if (!container) return;
+  const slides = container.querySelectorAll(".carousel-slide");
+  slides.forEach((slide, i) => {
+    if (i === showcaseCurrentIndex) {
+      slide.classList.add("active");
+    } else {
+      slide.classList.remove("active");
+    }
+  });
+
+  const dots = document.querySelectorAll(".carousel-dot");
+  dots.forEach((dot, i) => {
+    if (i === showcaseCurrentIndex) {
+      dot.classList.add("active");
+    } else {
+      dot.classList.remove("active");
+    }
+  });
+}
+
+function renderShowcaseCarousel() {
+  const showcases = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
+  if (!showcases.length) return "";
+
+  if (showcaseCurrentIndex >= showcases.length) showcaseCurrentIndex = 0;
+
+  return `
+    <div class="showcase-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="section-title" style="margin:0;">
+          🎓 O'quvchilar natijalari va rabochka loyihalari
+        </div>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddShowcaseModal()" style="font-size:11px; padding:5px 9px;">
+            ➕ Natija qo'shish
+          </button>
+        ` : ""}
+      </div>
+      <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
+        Kurs bitiruvchilari erishgan natijalar va to'liq tayyorlangan ishchi loyiha (PDF) albomlari:
+      </p>
+
+      <div class="carousel-wrap">
+        <div id="showcase-carousel-inner" class="carousel-track">
+          ${showcases.map((sc, idx) => {
+            const isActive = idx === showcaseCurrentIndex;
+            const previewImg = sc.preview_image_url || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80";
+
+            return `
+              <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${idx}">
+                <img src="${escapeHtml(previewImg)}" alt="${escapeHtml(sc.title)}" class="carousel-image-preview" onerror="this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80';">
+                
+                <div class="carousel-body">
+                  <div class="carousel-badge-row">
+                    <span class="carousel-course-tag">${escapeHtml(sc.course_title || "Revit kursi")}</span>
+                    ${sc.discount_badge ? `<span class="carousel-discount-badge">${escapeHtml(sc.discount_badge)}</span>` : ""}
+                  </div>
+
+                  <div class="carousel-slide-title">${escapeHtml(sc.title)}</div>
+                  ${sc.student_name ? `<div class="carousel-student-info">👨‍🎓 Muallif: ${escapeHtml(sc.student_name)}</div>` : ""}
+                  <div class="carousel-desc">${escapeHtml(sc.description || "")}</div>
+
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn" style="flex:1; margin:0; padding:11px;" onclick="openPdfViewerModal('${escapeJsString(sc.pdf_url)}', '${escapeJsString(sc.title)}')">
+                      📄 Loyihani ko'rish (PDF)
+                    </button>
+                    ${state.is_admin ? `
+                      <button class="admin-small-btn" style="padding:10px 12px; font-size:13px;" onclick="openEditShowcaseModal(${Number(sc.id)})" title="Tahrirlash">
+                        ✏️
+                      </button>
+                      <button class="admin-small-btn" style="padding:10px 12px; font-size:13px; background:rgba(235,59,59,0.2); color:#eb3b3b;" onclick="deleteShowcaseItem(${Number(sc.id)})" title="O'chirish">
+                        🗑️
+                      </button>
+                    ` : ""}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <!-- Ikki tarafidagi yozuvsiz piktogrammali (iconli) navigatsiya tugmalari -->
+        <div class="carousel-nav-buttons">
+          <button class="carousel-arrow-btn" onclick="prevShowcaseSlide(event)" aria-label="Oldingi slayd">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="carousel-arrow-btn" onclick="nextShowcaseSlide(event)" aria-label="Keyingi slayd">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <!-- Nuqtalar (Dots) -->
+        <div class="carousel-dots">
+          ${showcases.map((_, idx) => `
+            <div class="carousel-dot ${idx === showcaseCurrentIndex ? "active" : ""}" onclick="setShowcaseSlide(${idx})"></div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// PDF Viewer Modal (Faqat ko'rish uchun xavfsiz oyna)
+function openPdfViewerModal(rawPdfUrl, title) {
+  haptic("medium");
+  let viewUrl = rawPdfUrl;
+
+  // Google Drive havolasini preview iframe formatiga keltiramiz
+  if (viewUrl.includes("drive.google.com")) {
+    viewUrl = viewUrl.replace(/\/view(\?.*)?$/, "/preview").replace(/\/edit(\?.*)?$/, "/preview");
+    if (!viewUrl.includes("/preview")) {
+      viewUrl = viewUrl + (viewUrl.includes("?") ? "&" : "/") + "preview";
+    }
+  }
+
+  // Yandex Disk havolasi
+  if (viewUrl.includes("disk.yandex")) {
+    viewUrl = viewUrl;
+  }
+
+  currentView = {
+    html: `
+      <div class="pdf-viewer-overlay">
+        <div class="pdf-viewer-header">
+          <div style="font-weight:750; font-size:14px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:75%;">
+            📄 ${escapeHtml(title || "Loyiha albomi (PDF)")}
+          </div>
+          <button class="admin-small-btn" onclick="closeDetail()" style="padding:6px 12px; font-size:12px;">
+            Yopish ✕
+          </button>
+        </div>
+        <div class="pdf-viewer-iframe-wrap">
+          <iframe src="${escapeHtml(viewUrl)}" class="pdf-viewer-iframe" allow="autoplay" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+        </div>
+        <div style="padding:10px 14px; background:var(--bg-surface); border-top:1px solid var(--border); font-size:11.5px; color:var(--text-secondary); text-align:center;">
+          🔒 O'quvchi natijasi faqat tanishish maqsadida namoyish etilmoqda.
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+// Admin Showcase Boshqaruvi
+function openAddShowcaseModal() {
+  const courses = state.courses || [];
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminView ? renderAdminPanel() : closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Natija (Rabochka PDF) Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Qaysi kursga tegishli?</label>
+            <select id="sc-course-id" class="apple-input">
+              ${courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Loyiha nomi (Rabochka nomi) *</label>
+            <input id="sc-title" class="apple-input" type="text" placeholder="Masalan: 3 xonali kvartira ishchi loyihasi (42 list)">
+          </div>
+
+          <div class="apple-field">
+            <label>O'quvchi ismi *</label>
+            <input id="sc-student" class="apple-input" type="text" placeholder="Masalan: Azizbek Toshpo'latov">
+          </div>
+
+          <div class="apple-field">
+            <label>Google Disk yoki Yandex Disk PDF linki *</label>
+            <input id="sc-pdf" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view">
+          </div>
+
+          <div class="apple-field">
+            <label>Loyiha prevyu rasmi linki (ixtiyoriy rasm URL)</label>
+            <input id="sc-img" class="apple-input" type="url" placeholder="https://... rasm linki">
+          </div>
+
+          <div class="apple-field">
+            <label>Chegirma matni (ixtiyoriy, agar kursga chegirma bo'lsa)</label>
+            <input id="sc-discount" class="apple-input" type="text" placeholder="Masalan: 🔥 30% Chegirma mavjud: 1 050 000 so'm">
+          </div>
+
+          <div class="apple-field">
+            <label>Loyiha tavsifi</label>
+            <textarea id="sc-desc" class="apple-input apple-textarea" placeholder="O'quvchi erishgan natijalar haqida qisqacha ma'lumot..."></textarea>
+          </div>
+
+          <button id="save-sc-btn" class="btn" onclick="submitAddShowcase()">
+            💾 Saqlash va E'lon qilish
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitAddShowcase() {
+  const courseSelect = document.getElementById("sc-course-id");
+  const courseId = courseSelect?.value;
+  const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
+  const title = document.getElementById("sc-title")?.value.trim();
+  const student = document.getElementById("sc-student")?.value.trim();
+  let pdf = document.getElementById("sc-pdf")?.value.trim();
+  const img = document.getElementById("sc-img")?.value.trim();
+  const discount = document.getElementById("sc-discount")?.value.trim();
+  const desc = document.getElementById("sc-desc")?.value.trim();
+
+  if (!title || !pdf) return showAlert("Loyiha nomi va PDF linkini kiritish majburiy!");
+  if (!pdf.startsWith("http://") && !pdf.startsWith("https://")) {
+    pdf = "https://" + pdf;
+  }
+
+  const btn = document.getElementById("save-sc-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/showcases/add", {
+      course_id: courseId,
+      course_title: courseTitle,
+      title,
+      student_name: student,
+      pdf_url: pdf,
+      preview_image_url: img,
+      discount_badge: discount || null,
+      description: desc
+    });
+    showToast("O'quvchi natijasi saqlandi!");
+    await loadContent();
+    if (adminView === "library") renderAdminPanel();
+    else closeDetail();
+  } catch (err) {
+    showAlert(err.message || "Saqlashda xatolik.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function openEditShowcaseModal(id) {
+  const item = (state.showcases || []).find(s => Number(s.id) === Number(id));
+  if (!item) return showAlert("Ma'lumot topilmadi.");
+
+  const courses = state.courses || [];
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminView ? renderAdminPanel() : closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Natijani tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Kurs</label>
+            <select id="edit-sc-course" class="apple-input">
+              ${courses.map(c => `<option value="${c.id}" ${Number(c.id) === Number(item.course_id) ? "selected" : ""}>${escapeHtml(c.title)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Loyiha nomi *</label>
+            <input id="edit-sc-title" class="apple-input" type="text" value="${escapeHtml(item.title)}">
+          </div>
+
+          <div class="apple-field">
+            <label>O'quvchi ismi</label>
+            <input id="edit-sc-student" class="apple-input" type="text" value="${escapeHtml(item.student_name || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>PDF Linki *</label>
+            <input id="edit-sc-pdf" class="apple-input" type="url" value="${escapeHtml(item.pdf_url)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Rasm prevyu URL</label>
+            <input id="edit-sc-img" class="apple-input" type="url" value="${escapeHtml(item.preview_image_url || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Chegirma matni</label>
+            <input id="edit-sc-discount" class="apple-input" type="text" value="${escapeHtml(item.discount_badge || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Tavsif</label>
+            <textarea id="edit-sc-desc" class="apple-input apple-textarea">${escapeHtml(item.description || "")}</textarea>
+          </div>
+
+          <button id="update-sc-btn" class="btn" onclick="submitUpdateShowcase(${Number(id)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateShowcase(id) {
+  const courseSelect = document.getElementById("edit-sc-course");
+  const courseId = courseSelect?.value;
+  const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
+  const title = document.getElementById("edit-sc-title")?.value.trim();
+  const student = document.getElementById("edit-sc-student")?.value.trim();
+  let pdf = document.getElementById("edit-sc-pdf")?.value.trim();
+  const img = document.getElementById("edit-sc-img")?.value.trim();
+  const discount = document.getElementById("edit-sc-discount")?.value.trim();
+  const desc = document.getElementById("edit-sc-desc")?.value.trim();
+
+  if (!title || !pdf) return showAlert("Loyiha nomi va PDF linki zarur!");
+  if (!pdf.startsWith("http://") && !pdf.startsWith("https://")) {
+    pdf = "https://" + pdf;
+  }
+
+  const btn = document.getElementById("update-sc-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/showcases/${Number(id)}/update`, {
+      course_id: courseId,
+      course_title: courseTitle,
+      title,
+      student_name: student,
+      pdf_url: pdf,
+      preview_image_url: img,
+      discount_badge: discount || null,
+      description: desc
+    });
+    showToast("Muvaffaqiyatli yangilandi!");
+    await loadContent();
+    if (adminView === "library") renderAdminPanel();
+    else closeDetail();
+  } catch (err) {
+    showAlert(err.message || "Yangilashda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function deleteShowcaseItem(id) {
+  showConfirm(
+    "Natija o'chirilsinmi?",
+    "Ushbu slayd bosh sahifadagi karuseldan olib tashlanadi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/showcases/${Number(id)}/delete`);
+      showToast("O'chirildi!");
+      await loadContent();
+      if (adminView === "library") renderAdminPanel();
+    }
+  );
+}
+
+// ----------------------------------------------------
+// TALAB 5: DONAT VA QO'LLAB-QUVVATLASH LOGIKASI
+// ----------------------------------------------------
+
+function renderDonateBlock() {
+  const settings = state.settings || {};
+  const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
+  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
+  const desc = settings.donate_description || "Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo'llab-quvvatlash (ehson/donat).";
+
+  return `
+    <div class="donate-card">
+      <div class="donate-header">
+        <div class="donate-icon">💝</div>
+        <div class="donate-title">Akademiyani qo'llab-quvvatlash (Donat)</div>
+      </div>
+      <div class="donate-text">
+        ${escapeHtml(desc)}
+      </div>
+
+      <div class="donate-card-box">
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">💳 Karta raqami (UzCard / Humo):</div>
+          <div id="donate-card-val" class="donate-card-number">${escapeHtml(cardNum)}</div>
+          <div class="donate-card-holder">Egasi: ${escapeHtml(cardHolder)}</div>
+        </div>
+        <button id="copy-donate-btn" class="admin-small-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+          📋 Nusxalash
+        </button>
+      </div>
+
+      <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
+        Tezkor ehson summalari:
+      </div>
+      <div class="donate-pills">
+        <div class="donate-pill" onclick="openDonateModal('15 000 so\\'m (Qahva ☕)')">15 000 ☕</div>
+        <div class="donate-pill" onclick="openDonateModal('50 000 so\\'m (Kitob 📚)')">50 000 📚</div>
+        <div class="donate-pill" onclick="openDonateModal('100 000 so\\'m (Darslik 🚀)')">100 000 🚀</div>
+        <div class="donate-pill" onclick="openDonateModal('250 000 so\\'m (Homiylik 🌟)')">250 000 🌟</div>
+      </div>
+
+      <button class="btn" style="background:linear-gradient(135deg, #e91e63, #9c27b0); border:none; margin:0;" onclick="openDonateModal()">
+        💖 Donat qilish / Qo'llab-quvvatlash
+      </button>
+    </div>
+  `;
+}
+
+function copyDonateCard(cardNumber) {
+  haptic("medium");
+  const clean = String(cardNumber || "").replace(/\s+/g, "");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(clean);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = clean;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+
+  const btn = document.getElementById("copy-donate-btn");
+  if (btn) {
+    btn.textContent = "✅ Nusxalandi!";
+    setTimeout(() => {
+      if (btn) btn.textContent = "📋 Nusxalash";
+    }, 2000);
+  }
+  showToast("Karta raqami nusxalandi!");
+}
+
+function openDonateModal(summaLabel = "") {
+  haptic("light");
+  const settings = state.settings || {};
+  const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
+  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
+        <div class="page-title">💝 Qo'llab-quvvatlash (Donat)</div>
+
+        <div class="card" style="text-align:center; padding:24px 18px; margin-bottom:16px;">
+          <div style="font-size:44px; margin-bottom:10px;">☕</div>
+          <div style="font-size:17px; font-weight:800; margin-bottom:6px;">Har bir hissangiz biz uchun qadrli!</div>
+          <div style="font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:18px;">
+            Sizning qo'llab-quvvatlashingiz akademiyada yangi bepul darsliklar, Revit oilalari va ochiq normativlarni tayyorlashga sarflanadi.
+          </div>
+
+          ${summaLabel ? `
+            <div style="background:rgba(233,30,99,0.1); border:1px solid rgba(233,30,99,0.3); border-radius:8px; padding:10px; font-weight:750; color:#e91e63; margin-bottom:16px;">
+              Tanlangan summa: ${escapeHtml(summaLabel)}
+            </div>
+          ` : ""}
+
+          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px; text-align:left;">
+            <div style="font-size:11.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Karta raqami:</div>
+            <div style="font-family:monospace; font-size:18px; font-weight:800; color:var(--accent); letter-spacing:1px; margin:4px 0;">
+              ${escapeHtml(cardNum)}
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">Egasi: ${escapeHtml(cardHolder)}</div>
+            <button class="btn secondary" style="margin-top:12px; margin-bottom:0; padding:9px;" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+              📋 Karta raqamini nusxalash
+            </button>
+          </div>
+
+          <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.45; margin-bottom:18px;">
+            To'lovni amalga oshirgach, istasangiz chek yoki samimiy tilaklaringizni chat orqali adminga yuborishingiz mumkin!
+          </div>
+
+          <button class="btn" onclick="closeDetail(); setTab('chat');">
+            💬 Adminga xabar / chek yuborish
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+// ----------------------------------------------------
+// TALAB 6: QURILISH MATERIALLARI MARKETPLACE LOGIKASI
+// ----------------------------------------------------
+
+const MATERIAL_CATEGORIES = [
+  "Barchasi",
+  "Devor",
+  "Pol",
+  "Mebel",
+  "Bezak",
+  "Shift",
+  "Santexnika",
+  "Elektr"
+];
+
+const MATERIAL_SUBCATS = {
+  Devor: ["Barchasi", "G'isht", "Gazoblok", "Penoblok", "Gipsokarton"],
+  Mebel: ["Barchasi", "LDSP", "MDF", "LMDF", "DSP", "Fanera"],
+  Pol: ["Barchasi", "Laminat", "Keramogranit", "Parket", "Kafel"],
+  Bezak: ["Barchasi", "Ottocento", "Kraska", "Oboy", "Dekorativ shtukaturka"],
+  Shift: ["Barchasi", "Gipsokarton", "Natyajnoy", "Armstrong"],
+  Santexnika: ["Barchasi", "Trubalar", "Fitinglar", "Dush"],
+  Elektr: ["Barchasi", "Kabellar", "Avtomatlar", "Rozetkalar"]
+};
+
+function renderMarketplaceBanner() {
+  return `
+    <div class="marketplace-banner-btn" onclick="openMaterialsMarketplace()">
+      <div class="marketplace-banner-left">
+        <div class="marketplace-banner-icon">🧱</div>
+        <div>
+          <div class="marketplace-banner-title">Qurilish & Remont Materiallari Bozori</div>
+          <div class="marketplace-banner-sub">LDSP, Gazoblok, G'isht, Ottocento va barcha materiallar ensiklopediyasi →</div>
+        </div>
+      </div>
+      <div style="font-size:24px; color:#fff;">›</div>
+    </div>
+  `;
+}
+
+function openMaterialsMarketplace() {
+  haptic("light");
+  marketplaceCategory = "Barchasi";
+  marketplaceSubCategory = "Barchasi";
+  marketplaceSearchQuery = "";
+  renderMarketplaceView();
+}
+
+function setMarketplaceCategory(cat) {
+  haptic("light");
+  marketplaceCategory = cat;
+  marketplaceSubCategory = "Barchasi";
+  renderMarketplaceView();
+}
+
+function setMarketplaceSubCategory(subCat) {
+  haptic("light");
+  marketplaceSubCategory = subCat;
+  renderMarketplaceView();
+}
+
+function setMarketplaceSearch(query) {
+  marketplaceSearchQuery = query;
+  renderMarketplaceView();
+}
+
+function renderMarketplaceView() {
+  const materialsList = state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS;
+  const q = (marketplaceSearchQuery || "").trim().toLowerCase();
+
+  const filtered = materialsList.filter(m => {
+    const matchCat = marketplaceCategory === "Barchasi" || m.category === marketplaceCategory;
+    const matchSubCat = marketplaceSubCategory === "Barchasi" || m.sub_category === marketplaceSubCategory;
+    const matchQuery = !q ||
+      (m.title || "").toLowerCase().includes(q) ||
+      (m.short_desc || "").toLowerCase().includes(q) ||
+      (m.sub_category || "").toLowerCase().includes(q) ||
+      (m.what_is_it || "").toLowerCase().includes(q);
+
+    return matchCat && matchSubCat && matchQuery;
+  });
+
+  const availableSubCats = MATERIAL_SUBCATS[marketplaceCategory] || [];
+
+  currentView = {
+    html: `
+      <div class="page marketplace-page">
+        <div class="back-btn" onclick="closeDetail()">← Kutubxonaga qaytish</div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div class="page-title" style="margin-bottom:0;">🏪 Materiallar Bozori</div>
+          ${state.is_admin ? `
+            <button class="admin-small-btn" onclick="openAddMaterialModal()" style="font-size:11px; padding:6px 10px;">
+              ➕ Material Qo'shish
+            </button>
+          ` : ""}
+        </div>
+        <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:14px;">
+          Qurilish va ta'mirlashda ishlatiladigan barcha materiallar xususiyatlari, o'lchamlari, plyus/minuslari va O'zbekiston bozorlari:
+        </p>
+
+        <!-- Qidiruv paneli -->
+        <input
+          class="apple-input"
+          style="margin-bottom:12px;"
+          type="text"
+          placeholder="🔍 Nomi, turi yoki xususiyati bo'yicha qidirish..."
+          value="${escapeHtml(marketplaceSearchQuery)}"
+          oninput="setMarketplaceSearch(this.value)"
+        >
+
+        <!-- Asosiy Kategoriyalar (Gorizontal scroll) -->
+        <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px;">
+          ${MATERIAL_CATEGORIES.map(cat => `
+            <div class="chip ${marketplaceCategory === cat ? "active" : ""}" onclick="setMarketplaceCategory('${cat}')">
+              ${cat}
+            </div>
+          `).join("")}
+        </div>
+
+        <!-- Ichki Sub-kategoriyalar (Sub-filtrlar) -->
+        ${availableSubCats.length > 1 ? `
+          <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; padding-bottom:4px;">
+            ${availableSubCats.map(sc => `
+              <div class="spec-level-chip ${marketplaceSubCategory === sc ? "active" : ""}" onclick="setMarketplaceSubCategory('${sc}')" style="font-size:11px; padding:4px 10px;">
+                ${sc}
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
+
+        <!-- Mahsulotlar Gridi -->
+        ${filtered.length ? `
+          <div class="marketplace-grid">
+            ${filtered.map(mat => `
+              <div class="material-card" onclick="openMaterialDetailSheet(${Number(mat.id)})">
+                <img src="${escapeHtml(mat.image_url || 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80')}" alt="${escapeHtml(mat.title)}" class="material-card-img" onerror="this.src='https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80';">
+                <div class="material-card-content">
+                  <div class="material-card-category">${escapeHtml(mat.category)} · ${escapeHtml(mat.sub_category)}</div>
+                  <div class="material-card-title">${escapeHtml(mat.title)}</div>
+                  ${mat.dimensions ? `<div class="material-card-dim">📐 ${escapeHtml(mat.dimensions.split('.')[0])}</div>` : ""}
+                  <div class="material-card-footer">
+                    <span>Batafsil ko'rish</span>
+                    <span>→</span>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        ` : `
+          <div class="empty-box" style="margin-top:20px;">
+            Qidiruv bo'yicha mos materiallar topilmadi.
+          </div>
+        `}
+      </div>
+    `
+  };
+  render();
+}
+
+function openMaterialDetailSheet(matId) {
+  haptic("light");
+  const materialsList = state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS;
+  const mat = materialsList.find(m => Number(m.id) === Number(matId));
+  if (!mat) return showAlert("Material topilmadi.");
+
+  currentView = {
+    html: `
+      <div class="page" style="padding-bottom:50px;">
+        <div class="back-btn" onclick="renderMarketplaceView()">← Materiallar ro'yxatiga qaytish</div>
+
+        <img src="${escapeHtml(mat.image_url || 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80')}" alt="${escapeHtml(mat.title)}" class="material-detail-hero" onerror="this.src='https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80';">
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <div style="font-size:11.5px; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:4px;">
+              ${escapeHtml(mat.category)} · ${escapeHtml(mat.sub_category)}
+            </div>
+            <div style="font-size:20px; font-weight:800; color:var(--text-primary); line-height:1.3;">
+              ${escapeHtml(mat.title)}
+            </div>
+          </div>
+          ${state.is_admin ? `
+            <div style="display:flex; gap:6px;">
+              <button class="admin-small-btn" onclick="openEditMaterialModal(${Number(mat.id)})" title="Tahrirlash">✏️</button>
+              <button class="admin-small-btn" style="background:rgba(235,59,59,0.2); color:#eb3b3b;" onclick="deleteMaterialItem(${Number(mat.id)})" title="O'chirish">🗑️</button>
+            </div>
+          ` : ""}
+        </div>
+
+        <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.45; margin-bottom:16px;">
+          ${escapeHtml(mat.short_desc || "")}
+        </p>
+
+        <!-- 1. Nima o'zi u? -->
+        <div class="material-info-block">
+          <div class="material-info-header">📋 Material nima o'zi u?</div>
+          <div class="material-info-body">${escapeHtml(mat.what_is_it || "").replace(/\n/g, "<br>")}</div>
+        </div>
+
+        <!-- 2. Qachon chiqqan -->
+        ${mat.history ? `
+          <div class="material-info-block">
+            <div class="material-info-header">⏳ Qachon chiqqan va paydo bo'lish tarixi</div>
+            <div class="material-info-body">${escapeHtml(mat.history).replace(/\n/g, "<br>")}</div>
+          </div>
+        ` : ""}
+
+        <!-- 3. Standart o'lchamlari -->
+        ${mat.dimensions ? `
+          <div class="material-info-block">
+            <div class="material-info-header">📐 Standart o'lchamlari va qalinliklari</div>
+            <div class="material-info-body">${escapeHtml(mat.dimensions).replace(/\n/g, "<br>")}</div>
+          </div>
+        ` : ""}
+
+        <!-- 4. Qayerlarga ishlatiladi -->
+        ${mat.usage_area ? `
+          <div class="material-info-block">
+            <div class="material-info-header">🎯 Qayerlarga ishlatiladi (Tavsiya)</div>
+            <div class="material-info-body">${escapeHtml(mat.usage_area).replace(/\n/g, "<br>")}</div>
+          </div>
+        ` : ""}
+
+        <!-- 5. Plyus va minuslari -->
+        <div style="margin-top:16px;">
+          <div style="font-size:13.5px; font-weight:750; margin-bottom:8px; color:var(--text-primary);">Afzalliklari va Kamchiliklari:</div>
+          ${mat.pros ? `<div class="pros-box">${escapeHtml(mat.pros).replace(/\n/g, "<br>")}</div>` : ""}
+          ${mat.cons ? `<div class="cons-box">${escapeHtml(mat.cons).replace(/\n/g, "<br>")}</div>` : ""}
+        </div>
+
+        <!-- 6. O'zbekistondagi bozorlar va saytlar -->
+        ${mat.uzbekistan_sources ? `
+          <div class="uzb-market-card">
+            <div style="font-weight:750; font-size:13px; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <span>🇺🇿</span> O'zbekistondagi kerakli saytlar, do'konlar va bozorlar:
+            </div>
+            <div style="color:var(--text-primary);">${escapeHtml(mat.uzbekistan_sources).replace(/\n/g, "<br>")}</div>
+          </div>
+        ` : ""}
+
+        <!-- 7. Revit va 3ds Max maslahati -->
+        ${mat.bim_tips ? `
+          <div class="material-info-block" style="margin-top:14px; border-color:rgba(41,121,255,0.3); background:rgba(41,121,255,0.06);">
+            <div class="material-info-header" style="color:var(--accent);">💻 BIM & 3ds Max Tavsiyasi:</div>
+            <div class="material-info-body">${escapeHtml(mat.bim_tips).replace(/\n/g, "<br>")}</div>
+          </div>
+        ` : ""}
+      </div>
+    `
+  };
+  render();
+}
+
+// Admin Material Qo'shish / Tahrirlash
+function openAddMaterialModal() {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminView === 'library' ? renderAdminPanel() : renderMarketplaceView()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Material Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Material nomi *</label>
+            <input id="new-mat-title" class="apple-input" type="text" placeholder="Masalan: Gazoblok D500">
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriya</label>
+            <select id="new-mat-cat" class="apple-input">
+              <option value="Devor">Devor</option>
+              <option value="Pol">Pol</option>
+              <option value="Mebel">Mebel</option>
+              <option value="Bezak">Bezak</option>
+              <option value="Shift">Shift</option>
+              <option value="Santexnika">Santexnika</option>
+              <option value="Elektr">Elektr</option>
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Sub-kategoriya (Turi)</label>
+            <input id="new-mat-subcat" class="apple-input" type="text" placeholder="Masalan: Gazoblok, LDSP, Kraska...">
+          </div>
+
+          <div class="apple-field">
+            <label>Rasm URL linki</label>
+            <input id="new-mat-img" class="apple-input" type="url" placeholder="https://... rasm linki">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqacha tavsif</label>
+            <input id="new-mat-sdesc" class="apple-input" type="text" placeholder="Bir-ikki jumla qisqa ma'lumot">
+          </div>
+
+          <div class="apple-field">
+            <label>Material nima o'zi u? *</label>
+            <textarea id="new-mat-what" class="apple-input apple-textarea" placeholder="To'liq ta'rif, tayyorlanish jarayoni..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Standart o'lchamlari va qalinliklari</label>
+            <input id="new-mat-dim" class="apple-input" type="text" placeholder="Masalan: 600x300x200mm, 100mm...">
+          </div>
+
+          <div class="apple-field">
+            <label>Qachon chiqqan va tarixi</label>
+            <input id="new-mat-hist" class="apple-input" type="text" placeholder="Ixtiro qilingan yili, tarixi...">
+          </div>
+
+          <div class="apple-field">
+            <label>Qayerlarga ishlatiladi?</label>
+            <textarea id="new-mat-usage" class="apple-input apple-textarea" placeholder="Tavsiya etilgan sohalar..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Plyus taraflari (Afzalliklari)</label>
+            <textarea id="new-mat-pros" class="apple-input apple-textarea" placeholder="✅ Narxi, mustahkamligi..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Minus taraflari (Kamchiliklari)</label>
+            <textarea id="new-mat-cons" class="apple-input apple-textarea" placeholder="❌ Namlikka ta'sirchanlik..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>O'zbekistondagi kerakli saytlar, do'konlar va bozorlar</label>
+            <textarea id="new-mat-src" class="apple-input apple-textarea" placeholder="Bozorlar, rasmiy dilerlar, do'konlar va saytlar..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>BIM & 3ds Max tavsiyasi</label>
+            <textarea id="new-mat-bim" class="apple-input apple-textarea" placeholder="Revitda qaysi qatlam, 3ds Maxda qanday teksturalanadi..."></textarea>
+          </div>
+
+          <button id="save-mat-btn" class="btn" onclick="submitAddMaterial()">
+            💾 Saqlash va E'lon qilish
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitAddMaterial() {
+  const title = document.getElementById("new-mat-title")?.value.trim();
+  const cat = document.getElementById("new-mat-cat")?.value;
+  const subcat = document.getElementById("new-mat-subcat")?.value.trim() || "Boshqa";
+  let img = document.getElementById("new-mat-img")?.value.trim();
+  const sdesc = document.getElementById("new-mat-sdesc")?.value.trim();
+  const what = document.getElementById("new-mat-what")?.value.trim();
+  const dim = document.getElementById("new-mat-dim")?.value.trim();
+  const hist = document.getElementById("new-mat-hist")?.value.trim();
+  const usage = document.getElementById("new-mat-usage")?.value.trim();
+  const pros = document.getElementById("new-mat-pros")?.value.trim();
+  const cons = document.getElementById("new-mat-cons")?.value.trim();
+  const src = document.getElementById("new-mat-src")?.value.trim();
+  const bim = document.getElementById("new-mat-bim")?.value.trim();
+
+  if (!title) return showAlert("Material nomini kiritish shart!");
+  if (img && !img.startsWith("http://") && !img.startsWith("https://")) {
+    img = "https://" + img;
+  }
+
+  const btn = document.getElementById("save-mat-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/materials/add", {
+      title,
+      category: cat,
+      sub_category: subcat,
+      image_url: img,
+      short_desc: sdesc,
+      what_is_it: what,
+      dimensions: dim,
+      history: hist,
+      usage_area: usage,
+      pros,
+      cons,
+      uzbekistan_sources: src,
+      bim_tips: bim
+    });
+    showToast("Material qo'shildi!");
+    await loadContent();
+    if (adminView === "library") renderAdminPanel();
+    else renderMarketplaceView();
+  } catch (err) {
+    showAlert(err.message || "Material qo'shishda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function openEditMaterialModal(id) {
+  const materialsList = state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS;
+  const mat = materialsList.find(m => Number(m.id) === Number(id));
+  if (!mat) return showAlert("Material topilmadi.");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminView === 'library' ? renderAdminPanel() : openMaterialDetailSheet(${Number(id)})">← Ortga qaytish</div>
+        <div class="page-title">Materialni tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Nomi *</label>
+            <input id="edit-mat-title" class="apple-input" type="text" value="${escapeHtml(mat.title)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriya</label>
+            <select id="edit-mat-cat" class="apple-input">
+              ${MATERIAL_CATEGORIES.filter(c => c !== "Barchasi").map(c => `
+                <option value="${c}" ${c === mat.category ? "selected" : ""}>${c}</option>
+              `).join("")}
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Sub-kategoriya</label>
+            <input id="edit-mat-subcat" class="apple-input" type="text" value="${escapeHtml(mat.sub_category || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Rasm URL</label>
+            <input id="edit-mat-img" class="apple-input" type="url" value="${escapeHtml(mat.image_url || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqacha tavsif</label>
+            <input id="edit-mat-sdesc" class="apple-input" type="text" value="${escapeHtml(mat.short_desc || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Nima o'zi u?</label>
+            <textarea id="edit-mat-what" class="apple-input apple-textarea">${escapeHtml(mat.what_is_it || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>O'lchamlari</label>
+            <input id="edit-mat-dim" class="apple-input" type="text" value="${escapeHtml(mat.dimensions || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Tarixi</label>
+            <input id="edit-mat-hist" class="apple-input" type="text" value="${escapeHtml(mat.history || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Qayerlarga ishlatiladi</label>
+            <textarea id="edit-mat-usage" class="apple-input apple-textarea">${escapeHtml(mat.usage_area || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Plyus taraflari</label>
+            <textarea id="edit-mat-pros" class="apple-input apple-textarea">${escapeHtml(mat.pros || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Minus taraflari</label>
+            <textarea id="edit-mat-cons" class="apple-input apple-textarea">${escapeHtml(mat.cons || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>O'zbekistondagi manbalar</label>
+            <textarea id="edit-mat-src" class="apple-input apple-textarea">${escapeHtml(mat.uzbekistan_sources || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>BIM tavsiyasi</label>
+            <textarea id="edit-mat-bim" class="apple-input apple-textarea">${escapeHtml(mat.bim_tips || "")}</textarea>
+          </div>
+
+          <button id="update-mat-btn" class="btn" onclick="submitUpdateMaterial(${Number(id)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateMaterial(id) {
+  const title = document.getElementById("edit-mat-title")?.value.trim();
+  const cat = document.getElementById("edit-mat-cat")?.value;
+  const subcat = document.getElementById("edit-mat-subcat")?.value.trim() || "Boshqa";
+  let img = document.getElementById("edit-mat-img")?.value.trim();
+  const sdesc = document.getElementById("edit-mat-sdesc")?.value.trim();
+  const what = document.getElementById("edit-mat-what")?.value.trim();
+  const dim = document.getElementById("edit-mat-dim")?.value.trim();
+  const hist = document.getElementById("edit-mat-hist")?.value.trim();
+  const usage = document.getElementById("edit-mat-usage")?.value.trim();
+  const pros = document.getElementById("edit-mat-pros")?.value.trim();
+  const cons = document.getElementById("edit-mat-cons")?.value.trim();
+  const src = document.getElementById("edit-mat-src")?.value.trim();
+  const bim = document.getElementById("edit-mat-bim")?.value.trim();
+
+  if (!title) return showAlert("Material nomi majburiy!");
+  if (img && !img.startsWith("http://") && !img.startsWith("https://")) {
+    img = "https://" + img;
+  }
+
+  const btn = document.getElementById("update-mat-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/materials/${Number(id)}/update`, {
+      title,
+      category: cat,
+      sub_category: subcat,
+      image_url: img,
+      short_desc: sdesc,
+      what_is_it: what,
+      dimensions: dim,
+      history: hist,
+      usage_area: usage,
+      pros,
+      cons,
+      uzbekistan_sources: src,
+      bim_tips: bim
+    });
+    showToast("Material yangilandi!");
+    await loadContent();
+    if (adminView === "library") renderAdminPanel();
+    else openMaterialDetailSheet(id);
+  } catch (err) {
+    showAlert(err.message || "Yangilashda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function deleteMaterialItem(id) {
+  showConfirm(
+    "Material o'chirilsinmi?",
+    "Ushbu material ma'lumotlar bazasidan butunlay o'chiriladi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/materials/${Number(id)}/delete`);
+      showToast("O'chirildi!");
+      await loadContent();
+      if (adminView === "library") {
+        renderAdminPanel();
+      } else {
+        renderMarketplaceView();
+      }
+    }
+  );
+}
+
+// ----------------------------------------------------
+// TALAB 2: KUTUBXONA ERKIN MANBALARI VA TESTLARI LOGIKASI
+// ----------------------------------------------------
+
+function setOpenResTab(tab) {
+  haptic("light");
+  activeOpenResTab = tab;
+  render();
+}
+
+function renderOpenLibraryResources() {
+  const resources = state.open_resources && state.open_resources.length ? state.open_resources : DEFAULT_OPEN_RESOURCES;
+  const filtered = resources.filter(r => activeOpenResTab === "all" || r.type === activeOpenResTab);
+
+  return `
+    <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <div style="font-size:16px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+          <span>📖</span> Erkin testlar va ochiq manbalar (Bepul)
+        </div>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddOpenResourceModal()" style="font-size:11px; padding:5px 9px;">
+            ➕ Manba qo'shish
+          </button>
+        ` : ""}
+      </div>
+      <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
+        Ushbu bo'lim barcha o'quvchilar uchun ochiq. Bu yerdan bepul kitoblar, BIM standartlar, ochiq video darsliklar va erkin testlardan foydalanishingiz mumkin:
+      </p>
+
+      <!-- Filtr chiplari -->
+      <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; padding-bottom:4px;">
+        <div class="spec-level-chip ${activeOpenResTab === "all" ? "active" : ""}" onclick="setOpenResTab('all')">🌐 Barchasi</div>
+        <div class="spec-level-chip ${activeOpenResTab === "test" ? "active" : ""}" onclick="setOpenResTab('test')">🎯 Erkin Testlar</div>
+        <div class="spec-level-chip ${activeOpenResTab === "book" ? "active" : ""}" onclick="setOpenResTab('book')">📚 Kitoblar (PDF)</div>
+        <div class="spec-level-chip ${activeOpenResTab === "video" ? "active" : ""}" onclick="setOpenResTab('video')">🎬 Video Darslar</div>
+        <div class="spec-level-chip ${activeOpenResTab === "source" ? "active" : ""}" onclick="setOpenResTab('source')">📦 Oilalar & Shablonlar</div>
+      </div>
+
+      <div class="open-res-grid">
+        ${filtered.length ? filtered.map(r => `
+          <div class="open-res-card" onclick="handleOpenResourceClick(${Number(r.id)})">
+            <div class="open-res-left">
+              <div class="open-res-icon">${r.icon || "📄"}</div>
+              <div>
+                <div style="font-size:10.5px; font-weight:700; color:var(--accent); text-transform:uppercase;">
+                  ${r.type === "test" ? "🎯 Bepul Test Sinovi" : (r.category || "Ochiq manba")}
+                </div>
+                <div class="open-res-title">${escapeHtml(r.title)}</div>
+                <div class="open-res-desc">${escapeHtml(r.description || "")}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="font-size:12px; font-weight:750; color:var(--accent); white-space:nowrap;">
+                ${r.type === "test" ? "Test yechish ▶" : "Ochish ↗"}
+              </div>
+              ${state.is_admin ? `
+                <span onclick="event.stopPropagation(); deleteOpenResourceItem(${Number(r.id)})" title="O'chirish" style="font-size:13px; color:#eb3b3b; cursor:pointer;">🗑️</span>
+              ` : ""}
+            </div>
+          </div>
+        `).join("") : `<div class="empty-box">Ushbu bo'limda hozircha manbalar yo'q.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function handleOpenResourceClick(resId) {
+  const resources = state.open_resources && state.open_resources.length ? state.open_resources : DEFAULT_OPEN_RESOURCES;
+  const res = resources.find(r => Number(r.id) === Number(resId));
+  if (!res) return;
+
+  haptic("light");
+
+  if (res.type === "test") {
+    let testData = res.test_data;
+    if (typeof testData === "string") {
+      try { testData = JSON.parse(testData); } catch (e) { testData = []; }
+    }
+    if (!Array.isArray(testData) || !testData.length) {
+      return showAlert("Ushbu test uchun savollar kiritilmagan.");
+    }
+    startFreeTest(res.title, testData);
+  } else if (res.link_url) {
+    if (res.link_url.includes("drive.google.com") || res.link_url.endsWith(".pdf")) {
+      openPdfViewerModal(res.link_url, res.title);
+    } else {
+      window.open(res.link_url, "_blank", "noopener,noreferrer");
+    }
+  } else {
+    showAlert(res.description || res.title);
+  }
+}
+
+// Bepul / Erkin Test Oynasi
+function startFreeTest(testTitle, questions) {
+  haptic("medium");
+  freeQuizState = {
+    title: testTitle,
+    questions: questions,
+    currentIndex: 0,
+    answers: {},
+    isFinished: false,
+    score: 0
+  };
+  renderFreeQuiz();
+}
+
+function renderFreeQuiz() {
+  const qs = freeQuizState;
+  if (!qs) return;
+
+  if (qs.isFinished) {
+    const total = qs.questions.length;
+    const pct = Math.round((qs.score / total) * 100);
+    const passed = pct >= 70;
+
+    currentView = {
+      html: `
+        <div class="page" style="text-align:center; padding:30px 18px;">
+          <div style="font-size:54px; margin-bottom:12px;">${passed ? "🎉" : "💪"}</div>
+          <div class="page-title" style="margin-bottom:6px;">${escapeHtml(qs.title)}</div>
+          <div style="font-size:14px; color:var(--text-secondary); margin-bottom:20px;">
+            Test yakunlandi! Natijangiz bilan tanishing:
+          </div>
+
+          <div class="card" style="margin-bottom:20px; padding:20px;">
+            <div style="font-size:38px; font-weight:800; color:${passed ? "var(--accent)" : "var(--danger)"}; margin-bottom:6px;">
+              ${qs.score} / ${total}
+            </div>
+            <div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+              O'zlashtirish: ${pct}%
+            </div>
+            <div style="font-size:13px; color:var(--text-secondary);">
+              ${passed ? "Ajoyib natija! Siz ushbu mavzuni juda yaxshi tushungansiz." : "Harakat qiling! Kurs darsliklari va manbalarini qayta ko'rib chiqishni tavsiya qilamiz."}
+            </div>
+          </div>
+
+          <button class="btn" style="margin-bottom:10px;" onclick="closeDetail()">
+            Kutubxonaga qaytish ←
+          </button>
+          <button class="btn secondary" onclick="startFreeTest('${escapeJsString(qs.title)}', freeQuizState.questions)">
+            🔄 Testni qayta topshirish
+          </button>
+        </div>
+      `
+    };
+    render();
+    return;
+  }
+
+  const total = qs.questions.length;
+  const idx = qs.currentIndex;
+  const q = qs.questions[idx];
+  const isLast = idx === total - 1;
+  const selectedAnswer = qs.answers[idx];
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Testdan chiqish</div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">
+            ${escapeHtml(qs.title)}
+          </div>
+          <div style="font-size:13px; font-weight:750; color:var(--text-secondary);">
+            ${idx + 1} / ${total}
+          </div>
+        </div>
+
+        <div class="progress-wrap" style="margin-bottom:16px;">
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${Math.round(((idx + 1) / total) * 100)}%;"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-size:15.5px; font-weight:750; color:var(--text-primary); line-height:1.4; margin-bottom:16px;">
+            ${idx + 1}. ${escapeHtml(q.q || q.question || "")}
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${(q.options || []).map((opt, optIdx) => {
+              const isSelected = selectedAnswer === optIdx;
+              return `
+                <div class="apple-option ${isSelected ? "selected" : ""}" onclick="selectFreeQuizAnswer(${optIdx})">
+                  <div class="apple-option-indicator"></div>
+                  <div class="apple-option-text">${escapeHtml(opt)}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          ${idx > 0 ? `
+            <button class="btn secondary" style="flex:1; margin:0;" onclick="prevFreeQuizQuestion()">
+              ← Oldingisi
+            </button>
+          ` : ""}
+          <button class="btn" style="flex:2; margin:0;" onclick="${isLast ? "finishFreeQuiz()" : "nextFreeQuizQuestion()"}" ${selectedAnswer === undefined ? "disabled" : ""}>
+            ${isLast ? "Testni yakunlash ✅" : "Keyingisi →"}
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+function selectFreeQuizAnswer(optIdx) {
+  haptic("light");
+  if (!freeQuizState) return;
+  freeQuizState.answers[freeQuizState.currentIndex] = optIdx;
+  renderFreeQuiz();
+}
+
+function nextFreeQuizQuestion() {
+  if (!freeQuizState) return;
+  if (freeQuizState.currentIndex < freeQuizState.questions.length - 1) {
+    freeQuizState.currentIndex++;
+    renderFreeQuiz();
+  }
+}
+
+function prevFreeQuizQuestion() {
+  if (!freeQuizState) return;
+  if (freeQuizState.currentIndex > 0) {
+    freeQuizState.currentIndex--;
+    renderFreeQuiz();
+  }
+}
+
+function finishFreeQuiz() {
+  if (!freeQuizState) return;
+  haptic("medium");
+  let score = 0;
+  freeQuizState.questions.forEach((q, i) => {
+    if (freeQuizState.answers[i] === q.correct) {
+      score++;
+    }
+  });
+  freeQuizState.score = score;
+  freeQuizState.isFinished = true;
+  renderFreeQuiz();
+}
+
+function openAddOpenResourceModal() {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminView ? renderAdminPanel() : closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Ochiq Manba Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Manba turi</label>
+            <select id="or-type" class="apple-input">
+              <option value="book">📚 Kitob (PDF)</option>
+              <option value="video">🎬 Ochiq Video Dars</option>
+              <option value="source">📦 Manba / Oila / Shablon</option>
+              <option value="test">🎯 Sinov Testi</option>
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Sarlavha *</label>
+            <input id="or-title" class="apple-input" type="text" placeholder="Masalan: Revit 2024 qo'llanmasi (PDF)">
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriya / Tege</label>
+            <input id="or-cat" class="apple-input" type="text" placeholder="Masalan: Adabiyotlar, Standartlar...">
+          </div>
+
+          <div class="apple-field">
+            <label>Havola linki (Google Drive, YouTube, Telegram...)</label>
+            <input id="or-link" class="apple-input" type="url" placeholder="https://...">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqacha tavsif</label>
+            <textarea id="or-desc" class="apple-input apple-textarea" placeholder="Manba haqida ma'lumot..."></textarea>
+          </div>
+
+          <button id="save-or-btn" class="btn" onclick="submitAddOpenResource()">
+            💾 Saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitAddOpenResource() {
+  const type = document.getElementById("or-type")?.value;
+  const title = document.getElementById("or-title")?.value.trim();
+  const cat = document.getElementById("or-cat")?.value.trim();
+  let link = document.getElementById("or-link")?.value.trim();
+  const desc = document.getElementById("or-desc")?.value.trim();
+
+  if (!title) return showAlert("Sarlavha kiritilishi shart!");
+  if (link && !link.startsWith("http://") && !link.startsWith("https://")) {
+    link = "https://" + link;
+  }
+
+  const icons = { book: "📚", video: "🎬", source: "📦", test: "🎯" };
+
+  const btn = document.getElementById("save-or-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/library/resources/add", {
+      type,
+      title,
+      category: cat || "Ochiq manba",
+      description: desc,
+      link_url: link,
+      icon: icons[type] || "📄"
+    });
+    showToast("Manba saqlandi!");
+    await loadContent();
+    if (adminView === "library") renderAdminPanel();
+    else closeDetail();
+  } catch (err) {
+    showAlert(err.message || "Saqlashda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function deleteOpenResourceItem(id) {
+  showConfirm(
+    "Manba o'chirilsinmi?",
+    "Ushbu resurs kutubxonadan o'chiriladi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/library/resources/${Number(id)}/delete`);
+      showToast("O'chirildi!");
+      await loadContent();
+      if (adminView === "library") renderAdminPanel();
+    }
+  );
+}
+
 
 function fmtDate(d) {
   if (!d) return null;
@@ -673,6 +2685,12 @@ function renderHome() {
           </div>
         </div>
       `).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
+
+      <!-- 3-TALAB: O'QUVCHILAR NATIJALARI VA LOYIHA ALBOM LARI (PDF KARUSEL) -->
+      ${renderShowcaseCarousel()}
+
+      <!-- 1-TALAB: 3DS MAX & REVIT KOMPYUTER VA NOUTBUK PARAMETRLARI -->
+      ${renderPcSpecsBlock()}
 
       <div class="section-title">O'quvchilar fikri</div>
       <div class="testi-scroll">
@@ -2001,78 +4019,145 @@ async function submitLessonQuestion(lessonId) {
 function renderTasks() {
   const courses = state.courses || [];
 
-  if (!selectedCourseId || !courseModulesData) {
-    return `
-      <div class="page">
-        <div class="page-title">Vazifalar va Testlar</div>
-        <p style="color:var(--text-secondary); margin-bottom:14px; font-size:13px;">
-          Avval qaysi kurs bo'yicha vazifa va testlarni ko'rmoqchi ekaningizni tanlang:
-        </p>
-        <select class="apple-input" style="margin-bottom:14px;" onchange="selectTasksCourse(this.value)">
-          <option value="">— Kursni tanlang —</option>
-          ${courses.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.title)}</option>`).join("")}
-        </select>
-      </div>
-    `;
-  }
-
-  const course = courseModulesData.course || {};
-  const modules = Array.isArray(courseModulesData.modules) ? courseModulesData.modules : [];
-
   return `
     <div class="page">
+      <!-- 6-TALAB: QURILISH VA REMONT MATERIALLARI BOZORI (MARKETPLACE) BANNERI -->
+      ${renderMarketplaceBanner()}
+
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div class="page-title" style="margin-bottom:0;">Vazifalar va Testlar</div>
+        <div class="page-title" style="margin-bottom:0;">📚 Kutubxona & Testlar</div>
         ${state.is_admin ? `
           <button class="admin-small-btn" onclick="openAddTestModal()">
             ➕ Test Qo'shish
           </button>
         ` : ""}
       </div>
+      <p style="color:var(--text-secondary); margin-bottom:14px; font-size:13px;">
+        Kurs bo'yicha modul testlari, dars topshiriqlari va barcha uchun ochiq erkin manbalar:
+      </p>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-        <p style="color:var(--text-secondary); font-size:13px; margin:0;">
-          ${escapeHtml(course.title || "")}
-        </p>
-        <div class="chip" onclick="selectedCourseId = null; courseModulesData = null; render();">
-          🔄 Boshqa kurs
+      <!-- 2-TALAB: KURS BO'YICHA TANLASH VA HOZIRGI HOLATI / TEST DAVOM ETTIRISH -->
+      <div class="card" style="margin-bottom:16px; border:1px solid var(--border); padding:16px;">
+        <div style="font-weight:750; font-size:14.5px; margin-bottom:10px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+          <span>🎯</span> Kurs bo'yicha test va vazifalar:
         </div>
+
+        <select class="apple-input" style="margin-bottom:12px;" onchange="selectTasksCourse(this.value)">
+          <option value="">— Kursni tanlang —</option>
+          ${courses.map(c => `
+            <option value="${Number(c.id)}" ${Number(selectedCourseId) === Number(c.id) ? "selected" : ""}>
+              ${escapeHtml(c.title)}
+            </option>
+          `).join("")}
+        </select>
+
+        ${!selectedCourseId || !courseModulesData ? `
+          <div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:10px 0;">
+            Yuqoridan kursni tanlang va o'z bilimingizni sinab ko'ring.
+          </div>
+        ` : (() => {
+          const course = courseModulesData.course || {};
+          const modules = Array.isArray(courseModulesData.modules) ? courseModulesData.modules : [];
+          const isCourseFree = course.is_free || course.status === "free";
+          const userCanAccess = state.has_access || state.is_admin || isCourseFree;
+
+          // Agar kurs pullik bo'lsa va o'quvchida ruxsat bo'lmasa:
+          if (!userCanAccess) {
+            return `
+              <div style="background:rgba(235,59,59,0.08); border:1px solid rgba(235,59,59,0.3); border-radius:var(--radius-md); padding:18px; text-align:center; margin-top:8px;">
+                <div style="font-size:36px; margin-bottom:8px;">🔒</div>
+                <div style="font-weight:800; font-size:15.5px; color:var(--danger); margin-bottom:6px;">
+                  Ushbu kurs testlari va manbalariga kirish cheklangan
+                </div>
+                <div style="font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:16px;">
+                  Ushbu kurs pullik bo'lib, uning to'liq testlari, amaliy dars vazifalari va yopiq materiallariga kirish uchun kursni sotib olishingiz lozim. Kursni sotib olgach barcha ruxsatlar avtomatik ochiladi.
+                </div>
+                <button class="btn" style="margin:0 auto; padding:11px 24px; width:auto;" onclick="setTab('chat')">
+                  💳 Kursni sotib olish / Adminga yozish
+                </button>
+              </div>
+            `;
+          }
+
+          // Ruxsat bo'lsa: natijalar, hozirgi holati va davom ettirish
+          const totalMods = modules.length;
+          const passedMods = modules.filter(m => m.test_passed).length;
+          const nextModToTest = modules.find(m => !m.test_passed) || modules[0];
+
+          return `
+            <div style="background:var(--bg-secondary); border-radius:var(--radius-md); padding:14px; margin-top:8px; border:1px solid var(--border);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:700; font-size:14px; color:var(--text-primary);">${escapeHtml(course.title || "Kurs")}</span>
+                <span class="tag ok" style="font-size:11px;">🟢 Ruxsat berilgan</span>
+              </div>
+
+              <!-- Hozirgi holati va natijalari -->
+              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:12px;">
+                <div style="background:var(--bg-surface); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                  <div style="font-size:11px; color:var(--text-muted);">Topshirilgan testlar:</div>
+                  <div style="font-size:15px; font-weight:800; color:var(--accent);">${passedMods} / ${totalMods} modul</div>
+                </div>
+                <div style="background:var(--bg-surface); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                  <div style="font-size:11px; color:var(--text-muted);">Kurs holati:</div>
+                  <div style="font-size:14px; font-weight:750; color:var(--text-primary);">
+                    ${passedMods === totalMods && totalMods > 0 ? "🏆 Yakunlangan" : "⏳ O'rganilmoqda"}
+                  </div>
+                </div>
+              </div>
+
+              ${nextModToTest ? `
+                <button class="btn" style="margin:0 0 14px 0; padding:11px;" onclick="openTest(${Number(nextModToTest.id)})">
+                  ▶ Test yechishni davom ettirish (${escapeHtml(nextModToTest.title)})
+                </button>
+              ` : ""}
+
+              <div style="font-size:12.5px; font-weight:700; margin-bottom:8px; color:var(--text-secondary);">
+                Kurs modullari va amaliy vazifalari:
+              </div>
+
+              ${modules.map((mod, idx) => {
+                const tasks = (mod.lessons || []).filter(l => l.task_text && l.task_text.trim());
+                return `
+                  <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div>
+                        <span class="idx">${String(idx + 1).padStart(2, "0")}</span>
+                        <span style="font-weight:700; font-size:13.5px; margin-left:4px;">${escapeHtml(mod.title)}</span>
+                      </div>
+                      <button class="admin-small-btn" style="padding:5px 10px; font-size:11px;" onclick="openTest(${Number(mod.id)})">
+                        📝 Test
+                      </button>
+                    </div>
+                    ${tasks.length ? `
+                      <div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);">
+                        ${tasks.map(t => `
+                          <div style="font-size:12px; color:var(--text-secondary); cursor:pointer; padding:2px 0;" onclick="openLesson(${Number(t.id)})">
+                            📌 ${escapeHtml(t.title)}: <span style="color:var(--text-muted);">${escapeHtml(t.task_text.slice(0, 50))}...</span>
+                          </div>
+                        `).join("")}
+                      </div>
+                    ` : ""}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          `;
+        })()}
       </div>
 
-      ${modules.length ? modules.map((mod, idx) => {
-        const tasks = (mod.lessons || []).filter(l => l.task_text && l.task_text.trim());
-
-        return `
-          <div class="card" style="margin-bottom:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:10px;">
-              <div>
-                <span class="idx">${String(idx + 1).padStart(2, "0")}</span>
-                <span style="font-weight:750; font-size:15px; margin-left:6px;">${escapeHtml(mod.title)}</span>
-              </div>
-              ${state.has_access || state.is_admin ? `
-                <button class="admin-small-btn" style="padding:6px 12px; font-size:11.5px;" onclick="openTest(${Number(mod.id)})">
-                  📝 Test Topshirish
-                </button>
-              ` : `
-                <span style="font-size:11px; color:var(--text-secondary);">🔒 Kirish huquqi kerak</span>
-              `}
-            </div>
-
-            ${tasks.length ? tasks.map(t => `
-              <div class="task-card" style="margin-bottom:10px;" onclick="${t.available ? `openLesson(${Number(t.id)})` : `showLockedInfo()`}">
-                <div class="task-title" style="font-size:14.5px;">${escapeHtml(t.title)}</div>
-                <div class="task-text">${escapeHtml(t.task_text).replace(/\n/g, "<br>")}</div>
-              </div>
-            `).join("") : `<div style="font-size:13px; color:var(--text-secondary); padding:6px 0;">Ushbu modulda alohida dars vazifalari belgilanmagan. Modul testi orqali bilimingizni sinab ko'ring.</div>`}
-          </div>
-        `;
-      }).join("") : `<div class="empty-box">Bu kursda hozircha modullar kiritilmagan.</div>`}
+      <!-- 2-TALAB: KURS TANLASHNI TAGIDA ERKIN TESTLAR VA VAZIFALAR (HAMMAGA OCHIQ) -->
+      ${renderOpenLibraryResources()}
     </div>
   `;
 }
 
 async function selectTasksCourse(courseId) {
-  if (!courseId) return;
+  if (!courseId) {
+    selectedCourseId = null;
+    courseModulesData = null;
+    render();
+    return;
+  }
   try {
     haptic("light");
     const data = await api(`/api/course/${Number(courseId)}/modules`);
@@ -2675,6 +4760,9 @@ function renderProfile() {
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
 
+      <!-- 5-TALAB: QO'LLAB-QUVVATLASH (DONAT) QISMI -->
+      ${renderDonateBlock()}
+
       <button class="btn danger" style="margin-top:24px;" onclick="confirmDeleteAccount()">
         🗑️ Hisobni o'chirish
       </button>
@@ -2986,6 +5074,9 @@ function renderAdminPanel() {
           <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
             🎬 Darslar
           </button>
+          <button class="${adminView === "library" ? "active" : ""}" onclick="adminSetTab('library')">
+            📚 Kutubxona
+          </button>
           <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
             📤 Vazifalar
           </button>
@@ -3000,6 +5091,7 @@ function renderAdminPanel() {
           ${adminView === "dashboard" ? renderAdminDashboard() : ""}
           ${adminView === "students" ? renderAdminStudents() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
+          ${adminView === "library" ? renderAdminLibrary() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
           ${adminView === "practice" ? renderAdminPractice() : ""}
         </div>
@@ -3023,6 +5115,13 @@ async function adminSetTab(tab) {
     } else if (tab === "lessons") {
       const data = await adminApi("/api/admin/modules");
       adminData.modules = data.modules || [];
+    } else if (tab === "library") {
+      try {
+        const filesData = await adminApi("/api/admin/library/all-files");
+        adminData.libraryFiles = filesData.files || [];
+      } catch (fe) {
+        adminData.libraryFiles = [];
+      }
     } else if (tab === "admins") {
       const data = await adminApi("/api/admin/admins");
       adminData.admins = data.admins || [];
@@ -3562,19 +5661,39 @@ async function openEditLessonView(lessonId) {
           </div>
 
           <!-- Dars Materiallari / Manbalari boshqaruvi -->
-          <div class="section-title" style="margin-top:24px;">📁 Kerakli Manbalar va Fayllar</div>
+          <div class="section-title" style="margin-top:24px;">📁 Kerakli Manbalar va Fayllar (${files.length})</div>
           <div class="lesson-files">
-            ${files.map(f => `
-              <div class="lesson-file">
-                <div class="lesson-file-info">
-                  <span>${getResourceIcon(f.file_name)}</span>
-                  <span>${escapeHtml(f.file_name)}</span>
+            ${files.length ? files.map(f => `
+              <div class="lesson-file-row">
+                <div class="lesson-file-header">
+                  <div class="lesson-file-title-wrap">
+                    <span style="font-size:18px;">${getResourceIcon(f.file_name)}</span>
+                    <span class="lesson-file-title-text">${escapeHtml(f.file_name)}</span>
+                  </div>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="admin-small-btn" onclick="openEditLessonFileModal(${Number(f.id)}, '${escapeJsString(f.file_name)}', '${escapeJsString(f.file_url)}', ${Number(lessonId)})" title="Tahrirlash">
+                      ✏️ Tahrirlash
+                    </button>
+                    <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteLessonFile(${Number(f.id)}, ${Number(lessonId)})" title="O'chirish">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-                <button class="btn danger" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="deleteLessonFile(${Number(f.id)}, ${Number(lessonId)})">
-                  O'chirish 🗑️
-                </button>
+                <div class="lesson-file-link-wrap">
+                  <a href="${escapeHtml(f.file_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+                    ${escapeHtml(f.file_url)}
+                  </a>
+                  <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="window.open('${escapeJsString(f.file_url)}', '_blank')">
+                      🔗 Sinab ko'rish
+                    </button>
+                    <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(f.file_url)}', 'Havola nusxalandi!')">
+                      📋 Nusxa
+                    </button>
+                  </div>
+                </div>
               </div>
-            `).join("")}
+            `).join("") : `<div class="empty-box" style="margin-bottom:12px;">Hozircha biriktirilgan fayllar yo'q.</div>`}
           </div>
 
           <div class="apple-registration-form" style="background:var(--bg-surface); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border); margin-top:14px;">
@@ -3583,7 +5702,7 @@ async function openEditLessonView(lessonId) {
             </div>
             <input id="new-file-name" class="apple-input" type="text" placeholder="Fayl nomi (masalan: 2-dars_material.rar)" style="margin-bottom:8px;">
             <input id="new-file-url" class="apple-input" type="url" placeholder="Yuklab olish linki (Google Drive, Dropbox...)" style="margin-bottom:10px;">
-            <button class="btn secondary" style="margin:0;" onclick="submitAddLessonFile(${Number(lessonId)})">
+            <button id="add-file-btn" class="btn secondary" style="margin:0;" onclick="submitAddLessonFile(${Number(lessonId)})">
               📥 Faylni qo'shish
             </button>
           </div>
@@ -3643,9 +5762,18 @@ function deleteAdminLesson(lessonId, moduleId) {
 }
 
 async function submitAddLessonFile(lessonId) {
-  const name = document.getElementById("new-file-name")?.value.trim();
-  const url = document.getElementById("new-file-url")?.value.trim();
+  const nameInput = document.getElementById("new-file-name");
+  const urlInput = document.getElementById("new-file-url");
+  const btn = document.getElementById("add-file-btn");
+  const name = nameInput?.value.trim();
+  let url = urlInput?.value.trim();
   if (!name || !url) return showAlert("Fayl nomi va yuklab olish linki kiritilishi shart!");
+
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
+  }
+
+  if (btn) btn.classList.add("btn-loading");
 
   try {
     haptic("medium");
@@ -3657,6 +5785,77 @@ async function submitAddLessonFile(lessonId) {
     openEditLessonView(lessonId);
   } catch (error) {
     showAlert(error.message || "Fayl qo'shishda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+function openEditLessonFileModal(fileId, fileName, fileUrl, lessonId) {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="openEditLessonView(${Number(lessonId)})">← Ortga qaytish</div>
+        <div class="page-title">Faylni tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Fayl nomi *</label>
+            <input id="edit-fn-name" class="apple-input" type="text" value="${escapeHtml(fileName)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Yuklab olish linki *</label>
+            <input id="edit-fn-url" class="apple-input" type="url" value="${escapeHtml(fileUrl)}">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <button type="button" class="btn secondary" style="margin:0; padding:10px;" onclick="testModalUrl('edit-fn-url')">
+              🔗 Havolani brauzerda sinab ko'rish
+            </button>
+          </div>
+
+          <button id="save-fn-btn" class="btn" onclick="submitUpdateLessonFile(${Number(fileId)}, ${Number(lessonId)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+function testModalUrl(inputId) {
+  let url = document.getElementById(inputId)?.value.trim();
+  if (!url) return showAlert("Link kiritilmagan!");
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
+  }
+  window.open(url, "_blank");
+}
+
+async function submitUpdateLessonFile(fileId, lessonId) {
+  const name = document.getElementById("edit-fn-name")?.value.trim();
+  let url = document.getElementById("edit-fn-url")?.value.trim();
+  if (!name || !url) return showAlert("Fayl nomi va linki kiritilishi shart!");
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
+  }
+
+  const btn = document.getElementById("save-fn-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/file/${Number(fileId)}/update`, {
+      file_name: name,
+      file_url: url
+    });
+    showToast("Material muvaffaqiyatli yangilandi!");
+    openEditLessonView(lessonId);
+  } catch (error) {
+    showAlert(error.message || "Materialni yangilashda xato.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
   }
 }
 
@@ -3671,6 +5870,314 @@ async function deleteLessonFile(fileId, lessonId) {
       openEditLessonView(lessonId);
     }
   );
+}
+
+// ======================================================
+// TALAB 4: ADMIN CENTRAL KUTUBXONA BOSHQARUVI
+// ======================================================
+
+function setAdminLibraryTab(subTab) {
+  haptic("light");
+  adminData.librarySubTab = subTab;
+  renderAdminPanel();
+}
+
+function renderAdminLibrary() {
+  const subTab = adminData.librarySubTab || "files";
+  const files = adminData.libraryFiles || [];
+  const openRes = state.open_resources || [];
+  const showcases = state.showcases || [];
+  const materials = state.materials || [];
+  const search = (adminData.libraryFileSearch || "").toLowerCase().trim();
+
+  const filteredFiles = search ? files.filter(f =>
+    (f.file_name && f.file_name.toLowerCase().includes(search)) ||
+    (f.lesson_title && f.lesson_title.toLowerCase().includes(search)) ||
+    (f.course_title && f.course_title.toLowerCase().includes(search))
+  ) : files;
+
+  return `
+    <div>
+      <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
+        <div class="chip ${subTab === "files" ? "active" : ""}" onclick="setAdminLibraryTab('files')">
+          📁 Dars Fayllari (${files.length})
+        </div>
+        <div class="chip ${subTab === "open_res" ? "active" : ""}" onclick="setAdminLibraryTab('open_res')">
+          📖 Ochiq Manbalar (${openRes.length})
+        </div>
+        <div class="chip ${subTab === "showcases" ? "active" : ""}" onclick="setAdminLibraryTab('showcases')">
+          🎓 Natijalar (PDF) (${showcases.length})
+        </div>
+        <div class="chip ${subTab === "materials" ? "active" : ""}" onclick="setAdminLibraryTab('materials')">
+          🧱 Materiallar (${materials.length})
+        </div>
+      </div>
+
+      ${subTab === "files" ? renderAdminLibraryFiles(filteredFiles, search) : ""}
+      ${subTab === "open_res" ? renderAdminLibraryOpenRes(openRes) : ""}
+      ${subTab === "showcases" ? renderAdminLibraryShowcases(showcases) : ""}
+      ${subTab === "materials" ? renderAdminLibraryMaterials(materials) : ""}
+    </div>
+  `;
+}
+
+function renderAdminLibraryFiles(filteredFiles, search) {
+  return `
+    <div style="margin-bottom:14px;">
+      <input class="apple-input" type="text" placeholder="🔍 Fayl, kurs yoki dars nomi bo'yicha qidirish..." value="${escapeHtml(search)}" oninput="onLibraryFileSearch(this.value)">
+    </div>
+    <div class="admin-section-header" style="margin-bottom:10px;">
+      <div class="admin-section-title">Barcha Dars Fayllari (${filteredFiles.length})</div>
+      <button class="admin-small-btn" onclick="adminSetTab('library')" title="Yangilash">🔄 Yangilash</button>
+    </div>
+    <div class="lesson-files">
+      ${filteredFiles.length ? filteredFiles.map(f => `
+        <div class="lesson-file-row">
+          <div class="lesson-file-header">
+            <div class="lesson-file-title-wrap">
+              <span style="font-size:20px;">${getResourceIcon(f.file_name)}</span>
+              <div>
+                <div class="lesson-file-title-text">${escapeHtml(f.file_name)}</div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                  ${escapeHtml(f.course_title || "Kurs")} → ${escapeHtml(f.lesson_title || "Dars")}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="admin-small-btn" onclick="openEditLibraryFileDirectModal(${Number(f.id)}, '${escapeJsString(f.file_name)}', '${escapeJsString(f.file_url)}')" title="Tahrirlash">
+                ✏️
+              </button>
+              <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteLibraryFileDirect(${Number(f.id)})" title="O'chirish">
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div class="lesson-file-link-wrap">
+            <a href="${escapeHtml(f.file_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+              ${escapeHtml(f.file_url)}
+            </a>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="window.open('${escapeJsString(f.file_url)}', '_blank')">
+                🔗 Sinab ko'rish
+              </button>
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(f.file_url)}', 'Fayl havolasi nusxalandi!')">
+                📋 Nusxa
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join("") : `<div class="empty-box">Fayllar topilmadi.</div>`}
+    </div>
+  `;
+}
+
+function onLibraryFileSearch(val) {
+  adminData.libraryFileSearch = val;
+  renderAdminPanel();
+}
+
+function openEditLibraryFileDirectModal(fileId, fileName, fileUrl) {
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="renderAdminPanel()">← Ortga qaytish</div>
+        <div class="page-title">Faylni tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Fayl nomi *</label>
+            <input id="edit-libf-name" class="apple-input" type="text" value="${escapeHtml(fileName)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Yuklab olish linki *</label>
+            <input id="edit-libf-url" class="apple-input" type="url" value="${escapeHtml(fileUrl)}">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <button type="button" class="btn secondary" style="margin:0; padding:10px;" onclick="testModalUrl('edit-libf-url')">
+              🔗 Havolani brauzerda sinab ko'rish
+            </button>
+          </div>
+
+          <button id="save-libf-btn" class="btn" onclick="submitUpdateLibraryFileDirect(${Number(fileId)})">
+            💾 O'zgarishlarni saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateLibraryFileDirect(fileId) {
+  const name = document.getElementById("edit-libf-name")?.value.trim();
+  let url = document.getElementById("edit-libf-url")?.value.trim();
+  if (!name || !url) return showAlert("Fayl nomi va havolasi majburiy!");
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
+  }
+
+  const btn = document.getElementById("save-libf-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/file/${Number(fileId)}/update`, {
+      file_name: name,
+      file_url: url
+    });
+    showToast("Fayl yangilandi!");
+    await adminSetTab("library");
+  } catch (error) {
+    showAlert(error.message || "Faylni yangilashda xatolik.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
+async function deleteLibraryFileDirect(fileId) {
+  showConfirm(
+    "Fayl o'chirilsinmi?",
+    "Ushbu manba o'chiriladi va darsda ko'rinmaydi.",
+    "Ha, o'chirish",
+    async () => {
+      await adminApi(`/api/admin/file/${Number(fileId)}/delete`);
+      showToast("Fayl o'chirildi!");
+      await adminSetTab("library");
+    }
+  );
+}
+
+function renderAdminLibraryOpenRes(openRes) {
+  return `
+    <div class="admin-section-header" style="margin-bottom:12px;">
+      <div class="admin-section-title">Erkin Manbalar (${openRes.length})</div>
+      <button class="admin-small-btn" onclick="openAddOpenResourceModal()">➕ Manba Qo'shish</button>
+    </div>
+    <div class="lesson-files">
+      ${openRes.length ? openRes.map(r => `
+        <div class="lesson-file-row">
+          <div class="lesson-file-header">
+            <div class="lesson-file-title-wrap">
+              <span style="font-size:22px;">${r.icon || "📚"}</span>
+              <div>
+                <div class="lesson-file-title-text">${escapeHtml(r.title)}</div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                  Turi: ${r.type === "book" ? "Kitob (PDF)" : r.type === "video" ? "Video Dars" : r.type === "test" ? "Sinov Testi" : "Manba / Shablon"} • Kategoriya: ${escapeHtml(r.category || "Umumiy")}
+                </div>
+              </div>
+            </div>
+            <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteOpenResourceItem(${Number(r.id)})" title="O'chirish">
+              🗑️
+            </button>
+          </div>
+          ${r.description ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${escapeHtml(r.description)}</div>` : ""}
+          ${r.link_url ? `
+            <div class="lesson-file-link-wrap">
+              <a href="${escapeHtml(r.link_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+                ${escapeHtml(r.link_url)}
+              </a>
+              <div style="display:flex; gap:6px; flex-shrink:0;">
+                <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="window.open('${escapeJsString(r.link_url)}', '_blank')">
+                  🔗 Sinab ko'rish
+                </button>
+                <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(r.link_url)}', 'Havola nusxalandi!')">
+                  📋 Nusxa
+                </button>
+              </div>
+            </div>
+          ` : ""}
+        </div>
+      `).join("") : `<div class="empty-box">Erkin manbalar mavjud emas.</div>`}
+    </div>
+  `;
+}
+
+function renderAdminLibraryShowcases(showcases) {
+  return `
+    <div class="admin-section-header" style="margin-bottom:12px;">
+      <div class="admin-section-title">O'quvchilar Natijalari (${showcases.length})</div>
+      <button class="admin-small-btn" onclick="openAddShowcaseModal()">➕ Natija Qo'shish</button>
+    </div>
+    <div class="lesson-files">
+      ${showcases.length ? showcases.map(sc => `
+        <div class="lesson-file-row">
+          <div class="lesson-file-header">
+            <div class="lesson-file-title-wrap">
+              <span style="font-size:22px;">📜</span>
+              <div>
+                <div class="lesson-file-title-text">${escapeHtml(sc.title)}</div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                  O'quvchi: ${escapeHtml(sc.student_name || "O'quvchi")} • ${escapeHtml(sc.course_title || "Kurs")}
+                  ${sc.discount_badge ? ` • <span style="color:#ffab00; font-weight:700;">${escapeHtml(sc.discount_badge)}</span>` : ""}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="admin-small-btn" onclick="openEditShowcaseModal(${Number(sc.id)})" title="Tahrirlash">
+                ✏️
+              </button>
+              <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteShowcaseItem(${Number(sc.id)})" title="O'chirish">
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div class="lesson-file-link-wrap">
+            <span style="color:var(--text-secondary); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+              📄 PDF: ${escapeHtml(sc.pdf_url)}
+            </span>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="openPdfViewerModal('${escapeJsString(sc.pdf_url)}', '${escapeJsString(sc.title)}')">
+                👁️ Ko'rish
+              </button>
+              <button class="admin-small-btn" style="padding:4px 8px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(sc.pdf_url)}', 'PDF havolasi nusxalandi!')">
+                📋 Nusxa
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join("") : `<div class="empty-box">Natijalar slaydlari mavjud emas.</div>`}
+    </div>
+  `;
+}
+
+function renderAdminLibraryMaterials(materials) {
+  return `
+    <div class="admin-section-header" style="margin-bottom:12px;">
+      <div class="admin-section-title">Materiallar Bozori (${materials.length})</div>
+      <button class="admin-small-btn" onclick="openAddMaterialModal()">➕ Material Qo'shish</button>
+    </div>
+    <div class="lesson-files">
+      ${materials.length ? materials.map(m => `
+        <div class="lesson-file-row">
+          <div class="lesson-file-header">
+            <div class="lesson-file-title-wrap">
+              ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" style="width:38px; height:38px; border-radius:8px; object-fit:cover;" onerror="this.style.display='none'">` : `<span style="font-size:22px;">🧱</span>`}
+              <div>
+                <div class="lesson-file-title-text">${escapeHtml(m.title)}</div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                  ${escapeHtml(m.category)} • ${escapeHtml(m.sub_category || "")}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="admin-small-btn" onclick="openMaterialDetailSheet(${Number(m.id)})" title="Ko'rish">
+                👁️
+              </button>
+              <button class="admin-small-btn" onclick="openEditMaterialModal(${Number(m.id)})" title="Tahrirlash">
+                ✏️
+              </button>
+              <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteMaterialItem(${Number(m.id)})" title="O'chirish">
+                🗑️
+              </button>
+            </div>
+          </div>
+          ${m.short_desc ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${escapeHtml(m.short_desc)}</div>` : ""}
+        </div>
+      `).join("") : `<div class="empty-box">Materiallar mavjud emas.</div>`}
+    </div>
+  `;
 }
 
 // Admin Practice (vazifa topshiriqlari)
@@ -3851,7 +6358,7 @@ function renderNav() {
   const tabs = [
     { id: "home", label: "Bosh sahifa" },
     { id: "lessons", label: "Darslar" },
-    { id: "tasks", label: "Vazifalar" },
+    { id: "tasks", label: "Kutubxona" },
     { id: "chat", label: "Chat" },
     { id: "profile", label: "Profil" }
   ];

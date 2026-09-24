@@ -2505,4 +2505,764 @@ html.light .nav {
   margin-top: 6px;
 }
 
+/* ======================================================
+   BUTTON ANIMATIONS & FEEDBACK ENHANCEMENTS (Talab 4)
+   ====================================================== */
+.btn, .admin-small-btn, .chip, .spec-tab-btn, .carousel-arrow-btn, .tag, .download-file-btn {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.4, 1), background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn:active, .admin-small-btn:active, .spec-tab-btn:active, .carousel-arrow-btn:active {
+  transform: scale(0.95) !important;
+  opacity: 0.88;
+}
+
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.8;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  margin-left: -9px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Dars fayllari va havolalarining to'liq ko'rinishi */
+.lesson-file-row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lesson-file-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lesson-file-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lesson-file-title-text {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.lesson-file-link-wrap {
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  background: var(--bg-secondary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ======================================================
+   TALAB 1: 3DSMAX & REVIT KOMPYUTER VA NOUTBUK PARAMETRLARI
+   ====================================================== */
+.specs-section {
+  background: linear-gradient(145deg, var(--bg-surface) 0%, var(--bg-surface-elevated) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.specs-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.specs-main-title {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.specs-segment-control {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 4px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.spec-tab-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.spec-tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.spec-level-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+}
+
+.spec-level-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.spec-level-chip.active {
+  background: rgba(41, 121, 255, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.spec-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-secondary);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.spec-item-icon {
+  font-size: 18px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spec-item-content {
+  flex: 1;
+}
+
+.spec-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.spec-item-value {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.spec-item-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.spec-advice-box {
+  background: rgba(255, 171, 0, 0.1);
+  border: 1px dashed rgba(255, 171, 0, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #ffab00;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* ======================================================
+   TALAB 3: O'QUVCHILAR NATIJALARI & RABOCHKA PDF KARUSELI
+   ====================================================== */
+.showcase-section {
+  margin-bottom: 24px;
+}
+
+.carousel-wrap {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.carousel-track {
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+}
+
+.carousel-slide {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  padding: 0;
+}
+
+.carousel-slide.active {
+  display: block;
+  opacity: 1;
+}
+
+.carousel-image-preview {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: #111;
+  display: block;
+}
+
+.carousel-body {
+  padding: 16px;
+}
+
+.carousel-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.carousel-course-tag {
+  background: rgba(41, 121, 255, 0.15);
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.carousel-discount-badge {
+  background: linear-gradient(135deg, #eb3b3b, #ff5722);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(235, 59, 59, 0.4);
+}
+
+.carousel-slide-title {
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.carousel-student-info {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+
+.carousel-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+/* Yozuvsiz piktogrammali (iconli) navigatsiya tugmalari */
+.carousel-nav-buttons {
+  position: absolute;
+  top: 100px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.carousel-arrow-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(10, 10, 15, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.carousel-arrow-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 0 6px 0;
+}
+
+.carousel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.carousel-dot.active {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+/* PDF Faqat ko'rish iframe modal */
+.pdf-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-viewer-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.pdf-viewer-iframe-wrap {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #222;
+  position: relative;
+}
+
+.pdf-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ======================================================
+   TALAB 5: DONAT VA QO'LLAB-QUVVATLASH
+   ====================================================== */
+.donate-card {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.12) 0%, rgba(156, 39, 176, 0.08) 100%);
+  border: 1px solid rgba(233, 30, 99, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(233, 30, 99, 0.15);
+}
+
+.donate-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.donate-icon {
+  font-size: 26px;
+}
+
+.donate-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.donate-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+
+.donate-card-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.donate-card-number {
+  font-family: monospace;
+  font-size: 15.5px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+
+.donate-card-holder {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.donate-pills {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.donate-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.donate-pill:hover, .donate-pill:active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ======================================================
+   TALAB 6: QURILISH MATERIALLARI MARKETPLACE
+   ====================================================== */
+.marketplace-page {
+  padding-bottom: 60px;
+}
+
+.marketplace-banner-btn {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(30, 60, 114, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.marketplace-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.marketplace-banner-icon {
+  font-size: 32px;
+  background: rgba(255, 255, 255, 0.15);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketplace-banner-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.marketplace-banner-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (min-width: 600px) {
+  .marketplace-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.material-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.material-card-img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  background: #1a1a24;
+}
+
+.material-card-content {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.material-card-category {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.material-card-title {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.material-card-dim {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.material-card-footer {
+  margin-top: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Material batafsil ma'lumot modali (Sheet) */
+.material-detail-hero {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  background: #111;
+}
+
+.material-info-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.material-info-header {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.material-info-body {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.pros-box {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 10px;
+  color: #2ecc71;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cons-box {
+  background: rgba(235, 59, 59, 0.1);
+  border: 1px solid rgba(235, 59, 59, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 12px;
+  color: #eb3b3b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.uzb-market-card {
+  background: linear-gradient(135deg, rgba(41, 121, 255, 0.12), rgba(0, 200, 83, 0.1));
+  border: 1px solid rgba(41, 121, 255, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Erkin ochiq resurslar kartalari */
+.open-res-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.open-res-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.open-res-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.open-res-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.open-res-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.open-res-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+
 

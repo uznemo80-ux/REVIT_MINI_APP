@@ -291,9 +291,401 @@ async function initExtendedTables() {
       console.error('2-MODUL TEST SEED ERROR:', seedError.message);
     }
 
-    console.log('✅ DATABASE AVTO-MIGRATSIYA MUVAFFAQIYATLI YAKUNLANDI');
-  } catch (err) {
-    console.warn('⚠️ AVTO-MIGRATSIYA OGOHLANTIRISH:', err.message);
+    // 1. O'QUVCHILAR NATIJALARI & RABOCHKA LOYIHALAR SLAYDERI (Talab 3)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS course_showcases (
+        id SERIAL PRIMARY KEY,
+        course_id INT REFERENCES courses(id) ON DELETE SET NULL,
+        course_title VARCHAR(255),
+        title VARCHAR(255) NOT NULL,
+        student_name VARCHAR(255),
+        description TEXT,
+        pdf_url TEXT NOT NULL,
+        preview_image_url TEXT,
+        discount_badge TEXT,
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var scCount = await pool.query('SELECT COUNT(*)::int AS c FROM course_showcases');
+    if (scCount.rows[0].c === 0) {
+      await pool.query(`
+        INSERT INTO course_showcases (course_id, course_title, title, student_name, description, pdf_url, preview_image_url, discount_badge, order_index)
+        VALUES
+        (
+          1,
+          'INTPRO — Revit dasturida interyer loyihalash',
+          '3 xonali zamonaviy xonadon to''liq ishchi loyihasi (42 list)',
+          'Azizbek Toshpo''latov',
+          'INTPRO kursi bitiruvchisi tomonidan tayyorlangan to''liq interyer rabochkasi: obmer, demontaj, montaj, santexnika, elektr, pol, patalok, razvyortkalar va spesifikatsiyalar.',
+          'https://drive.google.com/file/d/1B_sample_rabochka_revit/preview',
+          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+          '🔥 25% Chegirma: 1 125 000 so''m',
+          1
+        ),
+        (
+          1,
+          'INTPRO — Revit dasturida interyer loyihalash',
+          '2 qavatli hovli uyi arxitektura ishchi chizmalari (AR bo''limi)',
+          'Malika Karimova',
+          'Revit Architecture bo''yicha tayyorlangan to''liq ishchi loyiha: fasadlar, kesimlar, listlar, konstruktiv uzellar va fasad pasporti.',
+          'https://drive.google.com/file/d/1C_sample_house_revit/preview',
+          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
+          '🔥 Maxsus chegirma narxi',
+          2
+        ),
+        (
+          1,
+          'INTPRO — Revit dasturida interyer loyihalash',
+          'Loft uslubidagi restoran va qahvaxona loyiha albomi',
+          'Sardorbek Aliyev',
+          'Jamoat binosi interyer loyihalash amaliy natijasi: mebel spetsifikatsiyalari, vitrajlar va yoritish zonalari.',
+          'https://drive.google.com/file/d/1D_sample_cafe_revit/preview',
+          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80',
+          null,
+          3
+        )
+      `);
+    }
+
+    // 2. KUTUBXONA ERKIN MANBALARI VA TESTLARI (Talab 2)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_open_resources (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        description TEXT,
+        link_url TEXT,
+        test_data JSONB DEFAULT '[]',
+        icon VARCHAR(50),
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var lrCount = await pool.query('SELECT COUNT(*)::int AS c FROM library_open_resources');
+    if (lrCount.rows[0].c === 0) {
+      // Standart ochiq kitoblar va manbalar
+      await pool.query(`
+        INSERT INTO library_open_resources (type, title, category, description, link_url, icon, order_index)
+        VALUES
+        (
+          'book',
+          'Revit 2024: Rasmiy qo''llanma va BIM standartlari (PDF)',
+          'Adabiyotlar',
+          'Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo''yicha to''liq o''zbekcha va ruscha qo''llanma kitobi.',
+          'https://drive.google.com/file/d/1_Revit_Guide_Book/preview',
+          '📚',
+          1
+        ),
+        (
+          'book',
+          'Arxitektura va bino loyihalash me''yorlari (ShNQ & KMK to''plami)',
+          'Normativlar',
+          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari: turar-joy va jamoat binolari talablari, xonalar minimal balandligi va maydonlari.',
+          'https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview',
+          '📐',
+          2
+        ),
+        (
+          'book',
+          'Interyer dizaynerlari uchun ergonomika va o''lchamlar (Noifert)',
+          'Ergonomika',
+          'Mebel joylashuvi, o''tish masofalari, eshik va deraza me''yorlari, oshxona va sanuzel ergonomikasi bo''yicha asosiy spravochnik.',
+          'https://drive.google.com/file/d/1_Ergonomika_Noifert/preview',
+          '📏',
+          3
+        ),
+        (
+          'video',
+          'Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)',
+          'Video dars',
+          'Ochiq video darslik: devorlarni to''g''ri darajalarga (Levels) bog''lash, eshik-derazalar o''rnatish va o''lcham zanjirlarini qo''yish.',
+          'https://youtu.be/dQw4w9WgXcQ',
+          '🎬',
+          4
+        ),
+        (
+          'source',
+          'Revit Professional Oilalari (Families) Kutubxonasi',
+          'Ochiq manba',
+          'O''zbekiston interyerlariga mos eshiklar, zamonaviy derazalar, santexnika jihozlari va mebel oilalari to''plami.',
+          'https://t.me/texnikuzb',
+          '📦',
+          5
+        )
+      `);
+
+      // Erkin sinov testlari
+      var freeRevitQuestions = [
+        { q: "Revit-da ishchi loyiha faylining asosiy formati qaysi?", options: ["RTE", "RVT", "RFA", "RFT"], correct: 1 },
+        { q: "Revit-da yangi qavat balandligini belgilash uchun qaysi elementdan foydalaniladi?", options: ["Grid (O'q)", "Level (Daraja)", "Scope Box", "Section"], correct: 1 },
+        { q: "Devor chizilayotganda uning yo'nalishi va ichki/tashqi tomonini tez almashtirish tugmasi qaysi?", options: ["Tab", "Enter", "Space (Probel)", "Shift"], correct: 2 },
+        { q: "AutoCAD chizmasini Revit-ga yangilanib turadigan havola sifatida olib kirish qaysi buyruq orqali bajariladi?", options: ["Import CAD", "Link CAD (Svyaz SAPR)", "Open CAD", "Attach CAD"], correct: 1 },
+        { q: "Chizmadagi barcha eshik va derazalarning avtomatik hisob-kitob jadvali nima deb ataladi?", options: ["Plan vid", "Spetsifikatsiya (Schedule/Quantities)", "List (Sheet)", "Shablon vid"], correct: 1 }
+      ];
+
+      var freeArchQuestions = [
+        { q: "Standart turar-joy binolarida polning toza sathi qanday belgi bilan ko'rsatiladi?", options: ["±0.000", "+3.000", "-0.150", "100%"], correct: 0 },
+        { q: "Xonadondagi standart kirish eshigining minimal kengligi qancha bo'lishi tavsiya etiladi?", options: ["600 mm", "700 mm", "900 mm", "1200 mm"], correct: 2 },
+        { q: "Interyer loyihalashda 'Demontaj rejasi' nima maqsadda chiziladi?", options: ["Yangi quriladigan devorlarni ko'rsatish", "Buziladigan mavjud devor va konstruksiyalarni aniq ko'rsatish", "Mebel sotib olish uchun", "Bo'yoq rangini tanlash uchun"], correct: 1 },
+        { q: "Oshxona ishchi yuzasi (stol usti) balandligi standart bo'yicha necha sm bo'lishi maqbul hisoblanadi?", options: ["60 sm", "85-90 sm", "110 sm", "130 sm"], correct: 1 }
+      ];
+
+      await pool.query(`
+        INSERT INTO library_open_resources (type, title, category, description, test_data, icon, order_index)
+        VALUES
+        (
+          'test',
+          'Revit Bazaviy Bilim Testi (Erkin Sinov)',
+          'Sinov Testi',
+          'Revit dasturidagi asosiy terminlar, fayl turlari va modellashtirish qoidalarini tekshirish uchun bepul test sinovi.',
+          $1,
+          '🎯',
+          6
+        ),
+        (
+          'test',
+          'Arxitektura va Chizmachilik Savodxonligi Testi',
+          'Sinov Testi',
+          'Loyiha chizmalari, o''lchamlar, eshik-deraza standartlari va shaharsozlik me''yorlari bo''yicha erkin sinov testi.',
+          $2,
+          '📝',
+          7
+        )
+      `, [JSON.stringify(freeRevitQuestions), JSON.stringify(freeArchQuestions)]);
+    }
+
+    // 3. QURILISH VA REMONT MATERIALLARI BAZASI (MARKETPLACE / ENSIKLOPEDIYA) (Talab 6)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS construction_materials (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        sub_category VARCHAR(100) NOT NULL,
+        image_url TEXT,
+        short_desc TEXT,
+        what_is_it TEXT,
+        dimensions TEXT,
+        history TEXT,
+        usage_area TEXT,
+        pros TEXT,
+        cons TEXT,
+        uzbekistan_sources TEXT,
+        bim_tips TEXT,
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var matCount = await pool.query('SELECT COUNT(*)::int AS c FROM construction_materials');
+    if (matCount.rows[0].c === 0) {
+      var seedMaterials = [
+        {
+          title: "LDSP (Laminatsiyalangan DSP)",
+          category: "Mebel",
+          sub_category: "LDSP",
+          image_url: "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Mebel korpuslari, javonlar va shkaflar uchun eng ommabop laminat qoplangan yog'och qirindili plita.",
+          what_is_it: "LDSP — yuqori bosim va harorat ostida qatronlar bilan presslangan yog'och qirindilari (DSP) ustiga melamin smolasi shimdirilgan qog'oz plyonka qoplab tayyorlanadigan mebel plitasi. U turli xil yog'och fakturalari, matoviy va glyanets ranglarga ega.",
+          dimensions: "Standart formatlar: 2800 x 2070 mm, 2750 x 1830 mm. Qalinliklari: 16 mm (asosiy mebel korpusi), 18 mm, 22 mm, 25 mm.",
+          history: "DSP ilk bor 1930-yillarda Germaniyada yog'och chiqindilarini tejash maqsadida yaratilgan. Melamin qoplamali LDSP esa 1960-yillardan boshlab butun dunyo mebel sanoatining asosiy materialiga aylangan.",
+          usage_area: "Oshxona garniturlari karkasi, shkaf-kupe, yotoqxona va bolalar xonasi mebellari, ofis stollari, kiyim javonlari.",
+          pros: "✅ Hamyonbop narx; Ranglar va fakturalar xilma-xilligi; Mexanik yuklamalarga chidamlilik; Oson kesilishi va yig'ilishi.",
+          cons: "❌ Namlikka o'ta ta'sirchan (suv tegsa shishib ketadi); Egiluvchan emas (faqat to'g'ri chiziqli mebellar); Formaldegid smolalari mavjudligi tufayli chetlariga (kromka) sifatli PVX yopishtirilishi shart.",
+          uzbekistan_sources: "O'zbekistondagi manbalar: Egger, Kastamonu, Kronospan, Yildiz Entegre dilerlari. Bozorlar: O'rikzor bozori 'Mebelchilar' qatori, Chilonzor 'Kastamonu' rasmiy do'koni, Toshkent halqa yo'lidagi mebel furnitura markazlari.",
+          bim_tips: "Revitda mebel oilalarida Material parametri sifatida 'Wood - LDSP Egger' qilib biriktiriladi. 3ds Maxda CoronaPhysicalMtl orqali Diffuse va yengil Roughness (0.4-0.6) kartasi beriladi.",
+          order_index: 1
+        },
+        {
+          title: "MDF (O'rta zichlikdagi yog'och tolali plita)",
+          category: "Mebel",
+          sub_category: "MDF",
+          image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Frezalash, bo'yash va profilli fasadlar tayyorlash uchun ideal zich va ekologik toza mebel plitasi.",
+          what_is_it: "MDF (Medium Density Fibreboard) — mayda yog'och tolalarini tabiiy lignin va parafin bilan yuqori bosimda qizdirib tayyorlanadigan monolit material. Qirindi o'rniga nozik changsimon tolalardan iborat bo'lgani sababli g'ovaksiz va o'ta silliq yuzaga ega.",
+          dimensions: "Plita o'lchami: 2800 x 2070 mm, 2440 x 1220 mm. Qalinliklari: 6, 8, 10, 16, 18, 19, 22, 25, 30 mm.",
+          history: "1965 yilda AQSHning Nyu-York shtatida birinchi MDF zavodi ishga tushirilgan. 1980-yillardan boshlab frezalangan oshxona fasadlari uchun standart materialga aylangan.",
+          usage_area: "Oshxona fasadlari, profilli va klassik naqshli eshiklar, devor panellari (reyka va MDF reykalar), kornizlar, plintuslar.",
+          pros: "✅ Chuqur 3D frezalash (ornament, profil) qilish imkoni; Emal bo'yoq bilan mukammal silliq bo'yalishi; Ekologik toza (smolasiz); Zichligi yuqori va namlikka LDSPga qaraganda ancha chidamli.",
+          cons: "❌ LDSPga qaraganda 1.5-2 baravar qimmatroq; Yuqori og'irlik (og'ir mebel qismlari); Bo'yalgan yuzasi o'tkir tirnalishlarga sezgir.",
+          uzbekistan_sources: "Kastamonu Uzbekistan, AGT dilerlik markazlari, Bek To'pi bozori, O'rikzor mebel do'konlari.",
+          bim_tips: "Revitda fasad oilalarida profil chizilib Sweep komandasi bilan chiqariladi. 3ds Maxda bo'yalgan emal effekti uchun yuqori Glossiness va minimal bump beriladi.",
+          order_index: 2
+        },
+        {
+          title: "Gazoblok (Avtoklav gazobeton D500)",
+          category: "Devor",
+          sub_category: "Gazoblok",
+          image_url: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Tashqi devorlar va xonalararo to'siqlar uchun engil, issiq va geometrik aniq qurilish bloki.",
+          what_is_it: "Gazoblok — kvars qumi, sement, ohak, suv va alyuminiy kukuni aralashmasidan tayyorlanib, avtoklavda 12 atmosfera bosimi va 190°C bug' ostida pishiriladigan g'ovakli sun'iy tosh.",
+          dimensions: "Uzunligi: 600 mm, Balandligi: 200, 250, 300 mm. Qalinligi: 100, 120, 150 mm (pardevor), 200, 250, 300, 400 mm (tashqi devor).",
+          history: "1924 yilda shved arxitektori Aksel Eriksson tomonidan patentlangan va 'Ytong' brendi ostida ommalashgan. O'zbekistonda so'nggi 7 yilda eng ommabop qurilish materialiga aylandi.",
+          usage_area: "Monolit-karkasli ko'p qavatli binolar to'ldiruvchi tashqi devorlari, kottedjlar va xonalararo pardevorlar.",
+          pros: "✅ A'lo darajadagi issiqlik izolyatsiyasi (g'ishtdan 3 baravar issiq); Yengil og'irlik (poydevorga kam yuk); Geometrik o'lcham xatosi 1-2 mm (yupqa kley bilan teriladi); Oson arralanadi va shtroba qilinadi.",
+          cons: "❌ To'g'ridan-to'g'ri suv va namlikka uzoq turishi mumkin emas (suvoq va gidroizolyatsiya talab etiladi); Mo'rtroq (og'ir ankerlar uchun maxsus dyubel kerak).",
+          uzbekistan_sources: "O'zbekistonda ishlab chiqaruvchilar: Arton Gazobeton, EkoGazobeton, Drenaj, Jomiy qurilish bozori, Chilonzor qurilish materiallari bozori.",
+          bim_tips: "Revitda 'Basic Wall - Gazoblok D500 200mm' oilasi yaratiladi va material termal xususiyatlariga issiqlik o'tkazuvchanlik 0.12 W/mK kiritiladi.",
+          order_index: 3
+        },
+        {
+          title: "Penoblok (Ko'pikli beton blok)",
+          category: "Devor",
+          sub_category: "Penoblok",
+          image_url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Sement va ko'pik aralashmasidan tabiiy sharoitda quriydigan issiqlik saqlovchi blok.",
+          what_is_it: "Penoblok — sement-qum qorishmasiga organik yoki sintetik ko'pikturgich qo'shib, avtoklavsiz tabiiy qotish orqali ishlab chiqariladigan engil beton bloki.",
+          dimensions: "600 x 300 x 200 mm, 600 x 300 x 100 mm.",
+          history: "XIX asr oxirida ixtiro qilingan, avtoklav talab qilmasligi tufayli kichik sexlarda ishlab chiqarish osonligi bilan keng tarqalgan.",
+          usage_area: "Xonalararo to'siq devorlari, omborxonalar, kottejlar va issiqlik izolyatsiyasi qatlamlari.",
+          pros: "✅ Arzon narx; Yaxshi tovush va issiqlik yutuvchanlik; Yonmaydi va chirimaydi.",
+          cons: "❌ Gazoblokka qaraganda geometriyasi noaniqroq (qalinroq qorishma talab qiladi); Siqilishga chidamliligi pastroq va yoriq berish ehtimoli bor.",
+          uzbekistan_sources: "Sergeli qurilish bozori, Rohat bozori, viloyat mahalliy ishlab chiqaruvchi sexlari.",
+          bim_tips: "Revitda devor qalinligi 100mm yoki 200mm bo'lgan ichki devor turi sifatida kiritiladi.",
+          order_index: 4
+        },
+        {
+          title: "Pishgan g'isht (M100 - M150 Qizil g'isht)",
+          category: "Devor",
+          sub_category: "G'isht",
+          image_url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Asrlar davomida sinovdan o'tgan mustahkam, uzoq umr ko'ruvchi loy pishig'i.",
+          what_is_it: "Tabiiy loy mineral xomashyosini qoliplab, pechlarda 1000°C yuqori haroratda kuydirish orqali olinadigan to'liq yoki teshikli an'anaviy qurilish toshi.",
+          dimensions: "O'zbekiston standarti: 250 x 120 x 65 mm (yakka g'isht), 250 x 120 x 88 mm (bir yarimtalik g'isht).",
+          history: "Miloddan avvalgi 3000-yillardan beri qadimiy Shumer, Bobil va O'rta Osiyo me'morchiligida ishlatib kelinmoqda.",
+          usage_area: "Yuk ko'taruvchi asosiy devorlar, sanuzel va ho'l xonalar to'siqlari, zaminlar va devor qoplamalari.",
+          pros: "✅ O'ta yuqori mustahkamlik (M125-M150); 100% namlikka chidamlilik (sanuzellarda devor sifatida birinchi raqamli tanlov); Yuqori tovush izolyatsiyasi; 100+ yil xizmat muddati.",
+          cons: "❌ Og'ir vazn; Issiqlikni gazoblokka nisbatan tezroq o'tkazadi (qalinroq terish yoki izolyatsiya kerak); Terish jarayoni ko'p mehnat va vaqt talab qiladi.",
+          uzbekistan_sources: "Bekobod, Qibray, Bo'stonliq g'isht zavodlari, Toshkentdagi barcha qurilish mollari bozorlari.",
+          bim_tips: "Revitda 'Wall - Pishgan g'isht 120mm' va '250mm' qilib chiziladi. Sanuzel devorlari doim pishgan g'ishtdan olinadi.",
+          order_index: 5
+        },
+        {
+          title: "Gipsokarton GKLV (Namlikka chidamli)",
+          category: "Shift",
+          sub_category: "Gipsokarton",
+          image_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Shiftlar, figuriy pataloklar va pardevorlar uchun yashil rangli namlikka chidamli list.",
+          what_is_it: "GKLV — ikki qavat maxsus ishlov berilgan karton orasiga gidrofob qo'shimchalar qo'shilgan gips yadrosi joylashtirilgan list. Rangi doimo och yashil bo'ladi.",
+          dimensions: "Standart o'lcham: 2500 x 1200 mm (maydoni 3 m²), Qalinliklari: 9.5 mm (shift uchun yengil), 12.5 mm (devor va pardevor uchun).",
+          history: "1894 yilda Ogustin Sekett tomonidan AQSHda ixtiro qilingan. Knauf kompaniyasi orqali dunyo standartiga aylandi.",
+          usage_area: "Oshxona va sanuzel shiftlari, ikki sathli gipsokarton pataloklar, korniz nishalari, devorlarni tekislash.",
+          pros: "✅ Tez va toza montaj; Har qanday egri chiziqli shakllarni yasash imkoni; Yashil karton qatlami zamburug' va mog'orga chidamli; Bo'yash yoki kafel yopishtirishga tayyor tekis yuza.",
+          cons: "❌ Metall karkas (profil) talab qiladi; Kuchli zarbaga chidamliligi g'ishtdan past.",
+          uzbekistan_sources: "Knauf Gips Buxoro, Akfa Gipsokarton dilerlari, Jomiy va O'rikzor bozorlari.",
+          bim_tips: "Revitda patalok planida (Reflected Ceiling Plan) 'Compound Ceiling - GKLV 12.5mm' sifatida chiziladi va svetilniklar joylanadi.",
+          order_index: 6
+        },
+        {
+          title: "Ottocento (Ipak effektli dekorativ bo'yoq)",
+          category: "Bezak",
+          sub_category: "Ottocento",
+          image_url: "https://images.unsplash.com/photo-1562663474-6cbb3eaa4d14?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Devorlarda tovlanuvchi baxmal va tabiiy ipak matosi ko'rinishini hosil qiluvchi premium qoplama.",
+          what_is_it: "Ottocento — maxsus metallashgan va marvaridli pigmentlar hamda suvli akril dispersiyasidan iborat nozik pardozlash bo'yog'i. Yorug'lik tushish burchagiga qarab rangi tovlanadi.",
+          dimensions: "1 litr, 2.5 litr, 5 litr bankalarda sotiladi. 1 litr bilan o'rtacha 7-9 m² devor qoplanadi.",
+          history: "Italiyaning Oikos kompaniyasi tomonidan Qadimgi Rim ipak matolari sharafiga yaratilgan va interyer dizaynida klassik va neoklassika uslubining timsoliga aylangan.",
+          usage_area: "Mehmonxona, yotoqxona devorlari, TV-zona orqa foni, restoran va mehmonxona zallari.",
+          pros: "✅ Vizual o'ta hashamatli va qimmatbaho ko'rinish; Choksiz (monolit) yuza; Ekologik toza, hid chiqarmaydi; Uzoq yillar rangini yo'qotmaydi.",
+          cons: "❌ Devor yuzasi shpaklyovka orqali oynadek silliq bo'lishi shart; Surkaydigan ustaning yuqori mahorati talab etiladi.",
+          uzbekistan_sources: "Oikos Uzbekistan rasmiy saloni, San Marco, Novacolor do'konlari, Parkent qurilish mollari bozori.",
+          bim_tips: "Revitda Material qatlamiga 'Paint - Ottocento Pearl' deb nomlanadi. 3ds Maxda CoronaMtl Fresnel IOR=1.6 va Ipak falloff xaritasi bilan teksturalanadi.",
+          order_index: 7
+        },
+        {
+          title: "Keramogranit plita (60x120 sm)",
+          category: "Pol",
+          sub_category: "Keramogranit",
+          image_url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Pol va devorlar uchun mustahkam, tirnalmaydigan marmar va beton fakturali yirik plita.",
+          what_is_it: "Keramogranit — loy, dala shpati, kvars va tabiiy pigmentlarni 450 kg/sm² bosimda presslab, 1300°C da monolit qilib eritib olinadigan sun'iy tosh. Suv shimish darajasi deyarli 0% (0.05%).",
+          dimensions: "60 x 120 sm, 80 x 80 sm, 80 x 160 sm. Qalinligi: 9 mm - 11 mm.",
+          history: "1970-yillarda Italiyaning Sassuolo shahrida kafelning mustahkam muqobili sifatida yaratilgan.",
+          usage_area: "Xonadon yo'lagi (prixojka), oshxona poli, sanuzel devor va pollari, dush kabinalari, issiq pol (tyoply pol) usti.",
+          pros: "✅ Suv, namlik va kimyoviy vositalarga 100% chidamli; Tirnalmaydi, to'kilmaydi; Issiq pol uchun eng samarali issiqlik o'tkazuvchi material; Yirik o'lchami tufayli oraliq choklar juda kam bo'ladi.",
+          cons: "❌ Yalangoyoq yurganda sovuq (issiq pol tavsiya etiladi); Kesish va teshik ochish uchun olmosli maxsus uskuna kerak.",
+          uzbekistan_sources: "Kerasun, Modern Keramika, O'zbekistondagi Eko-Kafel do'konlari, Jomiy plitka bozori, Parkent bozori.",
+          bim_tips: "Revitda 'Floor - Keramogranit 60x120 + Kley' qilib chiziladi va Pattern orqali 600x1200 model setkasi qo'yiladi.",
+          order_index: 8
+        },
+        {
+          title: "Laminat (33-klass, Faskali suvga chidamli)",
+          category: "Pol",
+          sub_category: "Laminat",
+          image_url: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Yotoqxona va mehmonxonalar uchun tabiiy yog'och ko'rinishidagi qulay va iliq pol qoplamasi.",
+          what_is_it: "Laminat — yuqori zichlikdagi HDF plitasi asosida tayyorlangan, ustiga yog'och rasmi tushirilgan va korund (olmos changi) qo'shilgan mustahkam himoya qatlami qoplangan pol materiali.",
+          dimensions: "1380 x 193 mm, 1285 x 192 mm. Qalinliklari: 8 mm, 10 mm, 12 mm.",
+          history: "1977 yilda Shvetsiyaning Perstorp kompaniyasi tomonidan ishlab chiqilgan va tezda parketning eng yaxshi hamyonbop o'rnini egalladi.",
+          usage_area: "Yotoqxona, bolalar xonasi, mehmonxona, kabinet va ofislar.",
+          pros: "✅ Oson va tez qulflanuvchi (Click) montaj; Tabiiy yog'ochga o'xshash iliq his; Ranglar va teksturalar xilma-xilligi; Qayta ko'chirish mumkinligi.",
+          cons: "❌ Suv to'kilib uzoq qolsa choklaridan shishishi mumkin; Tagiga to'g'ri podlojka to'shalishi shart.",
+          uzbekistan_sources: "Tarkett Uzbekistan, Egger, Kronotex dilerlari, O'rikzor va Bek To'pi pol qoplamalari qatori.",
+          bim_tips: "Revitda zamin qatlami qalinligi 8-10 mm qilib kiritiladi va 'Floor finish' sifatida hisoblanadi.",
+          order_index: 9
+        },
+        {
+          title: "Polipropilen truba va fitinglar (PPR PN25)",
+          category: "Santexnika",
+          sub_category: "Trubalar",
+          image_url: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Ichki issiq va sovuq suv ta'minoti hamda isitish tizimi uchun chidamli plastik quvurlar.",
+          what_is_it: "Random kopolimer polipropilendan tayyorlangan, ichida shisha tolali (fiberglass) yoki alyuminiy folga armatura qatlami bo'lgan, issiq ta'sirida erib payvandlanadigan suv quvuri.",
+          dimensions: "Diametrlari: 20 mm, 25 mm, 32 mm, 40 mm, 50 mm. Standart uzunligi: 4 metr.",
+          history: "1980-yillardan boshlab po'lat va cho'yan quvurlar o'rnini egallagan va zanglamaslik xususiyati bilan inqilob qilgan.",
+          usage_area: "Kvartira ichki vodoprovodi, dush va vanna tarmoqlari, radiatorli isitish va kombi tizimlari.",
+          pros: "✅ Zanglamaydi, chirimaydi, ichida cho'kindi yig'ilmaydi; Diffuzion payvandlash tufayli ulanish joyi monolit bo'ladi; 50 yil xizmat muddati.",
+          cons: "❌ Devor ichiga ko'milishidan oldin bosim ostida gidravlik sinovdan (opressovka) o'tkazilishi shart; O'rnatish uchun maxsus payvandlagich (dazmol) kerak.",
+          uzbekistan_sources: "Firat, Kalde, Akfa Plastik, Grand Santexnika do'konlari, O'rikzor santexnika bozori, Jomiy bozori.",
+          bim_tips: "Revit MEP da 'Pipe - Polypropylene PPR' tizimida chiziladi va diametrlari avtomatik hisoblanadi.",
+          order_index: 10
+        },
+        {
+          title: "Elektr kabeli VVGng-LS (Mis sim)",
+          category: "Elektr",
+          sub_category: "Kabellar",
+          image_url: "https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=800&auto=format&fit=crop&q=80",
+          short_desc: "Xonadon elektr montaji uchun yong'inga xavfsiz va tutun chiqarmaydigan monolit mis kabel.",
+          what_is_it: "VVGng-LS — har bir tomiri alohida PVX izolyatsiyalangan va umumiy yonishni tarqatmaydigan (ng) hamda tutun ajratmaydigan (LS - Low Smoke) qobiqqa o'ralgan yaxlit mis kabel.",
+          dimensions: "Rozetkalar uchun: 3 x 2.5 mm²; Yoritish (lyustra, svetilnik) uchun: 3 x 1.5 mm²; Plita va konditsioner uchun: 3 x 4 mm² yoki 3 x 6 mm².",
+          history: "Davlat GOST standartlari bo'yicha turar-joy binolarida xavfsizlik maqsadida alyuminiy simlar taqiqlanib, mis VVGng-LS standarti joriy qilingan.",
+          usage_area: "Barcha xonalarning devor ichidagi elektr provodkasi, shchitok avtomatlari va rozetkalar.",
+          pros: "✅ 100% yonishni davom ettirmaydi; Yuqori elektr o'tkazuvchanlik va qizib ketmaslik; Mexanik mustahkamlik; 30+ yil xizmat kafolati.",
+          cons: "❌ Qalbaki va kesimi ingichkaroq qilingan nusxalari ko'p (faqat GOST sertifikatli kabel tanlash shart).",
+          uzbekistan_sources: "Uzkabel, Andijankabel dilerlari, Chilonzor elektrobozori, Jomiy va Yangi Bozor elektrotovar do'konlari.",
+          bim_tips: "Revit Electrical bo'limida yuklamalar quvvati (Katta kVt) hisoblanib, qaysi guruhga qanday kabel ketishi avtomatik chiqariladi.",
+          order_index: 11
+        }
+      ];
+
+      for (var mi = 0; mi < seedMaterials.length; mi++) {
+        var mat = seedMaterials[mi];
+        await pool.query(`
+          INSERT INTO construction_materials
+          (title, category, sub_category, image_url, short_desc, what_is_it, dimensions, history, usage_area, pros, cons, uzbekistan_sources, bim_tips, order_index)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        `, [
+          mat.title, mat.category, mat.sub_category, mat.image_url, mat.short_desc,
+          mat.what_is_it, mat.dimensions, mat.history, mat.usage_area, mat.pros, mat.cons,
+          mat.uzbekistan_sources, mat.bim_tips, mat.order_index
+        ]);
+      }
+      console.log('✅ QURILISH MATERIALLARI BAZASI: ' + seedMaterials.length + ' ta toliq material kiritildi');
+    }
+
+    // 4. DONAT VA QO'LLAB-QUVVATLASH SOZLAMALARI (Talab 5)
+    await pool.query(`
+      INSERT INTO academy_settings (key, value) VALUES
+      ('donate_card_number', '8600 5304 1234 5678'),
+      ('donate_card_holder', 'Abdulloh S. (YOSHUZBEKK)'),
+      ('donate_description', 'Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo''llab-quvvatlash (ehson/donat).')
+      ON CONFLICT (key) DO NOTHING
+    `);
+  } catch (error) {
+    console.error('INIT EXTENDED TABLES ERROR:', error);
   }
 }
 
@@ -738,6 +1130,33 @@ app.post('/api/content', async function (req, res) {
       console.warn('SETTINGS QUERY WARNING:', sErr.message);
     }
 
+    // O'quvchilar natijalari va rabochka loyihalar karuseli (Talab 3)
+    var showcases = [];
+    try {
+      var scRes = await pool.query('SELECT * FROM course_showcases ORDER BY order_index ASC, id ASC');
+      showcases = scRes.rows;
+    } catch (scErr) {
+      console.warn('SHOWCASES QUERY WARNING:', scErr.message);
+    }
+
+    // Kutubxona ochiq manbalari va erkin testlar (Talab 2)
+    var openResources = [];
+    try {
+      var orRes = await pool.query('SELECT * FROM library_open_resources ORDER BY order_index ASC, id ASC');
+      openResources = orRes.rows;
+    } catch (orErr) {
+      console.warn('OPEN RESOURCES QUERY WARNING:', orErr.message);
+    }
+
+    // Qurilish va remont materiallari bazasi (Talab 6)
+    var materials = [];
+    try {
+      var matRes = await pool.query('SELECT * FROM construction_materials ORDER BY order_index ASC, id ASC');
+      materials = matRes.rows;
+    } catch (matErr) {
+      console.warn('MATERIALS QUERY WARNING:', matErr.message);
+    }
+
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
       telegram_id: user.telegram_id.toString(),
@@ -748,7 +1167,10 @@ app.post('/api/content', async function (req, res) {
       last_lesson: lastLesson,
       courses: courses,
       faqs: faqs,
-      settings: settings
+      settings: settings,
+      showcases: showcases,
+      open_resources: openResources,
+      materials: materials
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
@@ -2694,20 +3116,292 @@ app.post('/api/admin/test/:id/delete', requireAdmin, async function (req, res) {
 
 
 // ======================================================
-// ADMIN TEST NOTIFICATION
+// COURSE SHOWCASES / PORTFOLIO API (Talab 3)
 // ======================================================
 
-app.post('/api/admin-test', requireAdmin, async function (req, res) {
+app.all(['/api/showcases'], async function (req, res) {
   try {
-    await notifyAdmin(
-      'TEST XABARI\n\nTelegram Admin ID: ' + ADMIN_TELEGRAM_ID + '\n\nSorov yuborgan admin: ' + (req.admin.first_name || 'Nomalum') + '\n\nMini App serveridan test xabari.'
-    );
-    return res.json({ ok: true, message: 'Admin Telegramiga test xabari yuborildi' });
+    var result = await pool.query('SELECT * FROM course_showcases ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, showcases: result.rows });
   } catch (error) {
-    console.error('ADMIN TEST ERROR:', error);
-    return res.status(500).json({ ok: false, error: error.message });
+    console.error('GET SHOWCASES ERROR:', error);
+    return res.status(500).json({ error: 'Natijalar ro‘yxatini olishda xatolik' });
   }
 });
+
+app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
+  try {
+    var courseId = req.body.course_id ? Number(req.body.course_id) : null;
+    var courseTitle = req.body.course_title ? String(req.body.course_title).trim() : '';
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var studentName = req.body.student_name ? String(req.body.student_name).trim() : '';
+    var description = req.body.description ? String(req.body.description).trim() : '';
+    var pdfUrl = req.body.pdf_url ? String(req.body.pdf_url).trim() : '';
+    var previewImageUrl = req.body.preview_image_url ? String(req.body.preview_image_url).trim() : '';
+    var discountBadge = req.body.discount_badge ? String(req.body.discount_badge).trim() : null;
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title || !pdfUrl) {
+      return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
+    }
+
+    var result = await pool.query(`
+      INSERT INTO course_showcases
+      (course_id, course_title, title, student_name, description, pdf_url, preview_image_url, discount_badge, order_index)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex]);
+
+    return res.json({ ok: true, showcase: result.rows[0] });
+  } catch (error) {
+    console.error('ADD SHOWCASE ERROR:', error);
+    return res.status(500).json({ error: 'Natija qo‘shishda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    var courseId = req.body.course_id ? Number(req.body.course_id) : null;
+    var courseTitle = req.body.course_title ? String(req.body.course_title).trim() : '';
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var studentName = req.body.student_name ? String(req.body.student_name).trim() : '';
+    var description = req.body.description ? String(req.body.description).trim() : '';
+    var pdfUrl = req.body.pdf_url ? String(req.body.pdf_url).trim() : '';
+    var previewImageUrl = req.body.preview_image_url ? String(req.body.preview_image_url).trim() : '';
+    var discountBadge = req.body.discount_badge ? String(req.body.discount_badge).trim() : null;
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title || !pdfUrl) {
+      return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
+    }
+
+    var result = await pool.query(`
+      UPDATE course_showcases
+      SET course_id = $1, course_title = $2, title = $3, student_name = $4, description = $5,
+          pdf_url = $6, preview_image_url = $7, discount_badge = $8, order_index = $9
+      WHERE id = $10
+      RETURNING *
+    `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Natija topilmadi' });
+    return res.json({ ok: true, showcase: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE SHOWCASE ERROR:', error);
+    return res.status(500).json({ error: 'Natijani yangilashda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/showcases/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    await pool.query('DELETE FROM course_showcases WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Natija o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE SHOWCASE ERROR:', error);
+    return res.status(500).json({ error: 'Natijani o‘chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// LIBRARY OPEN RESOURCES API (Talab 2)
+// ======================================================
+
+app.all(['/api/library/open-resources'], async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM library_open_resources ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, resources: result.rows });
+  } catch (error) {
+    console.error('GET OPEN RESOURCES ERROR:', error);
+    return res.status(500).json({ error: 'Ochiq manbalarni olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/library/resources/add', requireAdmin, async function (req, res) {
+  try {
+    var type = req.body.type ? String(req.body.type).trim() : 'book';
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var category = req.body.category ? String(req.body.category).trim() : '';
+    var description = req.body.description ? String(req.body.description).trim() : '';
+    var linkUrl = req.body.link_url ? String(req.body.link_url).trim() : '';
+    var testData = req.body.test_data ? (typeof req.body.test_data === 'string' ? req.body.test_data : JSON.stringify(req.body.test_data)) : '[]';
+    var icon = req.body.icon ? String(req.body.icon).trim() : '📚';
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title) return res.status(400).json({ error: 'Sarlavha kiritilishi shart' });
+
+    var result = await pool.query(`
+      INSERT INTO library_open_resources (type, title, category, description, link_url, test_data, icon, order_index)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [type, title, category, description, linkUrl, testData, icon, orderIndex]);
+
+    return res.json({ ok: true, resource: result.rows[0] });
+  } catch (error) {
+    console.error('ADD RESOURCE ERROR:', error);
+    return res.status(500).json({ error: 'Manba qo‘shishda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/library/resources/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    var type = req.body.type ? String(req.body.type).trim() : 'book';
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var category = req.body.category ? String(req.body.category).trim() : '';
+    var description = req.body.description ? String(req.body.description).trim() : '';
+    var linkUrl = req.body.link_url ? String(req.body.link_url).trim() : '';
+    var testData = req.body.test_data ? (typeof req.body.test_data === 'string' ? req.body.test_data : JSON.stringify(req.body.test_data)) : '[]';
+    var icon = req.body.icon ? String(req.body.icon).trim() : '📚';
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title) return res.status(400).json({ error: 'Sarlavha kiritilishi shart' });
+
+    var result = await pool.query(`
+      UPDATE library_open_resources
+      SET type = $1, title = $2, category = $3, description = $4, link_url = $5,
+          test_data = $6, icon = $7, order_index = $8
+      WHERE id = $9
+      RETURNING *
+    `, [type, title, category, description, linkUrl, testData, icon, orderIndex, id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Manba topilmadi' });
+    return res.json({ ok: true, resource: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE RESOURCE ERROR:', error);
+    return res.status(500).json({ error: 'Manbani yangilashda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/library/resources/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    await pool.query('DELETE FROM library_open_resources WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Manba o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE RESOURCE ERROR:', error);
+    return res.status(500).json({ error: 'Manbani o‘chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// CONSTRUCTION MATERIALS MARKETPLACE API (Talab 6)
+// ======================================================
+
+app.all(['/api/materials'], async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM construction_materials ORDER BY order_index ASC, id ASC');
+    return res.json({ ok: true, materials: result.rows });
+  } catch (error) {
+    console.error('GET MATERIALS ERROR:', error);
+    return res.status(500).json({ error: 'Materiallarni olishda xatolik' });
+  }
+});
+
+app.post('/api/admin/materials/add', requireAdmin, async function (req, res) {
+  try {
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var category = req.body.category ? String(req.body.category).trim() : 'Devor';
+    var subCategory = req.body.sub_category ? String(req.body.sub_category).trim() : 'Boshqa';
+    var imageUrl = req.body.image_url ? String(req.body.image_url).trim() : '';
+    var shortDesc = req.body.short_desc ? String(req.body.short_desc).trim() : '';
+    var whatIsIt = req.body.what_is_it ? String(req.body.what_is_it).trim() : '';
+    var dimensions = req.body.dimensions ? String(req.body.dimensions).trim() : '';
+    var history = req.body.history ? String(req.body.history).trim() : '';
+    var usageArea = req.body.usage_area ? String(req.body.usage_area).trim() : '';
+    var pros = req.body.pros ? String(req.body.pros).trim() : '';
+    var cons = req.body.cons ? String(req.body.cons).trim() : '';
+    var uzbSources = req.body.uzbekistan_sources ? String(req.body.uzbekistan_sources).trim() : '';
+    var bimTips = req.body.bim_tips ? String(req.body.bim_tips).trim() : '';
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title) return res.status(400).json({ error: 'Material nomi kiritilishi shart' });
+
+    var result = await pool.query(`
+      INSERT INTO construction_materials
+      (title, category, sub_category, image_url, short_desc, what_is_it, dimensions, history, usage_area, pros, cons, uzbekistan_sources, bim_tips, order_index)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *
+    `, [title, category, subCategory, imageUrl, shortDesc, whatIsIt, dimensions, history, usageArea, pros, cons, uzbSources, bimTips, orderIndex]);
+
+    return res.json({ ok: true, material: result.rows[0] });
+  } catch (error) {
+    console.error('ADD MATERIAL ERROR:', error);
+    return res.status(500).json({ error: 'Material qo‘shishda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/materials/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    var title = req.body.title ? String(req.body.title).trim() : '';
+    var category = req.body.category ? String(req.body.category).trim() : 'Devor';
+    var subCategory = req.body.sub_category ? String(req.body.sub_category).trim() : 'Boshqa';
+    var imageUrl = req.body.image_url ? String(req.body.image_url).trim() : '';
+    var shortDesc = req.body.short_desc ? String(req.body.short_desc).trim() : '';
+    var whatIsIt = req.body.what_is_it ? String(req.body.what_is_it).trim() : '';
+    var dimensions = req.body.dimensions ? String(req.body.dimensions).trim() : '';
+    var history = req.body.history ? String(req.body.history).trim() : '';
+    var usageArea = req.body.usage_area ? String(req.body.usage_area).trim() : '';
+    var pros = req.body.pros ? String(req.body.pros).trim() : '';
+    var cons = req.body.cons ? String(req.body.cons).trim() : '';
+    var uzbSources = req.body.uzbekistan_sources ? String(req.body.uzbekistan_sources).trim() : '';
+    var bimTips = req.body.bim_tips ? String(req.body.bim_tips).trim() : '';
+    var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
+
+    if (!title) return res.status(400).json({ error: 'Material nomi kiritilishi shart' });
+
+    var result = await pool.query(`
+      UPDATE construction_materials
+      SET title = $1, category = $2, sub_category = $3, image_url = $4, short_desc = $5,
+          what_is_it = $6, dimensions = $7, history = $8, usage_area = $9, pros = $10,
+          cons = $11, uzbekistan_sources = $12, bim_tips = $13, order_index = $14
+      WHERE id = $15
+      RETURNING *
+    `, [title, category, subCategory, imageUrl, shortDesc, whatIsIt, dimensions, history, usageArea, pros, cons, uzbSources, bimTips, orderIndex, id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Material topilmadi' });
+    return res.json({ ok: true, material: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE MATERIAL ERROR:', error);
+    return res.status(500).json({ error: 'Materialni yangilashda xatolik: ' + error.message });
+  }
+});
+
+app.post('/api/admin/materials/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    await pool.query('DELETE FROM construction_materials WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Material o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE MATERIAL ERROR:', error);
+    return res.status(500).json({ error: 'Materialni o‘chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// ADMIN ALL LESSON FILES / LIBRARY MANAGEMENT (Talab 4)
+// ======================================================
+
+app.post('/api/admin/library/all-files', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(`
+      SELECT lf.id, lf.lesson_id, lf.file_name, lf.file_url, lf.created_at,
+             l.title AS lesson_title, l.module_id, m.title AS module_title,
+             c.id AS course_id, c.title AS course_title
+      FROM lesson_files lf
+      JOIN lessons l ON l.id = lf.lesson_id
+      JOIN modules m ON m.id = l.module_id
+      LEFT JOIN courses c ON c.id = m.course_id
+      ORDER BY lf.id DESC
+    `);
+    return res.json({ ok: true, files: result.rows });
+  } catch (error) {
+    console.error('GET ALL FILES ERROR:', error);
+    return res.status(500).json({ error: 'Dars materiallarini olishda xatolik' });
+  }
+});
+
 
 // ======================================================
 // HEALTH CHECK
