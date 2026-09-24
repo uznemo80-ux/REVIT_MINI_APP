@@ -3186,6 +3186,19 @@ app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'social_channel\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [socialChannel]);
     }
 
+    if (req.body.free_minicourse_title !== undefined) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_title\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_title).trim()]);
+    }
+    if (req.body.free_minicourse_subtitle !== undefined) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_subtitle\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_subtitle).trim()]);
+    }
+    if (req.body.free_minicourse_points !== undefined) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_points\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_points).trim()]);
+    }
+    if (req.body.free_minicourse_lesson_ids !== undefined) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_lesson_ids\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_lesson_ids).trim()]);
+    }
+
     return res.json({ ok: true, message: 'Sozlamalar saqlandi' });
   } catch (error) {
     console.error('SETTINGS UPDATE ERROR:', error);

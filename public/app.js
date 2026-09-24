@@ -1072,21 +1072,77 @@ function renderPcSpecsBlock() {
 }
 
 // ----------------------------------------------------
+// ----------------------------------------------------
 // SHOWCASE / RESULT SLIDER LOGIC (Talab 3)
 // ----------------------------------------------------
+
+let showcaseModalReturnContext = "home";
+
+function returnFromShowcaseModal() {
+  if (showcaseModalReturnContext === "admin") {
+    renderAdminPanel();
+  } else {
+    adminView = null;
+    closeDetail();
+  }
+}
+
+function getShowcaseSlideImages(sc) {
+  if (!sc) return [];
+  const results = [];
+  const rawSources = ((sc.selected_pages || "") + "\n" + (sc.preview_image_url || "")).trim();
+  const lines = rawSources.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    if (line.includes("drive.google.com") || line.startsWith("http://") || line.startsWith("https://")) {
+      const driveId = extractGoogleDriveId(line);
+      if (driveId) {
+        results.push({
+          src: `https://lh3.googleusercontent.com/d/${driveId}`,
+          retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
+        });
+      } else if (!line.endsWith(".pdf") && !line.includes("/preview")) {
+        results.push({
+          src: formatImageUrl(line),
+          retry: ""
+        });
+      }
+    }
+  }
+
+  // Fallback to sc.pdf_url if no images found yet
+  if (!results.length && sc.pdf_url) {
+    const driveId = extractGoogleDriveId(sc.pdf_url);
+    if (driveId) {
+      results.push({
+        src: `https://lh3.googleusercontent.com/d/${driveId}`,
+        retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
+      });
+    }
+  }
+
+  if (!results.length) {
+    results.push({
+      src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
+      retry: ""
+    });
+  }
+  return results;
+}
 
 function getShowcaseSlides() {
   const showcases = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
   const slides = [];
   showcases.forEach((sc, scIdx) => {
-    const pages = parseSelectedPages(sc.selected_pages);
-    pages.forEach((page, pIdx) => {
+    const images = getShowcaseSlideImages(sc);
+    images.forEach((img, imgIdx) => {
       slides.push({
         sc,
         scIdx,
-        page,
-        pIdx,
-        allPages: pages,
+        src: img.src,
+        retry: img.retry,
+        imgIdx,
+        totalImages: images.length,
         slideIndex: slides.length
       });
     });
@@ -1101,7 +1157,7 @@ function initShowcaseTimer() {
     if (!slides.length) return;
     showcaseCurrentIndex = (showcaseCurrentIndex + 1) % slides.length;
     updateShowcaseDom();
-  }, 5000); // Har 5 sekundda keyingi listga aylanadi
+  }, 5000); // Har 5 sekundda keyingi chizmaga aylanadi
 }
 
 function nextShowcaseSlide(e) {
@@ -1176,7 +1232,7 @@ function renderShowcaseCarousel() {
         ` : ""}
       </div>
       <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
-        Kurs bitiruvchilari erishgan natijalar va to'liq tayyorlangan ishchi loyiha (PDF) albomlari:
+        Kurs bitiruvchilari erishgan natijalar va to'liq tayyorlangan ishchi loyiha chizmalari:
       </p>
 
       <div class="carousel-wrap">
@@ -1184,59 +1240,34 @@ function renderShowcaseCarousel() {
           ${slides.map((item, globalIdx) => {
             const isActive = globalIdx === showcaseCurrentIndex;
             const sc = item.sc;
-            const driveId = extractGoogleDriveId(sc.pdf_url);
-            const previewImg = sc.preview_image_url ? formatImageUrl(sc.preview_image_url) : (driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200` : "");
 
             return `
               <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${globalIdx}">
-                <!-- Loyiha chizma listi visuali -->
-                <div class="carousel-sheet-card" onclick="openPdfViewerModal('${escapeJsString(sc.pdf_url)}', '${escapeJsString(sc.title)}', ${item.page})" title="Kattalashtirib ko'rish uchun bosing">
-                  ${driveId ? `
-                    <iframe src="https://drive.google.com/file/d/${escapeHtml(driveId)}/preview#page=${item.page}&toolbar=0&navpanes=0" class="carousel-pdf-sheet-frame" loading="lazy" title="${escapeHtml(sc.title)} - ${item.page}-list"></iframe>
-                    <div class="carousel-sheet-glass-overlay"></div>
-                  ` : `
-                    <img src="${escapeHtml(previewImg || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80')}" alt="${escapeHtml(sc.title)}" class="carousel-image-preview">
-                  `}
-                  
-                  <div class="carousel-sheet-badge-left">
-                    <span class="carousel-sheet-pill-badge">📐 ${item.page}-list (Rabochka)</span>
-                  </div>
-                  <div class="carousel-sheet-badge-right">
-                    <span class="carousel-sheet-zoom-tag">🔍 To'liq ko'rish</span>
-                  </div>
+                <!-- Chizma visuali (To'liq korish, listlar nomi, ulashish tugmasisiz) -->
+                <div class="carousel-sheet-card">
+                  <img
+                    src="${escapeHtml(item.src)}"
+                    data-retry="${escapeHtml(item.retry)}"
+                    alt="${escapeHtml(sc.title)}"
+                    class="carousel-image-preview"
+                    onerror="handleImageError(this) || (this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');"
+                  />
+                  <div class="carousel-sheet-glass-overlay"></div>
                 </div>
 
                 <div class="carousel-body">
-                  ${item.allPages.length > 1 ? `
-                    <div class="carousel-sheet-pill-list">
-                      <span class="carousel-sheet-label">📋 Listlar:</span>
-                      <div class="carousel-sheet-pills-row">
-                        ${item.allPages.map(p => {
-                          const isCurrent = p === item.page;
-                          const targetSlideIdx = slides.findIndex(s => s.sc.id === sc.id && s.page === p);
-                          return `
-                            <button type="button" class="sheet-chip-btn ${isCurrent ? 'active' : ''}" onclick="setShowcaseSlide(${targetSlideIdx}, event)">
-                              📄 ${p}-list
-                            </button>
-                          `;
-                        }).join('')}
-                      </div>
-                    </div>
-                  ` : ''}
-
                   <div class="carousel-badge-row">
                     <span class="carousel-course-tag">${escapeHtml(sc.course_title || "Revit kursi")}</span>
                     ${sc.discount_badge ? `<span class="carousel-discount-badge">${escapeHtml(sc.discount_badge)}</span>` : ""}
                   </div>
 
                   <div class="carousel-slide-title">${escapeHtml(sc.title)}</div>
-                  ${sc.student_name ? `<div class="carousel-student-info">👨‍🎓 Muallif: ${escapeHtml(sc.student_name)}</div>` : ""}
                   <div class="carousel-desc">${escapeHtml(sc.description || "")}</div>
 
                   ${state.is_admin ? `
-                    <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:8px;">
+                    <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:10px;">
                       <button class="admin-small-btn" style="padding:8px 14px; font-size:12px;" onclick="openEditShowcaseModal(${Number(sc.id)})" title="Tahrirlash">
-                        ✏️ Listlarni tahrirlash
+                        ✏️ Tahrirlash
                       </button>
                       <button class="admin-small-btn" style="padding:8px 14px; font-size:12px; background:rgba(235,59,59,0.2); color:#eb3b3b;" onclick="deleteShowcaseItem(${Number(sc.id)})" title="O'chirish">
                         🗑️ O'chirish
@@ -1270,109 +1301,62 @@ function renderShowcaseCarousel() {
   `;
 }
 
-// PDF Viewer Modal (Faqat ko'rish uchun xavfsiz oyna)
-function openPdfViewerModal(rawPdfUrl, title, initialPage) {
-  haptic("medium");
-  let viewUrl = rawPdfUrl || "";
-
-  const driveId = extractGoogleDriveId(viewUrl);
-  if (driveId) {
-    viewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-    if (initialPage) {
-      viewUrl += `#page=${initialPage}`;
-    }
-  } else if (viewUrl.includes("drive.google.com")) {
-    viewUrl = viewUrl.replace(/\/view(\?.*)?$/, "/preview").replace(/\/edit(\?.*)?$/, "/preview");
-    if (!viewUrl.includes("/preview")) {
-      viewUrl = viewUrl + (viewUrl.includes("?") ? "&" : "/") + "preview";
-    }
-    if (initialPage) {
-      viewUrl += `#page=${initialPage}`;
-    }
-  } else if (initialPage && viewUrl.toLowerCase().endsWith(".pdf")) {
-    viewUrl += `#page=${initialPage}`;
-  }
-
-  currentView = {
-    html: `
-      <div class="pdf-viewer-overlay">
-        <div class="pdf-viewer-header">
-          <div style="font-weight:750; font-size:14px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:75%;">
-            📄 ${escapeHtml(title || "Loyiha albomi (PDF)")} ${initialPage ? `(${initialPage}-list)` : ""}
-          </div>
-          <button class="admin-small-btn" onclick="closeDetail()" style="padding:6px 12px; font-size:12px;">
-            Yopish ✕
-          </button>
-        </div>
-        <div class="pdf-viewer-iframe-wrap">
-          <iframe src="${escapeHtml(viewUrl)}" class="pdf-viewer-iframe" allow="autoplay" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
-        </div>
-        <div style="padding:10px 14px; background:var(--bg-surface); border-top:1px solid var(--border); font-size:11.5px; color:var(--text-secondary); text-align:center;">
-          🔒 O'quvchi natijasi faqat tanishish maqsadida namoyish etilmoqda.
-        </div>
-      </div>
-    `
-  };
-  render();
-}
-
-function setAdminShowcasePages(val) {
-  const input = document.getElementById("sc-pages") || document.getElementById("edit-sc-pages");
-  if (input) {
-    input.value = val;
-    updateAdminShowcasePreview();
-  }
-}
-
 function updateAdminShowcasePreview() {
-  const pdfInput = document.getElementById("sc-pdf") || document.getElementById("edit-sc-pdf");
   const pagesInput = document.getElementById("sc-pages") || document.getElementById("edit-sc-pages");
   const previewBox = document.getElementById("admin-showcase-preview-box");
   if (!previewBox) return;
 
-  const pdfUrl = pdfInput?.value.trim() || "";
-  const pagesStr = pagesInput?.value.trim() || "1, 2, 3, 4, 5";
-  const driveId = extractGoogleDriveId(pdfUrl);
-  const pages = parseSelectedPages(pagesStr);
+  const rawText = pagesInput?.value.trim() || "";
+  const lines = rawText.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
 
-  if (!pdfUrl) {
+  if (!lines.length) {
     previewBox.innerHTML = `
       <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:8px;">
-        💡 Google Disk PDF linkini kiritsangiz, bu yerda tanlangan listlar jonli ko'rinadi.
+        💡 Google Disk chizmalar havolasini kiritsangiz, bu yerda slayderda aylanadigan barcha chizmalar chiqadi.
       </div>
     `;
     return;
   }
 
+  const detectedImages = [];
+  lines.forEach(line => {
+    const driveId = extractGoogleDriveId(line);
+    if (driveId) {
+      detectedImages.push({
+        src: `https://lh3.googleusercontent.com/d/${driveId}`,
+        retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
+      });
+    } else if (line.startsWith("http://") || line.startsWith("https://")) {
+      detectedImages.push({
+        src: formatImageUrl(line),
+        retry: ""
+      });
+    }
+  });
+
   previewBox.innerHTML = `
     <div style="font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-      ${driveId ? "✅ Google Disk PDF muvaffaqiyatli aniqlandi" : "📄 PDF havolasi kiritildi"}
+      ✅ Slayderda aylanadigan chizmalar: <b>${detectedImages.length} ta</b>
     </div>
-    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
-      Animatsiyali slayderda aylanadigan listlar: <b>${pages.length} ta list</b>
-      <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
-        ${pages.map(p => `<span style="background:rgba(41,121,255,0.15); color:var(--accent); padding:2px 8px; border-radius:4px; font-weight:700; font-size:11px;">📄 ${p}-list</span>`).join("")}
-      </div>
+    <div style="display:flex; gap:8px; overflow-x:auto; padding:6px 0;">
+      ${detectedImages.map((img) => `
+        <div style="width:75px; height:50px; flex-shrink:0; border-radius:6px; overflow:hidden; border:1px solid var(--border); background:#0a0a0f;">
+          <img src="${escapeHtml(img.src)}" data-retry="${escapeHtml(img.retry)}" style="width:100%; height:100%; object-fit:cover;" onerror="handleImageError(this)">
+        </div>
+      `).join("")}
     </div>
-    ${driveId ? `
-      <div style="width:100%; height:180px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#0a0a0f; margin-top:8px;">
-        <iframe src="https://drive.google.com/file/d/${escapeHtml(driveId)}/preview#page=${pages[0] || 1}&toolbar=0" style="width:100%; height:100%; border:none; pointer-events:none;"></iframe>
-      </div>
-      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px; text-align:center;">
-        (1-slayd uchun namuna chizma)
-      </div>
-    ` : ""}
   `;
 }
 
 // Admin Showcase Boshqaruvi
 function openAddShowcaseModal() {
+  showcaseModalReturnContext = (adminView && currentView && currentView.isAdminPanel) ? "admin" : "home";
   const courses = state.courses || [];
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="adminView ? renderAdminPanel() : closeDetail()">← Ortga qaytish</div>
-        <div class="page-title">Yangi Natija (Rabochka PDF) Qo'shish</div>
+        <div class="back-btn" onclick="returnFromShowcaseModal()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Natija Qo'shish</div>
 
         <div class="admin-form">
           <div class="apple-field">
@@ -1383,37 +1367,15 @@ function openAddShowcaseModal() {
           </div>
 
           <div class="apple-field">
-            <label>Loyiha nomi (Rabochka nomi) *</label>
+            <label>Loyiha nomi *</label>
             <input id="sc-title" class="apple-input" type="text" placeholder="Masalan: 3 xonali kvartira ishchi loyihasi (42 list)">
           </div>
 
           <div class="apple-field">
-            <label>O'quvchi ismi *</label>
-            <input id="sc-student" class="apple-input" type="text" placeholder="Masalan: Azizbek Toshpo'latov">
-          </div>
-
-          <div class="apple-field">
-            <label>Google Disk yoki Yandex Disk PDF linki *</label>
-            <div style="display:flex; gap:6px;">
-              <input id="sc-pdf" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view" style="flex:1;" oninput="updateAdminShowcasePreview()">
-              <button type="button" class="admin-small-btn" onclick="const u=document.getElementById('sc-pdf')?.value.trim(); if(u) window.open(u,'_blank');" style="white-space:nowrap; padding:8px 12px;">🔗 Tekshirish</button>
-            </div>
-            <span style="font-size:11px; color:var(--text-secondary); margin-top:4px; display:block;">
-              Revit ishchi loyihasi (PDF) havolasi.
-            </span>
-          </div>
-
-          <div class="apple-field">
-            <label>PDFdagi qaysi listlar (sahifalar) ko'rsatilsin? *</label>
-            <input id="sc-pages" class="apple-input" type="text" placeholder="Masalan: 1, 2, 3, 5, 8" value="1, 2, 3, 4, 5" oninput="updateAdminShowcasePreview()">
-            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 2, 3')">📄 1-3 listlar</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 2, 3, 4, 5')">📄 1-5 listlar</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 3, 7, 12, 18, 25')">📄 Asosiy listlar (1, 3, 7, 12, 18, 25)</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 5, 10, 15, 20')">📄 Har 5 listdan bitta</button>
-            </div>
-            <span style="font-size:11.5px; color:var(--accent); margin-top:5px; display:block;">
-              ⚡ Admin qaysi listlarni kiritsa, bosh sahifadagi slayderda o'sha listlar ketma-ket avtomatik aylanib turadi.
+            <label>Slayderda aylanadigan chizmalar (Google Disk yoki rasm havolalari) *</label>
+            <textarea id="sc-pages" class="apple-input apple-textarea" rows="4" placeholder="Har bir chizma yoki list havolasini yangi qatordan kiriting:&#10;https://drive.google.com/file/d/.../view&#10;https://drive.google.com/file/d/.../view" oninput="updateAdminShowcasePreview()"></textarea>
+            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
+              💡 Admin qaysi listlar / chizmalar havolasini kiritsa, slayderda aynan o'shalar aylanib turadi.
             </span>
           </div>
 
@@ -1427,7 +1389,7 @@ function openAddShowcaseModal() {
 
           <div class="apple-field">
             <label>Loyiha tavsifi</label>
-            <textarea id="sc-desc" class="apple-input apple-textarea" placeholder="O'quvchi erishgan natijalar haqida qisqacha ma'lumot..."></textarea>
+            <textarea id="sc-desc" class="apple-input apple-textarea" placeholder="Loyiha haqida qisqacha ma'lumot..."></textarea>
           </div>
 
           <button id="save-sc-btn" class="btn" onclick="submitAddShowcase()">
@@ -1446,36 +1408,33 @@ async function submitAddShowcase() {
   const courseId = courseSelect?.value;
   const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
   const title = document.getElementById("sc-title")?.value.trim();
-  const student = document.getElementById("sc-student")?.value.trim();
-  let pdf = document.getElementById("sc-pdf")?.value.trim();
-  const pages = document.getElementById("sc-pages")?.value.trim() || "1, 2, 3, 4, 5";
+  const pages = document.getElementById("sc-pages")?.value.trim() || "";
   const discount = document.getElementById("sc-discount")?.value.trim();
   const desc = document.getElementById("sc-desc")?.value.trim();
 
-  if (!title || !pdf) return showAlert("Loyiha nomi va PDF linkini kiritish majburiy!");
-  if (!pdf.startsWith("http://") && !pdf.startsWith("https://")) {
-    pdf = "https://" + pdf;
-  }
+  if (!title) return showAlert("Loyiha nomini kiritish majburiy!");
+  if (!pages) return showAlert("Kamida bitta chizma yoki PDF havolasini kiriting!");
 
   const btn = document.getElementById("save-sc-btn");
   if (btn) btn.classList.add("btn-loading");
 
   try {
     haptic("medium");
+    const firstLine = pages.split(/[\r\n,]+/)[0]?.trim() || "";
     await adminApi("/api/admin/showcases/add", {
       course_id: courseId,
       course_title: courseTitle,
       title,
-      student_name: student,
-      pdf_url: pdf,
+      student_name: "",
+      pdf_url: firstLine,
       selected_pages: pages,
+      preview_image_url: pages,
       discount_badge: discount || null,
       description: desc
     });
     showToast("O'quvchi natijasi saqlandi!");
     await loadContent();
-    if (adminView === "library") renderAdminPanel();
-    else closeDetail();
+    returnFromShowcaseModal();
   } catch (err) {
     showAlert(err.message || "Saqlashda xatolik.");
   } finally {
@@ -1484,6 +1443,7 @@ async function submitAddShowcase() {
 }
 
 function openEditShowcaseModal(id) {
+  showcaseModalReturnContext = (adminView && currentView && currentView.isAdminPanel) ? "admin" : "home";
   const item = (state.showcases || []).find(s => Number(s.id) === Number(id));
   if (!item) return showAlert("Ma'lumot topilmadi.");
 
@@ -1491,7 +1451,7 @@ function openEditShowcaseModal(id) {
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="adminView ? renderAdminPanel() : closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="returnFromShowcaseModal()">← Ortga qaytish</div>
         <div class="page-title">Natijani tahrirlash</div>
 
         <div class="admin-form">
@@ -1508,29 +1468,10 @@ function openEditShowcaseModal(id) {
           </div>
 
           <div class="apple-field">
-            <label>O'quvchi ismi</label>
-            <input id="edit-sc-student" class="apple-input" type="text" value="${escapeHtml(item.student_name || "")}">
-          </div>
-
-          <div class="apple-field">
-            <label>PDF Linki (Google Disk yoki Yandex Disk) *</label>
-            <div style="display:flex; gap:6px;">
-              <input id="edit-sc-pdf" class="apple-input" type="url" value="${escapeHtml(item.pdf_url)}" style="flex:1;" oninput="updateAdminShowcasePreview()">
-              <button type="button" class="admin-small-btn" onclick="const u=document.getElementById('edit-sc-pdf')?.value.trim(); if(u) window.open(u,'_blank');" style="white-space:nowrap; padding:8px 12px;">🔗 Tekshirish</button>
-            </div>
-          </div>
-
-          <div class="apple-field">
-            <label>PDFdagi qaysi listlar (sahifalar) ko'rsatilsin? *</label>
-            <input id="edit-sc-pages" class="apple-input" type="text" placeholder="Masalan: 1, 2, 3, 5, 8" value="${escapeHtml(item.selected_pages || '1, 2, 3, 4, 5')}" oninput="updateAdminShowcasePreview()">
-            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 2, 3')">📄 1-3 listlar</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 2, 3, 4, 5')">📄 1-5 listlar</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 3, 7, 12, 18, 25')">📄 Asosiy listlar (1, 3, 7, 12, 18, 25)</button>
-              <button type="button" class="admin-chip" onclick="setAdminShowcasePages('1, 5, 10, 15, 20')">📄 Har 5 listdan biri</button>
-            </div>
-            <span style="font-size:11.5px; color:var(--accent); margin-top:5px; display:block;">
-              ⚡ Slayderda aylanadigan listlar raqamini vergul bilan yozing (Masalan: 1, 3, 5, 8).
+            <label>Slayderda aylanadigan chizmalar (Google Disk yoki rasm havolalari) *</label>
+            <textarea id="edit-sc-pages" class="apple-input apple-textarea" rows="4" placeholder="Har bir chizma yoki list havolasini yangi qatordan kiriting:&#10;https://drive.google.com/file/d/.../view" oninput="updateAdminShowcasePreview()">${escapeHtml(item.selected_pages || item.preview_image_url || item.pdf_url || "")}</textarea>
+            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
+              💡 Har bir chizma havolasini yangi qatordan kiriting. Admin aynan o'zi tanlagan chizmalarni belgilaydi.
             </span>
           </div>
 
@@ -1563,36 +1504,33 @@ async function submitUpdateShowcase(id) {
   const courseId = courseSelect?.value;
   const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
   const title = document.getElementById("edit-sc-title")?.value.trim();
-  const student = document.getElementById("edit-sc-student")?.value.trim();
-  let pdf = document.getElementById("edit-sc-pdf")?.value.trim();
-  const pages = document.getElementById("edit-sc-pages")?.value.trim() || "1, 2, 3, 4, 5";
+  const pages = document.getElementById("edit-sc-pages")?.value.trim() || "";
   const discount = document.getElementById("edit-sc-discount")?.value.trim();
   const desc = document.getElementById("edit-sc-desc")?.value.trim();
 
-  if (!title || !pdf) return showAlert("Loyiha nomi va PDF linki zarur!");
-  if (!pdf.startsWith("http://") && !pdf.startsWith("https://")) {
-    pdf = "https://" + pdf;
-  }
+  if (!title) return showAlert("Loyiha nomi zarur!");
+  if (!pages) return showAlert("Kamida bitta chizma yoki PDF havolasini kiriting!");
 
   const btn = document.getElementById("update-sc-btn");
   if (btn) btn.classList.add("btn-loading");
 
   try {
     haptic("medium");
+    const firstLine = pages.split(/[\r\n,]+/)[0]?.trim() || "";
     await adminApi(`/api/admin/showcases/${Number(id)}/update`, {
       course_id: courseId,
       course_title: courseTitle,
       title,
-      student_name: student,
-      pdf_url: pdf,
+      student_name: "",
+      pdf_url: firstLine,
       selected_pages: pages,
+      preview_image_url: pages,
       discount_badge: discount || null,
       description: desc
     });
     showToast("Muvaffaqiyatli yangilandi!");
     await loadContent();
-    if (adminView === "library") renderAdminPanel();
-    else closeDetail();
+    returnFromShowcaseModal();
   } catch (err) {
     showAlert(err.message || "Yangilashda xato.");
   } finally {
@@ -2881,6 +2819,215 @@ function toggleAbout() {
   render();
 }
 
+let fmcLessonsOpen = false;
+
+function toggleFreeMiniCourseLessons() {
+  haptic("light");
+  fmcLessonsOpen = !fmcLessonsOpen;
+  render();
+}
+
+function startFreeMiniCourse() {
+  haptic("medium");
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const s = state.settings || {};
+  let fmcLessons = [];
+  if (s.free_minicourse_lesson_ids) {
+    const ids = s.free_minicourse_lesson_ids.split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
+    const allL = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
+    fmcLessons = ids.map(id => allL.find(l => l.id === id)).filter(Boolean);
+  }
+  if (!fmcLessons.length) {
+    fmcLessons = modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => ({ ...l, module_title: m.title })));
+  }
+  if (!fmcLessons.length && modules[0]?.lessons?.length) {
+    fmcLessons = modules[0].lessons.slice(0, 6).map(l => ({ ...l, module_title: modules[0].title }));
+  }
+
+  if (fmcLessons.length > 0) {
+    openLesson(Number(fmcLessons[0].id));
+  } else {
+    setTab("lessons");
+  }
+}
+
+function renderFreeMiniCourseCard() {
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const s = state.settings || {};
+
+  const freeTitle = s.free_minicourse_title || "REVIT 0 DAN";
+  const freeSubtitle = s.free_minicourse_subtitle || "Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs";
+  const rawPoints = s.free_minicourse_points || "Revit nima ekanini tushunasiz\nBirinchi loyihani yaratasiz\nDevor, eshik, deraza chizasiz\nBirinchi 3D modelingizni yaratasiz";
+  const freePoints = rawPoints.split("\n").map(p => p.trim()).filter(Boolean);
+
+  let fmcLessons = [];
+  if (s.free_minicourse_lesson_ids) {
+    const ids = s.free_minicourse_lesson_ids.split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
+    const allL = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
+    fmcLessons = ids.map(id => allL.find(l => l.id === id)).filter(Boolean);
+  }
+  if (!fmcLessons.length) {
+    fmcLessons = modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => ({ ...l, module_title: m.title })));
+  }
+  if (!fmcLessons.length && modules[0]?.lessons?.length) {
+    fmcLessons = modules[0].lessons.slice(0, 6).map(l => ({ ...l, module_title: modules[0].title }));
+  }
+
+  const countText = fmcLessons.length > 0 ? `${fmcLessons.length} ta bepul dars` : "6 ta bepul dars";
+
+  return `
+    <div class="free-minicourse-card">
+      <div class="fmc-top">
+        <div class="fmc-top-bar">
+          <div class="fmc-tag">✨ Bepul Mini-Kurs</div>
+          ${state.is_admin ? `
+            <button class="admin-small-btn" onclick="openEditFreeMiniCourseModal()" style="font-size:11px; padding:4px 9px;">
+              ✏️ Tahrirlash
+            </button>
+          ` : ""}
+        </div>
+
+        <div class="fmc-title">${escapeHtml(freeTitle)}</div>
+        <div class="fmc-subtitle">${escapeHtml(freeSubtitle)}</div>
+
+        <div class="fmc-gift-pill">
+          🎁 ${countText}
+        </div>
+
+        <div>
+          <button type="button" class="fmc-start-btn" onclick="startFreeMiniCourse()">
+            🚀 BOSHLASH
+          </button>
+        </div>
+      </div>
+
+      <div class="fmc-divider"></div>
+
+      <div class="fmc-bottom">
+        <div class="fmc-features-title">Bu mini-kursda siz:</div>
+        <div class="fmc-checklist">
+          ${freePoints.map(point => `
+            <div class="fmc-check-item">
+              <span class="fmc-check-icon">✓</span>
+              <span>${escapeHtml(point)}</span>
+            </div>
+          `).join("")}
+        </div>
+
+        ${fmcLessons.length > 0 ? `
+          <div class="fmc-lessons-toggle" onclick="toggleFreeMiniCourseLessons()">
+            <span>📋 Darslar ro'yxatini ko'rish (${fmcLessons.length} ta dars)</span>
+            <span id="fmc-arrow">${fmcLessonsOpen ? "▲" : "▼"}</span>
+          </div>
+          ${fmcLessonsOpen ? `
+            <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+              ${fmcLessons.map((l, idx) => `
+                <div onclick="openLesson(${Number(l.id)})" style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:11.5px; color:var(--accent); font-weight:750;">${idx + 1}.</span>
+                    <span style="font-size:12.5px; font-weight:650; color:var(--text-primary);">${escapeHtml(l.title)}</span>
+                  </div>
+                  <span style="font-size:12px; color:var(--accent); font-weight:700;">Ko'rish ▶</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
+        ` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function openEditFreeMiniCourseModal() {
+  haptic("light");
+  const s = state.settings || {};
+  const currentTitle = s.free_minicourse_title || "REVIT 0 DAN";
+  const currentSubtitle = s.free_minicourse_subtitle || "Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs";
+  const currentPoints = s.free_minicourse_points || "Revit nima ekanini tushunasiz\nBirinchi loyihani yaratasiz\nDevor, eshik, deraza chizasiz\nBirinchi 3D modelingizni yaratasiz";
+  const selectedIds = (s.free_minicourse_lesson_ids || "").split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
+
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const allLessons = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Bepul Mini-Kursni Sozlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Mini-kurs nomi</label>
+            <input id="edit-fmc-title" class="apple-input" type="text" value="${escapeHtml(currentTitle)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqacha ta'rif</label>
+            <input id="edit-fmc-subtitle" class="apple-input" type="text" value="${escapeHtml(currentSubtitle)}">
+          </div>
+
+          <div class="apple-field">
+            <label>O'rganiladigan natijalar (Har bir qatorda bittadan yozing, kartada ✓ bilan chiqadi)</label>
+            <textarea id="edit-fmc-points" class="apple-input apple-textarea" rows="4">${escapeHtml(currentPoints)}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Ushbu bepul mini-kursga kiruvchi darslar (belgilang):</label>
+            <div style="max-height:220px; overflow-y:auto; background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+              ${allLessons.map(l => {
+                const isChecked = selectedIds.length ? selectedIds.includes(l.id) : Boolean(l.is_free);
+                return `
+                  <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                    <input type="checkbox" class="fmc-lesson-cb" value="${l.id}" ${isChecked ? "checked" : ""}>
+                    <span>${escapeHtml(l.module_title || "")}: <b>${escapeHtml(l.title)}</b> ${l.is_free ? '<span style="color:var(--success); font-size:11px;">(Bepul)</span>' : ''}</span>
+                  </label>
+                `;
+              }).join("")}
+            </div>
+            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
+              Admin qaysi darslarni belgilasa, bepul mini-kurs kartasida aynan o'sha darslar soni va ro'yxati ko'rsatiladi.
+            </span>
+          </div>
+
+          <button id="save-fmc-btn" class="btn" onclick="submitEditFreeMiniCourse()">
+            💾 Saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitEditFreeMiniCourse() {
+  const title = document.getElementById("edit-fmc-title")?.value.trim() || "REVIT 0 DAN";
+  const subtitle = document.getElementById("edit-fmc-subtitle")?.value.trim() || "";
+  const points = document.getElementById("edit-fmc-points")?.value.trim() || "";
+
+  const cbs = document.querySelectorAll(".fmc-lesson-cb:checked");
+  const chosenIds = Array.from(cbs).map(cb => cb.value).join(",");
+
+  const btn = document.getElementById("save-fmc-btn");
+  if (btn) btn.classList.add("btn-loading");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/settings/update", {
+      free_minicourse_title: title,
+      free_minicourse_subtitle: subtitle,
+      free_minicourse_points: points,
+      free_minicourse_lesson_ids: chosenIds
+    });
+    showToast("Bepul mini-kurs sozlamalari saqlandi!");
+    await loadContent();
+    closeDetail();
+  } catch (err) {
+    showAlert(err.message || "Saqlashda xatolik.");
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
+}
+
 // ======================================================
 // TAB 1: HOME PAGE (Talab 1 & Talab 2)
 // ======================================================
@@ -2957,41 +3104,8 @@ function renderHome() {
         </div>
       ` : ""}
 
-      <!-- 8-TALAB: BEPUL DARSLAR QATORI (O'quv progressidan keyin) -->
-      <div style="margin-top:16px; margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div class="section-title" style="margin:0;">🎬 Bepul namuna darslar</div>
-          ${state.is_admin ? `
-            <button class="admin-small-btn" onclick="openAdminLessons()" style="font-size:11px; padding:5px 9px;">
-              ✏️ Boshqarish
-            </button>
-          ` : ""}
-        </div>
-        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
-          Darslarimiz sifati bilan tanishish uchun ochiq video darsliklar:
-        </p>
-
-        <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;">
-          ${sampleFreeList.map(l => `
-            <div class="card free-lesson-chip-card" onclick="openLesson(${Number(l.id)})" style="min-width:220px; max-width:240px; flex-shrink:0; cursor:pointer; padding:12px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-surface); position:relative;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span class="tag ok" style="font-size:10px; padding:2px 8px;">🟢 Bepul Dars</span>
-                ${state.is_admin ? `
-                  <span onclick="event.stopPropagation(); openAdminLessonEdit(${Number(l.id)})" title="Tahrirlash" style="font-size:13px; cursor:pointer; opacity:0.85;">✏️</span>
-                ` : ""}
-              </div>
-              <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">${escapeHtml(l.module_title || "1-Modul")}</div>
-              <div style="font-weight:750; font-size:13px; color:var(--text-primary); margin-bottom:8px; line-height:1.3; height:34px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-                ${escapeHtml(l.title)}
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--accent); font-weight:700;">
-                <span>Ko'rish ▶</span>
-                ${l.watched ? `<span style="color:var(--success);">✅ Ko'rilgan</span>` : ""}
-              </div>
-            </div>
-          `).join("")}
-        </div>
-      </div>
+      <!-- BEPUL MINI-KURS KARTASI (REVIT 0 DAN) - Admin haqida blokidan oldin -->
+      ${renderFreeMiniCourseCard()}
 
       <!-- 6-TALAB: O'ZIM HAQIMDA (Google Drive rasmlari to'liq ko'rinadigan CDN va zaxira fallback) -->
       <div class="about-card">
