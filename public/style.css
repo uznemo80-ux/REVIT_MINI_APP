@@ -3341,6 +3341,40 @@ html.light ::-webkit-scrollbar-thumb:hover {
   }
 }
 
+/* Free Lesson Chip Card */
+.free-lesson-chip-card {
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.free-lesson-chip-card:active {
+  transform: scale(0.97);
+  border-color: var(--accent);
+}
+
+/* Compact PC Specs Card */
+.pc-specs-compact-card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.pc-specs-compact-card:active {
+  transform: scale(0.98);
+}
+.pc-specs-compact-card:hover {
+  border-color: rgba(41, 121, 255, 0.4);
+  box-shadow: 0 4px 18px rgba(41, 121, 255, 0.12);
+}
+
+/* Social Channel Cards */
+.social-card {
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+.social-card:active {
+  transform: scale(0.97);
+}
+.social-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-surface-elevated);
+}
+
+
 
 
 

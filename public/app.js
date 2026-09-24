@@ -385,6 +385,7 @@ async function loadContent() {
       courses: Array.isArray(data.courses) ? data.courses : [],
       faqs: Array.isArray(data.faqs) ? data.faqs : [],
       settings: data.settings || state.settings,
+      testimonials: Array.isArray(data.testimonials) && data.testimonials.length ? data.testimonials : (state.testimonials && state.testimonials.length ? state.testimonials : TESTIMONIALS),
       showcases: Array.isArray(data.showcases) && data.showcases.length ? data.showcases : (state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES),
       open_resources: Array.isArray(data.open_resources) && data.open_resources.length ? data.open_resources : (state.open_resources && state.open_resources.length ? state.open_resources : DEFAULT_OPEN_RESOURCES),
       materials: Array.isArray(data.materials) && data.materials.length ? data.materials : (state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS)
@@ -866,6 +867,38 @@ function setSpecLevel(level) {
   }
 }
 
+function renderPcSpecsCompactCard() {
+  return `
+    <div class="card pc-specs-compact-card" onclick="openPcSpecsModal()" style="margin-bottom:18px; border:1px solid var(--border); padding:16px; background:linear-gradient(135deg, rgba(41,121,255,0.08) 0%, rgba(20,20,31,0.6) 100%); border-radius:var(--radius-md); cursor:pointer;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+          <div style="font-size:28px; width:48px; height:48px; border-radius:12px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">💻</div>
+          <div style="min-width:0;">
+            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); margin-bottom:2px;">Kompyuter & Noutbuk Parametrlari</div>
+            <div style="font-size:11.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">3ds Max & Revit: Minimal, Tavsiya, Pro talablar</div>
+          </div>
+        </div>
+        <button class="btn" style="width:auto; margin:0; padding:8px 14px; font-size:12px; white-space:nowrap; flex-shrink:0;">
+          Tanlash ↗
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function openPcSpecsModal() {
+  haptic("light");
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Bosh sahifaga qaytish</div>
+        ${renderPcSpecsBlock()}
+      </div>
+    `
+  };
+  render();
+}
+
 function renderPcSpecsBlock() {
   const currentDevData = PC_SPECS_DATA[specDevice] || PC_SPECS_DATA.desktop;
   const spec = currentDevData[specLevel] || currentDevData.recommended;
@@ -1291,13 +1324,20 @@ function openEditShowcaseModal(id) {
           </div>
 
           <div class="apple-field">
-            <label>PDF Linki *</label>
-            <input id="edit-sc-pdf" class="apple-input" type="url" value="${escapeHtml(item.pdf_url)}">
+            <label>PDF Linki (Google Disk yoki Yandex Disk) *</label>
+            <div style="display:flex; gap:6px;">
+              <input id="edit-sc-pdf" class="apple-input" type="url" value="${escapeHtml(item.pdf_url)}" style="flex:1;">
+              <button type="button" class="admin-small-btn" onclick="const u=document.getElementById('edit-sc-pdf')?.value.trim(); if(u) window.open(u,'_blank');" style="white-space:nowrap; padding:8px 12px;">🔗 Tekshirish</button>
+            </div>
           </div>
 
           <div class="apple-field">
-            <label>Rasm prevyu URL</label>
-            <input id="edit-sc-img" class="apple-input" type="url" value="${escapeHtml(item.preview_image_url || "")}">
+            <label>Loyiha rasmi (Google Disk yoki URL)</label>
+            <input id="edit-sc-img" class="apple-input" type="url" value="${escapeHtml(item.preview_image_url || "")}" placeholder="https://drive.google.com/... yoki rasm havolasi" oninput="const p = document.getElementById('edit-sc-img-preview'); if (p) { p.style.display='block'; p.src = formatImageUrl(this.value); }">
+            <div style="margin-top:6px; display:flex; align-items:center; gap:10px;">
+              <img id="edit-sc-img-preview" src="${escapeHtml(formatImageUrl(item.preview_image_url || ''))}" style="width:70px; height:45px; border-radius:6px; object-fit:cover; border:1px solid var(--border);" onerror="handleImageError(this)">
+              <span style="font-size:11px; color:var(--text-secondary);">Jonli rasm ko'rinishi</span>
+            </div>
           </div>
 
           <div class="apple-field">
@@ -2649,12 +2689,45 @@ function toggleAbout() {
 
 function renderHome() {
   const modules = Array.isArray(state.modules) ? state.modules : [];
-  const myTotal = modules.reduce((tot, m) => tot + (m.lessons?.length || 0), 0);
-  const myWatched = modules.reduce((tot, m) => tot + (m.watched_count || 0), 0);
+  const isPayingStudent = Boolean(state.has_access || state.is_admin);
+
+  // 7-TALAB: Yangi o'quvchi uchun bepul darslar progressi, to'lov qilgach barcha pullik darslar qo'shiladi
+  let myTotal = 0;
+  let myWatched = 0;
+  let progressTitle = "O'quv progressi";
+
+  const allFreeLessons = modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => ({ ...l, module_title: m.title })));
+  const sampleFreeList = allFreeLessons.length > 0 ? allFreeLessons : (modules[0]?.lessons || []).slice(0, 4).map(l => ({ ...l, module_title: modules[0].title }));
+
+  if (!isPayingStudent) {
+    myTotal = sampleFreeList.length;
+    myWatched = sampleFreeList.filter(l => l.watched).length;
+    progressTitle = "Bepul namuna darslar progressi";
+  } else {
+    myTotal = modules.reduce((tot, m) => tot + (m.lessons?.length || 0), 0);
+    myWatched = modules.reduce((tot, m) => tot + (m.watched_count || 0), 0);
+    progressTitle = "To'liq kurs progressi";
+  }
   const pct = myTotal ? Math.round((myWatched / myTotal) * 100) : 0;
 
-  // Talab 1: Admin rasmi
-  const adminPhoto = state.settings?.admin_photo_url || "/admin.jpg";
+  // 6-TALAB: Admin (Abdulloh) rasmi (Google Drive CDN formatlash va zaxira bilan)
+  const rawAdminPhoto = state.settings?.admin_photo_url || "/admin.jpg";
+  const adminPhoto = formatImageUrl(rawAdminPhoto);
+  const retryAdminPhoto = getDriveFallbackUrl(rawAdminPhoto);
+
+  // 2-TALAB: Faqat admin belgilagan kurslarni chiqarish (show_on_home)
+  const featuredCourses = (state.courses || []).filter(c => c.show_on_home);
+  const coursesToShow = featuredCourses.length > 0 ? featuredCourses : (state.courses || []).slice(0, 1);
+
+  // 5-TALAB: O'quvchilar fikri (Dinamik bazadan)
+  const testimonialsList = state.testimonials && state.testimonials.length ? state.testimonials : TESTIMONIALS;
+
+  // 1-TALAB: Ijtimoiy tarmoqlar
+  const s = state.settings || {};
+  const socialTg = s.social_telegram || "https://t.me/yoshuzbekk";
+  const socialInsta = s.social_instagram || "https://instagram.com/yoshuzbekk";
+  const socialYt = s.social_youtube || "https://youtube.com/@yoshuzbekk";
+  const socialChat = s.social_channel || "https://t.me/yoshuzbekk_academy";
   const faqsList = state.faqs && state.faqs.length ? state.faqs : [];
 
   return `
@@ -2667,28 +2740,72 @@ function renderHome() {
         <div class="welcome-sub">Revit dasturida interyer loyihalash professional akademiyasi</div>
       </div>
 
+      <!-- 7-TALAB: O'QUV PROGRESSI (Bepul va pullik o'quvchi uchun moslashuvchan) -->
       ${myTotal ? `
         <div class="progress-wrap">
           <div class="progress-labels">
-            <span>O'quv progressi</span>
+            <span>${progressTitle}</span>
             <span>${myWatched} / ${myTotal} dars (${pct}%)</span>
           </div>
           <div class="progress-track">
             <div class="progress-fill" style="width: ${pct}%"></div>
           </div>
+          ${!isPayingStudent ? `
+            <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span>💡 Kursga to'liq a'zo bo'lgach barcha pullik darslar qo'shiladi</span>
+              <span style="color:var(--accent); font-weight:700; cursor:pointer;" onclick="setTab('chat')">A'zo bo'lish ↗</span>
+            </div>
+          ` : ""}
         </div>
       ` : ""}
 
-      <!-- 1-TALAB: O'ZIM HAQIMDA (Mobil telefonda 100% ko'rinadigan rasm) -->
+      <!-- 8-TALAB: BEPUL DARSLAR QATORI (O'quv progressidan keyin) -->
+      <div style="margin-top:16px; margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="section-title" style="margin:0;">🎬 Bepul namuna darslar</div>
+          ${state.is_admin ? `
+            <button class="admin-small-btn" onclick="openAdminLessons()" style="font-size:11px; padding:5px 9px;">
+              ✏️ Boshqarish
+            </button>
+          ` : ""}
+        </div>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+          Darslarimiz sifati bilan tanishish uchun ochiq video darsliklar:
+        </p>
+
+        <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;">
+          ${sampleFreeList.map(l => `
+            <div class="card free-lesson-chip-card" onclick="openLesson(${Number(l.id)})" style="min-width:220px; max-width:240px; flex-shrink:0; cursor:pointer; padding:12px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-surface); position:relative;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="tag ok" style="font-size:10px; padding:2px 8px;">🟢 Bepul Dars</span>
+                ${state.is_admin ? `
+                  <span onclick="event.stopPropagation(); openAdminLessonEdit(${Number(l.id)})" title="Tahrirlash" style="font-size:13px; cursor:pointer; opacity:0.85;">✏️</span>
+                ` : ""}
+              </div>
+              <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">${escapeHtml(l.module_title || "1-Modul")}</div>
+              <div style="font-weight:750; font-size:13px; color:var(--text-primary); margin-bottom:8px; line-height:1.3; height:34px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                ${escapeHtml(l.title)}
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--accent); font-weight:700;">
+                <span>Ko'rish ▶</span>
+                ${l.watched ? `<span style="color:var(--success);">✅ Ko'rilgan</span>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- 6-TALAB: O'ZIM HAQIMDA (Google Drive rasmlari to'liq ko'rinadigan CDN va zaxira fallback) -->
       <div class="about-card">
         <div class="about-photo-wrap" style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
           <div style="position:relative; width:64px; height:64px; flex-shrink:0;">
             <img
               src="${escapeHtml(adminPhoto)}"
+              data-retry="${escapeHtml(retryAdminPhoto)}"
               alt="Abdulloh"
               class="about-photo"
               style="width:64px; height:64px; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--accent); box-shadow:0 4px 14px var(--accent-glow);"
-              onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Abdulloh&background=2979ff&color=fff&size=128&bold=true';"
+              onerror="handleImageError(this) || (this.src='https://ui-avatars.com/api/?name=Abdulloh&background=2979ff&color=fff&size=128&bold=true');"
             />
             ${state.is_admin ? `
               <div onclick="openAdminSettingsModal()" title="Rasmni o'zgartirish" style="position:absolute; bottom:-2px; right:-2px; background:var(--accent); color:#fff; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
@@ -2724,12 +2841,13 @@ function renderHome() {
         </div>
       ` : ""}
 
+      <!-- 2-TALAB: FAQAT ADMIN BELGILAGAN KURS(LAR) KO'RINADI -->
       <div class="section-title">
-        <span>Mavjud Kurslar</span>
-        <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
+        <span>Asosiy Kurs</span>
+        <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barcha kurslar (${(state.courses || []).length}) →</span>
       </div>
 
-      ${(state.courses || []).slice(0, 3).map(course => {
+      ${coursesToShow.map(course => {
         const coverSrc = formatImageUrl(course.cover_url);
         const retrySrc = getDriveFallbackUrl(course.cover_url);
         return `
@@ -2742,8 +2860,15 @@ function renderHome() {
             </div>
           </div>
           <div class="course-body">
-            <div class="course-title">${escapeHtml(course.title)}</div>
-            <div class="course-meta">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div class="course-title" style="margin-bottom:0;">${escapeHtml(course.title)}</div>
+              ${state.is_admin ? `
+                <button class="admin-small-btn" onclick="event.stopPropagation(); toggleCourseHome(${Number(course.id)})" style="font-size:10.5px; padding:4px 8px; background:${course.show_on_home ? 'var(--success)' : 'var(--bg-surface)'}; color:${course.show_on_home ? '#fff' : 'var(--text-secondary)'}; border:1px solid var(--border);">
+                  ${course.show_on_home ? "⭐ Asosiy" : "☆ Belgilash"}
+                </button>
+              ` : ""}
+            </div>
+            <div class="course-meta" style="margin-top:6px;">
               <span>📚 ${course.total_modules || 0} Modul</span>
               <span>🎬 ${course.total_lessons || 0} Dars</span>
             </div>
@@ -2758,23 +2883,39 @@ function renderHome() {
       `;
       }).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
 
-      <!-- 3-TALAB: O'QUVCHILAR NATIJALARI VA LOYIHA ALBOM LARI (PDF KARUSEL) -->
+      <!-- 3-TALAB: O'QUVCHILAR NATIJALARI VA LOYIHA ALBOM LARI (PDF KARUSEL & ADMIN TAHRIRLASH) -->
       ${renderShowcaseCarousel()}
 
-      <!-- 1-TALAB: 3DS MAX & REVIT KOMPYUTER VA NOUTBUK PARAMETRLARI -->
-      ${renderPcSpecsBlock()}
+      <!-- 4-TALAB: KOMPYUTER PARAMETRLARI TUGMA ORQALI (Ixcham ko'rinish va oyna orqali tanlash) -->
+      ${renderPcSpecsCompactCard()}
 
-      <div class="section-title">O'quvchilar fikri</div>
+      <!-- 5-TALAB: O'QUVCHILAR FIKRI (ADMIN TAHRIRLAY OLADI) -->
+      <div class="section-title" style="margin-top:20px;">
+        <span>O'quvchilar fikri</span>
+        ${state.is_admin ? `
+          <button class="admin-small-btn" onclick="openAddTestimonialModal()" style="font-size:11px; padding:5px 9px;">
+            ➕ Fikr qo'shish
+          </button>
+        ` : ""}
+      </div>
       <div class="testi-scroll">
-        ${TESTIMONIALS.map(t => `
-          <div class="testi-card">
+        ${testimonialsList.map(t => `
+          <div class="testi-card" style="position:relative;">
             <div class="testi-text">"${escapeHtml(t.text)}"</div>
-            <div class="testi-name">— ${escapeHtml(t.name)}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <div class="testi-name">— ${escapeHtml(t.name)} ${t.role ? `<span style="font-size:11px; color:var(--text-muted); font-weight:normal;">(${escapeHtml(t.role)})</span>` : ""}</div>
+              ${state.is_admin ? `
+                <div style="display:flex; gap:6px;">
+                  <span onclick="openEditTestimonialModal(${Number(t.id)}, '${escapeJsString(t.name)}', '${escapeJsString(t.text)}', '${escapeJsString(t.role || 'O\'quvchi')}')" title="Tahrirlash" style="font-size:12px; cursor:pointer; opacity:0.8;">✏️</span>
+                  <span onclick="deleteTestimonialItem(${Number(t.id)})" title="O'chirish" style="font-size:12px; color:var(--danger); cursor:pointer; opacity:0.8;">🗑️</span>
+                </div>
+              ` : ""}
+            </div>
           </div>
         `).join("")}
       </div>
 
-      <!-- 2-TALAB: KO'P BERILADIGAN SAVOLLAR (SILLIQ AKKORDEON VA ADMIN BOSHQARUVI) -->
+      <!-- FAQ: KO'P BERILADIGAN SAVOLLAR -->
       <div class="section-title" style="margin-top:24px;">
         <span>Ko'p beriladigan savollar</span>
         ${state.is_admin ? `
@@ -2805,6 +2946,57 @@ function renderHome() {
             </div>
           </div>
         `).join("")}
+      </div>
+
+      <!-- 1-TALAB: BIZNI KUZATING (IJTIMOIY TARMOQLAR) -->
+      <div class="social-section" style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
+        <div style="font-size:15.5px; font-weight:800; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>🌐</span> Bizni ijtimoiy tarmoqlarda kuzating
+          ${state.is_admin ? `
+            <span onclick="openAdminSettingsModal()" title="Ijtimoiy tarmoq havolalarini tahrirlash" style="font-size:14px; cursor:pointer; opacity:0.85;">✏️</span>
+          ` : ""}
+        </div>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+          Yangi darslar, Revit oilalari va loyiha yangiliklaridan xabardor bo'ling:
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:16px;">
+          <a href="${escapeHtml(socialTg)}" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); text-decoration:none; color:var(--text-primary);">
+            <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #229ED9, #1778A8); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; flex-shrink:0;">✈️</div>
+            <div style="text-align:left; min-width:0;">
+              <div style="font-size:12.5px; font-weight:750;">Telegram</div>
+              <div style="font-size:10.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Kanalimiz</div>
+            </div>
+          </a>
+
+          <a href="${escapeHtml(socialInsta)}" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); text-decoration:none; color:var(--text-primary);">
+            <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; flex-shrink:0;">📷</div>
+            <div style="text-align:left; min-width:0;">
+              <div style="font-size:12.5px; font-weight:750;">Instagram</div>
+              <div style="font-size:10.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Sahifamiz</div>
+            </div>
+          </a>
+
+          <a href="${escapeHtml(socialYt)}" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); text-decoration:none; color:var(--text-primary);">
+            <div style="width:32px; height:32px; border-radius:50%; background:#FF0000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; flex-shrink:0;">▶️</div>
+            <div style="text-align:left; min-width:0;">
+              <div style="font-size:12.5px; font-weight:750;">YouTube</div>
+              <div style="font-size:10.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Video darslar</div>
+            </div>
+          </a>
+
+          <a href="${escapeHtml(socialChat)}" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); text-decoration:none; color:var(--text-primary);">
+            <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #0088cc, #005580); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; flex-shrink:0;">💬</div>
+            <div style="text-align:left; min-width:0;">
+              <div style="font-size:12.5px; font-weight:750;">Guruhimiz</div>
+              <div style="font-size:10.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Savol-javob</div>
+            </div>
+          </a>
+        </div>
+
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
+          © ${new Date().getFullYear()} YOSHUZBEKK Academy. Barcha huquqlar himoyalangan.
+        </div>
       </div>
     </div>
   `;
@@ -2868,6 +3060,62 @@ function deleteFaqItem(id) {
     loadContent();
   });
 }
+
+// 2-TALAB: Kursni bosh sahifada ko'rsatish/yashirish
+async function toggleCourseHome(courseId) {
+  try {
+    haptic("medium");
+    const res = await adminApi(`/api/admin/courses/${Number(courseId)}/toggle-home`);
+    showToast(res.course?.show_on_home ? "Kurs bosh sahifaga qo'shildi!" : "Kurs bosh sahifadan olindi");
+    await loadContent();
+  } catch (err) {
+    showAlert(err.message || "Kurs holatini o'zgartirishda xato.");
+  }
+}
+
+// 5-TALAB: O'quvchilar fikrini boshqarish (CRUD)
+function openAddTestimonialModal() {
+  const name = prompt("O'quvchi ismi:");
+  if (!name || !name.trim()) return;
+  const role = prompt("Kasbi / Roli (masalan: Arxitektor, Dizayner, Talaba):", "O'quvchi") || "O'quvchi";
+  const text = prompt("O'quvchi fikri / taassuroti:");
+  if (!text || !text.trim()) return;
+
+  adminApi("/api/admin/testimonials/add", {
+    name: name.trim(),
+    role: role.trim(),
+    text: text.trim()
+  }).then(() => {
+    showToast("Fikr muvaffaqiyatli qo'shildi!");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function openEditTestimonialModal(id, oldName, oldText, oldRole) {
+  const name = prompt("O'quvchi ismini tahrirlang:", oldName);
+  if (!name || !name.trim()) return;
+  const role = prompt("Roli / Kasbi:", oldRole) || "O'quvchi";
+  const text = prompt("Fikr matnini tahrirlang:", oldText);
+  if (!text || !text.trim()) return;
+
+  adminApi(`/api/admin/testimonials/${Number(id)}/update`, {
+    name: name.trim(),
+    role: role.trim(),
+    text: text.trim()
+  }).then(() => {
+    showToast("Fikr yangilandi!");
+    loadContent();
+  }).catch(err => showAlert(err.message));
+}
+
+function deleteTestimonialItem(id) {
+  showConfirm("Fikr o'chirilsinmi?", "Ushbu o'quvchi fikri ro'yxatdan olib tashlanadi.", "O'chirish", async () => {
+    await adminApi(`/api/admin/testimonials/${Number(id)}/delete`);
+    showToast("Fikr o'chirildi!");
+    loadContent();
+  });
+}
+
 
 // ======================================================
 // TAB 2: LESSONS & COURSES CATALOG (Talab 3)
@@ -4590,27 +4838,76 @@ function openDirectAdminTelegram(username) {
 // Admin Sozlamalar oynasi (Talab 1 & Talab 5)
 function openAdminSettingsModal() {
   const s = state.settings || {};
+  const currentPhoto = formatImageUrl(s.admin_photo_url || "/admin.jpg");
+
   currentView = {
     html: `
       <div class="page">
         <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
-        <div class="page-title">Aloqa va Rasm Sozlamalari</div>
+        <div class="page-title">Aloqa, Rasm & Tarmoqlar</div>
 
         <div class="admin-form">
+          <div class="card" style="margin-bottom:14px; padding:14px; border:1px solid var(--border); display:flex; align-items:center; gap:14px;">
+            <img
+              id="admin-photo-preview"
+              src="${escapeHtml(currentPhoto)}"
+              alt="Admin"
+              style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); box-shadow:0 4px 12px var(--accent-glow);"
+              onerror="handleImageError(this) || (this.src='https://ui-avatars.com/api/?name=Abdulloh&background=2979ff&color=fff&size=128&bold=true');"
+            />
+            <div>
+              <div style="font-weight:750; font-size:14px;">Abdulloh (Admin) Rasmi</div>
+              <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">Google Disk yoki to'g'ridan-to'g'ri rasm havolasi</div>
+            </div>
+          </div>
+
+          <div class="apple-field">
+            <label>Admin Rasm Linki (Google Disk yoki URL) *</label>
+            <input
+              id="set-photo"
+              class="apple-input"
+              value="${escapeHtml(s.admin_photo_url || '')}"
+              placeholder="https://drive.google.com/file/d/.../view yoki https://..."
+              type="url"
+              oninput="const p = document.getElementById('admin-photo-preview'); if (p) p.src = formatImageUrl(this.value);"
+            >
+          </div>
+
           <div class="apple-field">
             <label>Admin Telegram Usernamesi (shaxsiy lichka)</label>
-            <input id="set-tg" class="apple-input" value="${escapeHtml(s.contact_telegram || '')}" placeholder="yoshuzbekk (boshida @ siz)" type="text">
+            <input id="set-tg" class="apple-input" value="${escapeHtml(s.contact_telegram || '')}" placeholder="texnikuzb (boshida @ siz)" type="text">
           </div>
+
           <div class="apple-field">
             <label>Admin Telefon Raqami (qo'ng'iroq qilish uchun)</label>
             <input id="set-phone" class="apple-input" value="${escapeHtml(s.contact_phone || '')}" placeholder="+998901234567" type="tel">
           </div>
-          <div class="apple-field">
-            <label>Admin Rasm Linki (bosh sahifada ko'rinishi uchun)</label>
-            <input id="set-photo" class="apple-input" value="${escapeHtml(s.admin_photo_url || '')}" placeholder="/admin.jpg yoki https://... rasm havolasi" type="url">
+
+          <div style="font-weight:750; font-size:14px; margin:16px 0 8px; color:var(--text-primary);">
+            🌐 Ijtimoiy Tarmoq Havolalari ("Bizni kuzating" bloki)
           </div>
 
-          <button class="btn" onclick="submitAdminSettings()">
+          <div class="apple-field">
+            <label>Telegram Kanal Havolasi</label>
+            <input id="set-social-tg" class="apple-input" value="${escapeHtml(s.social_telegram || 'https://t.me/yoshuzbekk')}" placeholder="https://t.me/yoshuzbekk" type="url">
+          </div>
+
+          <div class="apple-field">
+            <label>Instagram Sahifa Havolasi</label>
+            <input id="set-social-insta" class="apple-input" value="${escapeHtml(s.social_instagram || 'https://instagram.com/yoshuzbekk')}" placeholder="https://instagram.com/yoshuzbekk" type="url">
+          </div>
+
+          <div class="apple-field">
+            <label>YouTube Kanal Havolasi</label>
+            <input id="set-social-yt" class="apple-input" value="${escapeHtml(s.social_youtube || 'https://youtube.com/@yoshuzbekk')}" placeholder="https://youtube.com/@yoshuzbekk" type="url">
+          </div>
+
+          <div class="apple-field">
+            <label>Telegram Guruh / Forum Havolasi</label>
+            <input id="set-social-chat" class="apple-input" value="${escapeHtml(s.social_channel || 'https://t.me/yoshuzbekk_academy')}" placeholder="https://t.me/yoshuzbekk_academy" type="url">
+          </div>
+
+          <button class="btn" onclick="submitAdminSettings()" style="margin-top:10px;">
             💾 Sozlamalarni saqlash
           </button>
         </div>
@@ -4624,15 +4921,23 @@ async function submitAdminSettings() {
   const tgVal = document.getElementById("set-tg")?.value.trim();
   const phoneVal = document.getElementById("set-phone")?.value.trim();
   const photoVal = document.getElementById("set-photo")?.value.trim();
+  const socialTg = document.getElementById("set-social-tg")?.value.trim();
+  const socialInsta = document.getElementById("set-social-insta")?.value.trim();
+  const socialYt = document.getElementById("set-social-yt")?.value.trim();
+  const socialChat = document.getElementById("set-social-chat")?.value.trim();
 
   try {
     haptic("medium");
     await adminApi("/api/admin/settings/update", {
       contact_telegram: tgVal,
       contact_phone: phoneVal,
-      admin_photo_url: photoVal
+      admin_photo_url: photoVal,
+      social_telegram: socialTg,
+      social_instagram: socialInsta,
+      social_youtube: socialYt,
+      social_channel: socialChat
     });
-    showToast("Aloqa va rasm sozlamalari saqlandi!");
+    showToast("Sozlamalar muvaffaqiyatli saqlandi!");
     closeDetail();
     loadContent();
   } catch (err) {
@@ -5110,6 +5415,12 @@ let adminData = {
 async function adminApi(path, body = {}) {
   if (!state.is_admin) throw new Error("Sizda admin huquqi yo'q.");
   return await api(path, body);
+}
+
+function openAdminLessons() {
+  openAdminPanel().then(() => {
+    adminSetTab("lessons");
+  });
 }
 
 async function openAdminPanel() {

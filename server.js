@@ -142,6 +142,22 @@ async function initExtendedTables() {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE courses ADD COLUMN IF NOT EXISTS show_on_home BOOLEAN DEFAULT false;
+    `);
+
+    // Testimonials (O'quvchilar fikri) jadvali (Talab 5)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        text TEXT NOT NULL,
+        role VARCHAR(255) DEFAULT 'O''quvchi',
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
     // FAQ savol-javoblar jadvali (Talab 2)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS faqs (
@@ -240,14 +256,39 @@ async function initExtendedTables() {
       `);
     }
 
-    // Default aloqa sozlamalari
+    // Default aloqa va ijtimoiy tarmoq sozlamalari
     await pool.query(`
       INSERT INTO academy_settings (key, value) VALUES
       ('contact_telegram', 'texnikuzb'),
       ('contact_phone', '+998900000000'),
-      ('admin_photo_url', '/admin.jpg')
+      ('admin_photo_url', '/admin.jpg'),
+      ('social_telegram', 'https://t.me/yoshuzbekk'),
+      ('social_instagram', 'https://instagram.com/yoshuzbekk'),
+      ('social_youtube', 'https://youtube.com/@yoshuzbekk'),
+      ('social_channel', 'https://t.me/yoshuzbekk_academy')
       ON CONFLICT (key) DO NOTHING
     `);
+
+    // Testimonials default yozuvlari
+    var tCount = await pool.query('SELECT COUNT(*)::int AS count FROM testimonials');
+    if (tCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO testimonials (name, text, role, order_index) VALUES
+        ('Sardor M.', 'Darslar juda tushunarli va amaliy. Revitda loyiha chizishni 0 dan o''rgandim.', 'Arxitektor', 1),
+        ('Malika K.', 'Revit shablonlari va ishchi chizmalar tayyorlash bo''yicha eng zo''r akademiya!', 'Dizayner', 2),
+        ('Jasur B.', 'Har bir darsda yangi qulayliklar bor. Oilalar va materiallar kutubxonasi juda asqotdi.', 'BIM Modeler', 3)
+      `);
+    }
+
+    // Kamida 1 ta kurs bosh sahifada ko'rinishini ta'minlash
+    try {
+      var featCheck = await pool.query('SELECT COUNT(*)::int AS c FROM courses WHERE show_on_home = true');
+      if (featCheck.rows[0].c === 0) {
+        await pool.query('UPDATE courses SET show_on_home = true WHERE id = (SELECT id FROM courses ORDER BY id ASC LIMIT 1)');
+      }
+    } catch (fErr) {
+      console.warn('FEATURED COURSE SEED WARNING:', fErr.message);
+    }
 
     // Eski standart qiymatni ('yoshuzbekk') haqiqiy admin nikiga bir martalik yangilash
     await pool.query(`
@@ -1150,8 +1191,20 @@ app.post('/api/content', async function (req, res) {
       setRes.rows.forEach(function (r) {
         settings[r.key] = r.value;
       });
+      if (settings.admin_photo_url) {
+        settings.admin_photo_url = formatDirectImageUrl(settings.admin_photo_url);
+      }
     } catch (sErr) {
       console.warn('SETTINGS QUERY WARNING:', sErr.message);
+    }
+
+    // O'quvchilar fikri (Talab 5)
+    var testimonials = [];
+    try {
+      var tRes = await pool.query('SELECT * FROM testimonials ORDER BY order_index ASC, id ASC');
+      testimonials = tRes.rows;
+    } catch (tErr) {
+      console.warn('TESTIMONIALS QUERY WARNING:', tErr.message);
     }
 
     // O'quvchilar natijalari va rabochka loyihalar karuseli (Talab 3)
@@ -1192,6 +1245,7 @@ app.post('/api/content', async function (req, res) {
       courses: courses,
       faqs: faqs,
       settings: settings,
+      testimonials: testimonials,
       showcases: showcases,
       open_resources: openResources,
       materials: materials
@@ -3076,8 +3130,22 @@ app.post('/api/admin/courses/:id/delete', requireAdmin, async function (req, res
   }
 });
 
+app.post('/api/admin/courses/:id/toggle-home', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    var courseRes = await pool.query('SELECT show_on_home FROM courses WHERE id = $1', [id]);
+    if (courseRes.rows.length === 0) return res.status(404).json({ error: 'Kurs topilmadi' });
+    var newState = !courseRes.rows[0].show_on_home;
+    var result = await pool.query('UPDATE courses SET show_on_home = $1 WHERE id = $2 RETURNING *', [newState, id]);
+    return res.json({ ok: true, course: result.rows[0] });
+  } catch (error) {
+    console.error('TOGGLE COURSE HOME ERROR:', error);
+    return res.status(500).json({ error: 'Bosh sahifa holatini o‘zgartirishda xato' });
+  }
+});
+
 // ======================================================
-// ADMIN SETTINGS (Talab 1 & 5: Aloqa & Rasm)
+// ADMIN SETTINGS (Talab 1 & 5: Aloqa, Ijtimoiy Tarmoqlar & Rasm)
 // ======================================================
 
 app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
@@ -3085,21 +3153,99 @@ app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
     var contactTelegram = String(req.body.contact_telegram || '').trim().replace(/^@/, '');
     var contactPhone = String(req.body.contact_phone || '').trim();
     var adminPhotoUrl = String(req.body.admin_photo_url || '').trim();
+    var socialTelegram = String(req.body.social_telegram || '').trim();
+    var socialInstagram = String(req.body.social_instagram || '').trim();
+    var socialYoutube = String(req.body.social_youtube || '').trim();
+    var socialChannel = String(req.body.social_channel || '').trim();
 
+    if (adminPhotoUrl) {
+      adminPhotoUrl = formatDirectImageUrl(adminPhotoUrl);
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'admin_photo_url\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [adminPhotoUrl]);
+    }
     if (contactTelegram) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'contact_telegram\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [contactTelegram]);
     }
     if (contactPhone) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'contact_phone\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [contactPhone]);
     }
-    if (adminPhotoUrl) {
-      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'admin_photo_url\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [adminPhotoUrl]);
+    if (socialTelegram) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'social_telegram\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [socialTelegram]);
+    }
+    if (socialInstagram) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'social_instagram\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [socialInstagram]);
+    }
+    if (socialYoutube) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'social_youtube\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [socialYoutube]);
+    }
+    if (socialChannel) {
+      await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'social_channel\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [socialChannel]);
     }
 
     return res.json({ ok: true, message: 'Sozlamalar saqlandi' });
   } catch (error) {
     console.error('SETTINGS UPDATE ERROR:', error);
     return res.status(500).json({ error: 'Sozlamalarni saqlashda xato' });
+  }
+});
+
+// ======================================================
+// ADMIN TESTIMONIALS (O'quvchilar fikri CRUD)
+// ======================================================
+
+app.post('/api/admin/testimonials/add', requireAdmin, async function (req, res) {
+  try {
+    var name = req.body.name ? String(req.body.name).trim() : '';
+    var text = req.body.text ? String(req.body.text).trim() : '';
+    var role = req.body.role ? String(req.body.role).trim() : 'O\'quvchi';
+
+    if (!name || !text) {
+      return res.status(400).json({ error: 'Ism va fikr matni kiritilishi shart' });
+    }
+
+    var result = await pool.query(
+      'INSERT INTO testimonials (name, text, role) VALUES ($1, $2, $3) RETURNING *',
+      [name, text, role]
+    );
+
+    return res.json({ ok: true, testimonial: result.rows[0] });
+  } catch (error) {
+    console.error('ADD TESTIMONIAL ERROR:', error);
+    return res.status(500).json({ error: 'Fikr qo‘shishda xato: ' + error.message });
+  }
+});
+
+app.post('/api/admin/testimonials/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    var name = req.body.name ? String(req.body.name).trim() : '';
+    var text = req.body.text ? String(req.body.text).trim() : '';
+    var role = req.body.role ? String(req.body.role).trim() : 'O\'quvchi';
+
+    if (!name || !text) {
+      return res.status(400).json({ error: 'Ism va fikr matni kiritilishi shart' });
+    }
+
+    var result = await pool.query(
+      'UPDATE testimonials SET name = $1, text = $2, role = $3 WHERE id = $4 RETURNING *',
+      [name, text, role, id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Fikr topilmadi' });
+    return res.json({ ok: true, testimonial: result.rows[0] });
+  } catch (error) {
+    console.error('UPDATE TESTIMONIAL ERROR:', error);
+    return res.status(500).json({ error: 'Fikrni yangilashda xato: ' + error.message });
+  }
+});
+
+app.post('/api/admin/testimonials/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = Number(req.params.id);
+    await pool.query('DELETE FROM testimonials WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Fikr o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE TESTIMONIAL ERROR:', error);
+    return res.status(500).json({ error: 'Fikrni o‘chirishda xato' });
   }
 });
 
