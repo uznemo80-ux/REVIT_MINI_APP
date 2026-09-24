@@ -257,14 +257,19 @@ html.light .nav {
   justify-content: center;
 }
 
+.nav-svg,
 .nav-icon svg {
   display: block;
+  width: 23px;
+  height: 23px;
+  transition: width var(--transition-fast), height var(--transition-fast), transform var(--transition-fast);
 }
 
 .nav-label {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: -0.2px;
+  transition: font-size var(--transition-fast);
 }
 
 /* ------------------------------------------------------
@@ -3585,6 +3590,7 @@ html.light ::-webkit-scrollbar-thumb:hover {
 
 /* ======================================================
    Responsive Desktop & PC Telegram Web App Wrapper
+   Continuous Scaling for Desktop Fullscreen Monitors
    ====================================================== */
 input, textarea, select {
   user-select: text !important;
@@ -3593,6 +3599,10 @@ input, textarea, select {
 }
 
 @media (min-width: 641px) {
+  :root {
+    --nav-height: 72px;
+  }
+
   body {
     background-color: #06060a;
     display: flex;
@@ -3605,19 +3615,20 @@ input, textarea, select {
 
   #app {
     width: 100%;
-    max-width: 768px;
+    max-width: 860px;
     min-height: 100vh;
     background-color: var(--bg-primary);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     position: relative;
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 30px);
   }
 
   .page {
-    max-width: 768px;
+    max-width: 860px;
   }
 
   .nav {
-    max-width: 768px;
+    max-width: 860px;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%);
@@ -3625,53 +3636,200 @@ input, textarea, select {
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
-    height: 68px;
+    height: 72px;
+    padding: 0 16px;
   }
 
   .nav-item {
     font-size: 12.5px;
-    gap: 4px;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 12px;
   }
 
-  .nav-item svg {
-    width: 23px;
-    height: 23px;
+  .nav-icon {
+    font-size: 25px;
+  }
+
+  .nav-svg,
+  .nav-icon svg {
+    width: 25px !important;
+    height: 25px !important;
+  }
+
+  .nav-label {
+    font-size: 13px !important;
+    font-weight: 650;
   }
 
   .admin-page {
-    max-width: 768px;
+    max-width: 860px;
     margin: 0 auto;
   }
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1024px) {
+  :root {
+    --nav-height: 80px;
+  }
+
   #app {
-    max-width: 880px;
+    max-width: 1080px;
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 36px);
   }
 
   .page {
-    max-width: 880px;
+    max-width: 1080px;
     padding: 24px;
   }
 
   .nav {
-    max-width: 880px;
-    height: 72px;
+    max-width: 1080px;
+    height: 80px;
     border-radius: 24px 24px 0 0;
+    padding: 0 28px;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.55);
   }
 
   .nav-item {
-    font-size: 13px;
-    gap: 5px;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 16px;
   }
 
-  .nav-item svg {
-    width: 25px;
-    height: 25px;
+  .nav-icon {
+    font-size: 28px;
+  }
+
+  .nav-svg,
+  .nav-icon svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .nav-label {
+    font-size: 14.5px !important;
+    font-weight: 700;
+    letter-spacing: -0.2px;
   }
 
   .admin-page {
-    max-width: 880px;
+    max-width: 1080px;
+  }
+}
+
+@media (min-width: 1366px) {
+  :root {
+    --nav-height: 88px;
+  }
+
+  #app {
+    max-width: 1280px;
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 40px);
+  }
+
+  .page {
+    max-width: 1280px;
+    padding: 28px;
+  }
+
+  .nav {
+    max-width: 1280px;
+    height: 88px;
+    border-radius: 28px 28px 0 0;
+    padding: 0 42px;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6);
+  }
+
+  .nav-item {
+    gap: 7px;
+    padding: 10px 24px;
+    border-radius: 18px;
+  }
+
+  .nav-icon {
+    font-size: 32px;
+  }
+
+  .nav-svg,
+  .nav-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .nav-label {
+    font-size: 16px !important;
+    font-weight: 750;
+  }
+
+  .admin-page {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --nav-height: 94px;
+  }
+
+  #app {
+    max-width: 1440px;
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 44px);
+  }
+
+  .page {
+    max-width: 1440px;
+    padding: 32px;
+  }
+
+  .nav {
+    max-width: 1440px;
+    height: 94px;
+    border-radius: 32px 32px 0 0;
+    padding: 0 56px;
+    box-shadow: 0 -16px 54px rgba(0, 0, 0, 0.65);
+  }
+
+  .nav-item {
+    gap: 8px;
+    padding: 12px 30px;
+    border-radius: 20px;
+  }
+
+  .nav-icon {
+    font-size: 36px;
+  }
+
+  .nav-svg,
+  .nav-icon svg {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .nav-label {
+    font-size: 17.5px !important;
+    font-weight: 800;
+  }
+
+  .admin-page {
+    max-width: 1440px;
+  }
+}
+
+@media (min-width: 641px) and (hover: hover) {
+  .nav-item {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .nav-item:hover {
+    opacity: 0.95;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-3px);
+  }
+
+  .nav-item.active:hover {
+    opacity: 1;
+    background: rgba(41, 121, 255, 0.16);
   }
 }
 

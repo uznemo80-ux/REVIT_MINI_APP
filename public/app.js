@@ -7624,7 +7624,7 @@ function renderNav() {
         return `
         <div class="nav-item ${isActive ? "active" : ""}" onclick="setTab('${t.id}')">
           <div class="nav-icon">
-            <svg width="23" height="23" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
+            <svg class="nav-svg" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
           </div>
           <div class="nav-label">${t.label}</div>
         </div>
