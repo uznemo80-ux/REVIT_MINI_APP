@@ -693,136 +693,7 @@ async function initExtendedTables() {
       ON CONFLICT (key) DO NOTHING
     `);
 
-    // =================== KUTUBXONA V2: YAGONA RESURS JADVALI ===================
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_resources (
-        id SERIAL PRIMARY KEY,
-        type VARCHAR(50) NOT NULL,
-        title VARCHAR(500) NOT NULL,
-        subtitle TEXT,
-        description TEXT,
-        category VARCHAR(100) NOT NULL DEFAULT 'Boshqa',
-        sub_category VARCHAR(100),
-        tags TEXT[] DEFAULT '{}',
-        content_url TEXT,
-        content_type VARCHAR(50),
-        content_data JSONB,
-        preview_image_url TEXT,
-        storage_provider VARCHAR(50) DEFAULT 'url',
-        storage_id TEXT,
-        author VARCHAR(255),
-        file_size VARCHAR(50),
-        page_count INT,
-        language VARCHAR(10) DEFAULT 'uz',
-        status VARCHAR(30) DEFAULT 'published',
-        view_count INT DEFAULT 0,
-        download_count INT DEFAULT 0,
-        course_id INT REFERENCES courses(id) ON DELETE SET NULL,
-        order_index INT DEFAULT 0,
-        is_featured BOOLEAN DEFAULT false,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_type ON library_resources(type)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_category ON library_resources(category)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_status ON library_resources(status)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_tags ON library_resources USING GIN(tags)');
-
-    // Bookmarks
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_bookmarks (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        resource_id INT NOT NULL REFERENCES library_resources(id) ON DELETE CASCADE,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(user_id, resource_id)
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_bookmarks_user ON library_bookmarks(user_id)');
-
-    // Ko'rish tarixi
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_views (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        resource_id INT NOT NULL REFERENCES library_resources(id) ON DELETE CASCADE,
-        viewed_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_user ON library_views(user_id)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_resource ON library_views(resource_id)');
-
-    // Kategoriyalar
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_categories (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE,
-        icon VARCHAR(50) DEFAULT '📁',
-        order_index INT DEFAULT 0,
-        parent_id INT REFERENCES library_categories(id) ON DELETE SET NULL,
-        is_active BOOLEAN DEFAULT true
-      )
-    `);
-
-    // Default kategoriyalar seed
-    var lcCount = await pool.query('SELECT COUNT(*)::int AS c FROM library_categories');
-    if (lcCount.rows[0].c === 0) {
-      await pool.query(`
-        INSERT INTO library_categories (name, icon, order_index) VALUES
-        ('Kitoblar & Adabiyotlar', '📚', 1),
-        ('Normativ Hujjatlar', '📏', 2),
-        ('Qo''llanmalar', '📖', 3),
-        ('Revit Oilalar & Shablonlar', '📦', 4),
-        ('Video Darsliklar', '🎬', 5),
-        ('Erkin Testlar', '🎯', 6),
-        ('Qurilish Materiallari', '🧱', 7),
-        ('Terminlar', '📋', 8),
-        ('Arxitektura', '📐', 9),
-        ('Interyer Dizayn', '🏠', 10),
-        ('Revit / BIM', '💻', 11),
-        ('Qurilish', '🏗️', 12)
-      `);
-    }
-
-    // Mavjud open_resources va materials dan migratsiya (bir martalik)
-    var lrCount2 = await pool.query('SELECT COUNT(*)::int AS c FROM library_resources');
-    if (lrCount2.rows[0].c === 0) {
-      // library_open_resources -> library_resources
-      var openRes = await pool.query('SELECT * FROM library_open_resources ORDER BY order_index');
-      for (var ori = 0; ori < openRes.rows.length; ori++) {
-        var or_item = openRes.rows[ori];
-        var contentType = or_item.type === 'test' ? 'test_json' : (or_item.type === 'video' ? 'video' : 'pdf');
-        await pool.query(`
-          INSERT INTO library_resources (type, title, description, category, content_url, content_type, content_data, preview_image_url, status, order_index, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'published', $9, $10)
-        `, [
-          or_item.type, or_item.title, or_item.description, or_item.category || 'Boshqa',
-          or_item.link_url, contentType,
-          or_item.type === 'test' ? (typeof or_item.test_data === 'string' ? or_item.test_data : JSON.stringify(or_item.test_data)) : null,
-          null, or_item.order_index, or_item.created_at
-        ]);
-      }
-
-      // construction_materials -> library_resources
-      var mats = await pool.query('SELECT * FROM construction_materials ORDER BY order_index');
-      for (var mri = 0; mri < mats.rows.length; mri++) {
-        var m = mats.rows[mri];
-        var matData = {
-          what_is_it: m.what_is_it, dimensions: m.dimensions, history: m.history,
-          usage_area: m.usage_area, pros: m.pros, cons: m.cons,
-          uzbekistan_sources: m.uzbekistan_sources, bim_tips: m.bim_tips
-        };
-        await pool.query(`
-          INSERT INTO library_resources (type, title, description, category, sub_category, content_type, content_data, preview_image_url, status, order_index, created_at)
-          VALUES ('material', $1, $2, $3, $4, 'embedded', $5, $6, 'published', $7, $8)
-        `, [
-          m.title, m.short_desc, m.category, m.sub_category,
-          JSON.stringify(matData), m.image_url, m.order_index + 100, m.created_at
-        ]);
-      }
-      console.log('✅ KUTUBXONA V2: Mavjud manbalar va materiallar migratsiya qilindi');
-    }
+    // =================== KUTUBXONA V2: Jadvallar ensureLibraryV2Tables() orqali to'liq sozlanadi ===================
   } catch (error) {
     console.error('INIT EXTENDED TABLES ERROR:', error);
   }
@@ -942,150 +813,264 @@ async function ensureUserActivityTable() {
 // =================== KUTUBXONA 2.0 & SUPPORT SCHEMA SETUP ===================
 async function ensureLibraryV2Tables() {
   try {
-    // 1. library_sections table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_sections (
-        id SERIAL PRIMARY KEY,
-        slug VARCHAR(100) NOT NULL UNIQUE,
-        name VARCHAR(255) NOT NULL,
-        subtitle TEXT,
-        icon VARCHAR(50) DEFAULT '📁',
-        description TEXT,
-        order_index INT DEFAULT 0,
-        is_active BOOLEAN DEFAULT true,
-        is_visible BOOLEAN DEFAULT true,
-        settings JSONB DEFAULT '{}',
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_order ON library_sections(order_index)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_slug ON library_sections(slug)');
-
-    // Seed default 4 sections
-    await pool.query(`
-      INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index) VALUES
-      ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
-      ('sources', 'Manbalar', 'RVT, RFA, DWG va boshqa fayllar', '📦', 'Revit oilalari, shablonlar, chizmalar va 3D modellar', 2),
-      ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
-      ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4)
-      ON CONFLICT (slug) DO UPDATE SET
-        name = EXCLUDED.name,
-        subtitle = EXCLUDED.subtitle,
-        icon = EXCLUDED.icon,
-        order_index = EXCLUDED.order_index
-    `);
-
-    // 2. library_categories with section_slug
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS library_categories (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        section_slug VARCHAR(100) DEFAULT 'books',
-        icon VARCHAR(50) DEFAULT '📁',
-        order_index INT DEFAULT 0,
-        parent_id INT REFERENCES library_categories(id) ON DELETE SET NULL,
-        is_active BOOLEAN DEFAULT true
-      )
-    `);
-    await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100) DEFAULT \'books\'');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_categories_section ON library_categories(section_slug)');
-
-    // Seed categories for each section if missing
-    var catSeeds = [
-      // Books
-      { section: 'books', name: 'Barchasi', icon: '🌐', order: 0 },
-      { section: 'books', name: 'Arxitektura', icon: '📐', order: 1 },
-      { section: 'books', name: 'Revit / BIM', icon: '💻', order: 2 },
-      { section: 'books', name: 'Interyer', icon: '🏠', order: 3 },
-      { section: 'books', name: 'Qurilish', icon: '🏗️', order: 4 },
-      { section: 'books', name: 'Loyihalash', icon: '📏', order: 5 },
-      { section: 'books', name: 'Normativ', icon: '📋', order: 6 },
-      { section: 'books', name: 'Boshqa', icon: '📚', order: 7 },
-      // Sources
-      { section: 'sources', name: 'Barchasi', icon: '🌐', order: 0 },
-      { section: 'sources', name: 'Revit', icon: '📦', order: 1 },
-      { section: 'sources', name: 'Families', icon: '🪑', order: 2 },
-      { section: 'sources', name: 'DWG', icon: '📐', order: 3 },
-      { section: 'sources', name: 'CAD', icon: '📏', order: 4 },
-      { section: 'sources', name: 'BIM', icon: '💻', order: 5 },
-      { section: 'sources', name: '3D Models', icon: '🧊', order: 6 },
-      { section: 'sources', name: 'Textures', icon: '🎨', order: 7 },
-      { section: 'sources', name: 'Details', icon: '🔍', order: 8 },
-      { section: 'sources', name: 'Templates', icon: '📑', order: 9 },
-      { section: 'sources', name: 'Blocks', icon: '🧱', order: 10 },
-      { section: 'sources', name: 'Catalogs', icon: '📖', order: 11 },
-      { section: 'sources', name: 'Other', icon: '📁', order: 12 },
-      // Tests
-      { section: 'tests', name: 'Barchasi', icon: '🌐', order: 0 },
-      { section: 'tests', name: 'Revit Asoslari', icon: '💻', order: 1 },
-      { section: 'tests', name: 'BIM Standartlar', icon: '📐', order: 2 },
-      { section: 'tests', name: 'Konstruktsiya', icon: '🏗️', order: 3 },
-      { section: 'tests', name: 'Interyer Dizayn', icon: '🏠', order: 4 },
-      // Materials
-      { section: 'materials', name: 'Barchasi', icon: '🌐', order: 0 },
-      { section: 'materials', name: 'Devor', icon: '🧱', order: 1 },
-      { section: 'materials', name: 'Pol', icon: '🪵', order: 2 },
-      { section: 'materials', name: 'Potolok', icon: '⬜', order: 3 },
-      { section: 'materials', name: 'Mebel', icon: '🛋️', order: 4 },
-      { section: 'materials', name: 'Fasad', icon: '🏢', order: 5 },
-      { section: 'materials', name: 'Izolyatsiya', icon: '🛡️', order: 6 },
-      { section: 'materials', name: 'Elektr', icon: '💡', order: 7 },
-      { section: 'materials', name: 'Sanitary', icon: '🚿', order: 8 },
-      { section: 'materials', name: 'Dekor', icon: '🖼️', order: 9 },
-      { section: 'materials', name: 'Konstruktsiya', icon: '🏗️', order: 10 }
-    ];
-
-    for (var cs of catSeeds) {
-      try {
-        var existCat = await pool.query(
-          'SELECT id FROM library_categories WHERE section_slug = $1 AND name = $2',
-          [cs.section, cs.name]
-        );
-        if (existCat.rows.length === 0) {
-          await pool.query(
-            'INSERT INTO library_categories (section_slug, name, icon, order_index, is_active) VALUES ($1, $2, $3, $4, true)',
-            [cs.section, cs.name, cs.icon, cs.order]
-          );
-        }
-      } catch (catErr) {
-        // ignore duplicate
-      }
-    }
-
-    // 3. Columns on library_resources
-    var lrCols = [
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100)',
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)',
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)',
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT',
-      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false',
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS version VARCHAR(50)',
-      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS versions JSONB DEFAULT '[]'",
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS course_id INT',
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS source_label VARCHAR(255)',
-      "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS difficulty VARCHAR(50) DEFAULT 'medium'",
-      'ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS time_limit_min INT DEFAULT 15'
-    ];
-    for (var cSql of lrCols) {
-      try {
-        await pool.query(cSql);
-      } catch (cErr) {
-        console.warn('library_resources col add:', cErr.message);
-      }
-    }
+    // 0. library_views table (MUST exist)
     try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_views (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          resource_id INT NOT NULL,
+          viewed_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pool.query('ALTER TABLE library_views ADD COLUMN IF NOT EXISTS user_id INT');
+      await pool.query('ALTER TABLE library_views ADD COLUMN IF NOT EXISTS resource_id INT');
+      await pool.query('ALTER TABLE library_views ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMPTZ DEFAULT NOW()');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_user ON library_views(user_id)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_resource ON library_views(resource_id)');
+    } catch (lvErr) {
+      console.warn('ensure library_views:', lvErr.message);
+    }
+
+    // 0.1 library_bookmarks table (MUST exist and have resource_id)
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_bookmarks (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          resource_id INT NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pool.query('ALTER TABLE library_bookmarks ADD COLUMN IF NOT EXISTS user_id INT');
+      await pool.query('ALTER TABLE library_bookmarks ADD COLUMN IF NOT EXISTS resource_id INT');
+      await pool.query('ALTER TABLE library_bookmarks ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_bookmarks_user ON library_bookmarks(user_id)');
+      
+      // If old column exists, migrate values
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'library_bookmarks' AND column_name = 'open_resource_id') THEN
+            UPDATE library_bookmarks SET resource_id = open_resource_id WHERE resource_id IS NULL;
+          END IF;
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'library_bookmarks' AND column_name = 'item_id') THEN
+            UPDATE library_bookmarks SET resource_id = item_id WHERE resource_id IS NULL;
+          END IF;
+        END $$;
+      `);
+    } catch (bmErr) {
+      console.warn('ensure library_bookmarks:', bmErr.message);
+    }
+
+    // 1. library_sections table
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_sections (
+          id SERIAL PRIMARY KEY,
+          slug VARCHAR(100) NOT NULL UNIQUE,
+          name VARCHAR(255) NOT NULL,
+          subtitle TEXT,
+          icon VARCHAR(50) DEFAULT '📁',
+          description TEXT,
+          order_index INT DEFAULT 0,
+          is_active BOOLEAN DEFAULT true,
+          is_visible BOOLEAN DEFAULT true,
+          settings JSONB DEFAULT '{}',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS subtitle TEXT');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS icon VARCHAR(50) DEFAULT \'📁\'');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS description TEXT');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS order_index INT DEFAULT 0');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS is_visible BOOLEAN DEFAULT true');
+      await pool.query('ALTER TABLE library_sections ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT \'{}\'');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_order ON library_sections(order_index)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_slug ON library_sections(slug)');
+
+      // Seed default 4 sections
+      await pool.query(`
+        INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index) VALUES
+        ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
+        ('sources', 'Manbalar', 'RVT, RFA, DWG va boshqa fayllar', '📦', 'Revit oilalari, shablonlar, chizmalar va 3D modellar', 2),
+        ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
+        ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4)
+        ON CONFLICT (slug) DO UPDATE SET
+          name = EXCLUDED.name,
+          subtitle = EXCLUDED.subtitle,
+          icon = EXCLUDED.icon,
+          order_index = EXCLUDED.order_index
+      `);
+    } catch (secErr) {
+      console.warn('ensure library_sections:', secErr.message);
+    }
+
+    // 2. library_categories with order_index and section_slug
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_categories (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          section_slug VARCHAR(100) DEFAULT 'books',
+          icon VARCHAR(50) DEFAULT '📁',
+          order_index INT DEFAULT 0,
+          parent_id INT,
+          is_active BOOLEAN DEFAULT true
+        )
+      `);
+      await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100) DEFAULT \'books\'');
+      await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS icon VARCHAR(50) DEFAULT \'📁\'');
+      await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS order_index INT DEFAULT 0');
+      await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS parent_id INT');
+      await pool.query('ALTER TABLE library_categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_categories_section ON library_categories(section_slug)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_categories_order ON library_categories(order_index)');
+
+      // Seed categories for each section if missing
+      var catSeeds = [
+        // Books
+        { section: 'books', name: 'Barchasi', icon: '🌐', order: 0 },
+        { section: 'books', name: 'Arxitektura', icon: '📐', order: 1 },
+        { section: 'books', name: 'Revit / BIM', icon: '💻', order: 2 },
+        { section: 'books', name: 'Interyer', icon: '🏠', order: 3 },
+        { section: 'books', name: 'Qurilish', icon: '🏗️', order: 4 },
+        { section: 'books', name: 'Loyihalash', icon: '📏', order: 5 },
+        { section: 'books', name: 'Normativ', icon: '📋', order: 6 },
+        { section: 'books', name: 'Boshqa', icon: '📚', order: 7 },
+        // Sources
+        { section: 'sources', name: 'Barchasi', icon: '🌐', order: 0 },
+        { section: 'sources', name: 'Revit', icon: '📦', order: 1 },
+        { section: 'sources', name: 'Families', icon: '🪑', order: 2 },
+        { section: 'sources', name: 'DWG', icon: '📐', order: 3 },
+        { section: 'sources', name: 'CAD', icon: '📏', order: 4 },
+        { section: 'sources', name: 'BIM', icon: '💻', order: 5 },
+        { section: 'sources', name: '3D Models', icon: '🧊', order: 6 },
+        { section: 'sources', name: 'Textures', icon: '🎨', order: 7 },
+        { section: 'sources', name: 'Details', icon: '🔍', order: 8 },
+        { section: 'sources', name: 'Templates', icon: '📑', order: 9 },
+        { section: 'sources', name: 'Blocks', icon: '🧱', order: 10 },
+        { section: 'sources', name: 'Catalogs', icon: '📖', order: 11 },
+        { section: 'sources', name: 'Other', icon: '📁', order: 12 },
+        // Tests
+        { section: 'tests', name: 'Barchasi', icon: '🌐', order: 0 },
+        { section: 'tests', name: 'Revit Asoslari', icon: '💻', order: 1 },
+        { section: 'tests', name: 'BIM Standartlar', icon: '📐', order: 2 },
+        { section: 'tests', name: 'Konstruktsiya', icon: '🏗️', order: 3 },
+        { section: 'tests', name: 'Interyer Dizayn', icon: '🏠', order: 4 },
+        // Materials
+        { section: 'materials', name: 'Barchasi', icon: '🌐', order: 0 },
+        { section: 'materials', name: 'Devor', icon: '🧱', order: 1 },
+        { section: 'materials', name: 'Pol', icon: '🪵', order: 2 },
+        { section: 'materials', name: 'Potolok', icon: '⬜', order: 3 },
+        { section: 'materials', name: 'Mebel', icon: '🛋️', order: 4 },
+        { section: 'materials', name: 'Fasad', icon: '🏢', order: 5 },
+        { section: 'materials', name: 'Izolyatsiya', icon: '🛡️', order: 6 },
+        { section: 'materials', name: 'Elektr', icon: '💡', order: 7 },
+        { section: 'materials', name: 'Sanitary', icon: '🚿', order: 8 },
+        { section: 'materials', name: 'Dekor', icon: '🖼️', order: 9 },
+        { section: 'materials', name: 'Konstruktsiya', icon: '🏗️', order: 10 }
+      ];
+
+      for (var cs of catSeeds) {
+        try {
+          var existCat = await pool.query(
+            'SELECT id FROM library_categories WHERE section_slug = $1 AND name = $2',
+            [cs.section, cs.name]
+          );
+          if (existCat.rows.length === 0) {
+            await pool.query(
+              'INSERT INTO library_categories (section_slug, name, icon, order_index, is_active) VALUES ($1, $2, $3, $4, true)',
+              [cs.section, cs.name, cs.icon, cs.order]
+            );
+          }
+        } catch (catErr) {}
+      }
+    } catch (catSetupErr) {
+      console.warn('ensure library_categories:', catSetupErr.message);
+    }
+
+    // 3. Ensure ALL Columns on library_resources exist (Defensive Alteration)
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_resources (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(500) NOT NULL DEFAULT '',
+          type VARCHAR(50) DEFAULT 'book',
+          section_slug VARCHAR(100) DEFAULT 'books',
+          order_index INT DEFAULT 0,
+          status VARCHAR(30) DEFAULT 'published'
+        )
+      `);
+
+      var lrCols = [
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'book'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS section_slug VARCHAR(100) DEFAULT 'books'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS title VARCHAR(500) DEFAULT ''",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS subtitle TEXT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS description TEXT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Boshqa'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS sub_category VARCHAR(100)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS content_url TEXT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS content_type VARCHAR(50) DEFAULT 'pdf'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS content_data JSONB",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS preview_image_url TEXT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS storage_provider VARCHAR(50) DEFAULT 'url'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS storage_id TEXT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'published'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS download_count INT DEFAULT 0",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS course_id INT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS order_index INT DEFAULT 0",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS version VARCHAR(50)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS versions JSONB DEFAULT '[]'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS source_label VARCHAR(255)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS difficulty VARCHAR(50) DEFAULT 'medium'",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS time_limit_min INT DEFAULT 15",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()"
+      ];
+
+      for (var cSql of lrCols) {
+        try {
+          await pool.query(cSql);
+        } catch (cErr) {
+          console.warn('library_resources col add:', cErr.message);
+        }
+      }
+
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_type ON library_resources(type)');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_section ON library_resources(section_slug)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_category ON library_resources(category)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_status ON library_resources(status)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_order ON library_resources(order_index)');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_featured ON library_resources(is_featured)');
-    } catch (idxE) {}
+    } catch (resSetupErr) {
+      console.warn('ensure library_resources setup:', resSetupErr.message);
+    }
 
     // 4. Update section_slug on existing rows if not set
-    await pool.query(`
-      UPDATE library_resources SET section_slug = 'books' WHERE type = 'book' AND (section_slug IS NULL OR section_slug = '');
-      UPDATE library_resources SET section_slug = 'sources' WHERE type IN ('source', 'video', 'file', 'dwg', 'rfa', 'rvt') AND (section_slug IS NULL OR section_slug = '');
-      UPDATE library_resources SET section_slug = 'tests' WHERE type = 'test' AND (section_slug IS NULL OR section_slug = '');
-      UPDATE library_resources SET section_slug = 'materials' WHERE type = 'material' AND (section_slug IS NULL OR section_slug = '');
-    `);
+    try {
+      await pool.query(`
+        UPDATE library_resources SET section_slug = 'books' WHERE (type = 'book' OR type = 'normative' OR type = 'guide') AND (section_slug IS NULL OR section_slug = '');
+        UPDATE library_resources SET section_slug = 'sources' WHERE type IN ('source', 'family_pack', 'family', 'video', 'file', 'dwg', 'rfa', 'rvt') AND (section_slug IS NULL OR section_slug = '');
+        UPDATE library_resources SET section_slug = 'tests' WHERE type = 'test' AND (section_slug IS NULL OR section_slug = '');
+        UPDATE library_resources SET section_slug = 'materials' WHERE type = 'material' AND (section_slug IS NULL OR section_slug = '');
+        UPDATE library_resources SET section_slug = 'books' WHERE section_slug IS NULL OR section_slug = '';
+        UPDATE library_resources SET type = 'book' WHERE type IS NULL OR type = '';
+        UPDATE library_resources SET order_index = 0 WHERE order_index IS NULL;
+        UPDATE library_resources SET is_featured = false WHERE is_featured IS NULL;
+      `);
+    } catch (updErr) {
+      console.warn('update library_resources section_slug:', updErr.message);
+    }
 
     // 5. PRESERVE & SEED THE 3 CORE BOOKS
     var book1 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Revit 2024: Rasmiy qo%'");
