@@ -289,6 +289,23 @@ let courseSearchQuery = "";
 let selectedCourseCategory = "Barchasi";
 const COURSE_CATEGORIES = ["Revit", "AutoCAD", "3ds Max", "BIM", "Interyer", "Arxitektura", "Boshqa"];
 let currentView = null;
+let savedTabScrolls = {
+  home: 0,
+  lessons: 0,
+  tasks: 0,
+  chat: 0,
+  profile: 0
+};
+let lastDetailReturnScroll = 0;
+
+window.addEventListener("scroll", () => {
+  if (!currentView) {
+    const y = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    savedTabScrolls[activeTab] = y;
+    lastDetailReturnScroll = y;
+  }
+}, { passive: true });
+
 let aboutOpen = false;
 let adminQuestionsList = null;
 let adminQuestionsFilter = "pending";
@@ -369,6 +386,7 @@ async function loadAuth() {
 }
 
 async function loadContent() {
+  const prevY = !currentView ? (window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0) : lastDetailReturnScroll;
   try {
     const data = await api("/api/content");
     state = {
@@ -392,6 +410,14 @@ async function loadContent() {
     };
     initShowcaseTimer();
     render();
+    if (!currentView && prevY > 0) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: prevY, left: 0, behavior: "instant" });
+        setTimeout(() => {
+          window.scrollTo({ top: prevY, left: 0, behavior: "instant" });
+        }, 30);
+      });
+    }
   } catch (error) {
     console.error("CONTENT LOAD ERROR:", error);
     if (app) {
@@ -5987,6 +6013,10 @@ async function submitCreateLesson() {
 }
 
 // 6-TALAB: DARSNI TAHRIRLASH (Modul, dars nomi, raqami, linki, manbalar)
+function openAdminLessonEdit(lessonId) {
+  return openEditLessonView(lessonId);
+}
+
 async function openEditLessonView(lessonId) {
   try {
     haptic("light");
@@ -6782,10 +6812,19 @@ function renderNav() {
 
 function setTab(id) {
   haptic("light");
+  if (!currentView) {
+    savedTabScrolls[activeTab] = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
   activeTab = id;
   currentView = null;
   render();
-  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  const targetY = savedTabScrolls[id] || 0;
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: targetY, left: 0, behavior: "instant" });
+    setTimeout(() => {
+      window.scrollTo({ top: targetY, left: 0, behavior: "instant" });
+    }, 30);
+  });
   if (id === "chat") {
     loadChatQuestions();
   }
@@ -6841,8 +6880,14 @@ function closeDetail() {
     window._quizState = null;
   }
   currentView = null;
+  const targetY = lastDetailReturnScroll || savedTabScrolls[activeTab] || 0;
   render();
-  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: targetY, left: 0, behavior: "instant" });
+    setTimeout(() => {
+      window.scrollTo({ top: targetY, left: 0, behavior: "instant" });
+    }, 40);
+  });
 }
 
 function renderTab() {
