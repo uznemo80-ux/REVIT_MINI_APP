@@ -2120,52 +2120,85 @@ function copyDonateCard(cardNumber) {
   }
 }
 
+function openModal(title, content) {
+  haptic("light");
+  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  lastDetailReturnScroll = scrollY;
+  currentView = {
+    html: `
+      <div class="page lib-container lib-page-enter">
+        <div class="lib-back-nav" onclick="closeDetail()">
+          ${typeof libIcons !== "undefined" && libIcons.back ? libIcons.back('lib-back-svg', 16) : "←"} Ortga
+        </div>
+        <div class="card" style="margin-top:16px;">
+          ${title ? `<div class="card-title" style="margin-bottom:12px;">${escapeHtml(title)}</div>` : ""}
+          ${content}
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
 function openDonateModal() {
   haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   const settings = state.settings || {};
-  const title = settings.support_title || "Qo'llab-quvvatlash";
-  const desc = settings.support_description || "YOSHUZBEKK platformasi rivojiga hissa qo'shing";
+  const title = settings.support_title || "Akademiyani Qo'llab-quvvatlash";
+  const desc = settings.support_description || "YOSHUZBEKK platformasi rivojiga o'z hissangizni qo'shing";
   const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
-  const cardHolder = settings.donate_card_holder || "Abdulloh S.";
+  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
   const paymentType = settings.donate_payment_type || "UZCARD / HUMO";
   const telegram = settings.support_telegram_contact || "@yoshuzbekk_admin";
 
-  const content = `
-    <div style="padding: 10px 0; max-width: 360px; margin: 0 auto; text-align: center;">
-      <div style="width: 52px; height: 52px; border-radius: 16px; background: var(--bg-surface-elevated); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--text-primary);">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-        </svg>
-      </div>
-
-      <div style="font-size: 20px; font-weight: 750; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.02em;">
-        ${escapeHtml(title)}
-      </div>
-      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.45; margin: 0 auto 20px auto; max-width: 290px;">
-        ${escapeHtml(desc)}
-      </p>
-
-      <div class="support-modal-card">
-        <div class="support-bank-chip">${escapeHtml(paymentType)}</div>
-        <div class="support-card-digits">${escapeHtml(cardNum)}</div>
-        <div class="support-card-holder">${escapeHtml(cardHolder)}</div>
-
-        <button id="support-copy-btn" class="support-copy-cta" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-          <span id="support-copy-label">Nusxalash</span>
-        </button>
-      </div>
-
-      ${telegram ? `
-        <div style="margin-top: 14px;">
-          <a href="https://t.me/${telegram.replace('@', '')}" target="_blank" class="admin-small-btn" style="padding: 8px 16px; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px;">
-            Aloqa: ${escapeHtml(telegram)} ↗
-          </a>
+  currentView = {
+    html: `
+      <div class="page lib-container lib-page-enter" style="padding-bottom: 30px;">
+        <div class="lib-back-nav" onclick="closeDetail()">
+          ${typeof libIcons !== "undefined" && libIcons.back ? libIcons.back('lib-back-svg', 16) : "←"} Profil
         </div>
-      ` : ""}
-    </div>
-  `;
 
-  openModal(title, content);
+        <div class="lib-quiz-card" style="text-align: center; max-width: 480px; margin: 16px auto; padding: 28px 20px;">
+          <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: #3b82f6;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+          </div>
+
+          <div style="font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em;">
+            ${escapeHtml(title)}
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 auto 20px auto; max-width: 320px;">
+            ${escapeHtml(desc)}
+          </p>
+
+          <div class="support-modal-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 16px; padding: 22px; color: #fff; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.12); text-align: left; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.65);">${escapeHtml(paymentType)}</span>
+              <span style="font-size: 11px; background: rgba(59,130,246,0.3); border: 1px solid rgba(59,130,246,0.5); padding: 2px 8px; border-radius: 999px; color: #93c5fd;">YOSHUZBEKK</span>
+            </div>
+            <div style="font-family: monospace; font-size: 19px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px;">${escapeHtml(cardNum)}</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.85);">${escapeHtml(cardHolder)}</div>
+
+            <button id="support-copy-btn" class="lib-download-btn" style="width: 100%; margin-top: 18px; padding: 12px; font-size: 13px; font-weight: 700;" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+              📋 Karta raqamini nusxalash
+            </button>
+          </div>
+
+          ${telegram ? `
+            <div style="margin-top: 12px;">
+              <a href="https://t.me/${telegram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; width: 100%; min-height: 44px;">
+                💬 Telegram orqali bog'lanish: ${escapeHtml(telegram)}
+              </a>
+            </div>
+          ` : ""}
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
 }
 
 // ----------------------------------------------------
@@ -6156,6 +6189,65 @@ function renderMaterialCardHtml(mat) {
 // 6. DETAIL VIEWS (Apple-Inspired Sheet & Reader)
 // ------------------------------------------------------
 
+let lastPdfReturnView = null;
+let lastPdfReturnScroll = 0;
+
+function openPdfViewerModal(pdfUrl, title) {
+  haptic("light");
+  if (!pdfUrl) return showAlert("Kitob yoki fayl havolasi mavjud emas.");
+
+  lastPdfReturnView = currentView;
+  lastPdfReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  const driveId = extractGoogleDriveId(pdfUrl);
+  let embedUrl = "";
+  if (driveId) {
+    embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+  } else if (pdfUrl.startsWith("http://") || pdfUrl.startsWith("https://")) {
+    embedUrl = `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`;
+  } else {
+    embedUrl = pdfUrl;
+  }
+
+  currentView = {
+    html: `
+      <div class="page lib-container lib-page-enter" style="padding-bottom: 24px;">
+        <div class="lib-detail-top-bar" style="margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+          <div class="lib-back-nav" style="margin:0;" onclick="closePdfViewerModal()">
+            ${libIcons.back('lib-back-svg', 16)} Chiqish
+          </div>
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; text-align: right;">
+            ${escapeHtml(title || "Kitob Mutolaasi")}
+          </div>
+        </div>
+
+        <div class="lib-pdf-container" style="width: 100%; height: calc(100vh - 120px); min-height: 520px; border-radius: 16px; overflow: hidden; background: #1c1c1e; box-shadow: 0 10px 36px rgba(0,0,0,0.35); border: 1px solid var(--border);">
+          <iframe
+            id="lib-pdf-iframe"
+            src="${escapeHtml(embedUrl)}"
+            style="width: 100%; height: 100%; border: none; display: block;"
+            allow="autoplay"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function closePdfViewerModal() {
+  haptic("light");
+  if (lastPdfReturnView) {
+    currentView = lastPdfReturnView;
+    render();
+    window.scrollTo(0, lastPdfReturnScroll || 0);
+  } else {
+    closeDetail();
+  }
+}
+
 async function openBookDetail(resId) {
   haptic("light");
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
@@ -6178,7 +6270,6 @@ async function openBookDetail(resId) {
   const author = book.author || "Autodesk BIM & Architecture";
   const pages = book.page_count ? `${book.page_count} bet` : "PDF Kitob";
   const lang = (book.language || "UZ").toUpperCase();
-  const isPdf = Boolean(book.content_url && (book.content_url.includes("drive.google.com") || book.content_url.endsWith(".pdf")));
   const isBookmarked = libraryV2Bookmarks.has(Number(book.id));
 
   let whatLearn = [];
@@ -6253,18 +6344,13 @@ async function openBookDetail(resId) {
             </div>
           </div>
 
-          <!-- ACTION BUTTONS -->
-          <div class="lib-detail-actions" style="margin-top:24px; display:flex; flex-direction:column; gap:10px;">
-            ${isPdf ? `
+          <!-- ACTION BUTTONS: FAQAT O'QISH (ASL MANBA VA ULASHISH YO'Q) -->
+          <div class="lib-detail-actions" style="margin-top:24px;">
+            ${book.content_url ? `
               <button class="lib-download-btn" style="width:100%;" onclick="openPdfViewerModal('${escapeJsString(book.content_url)}', '${escapeJsString(book.title)}')">
                 ${libIcons.book('lib-btn-svg', 18)} O‘QISHNI BOSHLASH
               </button>
-            ` : ""}
-            ${book.content_url ? `
-              <a href="${escapeHtml(book.content_url)}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; text-align:center; min-height:44px; display:flex; align-items:center; justify-content:center;">
-                Asl manbani ochish ↗
-              </a>
-            ` : ""}
+            ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Kitob mutolaa havolasi kiritilmagan</button>`}
           </div>
         </div>
       </div>
@@ -6613,7 +6699,7 @@ function finishQuiz() {
 
   libraryQuizState.questions.forEach((q, idx) => {
     const userAns = libraryQuizState.answers[idx];
-    const correctAns = Number(q.correct !== undefined ? q.correct : q.correct_answer);
+    const correctAns = Number(q.correct !== undefined ? q.correct : (q.correct_index !== undefined ? q.correct_index : q.correct_answer));
     if (userAns !== undefined && Number(userAns) === correctAns) {
       correctCount++;
     }
@@ -6652,7 +6738,7 @@ function finishQuiz() {
 
             ${libraryQuizState.questions.map((q, idx) => {
               const userAns = libraryQuizState.answers[idx];
-              const correctAns = Number(q.correct !== undefined ? q.correct : q.correct_answer);
+              const correctAns = Number(q.correct !== undefined ? q.correct : (q.correct_index !== undefined ? q.correct_index : q.correct_answer));
               const isCorrect = userAns !== undefined && Number(userAns) === correctAns;
               const explanation = q.explanation || "Revit va arxitektura standartlariga muvofiq.";
 
@@ -7652,6 +7738,7 @@ async function openAdminPanel() {
 
 // 7-TALAB: "MODULLAR" QATORI BUTUNLAY OLIB TASHLANDI
 function renderAdminPanel() {
+  const savedScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   currentView = {
     html: `
       <div class="admin-page">
@@ -7697,6 +7784,9 @@ function renderAdminPanel() {
     `
   };
   render();
+  if (savedScroll > 0) {
+    window.scrollTo({ top: savedScroll, left: 0, behavior: "instant" });
+  }
 }
 
 function startAdminLivePolling() {
@@ -8884,15 +8974,31 @@ async function deleteLessonFile(fileId, lessonId) {
 // TALAB 4: ADMIN CENTRAL KUTUBXONA BOSHQARUVI
 // ======================================================
 
-function setAdminLibraryTab(subTab) {
+function setAdminLibraryTab(subTab, e) {
+  if (e) {
+    if (typeof e.preventDefault === "function") e.preventDefault();
+    if (typeof e.stopPropagation === "function") e.stopPropagation();
+  }
   haptic("light");
   adminData.librarySubTab = subTab;
-  renderAdminPanel();
+
+  const contentEl = document.getElementById("admin-library-subtab-content");
+  const chipsEl = document.getElementById("admin-library-subtab-chips");
+  if (contentEl && chipsEl) {
+    chipsEl.querySelectorAll(".chip").forEach(ch => {
+      ch.classList.toggle("active", ch.getAttribute("data-subtab") === subTab);
+    });
+    contentEl.innerHTML = renderAdminLibrarySubTabContent(subTab);
+  } else {
+    const savedScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    renderAdminPanel();
+    if (savedScroll > 0) {
+      window.scrollTo({ top: savedScroll, left: 0, behavior: "instant" });
+    }
+  }
 }
 
-function renderAdminLibrary() {
-  const subTab = adminData.librarySubTab || "resources_v2";
-  const v2Res = adminData.libraryV2Resources || libraryV2Resources || [];
+function renderAdminLibrarySubTabContent(subTab) {
   const files = adminData.libraryFiles || [];
   const openRes = state.open_resources || [];
   const showcases = state.showcases || [];
@@ -8905,37 +9011,49 @@ function renderAdminLibrary() {
     (f.course_title && f.course_title.toLowerCase().includes(search))
   ) : files;
 
+  if (subTab === "resources_v2") return renderAdminLibraryV2Resources();
+  if (subTab === "sections") return renderAdminLibrarySections();
+  if (subTab === "categories") return renderAdminLibraryCategories();
+  if (subTab === "support") return renderAdminSupportSettings();
+  if (subTab === "files") return renderAdminLibraryFiles(filteredFiles, search);
+  if (subTab === "open_res") return renderAdminLibraryOpenRes(openRes);
+  if (subTab === "showcases") return renderAdminLibraryShowcases(showcases);
+  if (subTab === "materials") return renderAdminLibraryMaterials(materials);
+  return renderAdminLibraryV2Resources();
+}
+
+function renderAdminLibrary() {
+  const subTab = adminData.librarySubTab || "resources_v2";
+  const v2Res = adminData.libraryV2Resources || libraryV2Resources || [];
+  const files = adminData.libraryFiles || [];
+  const showcases = state.showcases || [];
+
   return `
     <div>
-      <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
-        <div class="chip ${subTab === "resources_v2" ? "active" : ""}" onclick="setAdminLibraryTab('resources_v2')">
+      <div class="category-chips" id="admin-library-subtab-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
+        <div class="chip ${subTab === "resources_v2" ? "active" : ""}" data-subtab="resources_v2" onclick="setAdminLibraryTab('resources_v2', event)">
           📚 Resurslar (${v2Res.length})
         </div>
-        <div class="chip ${subTab === "sections" ? "active" : ""}" onclick="setAdminLibraryTab('sections')">
+        <div class="chip ${subTab === "sections" ? "active" : ""}" data-subtab="sections" onclick="setAdminLibraryTab('sections', event)">
           🗂️ Bo‘limlar (${(librarySections || []).length})
         </div>
-        <div class="chip ${subTab === "categories" ? "active" : ""}" onclick="setAdminLibraryTab('categories')">
+        <div class="chip ${subTab === "categories" ? "active" : ""}" data-subtab="categories" onclick="setAdminLibraryTab('categories', event)">
           🏷️ Kategoriyalar (${(libraryV2Categories || []).length})
         </div>
-        <div class="chip ${subTab === "support" ? "active" : ""}" onclick="setAdminLibraryTab('support')">
+        <div class="chip ${subTab === "support" ? "active" : ""}" data-subtab="support" onclick="setAdminLibraryTab('support', event)">
           💳 Qo‘llab-quvvatlash
         </div>
-        <div class="chip ${subTab === "files" ? "active" : ""}" onclick="setAdminLibraryTab('files')">
+        <div class="chip ${subTab === "files" ? "active" : ""}" data-subtab="files" onclick="setAdminLibraryTab('files', event)">
           📁 Dars Fayllari (${files.length})
         </div>
-        <div class="chip ${subTab === "showcases" ? "active" : ""}" onclick="setAdminLibraryTab('showcases')">
+        <div class="chip ${subTab === "showcases" ? "active" : ""}" data-subtab="showcases" onclick="setAdminLibraryTab('showcases', event)">
           🎓 Natijalar (PDF) (${showcases.length})
         </div>
       </div>
 
-      ${subTab === "resources_v2" ? renderAdminLibraryV2Resources() : ""}
-      ${subTab === "sections" ? renderAdminLibrarySections() : ""}
-      ${subTab === "categories" ? renderAdminLibraryCategories() : ""}
-      ${subTab === "support" ? renderAdminSupportSettings() : ""}
-      ${subTab === "files" ? renderAdminLibraryFiles(filteredFiles, search) : ""}
-      ${subTab === "open_res" ? renderAdminLibraryOpenRes(openRes) : ""}
-      ${subTab === "showcases" ? renderAdminLibraryShowcases(showcases) : ""}
-      ${subTab === "materials" ? renderAdminLibraryMaterials(materials) : ""}
+      <div id="admin-library-subtab-content">
+        ${renderAdminLibrarySubTabContent(subTab)}
+      </div>
     </div>
   `;
 }

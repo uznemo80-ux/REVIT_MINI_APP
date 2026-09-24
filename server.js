@@ -1374,6 +1374,51 @@ async function ensureLibraryV2Tables() {
       `, [ds[0], ds[1]]);
     }
 
+    // 10. SYNC MODULE TESTS (INTPRO & barcha kurslar modul testlarini library_resources ga ulash)
+    try {
+      var moduleTestsAgg = await pool.query(`
+        SELECT m.id AS module_id, m.title AS module_title, m.course_id, c.title AS course_title,
+               json_agg(json_build_object(
+                 'id', mt.id,
+                 'question', mt.question,
+                 'options', CASE WHEN jsonb_typeof(mt.options::jsonb) = 'array' THEN mt.options::jsonb ELSE jsonb_build_array() END,
+                 'correct_index', mt.correct_index,
+                 'correct', mt.correct_index
+               ) ORDER BY mt.order_index ASC, mt.id ASC) AS questions
+        FROM modules m
+        JOIN module_tests mt ON mt.module_id = m.id
+        LEFT JOIN courses c ON c.id = m.course_id
+        GROUP BY m.id, m.title, m.course_id, c.title
+      `);
+
+      for (var mRow of moduleTestsAgg.rows) {
+        var testTitle = mRow.module_title + ' (Sinov Testi)';
+        var existingTest = await pool.query(
+          "SELECT id FROM library_resources WHERE section_slug = 'tests' AND (course_id = $1 OR title = $2) AND title = $2 LIMIT 1",
+          [mRow.course_id, testTitle]
+        );
+        if (existingTest.rows.length === 0) {
+          await pool.query(`
+            INSERT INTO library_resources (
+              section_slug, type, title, subtitle, description, category,
+              content_type, content_data, course_id, status, is_featured, order_index
+            ) VALUES (
+              'tests', 'test', $1, $2, $3, 'Kurs Testi',
+              'quiz_json', $4, $5, 'published', true, 10
+            )
+          `, [
+            testTitle,
+            (mRow.course_title || 'Kurs') + ' amaliy sinov testi',
+            mRow.module_title + ' bo‘yicha o‘zlashtirgan bilimlaringizni sinash uchun mo‘ljallangan amaliy test savollari.',
+            JSON.stringify(mRow.questions),
+            mRow.course_id
+          ]);
+        }
+      }
+    } catch (testSyncErr) {
+      console.warn('MODULE TESTS AUTO-SYNC WARNING:', testSyncErr.message);
+    }
+
     console.log("✅ KUTUBXONA 2.0 & SUPPORT: Barcha jadvallar, 4 bo'lim, 3 kitob va kategoriyalar muvaffaqiyatli tekshirildi/sozlandi");
   } catch (err) {
     console.error('ensureLibraryV2Tables xatosi:', err.message);
@@ -1392,16 +1437,22 @@ ensureLibraryV2Tables();
 function generateBunnyToken(videoId, expiresAt) {
   var securityKey = process.env.BUNNY_TOKEN_AUTH_KEY;
   if (!securityKey) {
-    throw new Error('BUNNY_TOKEN_AUTH_KEY topilmadi');
+    return null;
   }
   var hashableString = securityKey + videoId + expiresAt;
   return crypto.createHash('sha256').update(hashableString).digest('hex');
 }
 
 function generateBunnyPlayerUrl(libraryId, videoId) {
-  var expiresAt = Math.floor(Date.now() / 1000) + 2 * 60 * 60;
-  var token = generateBunnyToken(videoId, expiresAt);
-  return 'https://iframe.mediadelivery.net/embed/' + libraryId + '/' + videoId + '?token=' + token + '&expires=' + expiresAt;
+  var securityKey = process.env.BUNNY_TOKEN_AUTH_KEY;
+  if (securityKey) {
+    var expiresAt = Math.floor(Date.now() / 1000) + 2 * 60 * 60;
+    var token = generateBunnyToken(videoId, expiresAt);
+    if (token) {
+      return 'https://iframe.mediadelivery.net/embed/' + libraryId + '/' + videoId + '?token=' + token + '&expires=' + expiresAt;
+    }
+  }
+  return 'https://iframe.mediadelivery.net/embed/' + libraryId + '/' + videoId;
 }
 
 // ======================================================
@@ -1812,7 +1863,7 @@ app.post('/api/content', async function (req, res) {
     try {
       var coursesQuery = isAdminUser
         ? 'SELECT * FROM courses ORDER BY order_index ASC, id ASC'
-        : "SELECT * FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC";
+        : "SELECT * FROM courses WHERE (status != 'hidden' AND status != 'archived') OR status IS NULL ORDER BY order_index ASC, id ASC";
       var coursesRes = await pool.query(coursesQuery);
       courses = coursesRes.rows.map(function (c) {
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
@@ -1927,9 +1978,13 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var adminUser = await getAdminByTelegramId(user.telegram_id);
     var isAdmin = Boolean(isMainAdminUser || adminUser);
 
-    if (course.status !== 'active' && !isAdmin) {
-      return res.status(403).json({ error: 'Ushbu kurs hali sotuvga chiqmagan yoki tayyorlanmoqda' });
+    if ((course.status === 'hidden' || course.status === 'archived') && !isAdmin) {
+      return res.status(403).json({ error: 'Ushbu kurs hozirda mavjud emas' });
     }
+
+    var isFreeCourse = Boolean(
+      !course.price || course.price === '0' || course.price.includes('0 so') || (course.title && /marafon/i.test(course.title))
+    );
 
     var modulesResult = await pool.query(
       'SELECT id, title, order_index FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
@@ -2018,12 +2073,12 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var data = modules.map(function (mod) {
       var isFirstModule = mod.id === firstModuleId;
       var isGranted = grantedModuleIds.has(mod.id);
-      var moduleUnlocked = (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
+      var moduleUnlocked = isFreeCourse || (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var available = Boolean(lesson.is_free) || isMainAdminUser || isGranted ||
+        var available = Boolean(lesson.is_free) || isFreeCourse || isMainAdminUser || isGranted ||
           (isNeverPaidUser(user) && isFirstModule) ||
           (userHasAccess && sequentialUnlockedSet.has(lesson.id));
         var watched = watchedSet.has(lesson.id);
@@ -2098,7 +2153,13 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('MODULE GRANT CHECK ERROR:', grantError);
     }
 
-    var lessonAvailable = Boolean(lesson.is_free) || isMainAdminUser || isGranted || (isNeverPaidUser(user) && isFirstModule);
+    var courseRes = await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [mod.course_id]);
+    var courseData = courseRes.rows[0];
+    var isFreeCourse = Boolean(
+      courseData && (!courseData.price || courseData.price === '0' || courseData.price.includes('0 so') || (courseData.title && /marafon/i.test(courseData.title)))
+    );
+
+    var lessonAvailable = Boolean(lesson.is_free) || isFreeCourse || isMainAdminUser || isGranted || (isNeverPaidUser(user) && isFirstModule);
 
     if (!lessonAvailable && userHasAccess) {
       // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
@@ -2232,7 +2293,8 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('LESSON QUESTIONS QUERY ERROR:', qErr);
     }
 
-    var youtubePlayerUrl = generateYouTubePlayerUrl(lesson.youtube_url);
+    var rawVideoUrl = (lesson.youtube_url || '').trim();
+    var youtubePlayerUrl = generateYouTubePlayerUrl(rawVideoUrl);
 
     if (youtubePlayerUrl) {
       return res.json({
@@ -2243,12 +2305,44 @@ app.post('/api/lesson/:id', async function (req, res) {
       });
     }
 
-    if (lesson.bunny_video_id && process.env.BUNNY_LIBRARY_ID) {
-      var bunnyPlayerUrl = generateBunnyPlayerUrl(process.env.BUNNY_LIBRARY_ID, lesson.bunny_video_id);
+    if (lesson.bunny_video_id && (process.env.BUNNY_LIBRARY_ID || lesson.bunny_video_id.includes('/'))) {
+      var libId = process.env.BUNNY_LIBRARY_ID || 'library';
+      var bunnyPlayerUrl = generateBunnyPlayerUrl(libId, lesson.bunny_video_id);
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'bunny',
-        bunny_video_id: lesson.bunny_video_id, bunny_library_id: process.env.BUNNY_LIBRARY_ID,
+        bunny_video_id: lesson.bunny_video_id, bunny_library_id: libId,
         bunny_player_url: bunnyPlayerUrl,
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+        questions: questions
+      });
+    }
+
+    // Bunny to'g'ridan-to'g'ri embed yoki stream havolasi
+    if (/mediadelivery\.net|bunnycdn\.com/i.test(rawVideoUrl)) {
+      return res.json({
+        id: lesson.id, title: lesson.title, video_type: 'bunny',
+        bunny_player_url: rawVideoUrl,
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+        questions: questions
+      });
+    }
+
+    // Google Drive video havolasi (stream / preview orqali o'ynatish)
+    var driveVidMatch = rawVideoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || rawVideoUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (/drive\.google\.com/i.test(rawVideoUrl) && driveVidMatch && driveVidMatch[1]) {
+      return res.json({
+        id: lesson.id, title: lesson.title, video_type: 'drive',
+        bunny_player_url: 'https://drive.google.com/file/d/' + driveVidMatch[1] + '/preview',
+        task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
+        questions: questions
+      });
+    }
+
+    // Har qanday boshqa to'g'ridan-to'g'ri video yoki ochiq stream havolasi
+    if (/^https?:\/\//i.test(rawVideoUrl)) {
+      return res.json({
+        id: lesson.id, title: lesson.title, video_type: 'stream',
+        bunny_player_url: rawVideoUrl,
         task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
         questions: questions
       });
@@ -4754,11 +4848,12 @@ app.post('/api/library/v2/recommended', async function (req, res) {
 });
 
 // Kurslar ro'yxati (Test filter dropdown uchun)
-app.post('/api/library/v2/courses', async function (req, res) {
+app.all(['/api/library/v2/courses'], async function (req, res) {
   try {
-    var result = await pool.query('SELECT id, title FROM courses WHERE is_active = true ORDER BY order_index ASC, id ASC');
+    var result = await pool.query("SELECT id, title FROM courses WHERE (status != 'hidden' AND status != 'archived') OR status IS NULL ORDER BY order_index ASC, id ASC");
     return res.json({ ok: true, courses: result.rows });
   } catch (err) {
+    console.error('LIBRARY COURSES ERROR:', err.message);
     return res.json({ ok: true, courses: [] });
   }
 });
@@ -4847,7 +4942,7 @@ app.post('/api/library/v2/resources', async function (req, res) {
     params.push(limit);
     params.push(offset);
     var dataResult = await pool.query(
-      'SELECT * FROM library_resources ' + whereClause + ' ' + orderClause + ' LIMIT $' + paramIdx + ' OFFSET $' + (paramIdx + 1),
+      'SELECT library_resources.*, (SELECT title FROM courses WHERE id = library_resources.course_id) AS course_title FROM library_resources ' + whereClause + ' ' + orderClause + ' LIMIT $' + paramIdx + ' OFFSET $' + (paramIdx + 1),
       params
     );
 
