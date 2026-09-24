@@ -370,6 +370,25 @@ let libraryV2Loading = false;
 let libraryV2HasLoaded = false;
 let libraryV2SelectedType = "all"; // "all" | "book" | "normative" | "guide" | "video" | "test" | "material" | "family_pack" | "term"
 
+// LIVE ACTIVITY TRACKING STATE
+let liveActivityState = {
+  status: "online",
+  lesson_id: null,
+  lesson_title: null,
+  module_title: null,
+  course_title: null,
+  video_progress: 0,
+  video_duration: 0,
+  video_status: "watching",
+  module_id: null,
+  test_question_index: 0,
+  test_total_questions: 0,
+  last_sent_at: 0
+};
+let heartbeatTimer = null;
+let videoProgressTicker = null;
+let adminLivePollingTimer = null;
+
 // ======================================================
 // API CLIENT
 // ======================================================
@@ -399,6 +418,150 @@ async function api(path, body = {}) {
   }
 
   return data;
+}
+
+// ======================================================
+// LIVE ACTIVITY TRACKING ENGINE
+// ======================================================
+
+function formatSeconds(sec) {
+  if (!sec || isNaN(sec) || sec <= 0) return "00:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function formatRelativeTime(dateStr) {
+  if (!dateStr) return "Noma'lum";
+  const diff = Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000));
+  if (diff < 15) return "Hozirgina";
+  if (diff < 60) return `${diff} soniya oldin`;
+  const mins = Math.floor(diff / 60);
+  if (mins < 60) return `${mins} daqiqa oldin`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} soat oldin`;
+  return `${Math.floor(hours / 24)} kun oldin`;
+}
+
+function initHeartbeat() {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  sendHeartbeat();
+
+  // 25 soniyali yengil davriy puls (1000+ user uchun optimal)
+  heartbeatTimer = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      sendHeartbeat();
+    }
+  }, 25000);
+
+  // Mini App yashirilganda / qayta ochilganda nazorat
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      sendHeartbeat({ status: "idle" });
+    } else {
+      sendHeartbeat();
+    }
+  });
+
+  // YouTube / Bunny iframe postMessage tinglovchisi
+  window.addEventListener("message", (event) => {
+    try {
+      const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      if (data && data.event === "infoDelivery" && data.info) {
+        if (typeof data.info.currentTime === "number") {
+          liveActivityState.video_progress = Math.round(data.info.currentTime);
+        }
+        if (typeof data.info.duration === "number") {
+          liveActivityState.video_duration = Math.round(data.info.duration);
+        }
+        if (data.info.playerState === 1) { // playing
+          liveActivityState.video_status = "watching";
+          liveActivityState.status = "watching";
+        } else if (data.info.playerState === 2) { // paused
+          liveActivityState.video_status = "paused";
+        } else if (data.info.playerState === 0) { // ended
+          liveActivityState.video_status = "finished";
+        }
+      }
+    } catch (e) {}
+  });
+}
+
+async function sendHeartbeat(extra = {}) {
+  if (!initData) return;
+  const payload = {
+    current_tab: activeTab || "home",
+    status: extra.status || liveActivityState.status,
+    lesson_id: liveActivityState.lesson_id,
+    lesson_title: liveActivityState.lesson_title,
+    module_title: liveActivityState.module_title,
+    course_title: liveActivityState.course_title,
+    video_progress: liveActivityState.video_progress,
+    video_duration: liveActivityState.video_duration,
+    video_status: liveActivityState.video_status,
+    module_id: liveActivityState.module_id,
+    test_question_index: liveActivityState.test_question_index,
+    test_total_questions: liveActivityState.test_total_questions,
+    device_info: specDevice || "mobile",
+    ...extra
+  };
+  try {
+    await fetch("/api/activity/heartbeat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData, device_id: deviceId, ...payload })
+    });
+    liveActivityState.last_sent_at = Date.now();
+  } catch (e) {
+    // Heartbeat uchun fon xatoliklari jimgina o'tkazib yuboriladi
+  }
+}
+
+function setActivityWatchingLesson(lesson, currentModule, currentCourse) {
+  liveActivityState.status = "watching";
+  liveActivityState.lesson_id = lesson.id;
+  liveActivityState.lesson_title = lesson.title;
+  liveActivityState.module_title = currentModule ? currentModule.title : null;
+  liveActivityState.course_title = currentCourse ? currentCourse.title : null;
+  liveActivityState.video_progress = 0;
+  liveActivityState.video_duration = 0;
+  liveActivityState.video_status = "watching";
+
+  if (videoProgressTicker) clearInterval(videoProgressTicker);
+  videoProgressTicker = setInterval(() => {
+    if (liveActivityState.status === "watching" && liveActivityState.video_status === "watching") {
+      liveActivityState.video_progress++;
+    }
+  }, 1000);
+
+  sendHeartbeat();
+}
+
+function setActivityTesting(moduleId, currentQ, totalQ, moduleTitle) {
+  liveActivityState.status = "testing";
+  liveActivityState.module_id = moduleId;
+  if (moduleTitle) liveActivityState.module_title = moduleTitle;
+  liveActivityState.test_question_index = currentQ;
+  liveActivityState.test_total_questions = totalQ;
+  sendHeartbeat();
+}
+
+function clearActivitySpecialState() {
+  if (videoProgressTicker) {
+    clearInterval(videoProgressTicker);
+    videoProgressTicker = null;
+  }
+  liveActivityState.status = "online";
+  liveActivityState.lesson_id = null;
+  liveActivityState.lesson_title = null;
+  liveActivityState.module_title = null;
+  liveActivityState.video_progress = 0;
+  liveActivityState.video_duration = 0;
+  liveActivityState.video_status = "watching";
+  liveActivityState.module_id = null;
+  liveActivityState.test_question_index = 0;
+  liveActivityState.test_total_questions = 0;
+  sendHeartbeat();
 }
 
 // ======================================================
@@ -4878,6 +5041,8 @@ async function openLesson(id) {
       course_title: currentCourse ? currentCourse.title : (state.last_lesson?.course_title || null)
     };
 
+    setActivityWatchingLesson(lesson, currentModuleData, currentCourse);
+
     const watermarkText = `${state.first_name || ""} · ID ${escapeHtml(String(state.telegram_id || ""))}`.trim();
     const watermarkHtml = `
       <div class="video-watermark">
@@ -6525,6 +6690,8 @@ function renderQuizQuestion() {
   const qs = window._quizState;
   if (!qs) return;
 
+  setActivityTesting(qs.moduleId, qs.currentIndex + 1, qs.questions.length);
+
   const total = qs.questions.length;
   const idx = qs.currentIndex;
   const q = qs.questions[idx];
@@ -6801,38 +6968,111 @@ function renderAdminPanel() {
   render();
 }
 
+function startAdminLivePolling() {
+  stopAdminLivePolling();
+  adminLivePollingTimer = setInterval(async () => {
+    if (!currentView || (adminView !== "dashboard" && adminView !== "live")) {
+      stopAdminLivePolling();
+      return;
+    }
+    try {
+      const liveData = await adminApi("/api/admin/live-activity");
+      if (liveData && liveData.ok) {
+        adminData.stats = liveData.stats || adminData.stats;
+        adminData.activeUsers = liveData.active_users || [];
+        updateAdminLiveDomElements();
+      }
+    } catch (e) {}
+  }, 6000);
+}
+
+function stopAdminLivePolling() {
+  if (adminLivePollingTimer) {
+    clearInterval(adminLivePollingTimer);
+    adminLivePollingTimer = null;
+  }
+}
+
+function updateAdminLiveDomElements() {
+  const s = adminData.stats || {};
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setTxt("adm-live-online", s.online_now || 0);
+  setTxt("adm-live-watching", s.watching_now || 0);
+  setTxt("adm-live-testing", s.testing_now || 0);
+  setTxt("adm-live-today-active", s.today_active || 0);
+  setTxt("adm-live-today-views", s.today_lesson_views || 0);
+  setTxt("adm-live-today-tests", s.today_test_attempts || 0);
+  setTxt("adm-live-total-users", s.total_students || 0);
+
+  const listEl = document.getElementById("admin-live-users-rows");
+  if (listEl) {
+    listEl.innerHTML = renderAdminLiveUsersHtml(adminData.activeUsers || []);
+  }
+  const countEl = document.getElementById("admin-live-users-count");
+  if (countEl) {
+    countEl.textContent = `(${adminData.activeUsers ? adminData.activeUsers.length : 0})`;
+  }
+}
+
+async function adminSetAnalyticsPeriod(period) {
+  haptic("light");
+  adminData.analyticsPeriod = period;
+  try {
+    const data = await adminApi("/api/admin/analytics/history", { period });
+    adminData.analyticsHistory = data || { summary: {}, daily: [] };
+    const container = document.getElementById("admin-analytics-section");
+    if (container) {
+      container.innerHTML = renderAdminAnalyticsSectionHtml();
+    }
+  } catch (e) {
+    showAlert("Tahlillarni yuklashda xatolik.");
+  }
+}
+
 async function adminSetTab(tab) {
   haptic("light");
   adminView = tab;
 
   try {
-    if (tab === "dashboard") {
-      const data = await adminApi("/api/admin/stats");
-      adminData.stats = data.stats || {};
-    } else if (tab === "students") {
-      const data = await adminApi("/api/admin/students");
-      adminData.students = data.students || [];
-    } else if (tab === "lessons") {
-      const data = await adminApi("/api/admin/modules");
-      adminData.modules = data.modules || [];
-    } else if (tab === "library") {
-      try {
-        const [filesData, resData] = await Promise.all([
-          adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
-          adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] }))
-        ]);
-        adminData.libraryFiles = filesData.files || [];
-        adminData.libraryV2Resources = resData.resources || [];
-      } catch (fe) {
-        adminData.libraryFiles = [];
-        adminData.libraryV2Resources = [];
+    if (tab === "dashboard" || tab === "live") {
+      const [liveData, historyData] = await Promise.all([
+        adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
+        adminApi("/api/admin/analytics/history", { period: adminData.analyticsPeriod || "7days" }).catch(() => ({ summary: {}, daily: [] }))
+      ]);
+      adminData.stats = liveData.stats || {};
+      adminData.activeUsers = liveData.active_users || [];
+      adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
+      startAdminLivePolling();
+    } else {
+      stopAdminLivePolling();
+      if (tab === "students") {
+        const data = await adminApi("/api/admin/students");
+        adminData.students = data.students || [];
+      } else if (tab === "lessons") {
+        const data = await adminApi("/api/admin/modules");
+        adminData.modules = data.modules || [];
+      } else if (tab === "library") {
+        try {
+          const [filesData, resData] = await Promise.all([
+            adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
+            adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] }))
+          ]);
+          adminData.libraryFiles = filesData.files || [];
+          adminData.libraryV2Resources = resData.resources || [];
+        } catch (fe) {
+          adminData.libraryFiles = [];
+          adminData.libraryV2Resources = [];
+        }
+      } else if (tab === "admins") {
+        const data = await adminApi("/api/admin/admins");
+        adminData.admins = data.admins || [];
+      } else if (tab === "practice") {
+        const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
+        adminData.practice = data.submissions || [];
       }
-    } else if (tab === "admins") {
-      const data = await adminApi("/api/admin/admins");
-      adminData.admins = data.admins || [];
-    } else if (tab === "practice") {
-      const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
-      adminData.practice = data.submissions || [];
     }
     renderAdminPanel();
   } catch (error) {
@@ -6840,46 +7080,374 @@ async function adminSetTab(tab) {
   }
 }
 
-// Admin Dashboard
+function getTabDisplayLabel(tab) {
+  switch (tab) {
+    case "home": return "Bosh sahifa";
+    case "lessons": return "Darslar";
+    case "tasks": return "Kutubxona";
+    case "chat": return "Chat";
+    case "profile": return "Profil";
+    default: return "Platforma";
+  }
+}
+
+function renderAdminLiveUsersHtml(users) {
+  if (!users || !users.length) {
+    return `<div class="empty-box" style="padding:24px 0;">Ayni damda faol foydalanuvchilar mavjud emas.</div>`;
+  }
+
+  return users.map(u => {
+    const isRecent = u.last_seen_at && (Date.now() - new Date(u.last_seen_at).getTime()) < 75000;
+    const isWatching = u.status === "watching" || u.video_status === "watching";
+    const isTesting = u.status === "testing";
+    const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
+    const progressPercent = u.video_duration > 0 ? Math.min(100, Math.round((u.video_progress / u.video_duration) * 100)) : 0;
+
+    return `
+      <div class="live-user-card" onclick="openAdminStudentLiveDossier(${Number(u.user_id)})">
+        <div class="live-user-header">
+          <div class="live-user-name-wrap">
+            <div class="live-user-avatar">
+              ${(fullName[0] || "O").toUpperCase()}
+              ${isRecent ? `<span class="live-pulse-dot avatar-dot"></span>` : ""}
+            </div>
+            <div class="live-user-details">
+              <div class="live-user-name">${escapeHtml(fullName)}</div>
+              <div class="live-user-handle">${u.phone ? escapeHtml(u.phone) : (u.username ? "@" + escapeHtml(u.username) : "ID: " + escapeHtml(u.telegram_id))}</div>
+            </div>
+          </div>
+          <div class="live-user-badge-time">
+            ${isRecent ? `<span style="color:#10b981; font-weight:700;">🟢 Online</span><br>` : ""}
+            <span>${formatRelativeTime(u.last_seen_at)}</span>
+          </div>
+        </div>
+
+        <div class="live-activity-box">
+          ${isWatching ? `
+            <div class="live-activity-title" style="color:#ef4444;">
+              <span>▶️</span> Dars ko'rmoqda: <span style="color:var(--text-primary);">${escapeHtml(u.lesson_title || "Dars")}</span>
+            </div>
+            ${u.course_title ? `<div style="font-size:11px; color:var(--text-muted);">${escapeHtml(u.course_title)} ${u.module_title ? `→ ${escapeHtml(u.module_title)}` : ""}</div>` : ""}
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-secondary); margin-top:2px;">
+              <span>⏱️ ${formatSeconds(u.video_progress)} / ${formatSeconds(u.video_duration)}</span>
+              <span>${progressPercent}%</span>
+            </div>
+            <div class="live-progress-track">
+              <div class="live-progress-fill red" style="width:${progressPercent}%;"></div>
+            </div>
+          ` : (isTesting ? `
+            <div class="live-activity-title" style="color:#8b5cf6;">
+              <span>📝</span> Test ishlamoqda: <span style="color:var(--text-primary);">${escapeHtml(u.module_title || "Modul Testi")}</span>
+            </div>
+            <div style="font-size:11.5px; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <span>Savol: <strong>${u.test_question_index || 1} / ${u.test_total_questions || 1}</strong></span>
+              <span>${u.test_total_questions > 0 ? Math.round(((u.test_question_index || 1) / u.test_total_questions) * 100) : 0}%</span>
+            </div>
+            <div class="live-progress-track">
+              <div class="live-progress-fill purple" style="width:${u.test_total_questions > 0 ? Math.round(((u.test_question_index || 1) / u.test_total_questions) * 100) : 0}%;"></div>
+            </div>
+          ` : `
+            <div class="live-activity-title" style="color:var(--text-secondary);">
+              <span>🌐</span> Sahifa: <span style="color:var(--text-primary);">${getTabDisplayLabel(u.current_tab)}</span>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderAdminAnalyticsSectionHtml() {
+  const h = adminData.analyticsHistory?.summary || {};
+  const daily = adminData.analyticsHistory?.daily || [];
+  const period = adminData.analyticsPeriod || "7days";
+
+  // Calculate max for bar chart scaling
+  let maxViews = 1;
+  daily.forEach(d => {
+    if (d.lesson_views > maxViews) maxViews = d.lesson_views;
+    if (d.new_users > maxViews) maxViews = d.new_users;
+  });
+
+  return `
+    <div class="analytics-chart-box">
+      <div class="analytics-chart-header">
+        <div style="font-weight:750; font-size:14px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+          <span>📈</span> Tarixiy Tahlil
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button class="chip ${period === "today" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('today')">Bugun</button>
+          <button class="chip ${period === "yesterday" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('yesterday')">Kecha</button>
+          <button class="chip ${period === "7days" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('7days')">7 kun</button>
+          <button class="chip ${period === "30days" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('30days')">30 kun</button>
+        </div>
+      </div>
+
+      <!-- KURS SUMMARY CARDS -->
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:14px;">
+        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10.5px; color:var(--text-muted);">Yangi Ro'yxatdan O'tgan:</div>
+          <div style="font-size:16px; font-weight:800; color:var(--text-primary);">${h.new_users || 0}</div>
+        </div>
+        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10.5px; color:var(--text-muted);">Faol O'quvchilar:</div>
+          <div style="font-size:16px; font-weight:800; color:#10b981;">${h.active_users || 0}</div>
+        </div>
+        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10.5px; color:var(--text-muted);">Ko'rilgan Darslar:</div>
+          <div style="font-size:16px; font-weight:800; color:var(--accent);">${h.lesson_views || 0}</div>
+        </div>
+        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10.5px; color:var(--text-muted);">Topshirilgan Testlar:</div>
+          <div style="font-size:16px; font-weight:800; color:#8b5cf6;">${h.test_attempts || 0} (${h.passed_tests || 0} o'tdi)</div>
+        </div>
+      </div>
+
+      <!-- KUNLIK BAR CHART -->
+      ${daily.length > 1 ? `
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px; font-weight:700;">Kunlik dars ko'rishlar dinamikasi:</div>
+        <div class="analytics-bars-container">
+          ${daily.map(d => {
+            const heightPct = Math.max(8, Math.round((d.lesson_views / maxViews) * 100));
+            return `
+              <div class="analytics-bar-col" title="${escapeHtml(d.date)}: ${d.lesson_views} dars, ${d.new_users} yangi user">
+                <span class="analytics-bar-val">${d.lesson_views}</span>
+                <div class="analytics-bar-stem" style="height:${heightPct}%;"></div>
+                <span class="analytics-bar-lbl">${escapeHtml(d.label || d.date.slice(5))}</span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+// ASOSIY ADMIN DASHBOARD
 function renderAdminDashboard() {
   const s = adminData.stats || {};
+  const activeUsers = adminData.activeUsers || [];
+
   return `
-    <div class="admin-stats-grid">
-      <div class="admin-stat-card">
-        <div class="admin-stat-icon">👥</div>
-        <div class="admin-stat-value">${s.total_students || 0}</div>
-        <div class="admin-stat-label">Jami O'quvchilar</div>
+    <div>
+      <!-- 1. LIVE ANALYTICS CARDS (REAL-TIME METRICS) -->
+      <div class="live-stats-row" id="admin-live-stats-row">
+        <div class="live-stat-card online-highlight">
+          <div class="live-stat-val">
+            <span class="live-pulse-dot"></span>
+            <span id="adm-live-online">${s.online_now || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Hozir Online</div>
+        </div>
+
+        <div class="live-stat-card watching-highlight">
+          <div class="live-stat-val">
+            <span>▶️</span>
+            <span id="adm-live-watching">${s.watching_now || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Dars Ko'rayotganlar</div>
+        </div>
+
+        <div class="live-stat-card testing-highlight">
+          <div class="live-stat-val">
+            <span>📝</span>
+            <span id="adm-live-testing">${s.testing_now || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Test Yechayotganlar</div>
+        </div>
+
+        <div class="live-stat-card">
+          <div class="live-stat-val">
+            <span>👥</span>
+            <span id="adm-live-total-users">${s.total_students || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Jami O'quvchilar</div>
+        </div>
+
+        <div class="live-stat-card">
+          <div class="live-stat-val">
+            <span>📅</span>
+            <span id="adm-live-today-active">${s.today_active || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Bugun Faol Bo'lgan</div>
+        </div>
+
+        <div class="live-stat-card">
+          <div class="live-stat-val">
+            <span>🎬</span>
+            <span id="adm-live-today-views">${s.today_lesson_views || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Bugun Ko'rilgan Dars</div>
+        </div>
+
+        <div class="live-stat-card">
+          <div class="live-stat-val">
+            <span>🎯</span>
+            <span id="adm-live-today-tests">${s.today_test_attempts || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Bugun Test Topshirish</div>
+        </div>
+
+        <div class="live-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
+          <div class="live-stat-val">
+            <span>💳</span>
+            <span>${s.paid_students || 0}</span>
+          </div>
+          <div class="live-stat-lbl">Faol Obunachilar →</div>
+        </div>
       </div>
-      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
-        <div class="admin-stat-icon">💳</div>
-        <div class="admin-stat-value">${s.paid_students || 0}</div>
-        <div class="admin-stat-label">Faol Obunachilar →</div>
+
+      <!-- 2. JONLI FAOLLIK LISTI (LIVE NOW USERS) -->
+      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+            <span>⚡</span> Hozirgi Faol O'quvchilar <span id="admin-live-users-count" style="color:var(--accent);">(${activeUsers.length})</span>
+          </div>
+          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
+            <span class="live-pulse-dot"></span> Jonli efir
+          </div>
+        </div>
+
+        <div id="admin-live-users-rows">
+          ${renderAdminLiveUsersHtml(activeUsers)}
+        </div>
       </div>
-      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('expired', 'Muddati Tugaganlar')">
-        <div class="admin-stat-icon">⏳</div>
-        <div class="admin-stat-value">${s.unpaid_students || 0}</div>
-        <div class="admin-stat-label">Muddati Tugaganlar →</div>
+
+      <!-- 3. TARIXIY TAHLILLAR VA GRAFIKLAR -->
+      <div id="admin-analytics-section">
+        ${renderAdminAnalyticsSectionHtml()}
       </div>
-      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\\'ragan')">
-        <div class="admin-stat-icon">🆕</div>
-        <div class="admin-stat-value">${s.pending_new || 0}</div>
-        <div class="admin-stat-label">Yangi So'rovlar →</div>
-      </div>
-      <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\\'ragan')">
-        <div class="admin-stat-icon">🔄</div>
-        <div class="admin-stat-value">${s.pending_renewal || 0}</div>
-        <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
-      </div>
-      <div class="admin-stat-card">
-        <div class="admin-stat-icon">🎬</div>
-        <div class="admin-stat-value">${s.total_lessons || 0}</div>
-        <div class="admin-stat-label">Jami Darslar</div>
+
+      <!-- 4. QO'SHIMCHA OBUNA VA DARS STATISTIKASI -->
+      <div style="margin-top:16px;">
+        <div class="admin-section-title" style="margin-bottom:10px;">Obunalar & Murojaatlar</div>
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\\'ragan')">
+            <div class="admin-stat-icon">🆕</div>
+            <div class="admin-stat-value">${s.pending_new || 0}</div>
+            <div class="admin-stat-label">Yangi So'rovlar →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\\'ragan')">
+            <div class="admin-stat-icon">🔄</div>
+            <div class="admin-stat-value">${s.pending_renewal || 0}</div>
+            <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('expired', 'Muddati Tugaganlar')">
+            <div class="admin-stat-icon">⏳</div>
+            <div class="admin-stat-value">${s.unpaid_students || 0}</div>
+            <div class="admin-stat-label">Muddati Tugaganlar →</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">🎬</div>
+            <div class="admin-stat-value">${s.total_lessons || 0}</div>
+            <div class="admin-stat-label">Jami Darslar</div>
+          </div>
+        </div>
       </div>
     </div>
-    <button class="btn secondary" onclick="adminSetTab('dashboard')">
-      🔄 Statistikani yangilash
-    </button>
   `;
+}
+
+async function openAdminStudentLiveDossier(userId) {
+  try {
+    haptic("light");
+    const data = await adminApi(`/api/admin/student/${Number(userId)}/live-dossier`);
+    const st = data.student;
+    if (!st) return showAlert("O'quvchi ma'lumotlari topilmadi.");
+
+    const act = st.activity || {};
+    const isOnline = act.last_seen_at && (Date.now() - new Date(act.last_seen_at).getTime()) < 75000;
+    const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
+
+    currentView = {
+      html: `
+        <div class="page">
+          <div class="back-btn" onclick="adminSetTab('dashboard')">← Dashboardga qaytish</div>
+          <div class="page-title" style="margin-bottom:6px;">👨‍🎓 O'quvchi Dosyesi</div>
+
+          <div class="card" style="margin-bottom:14px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+              <div>
+                <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">
+                  ${escapeHtml(fullName)}
+                </div>
+                <div style="font-size:12.5px; color:var(--text-secondary);">
+                  ${st.username ? "@" + escapeHtml(st.username) : "ID: " + escapeHtml(st.telegram_id)}
+                </div>
+              </div>
+              <div class="tag ${isOnline ? "ok" : "warning"}" style="font-size:11px;">
+                ${isOnline ? "🟢 Hozir Online" : "⚪ Offline"}
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:12px;">
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Telefon:</div>
+                <div style="font-size:12.5px; font-weight:700;">${st.phone ? escapeHtml(st.phone) : "Kiritilmagan"}</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Ro'yxatdan o'tgan:</div>
+                <div style="font-size:12.5px; font-weight:700;">${fmtDate(st.created_at)}</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Kursga kirish:</div>
+                <div style="font-size:12.5px; font-weight:700; color:${st.access_until && new Date(st.access_until) > new Date() ? "var(--success)" : "var(--danger)"};">
+                  ${st.access_until && new Date(st.access_until) > new Date() ? fmtDate(st.access_until) : "Muddati tugagan"}
+                </div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Ko'rilgan darslar:</div>
+                <div style="font-size:12.5px; font-weight:700; color:var(--accent);">
+                  ${st.watched_lessons} / ${st.total_lessons}
+                </div>
+              </div>
+            </div>
+
+            <!-- HOZIRGI JONLI FAOLLIGI -->
+            <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px;">
+              <div style="font-size:12px; font-weight:750; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>⚡</span> Hozirgi Faollik Holati:
+              </div>
+              <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
+                Holat: <strong style="color:var(--text-primary);">${act.status === "watching" ? "▶️ Dars ko'rmoqda" : (act.status === "testing" ? "📝 Test yechmoqda" : "🌐 Platformada")}</strong><br>
+                ${act.lesson_title ? `Dars: <strong>${escapeHtml(act.lesson_title)}</strong> (${escapeHtml(act.course_title || '')})<br>` : ""}
+                ${act.video_progress ? `Video vaqti: <strong>${formatSeconds(act.video_progress)} / ${formatSeconds(act.video_duration)}</strong> (${Math.round((act.video_progress / (act.video_duration || 1)) * 100)}%)<br>` : ""}
+                ${act.test_total_questions ? `Test: <strong>Savol ${act.test_question_index} / ${act.test_total_questions}</strong><br>` : ""}
+                Oxirgi signal: <strong>${formatRelativeTime(act.last_seen_at)}</strong>
+              </div>
+            </div>
+
+            <!-- TOPSHIRILGAN TESTLAR -->
+            ${st.tests && st.tests.length ? `
+              <div style="font-size:12.5px; font-weight:750; margin-bottom:8px; color:var(--text-secondary);">
+                Topshirilgan test natijalari:
+              </div>
+              ${st.tests.map(t => `
+                <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:6px; padding:8px 10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-size:12px; font-weight:700;">${escapeHtml(t.module_title || 'Modul')}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${fmtDate(t.attempted_at)}</div>
+                  </div>
+                  <div class="tag ${t.passed ? "ok" : "warning"}" style="font-size:11px;">
+                    ${t.score}% ${t.passed ? "✅ O'tdi" : "❌ O'tmadi"}
+                  </div>
+                </div>
+              `).join("")}
+            ` : ""}
+
+            <div style="margin-top:14px; display:flex; gap:8px;">
+              <button class="btn" style="flex:1; margin-bottom:0;" onclick="openAdminStudentModal(${Number(st.id)})">
+                ✏️ Ruxsatni boshqarish
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+    };
+    render();
+  } catch (err) {
+    showAlert(err.message || "O'quvchi ma'lumotlarini yuklashda xato.");
+  }
 }
 
 async function openStudentsDetailList(filter, title) {
@@ -8555,6 +9123,7 @@ function setTab(id) {
   if (id === "tasks") {
     loadLibraryV2Data();
   }
+  sendHeartbeat({ current_tab: id });
 }
 
 // Chegirma muddati uchun jonli sanoq (har soniyada barcha .discount-countdown elementlarini yangilaydi)
@@ -8598,6 +9167,8 @@ setInterval(() => {
 
 function closeDetail() {
   haptic("light");
+  stopAdminLivePolling();
+  clearActivitySpecialState();
   if (window._quizState) {
     if (window._quizState.lockTimer) clearTimeout(window._quizState.lockTimer);
     window._quizState = null;
@@ -8647,6 +9218,7 @@ function render() {
       return;
     }
     await loadContent();
+    initHeartbeat();
   } catch (error) {
     console.error("APP START ERROR:", error);
     if (app) {

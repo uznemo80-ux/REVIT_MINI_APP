@@ -823,6 +823,46 @@ async function initExtendedTables() {
       }
       console.log('✅ KUTUBXONA V2: Mavjud manbalar va materiallar migratsiya qilindi');
     }
+
+    // =================== LIVE ACTIVITY & ANALYTICS TRACKING ===================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_activity (
+        user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        last_seen_at TIMESTAMPTZ DEFAULT NOW(),
+        current_tab VARCHAR(50) DEFAULT 'home',
+        status VARCHAR(50) DEFAULT 'online',
+        lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
+        lesson_title VARCHAR(500),
+        module_title VARCHAR(500),
+        course_title VARCHAR(500),
+        video_progress INT DEFAULT 0,
+        video_duration INT DEFAULT 0,
+        video_status VARCHAR(30) DEFAULT 'watching',
+        module_id INT REFERENCES modules(id) ON DELETE SET NULL,
+        test_question_index INT DEFAULT 0,
+        test_total_questions INT DEFAULT 0,
+        device_info VARCHAR(100),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_last_seen ON user_activity(last_seen_at)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_status ON user_activity(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_activity_lesson ON user_activity(lesson_id)');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_history (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        activity_type VARCHAR(50) NOT NULL,
+        lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
+        module_id INT REFERENCES modules(id) ON DELETE SET NULL,
+        duration_seconds INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_created ON activity_history(created_at)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_type ON activity_history(activity_type)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_activity_history_user ON activity_history(user_id)');
   } catch (error) {
     console.error('INIT EXTENDED TABLES ERROR:', error);
   }
@@ -880,7 +920,7 @@ function getYouTubeVideoId(url) {
 function generateYouTubePlayerUrl(youtubeUrl) {
   var videoId = getYouTubeVideoId(youtubeUrl);
   if (!videoId) return null;
-  return 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1';
+  return 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1&enablejsapi=1';
 }
 
 // Google Drive va boshqa rasm linklarini to'g'ridan-to'g'ri rasm CDN formatiga o'tkazish
@@ -2304,7 +2344,82 @@ app.post('/api/admin/auth', requireAdmin, async function (req, res) {
 });
 
 // ======================================================
-// ADMIN STATS
+// LIVE ACTIVITY & HEARTBEAT
+// ======================================================
+
+app.post('/api/activity/heartbeat', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) {
+      return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+    }
+
+    var b = req.body || {};
+    var currentTab = (b.current_tab || 'home').slice(0, 50);
+    var status = (b.status || 'online').slice(0, 50);
+    var lessonId = b.lesson_id ? parseInt(b.lesson_id) : null;
+    var lessonTitle = b.lesson_title ? String(b.lesson_title).slice(0, 500) : null;
+    var moduleTitle = b.module_title ? String(b.module_title).slice(0, 500) : null;
+    var courseTitle = b.course_title ? String(b.course_title).slice(0, 500) : null;
+    var videoProgress = Math.max(0, parseInt(b.video_progress) || 0);
+    var videoDuration = Math.max(0, parseInt(b.video_duration) || 0);
+    var videoStatus = (b.video_status || 'watching').slice(0, 30);
+    var moduleId = b.module_id ? parseInt(b.module_id) : null;
+    var testQuestionIndex = Math.max(0, parseInt(b.test_question_index) || 0);
+    var testTotalQuestions = Math.max(0, parseInt(b.test_total_questions) || 0);
+    var deviceInfo = (b.device_info || '').slice(0, 100);
+
+    if (lessonId && videoStatus === 'watching') {
+      status = 'watching';
+    } else if (moduleId && status === 'testing') {
+      status = 'testing';
+    }
+
+    await pool.query(`
+      INSERT INTO user_activity (
+        user_id, last_seen_at, current_tab, status,
+        lesson_id, lesson_title, module_title, course_title,
+        video_progress, video_duration, video_status,
+        module_id, test_question_index, test_total_questions,
+        device_info, updated_at
+      ) VALUES (
+        $1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW()
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        last_seen_at = NOW(),
+        current_tab = EXCLUDED.current_tab,
+        status = EXCLUDED.status,
+        lesson_id = EXCLUDED.lesson_id,
+        lesson_title = EXCLUDED.lesson_title,
+        module_title = EXCLUDED.module_title,
+        course_title = EXCLUDED.course_title,
+        video_progress = EXCLUDED.video_progress,
+        video_duration = EXCLUDED.video_duration,
+        video_status = EXCLUDED.video_status,
+        module_id = EXCLUDED.module_id,
+        test_question_index = EXCLUDED.test_question_index,
+        test_total_questions = EXCLUDED.test_total_questions,
+        device_info = EXCLUDED.device_info,
+        updated_at = NOW()
+    `, [
+      user.id, currentTab, status,
+      lessonId, lessonTitle, moduleTitle, courseTitle,
+      videoProgress, videoDuration, videoStatus,
+      moduleId, testQuestionIndex, testTotalQuestions,
+      deviceInfo
+    ]);
+
+    await pool.query('UPDATE users SET device_last_seen = NOW() WHERE id = $1', [user.id]);
+
+    return res.json({ ok: true, server_time: new Date() });
+  } catch (error) {
+    console.error('HEARTBEAT ERROR:', error.message);
+    return res.status(500).json({ error: 'Heartbeat xatosi' });
+  }
+});
+
+// ======================================================
+// ADMIN STATS & LIVE ANALYTICS
 // ======================================================
 
 app.post('/api/admin/stats', requireAdmin, async function (req, res) {
@@ -2322,6 +2437,24 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       "SELECT COUNT(*)::int AS c FROM payment_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'pending' AND u.access_until IS NOT NULL"
     );
 
+    // Live counts
+    var liveResult = await pool.query(`
+      SELECT
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
+        COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
+      FROM user_activity
+    `);
+    var la = liveResult.rows[0] || {};
+
+    var todayProgressResult = await pool.query(`
+      SELECT COUNT(*)::int AS today_views FROM progress WHERE watched = true AND watched_at >= CURRENT_DATE
+    `);
+    var todayTestsResult = await pool.query(`
+      SELECT COUNT(*)::int AS today_tests FROM module_results WHERE attempted_at >= CURRENT_DATE
+    `);
+
     return res.json({
       ok: true,
       stats: {
@@ -2332,12 +2465,218 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
         total_lessons: lessonsResult.rows[0].total,
         total_modules: modulesResult.rows[0].total,
         pending_new: pendingNewResult.rows[0].c,
-        pending_renewal: pendingRenewalResult.rows[0].c
+        pending_renewal: pendingRenewalResult.rows[0].c,
+        online_now: la.online_now || 0,
+        watching_now: la.watching_now || 0,
+        testing_now: la.testing_now || 0,
+        today_active: Math.max(la.today_active || 0, la.online_now || 0),
+        today_lesson_views: todayProgressResult.rows[0]?.today_views || 0,
+        today_test_attempts: todayTestsResult.rows[0]?.today_tests || 0
       }
     });
   } catch (error) {
     console.error('ADMIN STATS ERROR:', error);
     return res.status(500).json({ error: 'Statistikani olishda xato' });
+  }
+});
+
+app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
+  try {
+    var liveStatsPromise = pool.query(`
+      SELECT
+        COUNT(*)::int AS total_students,
+        COUNT(CASE WHEN access_until > NOW() THEN 1 END)::int AS paid_students,
+        COUNT(CASE WHEN access_until IS NULL OR access_until <= NOW() THEN 1 END)::int AS unpaid_students
+      FROM users
+    `);
+
+    var liveActivityPromise = pool.query(`
+      SELECT
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
+        COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
+      FROM user_activity
+    `);
+
+    var todayProgressPromise = pool.query(`
+      SELECT COUNT(*)::int AS today_lesson_views
+      FROM progress
+      WHERE watched = true AND watched_at >= CURRENT_DATE
+    `);
+
+    var todayTestsPromise = pool.query(`
+      SELECT
+        COUNT(*)::int AS today_test_attempts,
+        COUNT(CASE WHEN passed = true THEN 1 END)::int AS today_test_passed
+      FROM module_results
+      WHERE attempted_at >= CURRENT_DATE
+    `);
+
+    var activeUsersPromise = pool.query(`
+      SELECT
+        ua.user_id, ua.last_seen_at, ua.current_tab, ua.status,
+        ua.lesson_id, ua.lesson_title, ua.module_title, ua.course_title,
+        ua.video_progress, ua.video_duration, ua.video_status,
+        ua.module_id, ua.test_question_index, ua.test_total_questions,
+        ua.device_info, ua.updated_at,
+        u.telegram_id, u.first_name, u.last_name, u.username, u.phone, u.access_until
+      FROM user_activity ua
+      JOIN users u ON u.id = ua.user_id
+      WHERE ua.last_seen_at >= NOW() - INTERVAL '20 MINUTES'
+      ORDER BY ua.last_seen_at DESC
+      LIMIT 60
+    `);
+
+    var [liveStatsRes, liveActRes, todayProgRes, todayTestsRes, activeUsersRes] = await Promise.all([
+      liveStatsPromise,
+      liveActivityPromise,
+      todayProgressPromise,
+      todayTestsPromise,
+      activeUsersPromise
+    ]);
+
+    var ls = liveStatsRes.rows[0] || {};
+    var la = liveActRes.rows[0] || {};
+    var tp = todayProgRes.rows[0] || {};
+    var tt = todayTestsRes.rows[0] || {};
+
+    return res.json({
+      ok: true,
+      stats: {
+        total_students: ls.total_students || 0,
+        paid_students: ls.paid_students || 0,
+        unpaid_students: ls.unpaid_students || 0,
+        online_now: la.online_now || 0,
+        watching_now: la.watching_now || 0,
+        testing_now: la.testing_now || 0,
+        today_active: Math.max(la.today_active || 0, la.online_now || 0),
+        today_lesson_views: tp.today_lesson_views || 0,
+        today_test_attempts: tt.today_test_attempts || 0,
+        today_test_passed: tt.today_test_passed || 0
+      },
+      active_users: activeUsersRes.rows
+    });
+  } catch (error) {
+    console.error('LIVE ACTIVITY ERROR:', error);
+    return res.status(500).json({ error: 'Live statistikalarni olishda xato' });
+  }
+});
+
+app.post('/api/admin/analytics/history', requireAdmin, async function (req, res) {
+  try {
+    var period = req.body.period || '7days';
+    var startDateSql = "CURRENT_DATE - INTERVAL '6 DAYS'";
+    var endDateSql = "CURRENT_DATE + INTERVAL '1 DAY'";
+
+    if (period === 'today') {
+      startDateSql = "CURRENT_DATE";
+      endDateSql = "CURRENT_DATE + INTERVAL '1 DAY'";
+    } else if (period === 'yesterday') {
+      startDateSql = "CURRENT_DATE - INTERVAL '1 DAY'";
+      endDateSql = "CURRENT_DATE";
+    } else if (period === '30days') {
+      startDateSql = "CURRENT_DATE - INTERVAL '29 DAYS'";
+      endDateSql = "CURRENT_DATE + INTERVAL '1 DAY'";
+    }
+
+    var summaryPromise = pool.query(`
+      SELECT
+        (SELECT COUNT(*)::int FROM users WHERE created_at >= ${startDateSql} AND created_at < ${endDateSql}) AS new_users,
+        (SELECT COUNT(DISTINCT user_id)::int FROM user_activity WHERE last_seen_at >= ${startDateSql} AND last_seen_at < ${endDateSql}) AS active_users,
+        (SELECT COUNT(*)::int FROM progress WHERE watched = true AND watched_at >= ${startDateSql} AND watched_at < ${endDateSql}) AS lesson_views,
+        (SELECT COUNT(*)::int FROM module_results WHERE attempted_at >= ${startDateSql} AND attempted_at < ${endDateSql}) AS test_attempts,
+        (SELECT COUNT(*)::int FROM module_results WHERE passed = true AND attempted_at >= ${startDateSql} AND attempted_at < ${endDateSql}) AS passed_tests
+    `);
+
+    var dailyPromise = pool.query(`
+      WITH dates AS (
+        SELECT generate_series(
+          (${startDateSql})::date,
+          (LEAST((${endDateSql})::date - INTERVAL '1 DAY', CURRENT_DATE))::date,
+          '1 day'::interval
+        )::date AS day
+      )
+      SELECT
+        d.day::text AS date,
+        TO_CHAR(d.day, 'DD.MM') AS label,
+        COALESCE(u.cnt, 0)::int AS new_users,
+        COALESCE(p.cnt, 0)::int AS lesson_views,
+        COALESCE(t.cnt, 0)::int AS test_attempts
+      FROM dates d
+      LEFT JOIN (
+        SELECT created_at::date AS day, COUNT(*) AS cnt FROM users GROUP BY day
+      ) u ON u.day = d.day
+      LEFT JOIN (
+        SELECT watched_at::date AS day, COUNT(*) AS cnt FROM progress WHERE watched = true GROUP BY day
+      ) p ON p.day = d.day
+      LEFT JOIN (
+        SELECT attempted_at::date AS day, COUNT(*) AS cnt FROM module_results GROUP BY day
+      ) t ON t.day = d.day
+      ORDER BY d.day ASC
+    `);
+
+    var [summaryRes, dailyRes] = await Promise.all([summaryPromise, dailyPromise]);
+    var summary = summaryRes.rows[0] || {};
+
+    return res.json({
+      ok: true,
+      period: period,
+      summary: {
+        new_users: summary.new_users || 0,
+        active_users: Math.max(summary.active_users || 0, summary.new_users || 0),
+        lesson_views: summary.lesson_views || 0,
+        test_attempts: summary.test_attempts || 0,
+        passed_tests: summary.passed_tests || 0
+      },
+      daily: dailyRes.rows
+    });
+  } catch (error) {
+    console.error('ANALYTICS HISTORY ERROR:', error);
+    return res.status(500).json({ error: 'Tarixiy tahlillarni olishda xato' });
+  }
+});
+
+app.post('/api/admin/student/:id/live-dossier', requireAdmin, async function (req, res) {
+  try {
+    var userId = parseInt(req.params.id);
+    var uRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (!uRes.rows.length) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+
+    var user = uRes.rows[0];
+    var actRes = await pool.query('SELECT * FROM user_activity WHERE user_id = $1', [userId]);
+    var activity = actRes.rows[0] || null;
+
+    var progRes = await pool.query('SELECT COUNT(*)::int AS watched FROM progress WHERE user_id = $1 AND watched = true', [userId]);
+    var totalLessRes = await pool.query('SELECT COUNT(*)::int AS total FROM lessons');
+    var testsRes = await pool.query(`
+      SELECT mr.*, m.title AS module_title
+      FROM module_results mr
+      JOIN modules m ON m.id = mr.module_id
+      WHERE mr.user_id = $1
+      ORDER BY mr.attempted_at DESC
+    `, [userId]);
+
+    return res.json({
+      ok: true,
+      student: {
+        id: user.id,
+        telegram_id: user.telegram_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        username: user.username,
+        phone: user.phone,
+        access_until: user.access_until,
+        created_at: user.created_at,
+        watched_lessons: progRes.rows[0].watched || 0,
+        total_lessons: totalLessRes.rows[0].total || 0,
+        activity: activity,
+        tests: testsRes.rows
+      }
+    });
+  } catch (error) {
+    console.error('STUDENT LIVE DOSSIER ERROR:', error);
+    return res.status(500).json({ error: 'O\'quvchi ma\'lumotlarini olishda xato' });
   }
 });
 
