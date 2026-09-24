@@ -744,6 +744,29 @@ function generateYouTubePlayerUrl(youtubeUrl) {
   return 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1';
 }
 
+// Google Drive va boshqa rasm linklarini to'g'ridan-to'g'ri rasm CDN formatiga o'tkazish
+function formatDirectImageUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  var cleanUrl = url.trim();
+  if (!cleanUrl) return '';
+
+  var driveMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return 'https://lh3.googleusercontent.com/d/' + driveMatch[1];
+  }
+
+  var driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (cleanUrl.indexOf('drive.google.com') !== -1 && driveIdMatch && driveIdMatch[1]) {
+    return 'https://lh3.googleusercontent.com/d/' + driveIdMatch[1];
+  }
+
+  if (cleanUrl.indexOf('dropbox.com') !== -1) {
+    return cleanUrl.replace(/[?&]dl=0/, '').concat(cleanUrl.indexOf('?') !== -1 ? '&raw=1' : '?raw=1');
+  }
+
+  return cleanUrl;
+}
+
 // ======================================================
 // ACCESS
 // ======================================================
@@ -1101,6 +1124,7 @@ app.post('/api/content', async function (req, res) {
       courses = coursesRes.rows.map(function (c) {
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
         return Object.assign({}, c, {
+          cover_url: formatDirectImageUrl(c.cover_url),
           is_discount_active: isDiscountActive,
           original_price: c.price,
           display_price: isDiscountActive ? c.discount_price : c.price
@@ -1312,6 +1336,10 @@ app.post('/api/course/:id/modules', async function (req, res) {
         retake_available_at: retakeAvailableAtMap[mod.id] || null
       };
     });
+
+    if (course && course.cover_url) {
+      course.cover_url = formatDirectImageUrl(course.cover_url);
+    }
 
     return res.json({ ok: true, course: course, modules: data });
   } catch (error) {
@@ -2961,7 +2989,7 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var totalModules = Number(req.body.total_modules) || 0;
     var totalLessons = Number(req.body.total_lessons) || 0;
     var releaseDate = String(req.body.release_date || 'Qoralama').trim();
-    var coverUrl = String(req.body.cover_url || '').trim();
+    var coverUrl = formatDirectImageUrl(String(req.body.cover_url || '').trim());
     var status = String(req.body.status || 'draft').trim();
     if (status !== 'active' && status !== 'draft') status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length
@@ -2993,7 +3021,7 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     var totalModules = Number(req.body.total_modules) || 0;
     var totalLessons = Number(req.body.total_lessons) || 0;
     var releaseDate = String(req.body.release_date || '').trim();
-    var coverUrl = String(req.body.cover_url || '').trim();
+    var coverUrl = formatDirectImageUrl(String(req.body.cover_url || '').trim());
     var status = String(req.body.status || 'draft').trim();
     if (status !== 'active' && status !== 'draft') status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length

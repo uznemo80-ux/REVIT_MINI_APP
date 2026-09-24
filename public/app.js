@@ -62,6 +62,74 @@ function escapeJsString(value) {
     .replace(/>/g, "\\u003E");
 }
 
+// Google Drive, Dropbox va boshqa rasm linklarini to'g'ridan-to'g'ri img src formatiga o'tkazuvchi funksiya
+function formatImageUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  let cleanUrl = url.trim();
+  if (!cleanUrl) return "";
+
+  // Google Drive: /file/d/FILE_ID
+  const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+  }
+
+  // Google Drive: id=FILE_ID
+  const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (cleanUrl.includes("drive.google.com") && driveIdMatch && driveIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+  }
+
+  // Dropbox (dl=0 -> raw=1)
+  if (cleanUrl.includes("dropbox.com")) {
+    return cleanUrl.replace(/[?&]dl=0/, "").concat(cleanUrl.includes("?") ? "&raw=1" : "?raw=1");
+  }
+
+  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://") && !cleanUrl.startsWith("data:")) {
+    cleanUrl = "https://" + cleanUrl;
+  }
+
+  return cleanUrl;
+}
+
+function getDriveFallbackUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  let cleanUrl = url.trim();
+  const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${driveFileMatch[1]}&sz=w1200`;
+  }
+  const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (cleanUrl.includes("drive.google.com") && driveIdMatch && driveIdMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1200`;
+  }
+  return "";
+}
+
+function handleImageError(imgEl) {
+  if (!imgEl) return;
+  const retry = imgEl.dataset.retry;
+  if (retry && imgEl.src !== retry) {
+    imgEl.dataset.retry = "";
+    imgEl.src = retry;
+  } else {
+    imgEl.style.display = "none";
+  }
+}
+
+function updateCourseCoverPreview(val, previewId) {
+  const container = document.getElementById(previewId);
+  if (!container) return;
+  const formatted = formatImageUrl(val);
+  if (formatted) {
+    container.style.display = "block";
+    container.innerHTML = `<img src="${escapeHtml(formatted)}" data-retry="${escapeHtml(getDriveFallbackUrl(val))}" onerror="handleImageError(this)" style="width:100%; height:160px; object-fit:cover; border-radius:10px;" />`;
+  } else {
+    container.style.display = "none";
+    container.innerHTML = "";
+  }
+}
+
 // Narx maydonlari uchun: faqat raqam qoldiradi va har 3 xonadan keyin bo'shliq qo'yadi (1500000 -> 1 500 000)
 function formatPriceInput(el) {
   const digits = el.value.replace(/\D/g, "").slice(0, 12);
@@ -997,11 +1065,11 @@ function renderShowcaseCarousel() {
         <div id="showcase-carousel-inner" class="carousel-track">
           ${showcases.map((sc, idx) => {
             const isActive = idx === showcaseCurrentIndex;
-            const previewImg = sc.preview_image_url || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80";
+            const previewImg = formatImageUrl(sc.preview_image_url) || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80";
 
             return `
               <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${idx}">
-                <img src="${escapeHtml(previewImg)}" alt="${escapeHtml(sc.title)}" class="carousel-image-preview" onerror="this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80';">
+                <img src="${escapeHtml(previewImg)}" data-retry="${escapeHtml(getDriveFallbackUrl(sc.preview_image_url))}" alt="${escapeHtml(sc.title)}" class="carousel-image-preview" onerror="handleImageError(this) || (this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');">
                 
                 <div class="carousel-body">
                   <div class="carousel-badge-row">
@@ -2661,11 +2729,14 @@ function renderHome() {
         <span style="font-size:13px; color:var(--accent); cursor:pointer;" onclick="setTab('lessons')">Barchasi →</span>
       </div>
 
-      ${(state.courses || []).slice(0, 3).map(course => `
+      ${(state.courses || []).slice(0, 3).map(course => {
+        const coverSrc = formatImageUrl(course.cover_url);
+        const retrySrc = getDriveFallbackUrl(course.cover_url);
+        return `
         <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
           <div class="course-card-header">
-            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
-            <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
+            ${coverSrc ? `<img src="${escapeHtml(coverSrc)}" data-retry="${escapeHtml(retrySrc)}" onerror="handleImageError(this)" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            <div class="course-banner-text" style="${coverSrc ? 'background:rgba(0,0,0,0.5);' : ''}">
               <h3>${escapeHtml(course.title)}</h3>
               <p>${escapeHtml(course.subtitle || '')}</p>
             </div>
@@ -2684,7 +2755,8 @@ function renderHome() {
             </div>
           </div>
         </div>
-      `).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
+      `;
+      }).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
 
       <!-- 3-TALAB: O'QUVCHILAR NATIJALARI VA LOYIHA ALBOM LARI (PDF KARUSEL) -->
       ${renderShowcaseCarousel()}
@@ -2878,7 +2950,10 @@ function renderCoursesList() {
         `).join("")}
       </div>
 
-      ${coursesList.length ? coursesList.map(course => `
+      ${coursesList.length ? coursesList.map(course => {
+        const coverSrc = formatImageUrl(course.cover_url);
+        const retrySrc = getDriveFallbackUrl(course.cover_url);
+        return `
         <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
           ${state.is_admin ? `
             <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
@@ -2888,8 +2963,8 @@ function renderCoursesList() {
           ` : ""}
 
           <div class="course-card-header" style="aspect-ratio: 16/7; background: linear-gradient(135deg, #0d47a1, #1976d2);">
-            ${course.cover_url ? `<img src="${escapeHtml(course.cover_url)}" style="width:100%; height:100%; object-fit:cover;" />` : ""}
-            <div class="course-banner-text" style="${course.cover_url ? 'background:rgba(0,0,0,0.5);' : ''}">
+            ${coverSrc ? `<img src="${escapeHtml(coverSrc)}" data-retry="${escapeHtml(retrySrc)}" onerror="handleImageError(this)" style="width:100%; height:100%; object-fit:cover;" />` : ""}
+            <div class="course-banner-text" style="${coverSrc ? 'background:rgba(0,0,0,0.5);' : ''}">
               <h3>${escapeHtml(course.title)}</h3>
               <p>${escapeHtml(course.subtitle || '')}</p>
             </div>
@@ -2922,7 +2997,8 @@ function renderCoursesList() {
             </button>
           </div>
         </div>
-      `).join("") : `<div class="empty-box">Hech narsa topilmadi. Boshqa so'z yoki kategoriya bilan sinab ko'ring.</div>`}
+      `;
+      }).join("") : `<div class="empty-box">Hech narsa topilmadi. Boshqa so'z yoki kategoriya bilan sinab ko'ring.</div>`}
     </div>
   `;
 }
@@ -2991,8 +3067,9 @@ function openAddCourseModal() {
             <input id="c-rel" class="apple-input" placeholder="Masalan: Faol kurs yoki 15-sentabr" type="text">
           </div>
           <div class="apple-field">
-            <label>Obloshka (muqova) rasm linki</label>
-            <input id="c-cover" class="apple-input" placeholder="https://... rasm havolasi" type="url">
+            <label>Obloshka (muqova) rasm linki (Google Drive yoki to'g'ridan-to'g'ri rasm)</label>
+            <input id="c-cover" class="apple-input" placeholder="https://drive.google.com/file/d/... yoki https://..." type="url" oninput="updateCourseCoverPreview(this.value, 'add-course-cover-preview')">
+            <div id="add-course-cover-preview" style="margin-top:8px; border-radius:10px; overflow:hidden; display:none; max-height:160px; border:1px solid var(--border);"></div>
           </div>
 
           <div class="apple-field" style="margin-top:14px; margin-bottom:18px;">
@@ -3037,7 +3114,7 @@ async function submitCreateCourse() {
   const mod = document.getElementById("c-mod")?.value;
   const less = document.getElementById("c-less")?.value;
   const rel = document.getElementById("c-rel")?.value.trim();
-  const cover = document.getElementById("c-cover")?.value.trim();
+  const cover = formatImageUrl(document.getElementById("c-cover")?.value.trim() || "");
   const status = document.getElementById("c-status")?.value || "draft";
 
   if (!title) return showAlert("Kurs nomi kiritilishi shart!");
@@ -3126,8 +3203,11 @@ async function openEditCourseModal(id) {
             <input id="ec-rel" class="apple-input" value="${escapeHtml(course.release_date || '')}" type="text">
           </div>
           <div class="apple-field">
-            <label>Obloshka (muqova) rasm linki</label>
-            <input id="ec-cover" class="apple-input" value="${escapeHtml(course.cover_url || '')}" type="url">
+            <label>Obloshka (muqova) rasm linki (Google Drive yoki to'g'ridan-to'g'ri rasm)</label>
+            <input id="ec-cover" class="apple-input" value="${escapeHtml(course.cover_url || '')}" type="url" oninput="updateCourseCoverPreview(this.value, 'edit-course-cover-preview')">
+            <div id="edit-course-cover-preview" style="margin-top:8px; border-radius:10px; overflow:hidden; ${course.cover_url ? 'display:block;' : 'display:none;'} max-height:160px; border:1px solid var(--border);">
+              ${course.cover_url ? `<img src="${escapeHtml(formatImageUrl(course.cover_url))}" data-retry="${escapeHtml(getDriveFallbackUrl(course.cover_url))}" onerror="handleImageError(this)" style="width:100%; height:160px; object-fit:cover;" />` : ''}
+            </div>
           </div>
 
           <div class="apple-field" style="margin-top:14px; margin-bottom:18px;">
@@ -3174,7 +3254,7 @@ async function submitUpdateCourse(id) {
   const mod = document.getElementById("ec-mod")?.value;
   const less = document.getElementById("ec-less")?.value;
   const rel = document.getElementById("ec-rel")?.value.trim();
-  const cover = document.getElementById("ec-cover")?.value.trim();
+  const cover = formatImageUrl(document.getElementById("ec-cover")?.value.trim() || "");
   const status = document.getElementById("ec-status")?.value || "draft";
 
   if (!title) return showAlert("Kurs nomi majburiy!");
