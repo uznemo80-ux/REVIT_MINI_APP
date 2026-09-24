@@ -354,46 +354,8 @@ async function initExtendedTables() {
       ALTER TABLE course_showcases ADD COLUMN IF NOT EXISTS selected_pages TEXT DEFAULT '1, 2, 3, 4, 5';
     `);
 
-    var scCount = await pool.query('SELECT COUNT(*)::int AS c FROM course_showcases');
-    if (scCount.rows[0].c === 0) {
-      await pool.query(`
-        INSERT INTO course_showcases (course_id, course_title, title, student_name, description, pdf_url, preview_image_url, discount_badge, order_index)
-        VALUES
-        (
-          1,
-          'INTPRO — Revit dasturida interyer loyihalash',
-          '3 xonali zamonaviy xonadon to''liq ishchi loyihasi (42 list)',
-          'Azizbek Toshpo''latov',
-          'INTPRO kursi bitiruvchisi tomonidan tayyorlangan to''liq interyer rabochkasi: obmer, demontaj, montaj, santexnika, elektr, pol, patalok, razvyortkalar va spesifikatsiyalar.',
-          'https://drive.google.com/file/d/1B_sample_rabochka_revit/preview',
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-          '🔥 25% Chegirma: 1 125 000 so''m',
-          1
-        ),
-        (
-          1,
-          'INTPRO — Revit dasturida interyer loyihalash',
-          '2 qavatli hovli uyi arxitektura ishchi chizmalari (AR bo''limi)',
-          'Malika Karimova',
-          'Revit Architecture bo''yicha tayyorlangan to''liq ishchi loyiha: fasadlar, kesimlar, listlar, konstruktiv uzellar va fasad pasporti.',
-          'https://drive.google.com/file/d/1C_sample_house_revit/preview',
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-          '🔥 Maxsus chegirma narxi',
-          2
-        ),
-        (
-          1,
-          'INTPRO — Revit dasturida interyer loyihalash',
-          'Loft uslubidagi restoran va qahvaxona loyiha albomi',
-          'Sardorbek Aliyev',
-          'Jamoat binosi interyer loyihalash amaliy natijasi: mebel spetsifikatsiyalari, vitrajlar va yoritish zonalari.',
-          'https://drive.google.com/file/d/1D_sample_cafe_revit/preview',
-          'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80',
-          null,
-          3
-        )
-      `);
-    }
+    // Eski dummy/namunaviy soxta chizmalarni o'chirib tozalash
+    await pool.query("DELETE FROM course_showcases WHERE pdf_url LIKE '%sample%' OR preview_image_url LIKE '%unsplash%'");
 
     // 2. KUTUBXONA ERKIN MANBALARI VA TESTLARI (Talab 2)
     await pool.query(`

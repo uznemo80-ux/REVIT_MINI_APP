@@ -579,47 +579,7 @@ const PC_SPECS_DATA = {
 // TALAB 3: O'QUVCHILAR NATIJALARI (SHOWCASES) STANDART BAZASI
 // ======================================================
 
-const DEFAULT_SHOWCASES = [
-  {
-    id: 1,
-    course_id: 1,
-    course_title: "INTPRO — Revit dasturida interyer loyihalash",
-    title: "3 xonali zamonaviy xonadon to'liq ishchi loyihasi (42 list)",
-    student_name: "Azizbek Toshpo'latov",
-    description: "INTPRO kursi bitiruvchisi tomonidan tayyorlangan to'liq interyer rabochkasi: obmer, demontaj, montaj, santexnika, elektr, pol, patalok, razvyortkalar va spesifikatsiyalar.",
-    pdf_url: "https://drive.google.com/file/d/1B_sample_rabochka_revit/preview",
-    preview_image_url: "",
-    selected_pages: "1, 2, 3, 5, 8",
-    discount_badge: "🔥 25% Chegirma: 1 125 000 so'm",
-    order_index: 1
-  },
-  {
-    id: 2,
-    course_id: 1,
-    course_title: "INTPRO — Revit dasturida interyer loyihalash",
-    title: "2 qavatli hovli uyi arxitektura ishchi chizmalari (AR bo'limi)",
-    student_name: "Malika Karimova",
-    description: "Revit Architecture bo'yicha tayyorlangan to'liq ishchi loyiha: fasadlar, kesimlar, listlar, konstruktiv uzellar va fasad pasporti.",
-    pdf_url: "https://drive.google.com/file/d/1C_sample_house_revit/preview",
-    preview_image_url: "",
-    selected_pages: "1, 3, 7, 12",
-    discount_badge: "🔥 Maxsus chegirma narxi",
-    order_index: 2
-  },
-  {
-    id: 3,
-    course_id: 1,
-    course_title: "INTPRO — Revit dasturida interyer loyihalash",
-    title: "Loft uslubidagi restoran va qahvaxona loyiha albomi",
-    student_name: "Sardorbek Aliyev",
-    description: "Jamoat binosi interyer loyihalash amaliy natijasi: mebel spetsifikatsiyalari, vitrajlar va yoritish zonalari.",
-    pdf_url: "https://drive.google.com/file/d/1D_sample_cafe_revit/preview",
-    preview_image_url: "",
-    selected_pages: "1, 2, 4, 6",
-    discount_badge: null,
-    order_index: 3
-  }
-];
+const DEFAULT_SHOWCASES = [];
 
 // ======================================================
 // TALAB 2: KUTUBXONA OCHIQ MANBALARI VA ERKIN TESTLAR STANDART BAZASI
@@ -1088,11 +1048,16 @@ function returnFromShowcaseModal() {
 }
 
 function getShowcaseSlides() {
-  const showcases = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
+  const allSc = state.showcases && state.showcases.length ? state.showcases : [];
+  // Dummy / samplelarni chiqarib tashlash
+  const realSc = allSc.filter(sc => sc && sc.pdf_url && !sc.pdf_url.includes("sample_"));
+  const showcases = realSc.length ? realSc : allSc;
+  if (!showcases.length) return [];
+
   const slides = [];
 
   showcases.forEach((sc, scIdx) => {
-    const driveId = extractGoogleDriveId(sc.pdf_url || sc.preview_image_url || "");
+    const driveId = extractGoogleDriveId(sc.pdf_url || "");
     
     // Admin tanlagan listlar raqamlarini ajratib olish
     let pageNumbers = [];
@@ -1114,8 +1079,6 @@ function getShowcaseSlides() {
         pageNum,
         driveId,
         pdfUrl: sc.pdf_url || "",
-        src: driveId ? `https://lh3.googleusercontent.com/d/${driveId}` : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
-        retry: driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200` : "",
         slideIndex: slides.length
       });
     });
@@ -1169,7 +1132,7 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
       setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 300);
     }
   } catch (err) {
-    console.warn("PDF sheet render fallback to preview image:", err);
+    console.warn("PDF sheet render error:", err);
   }
 }
 
@@ -1284,18 +1247,12 @@ function renderShowcaseCarousel() {
 
             return `
               <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${globalIdx}">
-                <!-- Chizma visuali (To'liq korish, listlar nomi, ulashish tugmasisiz) -->
+                <!-- Faqat Google Drive PDF chizmasi (ortiqcha rasmlarsiz) -->
                 <div class="carousel-sheet-card">
                   <canvas id="pdf-canvas-${globalIdx}" class="carousel-pdf-canvas"></canvas>
                   <div class="pdf-sheet-spinner" id="pdf-spinner-${globalIdx}">
-                    <img
-                      src="${escapeHtml(item.src)}"
-                      data-retry="${escapeHtml(item.retry)}"
-                      class="carousel-image-preview"
-                      style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"
-                      onerror="handleImageError(this) || (this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');"
-                    />
-                    <div class="carousel-sheet-glass-overlay"></div>
+                    <div class="spinner"></div>
+                    <span style="font-size:11.5px; color:var(--text-secondary); margin-top:8px;">${item.pageNum}-list ochilmoqda...</span>
                   </div>
                 </div>
 
@@ -2964,15 +2921,15 @@ async function submitProfileEdit() {
 // ======================================================
 
 const ABOUT_TEXT = `
-Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi mutaxassisman.
+Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman.
 
-Men Autodesk Revit dasturini real interyer va arxitektura loyihalarini yaratish, ishchi chizmalar tayyorlash va loyiha jarayonini tizimli tashkil qilish vositasi sifatida o'rganib, amaliyotda 4 yildan beri qo'llab kelmoqdaman.
+Men real arxitektura, interyer va BIM loyihalarini yaratish, ishchi chizmalar tayyorlash hamda loyiha jarayonini tizimli tashkil qilish vositalarini amaliyotda 4 yildan beri qo'llab kelmoqdaman.
 
 Shu tajribalarimni boshqalar bilan professional tarzda bo'lishish maqsadida YOSHUZBEKK Academy platformasini yaratdim.
 `;
 
 const ABOUT_SHORT = `
-Assalomu alaykum! Men Abdulloh — arxitektura va BIM yo'nalishida faoliyat yurituvchi mutaxassisman. Revit dasturida professional interyer loyihalashni amaliyotda o'rgataman.
+Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman. Zamonaviy loyihalash va modellashtirishni amaliyotda o'rgataman.
 `;
 
 const TESTIMONIALS = [
@@ -3124,6 +3081,102 @@ function renderFreeMiniCourseCard() {
   `;
 }
 
+let fmcActiveCourseFilter = "all";
+
+function renderFmcLessonsListHtml(selectedIds) {
+  const courses = state.courses || [];
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+
+  const filterCourseId = fmcActiveCourseFilter;
+  const filteredCourses = filterCourseId === "all" 
+    ? courses 
+    : courses.filter(c => String(c.id) === String(filterCourseId));
+
+  if (!filteredCourses.length && modules.length) {
+    return modules.map(m => `
+      <div style="margin-bottom:12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; padding:10px;">
+        <div style="font-size:12.5px; font-weight:750; color:var(--accent); margin-bottom:8px;">📂 ${escapeHtml(m.title)}</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${(m.lessons || []).map(l => {
+            const isChecked = selectedIds.length ? selectedIds.includes(Number(l.id)) : Boolean(l.is_free);
+            return `
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" class="fmc-lesson-cb" value="${l.id}" ${isChecked ? "checked" : ""}>
+                <span>${escapeHtml(l.title)} ${l.is_free ? '<span style="color:var(--success); font-size:11px;">(Bepul)</span>' : ''}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  return filteredCourses.map(c => {
+    const cModules = modules.filter(m => Number(m.course_id) === Number(c.id));
+    if (!cModules.length) return "";
+
+    return `
+      <div class="fmc-course-group" style="margin-bottom:14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px;">
+          <span style="font-size:13px; font-weight:800; color:var(--accent);">🎓 ${escapeHtml(c.title)}</span>
+          <button type="button" class="admin-small-btn" onclick="toggleSelectCourseLessons(${c.id})" style="font-size:10px; padding:3px 8px;">
+            Ushbu kursni to'liq belgilash
+          </button>
+        </div>
+
+        ${cModules.map(m => `
+          <div style="margin-bottom:10px; padding-left:6px; border-left:2px solid rgba(41,121,255,0.35);">
+            <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
+              📂 ${escapeHtml(m.title)}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; padding-left:4px;">
+              ${(m.lessons || []).map(l => {
+                const isChecked = selectedIds.length ? selectedIds.includes(Number(l.id)) : Boolean(l.is_free);
+                return `
+                  <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                    <input type="checkbox" class="fmc-lesson-cb" data-course-id="${c.id}" value="${l.id}" ${isChecked ? "checked" : ""}>
+                    <span>${escapeHtml(l.title)} ${l.is_free ? '<span style="color:var(--success); font-size:11px; font-weight:700;">(Bepul)</span>' : ''}</span>
+                  </label>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }).join("");
+}
+
+function onFmcCourseFilterChange(val) {
+  fmcActiveCourseFilter = val;
+  const currentChecked = Array.from(document.querySelectorAll(".fmc-lesson-cb:checked")).map(cb => Number(cb.value));
+  const container = document.getElementById("fmc-lessons-grouped-container");
+  if (container) {
+    container.innerHTML = renderFmcLessonsListHtml(currentChecked);
+  }
+}
+
+function toggleSelectCourseLessons(courseId) {
+  haptic("light");
+  const cbs = document.querySelectorAll(`.fmc-lesson-cb[data-course-id="${courseId}"]`);
+  const anyUnchecked = Array.from(cbs).some(cb => !cb.checked);
+  cbs.forEach(cb => { cb.checked = anyUnchecked; });
+}
+
+function selectAllFreeLessons() {
+  haptic("medium");
+  const modules = Array.isArray(state.modules) ? state.modules : [];
+  const freeIds = new Set(modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => Number(l.id))));
+  document.querySelectorAll(".fmc-lesson-cb").forEach(cb => {
+    cb.checked = freeIds.has(Number(cb.value));
+  });
+}
+
+function clearAllFmcLessons() {
+  haptic("light");
+  document.querySelectorAll(".fmc-lesson-cb").forEach(cb => { cb.checked = false; });
+}
+
 function openEditFreeMiniCourseModal() {
   haptic("light");
   const s = state.settings || {};
@@ -3132,8 +3185,7 @@ function openEditFreeMiniCourseModal() {
   const currentPoints = s.free_minicourse_points || "Revit nima ekanini tushunasiz\nBirinchi loyihani yaratasiz\nDevor, eshik, deraza chizasiz\nBirinchi 3D modelingizni yaratasiz";
   const selectedIds = (s.free_minicourse_lesson_ids || "").split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
 
-  const modules = Array.isArray(state.modules) ? state.modules : [];
-  const allLessons = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
+  fmcActiveCourseFilter = "all";
 
   currentView = {
     html: `
@@ -3158,20 +3210,31 @@ function openEditFreeMiniCourseModal() {
           </div>
 
           <div class="apple-field">
-            <label>Ushbu bepul mini-kursga kiruvchi darslar (belgilang):</label>
-            <div style="max-height:220px; overflow-y:auto; background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px;">
-              ${allLessons.map(l => {
-                const isChecked = selectedIds.length ? selectedIds.includes(l.id) : Boolean(l.is_free);
-                return `
-                  <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
-                    <input type="checkbox" class="fmc-lesson-cb" value="${l.id}" ${isChecked ? "checked" : ""}>
-                    <span>${escapeHtml(l.module_title || "")}: <b>${escapeHtml(l.title)}</b> ${l.is_free ? '<span style="color:var(--success); font-size:11px;">(Bepul)</span>' : ''}</span>
-                  </label>
-                `;
-              }).join("")}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <label style="font-weight:700; margin:0;">Mini-kurs darslari (kurslar bo'yicha tartiblangan):</label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="admin-small-btn" onclick="selectAllFreeLessons()" style="font-size:10.5px; padding:3px 8px;">
+                  Barcha bepul darslar
+                </button>
+                <button type="button" class="admin-small-btn" onclick="clearAllFmcLessons()" style="font-size:10.5px; padding:3px 8px; color:var(--danger);">
+                  Tozalash
+                </button>
+              </div>
             </div>
-            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
-              Admin qaysi darslarni belgilasa, bepul mini-kurs kartasida aynan o'sha darslar soni va ro'yxati ko'rsatiladi.
+
+            <!-- Kurs bo'yicha saralash filtri -->
+            <div style="margin-bottom:10px;">
+              <select id="fmc-course-filter" class="apple-input" onchange="onFmcCourseFilterChange(this.value)" style="font-size:12.5px;">
+                <option value="all">📁 Barcha kurslar bo'yicha ko'rish</option>
+                ${(state.courses || []).map(c => `<option value="${c.id}">🎓 ${escapeHtml(c.title)}</option>`).join("")}
+              </select>
+            </div>
+
+            <div id="fmc-lessons-grouped-container" style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-surface);">
+              ${renderFmcLessonsListHtml(selectedIds)}
+            </div>
+            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:6px; display:block;">
+              💡 Darslar kurslar va modullar bo'yicha tartiblangan. Qaysi darslarni belgilasangiz, o'quvchi boshlash tugmasini bosganda aynan o'sha darslar ro'yxati ochiladi.
             </span>
           </div>
 
@@ -3268,7 +3331,7 @@ function renderHome() {
         <div class="welcome-title">
           Xush kelibsiz${state.first_name ? ", " + escapeHtml(state.first_name) : ""}!
         </div>
-        <div class="welcome-sub">Revit dasturida interyer loyihalash professional akademiyasi</div>
+        <div class="welcome-sub">${escapeHtml(s.academy_sub || "Arxitektura, BIM, Interyer va Vizualizatsiya akademiyasi")}</div>
       </div>
 
       <!-- 7-TALAB: O'QUV PROGRESSI (Bepul va pullik o'quvchi uchun moslashuvchan) -->
