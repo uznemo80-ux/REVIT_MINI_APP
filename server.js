@@ -3321,11 +3321,152 @@ app.all(['/api/showcases'], async function (req, res) {
   }
 });
 
+function extractGoogleDriveId(rawUrl) {
+  if (!rawUrl) return null;
+  var str = String(rawUrl).trim();
+  var match = str.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  match = str.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  match = str.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(str)) return str;
+  return null;
+}
+
+// PDF fayllarni frontend uchun CORS va cheklovlarsiz proxy qilish
+app.get('/api/pdf-proxy', async function (req, res) {
+  try {
+    var rawUrl = req.query.url ? String(req.query.url).trim() : '';
+    var fileId = req.query.id ? String(req.query.id).trim() : extractGoogleDriveId(rawUrl);
+    var targetUrl = '';
+
+    if (fileId) {
+      targetUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download';
+    } else if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
+      targetUrl = rawUrl;
+    } else {
+      return res.status(400).json({ error: 'Fayl manzili ko‘rsatilmadi' });
+    }
+
+    var headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    var fetchRes = await fetch(targetUrl, {
+      method: 'GET',
+      headers: headers,
+      redirect: 'follow'
+    });
+
+    if (!fetchRes.ok && fileId) {
+      targetUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+      fetchRes = await fetch(targetUrl, {
+        method: 'GET',
+        headers: headers,
+        redirect: 'follow'
+      });
+    }
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+    res.setHeader('Content-Type', fetchRes.headers.get('content-type') || 'application/pdf');
+    if (fetchRes.headers.get('content-length')) {
+      res.setHeader('Content-Length', fetchRes.headers.get('content-length'));
+    }
+    if (fetchRes.headers.get('content-range')) {
+      res.setHeader('Content-Range', fetchRes.headers.get('content-range'));
+      res.status(206);
+    }
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    var arrayBuffer = await fetchRes.arrayBuffer();
+    return res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error('PDF PROXY ERROR:', error);
+    return res.status(500).json({ error: 'PDF faylni yuklashda xatolik yuz berdi' });
+  }
+});
+
+// Admin uchun Google Drive PDF listlarini o'qish va tahlil qilish
+app.post('/api/admin/showcases/inspect-pdf', requireAdmin, async function (req, res) {
+  try {
+    var rawUrl = req.body.pdf_url ? String(req.body.pdf_url).trim() : '';
+    if (!rawUrl) {
+      return res.status(400).json({ error: 'PDF havolasi kiritilmadi' });
+    }
+    var fileId = extractGoogleDriveId(rawUrl);
+    var downloadUrl = fileId
+      ? 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download'
+      : rawUrl;
+
+    var response = await fetch(downloadUrl, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      redirect: 'follow'
+    });
+
+    if (!response.ok && fileId) {
+      downloadUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+      response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        redirect: 'follow'
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Google Drive faylini avtomatik yuklab bo‘lmadi (' + response.status + '). Havola "Hammaga ochiq" (Anyone with the link) ekanini tekshiring yoki listlar sonini qo‘lda belgilang.'
+      });
+    }
+
+    var buffer = Buffer.from(await response.arrayBuffer());
+    var str = buffer.toString('latin1');
+
+    var pageCount = 0;
+    var pageMatches = str.match(/\/Type\s*\/Page[^s]/g);
+    if (pageMatches && pageMatches.length > 0) {
+      pageCount = pageMatches.length;
+    } else {
+      var countMatches = str.match(/\/Count\s+(\d+)/g);
+      if (countMatches) {
+        var max = 0;
+        for (var i = 0; i < countMatches.length; i++) {
+          var num = parseInt(countMatches[i].replace(/[^0-9]/g, ''), 10);
+          if (num > max) max = num;
+        }
+        if (max > 0) pageCount = max;
+      }
+    }
+
+    if (!pageCount || pageCount < 1) {
+      pageCount = 10;
+    }
+
+    return res.json({
+      ok: true,
+      file_id: fileId,
+      total_pages: pageCount,
+      message: 'PDF muvaffaqiyatli o‘qildi: jami ' + pageCount + ' ta list aniqlandi.'
+    });
+  } catch (error) {
+    console.error('INSPECT PDF ERROR:', error);
+    return res.status(500).json({ ok: false, error: 'PDF tahlilida xatolik: ' + error.message });
+  }
+});
+
 app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
   try {
     var courseId = req.body.course_id ? Number(req.body.course_id) : null;
     var courseTitle = req.body.course_title ? String(req.body.course_title).trim() : '';
-    var title = req.body.title ? String(req.body.title).trim() : '';
+    var title = req.body.title ? String(req.body.title).trim() : (courseTitle ? courseTitle + ' loyihasi' : 'Revit kursi natijasi');
     var studentName = req.body.student_name ? String(req.body.student_name).trim() : '';
     var description = req.body.description ? String(req.body.description).trim() : '';
     var pdfUrl = req.body.pdf_url ? String(req.body.pdf_url).trim() : '';
@@ -3334,8 +3475,8 @@ app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
     var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
     var selectedPages = req.body.selected_pages ? String(req.body.selected_pages).trim() : '1, 2, 3, 4, 5';
 
-    if (!title || !pdfUrl) {
-      return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
+    if (!pdfUrl) {
+      return res.status(400).json({ error: 'PDF linki kiritilishi shart' });
     }
 
     var result = await pool.query(`
@@ -3357,7 +3498,7 @@ app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, r
     var id = Number(req.params.id);
     var courseId = req.body.course_id ? Number(req.body.course_id) : null;
     var courseTitle = req.body.course_title ? String(req.body.course_title).trim() : '';
-    var title = req.body.title ? String(req.body.title).trim() : '';
+    var title = req.body.title ? String(req.body.title).trim() : (courseTitle ? courseTitle + ' loyihasi' : 'Revit kursi natijasi');
     var studentName = req.body.student_name ? String(req.body.student_name).trim() : '';
     var description = req.body.description ? String(req.body.description).trim() : '';
     var pdfUrl = req.body.pdf_url ? String(req.body.pdf_url).trim() : '';
@@ -3366,8 +3507,8 @@ app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, r
     var orderIndex = req.body.order_index ? Number(req.body.order_index) : 0;
     var selectedPages = req.body.selected_pages ? String(req.body.selected_pages).trim() : '1, 2, 3, 4, 5';
 
-    if (!title || !pdfUrl) {
-      return res.status(400).json({ error: 'Loyiha nomi va PDF linki kiritilishi shart' });
+    if (!pdfUrl) {
+      return res.status(400).json({ error: 'PDF linki kiritilishi shart' });
     }
 
     var result = await pool.query(`

@@ -1087,67 +1087,104 @@ function returnFromShowcaseModal() {
   }
 }
 
-function getShowcaseSlideImages(sc) {
-  if (!sc) return [];
-  const results = [];
-  const rawSources = ((sc.selected_pages || "") + "\n" + (sc.preview_image_url || "")).trim();
-  const lines = rawSources.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
-
-  for (const line of lines) {
-    if (line.includes("drive.google.com") || line.startsWith("http://") || line.startsWith("https://")) {
-      const driveId = extractGoogleDriveId(line);
-      if (driveId) {
-        results.push({
-          src: `https://lh3.googleusercontent.com/d/${driveId}`,
-          retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
-        });
-      } else if (!line.endsWith(".pdf") && !line.includes("/preview")) {
-        results.push({
-          src: formatImageUrl(line),
-          retry: ""
-        });
-      }
-    }
-  }
-
-  // Fallback to sc.pdf_url if no images found yet
-  if (!results.length && sc.pdf_url) {
-    const driveId = extractGoogleDriveId(sc.pdf_url);
-    if (driveId) {
-      results.push({
-        src: `https://lh3.googleusercontent.com/d/${driveId}`,
-        retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
-      });
-    }
-  }
-
-  if (!results.length) {
-    results.push({
-      src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
-      retry: ""
-    });
-  }
-  return results;
-}
-
 function getShowcaseSlides() {
   const showcases = state.showcases && state.showcases.length ? state.showcases : DEFAULT_SHOWCASES;
   const slides = [];
+
   showcases.forEach((sc, scIdx) => {
-    const images = getShowcaseSlideImages(sc);
-    images.forEach((img, imgIdx) => {
+    const driveId = extractGoogleDriveId(sc.pdf_url || sc.preview_image_url || "");
+    
+    // Admin tanlagan listlar raqamlarini ajratib olish
+    let pageNumbers = [];
+    if (sc.selected_pages) {
+      pageNumbers = String(sc.selected_pages)
+        .split(/[,\s]+/)
+        .map(n => parseInt(n.trim(), 10))
+        .filter(n => !isNaN(n) && n > 0);
+    }
+
+    if (!pageNumbers.length) {
+      pageNumbers = [1, 2, 3, 4, 5];
+    }
+
+    pageNumbers.forEach(pageNum => {
       slides.push({
         sc,
         scIdx,
-        src: img.src,
-        retry: img.retry,
-        imgIdx,
-        totalImages: images.length,
+        pageNum,
+        driveId,
+        pdfUrl: sc.pdf_url || "",
+        src: driveId ? `https://lh3.googleusercontent.com/d/${driveId}` : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
+        retry: driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200` : "",
         slideIndex: slides.length
       });
     });
   });
+
   return slides;
+}
+
+// PDF.js orqali listlarni canvasga chizish kesh va funksiyalari
+const pdfDocPromiseCache = new Map();
+
+async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
+  if (typeof window.pdfjsLib === "undefined") return;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || canvas.dataset.rendered === "true") return;
+
+  const proxyUrl = driveId
+    ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}`
+    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
+
+  try {
+    let docPromise = pdfDocPromiseCache.get(proxyUrl);
+    if (!docPromise) {
+      docPromise = window.pdfjsLib.getDocument({
+        url: proxyUrl,
+        cMapUrl: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/",
+        cMapPacked: true
+      }).promise;
+      pdfDocPromiseCache.set(proxyUrl, docPromise);
+    }
+
+    const pdfDoc = await docPromise;
+    const actualPageNum = Math.min(Math.max(1, pageNum), pdfDoc.numPages);
+    const page = await pdfDoc.getPage(actualPageNum);
+
+    const containerWidth = canvas.parentElement?.clientWidth || 360;
+    const unscaledViewport = page.getViewport({ scale: 1 });
+    const scale = Math.max(1.2, (containerWidth / unscaledViewport.width) * 1.5);
+    const viewport = page.getViewport({ scale });
+
+    const ctx = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    canvas.dataset.rendered = "true";
+
+    const spinner = canvas.parentElement?.querySelector(".pdf-sheet-spinner");
+    if (spinner) {
+      spinner.style.opacity = "0";
+      setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 300);
+    }
+  } catch (err) {
+    console.warn("PDF sheet render fallback to preview image:", err);
+  }
+}
+
+function renderCurrentAndAdjacentPdfSlides() {
+  const slides = getShowcaseSlides();
+  if (!slides.length) return;
+  const cur = showcaseCurrentIndex;
+  const toRender = [cur, (cur + 1) % slides.length, (cur - 1 + slides.length) % slides.length];
+
+  toRender.forEach(idx => {
+    const slide = slides[idx];
+    if (slide && (slide.driveId || slide.pdfUrl)) {
+      renderPdfSlide(`pdf-canvas-${idx}`, slide.driveId, slide.pdfUrl, slide.pageNum);
+    }
+  });
 }
 
 function initShowcaseTimer() {
@@ -1157,7 +1194,7 @@ function initShowcaseTimer() {
     if (!slides.length) return;
     showcaseCurrentIndex = (showcaseCurrentIndex + 1) % slides.length;
     updateShowcaseDom();
-  }, 5000); // Har 5 sekundda keyingi chizmaga aylanadi
+  }, 5000);
 }
 
 function nextShowcaseSlide(e) {
@@ -1208,6 +1245,8 @@ function updateShowcaseDom() {
       dot.classList.remove("active");
     }
   });
+
+  renderCurrentAndAdjacentPdfSlides();
 }
 
 function renderShowcaseCarousel() {
@@ -1218,6 +1257,8 @@ function renderShowcaseCarousel() {
   if (!slides.length) return "";
 
   if (showcaseCurrentIndex >= slides.length) showcaseCurrentIndex = 0;
+
+  setTimeout(renderCurrentAndAdjacentPdfSlides, 80);
 
   return `
     <div class="showcase-section">
@@ -1245,31 +1286,32 @@ function renderShowcaseCarousel() {
               <div class="carousel-slide ${isActive ? "active" : ""}" data-idx="${globalIdx}">
                 <!-- Chizma visuali (To'liq korish, listlar nomi, ulashish tugmasisiz) -->
                 <div class="carousel-sheet-card">
-                  <img
-                    src="${escapeHtml(item.src)}"
-                    data-retry="${escapeHtml(item.retry)}"
-                    alt="${escapeHtml(sc.title)}"
-                    class="carousel-image-preview"
-                    onerror="handleImageError(this) || (this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');"
-                  />
-                  <div class="carousel-sheet-glass-overlay"></div>
+                  <canvas id="pdf-canvas-${globalIdx}" class="carousel-pdf-canvas"></canvas>
+                  <div class="pdf-sheet-spinner" id="pdf-spinner-${globalIdx}">
+                    <img
+                      src="${escapeHtml(item.src)}"
+                      data-retry="${escapeHtml(item.retry)}"
+                      class="carousel-image-preview"
+                      style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"
+                      onerror="handleImageError(this) || (this.src='https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');"
+                    />
+                    <div class="carousel-sheet-glass-overlay"></div>
+                  </div>
                 </div>
 
                 <div class="carousel-body">
+                  <!-- Faqat qaysi kursdan natija ekanligi va chegirma uyg'un tarzda -->
                   <div class="carousel-badge-row">
-                    <span class="carousel-course-tag">${escapeHtml(sc.course_title || "Revit kursi")}</span>
+                    <span class="carousel-course-tag">🎓 ${escapeHtml(sc.course_title || "Revit kursi")} o'quvchisi natijasi</span>
                     ${sc.discount_badge ? `<span class="carousel-discount-badge">${escapeHtml(sc.discount_badge)}</span>` : ""}
                   </div>
 
-                  <div class="carousel-slide-title">${escapeHtml(sc.title)}</div>
-                  <div class="carousel-desc">${escapeHtml(sc.description || "")}</div>
-
                   ${state.is_admin ? `
-                    <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:10px;">
-                      <button class="admin-small-btn" style="padding:8px 14px; font-size:12px;" onclick="openEditShowcaseModal(${Number(sc.id)})" title="Tahrirlash">
+                    <div class="carousel-admin-row">
+                      <button class="admin-small-btn" onclick="openEditShowcaseModal(${Number(sc.id)})" title="Tahrirlash">
                         ✏️ Tahrirlash
                       </button>
-                      <button class="admin-small-btn" style="padding:8px 14px; font-size:12px; background:rgba(235,59,59,0.2); color:#eb3b3b;" onclick="deleteShowcaseItem(${Number(sc.id)})" title="O'chirish">
+                      <button class="admin-small-btn" style="background:rgba(235,59,59,0.2); color:#eb3b3b;" onclick="deleteShowcaseItem(${Number(sc.id)})" title="O'chirish">
                         🗑️ O'chirish
                       </button>
                     </div>
@@ -1301,51 +1343,150 @@ function renderShowcaseCarousel() {
   `;
 }
 
-function updateAdminShowcasePreview() {
-  const pagesInput = document.getElementById("sc-pages") || document.getElementById("edit-sc-pages");
-  const previewBox = document.getElementById("admin-showcase-preview-box");
-  if (!previewBox) return;
+// ----------------------------------------------------
+// ADMIN SHEET SELECTOR & PDF INSPECT STATE & HELPERS
+// ----------------------------------------------------
+let currentShowcaseTotalSheets = 15;
+let currentShowcaseSelectedSheets = new Set([1, 2, 3, 4, 5]);
 
-  const rawText = pagesInput?.value.trim() || "";
-  const lines = rawText.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
+function initSheetSelector(initialSelectedStr, totalCount) {
+  currentShowcaseTotalSheets = totalCount || 15;
+  currentShowcaseSelectedSheets = new Set();
+  if (initialSelectedStr) {
+    String(initialSelectedStr).split(/[,\s]+/).forEach(n => {
+      const num = parseInt(n.trim(), 10);
+      if (!isNaN(num) && num > 0) currentShowcaseSelectedSheets.add(num);
+    });
+  }
+  if (!currentShowcaseSelectedSheets.size) {
+    for (let i = 1; i <= Math.min(5, currentShowcaseTotalSheets); i++) {
+      currentShowcaseSelectedSheets.add(i);
+    }
+  }
+  const maxSelected = Math.max(...Array.from(currentShowcaseSelectedSheets), 0);
+  if (maxSelected > currentShowcaseTotalSheets) {
+    currentShowcaseTotalSheets = maxSelected;
+  }
+  renderSheetChips();
+}
 
-  if (!lines.length) {
-    previewBox.innerHTML = `
-      <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:8px;">
-        💡 Google Disk chizmalar havolasini kiritsangiz, bu yerda slayderda aylanadigan barcha chizmalar chiqadi.
+function renderSheetChips() {
+  const container = document.getElementById("sheet-chips-container");
+  const totalInput = document.getElementById("sc-total-sheets");
+  const selectedInput = document.getElementById("sc-selected-pages") || document.getElementById("edit-sc-selected-pages");
+  if (!container) return;
+
+  if (totalInput) totalInput.value = currentShowcaseTotalSheets;
+
+  let html = "";
+  for (let i = 1; i <= currentShowcaseTotalSheets; i++) {
+    const isChecked = currentShowcaseSelectedSheets.has(i);
+    html += `
+      <div class="sheet-chip ${isChecked ? "active" : ""}" onclick="toggleSheetChip(${i})">
+        ${isChecked ? "✓ " : ""}${i}-list
       </div>
     `;
+  }
+  container.innerHTML = html;
+
+  const sortedList = Array.from(currentShowcaseSelectedSheets).sort((a, b) => a - b);
+  if (selectedInput) {
+    selectedInput.value = sortedList.join(", ");
+  }
+}
+
+function toggleSheetChip(sheetNum) {
+  haptic("light");
+  if (currentShowcaseSelectedSheets.has(sheetNum)) {
+    currentShowcaseSelectedSheets.delete(sheetNum);
+  } else {
+    currentShowcaseSelectedSheets.add(sheetNum);
+  }
+  renderSheetChips();
+}
+
+function quickSelectSheets(type) {
+  haptic("medium");
+  currentShowcaseSelectedSheets.clear();
+  if (type === "all") {
+    for (let i = 1; i <= currentShowcaseTotalSheets; i++) currentShowcaseSelectedSheets.add(i);
+  } else if (type === "first5") {
+    for (let i = 1; i <= Math.min(5, currentShowcaseTotalSheets); i++) currentShowcaseSelectedSheets.add(i);
+  } else if (type === "first10") {
+    for (let i = 1; i <= Math.min(10, currentShowcaseTotalSheets); i++) currentShowcaseSelectedSheets.add(i);
+  }
+  renderSheetChips();
+}
+
+function updateSheetTotalFromInput(val) {
+  const num = parseInt(val, 10);
+  if (!isNaN(num) && num >= 1 && num <= 100) {
+    currentShowcaseTotalSheets = num;
+    renderSheetChips();
+  }
+}
+
+function syncChipsFromTextInput(val) {
+  const nums = val.split(/[,\s]+/).map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n) && n > 0);
+  currentShowcaseSelectedSheets = new Set(nums);
+  const maxN = Math.max(...nums, 0);
+  if (maxN > currentShowcaseTotalSheets) {
+    currentShowcaseTotalSheets = maxN;
+  }
+  renderSheetChips();
+}
+
+async function inspectShowcasePdf() {
+  const pdfInput = document.getElementById("sc-pdf") || document.getElementById("edit-sc-pdf");
+  const statusEl = document.getElementById("inspect-pdf-status");
+  const btn = document.getElementById("btn-inspect-pdf");
+  const url = pdfInput?.value.trim() || "";
+
+  if (!url) {
+    showAlert("Avval Google Drive PDF havolasini kiriting!");
     return;
   }
 
-  const detectedImages = [];
-  lines.forEach(line => {
-    const driveId = extractGoogleDriveId(line);
-    if (driveId) {
-      detectedImages.push({
-        src: `https://lh3.googleusercontent.com/d/${driveId}`,
-        retry: `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`
-      });
-    } else if (line.startsWith("http://") || line.startsWith("https://")) {
-      detectedImages.push({
-        src: formatImageUrl(line),
-        retry: ""
-      });
-    }
-  });
+  if (btn) btn.classList.add("btn-loading");
+  if (statusEl) {
+    statusEl.innerHTML = `<span style="color:var(--accent);">⏳ Google Disk PDF fayli o'qilmoqda va listlar aniqlanmoqda...</span>`;
+  }
 
-  previewBox.innerHTML = `
-    <div style="font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-      ✅ Slayderda aylanadigan chizmalar: <b>${detectedImages.length} ta</b>
-    </div>
-    <div style="display:flex; gap:8px; overflow-x:auto; padding:6px 0;">
-      ${detectedImages.map((img) => `
-        <div style="width:75px; height:50px; flex-shrink:0; border-radius:6px; overflow:hidden; border:1px solid var(--border); background:#0a0a0f;">
-          <img src="${escapeHtml(img.src)}" data-retry="${escapeHtml(img.retry)}" style="width:100%; height:100%; object-fit:cover;" onerror="handleImageError(this)">
-        </div>
-      `).join("")}
-    </div>
-  `;
+  try {
+    const res = await adminApi("/api/admin/showcases/inspect-pdf", { pdf_url: url });
+    if (res && res.total_pages) {
+      currentShowcaseTotalSheets = res.total_pages;
+      initSheetSelector("", res.total_pages);
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:#00e676;">✅ ${res.message}</span>`;
+      }
+      showToast(`${res.total_pages} ta list aniqlandi!`);
+    } else {
+      throw new Error(res.error || "PDF tahlil qilib bo'lmadi");
+    }
+  } catch (err) {
+    try {
+      const driveId = extractGoogleDriveId(url);
+      if (window.pdfjsLib && driveId) {
+        const doc = await window.pdfjsLib.getDocument(`/api/pdf-proxy?id=${driveId}`).promise;
+        currentShowcaseTotalSheets = doc.numPages;
+        initSheetSelector("", doc.numPages);
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color:#00e676;">✅ PDF o'qildi: jami ${doc.numPages} ta list aniqlandi.</span>`;
+        }
+        showToast(`${doc.numPages} ta list aniqlandi!`);
+        return;
+      }
+    } catch (clientErr) {
+      console.warn("Client PDF inspect error:", clientErr);
+    }
+
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color:#ffab00;">💡 Listlar sonini quyidagi katakchada belgilab, kerakli listlarni tanlashingiz mumkin.</span>`;
+    }
+  } finally {
+    if (btn) btn.classList.remove("btn-loading");
+  }
 }
 
 // Admin Showcase Boshqaruvi
@@ -1360,39 +1501,54 @@ function openAddShowcaseModal() {
 
         <div class="admin-form">
           <div class="apple-field">
-            <label>Qaysi kursga tegishli?</label>
+            <label>Kursni tanlang *</label>
             <select id="sc-course-id" class="apple-input">
               ${courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join("")}
             </select>
           </div>
 
           <div class="apple-field">
-            <label>Loyiha nomi *</label>
-            <input id="sc-title" class="apple-input" type="text" placeholder="Masalan: 3 xonali kvartira ishchi loyihasi (42 list)">
+            <label>Google Drive PDF loyiha havolasi *</label>
+            <input id="sc-pdf" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view">
+            <button type="button" class="btn btn-secondary" id="btn-inspect-pdf" onclick="inspectShowcasePdf()" style="margin-top:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+              🔍 PDF listlarini o'qish (Hamma listlarni aniqlash)
+            </button>
+            <div id="inspect-pdf-status" style="font-size:12px; margin-top:6px; color:var(--text-secondary);"></div>
           </div>
 
-          <div class="apple-field">
-            <label>Slayderda aylanadigan chizmalar (Google Disk yoki rasm havolalari) *</label>
-            <textarea id="sc-pages" class="apple-input apple-textarea" rows="4" placeholder="Har bir chizma yoki list havolasini yangi qatordan kiriting:&#10;https://drive.google.com/file/d/.../view&#10;https://drive.google.com/file/d/.../view" oninput="updateAdminShowcasePreview()"></textarea>
-            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
-              💡 Admin qaysi listlar / chizmalar havolasini kiritsa, slayderda aynan o'shalar aylanib turadi.
-            </span>
+          <!-- Slayderda ko'rsatiladigan listlarni tanlash bloki -->
+          <div class="sheet-selector-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+              <label style="font-weight:700; font-size:13px; color:var(--text-primary); margin:0;">
+                📋 Slayderda ko'rsatiladigan listlar:
+              </label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('all')" style="font-size:10.5px; padding:3px 8px;">Hammasi</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('first5')" style="font-size:10.5px; padding:3px 8px;">Dastlabki 5 ta</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('first10')" style="font-size:10.5px; padding:3px 8px;">10 ta</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('clear')" style="font-size:10.5px; padding:3px 8px; color:var(--danger);">Tozalash</button>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span style="font-size:12px; color:var(--text-secondary);">Jami aniqlangan listlar soni:</span>
+              <input type="number" id="sc-total-sheets" class="apple-input" style="width:70px; padding:4px 8px; text-align:center; font-weight:700;" value="15" min="1" max="100" onchange="updateSheetTotalFromInput(this.value)">
+            </div>
+
+            <div id="sheet-chips-container" class="sheet-chips-grid"></div>
+
+            <div style="margin-top:10px;">
+              <span style="font-size:11.5px; color:var(--text-secondary);">Tanlangan listlar raqamlari (vergul bilan):</span>
+              <input id="sc-selected-pages" class="apple-input" style="font-size:12px; margin-top:4px;" value="1, 2, 3, 4, 5" placeholder="1, 2, 3, 4, 5" oninput="syncChipsFromTextInput(this.value)">
+            </div>
           </div>
 
-          <!-- Jonli tekshiruv va prevyu bloki -->
-          <div id="admin-showcase-preview-box" style="padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; margin-bottom:14px;"></div>
-
-          <div class="apple-field">
+          <div class="apple-field" style="margin-top:14px;">
             <label>Chegirma matni (ixtiyoriy, agar kursga chegirma bo'lsa)</label>
-            <input id="sc-discount" class="apple-input" type="text" placeholder="Masalan: 🔥 30% Chegirma mavjud: 1 050 000 so'm">
+            <input id="sc-discount" class="apple-input" type="text" placeholder="Masalan: 🔥 25% Chegirma: 1 125 000 so'm">
           </div>
 
-          <div class="apple-field">
-            <label>Loyiha tavsifi</label>
-            <textarea id="sc-desc" class="apple-input apple-textarea" placeholder="Loyiha haqida qisqacha ma'lumot..."></textarea>
-          </div>
-
-          <button id="save-sc-btn" class="btn" onclick="submitAddShowcase()">
+          <button id="save-sc-btn" class="btn" onclick="submitAddShowcase()" style="margin-top:10px;">
             💾 Saqlash va E'lon qilish
           </button>
         </div>
@@ -1400,37 +1556,34 @@ function openAddShowcaseModal() {
     `
   };
   render();
-  setTimeout(updateAdminShowcasePreview, 100);
+  setTimeout(() => initSheetSelector("1, 2, 3, 4, 5", 15), 80);
 }
 
 async function submitAddShowcase() {
   const courseSelect = document.getElementById("sc-course-id");
   const courseId = courseSelect?.value;
   const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
-  const title = document.getElementById("sc-title")?.value.trim();
-  const pages = document.getElementById("sc-pages")?.value.trim() || "";
+  const pdfUrl = document.getElementById("sc-pdf")?.value.trim() || "";
+  const selectedPages = document.getElementById("sc-selected-pages")?.value.trim() || "1, 2, 3, 4, 5";
   const discount = document.getElementById("sc-discount")?.value.trim();
-  const desc = document.getElementById("sc-desc")?.value.trim();
 
-  if (!title) return showAlert("Loyiha nomini kiritish majburiy!");
-  if (!pages) return showAlert("Kamida bitta chizma yoki PDF havolasini kiriting!");
+  if (!pdfUrl) return showAlert("Google Drive PDF havolasini kiriting!");
 
   const btn = document.getElementById("save-sc-btn");
   if (btn) btn.classList.add("btn-loading");
 
   try {
     haptic("medium");
-    const firstLine = pages.split(/[\r\n,]+/)[0]?.trim() || "";
     await adminApi("/api/admin/showcases/add", {
       course_id: courseId,
       course_title: courseTitle,
-      title,
+      title: courseTitle ? `${courseTitle} natijasi` : "Revit o'quvchisi natijasi",
       student_name: "",
-      pdf_url: firstLine,
-      selected_pages: pages,
-      preview_image_url: pages,
+      pdf_url: pdfUrl,
+      selected_pages: selectedPages,
+      preview_image_url: pdfUrl,
       discount_badge: discount || null,
-      description: desc
+      description: ""
     });
     showToast("O'quvchi natijasi saqlandi!");
     await loadContent();
@@ -1448,6 +1601,8 @@ function openEditShowcaseModal(id) {
   if (!item) return showAlert("Ma'lumot topilmadi.");
 
   const courses = state.courses || [];
+  const selectedPagesStr = item.selected_pages || "1, 2, 3, 4, 5";
+
   currentView = {
     html: `
       <div class="page">
@@ -1456,39 +1611,54 @@ function openEditShowcaseModal(id) {
 
         <div class="admin-form">
           <div class="apple-field">
-            <label>Kurs</label>
+            <label>Kursni tanlang *</label>
             <select id="edit-sc-course" class="apple-input">
               ${courses.map(c => `<option value="${c.id}" ${Number(c.id) === Number(item.course_id) ? "selected" : ""}>${escapeHtml(c.title)}</option>`).join("")}
             </select>
           </div>
 
           <div class="apple-field">
-            <label>Loyiha nomi *</label>
-            <input id="edit-sc-title" class="apple-input" type="text" value="${escapeHtml(item.title)}">
+            <label>Google Drive PDF loyiha havolasi *</label>
+            <input id="edit-sc-pdf" class="apple-input" type="url" value="${escapeHtml(item.pdf_url || "")}" placeholder="https://drive.google.com/file/d/.../view">
+            <button type="button" class="btn btn-secondary" id="btn-inspect-pdf" onclick="inspectShowcasePdf()" style="margin-top:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+              🔍 PDF listlarini o'qish (Hamma listlarni aniqlash)
+            </button>
+            <div id="inspect-pdf-status" style="font-size:12px; margin-top:6px; color:var(--text-secondary);"></div>
           </div>
 
-          <div class="apple-field">
-            <label>Slayderda aylanadigan chizmalar (Google Disk yoki rasm havolalari) *</label>
-            <textarea id="edit-sc-pages" class="apple-input apple-textarea" rows="4" placeholder="Har bir chizma yoki list havolasini yangi qatordan kiriting:&#10;https://drive.google.com/file/d/.../view" oninput="updateAdminShowcasePreview()">${escapeHtml(item.selected_pages || item.preview_image_url || item.pdf_url || "")}</textarea>
-            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:4px; display:block;">
-              💡 Har bir chizma havolasini yangi qatordan kiriting. Admin aynan o'zi tanlagan chizmalarni belgilaydi.
-            </span>
+          <!-- Slayderda ko'rsatiladigan listlarni tanlash bloki -->
+          <div class="sheet-selector-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+              <label style="font-weight:700; font-size:13px; color:var(--text-primary); margin:0;">
+                📋 Slayderda ko'rsatiladigan listlar:
+              </label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('all')" style="font-size:10.5px; padding:3px 8px;">Hammasi</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('first5')" style="font-size:10.5px; padding:3px 8px;">Dastlabki 5 ta</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('first10')" style="font-size:10.5px; padding:3px 8px;">10 ta</button>
+                <button type="button" class="admin-small-btn" onclick="quickSelectSheets('clear')" style="font-size:10.5px; padding:3px 8px; color:var(--danger);">Tozalash</button>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span style="font-size:12px; color:var(--text-secondary);">Jami aniqlangan listlar soni:</span>
+              <input type="number" id="sc-total-sheets" class="apple-input" style="width:70px; padding:4px 8px; text-align:center; font-weight:700;" value="15" min="1" max="100" onchange="updateSheetTotalFromInput(this.value)">
+            </div>
+
+            <div id="sheet-chips-container" class="sheet-chips-grid"></div>
+
+            <div style="margin-top:10px;">
+              <span style="font-size:11.5px; color:var(--text-secondary);">Tanlangan listlar raqamlari (vergul bilan):</span>
+              <input id="edit-sc-selected-pages" class="apple-input" style="font-size:12px; margin-top:4px;" value="${escapeHtml(selectedPagesStr)}" placeholder="1, 2, 3, 4, 5" oninput="syncChipsFromTextInput(this.value)">
+            </div>
           </div>
 
-          <!-- Jonli tekshiruv va prevyu bloki -->
-          <div id="admin-showcase-preview-box" style="padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; margin-bottom:14px;"></div>
-
-          <div class="apple-field">
+          <div class="apple-field" style="margin-top:14px;">
             <label>Chegirma matni</label>
-            <input id="edit-sc-discount" class="apple-input" type="text" value="${escapeHtml(item.discount_badge || "")}">
+            <input id="edit-sc-discount" class="apple-input" type="text" value="${escapeHtml(item.discount_badge || "")}" placeholder="Masalan: 🔥 25% Chegirma: 1 125 000 so'm">
           </div>
 
-          <div class="apple-field">
-            <label>Tavsif</label>
-            <textarea id="edit-sc-desc" class="apple-input apple-textarea">${escapeHtml(item.description || "")}</textarea>
-          </div>
-
-          <button id="update-sc-btn" class="btn" onclick="submitUpdateShowcase(${Number(id)})">
+          <button id="update-sc-btn" class="btn" onclick="submitUpdateShowcase(${Number(id)})" style="margin-top:10px;">
             💾 O'zgarishlarni saqlash
           </button>
         </div>
@@ -1496,37 +1666,34 @@ function openEditShowcaseModal(id) {
     `
   };
   render();
-  setTimeout(updateAdminShowcasePreview, 100);
+  setTimeout(() => initSheetSelector(selectedPagesStr, 15), 80);
 }
 
 async function submitUpdateShowcase(id) {
   const courseSelect = document.getElementById("edit-sc-course");
   const courseId = courseSelect?.value;
   const courseTitle = courseSelect?.options[courseSelect.selectedIndex]?.text || "";
-  const title = document.getElementById("edit-sc-title")?.value.trim();
-  const pages = document.getElementById("edit-sc-pages")?.value.trim() || "";
+  const pdfUrl = document.getElementById("edit-sc-pdf")?.value.trim() || "";
+  const selectedPages = document.getElementById("edit-sc-selected-pages")?.value.trim() || "1, 2, 3, 4, 5";
   const discount = document.getElementById("edit-sc-discount")?.value.trim();
-  const desc = document.getElementById("edit-sc-desc")?.value.trim();
 
-  if (!title) return showAlert("Loyiha nomi zarur!");
-  if (!pages) return showAlert("Kamida bitta chizma yoki PDF havolasini kiriting!");
+  if (!pdfUrl) return showAlert("Google Drive PDF havolasini kiriting!");
 
   const btn = document.getElementById("update-sc-btn");
   if (btn) btn.classList.add("btn-loading");
 
   try {
     haptic("medium");
-    const firstLine = pages.split(/[\r\n,]+/)[0]?.trim() || "";
     await adminApi(`/api/admin/showcases/${Number(id)}/update`, {
       course_id: courseId,
       course_title: courseTitle,
-      title,
+      title: courseTitle ? `${courseTitle} natijasi` : "Revit o'quvchisi natijasi",
       student_name: "",
-      pdf_url: firstLine,
-      selected_pages: pages,
-      preview_image_url: pages,
+      pdf_url: pdfUrl,
+      selected_pages: selectedPages,
+      preview_image_url: pdfUrl,
       discount_badge: discount || null,
-      description: desc
+      description: ""
     });
     showToast("Muvaffaqiyatli yangilandi!");
     await loadContent();
@@ -2819,16 +2986,8 @@ function toggleAbout() {
   render();
 }
 
-let fmcLessonsOpen = false;
-
-function toggleFreeMiniCourseLessons() {
+function openFreeMiniCourseLessonsModal() {
   haptic("light");
-  fmcLessonsOpen = !fmcLessonsOpen;
-  render();
-}
-
-function startFreeMiniCourse() {
-  haptic("medium");
   const modules = Array.isArray(state.modules) ? state.modules : [];
   const s = state.settings || {};
   let fmcLessons = [];
@@ -2844,11 +3003,58 @@ function startFreeMiniCourse() {
     fmcLessons = modules[0].lessons.slice(0, 6).map(l => ({ ...l, module_title: modules[0].title }));
   }
 
-  if (fmcLessons.length > 0) {
-    openLesson(Number(fmcLessons[0].id));
-  } else {
-    setTab("lessons");
-  }
+  const freeTitle = s.free_minicourse_title || "REVIT 0 DAN";
+  const freeSubtitle = s.free_minicourse_subtitle || "Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs";
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        
+        <div style="margin-bottom:18px;">
+          <div class="fmc-tag" style="margin-bottom:8px;">✨ Bepul Mini-Kurs</div>
+          <div class="page-title" style="margin-bottom:6px;">${escapeHtml(freeTitle)} — Darslar</div>
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.45;">
+            ${escapeHtml(freeSubtitle)}. Kerakli darsni tanlab o'rganishni boshlang:
+          </p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+          ${fmcLessons.length > 0 ? fmcLessons.map((l, idx) => `
+            <div onclick="openLesson(${Number(l.id)})" style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; cursor:pointer; transition:all 0.2s ease;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:rgba(41,121,255,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;">
+                  ${idx + 1}
+                </div>
+                <div>
+                  <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:2px; line-height:1.35;">
+                    ${escapeHtml(l.title)}
+                  </div>
+                  <div style="font-size:11.5px; color:var(--text-secondary);">
+                    ${escapeHtml(l.module_title || "Asosiy modul")} • Bepul dars
+                  </div>
+                </div>
+              </div>
+              <div style="background:var(--accent); color:#fff; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                ▶ Ko'rish
+              </div>
+            </div>
+          `).join("") : `
+            <div style="text-align:center; padding:30px; color:var(--text-secondary);">
+              Hozircha bepul darslar belgilanmagan.
+            </div>
+          `}
+        </div>
+
+        ${fmcLessons.length > 0 ? `
+          <button class="btn" onclick="openLesson(${Number(fmcLessons[0].id)})" style="margin-bottom:12px;">
+            🚀 1-darsdan boshlash
+          </button>
+        ` : ""}
+      </div>
+    `
+  };
+  render();
 }
 
 function renderFreeMiniCourseCard() {
@@ -2895,7 +3101,7 @@ function renderFreeMiniCourseCard() {
         </div>
 
         <div>
-          <button type="button" class="fmc-start-btn" onclick="startFreeMiniCourse()">
+          <button type="button" class="fmc-start-btn" onclick="openFreeMiniCourseLessonsModal()">
             🚀 BOSHLASH
           </button>
         </div>
@@ -2913,26 +3119,6 @@ function renderFreeMiniCourseCard() {
             </div>
           `).join("")}
         </div>
-
-        ${fmcLessons.length > 0 ? `
-          <div class="fmc-lessons-toggle" onclick="toggleFreeMiniCourseLessons()">
-            <span>📋 Darslar ro'yxatini ko'rish (${fmcLessons.length} ta dars)</span>
-            <span id="fmc-arrow">${fmcLessonsOpen ? "▲" : "▼"}</span>
-          </div>
-          ${fmcLessonsOpen ? `
-            <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
-              ${fmcLessons.map((l, idx) => `
-                <div onclick="openLesson(${Number(l.id)})" style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:11.5px; color:var(--accent); font-weight:750;">${idx + 1}.</span>
-                    <span style="font-size:12.5px; font-weight:650; color:var(--text-primary);">${escapeHtml(l.title)}</span>
-                  </div>
-                  <span style="font-size:12px; color:var(--accent); font-weight:700;">Ko'rish ▶</span>
-                </div>
-              `).join("")}
-            </div>
-          ` : ""}
-        ` : ""}
       </div>
     </div>
   `;
