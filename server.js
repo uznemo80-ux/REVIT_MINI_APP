@@ -692,6 +692,137 @@ async function initExtendedTables() {
       ('donate_description', 'Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo''llab-quvvatlash (ehson/donat).')
       ON CONFLICT (key) DO NOTHING
     `);
+
+    // =================== KUTUBXONA V2: YAGONA RESURS JADVALI ===================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_resources (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        subtitle TEXT,
+        description TEXT,
+        category VARCHAR(100) NOT NULL DEFAULT 'Boshqa',
+        sub_category VARCHAR(100),
+        tags TEXT[] DEFAULT '{}',
+        content_url TEXT,
+        content_type VARCHAR(50),
+        content_data JSONB,
+        preview_image_url TEXT,
+        storage_provider VARCHAR(50) DEFAULT 'url',
+        storage_id TEXT,
+        author VARCHAR(255),
+        file_size VARCHAR(50),
+        page_count INT,
+        language VARCHAR(10) DEFAULT 'uz',
+        status VARCHAR(30) DEFAULT 'published',
+        view_count INT DEFAULT 0,
+        download_count INT DEFAULT 0,
+        course_id INT REFERENCES courses(id) ON DELETE SET NULL,
+        order_index INT DEFAULT 0,
+        is_featured BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_type ON library_resources(type)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_category ON library_resources(category)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_status ON library_resources(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_resources_tags ON library_resources USING GIN(tags)');
+
+    // Bookmarks
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_bookmarks (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        resource_id INT NOT NULL REFERENCES library_resources(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, resource_id)
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_bookmarks_user ON library_bookmarks(user_id)');
+
+    // Ko'rish tarixi
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_views (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        resource_id INT NOT NULL REFERENCES library_resources(id) ON DELETE CASCADE,
+        viewed_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_user ON library_views(user_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_library_views_resource ON library_views(resource_id)');
+
+    // Kategoriyalar
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        icon VARCHAR(50) DEFAULT '📁',
+        order_index INT DEFAULT 0,
+        parent_id INT REFERENCES library_categories(id) ON DELETE SET NULL,
+        is_active BOOLEAN DEFAULT true
+      )
+    `);
+
+    // Default kategoriyalar seed
+    var lcCount = await pool.query('SELECT COUNT(*)::int AS c FROM library_categories');
+    if (lcCount.rows[0].c === 0) {
+      await pool.query(`
+        INSERT INTO library_categories (name, icon, order_index) VALUES
+        ('Kitoblar & Adabiyotlar', '📚', 1),
+        ('Normativ Hujjatlar', '📏', 2),
+        ('Qo''llanmalar', '📖', 3),
+        ('Revit Oilalar & Shablonlar', '📦', 4),
+        ('Video Darsliklar', '🎬', 5),
+        ('Erkin Testlar', '🎯', 6),
+        ('Qurilish Materiallari', '🧱', 7),
+        ('Terminlar', '📋', 8),
+        ('Arxitektura', '📐', 9),
+        ('Interyer Dizayn', '🏠', 10),
+        ('Revit / BIM', '💻', 11),
+        ('Qurilish', '🏗️', 12)
+      `);
+    }
+
+    // Mavjud open_resources va materials dan migratsiya (bir martalik)
+    var lrCount2 = await pool.query('SELECT COUNT(*)::int AS c FROM library_resources');
+    if (lrCount2.rows[0].c === 0) {
+      // library_open_resources -> library_resources
+      var openRes = await pool.query('SELECT * FROM library_open_resources ORDER BY order_index');
+      for (var ori = 0; ori < openRes.rows.length; ori++) {
+        var or_item = openRes.rows[ori];
+        var contentType = or_item.type === 'test' ? 'test_json' : (or_item.type === 'video' ? 'video' : 'pdf');
+        await pool.query(`
+          INSERT INTO library_resources (type, title, description, category, content_url, content_type, content_data, preview_image_url, status, order_index, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'published', $9, $10)
+        `, [
+          or_item.type, or_item.title, or_item.description, or_item.category || 'Boshqa',
+          or_item.link_url, contentType,
+          or_item.type === 'test' ? (typeof or_item.test_data === 'string' ? or_item.test_data : JSON.stringify(or_item.test_data)) : null,
+          null, or_item.order_index, or_item.created_at
+        ]);
+      }
+
+      // construction_materials -> library_resources
+      var mats = await pool.query('SELECT * FROM construction_materials ORDER BY order_index');
+      for (var mri = 0; mri < mats.rows.length; mri++) {
+        var m = mats.rows[mri];
+        var matData = {
+          what_is_it: m.what_is_it, dimensions: m.dimensions, history: m.history,
+          usage_area: m.usage_area, pros: m.pros, cons: m.cons,
+          uzbekistan_sources: m.uzbekistan_sources, bim_tips: m.bim_tips
+        };
+        await pool.query(`
+          INSERT INTO library_resources (type, title, description, category, sub_category, content_type, content_data, preview_image_url, status, order_index, created_at)
+          VALUES ('material', $1, $2, $3, $4, 'embedded', $5, $6, 'published', $7, $8)
+        `, [
+          m.title, m.short_desc, m.category, m.sub_category,
+          JSON.stringify(matData), m.image_url, m.order_index + 100, m.created_at
+        ]);
+      }
+      console.log('✅ KUTUBXONA V2: Mavjud manbalar va materiallar migratsiya qilindi');
+    }
   } catch (error) {
     console.error('INIT EXTENDED TABLES ERROR:', error);
   }
@@ -3696,6 +3827,356 @@ app.post('/api/admin/library/all-files', requireAdmin, async function (req, res)
   } catch (error) {
     console.error('GET ALL FILES ERROR:', error);
     return res.status(500).json({ error: 'Dars materiallarini olishda xatolik' });
+  }
+});
+
+
+// ======================================================
+// KUTUBXONA V2: STUDENT API
+// ======================================================
+
+// Kutubxona resurslari (filter, search, pagination)
+app.post('/api/library/v2/resources', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var type = req.body.type || null;
+    var category = req.body.category || null;
+    var search = req.body.search || '';
+    var page = parseInt(req.body.page) || 1;
+    var limit = Math.min(parseInt(req.body.limit) || 20, 50);
+    var offset = (page - 1) * limit;
+    var sort = req.body.sort || 'newest';
+
+    var conditions = ["status = 'published'"];
+    var params = [];
+    var paramIdx = 1;
+
+    if (type) {
+      conditions.push('type = $' + paramIdx);
+      params.push(type);
+      paramIdx++;
+    }
+    if (category) {
+      conditions.push('category = $' + paramIdx);
+      params.push(category);
+      paramIdx++;
+    }
+    if (search.trim()) {
+      conditions.push('(LOWER(title) LIKE $' + paramIdx + ' OR LOWER(description) LIKE $' + paramIdx + ' OR LOWER(category) LIKE $' + paramIdx + ')');
+      params.push('%' + search.trim().toLowerCase() + '%');
+      paramIdx++;
+    }
+
+    var whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+    var orderClause = sort === 'popular' ? 'ORDER BY view_count DESC, order_index ASC' :
+                      sort === 'alphabetical' ? 'ORDER BY title ASC' :
+                      'ORDER BY is_featured DESC, order_index ASC, id DESC';
+
+    var countResult = await pool.query('SELECT COUNT(*)::int AS total FROM library_resources ' + whereClause, params);
+    var total = countResult.rows[0].total;
+
+    params.push(limit);
+    params.push(offset);
+    var dataResult = await pool.query(
+      'SELECT * FROM library_resources ' + whereClause + ' ' + orderClause + ' LIMIT $' + paramIdx + ' OFFSET $' + (paramIdx + 1),
+      params
+    );
+
+    // Kategoriya hisoblagichlari
+    var catResult = await pool.query("SELECT category, COUNT(*)::int AS count FROM library_resources WHERE status = 'published' GROUP BY category ORDER BY count DESC");
+
+    return res.json({
+      ok: true,
+      resources: dataResult.rows,
+      total: total,
+      page: page,
+      totalPages: Math.ceil(total / limit),
+      categories: catResult.rows
+    });
+  } catch (error) {
+    console.error('LIBRARY V2 RESOURCES ERROR:', error);
+    return res.status(500).json({ error: 'Kutubxona resurslarini yuklashda xatolik' });
+  }
+});
+
+// Yagona resurs detail
+app.post('/api/library/v2/resource/:id', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var resourceId = parseInt(req.params.id);
+    var result = await pool.query('SELECT * FROM library_resources WHERE id = $1', [resourceId]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+
+    // Bookmark holati
+    var bmResult = await pool.query('SELECT id FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, resourceId]);
+    var isBookmarked = bmResult.rows.length > 0;
+
+    // Ko'rish qayd qilish
+    await pool.query('INSERT INTO library_views (user_id, resource_id) VALUES ($1, $2)', [user.id, resourceId]);
+    await pool.query('UPDATE library_resources SET view_count = view_count + 1 WHERE id = $1', [resourceId]);
+
+    // O'xshash resurslar (same category, limit 4)
+    var relatedResult = await pool.query(
+      "SELECT id, type, title, category, preview_image_url, view_count FROM library_resources WHERE category = $1 AND id != $2 AND status = 'published' ORDER BY view_count DESC LIMIT 4",
+      [result.rows[0].category, resourceId]
+    );
+
+    return res.json({
+      ok: true,
+      resource: result.rows[0],
+      is_bookmarked: isBookmarked,
+      related: relatedResult.rows
+    });
+  } catch (error) {
+    console.error('LIBRARY V2 RESOURCE DETAIL ERROR:', error);
+    return res.status(500).json({ error: 'Resurs ma\'lumotlarini olishda xatolik' });
+  }
+});
+
+// Bookmark toggle
+app.post('/api/library/v2/bookmark/toggle', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var resourceId = parseInt(req.body.resource_id);
+    if (!resourceId) return res.status(400).json({ error: 'resource_id majburiy' });
+
+    var existing = await pool.query('SELECT id FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, resourceId]);
+
+    if (existing.rows.length > 0) {
+      await pool.query('DELETE FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, resourceId]);
+      return res.json({ ok: true, bookmarked: false, message: 'Sevimlilardan olib tashlandi' });
+    } else {
+      await pool.query('INSERT INTO library_bookmarks (user_id, resource_id) VALUES ($1, $2)', [user.id, resourceId]);
+      return res.json({ ok: true, bookmarked: true, message: 'Sevimlilarga saqlandi' });
+    }
+  } catch (error) {
+    console.error('LIBRARY V2 BOOKMARK ERROR:', error);
+    return res.status(500).json({ error: 'Bookmark xatosi' });
+  }
+});
+
+// Bookmarklar ro'yxati
+app.post('/api/library/v2/bookmarks', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var result = await pool.query(`
+      SELECT lr.* FROM library_resources lr
+      JOIN library_bookmarks lb ON lb.resource_id = lr.id
+      WHERE lb.user_id = $1 AND lr.status = 'published'
+      ORDER BY lb.created_at DESC
+    `, [user.id]);
+
+    return res.json({ ok: true, resources: result.rows });
+  } catch (error) {
+    console.error('LIBRARY V2 BOOKMARKS ERROR:', error);
+    return res.status(500).json({ error: 'Sevimlilarni yuklashda xatolik' });
+  }
+});
+
+// Yaqinda ko'rilganlar
+app.post('/api/library/v2/recent', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var result = await pool.query(`
+      SELECT DISTINCT ON (lr.id) lr.*, lv.viewed_at
+      FROM library_resources lr
+      JOIN library_views lv ON lv.resource_id = lr.id
+      WHERE lv.user_id = $1 AND lr.status = 'published'
+      ORDER BY lr.id, lv.viewed_at DESC
+    `, [user.id]);
+
+    // Sort by most recent view
+    var sorted = result.rows.sort(function(a, b) {
+      return new Date(b.viewed_at) - new Date(a.viewed_at);
+    }).slice(0, 10);
+
+    return res.json({ ok: true, resources: sorted });
+  } catch (error) {
+    console.error('LIBRARY V2 RECENT ERROR:', error);
+    return res.status(500).json({ error: 'Yaqinda ko\'rilganlarni yuklashda xatolik' });
+  }
+});
+
+// Kategoriyalar ro'yxati
+app.post('/api/library/v2/categories', async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM library_categories WHERE is_active = true ORDER BY order_index ASC');
+    return res.json({ ok: true, categories: result.rows });
+  } catch (error) {
+    console.error('LIBRARY V2 CATEGORIES ERROR:', error);
+    return res.status(500).json({ error: 'Kategoriyalarni yuklashda xatolik' });
+  }
+});
+
+// ======================================================
+// KUTUBXONA V2: ADMIN API
+// ======================================================
+
+// Admin: barcha resurslar
+app.post('/api/admin/library-v2/resources', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM library_resources ORDER BY order_index ASC, id DESC');
+    return res.json({ ok: true, resources: result.rows });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 LIST ERROR:', error);
+    return res.status(500).json({ error: 'Resurslar ro\'yxatini yuklashda xatolik' });
+  }
+});
+
+// Admin: resurs qo'shish
+app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    if (!b.title || !b.type) return res.status(400).json({ error: 'Nomi va turi majburiy' });
+
+    var result = await pool.query(`
+      INSERT INTO library_resources (type, title, subtitle, description, category, sub_category, tags, content_url, content_type, content_data, preview_image_url, storage_provider, storage_id, author, file_size, page_count, language, status, course_id, order_index, is_featured)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+      RETURNING *
+    `, [
+      b.type, b.title, b.subtitle || null, b.description || null,
+      b.category || 'Boshqa', b.sub_category || null,
+      b.tags || '{}', b.content_url || null, b.content_type || null,
+      b.content_data ? JSON.stringify(b.content_data) : null,
+      b.preview_image_url ? formatDirectImageUrl(b.preview_image_url) : null,
+      b.storage_provider || 'url', b.storage_id || null,
+      b.author || null, b.file_size || null, b.page_count || null,
+      b.language || 'uz', b.status || 'published',
+      b.course_id || null, b.order_index || 0, b.is_featured || false
+    ]);
+
+    return res.json({ ok: true, resource: result.rows[0], message: 'Resurs muvaffaqiyatli qo\'shildi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 ADD ERROR:', error);
+    return res.status(500).json({ error: 'Resurs qo\'shishda xatolik: ' + error.message });
+  }
+});
+
+// Admin: resurs tahrirlash
+app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var resourceId = parseInt(req.params.id);
+    var b = req.body;
+
+    var result = await pool.query(`
+      UPDATE library_resources SET
+        type = COALESCE($1, type),
+        title = COALESCE($2, title),
+        subtitle = $3,
+        description = $4,
+        category = COALESCE($5, category),
+        sub_category = $6,
+        tags = COALESCE($7, tags),
+        content_url = $8,
+        content_type = $9,
+        content_data = $10,
+        preview_image_url = $11,
+        author = $12,
+        file_size = $13,
+        page_count = $14,
+        status = COALESCE($15, status),
+        order_index = COALESCE($16, order_index),
+        is_featured = COALESCE($17, is_featured),
+        course_id = $18,
+        updated_at = NOW()
+      WHERE id = $19
+      RETURNING *
+    `, [
+      b.type, b.title, b.subtitle || null, b.description || null,
+      b.category, b.sub_category || null,
+      b.tags || '{}', b.content_url || null, b.content_type || null,
+      b.content_data ? JSON.stringify(b.content_data) : null,
+      b.preview_image_url ? formatDirectImageUrl(b.preview_image_url) : null,
+      b.author || null, b.file_size || null, b.page_count || null,
+      b.status, b.order_index, b.is_featured,
+      b.course_id || null, resourceId
+    ]);
+
+    if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+    return res.json({ ok: true, resource: result.rows[0], message: 'Resurs yangilandi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Resursni yangilashda xatolik' });
+  }
+});
+
+// Admin: resurs o'chirish
+app.post('/api/admin/library-v2/resource/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var resourceId = parseInt(req.params.id);
+    await pool.query('DELETE FROM library_bookmarks WHERE resource_id = $1', [resourceId]);
+    await pool.query('DELETE FROM library_views WHERE resource_id = $1', [resourceId]);
+    var result = await pool.query('DELETE FROM library_resources WHERE id = $1 RETURNING id', [resourceId]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+    return res.json({ ok: true, message: 'Resurs o\'chirildi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 DELETE ERROR:', error);
+    return res.status(500).json({ error: 'Resursni o\'chirishda xatolik' });
+  }
+});
+
+// Admin: resurs status o'zgartirish
+app.post('/api/admin/library-v2/resource/:id/status', requireAdmin, async function (req, res) {
+  try {
+    var resourceId = parseInt(req.params.id);
+    var status = req.body.status || 'published';
+    var result = await pool.query('UPDATE library_resources SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *', [status, resourceId]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+    return res.json({ ok: true, resource: result.rows[0], message: 'Status yangilandi: ' + status });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 STATUS ERROR:', error);
+    return res.status(500).json({ error: 'Status o\'zgartirishda xatolik' });
+  }
+});
+
+// Admin: kategoriyalar CRUD
+app.post('/api/admin/library-v2/categories', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM library_categories ORDER BY order_index ASC');
+    return res.json({ ok: true, categories: result.rows });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 CATEGORIES ERROR:', error);
+    return res.status(500).json({ error: 'Kategoriyalarni yuklashda xatolik' });
+  }
+});
+
+app.post('/api/admin/library-v2/category/add', requireAdmin, async function (req, res) {
+  try {
+    var name = req.body.name;
+    var icon = req.body.icon || '📁';
+    if (!name) return res.status(400).json({ error: 'Kategoriya nomi majburiy' });
+
+    var maxOrder = await pool.query('SELECT COALESCE(MAX(order_index), 0) + 1 AS next FROM library_categories');
+    var result = await pool.query(
+      'INSERT INTO library_categories (name, icon, order_index) VALUES ($1, $2, $3) RETURNING *',
+      [name, icon, maxOrder.rows[0].next]
+    );
+    return res.json({ ok: true, category: result.rows[0], message: 'Kategoriya qo\'shildi' });
+  } catch (error) {
+    if (error.code === '23505') return res.status(400).json({ error: 'Bunday kategoriya mavjud' });
+    console.error('ADMIN LIBRARY V2 CAT ADD ERROR:', error);
+    return res.status(500).json({ error: 'Kategoriya qo\'shishda xatolik' });
+  }
+});
+
+app.post('/api/admin/library-v2/category/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var catId = parseInt(req.params.id);
+    await pool.query('DELETE FROM library_categories WHERE id = $1', [catId]);
+    return res.json({ ok: true, message: 'Kategoriya o\'chirildi' });
+  } catch (error) {
+    console.error('ADMIN LIBRARY V2 CAT DELETE ERROR:', error);
+    return res.status(500).json({ error: 'Kategoriya o\'chirishda xatolik' });
   }
 });
 

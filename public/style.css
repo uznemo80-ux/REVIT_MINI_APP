@@ -4105,6 +4105,337 @@ input, textarea, select {
   pointer-events: none;
 }
 
+/* ======================================================
+   KUTUBXONA V2: ARCHITECTURE & BIM KNOWLEDGE PLATFORM
+   ====================================================== */
+
+.library-v2-header-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.library-v2-search-box {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.library-v2-search-input {
+  width: 100%;
+  padding: 12px 14px 12px 38px;
+  font-size: 13.5px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+  user-select: text !important;
+}
+
+.library-v2-search-input:focus {
+  border-color: var(--accent);
+}
+
+.library-v2-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.library-v2-views-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.library-v2-view-btn {
+  flex: 1;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.library-v2-view-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.library-v2-recent-container {
+  margin-bottom: 16px;
+}
+
+.library-v2-recent-title {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.library-v2-recent-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.library-v2-recent-item {
+  flex-shrink: 0;
+  width: 140px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.library-v2-recent-item:active {
+  transform: scale(0.97);
+}
+
+.library-v2-recent-thumb {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  background: #191924;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.library-v2-recent-text {
+  padding: 6px 8px;
+}
+
+.library-v2-recent-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library-v2-recent-type {
+  font-size: 10px;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+/* KUTUBXONA GRID */
+.library-v2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@media (min-width: 768px) {
+  .library-v2-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .library-v2-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.library-v2-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.library-v2-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.library-v2-card:active {
+  transform: scale(0.985);
+}
+
+.library-v2-card-thumb-wrap {
+  width: 100%;
+  aspect-ratio: 16/10;
+  position: relative;
+  background: linear-gradient(135deg, #181a29 0%, #10121d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.library-v2-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.library-v2-card-icon-placeholder {
+  font-size: 38px;
+  opacity: 0.9;
+}
+
+.library-v2-badge-type {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: var(--radius-xs);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  z-index: 2;
+}
+
+.badge-book {
+  background: rgba(41, 121, 255, 0.9);
+  color: #fff;
+}
+.badge-normative {
+  background: rgba(245, 158, 11, 0.92);
+  color: #000;
+}
+.badge-guide {
+  background: rgba(16, 185, 129, 0.9);
+  color: #fff;
+}
+.badge-video {
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+}
+.badge-test {
+  background: rgba(139, 92, 246, 0.9);
+  color: #fff;
+}
+.badge-material {
+  background: rgba(14, 165, 233, 0.9);
+  color: #fff;
+}
+.badge-family {
+  background: rgba(236, 72, 153, 0.9);
+  color: #fff;
+}
+.badge-default {
+  background: rgba(100, 116, 139, 0.9);
+  color: #fff;
+}
+
+.library-v2-bookmark-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.15s ease;
+}
+
+.library-v2-bookmark-btn:hover {
+  transform: scale(1.1);
+  color: #fbbf24;
+}
+
+.library-v2-bookmark-btn.active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.25);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.library-v2-card-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.library-v2-card-cat {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.library-v2-card-title {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-v2-card-meta {
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.library-v2-card-action {
+  font-size: 11px;
+  font-weight: 750;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 
 
 

@@ -358,6 +358,18 @@ let marketplaceSubCategory = "Barchasi";
 let selectedMaterialDetail = null;
 let adminLibraryFilter = "all";
 
+// KUTUBXONA V2 STATE
+let libraryV2Resources = [];
+let libraryV2Categories = [];
+let libraryV2SearchQuery = "";
+let libraryV2SelectedCategory = "Barchasi";
+let libraryV2ActiveView = "all"; // "all" | "bookmarks" | "recent"
+let libraryV2Bookmarks = new Set();
+let libraryV2RecentList = [];
+let libraryV2Loading = false;
+let libraryV2HasLoaded = false;
+let libraryV2SelectedType = "all"; // "all" | "book" | "normative" | "guide" | "video" | "test" | "material" | "family_pack" | "term"
+
 // ======================================================
 // API CLIENT
 // ======================================================
@@ -442,6 +454,7 @@ async function loadContent() {
       materials: Array.isArray(data.materials) && data.materials.length ? data.materials : (state.materials && state.materials.length ? state.materials : DEFAULT_MATERIALS)
     };
     initShowcaseTimer();
+    loadLibraryV2Data();
     render();
     if (!currentView && prevY > 0) {
       requestAnimationFrame(() => {
@@ -5170,146 +5183,607 @@ async function submitLessonQuestion(lessonId) {
 }
 
 // ======================================================
-// TAB 3: TASKS & TESTS MANAGEMENT (Talab 4)
+// TAB 3: KUTUBXONA V2 — ARCHITECTURE & BIM KNOWLEDGE PLATFORM
 // ======================================================
 
-function renderTasks() {
-  const courses = state.courses || [];
-  if (!selectedCourseId && courses.length > 0 && !courseModulesData) {
-    const defaultCId = state.last_lesson?.course_id || courses[0].id;
-    setTimeout(() => {
-      if (!selectedCourseId) selectTasksCourse(defaultCId);
-    }, 10);
+const DEFAULT_LIBRARY_CATEGORIES = [
+  "Barchasi",
+  "Kitoblar & Adabiyotlar",
+  "Normativ Hujjatlar",
+  "Qo'llanmalar",
+  "Revit Oilalar & Shablonlar",
+  "Video Darsliklar",
+  "Erkin Testlar",
+  "Qurilish Materiallari",
+  "Terminlar",
+  "Arxitektura",
+  "Interyer Dizayn",
+  "Revit / BIM",
+  "Qurilish"
+];
+
+function getLibraryTypeBadge(type) {
+  switch (type) {
+    case "book":
+      return { label: "Kitob", className: "badge-book", icon: "📚" };
+    case "normative":
+      return { label: "Normativ", className: "badge-normative", icon: "📏" };
+    case "guide":
+      return { label: "Qo'llanma", className: "badge-guide", icon: "📖" };
+    case "video":
+      return { label: "Video", className: "badge-video", icon: "🎬" };
+    case "test":
+      return { label: "Test", className: "badge-test", icon: "🎯" };
+    case "material":
+      return { label: "Material", className: "badge-material", icon: "🧱" };
+    case "family_pack":
+    case "source":
+      return { label: "Oila / Shablon", className: "badge-family", icon: "📦" };
+    case "term":
+      return { label: "Termin", className: "badge-default", icon: "📋" };
+    default:
+      return { label: "Resurs", className: "badge-default", icon: "📄" };
   }
+}
+
+async function loadLibraryV2Data(force = false) {
+  if (libraryV2Loading) return;
+  if (libraryV2HasLoaded && !force) return;
+  libraryV2Loading = true;
+  try {
+    const [resData, bmData, recData, catsData] = await Promise.all([
+      api("/api/library/v2/resources", { page: 1, limit: 100 }),
+      api("/api/library/v2/bookmarks").catch(() => ({ resources: [] })),
+      api("/api/library/v2/recent").catch(() => ({ resources: [] })),
+      api("/api/library/v2/categories").catch(() => ({ categories: [] }))
+    ]);
+
+    if (resData && Array.isArray(resData.resources)) {
+      libraryV2Resources = resData.resources;
+    }
+    if (bmData && Array.isArray(bmData.resources)) {
+      libraryV2Bookmarks = new Set(bmData.resources.map(r => Number(r.id)));
+    }
+    if (recData && Array.isArray(recData.resources)) {
+      libraryV2RecentList = recData.resources;
+    }
+    if (catsData && Array.isArray(catsData.categories) && catsData.categories.length) {
+      libraryV2Categories = catsData.categories;
+    }
+    libraryV2HasLoaded = true;
+
+    if (activeTab === "tasks" && !currentView) {
+      const gridEl = document.getElementById("library-v2-grid-container");
+      if (gridEl) {
+        gridEl.innerHTML = renderLibraryV2GridHtml(getFilteredLibraryV2List());
+      }
+      const recEl = document.getElementById("library-v2-recent-container");
+      if (recEl) {
+        recEl.innerHTML = renderLibraryV2RecentHtml();
+      }
+    }
+  } catch (err) {
+    console.error("LOAD LIBRARY V2 ERROR:", err);
+  } finally {
+    libraryV2Loading = false;
+  }
+}
+
+function getFilteredLibraryV2List() {
+  let list = libraryV2Resources;
+  if (!list || !list.length) {
+    const openRes = (state.open_resources || []).map(r => ({
+      ...r,
+      content_url: r.link_url,
+      content_type: r.type === 'test' ? 'test_json' : (r.type === 'video' ? 'video' : 'pdf'),
+      content_data: r.test_data
+    }));
+    const mats = (state.materials || []).map(m => ({
+      id: Number(m.id) + 1000,
+      type: 'material',
+      title: m.title,
+      description: m.short_desc,
+      category: m.category || 'Qurilish Materiallari',
+      preview_image_url: m.image_url,
+      content_type: 'embedded',
+      content_data: m
+    }));
+    list = [...openRes, ...mats];
+  }
+
+  if (libraryV2ActiveView === "bookmarks") {
+    list = list.filter(r => libraryV2Bookmarks.has(Number(r.id)));
+  } else if (libraryV2ActiveView === "recent") {
+    if (libraryV2RecentList && libraryV2RecentList.length) {
+      list = libraryV2RecentList;
+    }
+  }
+
+  if (libraryV2SelectedCategory !== "Barchasi") {
+    list = list.filter(r => {
+      if (r.category === libraryV2SelectedCategory) return true;
+      if (libraryV2SelectedCategory === "Kitoblar & Adabiyotlar" && (r.type === "book" || r.category === "Adabiyotlar")) return true;
+      if (libraryV2SelectedCategory === "Normativ Hujjatlar" && (r.type === "normative" || r.category === "Normativlar")) return true;
+      if (libraryV2SelectedCategory === "Qo'llanmalar" && r.type === "guide") return true;
+      if (libraryV2SelectedCategory === "Revit Oilalar & Shablonlar" && (r.type === "family_pack" || r.type === "source")) return true;
+      if (libraryV2SelectedCategory === "Video Darsliklar" && r.type === "video") return true;
+      if (libraryV2SelectedCategory === "Erkin Testlar" && r.type === "test") return true;
+      if (libraryV2SelectedCategory === "Qurilish Materiallari" && r.type === "material") return true;
+      if (libraryV2SelectedCategory === "Terminlar" && r.type === "term") return true;
+      return false;
+    });
+  }
+
+  if (libraryV2SelectedType !== "all") {
+    list = list.filter(r => r.type === libraryV2SelectedType);
+  }
+
+  const q = (libraryV2SearchQuery || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(r =>
+      (r.title && r.title.toLowerCase().includes(q)) ||
+      (r.description && r.description.toLowerCase().includes(q)) ||
+      (r.category && r.category.toLowerCase().includes(q)) ||
+      (r.sub_category && r.sub_category.toLowerCase().includes(q)) ||
+      (r.author && r.author.toLowerCase().includes(q))
+    );
+  }
+
+  return list;
+}
+
+function renderLibraryV2CardHtml(res) {
+  const badge = getLibraryTypeBadge(res.type);
+  const isBookmarked = libraryV2Bookmarks.has(Number(res.id));
+  const coverUrl = formatImageUrl(res.preview_image_url || res.image_url || "");
+  const fallbackUrl = getDriveFallbackUrl(res.preview_image_url || res.image_url || "");
+  const viewCount = res.view_count || 0;
+
+  return `
+    <div class="library-v2-card" onclick="openLibraryV2ResourceDetail(${Number(res.id)})">
+      <div class="library-v2-card-thumb-wrap">
+        <div class="library-v2-badge-type ${badge.className}">
+          ${badge.icon} ${escapeHtml(badge.label)}
+        </div>
+        <button type="button" class="library-v2-bookmark-btn ${isBookmarked ? "active" : ""}"
+                onclick="event.stopPropagation(); toggleLibraryV2Bookmark(${Number(res.id)})"
+                title="${isBookmarked ? "Saqlangandan olib tashlash" : "Saqlash"}">
+          ${isBookmarked ? "★" : "☆"}
+        </button>
+        ${coverUrl ? `
+          <img src="${escapeHtml(coverUrl)}" data-retry="${escapeHtml(fallbackUrl)}" onerror="handleImageError(this)" class="library-v2-card-img" alt="${escapeHtml(res.title)}" />
+        ` : `
+          <div class="library-v2-card-icon-placeholder">${badge.icon}</div>
+        `}
+      </div>
+
+      <div class="library-v2-card-body">
+        <div class="library-v2-card-cat">${escapeHtml(res.category || "Ochiq manba")}</div>
+        <div class="library-v2-card-title">${escapeHtml(res.title)}</div>
+        <div class="library-v2-card-meta">
+          <span>👁️ ${viewCount}</span>
+          <span class="library-v2-card-action">
+            ${res.type === "test" ? "Test ▶" : (res.type === "video" ? "Ko'rish ↗" : "Ochish ↗")}
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLibraryV2GridHtml(list) {
+  if (!list || !list.length) {
+    return `
+      <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 16px;">
+        <div style="font-size:36px; margin-bottom:8px;">🔍</div>
+        <div style="font-weight:700; margin-bottom:4px;">Hech qanday resurs topilmadi</div>
+        <div style="font-size:12.5px; color:var(--text-secondary);">
+          ${libraryV2ActiveView === "bookmarks" ? "Siz hali hech qanday resursni saqlamadingiz. Kerakli manbalarni yulduzcha orqali saqlang." : "Boshqa qidiruv so'zi yoki kategoriya tanlab ko'ring."}
+        </div>
+      </div>
+    `;
+  }
+  return list.map(renderLibraryV2CardHtml).join("");
+}
+
+function renderLibraryV2RecentHtml() {
+  if (!libraryV2RecentList || !libraryV2RecentList.length) return "";
+  return `
+    <div class="library-v2-recent-container">
+      <div class="library-v2-recent-title">
+        <span>🕒</span> Yaqinda ko'rilganlar
+      </div>
+      <div class="library-v2-recent-scroll">
+        ${libraryV2RecentList.map(item => {
+          const badge = getLibraryTypeBadge(item.type);
+          const cover = formatImageUrl(item.preview_image_url || "");
+          return `
+            <div class="library-v2-recent-item" onclick="openLibraryV2ResourceDetail(${Number(item.id)})">
+              <div class="library-v2-recent-thumb">
+                ${cover ? `<img src="${escapeHtml(cover)}" style="width:100%; height:100%; object-fit:cover;" onerror="handleImageError(this)" />` : badge.icon}
+              </div>
+              <div class="library-v2-recent-text">
+                <div class="library-v2-recent-name" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+                <div class="library-v2-recent-type">${badge.icon} ${escapeHtml(badge.label)}</div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function setLibraryV2Search(val) {
+  libraryV2SearchQuery = val;
+  const container = document.getElementById("library-v2-grid-container");
+  if (container) {
+    container.innerHTML = renderLibraryV2GridHtml(getFilteredLibraryV2List());
+  }
+}
+
+function setLibraryV2Category(cat) {
+  haptic("light");
+  libraryV2SelectedCategory = cat;
+  document.querySelectorAll(".library-v2-cat-chip").forEach(el => {
+    el.classList.toggle("active", el.dataset.cat === cat);
+  });
+  const container = document.getElementById("library-v2-grid-container");
+  if (container) {
+    container.innerHTML = renderLibraryV2GridHtml(getFilteredLibraryV2List());
+  }
+}
+
+function setLibraryV2View(view) {
+  haptic("light");
+  libraryV2ActiveView = view;
+  document.querySelectorAll(".library-v2-view-btn").forEach(el => {
+    el.classList.toggle("active", el.dataset.view === view);
+  });
+  const container = document.getElementById("library-v2-grid-container");
+  if (container) {
+    container.innerHTML = renderLibraryV2GridHtml(getFilteredLibraryV2List());
+  }
+}
+
+async function toggleLibraryV2Bookmark(resId) {
+  haptic("light");
+  try {
+    const res = await api("/api/library/v2/bookmark/toggle", { resource_id: Number(resId) });
+    if (res.bookmarked) {
+      libraryV2Bookmarks.add(Number(resId));
+      showToast("⭐ Sevimlilarga saqlandi!");
+    } else {
+      libraryV2Bookmarks.delete(Number(resId));
+      showToast("Sevimlilardan olib tashlandi.");
+    }
+    document.querySelectorAll(`.library-v2-card[onclick*="(${resId})"] .library-v2-bookmark-btn`).forEach(btn => {
+      btn.classList.toggle("active", res.bookmarked);
+      btn.innerHTML = res.bookmarked ? "★" : "☆";
+    });
+    if (libraryV2ActiveView === "bookmarks") {
+      const container = document.getElementById("library-v2-grid-container");
+      if (container) {
+        container.innerHTML = renderLibraryV2GridHtml(getFilteredLibraryV2List());
+      }
+    }
+    const countEl = document.getElementById("library-v2-bm-count");
+    if (countEl) {
+      countEl.textContent = libraryV2Bookmarks.size > 0 ? `(${libraryV2Bookmarks.size})` : "";
+    }
+  } catch (err) {
+    showAlert(err.message || "Xatolik yuz berdi.");
+  }
+}
+
+async function openLibraryV2ResourceDetail(resId) {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  let item = (libraryV2Resources || []).find(r => Number(r.id) === Number(resId));
+  if (!item) {
+    item = (state.open_resources || []).find(r => Number(r.id) === Number(resId));
+  }
+  if (!item && state.materials) {
+    const mat = state.materials.find(m => Number(m.id) === Number(resId) || (Number(m.id) + 1000) === Number(resId));
+    if (mat) {
+      openMaterialDetailSheet(mat.id);
+      return;
+    }
+  }
+
+  let detailData = null;
+  try {
+    detailData = await api(`/api/library/v2/resource/${Number(resId)}`);
+    if (detailData && detailData.resource) {
+      item = detailData.resource;
+      if (detailData.is_bookmarked) libraryV2Bookmarks.add(Number(resId));
+      else libraryV2Bookmarks.delete(Number(resId));
+    }
+  } catch (e) {
+    console.warn("DETAIL FETCH FALLBACK:", e);
+  }
+
+  if (!item) {
+    return showAlert("Resurs topilmadi.");
+  }
+
+  if (item.type === "test" || item.content_type === "test_json") {
+    let testData = item.content_data || item.test_data;
+    if (typeof testData === "string") {
+      try { testData = JSON.parse(testData); } catch (e) { testData = []; }
+    }
+    if (Array.isArray(testData) && testData.length) {
+      startFreeTest(item.title, testData);
+      return;
+    }
+  }
+
+  const isPdf = item.content_type === "pdf" ||
+                (item.content_url && (item.content_url.includes("drive.google.com") || item.content_url.endsWith(".pdf")));
+  if (isPdf && (item.type === "book" || item.type === "normative" || item.type === "guide")) {
+    openPdfViewerModal(item.content_url, item.title);
+    return;
+  }
+
+  if (item.type === "material" && item.content_data) {
+    const matData = typeof item.content_data === "string" ? JSON.parse(item.content_data) : item.content_data;
+    if (matData && matData.what_is_it) {
+      openMaterialDetailSheetFromResource(item);
+      return;
+    }
+  }
+
+  const badge = getLibraryTypeBadge(item.type);
+  const isBookmarked = libraryV2Bookmarks.has(Number(item.id));
+  const coverUrl = formatImageUrl(item.preview_image_url || "");
+  const related = (detailData && detailData.related) || [];
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Kutubxonaga qaytish</div>
+
+        <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
+          ${coverUrl ? `
+            <div style="width: 100%; aspect-ratio: 16/9; background: #111; overflow: hidden;">
+              <img src="${escapeHtml(coverUrl)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="handleImageError(this)" />
+            </div>
+          ` : ""}
+          <div style="padding: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;">
+              <span class="tag ok" style="font-size:11px;">${badge.icon} ${escapeHtml(badge.label)}</span>
+              <button type="button" class="admin-small-btn" onclick="toggleLibraryV2Bookmark(${Number(item.id)})" style="display:flex; align-items:center; gap:4px;">
+                <span>${isBookmarked ? "★" : "☆"}</span> ${isBookmarked ? "Saqlangan" : "Saqlash"}
+              </button>
+            </div>
+
+            <div class="page-title" style="margin-bottom: 8px; font-size: 20px;">
+              ${escapeHtml(item.title)}
+            </div>
+            ${item.subtitle ? `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">${escapeHtml(item.subtitle)}</div>` : ""}
+
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin: 12px 0 16px;">
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Kategoriya:</div>
+                <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${escapeHtml(item.category || "Arxitektura")}</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Ko'rishlar:</div>
+                <div style="font-size:13px; font-weight:700; color:var(--accent);">👁️ ${item.view_count || 0} marta</div>
+              </div>
+            </div>
+
+            ${item.description ? `
+              <div style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+                ${escapeHtml(item.description)}
+              </div>
+            ` : ""}
+
+            ${item.content_url ? `
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+                ${isPdf ? `
+                  <button class="btn" onclick="openPdfViewerModal('${escapeJsString(item.content_url)}', '${escapeJsString(item.title)}')">
+                    📖 PDF kitobni ochish va o'qish
+                  </button>
+                ` : ""}
+                <a href="${escapeHtml(item.content_url)}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; text-align:center;">
+                  🔗 Asl manbaga o'tish (${item.type === "video" ? "Videoni ko'rish" : "Yuklab olish"}) ↗
+                </a>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+
+        ${related.length ? `
+          <div class="section-title" style="margin-top:20px;">
+            <span>Tavsiya etilgan manbalar</span>
+          </div>
+          <div class="library-v2-grid">
+            ${related.map(renderLibraryV2CardHtml).join("")}
+          </div>
+        ` : ""}
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function openMaterialDetailSheetFromResource(res) {
+  let mat = res.content_data;
+  if (typeof mat === "string") {
+    try { mat = JSON.parse(mat); } catch (e) { mat = {}; }
+  }
+  const imgUrl = formatImageUrl(res.preview_image_url || mat.image_url || "");
+  const fallbackUrl = getDriveFallbackUrl(res.preview_image_url || mat.image_url || "");
+
+  currentView = {
+    html: `
+      <div class="page marketplace-detail-page">
+        <div class="back-btn" onclick="closeDetail()">← Kutubxonaga qaytish</div>
+
+        ${imgUrl ? `
+          <img src="${escapeHtml(imgUrl)}" data-retry="${escapeHtml(fallbackUrl)}" onerror="handleImageError(this)" class="material-detail-hero" alt="${escapeHtml(res.title)}" />
+        ` : ""}
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <div class="material-card-category">${escapeHtml(res.category || "Material")} ${mat.sub_category ? `→ ${escapeHtml(mat.sub_category)}` : ""}</div>
+            <div class="page-title" style="margin-bottom:4px; font-size:22px;">${escapeHtml(res.title)}</div>
+          </div>
+        </div>
+
+        ${res.description ? `
+          <div class="material-desc-lead" style="font-size:14px; color:var(--text-secondary); line-height:1.5; margin-bottom:16px;">
+            ${escapeHtml(res.description)}
+          </div>
+        ` : ""}
+
+        <div class="material-info-block">
+          <div class="material-info-title"><span>📋</span> Material nima o'zi u?</div>
+          <div class="material-info-text">${escapeHtml(mat.what_is_it || "Ma'lumot keltirilmagan.")}</div>
+        </div>
+
+        <div class="material-info-block">
+          <div class="material-info-title"><span>📐</span> Standart o'lchamlari va qalinliklari</div>
+          <div class="material-info-text">${escapeHtml(mat.dimensions || "Ma'lumot keltirilmagan.")}</div>
+        </div>
+
+        <div class="material-info-block">
+          <div class="material-info-title"><span>🎯</span> Qayerlarga ishlatiladi (Tavsiya)</div>
+          <div class="material-info-text">${escapeHtml(mat.usage_area || "Ma'lumot keltirilmagan.")}</div>
+        </div>
+
+        ${(mat.pros || mat.cons) ? `
+          <div style="display:grid; grid-template-columns: 1fr; gap:10px; margin-bottom:14px;">
+            ${mat.pros ? `
+              <div class="material-info-block pros-box" style="border-left: 3px solid var(--success); margin-bottom:0;">
+                <div class="material-info-title" style="color:var(--success);"><span>✅</span> Afzalliklari</div>
+                <div class="material-info-text">${escapeHtml(mat.pros)}</div>
+              </div>
+            ` : ""}
+            ${mat.cons ? `
+              <div class="material-info-block cons-box" style="border-left: 3px solid var(--danger); margin-bottom:0;">
+                <div class="material-info-title" style="color:var(--danger);"><span>❌</span> Kamchiliklari</div>
+                <div class="material-info-text">${escapeHtml(mat.cons)}</div>
+              </div>
+            ` : ""}
+          </div>
+        ` : ""}
+
+        ${mat.uzbekistan_sources ? `
+          <div class="material-info-block uzb-market-card">
+            <div class="material-info-title"><span>🇺🇿</span> O'zbekistondagi manbalar va bozorlar</div>
+            <div class="material-info-text">${escapeHtml(mat.uzbekistan_sources)}</div>
+          </div>
+        ` : ""}
+
+        ${mat.bim_tips ? `
+          <div class="material-info-block" style="border-left: 3px solid var(--accent);">
+            <div class="material-info-title" style="color:var(--accent);"><span>💻</span> BIM & Revit Maslahati</div>
+            <div class="material-info-text">${escapeHtml(mat.bim_tips)}</div>
+          </div>
+        ` : ""}
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ASOSIY KUTUBXONA SAHIFASI
+function renderTasks() {
+  if (!libraryV2HasLoaded && !libraryV2Loading) {
+    loadLibraryV2Data();
+  }
+
+  const categories = DEFAULT_LIBRARY_CATEGORIES;
+  const filteredList = getFilteredLibraryV2List();
 
   return `
     <div class="page">
-      <!-- 6-TALAB: QURILISH VA REMONT MATERIALLARI BOZORI (MARKETPLACE) BANNERI -->
-      ${renderMarketplaceBanner()}
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div class="page-title" style="margin-bottom:0;">📚 Kutubxona & Testlar</div>
+      <!-- HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <div class="page-title" style="margin-bottom:0;">📚 Kutubxona</div>
         ${state.is_admin ? `
-          <button class="admin-small-btn" onclick="openAddTestModal()">
-            ➕ Test Qo'shish
+          <button class="admin-small-btn" onclick="openAddLibraryV2ResourceModal()">
+            ➕ Yangi Resurs
           </button>
         ` : ""}
       </div>
-      <p style="color:var(--text-secondary); margin-bottom:14px; font-size:13px;">
-        Kurs bo'yicha modul testlari, dars topshiriqlari va barcha uchun ochiq erkin manbalar:
+      <p class="library-v2-header-desc">
+        Arxitektura, BIM, interyer va qurilish bo'yicha professional adabiyotlar, normativlar, modellar va materiallar platformasi:
       </p>
 
-      <!-- 2-TALAB: KURS BO'YICHA TANLASH VA HOZIRGI HOLATI / TEST DAVOM ETTIRISH -->
-      <div class="card" style="margin-bottom:16px; border:1px solid var(--border); padding:16px;">
-        <div style="font-weight:750; font-size:14.5px; margin-bottom:10px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-          <span>🎯</span> Kurs bo'yicha test va vazifalar:
-        </div>
-
-        <select class="apple-input" style="margin-bottom:12px;" onchange="selectTasksCourse(this.value)">
-          <option value="">— Kursni tanlang —</option>
-          ${courses.map(c => `
-            <option value="${Number(c.id)}" ${Number(selectedCourseId) === Number(c.id) ? "selected" : ""}>
-              ${escapeHtml(c.title)}
-            </option>
-          `).join("")}
-        </select>
-
-        ${!selectedCourseId || !courseModulesData ? `
-          <div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:10px 0;">
-            Yuqoridan kursni tanlang va o'z bilimingizni sinab ko'ring.
-          </div>
-        ` : (() => {
-          const course = courseModulesData.course || {};
-          const modules = Array.isArray(courseModulesData.modules) ? courseModulesData.modules : [];
-          const isCourseFree = course.is_free || course.status === "free";
-          const userCanAccess = state.has_access || state.is_admin || isCourseFree;
-
-          // Agar kurs pullik bo'lsa va o'quvchida ruxsat bo'lmasa:
-          if (!userCanAccess) {
-            return `
-              <div style="background:rgba(235,59,59,0.08); border:1px solid rgba(235,59,59,0.3); border-radius:var(--radius-md); padding:18px; text-align:center; margin-top:8px;">
-                <div style="font-size:36px; margin-bottom:8px;">🔒</div>
-                <div style="font-weight:800; font-size:15.5px; color:var(--danger); margin-bottom:6px;">
-                  Ushbu kurs testlari va manbalariga kirish cheklangan
-                </div>
-                <div style="font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:16px;">
-                  Ushbu kurs pullik bo'lib, uning to'liq testlari, amaliy dars vazifalari va yopiq materiallariga kirish uchun kursni sotib olishingiz lozim. Kursni sotib olgach barcha ruxsatlar avtomatik ochiladi.
-                </div>
-                <button class="btn" style="margin:0 auto; padding:11px 24px; width:auto;" onclick="setTab('chat')">
-                  💳 Kursni sotib olish / Adminga yozish
-                </button>
-              </div>
-            `;
-          }
-
-          // Ruxsat bo'lsa: natijalar, hozirgi holati va davom ettirish
-          const totalMods = modules.length;
-          const passedMods = modules.filter(m => m.test_passed).length;
-          const nextModToTest = modules.find(m => !m.test_passed) || modules[0];
-
-          return `
-            <div style="background:var(--bg-secondary); border-radius:var(--radius-md); padding:14px; margin-top:8px; border:1px solid var(--border);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-weight:700; font-size:14px; color:var(--text-primary);">${escapeHtml(course.title || "Kurs")}</span>
-                <span class="tag ok" style="font-size:11px;">🟢 Ruxsat berilgan</span>
-              </div>
-
-              <!-- Hozirgi holati va natijalari -->
-              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:12px;">
-                <div style="background:var(--bg-surface); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-                  <div style="font-size:11px; color:var(--text-muted);">Topshirilgan testlar:</div>
-                  <div style="font-size:15px; font-weight:800; color:var(--accent);">${passedMods} / ${totalMods} modul</div>
-                </div>
-                <div style="background:var(--bg-surface); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-                  <div style="font-size:11px; color:var(--text-muted);">Kurs holati:</div>
-                  <div style="font-size:14px; font-weight:750; color:var(--text-primary);">
-                    ${passedMods === totalMods && totalMods > 0 ? "🏆 Yakunlangan" : "⏳ O'rganilmoqda"}
-                  </div>
-                </div>
-              </div>
-
-              ${nextModToTest ? `
-                <button class="btn" style="margin:0 0 14px 0; padding:11px;" onclick="openTest(${Number(nextModToTest.id)})">
-                  ▶ Test yechishni davom ettirish (${escapeHtml(nextModToTest.title)})
-                </button>
-              ` : ""}
-
-              <div style="font-size:12.5px; font-weight:700; margin-bottom:8px; color:var(--text-secondary);">
-                Kurs modullari va amaliy vazifalari:
-              </div>
-
-              ${modules.map((mod, idx) => {
-                const tasks = (mod.lessons || []).filter(l => l.task_text && l.task_text.trim());
-                return `
-                  <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <div>
-                        <span class="idx">${String(idx + 1).padStart(2, "0")}</span>
-                        <span style="font-weight:700; font-size:13.5px; margin-left:4px;">${escapeHtml(mod.title)}</span>
-                      </div>
-                      <button class="admin-small-btn" style="padding:5px 10px; font-size:11px;" onclick="openTest(${Number(mod.id)})">
-                        📝 Test
-                      </button>
-                    </div>
-                    ${tasks.length ? `
-                      <div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);">
-                        ${tasks.map(t => `
-                          <div style="font-size:12px; color:var(--text-secondary); cursor:pointer; padding:2px 0;" onclick="openLesson(${Number(t.id)})">
-                            📌 ${escapeHtml(t.title)}: <span style="color:var(--text-muted);">${escapeHtml(t.task_text.slice(0, 50))}...</span>
-                          </div>
-                        `).join("")}
-                      </div>
-                    ` : ""}
-                  </div>
-                `;
-              }).join("")}
-            </div>
-          `;
-        })()}
+      <!-- QIDIRUV SATRI -->
+      <div class="library-v2-search-box">
+        <span class="library-v2-search-icon">🔍</span>
+        <input id="library-v2-search-input"
+               class="library-v2-search-input"
+               type="text"
+               placeholder="Kitob, normativ, video yoki mavzu bo'yicha qidirish..."
+               value="${escapeHtml(libraryV2SearchQuery)}"
+               oninput="setLibraryV2Search(this.value)">
       </div>
 
-      <!-- 2-TALAB: KURS TANLASHNI TAGIDA ERKIN TESTLAR VA VAZIFALAR (HAMMAGA OCHIQ) -->
-      ${renderOpenLibraryResources()}
+      <!-- VIEW SELECTOR (Barchasi / Saqlanganlar / Yaqinda ko'rilganlar) -->
+      <div class="library-v2-views-row">
+        <button type="button"
+                class="library-v2-view-btn ${libraryV2ActiveView === "all" ? "active" : ""}"
+                data-view="all"
+                onclick="setLibraryV2View('all')">
+          🌐 Barchasi
+        </button>
+        <button type="button"
+                class="library-v2-view-btn ${libraryV2ActiveView === "bookmarks" ? "active" : ""}"
+                data-view="bookmarks"
+                onclick="setLibraryV2View('bookmarks')">
+          ⭐ Saqlanganlar <span id="library-v2-bm-count">${libraryV2Bookmarks.size > 0 ? `(${libraryV2Bookmarks.size})` : ""}</span>
+        </button>
+        <button type="button"
+                class="library-v2-view-btn ${libraryV2ActiveView === "recent" ? "active" : ""}"
+                data-view="recent"
+                onclick="setLibraryV2View('recent')">
+          🕒 Yaqinda ko'rilgan
+        </button>
+      </div>
+
+      <!-- KATEGORIYA CHIPLARI -->
+      <div class="category-chips" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px;">
+        ${categories.map(cat => `
+          <div class="chip library-v2-cat-chip ${libraryV2SelectedCategory === cat ? "active" : ""}"
+               data-cat="${escapeHtml(cat)}"
+               onclick="setLibraryV2Category('${escapeJsString(cat)}')">
+            ${escapeHtml(cat)}
+          </div>
+        `).join("")}
+      </div>
+
+      <!-- YAQINDA KO'RILGANLAR (Horizontal Scroll) -->
+      <div id="library-v2-recent-container">
+        ${libraryV2ActiveView !== "bookmarks" ? renderLibraryV2RecentHtml() : ""}
+      </div>
+
+      <!-- RESURSLAR GRIDI -->
+      <div id="library-v2-grid-container" class="library-v2-grid">
+        ${renderLibraryV2GridHtml(filteredList)}
+      </div>
+
+      <!-- KURS MODUL TESTLARI VA TOPSHIRIQLARIGA TEZ QATNOV BANNERI -->
+      <div class="card" style="margin-top: 24px; padding: 14px 16px; border: 1px dashed var(--border); background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div>
+          <div style="font-weight: 750; font-size: 13.5px; color: var(--text-primary); margin-bottom: 2px;">
+            🎯 Kurs Modul Testlari & Topshiriqlari
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-secondary);">
+            Kurs darsliklari bo'yicha testlarni topshirish va natijalarni tekshirish
+          </div>
+        </div>
+        <button class="admin-small-btn" style="padding: 7px 14px; white-space: nowrap; flex-shrink: 0;" onclick="setTab('lessons')">
+          Darslarga o'tish →
+        </button>
+      </div>
     </div>
   `;
 }
@@ -6343,10 +6817,15 @@ async function adminSetTab(tab) {
       adminData.modules = data.modules || [];
     } else if (tab === "library") {
       try {
-        const filesData = await adminApi("/api/admin/library/all-files");
+        const [filesData, resData] = await Promise.all([
+          adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
+          adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] }))
+        ]);
         adminData.libraryFiles = filesData.files || [];
+        adminData.libraryV2Resources = resData.resources || [];
       } catch (fe) {
         adminData.libraryFiles = [];
+        adminData.libraryV2Resources = [];
       }
     } else if (tab === "admins") {
       const data = await adminApi("/api/admin/admins");
@@ -7113,7 +7592,8 @@ function setAdminLibraryTab(subTab) {
 }
 
 function renderAdminLibrary() {
-  const subTab = adminData.librarySubTab || "files";
+  const subTab = adminData.librarySubTab || "resources_v2";
+  const v2Res = adminData.libraryV2Resources || libraryV2Resources || [];
   const files = adminData.libraryFiles || [];
   const openRes = state.open_resources || [];
   const showcases = state.showcases || [];
@@ -7129,6 +7609,9 @@ function renderAdminLibrary() {
   return `
     <div>
       <div class="category-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
+        <div class="chip ${subTab === "resources_v2" ? "active" : ""}" onclick="setAdminLibraryTab('resources_v2')">
+          📚 Barcha Resurslar (${v2Res.length})
+        </div>
         <div class="chip ${subTab === "files" ? "active" : ""}" onclick="setAdminLibraryTab('files')">
           📁 Dars Fayllari (${files.length})
         </div>
@@ -7143,12 +7626,429 @@ function renderAdminLibrary() {
         </div>
       </div>
 
+      ${subTab === "resources_v2" ? renderAdminLibraryV2Resources() : ""}
       ${subTab === "files" ? renderAdminLibraryFiles(filteredFiles, search) : ""}
       ${subTab === "open_res" ? renderAdminLibraryOpenRes(openRes) : ""}
       ${subTab === "showcases" ? renderAdminLibraryShowcases(showcases) : ""}
       ${subTab === "materials" ? renderAdminLibraryMaterials(materials) : ""}
     </div>
   `;
+}
+
+function renderAdminLibraryV2Resources() {
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const search = (adminData.libraryV2Search || "").toLowerCase().trim();
+
+  const filtered = allRes.filter(r => {
+    return !search ||
+      (r.title && r.title.toLowerCase().includes(search)) ||
+      (r.category && r.category.toLowerCase().includes(search)) ||
+      (r.description && r.description.toLowerCase().includes(search)) ||
+      (r.author && r.author.toLowerCase().includes(search));
+  });
+
+  return `
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
+        <div class="admin-section-title" style="margin-bottom:0;">
+          Resurslar (${filtered.length}/${allRes.length})
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="admin-small-btn" onclick="adminSetTab('library')" title="Yangilash">🔄</button>
+          <button class="admin-small-btn" onclick="openAddLibraryV2ResourceModal()">
+            ➕ Yangi Resurs
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <input id="admin-library-v2-search-input"
+               class="apple-input"
+               type="text"
+               placeholder="🔍 Resurs nomi, kategoriya yoki muallif bo'yicha qidirish..."
+               value="${escapeHtml(search)}"
+               oninput="onAdminLibraryV2Search(this.value)">
+      </div>
+
+      <div id="admin-library-v2-rows">
+        ${renderAdminLibraryV2RowsHtml(filtered)}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminLibraryV2RowsHtml(list) {
+  if (!list.length) {
+    return `<div class="empty-box">Resurslar topilmadi.</div>`;
+  }
+  return list.map(r => {
+    const badge = getLibraryTypeBadge(r.type);
+    const isPublished = r.status === "published";
+    return `
+      <div class="lesson-file-row" style="margin-bottom:10px;">
+        <div class="lesson-file-header">
+          <div class="lesson-file-title-wrap">
+            <span style="font-size:22px;">${badge.icon}</span>
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                <span class="tag ${badge.className}" style="font-size:10px; padding:2px 6px;">${badge.label}</span>
+                <span class="tag ${isPublished ? "passed" : "warning"}"
+                      style="font-size:10px; cursor:pointer;"
+                      onclick="toggleAdminLibraryV2Status(${Number(r.id)}, '${isPublished ? "draft" : "published"}')"
+                      title="Statusni o'zgartirish">
+                  ${isPublished ? "🟢 Ochiq" : "🔒 Qoralama"}
+                </span>
+                <span style="font-size:11px; color:var(--text-muted);">👁️ ${r.view_count || 0}</span>
+              </div>
+              <div class="lesson-file-title-text" style="font-size:13.5px; font-weight:750;">${escapeHtml(r.title)}</div>
+              <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                📁 ${escapeHtml(r.category || "Boshqa")} ${r.author ? `· 👤 ${escapeHtml(r.author)}` : ""}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="admin-small-btn" onclick="openEditLibraryV2ResourceModal(${Number(r.id)})" title="Tahrirlash">
+              ✏️
+            </button>
+            <button class="btn danger" style="width:auto; margin:0; padding:6px 10px; font-size:12px;" onclick="deleteAdminLibraryV2ResourceConfirm(${Number(r.id)})" title="O'chirish">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        ${r.content_url ? `
+          <div class="lesson-file-link-wrap">
+            <a href="${escapeHtml(r.content_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; font-size:12px;">
+              ${escapeHtml(r.content_url)}
+            </a>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <button class="admin-small-btn" style="padding:3px 7px; font-size:11px;" onclick="openLibraryV2ResourceDetail(${Number(r.id)})">
+                👁️ Ko'rish
+              </button>
+              <button class="admin-small-btn" style="padding:3px 7px; font-size:11px;" onclick="copyDonateCard('${escapeJsString(r.content_url)}', 'Havola nusxalandi!')">
+                📋 Nusxa
+              </button>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function onAdminLibraryV2Search(val) {
+  adminData.libraryV2Search = val;
+  const container = document.getElementById("admin-library-v2-rows");
+  if (container) {
+    const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+    const search = (adminData.libraryV2Search || "").toLowerCase().trim();
+    const filtered = allRes.filter(r =>
+      !search ||
+      (r.title && r.title.toLowerCase().includes(search)) ||
+      (r.category && r.category.toLowerCase().includes(search)) ||
+      (r.description && r.description.toLowerCase().includes(search)) ||
+      (r.author && r.author.toLowerCase().includes(search))
+    );
+    container.innerHTML = renderAdminLibraryV2RowsHtml(filtered);
+  }
+}
+
+async function toggleAdminLibraryV2Status(resId, newStatus) {
+  haptic("light");
+  try {
+    const res = await adminApi(`/api/admin/library-v2/resource/${Number(resId)}/status`, { status: newStatus });
+    showToast(res.message || "Status yangilandi!");
+    const item = (adminData.libraryV2Resources || []).find(r => Number(r.id) === Number(resId));
+    if (item) item.status = newStatus;
+    const itemV2 = (libraryV2Resources || []).find(r => Number(r.id) === Number(resId));
+    if (itemV2) itemV2.status = newStatus;
+    adminSetTab("library");
+  } catch (err) {
+    showAlert(err.message || "Statusni o'zgartirishda xatolik.");
+  }
+}
+
+function deleteAdminLibraryV2ResourceConfirm(resId) {
+  showConfirm(
+    "Resursni o'chirish",
+    "Ushbu resursni kutubxonadan butunlay o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
+    "Ha, o'chirish",
+    async () => {
+      const res = await adminApi(`/api/admin/library-v2/resource/${Number(resId)}/delete`);
+      showToast(res.message || "Resurs o'chirildi!");
+      if (adminData.libraryV2Resources) {
+        adminData.libraryV2Resources = adminData.libraryV2Resources.filter(r => Number(r.id) !== Number(resId));
+      }
+      libraryV2Resources = libraryV2Resources.filter(r => Number(r.id) !== Number(resId));
+      adminSetTab("library");
+    }
+  );
+}
+
+function openAddLibraryV2ResourceModal() {
+  const cats = DEFAULT_LIBRARY_CATEGORIES.filter(c => c !== "Barchasi");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Yangi Kutubxona Resursi Qo'shish</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Resurs turi *</label>
+            <select id="v2-type" class="apple-input">
+              <option value="book">📚 Kitob / Adabiyot (PDF)</option>
+              <option value="normative">📏 Normativ Hujjat (ShNQ, KMK, GOST)</option>
+              <option value="guide">📖 Qo'llanma / Yo'riqnoma</option>
+              <option value="family_pack">📦 Revit Oilasi / Shablon (RFA / RTE)</option>
+              <option value="video">🎬 Video Darslik</option>
+              <option value="test">🎯 Erkin Sinov Testi</option>
+              <option value="material">🧱 Qurilish Materiali</option>
+              <option value="term">📋 Arxitektura / BIM Termini</option>
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Resurs nomi *</label>
+            <input id="v2-title" class="apple-input" type="text" placeholder="Masalan: Revit 2024: Rasmiy qo'llanma">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqa sarlavha (Subtitle)</label>
+            <input id="v2-sub" class="apple-input" type="text" placeholder="Masalan: BIM standartlari va ishchi chizmalar">
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriya *</label>
+            <select id="v2-cat" class="apple-input">
+              ${cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Sub-kategoriya (ixtiyoriy)</label>
+            <input id="v2-subcat" class="apple-input" type="text" placeholder="Masalan: ShNQ 2.08.01-19">
+          </div>
+
+          <div class="apple-field">
+            <label>Muallif / Manba muallifi</label>
+            <input id="v2-author" class="apple-input" type="text" placeholder="Masalan: Autodesk / O'zbekiston Qurilish Vazirligi">
+          </div>
+
+          <div class="apple-field">
+            <label>Fayl / Havola URL (Google Drive, YouTube, PDF yoki web link)</label>
+            <input id="v2-url" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view yoki https://...">
+          </div>
+
+          <div class="apple-field">
+            <label>Muqova (Preview) rasm havolasi (Google Drive yoki to'g'ridan-to'g'ri rasm)</label>
+            <input id="v2-cover" class="apple-input" type="url" placeholder="https://...">
+          </div>
+
+          <div class="apple-field">
+            <label>Tavsif (Description)</label>
+            <textarea id="v2-desc" class="apple-input apple-textarea" placeholder="Resurs haqida batafsil ma'lumot..."></textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Status</label>
+            <select id="v2-status" class="apple-input">
+              <option value="published">🟢 Ochiq (O'quvchilarga ko'rinadi)</option>
+              <option value="draft">🔒 Qoralama (Faqat adminga ko'rinadi)</option>
+            </select>
+          </div>
+
+          <button class="btn" style="margin-top:16px;" onclick="submitCreateLibraryV2Resource()">
+            💾 Resursni Saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCreateLibraryV2Resource() {
+  const type = document.getElementById("v2-type")?.value;
+  const title = document.getElementById("v2-title")?.value.trim();
+  const subtitle = document.getElementById("v2-sub")?.value.trim();
+  const category = document.getElementById("v2-cat")?.value;
+  const subCategory = document.getElementById("v2-subcat")?.value.trim();
+  const author = document.getElementById("v2-author")?.value.trim();
+  const contentUrl = document.getElementById("v2-url")?.value.trim();
+  const previewImageUrl = document.getElementById("v2-cover")?.value.trim();
+  const description = document.getElementById("v2-desc")?.value.trim();
+  const status = document.getElementById("v2-status")?.value || "published";
+
+  if (!title) {
+    return showAlert("Resurs nomi majburiy!");
+  }
+
+  let contentType = "link";
+  if (contentUrl) {
+    if (contentUrl.includes("drive.google.com") || contentUrl.endsWith(".pdf")) contentType = "pdf";
+    else if (contentUrl.includes("youtube.com") || contentUrl.includes("youtu.be")) contentType = "video";
+  }
+
+  try {
+    haptic("medium");
+    const res = await adminApi("/api/admin/library-v2/resource/add", {
+      type: type,
+      title: title,
+      subtitle: subtitle,
+      category: category,
+      sub_category: subCategory,
+      author: author,
+      content_url: contentUrl,
+      content_type: contentType,
+      preview_image_url: previewImageUrl,
+      description: description,
+      status: status
+    });
+
+    showToast("Resurs muvaffaqiyatli qo'shildi!");
+    closeDetail();
+    await loadLibraryV2Data(true);
+    adminSetTab("library");
+  } catch (err) {
+    showAlert(err.message || "Resurs qo'shishda xato yuz berdi.");
+  }
+}
+
+function openEditLibraryV2ResourceModal(resId) {
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const item = allRes.find(r => Number(r.id) === Number(resId));
+  if (!item) return showAlert("Resurs topilmadi.");
+
+  const cats = DEFAULT_LIBRARY_CATEGORIES.filter(c => c !== "Barchasi");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="page-title">Resursni Tahrirlash</div>
+
+        <div class="admin-form">
+          <div class="apple-field">
+            <label>Resurs turi *</label>
+            <select id="ev2-type" class="apple-input">
+              <option value="book" ${item.type === "book" ? "selected" : ""}>📚 Kitob / Adabiyot (PDF)</option>
+              <option value="normative" ${item.type === "normative" ? "selected" : ""}>📏 Normativ Hujjat (ShNQ, KMK)</option>
+              <option value="guide" ${item.type === "guide" ? "selected" : ""}>📖 Qo'llanma / Yo'riqnoma</option>
+              <option value="family_pack" ${item.type === "family_pack" ? "selected" : ""}>📦 Revit Oilasi / Shablon</option>
+              <option value="video" ${item.type === "video" ? "selected" : ""}>🎬 Video Darslik</option>
+              <option value="test" ${item.type === "test" ? "selected" : ""}>🎯 Erkin Sinov Testi</option>
+              <option value="material" ${item.type === "material" ? "selected" : ""}>🧱 Qurilish Materiali</option>
+              <option value="term" ${item.type === "term" ? "selected" : ""}>📋 Termin</option>
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Resurs nomi *</label>
+            <input id="ev2-title" class="apple-input" type="text" value="${escapeHtml(item.title)}">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqa sarlavha (Subtitle)</label>
+            <input id="ev2-sub" class="apple-input" type="text" value="${escapeHtml(item.subtitle || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriya *</label>
+            <select id="ev2-cat" class="apple-input">
+              ${cats.map(c => `<option value="${escapeHtml(c)}" ${item.category === c ? "selected" : ""}>${escapeHtml(c)}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="apple-field">
+            <label>Sub-kategoriya</label>
+            <input id="ev2-subcat" class="apple-input" type="text" value="${escapeHtml(item.sub_category || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Muallif</label>
+            <input id="ev2-author" class="apple-input" type="text" value="${escapeHtml(item.author || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Fayl / Havola URL</label>
+            <input id="ev2-url" class="apple-input" type="url" value="${escapeHtml(item.content_url || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Muqova (Preview) rasm havolasi</label>
+            <input id="ev2-cover" class="apple-input" type="url" value="${escapeHtml(item.preview_image_url || "")}">
+          </div>
+
+          <div class="apple-field">
+            <label>Tavsif</label>
+            <textarea id="ev2-desc" class="apple-input apple-textarea">${escapeHtml(item.description || "")}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Status</label>
+            <select id="ev2-status" class="apple-input">
+              <option value="published" ${item.status === "published" ? "selected" : ""}>🟢 Ochiq</option>
+              <option value="draft" ${item.status === "draft" ? "selected" : ""}>🔒 Qoralama</option>
+            </select>
+          </div>
+
+          <button class="btn" style="margin-top:16px;" onclick="submitUpdateLibraryV2Resource(${Number(item.id)})">
+            💾 O'zgarishlarni Saqlash
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitUpdateLibraryV2Resource(resId) {
+  const type = document.getElementById("ev2-type")?.value;
+  const title = document.getElementById("ev2-title")?.value.trim();
+  const subtitle = document.getElementById("ev2-sub")?.value.trim();
+  const category = document.getElementById("ev2-cat")?.value;
+  const subCategory = document.getElementById("ev2-subcat")?.value.trim();
+  const author = document.getElementById("ev2-author")?.value.trim();
+  const contentUrl = document.getElementById("ev2-url")?.value.trim();
+  const previewImageUrl = document.getElementById("ev2-cover")?.value.trim();
+  const description = document.getElementById("ev2-desc")?.value.trim();
+  const status = document.getElementById("ev2-status")?.value;
+
+  if (!title) {
+    return showAlert("Resurs nomi majburiy!");
+  }
+
+  let contentType = "link";
+  if (contentUrl) {
+    if (contentUrl.includes("drive.google.com") || contentUrl.endsWith(".pdf")) contentType = "pdf";
+    else if (contentUrl.includes("youtube.com") || contentUrl.includes("youtu.be")) contentType = "video";
+  }
+
+  try {
+    haptic("medium");
+    const res = await adminApi(`/api/admin/library-v2/resource/${Number(resId)}/update`, {
+      type: type,
+      title: title,
+      subtitle: subtitle,
+      category: category,
+      sub_category: subCategory,
+      author: author,
+      content_url: contentUrl,
+      content_type: contentType,
+      preview_image_url: previewImageUrl,
+      description: description,
+      status: status
+    });
+
+    showToast("Resurs yangilandi!");
+    closeDetail();
+    await loadLibraryV2Data(true);
+    adminSetTab("library");
+  } catch (err) {
+    showAlert(err.message || "Resursni yangilashda xato yuz berdi.");
+  }
 }
 
 function renderAdminLibraryFilesRowsHtml(filteredFiles) {
@@ -7652,9 +8552,8 @@ function setTab(id) {
   if (id === "chat") {
     loadChatQuestions();
   }
-  if (id === "tasks" && !selectedCourseId && state.courses && state.courses.length > 0) {
-    const defaultCId = state.last_lesson?.course_id || state.courses[0].id;
-    selectTasksCourse(defaultCId);
+  if (id === "tasks") {
+    loadLibraryV2Data();
   }
 }
 
