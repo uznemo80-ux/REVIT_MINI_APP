@@ -4098,6 +4098,12 @@ async function submitLessonQuestion(lessonId) {
 
 function renderTasks() {
   const courses = state.courses || [];
+  if (!selectedCourseId && courses.length > 0 && !courseModulesData) {
+    const defaultCId = state.last_lesson?.course_id || courses[0].id;
+    setTimeout(() => {
+      if (!selectedCourseId) selectTasksCourse(defaultCId);
+    }, 10);
+  }
 
   return `
     <div class="page">
@@ -6471,6 +6477,10 @@ function setTab(id) {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   if (id === "chat") {
     loadChatQuestions();
+  }
+  if (id === "tasks" && !selectedCourseId && state.courses && state.courses.length > 0) {
+    const defaultCId = state.last_lesson?.course_id || state.courses[0].id;
+    selectTasksCourse(defaultCId);
   }
 }
 

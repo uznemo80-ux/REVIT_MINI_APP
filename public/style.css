@@ -3264,5 +3264,83 @@ html.light .nav {
   line-height: 1.35;
 }
 
+.open-res-card:active {
+  transform: scale(0.985);
+  opacity: 0.92;
+}
+
+.material-card:active {
+  transform: scale(0.985);
+  opacity: 0.92;
+}
+
+.admin-tabs button:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* Sleek Apple-Style Scrollbars for Desktop & Web */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+/* ======================================================
+   Responsive Desktop & PC Telegram Web App Wrapper
+   ====================================================== */
+@media (min-width: 641px) {
+  body {
+    background-color: #06060a;
+    display: flex;
+    justify-content: center;
+  }
+
+  html.light body {
+    background-color: #e2e5eb;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 640px;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+    position: relative;
+  }
+
+  .nav {
+    max-width: 640px;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+  }
+
+  .admin-page {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+
 
 
