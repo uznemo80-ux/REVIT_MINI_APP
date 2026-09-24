@@ -1460,21 +1460,40 @@ function generateBunnyPlayerUrl(libraryId, videoId) {
 // ======================================================
 
 function getYouTubeVideoId(url) {
-  if (!url) return null;
+  if (!url || typeof url !== 'string') return null;
   try {
-    var parsedUrl = new URL(url);
-    var hostname = parsedUrl.hostname.toLowerCase();
-    if (hostname === 'youtu.be') {
-      return parsedUrl.pathname.replace(/^\/+/, '').split('/')[0].trim() || null;
-    }
-    if (hostname === 'youtube.com' || hostname === 'www.youtube.com' || hostname === 'm.youtube.com') {
-      var videoId = parsedUrl.searchParams.get('v');
-      if (videoId) return videoId;
-      var embedMatch = parsedUrl.pathname.match(/^\/embed\/([^/]+)/);
-      if (embedMatch) return embedMatch[1];
-      var shortsMatch = parsedUrl.pathname.match(/^\/shorts\/([^/]+)/);
-      if (shortsMatch) return shortsMatch[1];
-    }
+    var clean = url.trim();
+    // If it's an iframe tag, extract the src attribute
+    var srcMatch = clean.match(/src=["']([^"']+)["']/i);
+    if (srcMatch && srcMatch[1]) clean = srcMatch[1];
+
+    // If it's just an 11-char ID
+    if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
+
+    // 1. Check youtu.be/VIDEO_ID
+    var youtuMatch = clean.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+    if (youtuMatch && youtuMatch[1]) return youtuMatch[1];
+
+    // 2. Check /live/VIDEO_ID (YouTube Stream / Jonli Efir)
+    var liveMatch = clean.match(/(?:youtube\.com|youtube-nocookie\.com)\/live\/([a-zA-Z0-9_-]{11})/i);
+    if (liveMatch && liveMatch[1]) return liveMatch[1];
+
+    // 3. Check /embed/VIDEO_ID
+    var embedMatch = clean.match(/(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})/i);
+    if (embedMatch && embedMatch[1]) return embedMatch[1];
+
+    // 4. Check /shorts/VIDEO_ID
+    var shortsMatch = clean.match(/(?:youtube\.com|youtube-nocookie\.com)\/shorts\/([a-zA-Z0-9_-]{11})/i);
+    if (shortsMatch && shortsMatch[1]) return shortsMatch[1];
+
+    // 5. Check watch?v=VIDEO_ID
+    var vMatch = clean.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+    if (vMatch && vMatch[1]) return vMatch[1];
+
+    // 6. Generic regex fallback for any youtube URL
+    var genMatch = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if (genMatch && genMatch[1]) return genMatch[1];
+
     return null;
   } catch (error) {
     console.error('YOUTUBE URL ERROR:', error.message);
@@ -1983,7 +2002,8 @@ app.post('/api/course/:id/modules', async function (req, res) {
     }
 
     var isFreeCourse = Boolean(
-      !course.price || course.price === '0' || course.price.includes('0 so') || (course.title && /marafon/i.test(course.title))
+      !course.price || course.price === '0' || course.price.includes('0 so') ||
+      (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title))
     );
 
     var modulesResult = await pool.query(
@@ -2073,14 +2093,20 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var data = modules.map(function (mod) {
       var isFirstModule = mod.id === firstModuleId;
       var isGranted = grantedModuleIds.has(mod.id);
-      var moduleUnlocked = isFreeCourse || (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
+      var isStreamCourseOrModule = isFreeCourse ||
+        /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
+        (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
+      var moduleUnlocked = isStreamCourseOrModule || (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var available = Boolean(lesson.is_free) || isFreeCourse || isMainAdminUser || isGranted ||
+        var isStreamLesson = isStreamCourseOrModule ||
+          /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '');
+        var available = Boolean(lesson.is_free) || isStreamLesson || isMainAdminUser || isGranted ||
           (isNeverPaidUser(user) && isFirstModule) ||
-          (userHasAccess && sequentialUnlockedSet.has(lesson.id));
+          userHasAccess ||
+          sequentialUnlockedSet.has(lesson.id);
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
         return {
@@ -2156,10 +2182,14 @@ app.post('/api/lesson/:id', async function (req, res) {
     var courseRes = await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [mod.course_id]);
     var courseData = courseRes.rows[0];
     var isFreeCourse = Boolean(
-      courseData && (!courseData.price || courseData.price === '0' || courseData.price.includes('0 so') || (courseData.title && /marafon/i.test(courseData.title)))
+      courseData && (!courseData.price || courseData.price === '0' || courseData.price.includes('0 so') || (courseData.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title)))
     );
+    var isStreamLesson = isFreeCourse ||
+      /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '') ||
+      (courseData && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title || '')) ||
+      /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '');
 
-    var lessonAvailable = Boolean(lesson.is_free) || isFreeCourse || isMainAdminUser || isGranted || (isNeverPaidUser(user) && isFirstModule);
+    var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isMainAdminUser || isGranted || userHasAccess || (isNeverPaidUser(user) && isFirstModule);
 
     if (!lessonAvailable && userHasAccess) {
       // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
@@ -2294,12 +2324,21 @@ app.post('/api/lesson/:id', async function (req, res) {
     }
 
     var rawVideoUrl = (lesson.youtube_url || '').trim();
+    if (!rawVideoUrl && lesson.bunny_video_id && /^https?:\/\//i.test(lesson.bunny_video_id.trim())) {
+      rawVideoUrl = lesson.bunny_video_id.trim();
+    }
+    if (!rawVideoUrl && files && files.length > 0) {
+      var streamFile = files.find(f => /youtube|youtu\.be|mediadelivery|bunny|drive\.google|\.mp4/i.test(f.file_url || ''));
+      if (streamFile) {
+        rawVideoUrl = streamFile.file_url.trim();
+      }
+    }
     var youtubePlayerUrl = generateYouTubePlayerUrl(rawVideoUrl);
 
     if (youtubePlayerUrl) {
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'youtube',
-        youtube_url: lesson.youtube_url, youtube_player_url: youtubePlayerUrl,
+        youtube_url: rawVideoUrl, youtube_player_url: youtubePlayerUrl,
         task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
         questions: questions
       });

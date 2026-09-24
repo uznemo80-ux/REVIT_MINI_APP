@@ -4222,7 +4222,7 @@ function renderCourseCardsListHtml() {
       <div class="course-body">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
-            ${course.status === 'active' ? 'Faol Kurs' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Tez Kunda')}
+            ${course.status === 'active' ? 'Faol Kurs' : (/marafon|stream|7/i.test(course.title || '') ? '🔥 Marafon' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Mavjud Kurs'))}
           </div>
           <div style="font-weight:750; color:var(--accent); font-size:15px;">
             ${course.is_discount_active && course.discount_price ? `
@@ -4242,8 +4242,8 @@ function renderCourseCardsListHtml() {
           <span>🎬 ${course.total_lessons || 0} Dars</span>
           ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
         </div>
-        <button class="btn" style="margin-bottom:0; padding:10px 16px; ${course.status !== 'active' && state.is_admin ? 'background:var(--bg-surface-elevated); border:1px solid var(--border); color:var(--text-primary);' : ''}">
-          ${course.status === 'active' ? 'Darslarni ochish →' : (state.is_admin ? '⚙️ Kursni ochish va to‘ldirish →' : 'Tez kunda chiqadi ⏳')}
+        <button class="btn" style="margin-bottom:0; padding:10px 16px;">
+          Darslarni ochish →
         </button>
       </div>
     </div>
@@ -5091,21 +5091,90 @@ async function openLesson(id) {
       </div>
     `;
 
+    function getClientYouTubeEmbed(url) {
+      if (!url || typeof url !== "string") return null;
+      var clean = url.trim();
+      var srcMatch = clean.match(/src=["']([^"']+)["']/i);
+      if (srcMatch && srcMatch[1]) clean = srcMatch[1];
+      if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) {
+        return `https://www.youtube.com/embed/${clean}?rel=0&modestbranding=1&enablejsapi=1`;
+      }
+      var m = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+      if (m && m[1]) {
+        return `https://www.youtube.com/embed/${m[1]}?rel=0&modestbranding=1&enablejsapi=1`;
+      }
+      return null;
+    }
+
+    const ytEmbed = lesson.youtube_player_url ||
+      getClientYouTubeEmbed(lesson.youtube_url) ||
+      getClientYouTubeEmbed(lesson.bunny_player_url) ||
+      getClientYouTubeEmbed(lesson.bunny_video_id);
+
+    const directStreamUrl = (lesson.youtube_url || lesson.bunny_player_url || lesson.bunny_video_id || "").trim();
+
     let videoHtml = "";
-    if (lesson.youtube_player_url) {
+    if (ytEmbed) {
       videoHtml = `
         <div class="video-container">
-          <iframe src="${escapeHtml(lesson.youtube_player_url)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe src="${escapeHtml(ytEmbed)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+          ${watermarkHtml}
+        </div>
+        ${directStreamUrl && /^https?:\/\//i.test(directStreamUrl) ? `
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <a href="${escapeHtml(directStreamUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
+              <span>▶ Jonli Efir / YouTube'da ochish ↗</span>
+            </a>
+          </div>
+        ` : ""}
+      `;
+    } else if (lesson.bunny_player_url && /\.mp4($|\?)/i.test(lesson.bunny_player_url)) {
+      videoHtml = `
+        <div class="video-container" style="background:#000; display:flex; align-items:center; justify-content:center;">
+          <video controls playsinline controlslist="nodownload" preload="metadata" style="width:100%; max-height:420px; border-radius:12px;">
+            <source src="${escapeHtml(lesson.bunny_player_url)}" type="video/mp4">
+            Brauzeringiz videoni qo'llab-quvvatlamaydi.
+          </video>
           ${watermarkHtml}
         </div>
       `;
     } else if (lesson.bunny_player_url) {
       videoHtml = `
         <div class="video-container">
-          <iframe src="${escapeHtml(lesson.bunny_player_url)}" title="${escapeHtml(lesson.title)}" allowfullscreen></iframe>
+          <iframe src="${escapeHtml(lesson.bunny_player_url)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
           ${watermarkHtml}
         </div>
+        ${directStreamUrl && /^https?:\/\//i.test(directStreamUrl) ? `
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <a href="${escapeHtml(directStreamUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
+              <span>▶ Stream / Videoni to'g'ridan-to'g'ri ochish ↗</span>
+            </a>
+          </div>
+        ` : ""}
       `;
+    } else if (lesson.files && lesson.files.length > 0 && lesson.files.some(f => /youtube|youtu\.be|mediadelivery|bunny|drive\.google|\.mp4/i.test(f.file_url || ''))) {
+      const vidFile = lesson.files.find(f => /youtube|youtu\.be|mediadelivery|bunny|drive\.google|\.mp4/i.test(f.file_url || ''));
+      const embedFromFile = getClientYouTubeEmbed(vidFile.file_url);
+      if (embedFromFile) {
+        videoHtml = `
+          <div class="video-container">
+            <iframe src="${escapeHtml(embedFromFile)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            ${watermarkHtml}
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <a href="${escapeHtml(vidFile.file_url)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
+              <span>▶ Jonli Efir / Video havolasini ochish ↗</span>
+            </a>
+          </div>
+        `;
+      } else {
+        videoHtml = `
+          <div class="video-container">
+            <iframe src="${escapeHtml(vidFile.file_url)}" title="${escapeHtml(lesson.title)}" allowfullscreen></iframe>
+            ${watermarkHtml}
+          </div>
+        `;
+      }
     } else {
       videoHtml = `
         <div class="lesson-no-video">
