@@ -4908,13 +4908,15 @@ app.all(['/api/support/info'], async function (req, res) {
     return res.json({
       ok: true,
       support: {
-        title: settings.support_title || 'Akademiyani qo\'llab-quvvatlash',
-        subtitle: settings.support_subtitle || 'YOSHUZBEKK platformasini rivojlantirishga o\'z hissangizni qo\'shing',
-        description: settings.support_description || 'Akademiyamiz darslari, ochiq manbalar, BIM standartlari va erkin testlar rivoji uchun ixtiyoriy moliyaviy qo\'llab-quvvatlash.',
-        card_number: settings.donate_card_number || '8600 5304 1234 5678',
-        card_holder: settings.donate_card_holder || 'Abdulloh S. (YOSHUZBEKK)',
-        payment_type: settings.donate_payment_type || 'UZCARD / HUMO',
-        telegram_contact: settings.support_telegram_contact || '@yoshuzbekk_admin'
+        title: settings.support_title || 'Qo‘llab-quvvatlash',
+        subtitle: settings.support_subtitle || 'Platforma rivojiga o‘z xohishingiz bilan hissa qo‘shishingiz mumkin.',
+        description: settings.support_description || 'Platforma rivojiga o‘z xohishingiz bilan hissa qo‘shishingiz mumkin.',
+        card_number: settings.donate_card_number || settings.support_card_number || '8600 5304 1234 5678',
+        card_holder: settings.donate_card_holder || settings.support_card_holder || 'Abdulloh S.',
+        first_name: settings.support_first_name || '',
+        last_name: settings.support_last_name || '',
+        payment_type: settings.donate_payment_type || settings.support_payment_type || 'UZCARD / HUMO',
+        telegram_contact: settings.support_telegram_contact || '@texnikuzb'
       }
     });
   } catch (err) {
@@ -5459,14 +5461,31 @@ app.post('/api/admin/library-v2/category/:id/delete', requireAdmin, async functi
 app.post('/api/admin/support/update', requireAdmin, async function (req, res) {
   try {
     var b = req.body;
+    var firstName = (b.first_name || b.support_first_name || '').trim();
+    var lastName = (b.last_name || b.support_last_name || '').trim();
+    var holder = (b.card_holder || b.support_card_holder || [firstName, lastName].filter(Boolean).join(' ') || 'Abdulloh S.').trim();
+    var cardNum = (b.card_number || b.donate_card_number || b.support_card_number || '8600 5304 1234 5678').trim();
+    var paymentType = (b.payment_type || b.donate_payment_type || b.support_payment_type || 'UZCARD / HUMO').trim();
+    var tgContact = (b.telegram_contact || b.support_telegram_contact || b.support_contact || '@texnikuzb').trim();
+    if (tgContact && !tgContact.startsWith('@') && !tgContact.startsWith('http')) {
+      tgContact = '@' + tgContact;
+    }
+    var title = (b.title || b.support_title || 'Qo‘llab-quvvatlash').trim();
+    var desc = (b.description || b.subtitle || b.support_description || b.support_subtitle || 'Platforma rivojiga o‘z xohishingiz bilan hissa qo‘shishingiz mumkin.').trim();
+
     var keys = [
-      ['support_title', b.title || 'Akademiyani qo\'llab-quvvatlash'],
-      ['support_subtitle', b.subtitle || 'YOSHUZBEKK platformasini rivojlantirishga o\'z hissangizni qo\'shing'],
-      ['support_description', b.description || 'Akademiyamiz darslari, ochiq manbalar, BIM standartlari va erkin testlar rivoji uchun ixtiyoriy moliyaviy qo\'llab-quvvatlash.'],
-      ['donate_card_number', b.card_number || '8600 5304 1234 5678'],
-      ['donate_card_holder', b.card_holder || 'Abdulloh S. (YOSHUZBEKK)'],
-      ['donate_payment_type', b.payment_type || 'UZCARD / HUMO'],
-      ['support_telegram_contact', b.telegram_contact || '@yoshuzbekk_admin']
+      ['support_title', title],
+      ['support_subtitle', desc],
+      ['support_description', desc],
+      ['donate_card_number', cardNum],
+      ['support_card_number', cardNum],
+      ['support_first_name', firstName],
+      ['support_last_name', lastName],
+      ['donate_card_holder', holder],
+      ['support_card_holder', holder],
+      ['donate_payment_type', paymentType],
+      ['support_payment_type', paymentType],
+      ['support_telegram_contact', tgContact]
     ];
 
     for (var k of keys) {

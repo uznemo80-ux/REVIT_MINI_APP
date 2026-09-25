@@ -1327,7 +1327,7 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
   }
 }
 
-function renderCurrentAndAdjacentPdfSlides() {
+function renderCurrentAndAdjacentPdfSlides(force = false) {
   const slides = getShowcaseSlides();
   if (!slides.length) return;
   const cur = showcaseCurrentIndex;
@@ -1336,10 +1336,24 @@ function renderCurrentAndAdjacentPdfSlides() {
   toRender.forEach(idx => {
     const slide = slides[idx];
     if (slide && (slide.driveId || slide.pdfUrl)) {
+      if (force) {
+        const c = document.getElementById(`pdf-canvas-${idx}`);
+        if (c) delete c.dataset.rendered;
+      }
       renderPdfSlide(`pdf-canvas-${idx}`, slide.driveId, slide.pdfUrl, slide.pageNum);
     }
   });
 }
+
+let _pdfResizeTimer = null;
+window.addEventListener("resize", () => {
+  if (_pdfResizeTimer) clearTimeout(_pdfResizeTimer);
+  _pdfResizeTimer = setTimeout(() => {
+    if (activeTab === "home" && !currentView) {
+      renderCurrentAndAdjacentPdfSlides(true);
+    }
+  }, 250);
+});
 
 function initShowcaseTimer() {
   if (showcaseAutoTimer) clearInterval(showcaseAutoTimer);
@@ -2064,40 +2078,54 @@ function deleteShowcaseItem(id) {
 
 function renderDonateBlock() {
   const settings = state.settings || {};
-  const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
-  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
-  const desc = settings.donate_description || settings.support_description || "Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo'llab-quvvatlash (ehson/donat).";
-  const title = settings.donate_title || settings.support_title || "Akademiyani qo'llab-quvvatlash (Donat)";
+  const cardNum = settings.donate_card_number || settings.support_card_number || "8600 5304 1234 5678";
+  const firstName = settings.support_first_name || "";
+  const lastName = settings.support_last_name || "";
+  const cardHolder = [firstName, lastName].filter(Boolean).join(" ") || settings.donate_card_holder || settings.support_card_holder || "Abdulloh S.";
+  const paymentType = settings.donate_payment_type || settings.support_payment_type || "UZCARD / HUMO";
+  const desc = settings.support_description || settings.support_subtitle || settings.donate_description || "Platforma rivojiga o'z xohishingiz bilan hissa qo'shishingiz mumkin.";
+  const title = settings.support_title || settings.donate_title || "Qo'llab-quvvatlash";
+  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
+  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
+  const displayTg = "@" + cleanTg;
 
   return `
     <div class="donate-card">
       <div class="donate-header">
-        <div class="donate-icon">💝</div>
         <div class="donate-title">${escapeHtml(title)}</div>
-      </div>
-      <div class="donate-text">
-        ${escapeHtml(desc)}
+        <div class="donate-text">${escapeHtml(desc)}</div>
       </div>
 
       <div class="donate-card-box">
-        <div>
-          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">💳 Karta raqami (UzCard / Humo):</div>
-          <div id="donate-card-val" class="donate-card-number">${escapeHtml(cardNum)}</div>
-          <div class="donate-card-holder">Egasi: ${escapeHtml(cardHolder)}</div>
+        <div class="donate-card-top-row">
+          <div class="donate-card-holder">Karta egasi: <strong>${escapeHtml(cardHolder)}</strong></div>
+          <span class="donate-card-type-badge">${escapeHtml(paymentType)}</span>
         </div>
-        <button id="copy-donate-btn" class="admin-small-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-          📋 Nusxalash
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Karta raqami:</div>
+          <div id="donate-card-val" class="donate-card-number">${escapeHtml(cardNum)}</div>
+        </div>
+        <button id="copy-donate-btn" class="donate-copy-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+          📋 Raqamni nusxalash
         </button>
       </div>
 
       <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
-        Tezkor ehson summalari:
+        Ixtiyoriy tezkor summalar:
       </div>
       <div class="donate-pills">
-        <div class="donate-pill" onclick="openDonateModal('15 000 so\\'m (Qahva ☕)')">15 000 ☕</div>
-        <div class="donate-pill" onclick="openDonateModal('50 000 so\\'m (Kitob 📚)')">50 000 📚</div>
-        <div class="donate-pill" onclick="openDonateModal('100 000 so\\'m (Darslik 🚀)')">100 000 🚀</div>
-        <div class="donate-pill" onclick="openDonateModal('250 000 so\\'m (Homiylik 🌟)')">250 000 🌟</div>
+        <div class="donate-pill" onclick="openDonateModal('15 000 so\\'m')">15 000</div>
+        <div class="donate-pill" onclick="openDonateModal('50 000 so\\'m')">50 000</div>
+        <div class="donate-pill" onclick="openDonateModal('100 000 so\\'m')">100 000</div>
+        <div class="donate-pill" onclick="openDonateModal('250 000 so\\'m')">250 000</div>
+      </div>
+
+      <div class="donate-telegram-row" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')" title="Telegramda ochish">
+        <span class="donate-telegram-label">Savol yoki murojaat uchun:</span>
+        <span class="donate-telegram-handle">
+          ${escapeHtml(displayTg)}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </span>
       </div>
     </div>
   `;
@@ -2162,51 +2190,102 @@ function openDonateModal(summaLabel = "") {
   haptic("light");
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   const settings = state.settings || {};
-  const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
-  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
-  const paymentType = settings.donate_payment_type || "UZCARD / HUMO";
-  const telegram = settings.support_telegram_contact || settings.contact_telegram || "yoshuzbekk_admin";
-  const cleanTg = String(telegram).replace('@', '');
+  const cardNum = settings.donate_card_number || settings.support_card_number || "8600 5304 1234 5678";
+  const firstName = settings.support_first_name || "";
+  const lastName = settings.support_last_name || "";
+  const cardHolder = [firstName, lastName].filter(Boolean).join(" ") || settings.donate_card_holder || settings.support_card_holder || "Abdulloh S.";
+  const paymentType = settings.donate_payment_type || settings.support_payment_type || "UZCARD / HUMO";
+  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
+  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
+  const displayTg = "@" + cleanTg;
 
   currentView = {
     html: `
       <div class="page">
         <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
-        <div class="page-title">💝 Qo'llab-quvvatlash (Donat)</div>
+        <div class="page-title">Qo'llab-quvvatlash</div>
 
         <div class="card" style="text-align:center; padding:24px 18px; margin-bottom:16px;">
-          <div style="font-size:44px; margin-bottom:10px;">☕</div>
-          <div style="font-size:17px; font-weight:800; margin-bottom:6px;">Har bir hissangiz biz uchun qadrli!</div>
-          <div style="font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:18px;">
+          <div style="font-size:17px; font-weight:700; margin-bottom:6px;">Platforma rivojiga hissa qo'shish</div>
+          <div style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin-bottom:18px;">
             Sizning qo'llab-quvvatlashingiz akademiyada yangi bepul darsliklar, Revit oilalari va ochiq normativlarni tayyorlashga sarflanadi.
           </div>
 
           ${summaLabel ? `
-            <div style="background:rgba(233,30,99,0.1); border:1px solid rgba(233,30,99,0.3); border-radius:8px; padding:10px; font-weight:750; color:#e91e63; margin-bottom:16px;">
+            <div style="background:rgba(41,121,255,0.1); border:1px solid rgba(41,121,255,0.25); border-radius:8px; padding:10px; font-weight:700; color:var(--accent); margin-bottom:16px;">
               Tanlangan summa: ${escapeHtml(summaLabel)}
             </div>
           ` : ""}
 
-          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Karta raqami:</span>
-              <span style="font-size:10.5px; background:rgba(255,255,255,0.08); border-radius:4px; padding:2px 6px; color:var(--text-secondary);">${escapeHtml(paymentType)}</span>
+          <div class="donate-card-box" style="text-align:left;">
+            <div class="donate-card-top-row">
+              <div class="donate-card-holder">Karta egasi: <strong>${escapeHtml(cardHolder)}</strong></div>
+              <span class="donate-card-type-badge">${escapeHtml(paymentType)}</span>
             </div>
-            <div style="font-family:monospace; font-size:18px; font-weight:800; color:var(--accent); letter-spacing:1px; margin:4px 0;">
-              ${escapeHtml(cardNum)}
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Karta raqami:</div>
+              <div class="donate-card-number">${escapeHtml(cardNum)}</div>
             </div>
-            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">Egasi: ${escapeHtml(cardHolder)}</div>
-
-            <button id="support-copy-btn" class="btn" style="margin-bottom:0;" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-              📋 Karta raqamini nusxalash
+            <button id="support-copy-btn" class="donate-copy-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+              📋 Raqamni nusxalash
             </button>
           </div>
 
-          ${cleanTg ? `
-            <a href="https://t.me/${cleanTg}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
-              💬 Bog'lanish (@${escapeHtml(cleanTg)})
-            </a>
-          ` : ""}
+          <button class="btn secondary" style="margin-bottom:0;" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')">
+            💬 Bog'lanish (${escapeHtml(displayTg)})
+          </button>
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+function openPlatformRulesModal() {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  const settings = state.settings || {};
+  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
+  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
+  const displayTg = "@" + cleanTg;
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
+        <div class="page-title">Platformadan foydalanish qoidalari</div>
+
+        <div class="card" style="padding:22px 18px; margin-bottom:16px;">
+          <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">
+            Hurmatli o'quvchi!
+          </div>
+
+          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+            <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
+              ⚠️ Darslik va materiallar daxlsizligi
+            </div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+              Darslik va materiallarni boshqa shaxslarga yuborish, tarqatish yoki sotish qat'iyan taqiqlanadi. Bu sizning shaxsiy foydalanishingiz uchun berilgan omonat hisoblanadi.
+            </div>
+          </div>
+
+          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+            <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
+              🔒 Shaxsiy ma'lumotlar
+            </div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+              Ma’lumotlaringiz faqat kursdan foydalanish va siz bilan bog‘lanish uchun ishlatiladi.
+            </div>
+          </div>
+
+          <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:16px; text-align:center;">
+            Qo'shimcha savollar yoki tushunmovchiliklar bo'lsa, platforma ma'muriyati bilan bog'lanishingiz mumkin.
+          </div>
+
+          <button class="btn secondary" style="margin-bottom:0;" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')">
+            💬 Ma'muriyat bilan bog'lanish (${escapeHtml(displayTg)})
+          </button>
         </div>
       </div>
     `
@@ -7654,9 +7733,15 @@ function renderProfile() {
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
 
-      <!-- 5-TALAB: QO'LLAB-QUVVATLASH (DONAT) QISMI -->
+      <!-- 1-TALAB: QO'LLAB-QUVVATLASH (SUPPORT) BO'LIMI -->
       ${renderDonateBlock()}
 
+      <!-- 4-TALAB: PLATFORMADAN FOYDALANISH QOIDALARI -->
+      <button class="btn secondary" style="margin-top:14px;" onclick="openPlatformRulesModal()">
+        📜 Platformadan foydalanish qoidalari
+      </button>
+
+      <!-- HISOBNI O'CHIRISH -->
       <button class="btn danger" style="margin-top:24px;" onclick="confirmDeleteAccount()">
         🗑️ Hisobni o'chirish
       </button>
@@ -9761,43 +9846,64 @@ function deleteAdminCategoryConfirm(catId) {
 
 function renderAdminSupportSettings() {
   const sets = state.settings || {};
+  const currentCard = sets.donate_card_number || sets.support_card_number || "8600 5304 1234 5678";
+  const firstName = sets.support_first_name || "";
+  const lastName = sets.support_last_name || "";
+  const holder = sets.donate_card_holder || sets.support_card_holder || "";
+  const parsedFirst = firstName || (holder.split(" ")[0] || "Abdulloh");
+  const parsedLast = lastName || (holder.split(" ").slice(1).join(" ") || "S.");
+  const paymentType = sets.donate_payment_type || sets.support_payment_type || "UZCARD / HUMO";
+  const tgContact = sets.support_telegram_contact || sets.contact_telegram || "@texnikuzb";
+  const title = sets.support_title || "Qo'llab-quvvatlash";
+  const desc = sets.support_description || sets.support_subtitle || "Platforma rivojiga o'z xohishingiz bilan hissa qo'shishingiz mumkin.";
 
   return `
     <div>
-      <div class="admin-section-title" style="margin-bottom:4px;">💳 Qo‘llab-quvvatlash / Donat Sozlamalari</div>
+      <div class="admin-section-title" style="margin-bottom:4px;">💳 Qo‘llab-quvvatlash Sozlamalari</div>
       <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
-        Profil bo'limidagi zamonaviy Apple-style qo'llab-quvvatlash bloki ma'lumotlari
+        Profil sahifasidagi premium Apple-style qo‘llab-quvvatlash kartasi ma'lumotlarini boshqarish
       </div>
 
       <div class="admin-form">
         <div class="apple-field">
-          <label>Blok Sarlavhasi</label>
-          <input id="set-sup-title" class="apple-input" type="text" value="${escapeHtml(sets.support_title || "Platforma rivojiga hissa qo'shing")}">
+          <label>1. Karta raqami (16 xonali) *</label>
+          <input id="set-sup-card" class="apple-input" type="text" placeholder="8600 5304 1234 5678" value="${escapeHtml(currentCard)}">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="apple-field">
+            <label>2. Ism *</label>
+            <input id="set-sup-first-name" class="apple-input" type="text" placeholder="Abdulloh" value="${escapeHtml(parsedFirst)}">
+          </div>
+          <div class="apple-field">
+            <label>3. Familya *</label>
+            <input id="set-sup-last-name" class="apple-input" type="text" placeholder="Salimov" value="${escapeHtml(parsedLast)}">
+          </div>
         </div>
 
         <div class="apple-field">
-          <label>Qisqa Tavsif / Rahmat so'zi</label>
-          <textarea id="set-sup-desc" class="apple-input apple-textarea">${escapeHtml(sets.support_subtitle || "Bepul bilimlar va ochiq manbalar bazasini boyitishda yordam bering")}</textarea>
+          <label>4. Karta turi *</label>
+          <select id="set-sup-type" class="apple-input">
+            <option value="UZCARD / HUMO" ${paymentType === "UZCARD / HUMO" ? "selected" : ""}>UZCARD / HUMO</option>
+            <option value="UZCARD" ${paymentType === "UZCARD" ? "selected" : ""}>UZCARD</option>
+            <option value="HUMO" ${paymentType === "HUMO" ? "selected" : ""}>HUMO</option>
+          </select>
         </div>
 
         <div class="apple-field">
-          <label>Bank Karta Raqami (8600... / 9860...)</label>
-          <input id="set-sup-card" class="apple-input" type="text" value="${escapeHtml(sets.support_card_number || "8600 0000 0000 0000")}">
+          <label>5. Telegram username / link * (standart: @texnikuzb)</label>
+          <input id="set-sup-contact" class="apple-input" type="text" placeholder="@texnikuzb" value="${escapeHtml(tgContact)}">
+          <span style="font-size:11px; color:var(--text-muted); margin-top:2px;">Profil kartasida bosilganda to'g'ridan-to'g'ri Telegram chatiga olib kiradi</span>
         </div>
 
         <div class="apple-field">
-          <label>Karta Egasi Ism-familiyasi</label>
-          <input id="set-sup-holder" class="apple-input" type="text" value="${escapeHtml(sets.support_card_holder || "YOSHUZBEKK ACADEMY")}">
+          <label>Blok Sarlavhasi (Ixtiyoriy)</label>
+          <input id="set-sup-title" class="apple-input" type="text" value="${escapeHtml(title)}">
         </div>
 
         <div class="apple-field">
-          <label>Bank Nomi</label>
-          <input id="set-sup-bank" class="apple-input" type="text" value="${escapeHtml(sets.support_bank_name || "TBC / Hamkorbank")}">
-        </div>
-
-        <div class="apple-field">
-          <label>Bog'lanish / Chek yuborish Telegram username</label>
-          <input id="set-sup-contact" class="apple-input" type="text" value="${escapeHtml(sets.support_contact || sets.contact_telegram || "yoshuzbekk")}">
+          <label>Qisqa Tavsif (Ixtiyoriy)</label>
+          <textarea id="set-sup-desc" class="apple-input apple-textarea">${escapeHtml(desc)}</textarea>
         </div>
 
         <button class="btn" style="margin-top:16px;" onclick="submitUpdateSupportSettings()">
@@ -9809,32 +9915,45 @@ function renderAdminSupportSettings() {
 }
 
 async function submitUpdateSupportSettings() {
-  const title = document.getElementById("set-sup-title")?.value.trim();
-  const subtitle = document.getElementById("set-sup-desc")?.value.trim();
-  const cardNumber = document.getElementById("set-sup-card")?.value.trim();
-  const cardHolder = document.getElementById("set-sup-holder")?.value.trim();
-  const bankName = document.getElementById("set-sup-bank")?.value.trim();
-  const contact = document.getElementById("set-sup-contact")?.value.trim();
+  const cardNumber = document.getElementById("set-sup-card")?.value.trim() || "8600 5304 1234 5678";
+  const firstName = document.getElementById("set-sup-first-name")?.value.trim() || "";
+  const lastName = document.getElementById("set-sup-last-name")?.value.trim() || "";
+  const paymentType = document.getElementById("set-sup-type")?.value.trim() || "UZCARD / HUMO";
+  let contact = document.getElementById("set-sup-contact")?.value.trim() || "@texnikuzb";
+  if (contact && !contact.startsWith("@") && !contact.startsWith("http")) {
+    contact = "@" + contact;
+  }
+  const title = document.getElementById("set-sup-title")?.value.trim() || "Qo'llab-quvvatlash";
+  const desc = document.getElementById("set-sup-desc")?.value.trim() || "Platforma rivojiga o'z xohishingiz bilan hissa qo'shishingiz mumkin.";
+  const cardHolder = [firstName, lastName].filter(Boolean).join(" ") || "Abdulloh S.";
 
   try {
     haptic("medium");
     await adminApi("/api/admin/support/update", {
-      support_title: title,
-      support_subtitle: subtitle,
-      support_card_number: cardNumber,
-      support_card_holder: cardHolder,
-      support_bank_name: bankName,
-      support_contact: contact
+      card_number: cardNumber,
+      first_name: firstName,
+      last_name: lastName,
+      card_holder: cardHolder,
+      payment_type: paymentType,
+      telegram_contact: contact,
+      title: title,
+      description: desc
     });
     showToast("Qo'llab-quvvatlash sozlamalari saqlandi!");
     state.settings = {
       ...state.settings,
-      support_title: title,
-      support_subtitle: subtitle,
+      donate_card_number: cardNumber,
       support_card_number: cardNumber,
+      support_first_name: firstName,
+      support_last_name: lastName,
+      donate_card_holder: cardHolder,
       support_card_holder: cardHolder,
-      support_bank_name: bankName,
-      support_contact: contact
+      donate_payment_type: paymentType,
+      support_payment_type: paymentType,
+      support_telegram_contact: contact,
+      support_title: title,
+      support_subtitle: desc,
+      support_description: desc
     };
     adminSetTab("library");
   } catch (err) {

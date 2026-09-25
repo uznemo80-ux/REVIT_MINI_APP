@@ -2766,7 +2766,7 @@ html.light .nav {
 .carousel-track {
   position: relative;
   width: 100%;
-  min-height: 380px;
+  min-height: auto;
 }
 
 .carousel-slide {
@@ -2906,10 +2906,14 @@ html.light .nav {
 .carousel-sheet-card {
   position: relative;
   width: 100%;
-  height: 220px;
+  aspect-ratio: 16 / 10.5;
+  min-height: 220px;
+  max-height: 520px;
   background: #0f111a;
   overflow: hidden;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .carousel-sheet-card .carousel-image-preview {
@@ -3224,92 +3228,160 @@ html.light .nav {
 }
 
 /* ======================================================
-   TALAB 5: DONAT VA QO'LLAB-QUVVATLASH
+   TALAB 5: DONAT VA QO'LLAB-QUVVATLASH (APPLE-STYLE MINIMAL)
    ====================================================== */
 .donate-card {
-  background: linear-gradient(135deg, rgba(233, 30, 99, 0.12) 0%, rgba(156, 39, 176, 0.08) 100%);
-  border: 1px solid rgba(233, 30, 99, 0.3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px 18px;
-  margin-top: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 24px rgba(233, 30, 99, 0.15);
+  padding: 22px 20px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .donate-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.donate-icon {
-  font-size: 26px;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
 .donate-title {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
 }
 
 .donate-text {
   font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
+  margin-top: 4px;
   margin-bottom: 16px;
 }
 
 .donate-card-box {
-  background: var(--bg-surface);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
-  margin-bottom: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
 }
 
+.donate-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.donate-card-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  letter-spacing: 0.5px;
+}
+
 .donate-card-number {
-  font-family: monospace;
-  font-size: 15.5px;
-  font-weight: 750;
-  letter-spacing: 1px;
-  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  word-break: break-all;
 }
 
 .donate-card-holder {
-  font-size: 11.5px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-secondary);
-  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+.donate-copy-btn {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.donate-copy-btn:active {
+  transform: scale(0.98);
 }
 
 .donate-pills {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .donate-pill {
-  background: var(--bg-surface);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 4px;
+  padding: 9px 4px;
   text-align: center;
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .donate-pill:hover, .donate-pill:active {
-  background: var(--accent);
-  color: #fff;
   border-color: var(--accent);
+  color: var(--accent);
+}
+
+.donate-telegram-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.donate-telegram-row:hover {
+  border-color: var(--accent);
+}
+
+.donate-telegram-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.donate-telegram-handle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ======================================================
