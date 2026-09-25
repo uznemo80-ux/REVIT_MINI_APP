@@ -1446,6 +1446,79 @@ async function ensureLibraryV2Tables() {
       console.warn('MODULE TESTS AUTO-SYNC WARNING:', testSyncErr.message);
     }
 
+    // 8. DEDICATED LIBRARY BOOKS TABLE & AUTO-MIGRATION
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS library_books (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(500) NOT NULL,
+          author VARCHAR(255),
+          short_description TEXT NOT NULL DEFAULT '',
+          what_you_learn TEXT NOT NULL DEFAULT '',
+          categories TEXT[] DEFAULT '{}',
+          pdf_url TEXT NOT NULL DEFAULT '',
+          cover_url TEXT,
+          generated_cover_url TEXT,
+          page_count INT DEFAULT 0,
+          reading_time_minutes INT DEFAULT 0,
+          access_type VARCHAR(20) DEFAULT 'free',
+          is_recommended BOOLEAN DEFAULT false,
+          status VARCHAR(30) DEFAULT 'published',
+          view_count INT DEFAULT 0,
+          download_count INT DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW(),
+          published_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_status ON library_books(status)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_recommended ON library_books(is_recommended)');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_categories ON library_books USING GIN(categories)');
+
+      // Mavjud kitoblarni library_resources dan library_books ga xavfsiz ko'chirish
+      await pool.query(`
+        INSERT INTO library_books (
+          title, author, short_description, what_you_learn, categories,
+          pdf_url, cover_url, generated_cover_url, page_count, reading_time_minutes,
+          access_type, is_recommended, status, created_at, updated_at
+        )
+        SELECT
+          title,
+          COALESCE(author, ''),
+          COALESCE(description, subtitle, ''),
+          CASE
+            WHEN content_data IS NOT NULL AND content_data->'what_you_learn' IS NOT NULL THEN
+              CASE
+                WHEN jsonb_typeof(content_data->'what_you_learn') = 'array' THEN
+                  array_to_string(ARRAY(SELECT jsonb_array_elements_text(content_data->'what_you_learn')), E'\n• ')
+                ELSE content_data->>'what_you_learn'
+              END
+            ELSE ''
+          END,
+          CASE
+            WHEN tags IS NOT NULL AND array_length(tags, 1) > 0 THEN tags
+            WHEN category IS NOT NULL AND category != '' AND category != 'Boshqa' THEN ARRAY[category]
+            ELSE '{}'
+          END,
+          COALESCE(content_url, ''),
+          preview_image_url,
+          preview_image_url,
+          COALESCE(page_count, 0),
+          CASE WHEN page_count IS NOT NULL AND page_count > 0 THEN page_count * 2 ELSE 30 END,
+          'free',
+          COALESCE(is_featured, false),
+          COALESCE(status, 'published'),
+          created_at,
+          updated_at
+        FROM library_resources
+        WHERE (section_slug = 'books' OR type = 'book')
+          AND NOT EXISTS (SELECT 1 FROM library_books WHERE library_books.title = library_resources.title)
+      `);
+      console.log('✅ LIBRARY BOOKS: library_books jadvali va mavjud kitoblar migratsiyasi muvaffaqiyatli tekshirildi');
+    } catch (bkErr) {
+      console.warn('ensure library_books table warning:', bkErr.message);
+    }
+
     console.log("✅ KUTUBXONA 2.0 & SUPPORT: Barcha jadvallar, 4 bo'lim, 3 kitob va kategoriyalar muvaffaqiyatli tekshirildi/sozlandi");
   } catch (err) {
     console.error('ensureLibraryV2Tables xatosi:', err.message);
@@ -5660,6 +5733,349 @@ app.post('/api/admin/support/update', requireAdmin, async function (req, res) {
   } catch (error) {
     console.error('ADMIN SUPPORT UPDATE ERROR:', error);
     return res.status(500).json({ error: 'Sozlamalarni saqlashda xatolik' });
+  }
+});
+
+// ======================================================
+// ADMIN BOOKS & LIBRARY INSPECT API
+// ======================================================
+
+function formatReadingTime(minutes) {
+  if (!minutes || minutes <= 0) return '30 daqiqa';
+  var h = Math.floor(minutes / 60);
+  var m = minutes % 60;
+  if (h > 0 && m > 0) return '~' + h + ' soat ' + m + ' daqiqa';
+  if (h > 0) return '~' + h + ' soat';
+  return '~' + m + ' daqiqa';
+}
+
+app.post('/api/admin/library/inspect-pdf', requireAdmin, async function (req, res) {
+  try {
+    var pdfUrl = (req.body.pdf_url || req.body.url || '').trim();
+    var coverUrl = (req.body.cover_url || '').trim();
+    if (!pdfUrl) {
+      return res.status(400).json({ error: 'PDF havolasi kiritilmadi' });
+    }
+
+    var driveId = null;
+    var m = pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m && m[1]) driveId = m[1];
+    if (!driveId) {
+      m = pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) driveId = m[1];
+    }
+    if (!driveId) {
+      m = pdfUrl.match(/drive\.google\.com\/thumbnail\?id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) driveId = m[1];
+    }
+
+    var generatedCover = coverUrl;
+    if (!generatedCover && driveId) {
+      generatedCover = 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w800';
+    }
+
+    var pageCount = parseInt(req.body.page_count) || 0;
+    var readingMinutes = pageCount > 0 ? pageCount * 2 : 30;
+    var readingTimeFormatted = formatReadingTime(readingMinutes);
+
+    return res.json({
+      ok: true,
+      drive_id: driveId,
+      page_count: pageCount,
+      reading_time_minutes: readingMinutes,
+      reading_time_formatted: readingTimeFormatted,
+      generated_cover_url: generatedCover
+    });
+  } catch (err) {
+    console.error('INSPECT PDF ERROR:', err);
+    return res.status(500).json({ error: 'PDF tekshirishda xatolik: ' + err.message });
+  }
+});
+
+// Admin: Kitoblar ro'yxati (qidiruv va 7 ta filtr bilan)
+app.post('/api/admin/books/list', requireAdmin, async function (req, res) {
+  try {
+    var search = (req.body.search || '').trim().toLowerCase();
+    var filter = req.body.filter || 'all'; // all, pending, published, free, pro, recommended, uncategorized
+    var category = req.body.category || null;
+
+    var conditions = [];
+    var params = [];
+    var pIdx = 1;
+
+    if (search) {
+      conditions.push('(LOWER(title) LIKE $' + pIdx + ' OR LOWER(COALESCE(author, \'\')) LIKE $' + pIdx + ' OR LOWER(COALESCE(short_description, \'\')) LIKE $' + pIdx + ' OR array_to_string(categories, \' \') ILIKE $' + pIdx + ')');
+      params.push('%' + search + '%');
+      pIdx++;
+    }
+
+    if (filter === 'pending') {
+      conditions.push("(status = 'pending' OR status = 'draft')");
+    } else if (filter === 'published') {
+      conditions.push("status = 'published'");
+    } else if (filter === 'free') {
+      conditions.push("access_type = 'free'");
+    } else if (filter === 'pro') {
+      conditions.push("access_type = 'pro'");
+    } else if (filter === 'recommended') {
+      conditions.push("is_recommended = true");
+    } else if (filter === 'uncategorized') {
+      conditions.push("(categories IS NULL OR cardinality(categories) = 0)");
+    }
+
+    if (category && category !== 'Barchasi') {
+      conditions.push('$' + pIdx + ' = ANY(categories)');
+      params.push(category);
+      pIdx++;
+    }
+
+    var where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+    var q = 'SELECT * FROM library_books ' + where + ' ORDER BY is_recommended DESC, id DESC';
+    var result = await pool.query(q, params);
+
+    return res.json({ ok: true, books: result.rows });
+  } catch (err) {
+    console.error('ADMIN BOOKS LIST ERROR:', err);
+    return res.status(500).json({ error: 'Kitoblar ro\'yxatini yuklashda xatolik' });
+  }
+});
+
+// Admin: Kitob qo'shish (Faqat kitob parametrlari, avtomatik muqova va page count)
+app.post('/api/admin/books/add', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    var title = (b.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'Kitob nomi majburiy' });
+    var shortDesc = (b.short_description || '').trim();
+    if (!shortDesc) return res.status(400).json({ error: 'Qisqa tavsif majburiy' });
+    var whatYouLearn = (b.what_you_learn || '').trim();
+    if (!whatYouLearn) return res.status(400).json({ error: 'Nima o\'rganiladi maydoni majburiy' });
+    var pdfUrl = (b.pdf_url || '').trim();
+    if (!pdfUrl) return res.status(400).json({ error: 'PDF fayl yoki havola majburiy' });
+
+    var author = (b.author || '').trim();
+    var categories = Array.isArray(b.categories) ? b.categories.filter(Boolean) : [];
+    if (!categories.length && b.category) categories = [b.category];
+
+    var pageCount = parseInt(b.page_count) || 0;
+    var readingMinutes = parseInt(b.reading_time_minutes) || (pageCount > 0 ? pageCount * 2 : 30);
+    var accessType = b.access_type === 'pro' ? 'pro' : 'free';
+    var isRecommended = !!b.is_recommended;
+    var status = b.status || 'published';
+    var coverUrl = (b.cover_url || '').trim();
+
+    // Auto drive thumbnail fallback
+    var generatedCover = coverUrl;
+    if (!generatedCover) {
+      var m = pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) {
+        generatedCover = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w800';
+      }
+    }
+
+    var insertResult = await pool.query(`
+      INSERT INTO library_books (
+        title, author, short_description, what_you_learn, categories,
+        pdf_url, cover_url, generated_cover_url, page_count, reading_time_minutes,
+        access_type, is_recommended, status, published_at
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9, $10,
+        $11, $12, $13, NOW()
+      ) RETURNING *
+    `, [
+      title, author, shortDesc, whatYouLearn, categories,
+      pdfUrl, coverUrl || null, generatedCover || null, pageCount, readingMinutes,
+      accessType, isRecommended, status
+    ]);
+
+    var book = insertResult.rows[0];
+
+    // Mirror to library_resources for Mini App backwards compatibility
+    try {
+      var primaryCat = categories[0] || 'Arxitektura';
+      var contentData = {
+        what_you_learn: whatYouLearn,
+        reading_time_minutes: readingMinutes,
+        access_type: accessType,
+        book_id: book.id
+      };
+      await pool.query(`
+        INSERT INTO library_resources (
+          type, section_slug, title, subtitle, description, category, tags,
+          content_url, content_type, content_data, preview_image_url,
+          author, page_count, status, is_featured, order_index
+        ) VALUES (
+          'book', 'books', $1, $2, $3, $4, $5,
+          $6, 'pdf', $7, $8,
+          $9, $10, $11, $12, 1
+        )
+      `, [
+        title, author ? ('Muallif: ' + author) : '', shortDesc, primaryCat, categories,
+        pdfUrl, JSON.stringify(contentData), coverUrl || generatedCover || null,
+        author, pageCount, status, isRecommended
+      ]);
+    } catch (mirrorErr) {
+      console.warn('Mirror book to library_resources warning:', mirrorErr.message);
+    }
+
+    return res.json({ ok: true, book: book, message: 'Kitob muvaffaqiyatli saqlandi' });
+  } catch (err) {
+    console.error('ADMIN BOOKS ADD ERROR:', err);
+    return res.status(500).json({ error: 'Kitob qo\'shishda xatolik: ' + err.message });
+  }
+});
+
+// Admin: Kitob yangilash
+app.post('/api/admin/books/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id);
+    var b = req.body;
+    var title = (b.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'Kitob nomi majburiy' });
+    var shortDesc = (b.short_description || '').trim();
+    if (!shortDesc) return res.status(400).json({ error: 'Qisqa tavsif majburiy' });
+    var whatYouLearn = (b.what_you_learn || '').trim();
+    if (!whatYouLearn) return res.status(400).json({ error: 'Nima o\'rganiladi maydoni majburiy' });
+    var pdfUrl = (b.pdf_url || '').trim();
+    if (!pdfUrl) return res.status(400).json({ error: 'PDF fayl yoki havola majburiy' });
+
+    var author = (b.author || '').trim();
+    var categories = Array.isArray(b.categories) ? b.categories.filter(Boolean) : [];
+    if (!categories.length && b.category) categories = [b.category];
+
+    var pageCount = parseInt(b.page_count) || 0;
+    var readingMinutes = parseInt(b.reading_time_minutes) || (pageCount > 0 ? pageCount * 2 : 30);
+    var accessType = b.access_type === 'pro' ? 'pro' : 'free';
+    var isRecommended = !!b.is_recommended;
+    var status = b.status || 'published';
+    var coverUrl = (b.cover_url || '').trim();
+
+    var generatedCover = coverUrl;
+    if (!generatedCover) {
+      var m = pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) {
+        generatedCover = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w800';
+      }
+    }
+
+    var updateResult = await pool.query(`
+      UPDATE library_books SET
+        title = $1, author = $2, short_description = $3, what_you_learn = $4, categories = $5,
+        pdf_url = $6, cover_url = $7, generated_cover_url = $8, page_count = $9, reading_time_minutes = $10,
+        access_type = $11, is_recommended = $12, status = $13, updated_at = NOW()
+      WHERE id = $14
+      RETURNING *
+    `, [
+      title, author, shortDesc, whatYouLearn, categories,
+      pdfUrl, coverUrl || null, generatedCover || null, pageCount, readingMinutes,
+      accessType, isRecommended, status, id
+    ]);
+
+    if (!updateResult.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+    var book = updateResult.rows[0];
+
+    // Mirror update to library_resources
+    try {
+      var primaryCat = categories[0] || 'Arxitektura';
+      var contentData = {
+        what_you_learn: whatYouLearn,
+        reading_time_minutes: readingMinutes,
+        access_type: accessType,
+        book_id: book.id
+      };
+      await pool.query(`
+        UPDATE library_resources SET
+          title = $1, subtitle = $2, description = $3, category = $4, tags = $5,
+          content_url = $6, content_data = $7, preview_image_url = $8,
+          author = $9, page_count = $10, status = $11, is_featured = $12, updated_at = NOW()
+        WHERE (content_data->>'book_id' = $13::text) OR (title = $1 AND section_slug = 'books')
+      `, [
+        title, author ? ('Muallif: ' + author) : '', shortDesc, primaryCat, categories,
+        pdfUrl, JSON.stringify(contentData), coverUrl || generatedCover || null,
+        author, pageCount, status, isRecommended, id.toString()
+      ]);
+    } catch (mErr) {
+      console.warn('Mirror book update error:', mErr.message);
+    }
+
+    return res.json({ ok: true, book: book, message: 'Kitob muvaffaqiyatli yangilandi' });
+  } catch (err) {
+    console.error('ADMIN BOOKS UPDATE ERROR:', err);
+    return res.status(500).json({ error: 'Kitobni yangilashda xatolik' });
+  }
+});
+
+// Admin: Kitob statusini nashr qilish / o'zgartirish
+app.post('/api/admin/books/:id/publish', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id);
+    var status = req.body.status || 'published';
+    var result = await pool.query(
+      'UPDATE library_books SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [status, id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+    var book = result.rows[0];
+
+    await pool.query(
+      "UPDATE library_resources SET status = $1, updated_at = NOW() WHERE (content_data->>'book_id' = $2::text) OR (title = $3 AND section_slug = 'books')",
+      [status, id.toString(), book.title]
+    );
+
+    return res.json({ ok: true, book: book, message: 'Kitob statusi: ' + status });
+  } catch (err) {
+    console.error('ADMIN BOOKS PUBLISH ERROR:', err);
+    return res.status(500).json({ error: 'Status o\'zgartirishda xatolik' });
+  }
+});
+
+// Admin: Kitobni o'chirish
+app.post('/api/admin/books/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id);
+    var cur = await pool.query('SELECT title FROM library_books WHERE id = $1', [id]);
+    var title = cur.rows.length ? cur.rows[0].title : null;
+
+    var result = await pool.query('DELETE FROM library_books WHERE id = $1 RETURNING id', [id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+
+    if (title) {
+      await pool.query(
+        "DELETE FROM library_resources WHERE (content_data->>'book_id' = $1::text) OR (title = $2 AND section_slug = 'books')",
+        [id.toString(), title]
+      );
+    }
+
+    return res.json({ ok: true, message: 'Kitob o\'chirildi' });
+  } catch (err) {
+    console.error('ADMIN BOOKS DELETE ERROR:', err);
+    return res.status(500).json({ error: 'Kitobni o\'chirishda xatolik' });
+  }
+});
+
+// Admin: Tavsiya holatini o'zgartirish
+app.post('/api/admin/books/:id/toggle-recommend', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id);
+    var cur = await pool.query('SELECT is_recommended, title FROM library_books WHERE id = $1', [id]);
+    if (!cur.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+
+    var nextRec = !cur.rows[0].is_recommended;
+    var result = await pool.query(
+      'UPDATE library_books SET is_recommended = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [nextRec, id]
+    );
+
+    await pool.query(
+      "UPDATE library_resources SET is_featured = $1, updated_at = NOW() WHERE (content_data->>'book_id' = $2::text) OR (title = $3 AND section_slug = 'books')",
+      [nextRec, id.toString(), cur.rows[0].title]
+    );
+
+    return res.json({ ok: true, is_recommended: nextRec, message: nextRec ? 'Tavsiya etildi' : 'Tavsiyalardan olindi' });
+  } catch (err) {
+    console.error('ADMIN BOOKS TOGGLE RECOMMEND ERROR:', err);
+    return res.status(500).json({ error: 'Tavsiya holatini o\'zgartirishda xatolik' });
   }
 });
 

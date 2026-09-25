@@ -8331,15 +8331,19 @@ async function adminSetTab(tab) {
         adminData.modules = data.modules || [];
       } else if (tab === "library") {
         try {
-          const [filesData, resData] = await Promise.all([
+          const [filesData, resData, booksData] = await Promise.all([
             adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
-            adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] }))
+            adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] })),
+            adminApi("/api/admin/books/list").catch(() => ({ books: [] }))
           ]);
           adminData.libraryFiles = filesData.files || [];
           adminData.libraryV2Resources = resData.resources || [];
+          adminData.libraryBooks = booksData.books || [];
+          if (!adminData.librarySubTab) adminData.librarySubTab = "books";
         } catch (fe) {
           adminData.libraryFiles = [];
           adminData.libraryV2Resources = [];
+          adminData.libraryBooks = [];
         }
       } else if (tab === "support_cards") {
         try {
@@ -9459,6 +9463,23 @@ function setAdminLibraryTab(subTab, e) {
   }
 }
 
+const DEFAULT_BOOK_CATEGORIES = [
+  "Arxitektura", "Interyer", "Revit", "BIM", "Qurilish", "Dizayn",
+  "Mebel", "Yoritish", "Normativ hujjatlar", "Materiallar", "Terminlar",
+  "Loyihalash", "Boshqa"
+];
+let adminBookSelectedCategories = [];
+
+function formatReadingTimeMinutes(mins) {
+  const m = Number(mins) || 0;
+  if (m <= 0) return "30 daqiqa";
+  const hours = Math.floor(m / 60);
+  const remMinutes = m % 60;
+  if (hours > 0 && remMinutes > 0) return `~${hours} soat ${remMinutes} daqiqa`;
+  if (hours > 0) return `~${hours} soat`;
+  return `~${remMinutes} daqiqa`;
+}
+
 function renderAdminLibrarySubTabContent(subTab) {
   const files = adminData.libraryFiles || [];
   const openRes = state.open_resources || [];
@@ -9472,6 +9493,10 @@ function renderAdminLibrarySubTabContent(subTab) {
     (f.course_title && f.course_title.toLowerCase().includes(search))
   ) : files;
 
+  if (subTab === "books") return renderAdminLibraryBooks();
+  if (subTab === "sources") return renderAdminLibrarySectionResources('sources', 'Manbalar / Fayllar');
+  if (subTab === "tests") return renderAdminLibrarySectionResources('tests', 'Test va Vazifalar');
+  if (subTab === "materials") return renderAdminLibrarySectionResources('materials', 'Qurilish Materiallari');
   if (subTab === "resources_v2") return renderAdminLibraryV2Resources();
   if (subTab === "sections") return renderAdminLibrarySections();
   if (subTab === "categories") return renderAdminLibraryCategories();
@@ -9479,24 +9504,33 @@ function renderAdminLibrarySubTabContent(subTab) {
   if (subTab === "files") return renderAdminLibraryFiles(filteredFiles, search);
   if (subTab === "open_res") return renderAdminLibraryOpenRes(openRes);
   if (subTab === "showcases") return renderAdminLibraryShowcases(showcases);
-  if (subTab === "materials") return renderAdminLibraryMaterials(materials);
-  return renderAdminLibraryV2Resources();
+  return renderAdminLibraryBooks();
 }
 
 function renderAdminLibrary() {
-  const subTab = adminData.librarySubTab || "resources_v2";
-  const v2Res = adminData.libraryV2Resources || libraryV2Resources || [];
+  const subTab = adminData.librarySubTab || "books";
+  const books = adminData.libraryBooks || [];
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const sources = allRes.filter(r => r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative');
+  const tests = allRes.filter(r => r.section_slug === 'tests' || r.type === 'test');
+  const mats = allRes.filter(r => r.section_slug === 'materials' || r.type === 'material');
   const files = adminData.libraryFiles || [];
   const showcases = state.showcases || [];
 
   return `
     <div>
       <div class="category-chips" id="admin-library-subtab-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
-        <div class="chip ${subTab === "resources_v2" ? "active" : ""}" data-subtab="resources_v2" onclick="setAdminLibraryTab('resources_v2', event)">
-          📚 Resurslar (${v2Res.length})
+        <div class="chip ${subTab === "books" ? "active" : ""}" data-subtab="books" onclick="setAdminLibraryTab('books', event)">
+          📚 Kitoblar (${books.length})
         </div>
-        <div class="chip ${subTab === "sections" ? "active" : ""}" data-subtab="sections" onclick="setAdminLibraryTab('sections', event)">
-          🗂️ Bo‘limlar (${(librarySections || []).length})
+        <div class="chip ${subTab === "sources" ? "active" : ""}" data-subtab="sources" onclick="setAdminLibraryTab('sources', event)">
+          📦 Manbalar (${sources.length})
+        </div>
+        <div class="chip ${subTab === "tests" ? "active" : ""}" data-subtab="tests" onclick="setAdminLibraryTab('tests', event)">
+          ✓ Testlar (${tests.length})
+        </div>
+        <div class="chip ${subTab === "materials" ? "active" : ""}" data-subtab="materials" onclick="setAdminLibraryTab('materials', event)">
+          🧱 Materiallar (${mats.length})
         </div>
         <div class="chip ${subTab === "categories" ? "active" : ""}" data-subtab="categories" onclick="setAdminLibraryTab('categories', event)">
           🏷️ Kategoriyalar (${(libraryV2Categories || []).length})
@@ -9517,6 +9551,634 @@ function renderAdminLibrary() {
       </div>
     </div>
   `;
+}
+
+function renderAdminLibraryBooks() {
+  const allBooks = adminData.libraryBooks || [];
+  const search = (adminData.adminBooksSearch || "").toLowerCase().trim();
+  const filter = adminData.adminBooksFilter || "all";
+
+  const filteredBooks = allBooks.filter(b => {
+    if (search) {
+      const match = (b.title && b.title.toLowerCase().includes(search)) ||
+                    (b.author && b.author.toLowerCase().includes(search)) ||
+                    (b.short_description && b.short_description.toLowerCase().includes(search)) ||
+                    (Array.isArray(b.categories) && b.categories.some(c => c.toLowerCase().includes(search)));
+      if (!match) return false;
+    }
+    if (filter === "pending") return b.status === "pending" || b.status === "draft";
+    if (filter === "published") return b.status === "published";
+    if (filter === "free") return (b.access_type || "free") === "free";
+    if (filter === "pro") return b.access_type === "pro";
+    if (filter === "recommended") return Boolean(b.is_recommended);
+    if (filter === "uncategorized") return !b.categories || b.categories.length === 0;
+    return true;
+  });
+
+  return `
+    <div class="admin-books-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div class="admin-section-title" style="margin-bottom:0;">
+          Kitoblar Ro'yxati (${filteredBooks.length}/${allBooks.length})
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="admin-small-btn" onclick="refreshAdminBooks()" title="Yangilash">🔄</button>
+          <button class="admin-small-btn" onclick="openAdminBookModal()" style="font-weight:700; background:var(--accent); color:#fff; border:none; padding:6px 12px; border-radius:8px;">
+            ➕ Kitob qo‘shish
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <input id="admin-books-search-input"
+               class="apple-input"
+               type="text"
+               placeholder="🔍 Kitob nomi, muallifi yoki kalit so'z bo'yicha qidirish..."
+               value="${escapeHtml(search)}"
+               oninput="onAdminBooksSearch(this.value)">
+      </div>
+
+      <div class="admin-books-filter-bar">
+        <div class="admin-filter-chip ${filter === 'all' ? 'active' : ''}" onclick="setAdminBooksFilter('all')">Barchasi</div>
+        <div class="admin-filter-chip ${filter === 'pending' ? 'active' : ''}" onclick="setAdminBooksFilter('pending')">Tekshirilmagan</div>
+        <div class="admin-filter-chip ${filter === 'published' ? 'active' : ''}" onclick="setAdminBooksFilter('published')">Tasdiqlangan</div>
+        <div class="admin-filter-chip ${filter === 'free' ? 'active' : ''}" onclick="setAdminBooksFilter('free')">Bepul</div>
+        <div class="admin-filter-chip ${filter === 'pro' ? 'active' : ''}" onclick="setAdminBooksFilter('pro')">Pro</div>
+        <div class="admin-filter-chip ${filter === 'recommended' ? 'active' : ''}" onclick="setAdminBooksFilter('recommended')">⭐ Tavsiya etilgan</div>
+        <div class="admin-filter-chip ${filter === 'uncategorized' ? 'active' : ''}" onclick="setAdminBooksFilter('uncategorized')">Kategoriya belgilanmagan</div>
+      </div>
+
+      <div id="admin-books-grid" class="admin-books-grid">
+        ${renderAdminBooksGridHtml(filteredBooks)}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminBooksGridHtml(books) {
+  if (!books.length) {
+    return `<div class="empty-box" style="grid-column: 1 / -1; padding: 40px 16px;">Hech qanday kitob topilmadi.</div>`;
+  }
+
+  return books.map(b => {
+    const isPublished = b.status === "published";
+    const isPending = b.status === "pending";
+    const isPro = b.access_type === "pro";
+    const isRecommended = Boolean(b.is_recommended);
+    const coverUrl = b.cover_url || b.generated_cover_url;
+    const cats = Array.isArray(b.categories) ? b.categories : [];
+    const readTime = formatReadingTimeMinutes(b.reading_time_minutes || (b.page_count ? b.page_count * 2 : 30));
+
+    return `
+      <div class="admin-book-card">
+        <div>
+          <div class="admin-book-card-top">
+            <div class="admin-book-cover-wrap">
+              ${coverUrl ? `
+                <img src="${escapeHtml(coverUrl)}" class="admin-book-cover-img" alt="${escapeHtml(b.title)}" onerror="this.parentElement.innerHTML='<div class=\\'admin-book-cover-fallback\\'><div class=\\'fallback-icon\\'>📖</div><div class=\\'fallback-title\\'>${escapeJsString(b.title)}</div></div>'">
+              ` : `
+                <div class="admin-book-cover-fallback">
+                  <div class="fallback-icon">📖</div>
+                  <div class="fallback-title">${escapeHtml(b.title)}</div>
+                </div>
+              `}
+            </div>
+            <div class="admin-book-meta-top">
+              <div class="admin-book-title" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</div>
+              <div class="admin-book-author">👤 ${escapeHtml(b.author || "Muallif ko'rsatilmagan")}</div>
+              <div class="admin-book-badges-row">
+                <span class="admin-badge ${isPublished ? 'badge-published' : isPending ? 'badge-pending' : 'badge-draft'}"
+                      onclick="toggleAdminBookPublish(${Number(b.id)})"
+                      style="cursor:pointer;"
+                      title="Statusni o'zgartirish">
+                  ${isPublished ? '🟢 Published' : isPending ? '🟡 Pending' : '⚪ Draft'}
+                </span>
+                <span class="admin-badge ${isPro ? 'badge-pro' : 'badge-free'}">
+                  ${isPro ? '👑 Pro' : '🆓 Bepul'}
+                </span>
+                ${isRecommended ? `
+                  <span class="admin-badge badge-recommended" onclick="toggleAdminBookRecommend(${Number(b.id)})" style="cursor:pointer;" title="Tavsiyadan olish">
+                    ⭐ Tavsiya
+                  </span>
+                ` : `
+                  <span class="admin-badge" onclick="toggleAdminBookRecommend(${Number(b.id)})" style="cursor:pointer; background:var(--bg-secondary); color:var(--text-muted);" title="Tavsiya qilish">
+                    ☆ Tavsiya
+                  </span>
+                `}
+              </div>
+            </div>
+          </div>
+
+          ${b.short_description ? `
+            <div class="admin-book-desc">${escapeHtml(b.short_description)}</div>
+          ` : ""}
+
+          ${cats.length ? `
+            <div class="admin-book-tags">
+              ${cats.slice(0, 3).map(c => `<span class="admin-book-tag">🏷️ ${escapeHtml(c)}</span>`).join("")}
+              ${cats.length > 3 ? `<span class="admin-book-tag">+${cats.length - 3}</span>` : ""}
+            </div>
+          ` : ""}
+        </div>
+
+        <div>
+          <div class="admin-book-stats">
+            <span>📄 ${b.page_count || 0} sahifa</span>
+            <span>⏱️ ${readTime}</span>
+            <span>👁️ ${b.view_count || 0}</span>
+          </div>
+
+          <div class="admin-book-actions">
+            <button class="btn-sm btn" style="margin:0; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border);" onclick="openAdminBookModal(${Number(b.id)})" title="Tahrirlash">
+              ✏️ Tahrirlash
+            </button>
+            <button class="btn-sm btn" style="margin:0; background:${isPublished ? 'var(--bg-secondary)' : 'var(--accent)'}; color:${isPublished ? 'var(--text-primary)' : '#fff'}; border:1px solid var(--border);" onclick="toggleAdminBookPublish(${Number(b.id)})">
+              ${isPublished ? '🔒 Qoralama' : '✓ Nashr qilish'}
+            </button>
+            <button class="btn danger" style="width:auto; margin:0; padding:7px 10px; font-size:12px; border-radius:8px;" onclick="deleteAdminBookConfirm(${Number(b.id)})" title="O'chirish">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function onAdminBooksSearch(val) {
+  adminData.adminBooksSearch = val;
+  const grid = document.getElementById("admin-books-grid");
+  if (!grid) return;
+  const allBooks = adminData.libraryBooks || [];
+  const search = val.toLowerCase().trim();
+  const filter = adminData.adminBooksFilter || "all";
+  const filtered = allBooks.filter(b => {
+    if (search) {
+      const match = (b.title && b.title.toLowerCase().includes(search)) ||
+                    (b.author && b.author.toLowerCase().includes(search)) ||
+                    (b.short_description && b.short_description.toLowerCase().includes(search)) ||
+                    (Array.isArray(b.categories) && b.categories.some(c => c.toLowerCase().includes(search)));
+      if (!match) return false;
+    }
+    if (filter === "pending") return b.status === "pending" || b.status === "draft";
+    if (filter === "published") return b.status === "published";
+    if (filter === "free") return (b.access_type || "free") === "free";
+    if (filter === "pro") return b.access_type === "pro";
+    if (filter === "recommended") return Boolean(b.is_recommended);
+    if (filter === "uncategorized") return !b.categories || b.categories.length === 0;
+    return true;
+  });
+  grid.innerHTML = renderAdminBooksGridHtml(filtered);
+}
+
+function setAdminBooksFilter(filter) {
+  adminData.adminBooksFilter = filter;
+  const chips = document.querySelectorAll(".admin-books-filter-bar .admin-filter-chip");
+  chips.forEach(c => {
+    const fn = c.getAttribute("onclick") || "";
+    c.classList.toggle("active", fn.includes(`'${filter}'`));
+  });
+  const grid = document.getElementById("admin-books-grid");
+  if (!grid) return;
+  const allBooks = adminData.libraryBooks || [];
+  const search = (adminData.adminBooksSearch || "").toLowerCase().trim();
+  const filtered = allBooks.filter(b => {
+    if (search) {
+      const match = (b.title && b.title.toLowerCase().includes(search)) ||
+                    (b.author && b.author.toLowerCase().includes(search)) ||
+                    (b.short_description && b.short_description.toLowerCase().includes(search)) ||
+                    (Array.isArray(b.categories) && b.categories.some(c => c.toLowerCase().includes(search)));
+      if (!match) return false;
+    }
+    if (filter === "pending") return b.status === "pending" || b.status === "draft";
+    if (filter === "published") return b.status === "published";
+    if (filter === "free") return (b.access_type || "free") === "free";
+    if (filter === "pro") return b.access_type === "pro";
+    if (filter === "recommended") return Boolean(b.is_recommended);
+    if (filter === "uncategorized") return !b.categories || b.categories.length === 0;
+    return true;
+  });
+  grid.innerHTML = renderAdminBooksGridHtml(filtered);
+}
+
+async function refreshAdminBooks() {
+  try {
+    const data = await adminApi("/api/admin/books/list");
+    adminData.libraryBooks = data.books || [];
+    setAdminBooksFilter(adminData.adminBooksFilter || "all");
+    showToast("Kitoblar ro'yxati yangilandi");
+  } catch (e) {
+    showAlert("Yangilashda xatolik");
+  }
+}
+
+async function toggleAdminBookPublish(bookId) {
+  const book = (adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId));
+  if (!book) return;
+  const nextStatus = book.status === "published" ? "draft" : "published";
+  try {
+    const res = await adminApi(`/api/admin/books/${bookId}/publish`, { status: nextStatus });
+    if (res && res.ok) {
+      book.status = nextStatus;
+      showToast(`Kitob ${nextStatus === 'published' ? 'nashr qilindi (🟢 Published)' : 'qoralamaga olindi (⚪ Draft)'}`);
+      setAdminBooksFilter(adminData.adminBooksFilter || "all");
+    }
+  } catch (err) {
+    showAlert(err.message || "Statusni o'zgartirishda xatolik");
+  }
+}
+
+async function toggleAdminBookRecommend(bookId) {
+  const book = (adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId));
+  if (!book) return;
+  try {
+    const res = await adminApi(`/api/admin/books/${bookId}/toggle-recommend`);
+    if (res && res.ok) {
+      book.is_recommended = res.is_recommended;
+      showToast(res.is_recommended ? "Kitob tavsiya etildi ⭐" : "Kitob tavsiyalardan olindi");
+      setAdminBooksFilter(adminData.adminBooksFilter || "all");
+    }
+  } catch (err) {
+    showAlert(err.message || "Tavsiya holatini o'zgartirishda xatolik");
+  }
+}
+
+function deleteAdminBookConfirm(bookId) {
+  const book = (adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId));
+  const title = book ? `"${book.title}"` : "bu kitobni";
+  showConfirm(`Haqiqatan ham ${title} o'chirmoqchimisiz?`, async () => {
+    try {
+      const res = await adminApi(`/api/admin/books/${bookId}/delete`);
+      if (res && res.ok) {
+        showToast("Kitob o'chirildi");
+        adminData.libraryBooks = (adminData.libraryBooks || []).filter(b => Number(b.id) !== Number(bookId));
+        setAdminBooksFilter(adminData.adminBooksFilter || "all");
+      }
+    } catch (err) {
+      showAlert(err.message || "Kitobni o'chirishda xatolik");
+    }
+  });
+}
+
+function renderAdminLibrarySectionResources(sectionSlug, sectionTitle) {
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const search = (adminData.libraryV2Search || "").toLowerCase().trim();
+
+  const sectionRes = allRes.filter(r => {
+    if (sectionSlug === 'sources') {
+      return r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative';
+    } else if (sectionSlug === 'tests') {
+      return r.section_slug === 'tests' || r.type === 'test';
+    } else if (sectionSlug === 'materials') {
+      return r.section_slug === 'materials' || r.type === 'material';
+    }
+    return r.section_slug === sectionSlug;
+  });
+
+  const filtered = sectionRes.filter(r => {
+    return !search ||
+      (r.title && r.title.toLowerCase().includes(search)) ||
+      (r.category && r.category.toLowerCase().includes(search)) ||
+      (r.description && r.description.toLowerCase().includes(search)) ||
+      (r.author && r.author.toLowerCase().includes(search));
+  });
+
+  const addLabel = sectionSlug === 'sources' ? '➕ Manba qo‘shish' :
+                   sectionSlug === 'tests' ? '➕ Test qo‘shish' :
+                   sectionSlug === 'materials' ? '➕ Material qo‘shish' : '➕ Yangi Resurs';
+
+  return `
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
+        <div class="admin-section-title" style="margin-bottom:0;">
+          ${escapeHtml(sectionTitle)} (${filtered.length}/${sectionRes.length})
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="admin-small-btn" onclick="adminSetTab('library')" title="Yangilash">🔄</button>
+          <button class="admin-small-btn" onclick="openAddLibraryV2ResourceModal('${sectionSlug}')" style="font-weight:700;">
+            ${addLabel}
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <input class="apple-input"
+               type="text"
+               placeholder="🔍 ${escapeHtml(sectionTitle)} bo'yicha qidirish..."
+               value="${escapeHtml(search)}"
+               oninput="onAdminLibraryV2Search(this.value)">
+      </div>
+
+      <div id="admin-library-v2-rows">
+        ${renderAdminLibraryV2RowsHtml(filtered)}
+      </div>
+    </div>
+  `;
+}
+
+function openAdminBookModal(bookId) {
+  const isEdit = Boolean(bookId);
+  const book = isEdit ? ((adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId)) || {}) : {};
+
+  adminBookSelectedCategories = Array.isArray(book.categories) ? [...book.categories] : (book.category ? [book.category] : []);
+  const readTime = formatReadingTimeMinutes(book.reading_time_minutes || (book.page_count ? book.page_count * 2 : 30));
+  const coverUrl = book.cover_url || book.generated_cover_url || "";
+  const accessType = book.access_type || "free";
+  const isRecommended = Boolean(book.is_recommended);
+  const status = book.status || "published";
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
+        <div class="page-title">${isEdit ? 'Kitobni Tahrirlash' : 'Yangi Kitob Qo‘shish'}</div>
+
+        <div class="admin-form">
+          <!-- 1. ASOSIY MA'LUMOTLAR -->
+          <div style="font-size:16px; font-weight:750; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+            1. Asosiy ma'lumotlar
+          </div>
+
+          <div class="apple-field">
+            <label>Kitob nomi *</label>
+            <input id="book-title" class="apple-input" type="text" placeholder="Masalan: Revit 2024: To'liq qo'llanma" value="${escapeHtml(book.title || '')}">
+          </div>
+
+          <div class="apple-field">
+            <label>Muallif</label>
+            <input id="book-author" class="apple-input" type="text" placeholder="Masalan: Autodesk / YOSHUZBEKK" value="${escapeHtml(book.author || '')}">
+          </div>
+
+          <div class="apple-field">
+            <label>Qisqa tavsif *</label>
+            <textarea id="book-desc" class="apple-input apple-textarea" rows="3" placeholder="Kitob nima haqida va kimlar uchun mo'ljallangan...">${escapeHtml(book.short_description || '')}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Nima o‘rganiladi? * (Har bir qatorga alohida punkt yozing)</label>
+            <textarea id="book-what-you-learn" class="apple-input apple-textarea" rows="4" placeholder="• Revit arxitektura asoslari&#10;• Bino konstruksiyalari va modellashtirish&#10;• Ishchi chizmalar va spetsifikatsiyalar">${escapeHtml(book.what_you_learn || '')}</textarea>
+          </div>
+
+          <div class="apple-field">
+            <label>Kategoriyalar (Bir yoki bir nechta tanlang)</label>
+            <div id="book-cats-container" class="book-cats-wrapper">
+              ${renderBookCategoryChipsHtml(adminBookSelectedCategories)}
+            </div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <input id="new-book-cat-input" class="apple-input" type="text" placeholder="+ Yangi kategoriya..." style="flex:1; padding:6px 10px; font-size:12px;">
+              <button type="button" class="admin-small-btn" onclick="addNewBookCategoryChip()">Qo'shish</button>
+            </div>
+          </div>
+
+          <!-- 2. KITOB FAYLI VA MUQOVA -->
+          <div style="font-size:16px; font-weight:750; margin-top:20px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+            2. Kitob fayli va Muqova
+          </div>
+
+          <div class="apple-field">
+            <label>PDF fayl yoki havola * (Google Drive yoki to'g'ridan-to'g'ri PDF URL)</label>
+            <div style="display:flex; gap:6px;">
+              <input id="book-pdf-url" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view" value="${escapeHtml(book.pdf_url || '')}" onchange="inspectAdminBookPdf()" onblur="inspectAdminBookPdf()">
+              <button type="button" class="admin-small-btn" onclick="inspectAdminBookPdf()" title="PDF ni tahlil qilish">🔍 Tahlil</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="apple-field">
+              <label>📄 Sahifalar soni</label>
+              <input id="book-pages" class="apple-input" type="number" min="0" placeholder="248" value="${book.page_count || ''}" oninput="updateBookReadingTimeFromPages(this.value)">
+            </div>
+            <div class="apple-field">
+              <label>⏱️ O'qish vaqti (taxminiy)</label>
+              <input id="book-reading-time-display" class="apple-input" type="text" readonly style="background:var(--bg-secondary); cursor:default;" value="${readTime}">
+            </div>
+          </div>
+
+          <div class="apple-field">
+            <label>Muqova URL (Ixtiyoriy — bo'sh qoldirilsa, PDF 1-sahifasi avtomatik olinadi)</label>
+            <input id="book-cover-url" class="apple-input" type="url" placeholder="https://..." value="${escapeHtml(book.cover_url || '')}" oninput="updateBookCoverPreview(this.value)">
+          </div>
+
+          <div id="book-inspect-preview" class="book-inspect-box">
+            <div id="book-inspect-thumb-wrap">
+              ${coverUrl ? `<img src="${escapeHtml(coverUrl)}" class="book-inspect-cover-thumb">` : `<div class="book-inspect-cover-thumb" style="display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;">📖</div>`}
+            </div>
+            <div class="book-inspect-details" id="book-inspect-details">
+              <b>Muqova va parametrlar:</b><br>
+              <span id="inspect-pages-text">Sahifalar: ${book.page_count || 0}</span> · <span id="inspect-time-text">O'qish vaqti: ${readTime}</span><br>
+              <span style="font-size:11px; color:var(--text-muted);">PDF havolasi kiritilganda birinchi sahifa va o'qish vaqti avtomatik hisoblanadi.</span>
+            </div>
+          </div>
+
+          <!-- 3. NASHR SOZLAMALARI -->
+          <div style="font-size:16px; font-weight:750; margin-top:20px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+            3. Nashr sozlamalari
+          </div>
+
+          <div class="apple-field">
+            <label>Kirish turi (Access)</label>
+            <div style="display:flex; gap:16px; margin-top:6px;">
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
+                <input type="radio" name="book-access-type" value="free" ${accessType === 'free' ? 'checked' : ''}>
+                <span>🆓 Bepul (Barcha foydalanuvchilar)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
+                <input type="radio" name="book-access-type" value="pro" ${accessType === 'pro' ? 'checked' : ''}>
+                <span>👑 Pro (Faqat premium a'zolar)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="apple-field" style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+            <input id="book-recommended" type="checkbox" style="width:20px; height:20px; cursor:pointer;" ${isRecommended ? 'checked' : ''}>
+            <label for="book-recommended" style="cursor:pointer; margin:0; font-weight:600;">
+              ⭐ Tavsiya etilgan kitob (Bosh sahifada ajratib ko'rsatiladi)
+            </label>
+          </div>
+
+          <div class="apple-field" style="margin-top:12px;">
+            <label>Status</label>
+            <select id="book-status" class="apple-input">
+              <option value="published" ${status === 'published' ? 'selected' : ''}>🟢 Published (Nashr qilingan)</option>
+              <option value="pending" ${status === 'pending' ? 'selected' : ''}>🟡 Pending review (Tekshiruvda)</option>
+              <option value="draft" ${status === 'draft' ? 'selected' : ''}>⚪ Draft (Qoralama)</option>
+              <option value="archived" ${status === 'archived' ? 'selected' : ''}>📦 Archived (Arxivlangan)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:24px;">
+            <button type="button" class="btn" style="background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border);" onclick="adminSetTab('library')">
+              Bekor qilish
+            </button>
+            <button type="button" class="btn" style="font-weight:750;" onclick="submitSaveAdminBook(${isEdit ? Number(book.id) : 'null'})">
+              💾 ${isEdit ? 'O‘zgarishlarni saqlash' : 'Kitobni saqlash va nashr qilish'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+function renderBookCategoryChipsHtml(activeCats) {
+  const allCats = Array.from(new Set([...DEFAULT_BOOK_CATEGORIES, ...activeCats]));
+  return allCats.map(cat => {
+    const isSel = activeCats.includes(cat);
+    return `<div class="book-cat-chip ${isSel ? 'selected' : ''}" onclick="toggleBookCategoryChip('${escapeJsString(cat)}')">${escapeHtml(cat)}</div>`;
+  }).join("");
+}
+
+function toggleBookCategoryChip(catName) {
+  const idx = adminBookSelectedCategories.indexOf(catName);
+  if (idx >= 0) {
+    adminBookSelectedCategories.splice(idx, 1);
+  } else {
+    adminBookSelectedCategories.push(catName);
+  }
+  const cont = document.getElementById("book-cats-container");
+  if (cont) {
+    cont.innerHTML = renderBookCategoryChipsHtml(adminBookSelectedCategories);
+  }
+}
+
+function addNewBookCategoryChip() {
+  const input = document.getElementById("new-book-cat-input");
+  const val = (input?.value || "").trim();
+  if (!val) return;
+  if (!adminBookSelectedCategories.includes(val)) {
+    adminBookSelectedCategories.push(val);
+  }
+  input.value = "";
+  const cont = document.getElementById("book-cats-container");
+  if (cont) {
+    cont.innerHTML = renderBookCategoryChipsHtml(adminBookSelectedCategories);
+  }
+}
+
+function updateBookReadingTimeFromPages(pages) {
+  const p = parseInt(pages) || 0;
+  const mins = p > 0 ? p * 2 : 30;
+  const timeFormatted = formatReadingTimeMinutes(mins);
+  const disp = document.getElementById("book-reading-time-display");
+  if (disp) disp.value = timeFormatted;
+  const pText = document.getElementById("inspect-pages-text");
+  if (pText) pText.innerText = `Sahifalar: ${p}`;
+  const tText = document.getElementById("inspect-time-text");
+  if (tText) tText.innerText = `O'qish vaqti: ${timeFormatted}`;
+}
+
+function updateBookCoverPreview(url) {
+  const thumbWrap = document.getElementById("book-inspect-thumb-wrap");
+  if (!thumbWrap) return;
+  const cleanUrl = (url || "").trim();
+  if (cleanUrl) {
+    thumbWrap.innerHTML = `<img src="${escapeHtml(cleanUrl)}" class="book-inspect-cover-thumb" onerror="this.parentElement.innerHTML='<div class=\\'book-inspect-cover-thumb\\' style=\\'display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;\\'>📖</div>'">`;
+  } else {
+    thumbWrap.innerHTML = `<div class="book-inspect-cover-thumb" style="display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">📖</div>`;
+  }
+}
+
+async function inspectAdminBookPdf() {
+  const pdfInput = document.getElementById("book-pdf-url");
+  const coverInput = document.getElementById("book-cover-url");
+  const pagesInput = document.getElementById("book-pages");
+  const url = (pdfInput?.value || "").trim();
+  if (!url) return;
+
+  try {
+    const res = await adminApi("/api/admin/library/inspect-pdf", {
+      pdf_url: url,
+      cover_url: coverInput?.value || "",
+      page_count: pagesInput?.value || 0
+    });
+    if (res && res.ok) {
+      if (res.page_count && (!pagesInput.value || Number(pagesInput.value) === 0)) {
+        pagesInput.value = res.page_count;
+      }
+      if (res.reading_time_formatted) {
+        const disp = document.getElementById("book-reading-time-display");
+        if (disp) disp.value = res.reading_time_formatted;
+      }
+      if (res.generated_cover_url && !coverInput.value) {
+        updateBookCoverPreview(res.generated_cover_url);
+      }
+      const pText = document.getElementById("inspect-pages-text");
+      if (pText) pText.innerText = `Sahifalar: ${pagesInput?.value || res.page_count || 0}`;
+      const tText = document.getElementById("inspect-time-text");
+      if (tText) tText.innerText = `O'qish vaqti: ${res.reading_time_formatted || "30 daqiqa"}`;
+    }
+  } catch (err) {
+    console.warn("inspectAdminBookPdf warning:", err);
+  }
+}
+
+async function submitSaveAdminBook(bookId) {
+  const title = (document.getElementById("book-title")?.value || "").trim();
+  const author = (document.getElementById("book-author")?.value || "").trim();
+  const shortDesc = (document.getElementById("book-desc")?.value || "").trim();
+  const whatYouLearn = (document.getElementById("book-what-you-learn")?.value || "").trim();
+  const pdfUrl = (document.getElementById("book-pdf-url")?.value || "").trim();
+  const coverUrl = (document.getElementById("book-cover-url")?.value || "").trim();
+  const pages = parseInt(document.getElementById("book-pages")?.value) || 0;
+  const accessType = document.querySelector("input[name='book-access-type']:checked")?.value || "free";
+  const isRecommended = Boolean(document.getElementById("book-recommended")?.checked);
+  const status = document.getElementById("book-status")?.value || "published";
+
+  if (!title) {
+    showAlert("Iltimos, kitob nomini kiriting");
+    return;
+  }
+  if (!shortDesc) {
+    showAlert("Iltimos, kitob uchun qisqa tavsif kiriting");
+    return;
+  }
+  if (!whatYouLearn) {
+    showAlert("Iltimos, 'Nima o‘rganiladi?' maydonini to'ldiring");
+    return;
+  }
+  if (!pdfUrl) {
+    showAlert("Iltimos, kitob PDF havolasini kiriting");
+    return;
+  }
+
+  const payload = {
+    title,
+    author,
+    short_description: shortDesc,
+    what_you_learn: whatYouLearn,
+    categories: adminBookSelectedCategories,
+    pdf_url: pdfUrl,
+    cover_url: coverUrl,
+    page_count: pages,
+    reading_time_minutes: pages > 0 ? pages * 2 : 30,
+    access_type: accessType,
+    is_recommended: isRecommended,
+    status
+  };
+
+  try {
+    let res;
+    if (bookId) {
+      res = await adminApi(`/api/admin/books/${bookId}/update`, payload);
+    } else {
+      res = await adminApi("/api/admin/books/add", payload);
+    }
+
+    if (res && res.ok) {
+      showToast(bookId ? "Kitob muvaffaqiyatli yangilandi!" : "Yangi kitob muvaffaqiyatli saqlandi!");
+      const booksData = await adminApi("/api/admin/books/list").catch(() => ({ books: [] }));
+      adminData.libraryBooks = booksData.books || [];
+      const resData = await adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] }));
+      adminData.libraryV2Resources = resData.resources || [];
+      adminData.librarySubTab = "books";
+      adminSetTab("library");
+    } else {
+      showAlert(res?.error || "Kitobni saqlashda xatolik yuz berdi");
+    }
+  } catch (err) {
+    showAlert(err.message || "Kitobni saqlashda server xatosi");
+  }
 }
 
 function renderAdminLibraryV2Resources() {
@@ -10331,7 +10993,16 @@ async function toggleAdminSupportCard(id) {
 // ADMIN ADD / EDIT RESOURCE MODAL
 // ------------------------------------------------------
 
-function openAddLibraryV2ResourceModal() {
+function openAddLibraryV2ResourceModal(presetSection) {
+  if (presetSection === "books") {
+    return openAdminBookModal();
+  }
+  const defaultSec = presetSection || "sources";
+  const defaultType = defaultSec === "tests" ? "test" : defaultSec === "materials" ? "material" : "source";
+  const titleLabel = defaultSec === "sources" ? "Yangi Manba Qo'shish" :
+                     defaultSec === "tests" ? "Yangi Sinov Testi Qo'shish" :
+                     defaultSec === "materials" ? "Yangi Qurilish Materiali Qo'shish" :
+                     "Yangi Kutubxona Resursi Qo'shish";
   const cats = DEFAULT_LIBRARY_CATEGORIES.filter(c => c !== "Barchasi");
   const courses = libraryV2CoursesList || [];
 
@@ -10339,28 +11010,28 @@ function openAddLibraryV2ResourceModal() {
     html: `
       <div class="page">
         <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
-        <div class="page-title">Yangi Kutubxona Resursi Qo'shish</div>
+        <div class="page-title">${titleLabel}</div>
 
         <div class="admin-form">
           <div class="apple-field">
             <label>Bo'lim * (Qaysi asosiy bo'limga tegishli)</label>
             <select id="v2-sec" class="apple-input">
-              <option value="books">📚 Kitoblar</option>
-              <option value="sources">📦 Manbalar</option>
-              <option value="tests">✓ Testlar</option>
-              <option value="materials">🧱 Materiallar</option>
+              <option value="sources" ${defaultSec === 'sources' ? 'selected' : ''}>📦 Manbalar</option>
+              <option value="tests" ${defaultSec === 'tests' ? 'selected' : ''}>✓ Testlar</option>
+              <option value="materials" ${defaultSec === 'materials' ? 'selected' : ''}>🧱 Materiallar</option>
+              <option value="books" ${defaultSec === 'books' ? 'selected' : ''}>📚 Kitoblar</option>
             </select>
           </div>
 
           <div class="apple-field">
             <label>Resurs turi *</label>
             <select id="v2-type" class="apple-input">
-              <option value="book">📚 Kitob / Qo'llanma (PDF)</option>
-              <option value="normative">📏 Normativ Hujjat (ShNQ, KMK)</option>
-              <option value="source">📦 Revit Oilasi / Shablon (.rfa / .rte)</option>
-              <option value="test">✓ Erkin Sinov Testi</option>
-              <option value="material">🧱 Qurilish Materiali</option>
+              <option value="source" ${defaultType === 'source' ? 'selected' : ''}>📦 Revit Oilasi / Shablon (.rfa / .rte)</option>
+              <option value="normative" ${defaultType === 'normative' ? 'selected' : ''}>📏 Normativ Hujjat (ShNQ, KMK)</option>
+              <option value="test" ${defaultType === 'test' ? 'selected' : ''}>✓ Erkin Sinov Testi</option>
+              <option value="material" ${defaultType === 'material' ? 'selected' : ''}>🧱 Qurilish Materiali</option>
               <option value="video">🎬 Video Darslik</option>
+              <option value="book">📚 Kitob / Qo'llanma (PDF)</option>
             </select>
           </div>
 
