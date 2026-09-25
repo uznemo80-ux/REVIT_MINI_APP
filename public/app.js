@@ -2242,50 +2242,151 @@ function openDonateModal(summaLabel = "") {
   window.scrollTo(0, 0);
 }
 
+const PLATFORM_RULES_SECTIONS = [
+  {
+    title: "Umumiy qoidalar",
+    items: [
+      "Ushbu qoidalar YOSHUZBEKK Academy ta’lim platformasi, uning Telegram Mini App interfeysi, barcha darsliklar, materiallar va xizmatlaridan foydalanish tartibini belgilaydi.",
+      "Platformadan ro‘yxatdan o‘tgan yoki undan foydalangan har bir shaxs ushbu qoidalar bilan to‘liq tanishgan va ularga so‘zsiz rozi bo‘lgan hisoblanadi.",
+      "Agar foydalanuvchi ushbu qoidalarning biron bir bandiga rozi bo‘lmasa, platformadan foydalanishni darhol to‘xtatishi shart."
+    ]
+  },
+  {
+    title: "Foydalanuvchi majburiyatlari",
+    items: [
+      "Platformadan faqat qonuniy, shaxsiy va ta’lim maqsadlarida foydalanish.",
+      "O‘z akkaunti xavfsizligini ta’minlash va unga uchinchi shaxslarning kirishiga yo‘l qo‘ymaslik.",
+      "Platformaning ishlashiga xalaqit beruvchi har qanday noqonuniy, zararli yoki ruxsatsiz texnik harakatlarni amalga oshirmaslik.",
+      "O‘quv jarayonida, guruhlarda va platforma ichidagi muloqotda etika va o‘zaro hurmat qoidalariga amal qilish."
+    ]
+  },
+  {
+    title: "Intellektual mulk huquqlari",
+    items: [
+      "Platformadagi barcha video darslar, audio materiallar, matnlar, taqdimotlar, Revit oilalari (families), shablonlar, testlar, qo‘llanmalar va boshqa barcha kontentlar YOSHUZBEKK Academy’ning intellektual mulki hisoblanadi.",
+      "Foydalanuvchiga taqdim etilgan barcha o‘quv materiallari faqat uning shaxsiy foydalanishi uchun berilgan omonat hisoblanadi.",
+      "Materiallarni nusxalash, qayta yozib olish (screen recording), uchinchi shaxslarga yuborish, internetda e’lon qilish, tarqatish, sotish yoki tijoriy maqsadlarda foydalanish qat’iyan man etiladi.",
+      "Mualliflik huquqlari buzilgan taqdirda, qonunchilikda belgilangan tartibda javobgarlik choralari ko‘riladi."
+    ]
+  },
+  {
+    title: "Yopiq va pullik materiallar tartibi",
+    items: [
+      "Platformadagi pullik kurslar, yopiq darslar va maxsus materiallarga kirish huquqi faqat to‘lov to‘liq amalga oshirilgandan va ma’muriyat tomonidan tasdiqlangandan so‘ng beriladi.",
+      "Berilgan kirish huquqi faqat to‘lov qilgan bitta foydalanuvchiga tegishli bo‘lib, uni boshqa shaxsga o‘tkazish, ulashish yoki bir nechta qurilmadan bir vaqtda suiiste’mol qilish taqiqlanadi.",
+      "Qoidalar buzilgan taqdirda, foydalanuvchining pullik materiallarga kirish huquqi to‘lov qaytarilmasdan bekor qilinishi mumkin."
+    ]
+  },
+  {
+    title: "Natijalar va kafolatlar bo‘yicha ogohlantirish",
+    items: [
+      "Platforma har bir o‘quvchiga sifatli, tizimli va amaliy bilim berishga intiladi.",
+      "O‘quv natijasi foydalanuvchining shaxsiy mehnati, intizomi, amaliyot hajmi va mustaqil ishlashiga to‘g‘ridan-to‘g‘ri bog‘liqdir.",
+      "Shu sababli, platforma foydalanuvchiga 100% natija, ishga joylashish yoki daromad kafolatini bermaydi."
+    ]
+  },
+  {
+    title: "Texnik talablar va javobgarlik chegarasi",
+    items: [
+      "Platforma va unga integratsiya qilingan xizmatlarning barqaror ishlashi uchun barcha texnik choralar ko‘riladi.",
+      "Biroq foydalanuvchi tomonidagi internet sifati, qurilma nosozliklari, Telegram yoki boshqa uchinchi tomon xizmatlaridagi uzilishlar tufayli yuzaga kelgan nosozliklar uchun platforma javobgar emas.",
+      "Profilaktika yoki texnik yangilanishlar sababli platforma ishlashida qisqa muddatli uzilishlar bo‘lishi mumkin."
+    ]
+  },
+  {
+    title: "Akkaunt xavfsizligi va ma’lumotlar daxlsizligi",
+    items: [
+      "Foydalanuvchining shaxsiy ma’lumotlari (ism, telefon raqami, Telegram ma’lumotlari) faqat ta’lim jarayonini tashkil qilish, foydalanuvchini identifikatsiya qilish va u bilan bog‘lanish maqsadida ishlatiladi.",
+      "Platforma foydalanuvchi ma’lumotlarining xavfsizligini ta’minlash choralarini ko‘radi va ularni uchinchi shaxslarga bermaydi (qonunda nazarda tutilgan hollar bundan mustasno).",
+      "Foydalanuvchi o‘zining Telegram akkaunti va unga ulangan qurilmalari xavfsizligi uchun shaxsan o‘zi javobgar bo‘ladi."
+    ]
+  },
+  {
+    title: "To‘lovlar va xizmatlardan foydalanish",
+    items: [
+      "Kurslar va xizmatlar uchun to‘lovlar platformada ko‘rsatilgan to‘lov tizimlari yoki rasmiy tasdiqlangan usullar orqali amalga oshiriladi.",
+      "Foydalanuvchi to‘lovni amalga oshirishdan oldin kurs dasturi, formati va shartlari bilan to‘liq tanishib chiqishi shart.",
+      "Xizmat ko‘rsatish boshlanganidan, darslar ochilganidan yoki materiallar taqdim etilganidan so‘ng, qonunda boshqacha tartib nazarda tutilmagan bo‘lsa, to‘lovlar qaytarilmaydi."
+    ]
+  },
+  {
+    title: "Qoidalarni buzganlik uchun choralar",
+    items: [
+      "Agar foydalanuvchi ushbu qoidalarni buzsa, etika doirasidan chiqsa, kontentni tarqatsa yoki noqonuniy harakatlarni sodir etsa, ma’muriyat quyidagi choralarni qo‘llash huquqiga ega:",
+      "– ogohlantirish berish;",
+      "– platformadan foydalanishni vaqtincha cheklash;",
+      "– akkauntni butunlay bloklash;",
+      "– kurslar va materiallarga kirishni to‘xtatish;",
+      "– qonunbuzarlik holatlari bo‘yicha vakolatli organlarga murojaat qilish."
+    ]
+  },
+  {
+    title: "Nizolarni hal qilish tartibi",
+    items: [
+      "Platformadan foydalanish jarayonida kelib chiqadigan barcha tushunmovchiliklar va nizolar birinchi navbatda muzokaralar va o‘zaro muloqot yo‘li bilan hal qilinadi.",
+      "Foydalanuvchi o‘z e’tirozlarini rasmiy qo‘llab-quvvatlash xizmati orqali ma’muriyatga yuborishi mumkin.",
+      "Kelishuvga erishilmagan taqdirda, barcha nizolar O‘zbekiston Respublikasining amaldagi qonunchiligiga muvofiq ko‘rib chiqiladi."
+    ]
+  },
+  {
+    title: "Qoidalarga o‘zgartirish kiritish",
+    items: [
+      "Platforma ma’muriyati ushbu qoidalarga istalgan vaqtda bir tomonlama tartibda o‘zgartirish va qo‘shimchalar kiritish huquqini o‘zida saqlab qoladi.",
+      "Yangilangan qoidalar platformada e’lon qilingan paytdan boshlab kuchga kiradi.",
+      "Foydalanuvchining yangilanishlardan so‘ng platformadan foydalanishni davom ettirishi uning yangi tahrirdagi qoidalarga rozi ekanligini bildiradi."
+    ]
+  },
+  {
+    title: "Yakuniy qoidalar",
+    items: [
+      "Ushbu qoidalar platforma ma’muriyati va foydalanuvchi o‘rtasidagi rasmiy kelishuv hujjati hisoblanadi.",
+      "Savollar, takliflar yoki murojaatlar uchun foydalanuvchi Profil bo‘limidagi rasmiy qo‘llab-quvvatlash aloqa manzillari orqali ma’muriyatga murojaat qilishi mumkin."
+    ]
+  }
+];
+
 function openPlatformRulesModal() {
   haptic("light");
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-  const settings = state.settings || {};
-  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
-  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
-  const displayTg = "@" + cleanTg;
+
+  const cardsHtml = PLATFORM_RULES_SECTIONS.map((sec, idx) => `
+    <div class="rules-card">
+      <div class="rules-card-header">
+        <span class="rules-card-num">${idx + 1}</span>
+        <span class="rules-card-title">${escapeHtml(sec.title)}</span>
+      </div>
+      <ul class="rules-list">
+        ${sec.items.map(item => `
+          <li class="rules-item">
+            <span class="rules-item-bullet"></span>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")}
+      </ul>
+    </div>
+  `).join("");
 
   currentView = {
     html: `
-      <div class="page">
+      <div class="page rules-page">
         <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
-        <div class="page-title">Platformadan foydalanish qoidalari</div>
 
-        <div class="card" style="padding:22px 18px; margin-bottom:16px;">
-          <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">
-            Hurmatli o'quvchi!
+        <div class="rules-header-card">
+          <div class="rules-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Rasmiy hujjat
           </div>
+          <div class="rules-main-title">Foydalanish qoidalari</div>
+          <div class="rules-subtitle">YOSHUZBEKK Academy platformasidan foydalanish shartlari va tartibi</div>
+        </div>
 
-          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
-            <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
-              ⚠️ Darslik va materiallar daxlsizligi
-            </div>
-            <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
-              Darslik va materiallarni boshqa shaxslarga yuborish, tarqatish yoki sotish qat'iyan taqiqlanadi. Bu sizning shaxsiy foydalanishingiz uchun berilgan omonat hisoblanadi.
-            </div>
-          </div>
+        <div class="rules-content-wrap">
+          ${cardsHtml}
+        </div>
 
-          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
-            <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:6px;">
-              🔒 Shaxsiy ma'lumotlar
-            </div>
-            <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
-              Ma’lumotlaringiz faqat kursdan foydalanish va siz bilan bog‘lanish uchun ishlatiladi.
-            </div>
-          </div>
-
-          <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:16px; text-align:center;">
-            Qo'shimcha savollar yoki tushunmovchiliklar bo'lsa, platforma ma'muriyati bilan bog'lanishingiz mumkin.
-          </div>
-
-          <button class="btn secondary" style="margin-bottom:0;" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')">
-            💬 Ma'muriyat bilan bog'lanish (${escapeHtml(displayTg)})
-          </button>
+        <div class="rules-footer">
+          <div class="rules-footer-brand">YOSHUZBEKK Academy</div>
+          <div class="rules-footer-motto">Bilim &rarr; Amaliyot &rarr; Natija</div>
         </div>
       </div>
     `
@@ -7737,9 +7838,25 @@ function renderProfile() {
       ${renderDonateBlock()}
 
       <!-- 4-TALAB: PLATFORMADAN FOYDALANISH QOIDALARI -->
-      <button class="btn secondary" style="margin-top:14px;" onclick="openPlatformRulesModal()">
-        📜 Platformadan foydalanish qoidalari
-      </button>
+      <div class="profile-action-row" onclick="openPlatformRulesModal()" role="button" tabindex="0">
+        <div class="profile-action-left">
+          <div class="profile-action-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <span class="profile-action-label">Foydalanish qoidalari</span>
+        </div>
+        <div class="profile-action-chevron">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
 
       <!-- HISOBNI O'CHIRISH -->
       <button class="btn danger" style="margin-top:24px;" onclick="confirmDeleteAccount()">
