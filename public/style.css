@@ -7031,9 +7031,93 @@ input, textarea, select {
   color: var(--text-primary);
 }
 
+/* ======================================================
+   ADMIN & STUDENT BOOKS ENHANCEMENTS (500+ BOOKS SYSTEM)
+   ====================================================== */
+.admin-books-stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
 
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--card-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
 
+.stat-pill:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+}
 
+.stat-pill.pill-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 
+.admin-book-card.selected-card {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1.5px var(--accent), 0 4px 16px rgba(0, 122, 255, 0.15);
+  background: rgba(0, 122, 255, 0.04);
+}
 
+/* Student Books Pagination */
+.lib-books-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
 
+.lib-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lib-page-btn:hover:not(:disabled) {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.15));
+  border-color: var(--text-muted);
+}
+
+.lib-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.lib-page-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 75px;
+  text-align: center;
+}
