@@ -837,6 +837,74 @@ async function ensureUserActivityTable() {
   }
 }
 
+// =================== DEDICATED LIBRARY BOOKS SCHEMA ===================
+let libraryBooksTableReady = false;
+
+async function ensureLibraryBooksTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS library_books (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL DEFAULT '',
+        author VARCHAR(255),
+        short_description TEXT NOT NULL DEFAULT '',
+        what_you_learn TEXT NOT NULL DEFAULT '',
+        categories TEXT[] DEFAULT '{}',
+        pdf_url TEXT NOT NULL DEFAULT '',
+        cover_url TEXT,
+        generated_cover_url TEXT,
+        page_count INT DEFAULT 0,
+        reading_time_minutes INT DEFAULT 0,
+        access_type VARCHAR(20) DEFAULT 'free',
+        is_recommended BOOLEAN DEFAULT false,
+        status VARCHAR(30) DEFAULT 'published',
+        view_count INT DEFAULT 0,
+        download_count INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        published_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var cols = [
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS title VARCHAR(500) NOT NULL DEFAULT ''",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS author VARCHAR(255)",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS short_description TEXT NOT NULL DEFAULT ''",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS what_you_learn TEXT NOT NULL DEFAULT ''",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS categories TEXT[] DEFAULT '{}'",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS pdf_url TEXT NOT NULL DEFAULT ''",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS cover_url TEXT",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS generated_cover_url TEXT",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS page_count INT DEFAULT 0",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS reading_time_minutes INT DEFAULT 0",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS access_type VARCHAR(20) DEFAULT 'free'",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS is_recommended BOOLEAN DEFAULT false",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'published'",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS download_count INT DEFAULT 0",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()",
+      "ALTER TABLE library_books ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ DEFAULT NOW()"
+    ];
+
+    for (var colSql of cols) {
+      try {
+        await pool.query(colSql);
+      } catch (colErr) {
+        // ignore if already exists
+      }
+    }
+
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_status ON library_books(status)'); } catch(e){}
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_recommended ON library_books(is_recommended)'); } catch(e){}
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_categories ON library_books USING GIN(categories)'); } catch(e){}
+    libraryBooksTableReady = true;
+    console.log('✅ LIBRARY BOOKS TABLE: library_books ustunlari (is_recommended va b.) to\'liq tekshirildi');
+  } catch (err) {
+    console.error('ensureLibraryBooksTable error:', err.message);
+  }
+}
+
 // =================== KUTUBXONA 2.0 & SUPPORT SCHEMA SETUP ===================
 async function ensureLibraryV2Tables() {
   try {
@@ -1448,32 +1516,7 @@ async function ensureLibraryV2Tables() {
 
     // 8. DEDICATED LIBRARY BOOKS TABLE & AUTO-MIGRATION
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS library_books (
-          id SERIAL PRIMARY KEY,
-          title VARCHAR(500) NOT NULL,
-          author VARCHAR(255),
-          short_description TEXT NOT NULL DEFAULT '',
-          what_you_learn TEXT NOT NULL DEFAULT '',
-          categories TEXT[] DEFAULT '{}',
-          pdf_url TEXT NOT NULL DEFAULT '',
-          cover_url TEXT,
-          generated_cover_url TEXT,
-          page_count INT DEFAULT 0,
-          reading_time_minutes INT DEFAULT 0,
-          access_type VARCHAR(20) DEFAULT 'free',
-          is_recommended BOOLEAN DEFAULT false,
-          status VARCHAR(30) DEFAULT 'published',
-          view_count INT DEFAULT 0,
-          download_count INT DEFAULT 0,
-          created_at TIMESTAMPTZ DEFAULT NOW(),
-          updated_at TIMESTAMPTZ DEFAULT NOW(),
-          published_at TIMESTAMPTZ DEFAULT NOW()
-        )
-      `);
-      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_status ON library_books(status)');
-      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_recommended ON library_books(is_recommended)');
-      await pool.query('CREATE INDEX IF NOT EXISTS idx_library_books_categories ON library_books USING GIN(categories)');
+      await ensureLibraryBooksTable();
 
       // Mavjud kitoblarni library_resources dan library_books ga xavfsiz ko'chirish
       await pool.query(`
@@ -5795,6 +5838,9 @@ app.post('/api/admin/library/inspect-pdf', requireAdmin, async function (req, re
 // Admin: Kitoblar ro'yxati (qidiruv va 7 ta filtr bilan)
 app.post('/api/admin/books/list', requireAdmin, async function (req, res) {
   try {
+    if (!libraryBooksTableReady) {
+      await ensureLibraryBooksTable();
+    }
     var search = (req.body.search || '').trim().toLowerCase();
     var filter = req.body.filter || 'all'; // all, pending, published, free, pro, recommended, uncategorized
     var category = req.body.category || null;
@@ -5843,6 +5889,9 @@ app.post('/api/admin/books/list', requireAdmin, async function (req, res) {
 // Admin: Kitob qo'shish (Faqat kitob parametrlari, avtomatik muqova va page count)
 app.post('/api/admin/books/add', requireAdmin, async function (req, res) {
   try {
+    if (!libraryBooksTableReady) {
+      await ensureLibraryBooksTable();
+    }
     var b = req.body;
     var title = (b.title || '').trim();
     if (!title) return res.status(400).json({ error: 'Kitob nomi majburiy' });
@@ -5929,6 +5978,9 @@ app.post('/api/admin/books/add', requireAdmin, async function (req, res) {
 // Admin: Kitob yangilash
 app.post('/api/admin/books/:id/update', requireAdmin, async function (req, res) {
   try {
+    if (!libraryBooksTableReady) {
+      await ensureLibraryBooksTable();
+    }
     var id = parseInt(req.params.id);
     var b = req.body;
     var title = (b.title || '').trim();
@@ -6057,6 +6109,9 @@ app.post('/api/admin/books/:id/delete', requireAdmin, async function (req, res) 
 // Admin: Tavsiya holatini o'zgartirish
 app.post('/api/admin/books/:id/toggle-recommend', requireAdmin, async function (req, res) {
   try {
+    if (!libraryBooksTableReady) {
+      await ensureLibraryBooksTable();
+    }
     var id = parseInt(req.params.id);
     var cur = await pool.query('SELECT is_recommended, title FROM library_books WHERE id = $1', [id]);
     if (!cur.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
