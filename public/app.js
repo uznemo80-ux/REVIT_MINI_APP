@@ -2064,31 +2064,40 @@ function deleteShowcaseItem(id) {
 
 function renderDonateBlock() {
   const settings = state.settings || {};
-  const title = settings.support_title || "Qo'llab-quvvatlash";
-  const sub = settings.support_subtitle || "Platforma rivojiga hissa qo'shing";
+  const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
+  const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
+  const desc = settings.donate_description || settings.support_description || "Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo'llab-quvvatlash (ehson/donat).";
+  const title = settings.donate_title || settings.support_title || "Akademiyani qo'llab-quvvatlash (Donat)";
 
   return `
-    <div class="profile-support-entry" onclick="openDonateModal()">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div class="profile-support-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-          </svg>
-        </div>
-        <div>
-          <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:2px;">
-            ${escapeHtml(title)}
-          </div>
-          <div style="font-size:12px; color:var(--text-secondary);">
-            ${escapeHtml(sub)}
-          </div>
-        </div>
+    <div class="donate-card">
+      <div class="donate-header">
+        <div class="donate-icon">💝</div>
+        <div class="donate-title">${escapeHtml(title)}</div>
       </div>
-      <div style="color:var(--text-muted); display:flex; align-items:center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
+      <div class="donate-text">
+        ${escapeHtml(desc)}
+      </div>
+
+      <div class="donate-card-box">
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">💳 Karta raqami (UzCard / Humo):</div>
+          <div id="donate-card-val" class="donate-card-number">${escapeHtml(cardNum)}</div>
+          <div class="donate-card-holder">Egasi: ${escapeHtml(cardHolder)}</div>
+        </div>
+        <button id="copy-donate-btn" class="admin-small-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+          📋 Nusxalash
+        </button>
+      </div>
+
+      <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
+        Tezkor ehson summalari:
+      </div>
+      <div class="donate-pills">
+        <div class="donate-pill" onclick="openDonateModal('15 000 so\\'m (Qahva ☕)')">15 000 ☕</div>
+        <div class="donate-pill" onclick="openDonateModal('50 000 so\\'m (Kitob 📚)')">50 000 📚</div>
+        <div class="donate-pill" onclick="openDonateModal('100 000 so\\'m (Darslik 🚀)')">100 000 🚀</div>
+        <div class="donate-pill" onclick="openDonateModal('250 000 so\\'m (Homiylik 🌟)')">250 000 🌟</div>
       </div>
     </div>
   `;
@@ -2099,14 +2108,24 @@ function copyDonateCard(cardNumber) {
   const clean = String(cardNumber || "").replace(/\s+/g, "");
 
   function setCopiedUi() {
-    const btn = document.getElementById("support-copy-btn");
+    const btn = document.getElementById("copy-donate-btn") || document.getElementById("support-copy-btn");
     const label = document.getElementById("support-copy-label");
-    if (btn) btn.classList.add("copied");
-    if (label) label.textContent = "Nusxalandi ✓";
-    setTimeout(() => {
-      if (btn) btn.classList.remove("copied");
-      if (label) label.textContent = "Nusxalash";
-    }, 2200);
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = "Nusxalandi ✓";
+      btn.style.background = "#10b981";
+      btn.style.color = "#fff";
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.style.background = "";
+        btn.style.color = "";
+      }, 2000);
+    }
+    if (label) {
+      label.textContent = "Nusxalandi ✓";
+      setTimeout(() => { label.textContent = "Nusxalash"; }, 2000);
+    }
+    showToast("Karta raqami nusxalandi!");
   }
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2126,10 +2145,8 @@ function openModal(title, content) {
   lastDetailReturnScroll = scrollY;
   currentView = {
     html: `
-      <div class="page lib-container lib-page-enter">
-        <div class="lib-back-nav" onclick="closeDetail()">
-          ${typeof libIcons !== "undefined" && libIcons.back ? libIcons.back('lib-back-svg', 16) : "←"} Ortga
-        </div>
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga</div>
         <div class="card" style="margin-top:16px;">
           ${title ? `<div class="card-title" style="margin-bottom:12px;">${escapeHtml(title)}</div>` : ""}
           ${content}
@@ -2141,57 +2158,54 @@ function openModal(title, content) {
   window.scrollTo(0, 0);
 }
 
-function openDonateModal() {
+function openDonateModal(summaLabel = "") {
   haptic("light");
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   const settings = state.settings || {};
-  const title = settings.support_title || "Akademiyani Qo'llab-quvvatlash";
-  const desc = settings.support_description || "YOSHUZBEKK platformasi rivojiga o'z hissangizni qo'shing";
   const cardNum = settings.donate_card_number || "8600 5304 1234 5678";
   const cardHolder = settings.donate_card_holder || "Abdulloh S. (YOSHUZBEKK)";
   const paymentType = settings.donate_payment_type || "UZCARD / HUMO";
-  const telegram = settings.support_telegram_contact || "@yoshuzbekk_admin";
+  const telegram = settings.support_telegram_contact || settings.contact_telegram || "yoshuzbekk_admin";
+  const cleanTg = String(telegram).replace('@', '');
 
   currentView = {
     html: `
-      <div class="page lib-container lib-page-enter" style="padding-bottom: 30px;">
-        <div class="lib-back-nav" onclick="closeDetail()">
-          ${typeof libIcons !== "undefined" && libIcons.back ? libIcons.back('lib-back-svg', 16) : "←"} Profil
-        </div>
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
+        <div class="page-title">💝 Qo'llab-quvvatlash (Donat)</div>
 
-        <div class="lib-quiz-card" style="text-align: center; max-width: 480px; margin: 16px auto; padding: 28px 20px;">
-          <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: #3b82f6;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
+        <div class="card" style="text-align:center; padding:24px 18px; margin-bottom:16px;">
+          <div style="font-size:44px; margin-bottom:10px;">☕</div>
+          <div style="font-size:17px; font-weight:800; margin-bottom:6px;">Har bir hissangiz biz uchun qadrli!</div>
+          <div style="font-size:13px; color:var(--text-secondary); line-height:1.45; margin-bottom:18px;">
+            Sizning qo'llab-quvvatlashingiz akademiyada yangi bepul darsliklar, Revit oilalari va ochiq normativlarni tayyorlashga sarflanadi.
           </div>
 
-          <div style="font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em;">
-            ${escapeHtml(title)}
-          </div>
-          <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 auto 20px auto; max-width: 320px;">
-            ${escapeHtml(desc)}
-          </p>
-
-          <div class="support-modal-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 16px; padding: 22px; color: #fff; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.12); text-align: left; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.65);">${escapeHtml(paymentType)}</span>
-              <span style="font-size: 11px; background: rgba(59,130,246,0.3); border: 1px solid rgba(59,130,246,0.5); padding: 2px 8px; border-radius: 999px; color: #93c5fd;">YOSHUZBEKK</span>
+          ${summaLabel ? `
+            <div style="background:rgba(233,30,99,0.1); border:1px solid rgba(233,30,99,0.3); border-radius:8px; padding:10px; font-weight:750; color:#e91e63; margin-bottom:16px;">
+              Tanlangan summa: ${escapeHtml(summaLabel)}
             </div>
-            <div style="font-family: monospace; font-size: 19px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px;">${escapeHtml(cardNum)}</div>
-            <div style="font-size: 13px; color: rgba(255,255,255,0.85);">${escapeHtml(cardHolder)}</div>
+          ` : ""}
 
-            <button id="support-copy-btn" class="lib-download-btn" style="width: 100%; margin-top: 18px; padding: 12px; font-size: 13px; font-weight: 700;" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
+          <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:16px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Karta raqami:</span>
+              <span style="font-size:10.5px; background:rgba(255,255,255,0.08); border-radius:4px; padding:2px 6px; color:var(--text-secondary);">${escapeHtml(paymentType)}</span>
+            </div>
+            <div style="font-family:monospace; font-size:18px; font-weight:800; color:var(--accent); letter-spacing:1px; margin:4px 0;">
+              ${escapeHtml(cardNum)}
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">Egasi: ${escapeHtml(cardHolder)}</div>
+
+            <button id="support-copy-btn" class="btn" style="margin-bottom:0;" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
               📋 Karta raqamini nusxalash
             </button>
           </div>
 
-          ${telegram ? `
-            <div style="margin-top: 12px;">
-              <a href="https://t.me/${telegram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; width: 100%; min-height: 44px;">
-                💬 Telegram orqali bog'lanish: ${escapeHtml(telegram)}
-              </a>
-            </div>
+          ${cleanTg ? `
+            <a href="https://t.me/${cleanTg}" target="_blank" rel="noopener noreferrer" class="btn secondary" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+              💬 Bog'lanish (@${escapeHtml(cleanTg)})
+            </a>
           ` : ""}
         </div>
       </div>
@@ -5655,6 +5669,138 @@ function setLibrarySectionCategory(cat) {
   render();
 }
 
+function renderActiveSectionItemsHtml() {
+  const search = (librarySectionSearchQuery || "").toLowerCase().trim();
+  const cat = librarySectionSelectedCategory;
+
+  if (libraryActiveSection === "books") {
+    let books = libraryV2Resources.filter(r =>
+      r.section_slug === "books" ||
+      r.type === "book" ||
+      r.type === "normative" ||
+      r.type === "guide"
+    );
+
+    if (!books.length) {
+      books = (state.open_resources || []).filter(r => r.type === "book").map(r => ({
+        ...r,
+        section_slug: "books",
+        author: "Autodesk / O'zbekiston",
+        language: "UZ",
+        page_count: 240,
+        what_you_learn: ["Revit dasturi interfeysi va asosiy tushunchalari", "BIM modellashtirish va listlarni sozlash", "ShNQ va KMK me'yoriy talablari"]
+      }));
+    }
+
+    if (cat !== "Barchasi") {
+      books = books.filter(b => b.category === cat || (cat === "Normativlar" && b.type === "normative"));
+    }
+
+    if (search) {
+      books = books.filter(b =>
+        (b.title && b.title.toLowerCase().includes(search)) ||
+        (b.description && b.description.toLowerCase().includes(search)) ||
+        (b.author && b.author.toLowerCase().includes(search)) ||
+        (b.category && b.category.toLowerCase().includes(search))
+      );
+    }
+
+    if (librarySectionSort === "popular") {
+      books.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+    } else {
+      books.sort((a, b) => (b.id || 0) - (a.id || 0));
+    }
+
+    return books.length ? books.map(renderBookCardHtml).join("") : `
+      <div class="empty-box" style="grid-column: 1 / -1;">
+        Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.
+      </div>
+    `;
+  }
+
+  if (libraryActiveSection === "sources") {
+    let sources = libraryV2Resources.filter(r =>
+      r.section_slug === "sources" ||
+      r.type === "source" ||
+      r.type === "family" ||
+      r.type === "template"
+    );
+
+    if (!sources.length) {
+      sources = (state.open_resources || []).filter(r => r.type === "source" || r.type === "rfa" || r.type === "family").map(r => ({
+        ...r,
+        section_slug: "sources",
+        version: "Revit 2024+",
+        file_size: "18 MB"
+      }));
+    }
+
+    if (cat !== "Barchasi") {
+      sources = sources.filter(s => s.category === cat);
+    }
+
+    if (search) {
+      sources = sources.filter(s =>
+        (s.title && s.title.toLowerCase().includes(search)) ||
+        (s.description && s.description.toLowerCase().includes(search)) ||
+        (s.category && s.category.toLowerCase().includes(search)) ||
+        (s.version && s.version.toLowerCase().includes(search))
+      );
+    }
+
+    return sources.length ? sources.map(renderSourceCardHtml).join("") : `
+      <div class="empty-box" style="grid-column: 1 / -1;">
+        Ushbu bo‘limda hozircha manbalar yo‘q. Tez orada yangi Revit oilalari qo‘shiladi!
+      </div>
+    `;
+  }
+
+  if (libraryActiveSection === "materials") {
+    let mats = libraryV2Resources.filter(r =>
+      r.section_slug === "materials" ||
+      r.type === "material"
+    );
+
+    if (!mats.length && typeof DEFAULT_MATERIALS !== "undefined" && DEFAULT_MATERIALS.length) {
+      mats = DEFAULT_MATERIALS.map(m => ({
+        id: Number(m.id) + 1000,
+        title: m.title,
+        category: m.category,
+        sub_category: m.sub_category,
+        preview_image_url: m.image_url,
+        description: m.short_desc,
+        content_data: m
+      }));
+    }
+
+    if (cat !== "Barchasi") {
+      mats = mats.filter(m => m.category === cat);
+    }
+
+    if (search) {
+      mats = mats.filter(m => {
+        const titleMatch = m.title && m.title.toLowerCase().includes(search);
+        const descMatch = m.description && m.description.toLowerCase().includes(search);
+        const catMatch = m.category && m.category.toLowerCase().includes(search);
+        let contentMatch = false;
+        if (m.content_data) {
+          const cStr = typeof m.content_data === "string" ? m.content_data.toLowerCase() : JSON.stringify(m.content_data).toLowerCase();
+          contentMatch = cStr.includes(search);
+        }
+        return titleMatch || descMatch || catMatch || contentMatch;
+      });
+    }
+
+    return mats.length ? mats.map(renderMaterialCardHtml).join("") : `
+      <div class="empty-box" style="grid-column: 1 / -1;">
+        Bunday material topilmadi. Qidiruv so'zini tekshiring.
+      </div>
+    `;
+  }
+
+  return "";
+}
+
 function setLibrarySectionSearch(q) {
   librarySectionSearchQuery = q;
   const listEl = document.getElementById("lib-section-list-container");
@@ -5681,19 +5827,22 @@ function renderTasks() {
     loadLibraryV2Data();
   }
 
+  let content = "";
   if (libraryActiveSection === "books") {
-    return renderBooksSectionHtml();
+    content = renderBooksSectionHtml();
   } else if (libraryActiveSection === "sources") {
-    return renderSourcesSectionHtml();
+    content = renderSourcesSectionHtml();
   } else if (libraryActiveSection === "tests") {
-    return renderTestsSectionHtml();
+    content = renderTestsSectionHtml();
   } else if (libraryActiveSection === "materials") {
-    return renderMaterialsSectionHtml();
+    content = renderMaterialsSectionHtml();
   } else if (libraryActiveSection) {
-    return renderGenericSectionHtml(libraryActiveSection);
+    content = renderGenericSectionHtml(libraryActiveSection);
+  } else {
+    content = renderTasksHomeHtml();
   }
 
-  return renderTasksHomeHtml();
+  return `<div class="lib-scope">${content}</div>`;
 }
 
 // ------------------------------------------------------
@@ -9360,7 +9509,7 @@ function openAddSectionModal() {
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
         <div class="page-title">Yangi Bo'lim Qo'shish</div>
 
         <div class="admin-form">
@@ -9410,7 +9559,6 @@ async function submitCreateSection() {
       name, slug, icon, description: desc, order_index: order
     });
     showToast("Yangi bo'lim muvaffaqiyatli yaratildi!");
-    closeDetail();
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
@@ -9425,7 +9573,7 @@ function openEditSectionModal(secId) {
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
         <div class="page-title">Bo'limni Tahrirlash</div>
 
         <div class="admin-form">
@@ -9475,7 +9623,6 @@ async function submitUpdateSection(secId) {
       name, slug, icon, description: desc, order_index: order
     });
     showToast("Bo'lim yangilandi!");
-    closeDetail();
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
@@ -9706,7 +9853,7 @@ function openAddLibraryV2ResourceModal() {
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
         <div class="page-title">Yangi Kutubxona Resursi Qo'shish</div>
 
         <div class="admin-form">
@@ -9856,7 +10003,6 @@ async function submitCreateLibraryV2Resource() {
     });
 
     showToast("Resurs muvaffaqiyatli qo'shildi!");
-    closeDetail();
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
@@ -9875,7 +10021,7 @@ function openEditLibraryV2ResourceModal(resId) {
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="adminSetTab('library')">← Ortga qaytish</div>
         <div class="page-title">Resursni Tahrirlash</div>
 
         <div class="admin-form">
@@ -10025,7 +10171,6 @@ async function submitUpdateLibraryV2Resource(resId) {
     });
 
     showToast("Resurs muvaffaqiyatli yangilandi!");
-    closeDetail();
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
@@ -10611,13 +10756,16 @@ function renderTab() {
 
 function updateTelegramBackButton() {
   try {
-    if (!tg.BackButton) return;
-    if (currentView || (activeTab === "tasks" && libraryActiveSection)) {
+    if (!tg || !tg.BackButton) return;
+    tg.BackButton.offClick(handleTelegramBackClick);
+    if (currentView) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(handleTelegramBackClick);
+    } else if (activeTab === "tasks" && typeof libraryActiveSection !== "undefined" && libraryActiveSection) {
       tg.BackButton.show();
       tg.BackButton.onClick(handleTelegramBackClick);
     } else {
       tg.BackButton.hide();
-      tg.BackButton.offClick(handleTelegramBackClick);
     }
   } catch (e) {}
 }
@@ -10625,7 +10773,7 @@ function updateTelegramBackButton() {
 function handleTelegramBackClick() {
   if (currentView) {
     closeDetail();
-  } else if (activeTab === "tasks" && libraryActiveSection) {
+  } else if (activeTab === "tasks" && typeof libraryActiveSection !== "undefined" && libraryActiveSection) {
     closeLibrarySection();
   }
 }

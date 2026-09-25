@@ -3663,156 +3663,39 @@ input, textarea, select {
   }
 
   .admin-page {
-    max-width: 860px;
+    max-width: 768px;
     margin: 0 auto;
   }
 }
 
-@media (min-width: 1024px) {
-  :root {
-    --nav-height: 80px;
-  }
-
+@media (min-width: 992px) {
   #app {
-    max-width: 1080px;
-    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 36px);
+    max-width: 880px;
   }
 
   .page {
-    max-width: 1080px;
+    max-width: 880px;
     padding: 24px;
   }
 
   .nav {
-    max-width: 1080px;
-    height: 80px;
+    max-width: 880px;
+    height: 72px;
     border-radius: 24px 24px 0 0;
-    padding: 0 28px;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.55);
   }
 
   .nav-item {
-    gap: 6px;
-    padding: 8px 18px;
-    border-radius: 16px;
+    font-size: 13px;
+    gap: 5px;
   }
 
-  .nav-icon {
-    font-size: 28px;
-  }
-
-  .nav-svg,
-  .nav-icon svg {
-    width: 28px !important;
-    height: 28px !important;
-  }
-
-  .nav-label {
-    font-size: 14.5px !important;
-    font-weight: 700;
-    letter-spacing: -0.2px;
+  .nav-item svg {
+    width: 25px;
+    height: 25px;
   }
 
   .admin-page {
-    max-width: 1080px;
-  }
-}
-
-@media (min-width: 1366px) {
-  :root {
-    --nav-height: 88px;
-  }
-
-  #app {
-    max-width: 1280px;
-    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 40px);
-  }
-
-  .page {
-    max-width: 1280px;
-    padding: 28px;
-  }
-
-  .nav {
-    max-width: 1280px;
-    height: 88px;
-    border-radius: 28px 28px 0 0;
-    padding: 0 42px;
-    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6);
-  }
-
-  .nav-item {
-    gap: 7px;
-    padding: 10px 24px;
-    border-radius: 18px;
-  }
-
-  .nav-icon {
-    font-size: 32px;
-  }
-
-  .nav-svg,
-  .nav-icon svg {
-    width: 32px !important;
-    height: 32px !important;
-  }
-
-  .nav-label {
-    font-size: 16px !important;
-    font-weight: 750;
-  }
-
-  .admin-page {
-    max-width: 1280px;
-  }
-}
-
-@media (min-width: 1600px) {
-  :root {
-    --nav-height: 94px;
-  }
-
-  #app {
-    max-width: 1440px;
-    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 44px);
-  }
-
-  .page {
-    max-width: 1440px;
-    padding: 32px;
-  }
-
-  .nav {
-    max-width: 1440px;
-    height: 94px;
-    border-radius: 32px 32px 0 0;
-    padding: 0 56px;
-    box-shadow: 0 -16px 54px rgba(0, 0, 0, 0.65);
-  }
-
-  .nav-item {
-    gap: 8px;
-    padding: 12px 30px;
-    border-radius: 20px;
-  }
-
-  .nav-icon {
-    font-size: 36px;
-  }
-
-  .nav-svg,
-  .nav-icon svg {
-    width: 36px !important;
-    height: 36px !important;
-  }
-
-  .nav-label {
-    font-size: 17.5px !important;
-    font-weight: 800;
-  }
-
-  .admin-page {
-    max-width: 1440px;
+    max-width: 880px;
   }
 }
 
@@ -4709,7 +4592,8 @@ input, textarea, select {
    YOSHUZBEKK Identity + Swiss Typography + Subtle Motion
    ====================================================== */
 
-:root {
+.lib-scope,
+.lib-container {
   --lib-font: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --motion-fast: 120ms;
   --motion-normal: 200ms;
@@ -6200,7 +6084,7 @@ input, textarea, select {
    7. REDUCED MOTION & ACCESSIBILITY
    ------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  .lib-scope *, .lib-scope *::before, .lib-scope *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
