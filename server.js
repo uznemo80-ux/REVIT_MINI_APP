@@ -100,6 +100,7 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_by BIGINT');
+    await pool.query('ALTER TABLE lesson_files ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS course_id INT REFERENCES courses(id) ON DELETE SET NULL');
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Boshqa'");
     await pool.query("ALTER TABLE courses ADD COLUMN IF NOT EXISTS categories TEXT[]");
@@ -5234,7 +5235,7 @@ app.post('/api/admin/materials/:id/delete', requireAdmin, async function (req, r
 app.post('/api/admin/library/all-files', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query(`
-      SELECT lf.id, lf.lesson_id, lf.file_name, lf.file_url, lf.created_at,
+      SELECT lf.id, lf.lesson_id, lf.file_name, lf.file_url,
              l.title AS lesson_title, l.module_id, m.title AS module_title,
              c.id AS course_id, c.title AS course_title
       FROM lesson_files lf
