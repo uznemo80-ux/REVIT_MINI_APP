@@ -4838,20 +4838,41 @@ app.get('/api/pdf-proxy', async function (req, res) {
     }
 
     // 2. Keshda yo'q bo'lsa, manbadan yuklab olib keshga yozish
-    var targetUrl = '';
-    if (fileId) {
-      targetUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=t';
-    } else {
-      targetUrl = rawUrl;
+    var fetchRes = null;
+    var driveApiKey = process.env.GOOGLE_DRIVE_API_KEY || '';
+
+    // A. Agar Drive File ID va API Key bo'lsa - to'g'ridan-to'g'ri rasmiy Drive API v3 alt=media orqali yuklash (100% barqaror)
+    if (fileId && driveApiKey) {
+      try {
+        var driveApiUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${encodeURIComponent(driveApiKey)}`;
+        var apiRes = await fetch(driveApiUrl, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          redirect: 'follow'
+        });
+        var apiType = (apiRes.headers.get('content-type') || '').toLowerCase();
+        if (apiRes.ok && !apiType.includes('text/html')) {
+          fetchRes = apiRes;
+        }
+      } catch (dErr) {
+        console.warn('Drive API media fetch warning:', dErr.message);
+      }
     }
 
-    var fetchRes = await fetch(targetUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      },
-      redirect: 'follow'
-    });
+    // B. Standart anonim download fallback
+    if (!fetchRes) {
+      var targetUrl = fileId
+        ? 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=t'
+        : rawUrl;
+
+      fetchRes = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        redirect: 'follow'
+      });
+    }
 
     var cType = (fetchRes.headers.get('content-type') || '').toLowerCase();
     if (!fetchRes.ok || cType.includes('text/html')) {
@@ -5419,6 +5440,84 @@ app.post('/api/library/v2/resources', async function (req, res) {
   } catch (error) {
     console.error('LIBRARY V2 RESOURCES ERROR:', error);
     return res.status(500).json({ error: 'Kutubxona resurslarini yuklashda xatolik' });
+  }
+});
+
+// Dedicated Student API: Yagona kitob tafsilotlari (Faqat library_books jadvali - 100% to'g'ri ID va mapping)
+app.post('/api/library/v2/book/:id', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var bookId = parseInt(req.params.id);
+    if (isNaN(bookId) || bookId <= 0) {
+      return res.status(400).json({ error: 'Noto\'g\'ri kitob identifikatori' });
+    }
+
+    var bookRes = await pool.query('SELECT * FROM library_books WHERE id = $1', [bookId]);
+    if (!bookRes.rows.length) {
+      return res.status(404).json({ error: 'Kitob topilmadi' });
+    }
+
+    var bRow = bookRes.rows[0];
+
+    // Ko'rishlar sonini inkrement qilish
+    try {
+      await pool.query('UPDATE library_books SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1', [bookId]);
+      await pool.query('INSERT INTO library_views (user_id, resource_id, viewed_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING', [user.id, bookId]).catch(() => {});
+    } catch (vErr) {}
+
+    // Bookmark holati
+    var isBookmarked = false;
+    try {
+      var bmResult = await pool.query('SELECT id FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, bookId]);
+      isBookmarked = bmResult.rows.length > 0;
+    } catch (bmErr) {}
+
+    var whatLearn = [];
+    if (bRow.what_you_learn) {
+      if (typeof bRow.what_you_learn === 'string') {
+        try {
+          var parsed = JSON.parse(bRow.what_you_learn);
+          if (Array.isArray(parsed)) whatLearn = parsed;
+          else whatLearn = bRow.what_you_learn.split('\n').filter(Boolean);
+        } catch (e) {
+          whatLearn = bRow.what_you_learn.split('\n').filter(Boolean);
+        }
+      } else if (Array.isArray(bRow.what_you_learn)) {
+        whatLearn = bRow.what_you_learn;
+      }
+    }
+
+    return res.json({
+      ok: true,
+      book: {
+        id: bRow.id,
+        type: 'book',
+        title: bRow.title,
+        author: bRow.author || 'Autodesk BIM & Architecture',
+        short_description: bRow.short_description || '',
+        description: bRow.short_description || '',
+        what_you_learn: whatLearn,
+        categories: bRow.categories || [],
+        category: (bRow.categories && bRow.categories[0]) || 'Arxitektura',
+        pdf_url: bRow.pdf_url || '',
+        content_url: bRow.pdf_url || '',
+        cover_url: bRow.cover_url || bRow.generated_cover_url || (bRow.drive_file_id ? `https://drive.google.com/thumbnail?id=${bRow.drive_file_id}&sz=w800` : ''),
+        preview_image_url: bRow.cover_url || bRow.generated_cover_url || (bRow.drive_file_id ? `https://drive.google.com/thumbnail?id=${bRow.drive_file_id}&sz=w800` : ''),
+        page_count: bRow.page_count || 0,
+        reading_time_minutes: bRow.reading_time_minutes || 30,
+        access_type: bRow.access_type || 'free',
+        drive_file_id: bRow.drive_file_id,
+        drive_file_name: bRow.drive_file_name,
+        status: bRow.status,
+        is_bookmarked: isBookmarked,
+        view_count: (bRow.view_count || 0) + 1
+      }
+    });
+  } catch (err) {
+    console.error('LIBRARY V2 BOOK DETAIL ERROR:', err);
+    return res.status(500).json({ error: 'Kitob ma\'lumotlarini yuklashda xatolik' });
   }
 });
 
@@ -6043,11 +6142,39 @@ async function testGoogleDriveFolderAccess(folderId, apiKey) {
 
   var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
   if (!key) {
+    // API kalitsiz tekshirib ko'rish (ochiq papka orqali)
+    try {
+      var pubUrl = `https://drive.google.com/drive/folders/${encodeURIComponent(folderId)}`;
+      var pubRes = await fetch(pubUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } });
+      if (!pubRes.ok) {
+        return {
+          ok: false,
+          case: 2,
+          error: "Google Drive papkasi topilmadi yoki papka yopiq (Private). Iltimos, Google Drive'da ushbu papka havolasini 'Havolaga ega bo'lgan har kim (Anyone with the link)' ko'rishi mumkin qilib sozlang."
+        };
+      }
+      var pubHtml = await pubRes.text();
+      var idMatches = Array.from(pubHtml.matchAll(/\/file\/d\/([a-zA-Z0-9_-]{20,})/g)).map(m => m[1]);
+      var uniqueIds = Array.from(new Set(idMatches));
+      if (uniqueIds.length > 0) {
+        return {
+          ok: true,
+          folder_id: folderId,
+          folder_name: "Google Drive Papkasi (Ochiq)",
+          pdf_count: uniqueIds.length,
+          sample_files: uniqueIds.slice(0, 5).map((id, idx) => `PDF Fayl ${idx + 1} (${id.substring(0, 8)}...)`),
+          message: `✓ Google Drive papkasi ulandi! ${uniqueIds.length} ta fayl topildi.`
+        };
+      }
+    } catch (pubErr) {
+      console.warn("Public folder test error:", pubErr.message);
+    }
+
     return {
       ok: false,
       case: 4,
       needs_api_key: true,
-      error: "Google Drive API kaliti (API Key) topilmadi. Google Cloud Console'dan Google Drive API v3 kalitini kiritishingiz yoki server muhitida GOOGLE_DRIVE_API_KEY ni sozlashingiz kerak."
+      error: "Google Drive API kaliti (API Key) kiritilmagan. Google Drive papkalari to'liq va tez skanerlanishi uchun Google Cloud Console'dan bepul Google Drive API kalitini kiriting yoki papka havolasini 'Havolaga ega bo'lgan har kim' qiling."
     };
   }
 
@@ -6187,6 +6314,36 @@ async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
         }
       } catch (apiErr) {
         console.warn('Drive API v3 fetch warning:', apiErr.message);
+      }
+    }
+
+    // Key bo'lmagan yoki API ishlamagan taqdirda ochiq papka HTML sahifasidan skanerlash
+    if (!results.length) {
+      try {
+        var scrapeUrl = `https://drive.google.com/drive/folders/${encodeURIComponent(fId)}`;
+        var scrapeRes = await fetch(scrapeUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+        });
+        if (scrapeRes.ok) {
+          var html = await scrapeRes.text();
+          var fileMatches = Array.from(html.matchAll(/\/file\/d\/([a-zA-Z0-9_-]{20,})/g)).map(m => m[1]);
+          var seenIds = new Set();
+          for (var fileId of fileMatches) {
+            if (!seenIds.has(fileId)) {
+              seenIds.add(fileId);
+              results.push({
+                id: fileId,
+                name: 'PDF Kitob ' + fileId.substring(0, 6),
+                size: 0,
+                mimeType: 'application/pdf',
+                webViewLink: `https://drive.google.com/file/d/${fileId}/view`,
+                category: currentCategory || 'Arxitektura'
+              });
+            }
+          }
+        }
+      } catch (sErr) {
+        console.warn('Drive folder scrape warning:', sErr.message);
       }
     }
   }
@@ -6739,23 +6896,43 @@ app.post('/api/admin/books/:id/approve', requireAdmin, async function (req, res)
         access_type: book.access_type,
         book_id: book.id
       };
-      await pool.query(`
-        INSERT INTO library_resources (
-          type, section_slug, title, subtitle, description, category, tags,
-          content_url, content_type, content_data, preview_image_url,
-          author, page_count, status, is_featured, order_index
-        ) VALUES (
-          'book', 'books', $1, $2, $3, $4, $5,
-          $6, 'pdf', $7, $8,
-          $9, $10, 'published', $11, 1
-        )
-        ON CONFLICT DO NOTHING
-      `, [
-        book.title, book.author ? ('Muallif: ' + book.author) : '', book.short_description, primaryCat, book.categories || [],
-        book.pdf_url, JSON.stringify(contentData), book.cover_url || book.generated_cover_url || null,
-        book.author, book.page_count, book.is_recommended
-      ]);
-    } catch (mErr) {}
+      // library_resources ga ham aks ettirish (agar mavjud bo'lsa yangilash, bo'lmasa yaratish)
+      var existingLr = await pool.query(
+        "SELECT id FROM library_resources WHERE (content_data->>'book_id' = $1::text) OR (title = $2 AND section_slug = 'books')",
+        [book.id.toString(), book.title]
+      );
+      if (existingLr.rows.length) {
+        await pool.query(`
+          UPDATE library_resources SET
+            title = $1, subtitle = $2, description = $3, category = $4, tags = $5,
+            content_url = $6, content_data = $7, preview_image_url = $8, author = $9,
+            page_count = $10, status = 'published', is_featured = $11
+          WHERE id = $12
+        `, [
+          book.title, book.author ? ('Muallif: ' + book.author) : '', book.short_description, primaryCat, book.categories || [],
+          book.pdf_url, JSON.stringify(contentData), book.cover_url || book.generated_cover_url || null,
+          book.author, book.page_count, book.is_recommended, existingLr.rows[0].id
+        ]);
+      } else {
+        await pool.query(`
+          INSERT INTO library_resources (
+            type, section_slug, title, subtitle, description, category, tags,
+            content_url, content_type, content_data, preview_image_url,
+            author, page_count, status, is_featured, order_index
+          ) VALUES (
+            'book', 'books', $1, $2, $3, $4, $5,
+            $6, 'pdf', $7, $8,
+            $9, $10, 'published', $11, 1
+          )
+        `, [
+          book.title, book.author ? ('Muallif: ' + book.author) : '', book.short_description, primaryCat, book.categories || [],
+          book.pdf_url, JSON.stringify(contentData), book.cover_url || book.generated_cover_url || null,
+          book.author, book.page_count, book.is_recommended
+        ]);
+      }
+    } catch (mErr) {
+      console.warn("library_resources sync error:", mErr.message);
+    }
 
     return res.json({ ok: true, book: book, message: 'Kitob muvaffaqiyatli tasdiqlandi va nashr qilindi' });
   } catch (err) {
@@ -7106,16 +7283,18 @@ app.post('/api/admin/books/:id/publish', requireAdmin, async function (req, res)
   }
 });
 
-// Admin: Kitobni o'chirish
+// Admin: Kitobni o'chirish (Soft-delete / Arxivlash — Google Drive fayliga ziyon yetkazmaydi)
 app.post('/api/admin/books/:id/delete', requireAdmin, async function (req, res) {
   try {
     var id = parseInt(req.params.id);
     var cur = await pool.query('SELECT title FROM library_books WHERE id = $1', [id]);
-    var title = cur.rows.length ? cur.rows[0].title : null;
+    if (!cur.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+    var title = cur.rows[0].title;
 
-    var result = await pool.query('DELETE FROM library_books WHERE id = $1 RETURNING id', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Kitob topilmadi' });
+    // library_books jadvalida statusini 'archived' qilish (Google Drive fayliga ziyon yetmaydi, talaba kutubxonasidan yo'qoladi)
+    await pool.query("UPDATE library_books SET status = 'archived', updated_at = NOW() WHERE id = $1", [id]);
 
+    // library_resources dagi barcha bog'liq nusxalarni to'liq tozalash
     if (title) {
       await pool.query(
         "DELETE FROM library_resources WHERE (content_data->>'book_id' = $1::text) OR (title = $2 AND section_slug = 'books')",
@@ -7123,10 +7302,10 @@ app.post('/api/admin/books/:id/delete', requireAdmin, async function (req, res) 
       );
     }
 
-    return res.json({ ok: true, message: 'Kitob o\'chirildi' });
+    return res.json({ ok: true, message: 'Kitob kutubxonadan muvaffaqiyatli olib tashlandi' });
   } catch (err) {
     console.error('ADMIN BOOKS DELETE ERROR:', err);
-    return res.status(500).json({ error: 'Kitobni o\'chirishda xatolik' });
+    return res.status(500).json({ error: 'Kitobni o\'chirishda xatolik: ' + err.message });
   }
 });
 

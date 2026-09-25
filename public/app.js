@@ -254,12 +254,22 @@ function showToast(message, duration = 2800) {
 }
 
 function showConfirm(title, message, confirmLabel, onConfirm) {
+  if (typeof message === "function") {
+    onConfirm = message;
+    confirmLabel = "Tasdiqlash";
+    message = "";
+  } else if (typeof confirmLabel === "function") {
+    onConfirm = confirmLabel;
+    confirmLabel = "Tasdiqlash";
+  }
+  if (!confirmLabel) confirmLabel = "Tasdiqlash";
+
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal-card">
-      <div class="modal-title">${escapeHtml(title)}</div>
-      <div class="modal-msg">${escapeHtml(message)}</div>
+      <div class="modal-title">${escapeHtml(title || "Tasdiqlash")}</div>
+      ${message ? `<div class="modal-msg">${escapeHtml(message)}</div>` : ""}
       <div class="modal-actions">
         <button type="button" class="modal-btn cancel">Bekor qilish</button>
         <button type="button" class="modal-btn confirm">${escapeHtml(confirmLabel)}</button>
@@ -279,14 +289,27 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
     closeOverlay();
   });
 
-  overlay.querySelector(".confirm")?.addEventListener("click", async () => {
+  overlay.querySelector(".confirm")?.addEventListener("click", async (e) => {
     haptic("medium");
-    closeOverlay();
-    try {
-      await onConfirm();
-    } catch (error) {
-      console.error("CONFIRM ERROR:", error);
-      showAlert(error.message || "Amalni bajarishda xatolik yuz berdi.");
+    const confirmBtn = e.currentTarget;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = "0.6";
+    }
+    if (typeof onConfirm === "function") {
+      try {
+        await onConfirm();
+        closeOverlay();
+      } catch (error) {
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.style.opacity = "1";
+        }
+        console.error("CONFIRM ERROR:", error);
+        showAlert(error.message || "Amalni bajarishda xatolik yuz berdi.");
+      }
+    } else {
+      closeOverlay();
     }
   });
 }
@@ -6295,7 +6318,15 @@ async function loadStudentBooks() {
   } finally {
     studentBooksLoading = false;
     if (libraryActiveSection === "books") {
-      render();
+      const listEl = document.getElementById("lib-section-list-container");
+      const searchField = document.querySelector(".lib-search-field");
+      if (listEl && searchField && document.activeElement === searchField) {
+        listEl.innerHTML = studentBooksList.length
+          ? studentBooksList.map(renderBookCardHtml).join("")
+          : `<div class="empty-box" style="grid-column: 1 / -1;">Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.</div>`;
+      } else {
+        render();
+      }
     }
   }
 }
@@ -6996,25 +7027,39 @@ function closePdfViewerModal() {
   }
 }
 
+let currentDetailBookRequestId = 0;
+
 async function openBookDetail(resId) {
   haptic("light");
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
-  let book = libraryV2Resources.find(r => Number(r.id) === Number(resId));
-  if (!book && Array.isArray(studentBooksList)) {
-    book = studentBooksList.find(r => Number(r.id) === Number(resId));
-  }
-  if (!book && state.open_resources) {
-    book = state.open_resources.find(r => Number(r.id) === Number(resId));
-  }
+  const reqId = ++currentDetailBookRequestId;
+  const numId = Number(resId);
 
+  // 1. Dastlabki ma'lumotni darhol ko'rsatish (Zero lag UX)
+  let book = (Array.isArray(studentBooksList) ? studentBooksList.find(b => Number(b.id) === numId) : null) ||
+             (adminData.libraryBooks ? adminData.libraryBooks.find(b => Number(b.id) === numId) : null) ||
+             (state.open_resources ? state.open_resources.find(r => Number(r.id) === numId) : null) ||
+             libraryV2Resources.find(r => Number(r.id) === numId);
+
+  // 2. Serverdan to'g'ri kitob ma'lumotlarini yuklash (/api/library/v2/book/:id)
   try {
-    const detailData = await api(`/api/library/v2/resource/${Number(resId)}`);
-    if (detailData && detailData.resource) {
-      book = detailData.resource;
+    const detailData = await api(`/api/library/v2/book/${numId}`).catch(() => null);
+    if (reqId !== currentDetailBookRequestId) return; // Stale request discard (Race condition guard)
+
+    if (detailData && detailData.book) {
+      book = detailData.book;
+    } else {
+      // Fallback resource detail
+      const resDetail = await api(`/api/library/v2/resource/${numId}`).catch(() => null);
+      if (reqId !== currentDetailBookRequestId) return;
+      if (resDetail && resDetail.resource) {
+        book = resDetail.resource;
+      }
     }
   } catch (e) {}
 
+  if (reqId !== currentDetailBookRequestId) return;
   if (!book) return showAlert("Kitob ma'lumotlari topilmadi.");
 
   const cover = formatImageUrl(book.preview_image_url || book.cover_url || book.generated_cover_url || "");
@@ -7040,7 +7085,7 @@ async function openBookDetail(resId) {
     ];
   }
 
-  const readUrl = book.content_url || book.pdf_url || "";
+  const readUrl = book.pdf_url || book.content_url || (book.drive_file_id ? `https://drive.google.com/file/d/${book.drive_file_id}/view` : "");
 
   currentView = {
     html: `
@@ -11069,13 +11114,16 @@ async function toggleAdminBookRecommend(bookId) {
 
 function deleteAdminBookConfirm(bookId) {
   const book = (adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId));
-  const title = book ? `"${book.title}"` : "bu kitobni";
-  showConfirm(`Haqiqatan ham ${title} o'chirmoqchimisiz?`, async () => {
+  const title = book ? `"${book.title}"` : "ushbu kitobni";
+  showConfirm("Kitobni o'chirish", `Haqiqatan ham ${title} kutubxonadan olib tashlamoqchimisiz?`, "O'chirish", async () => {
     try {
       const res = await adminApi(`/api/admin/books/${bookId}/delete`);
       if (res && res.ok) {
-        showToast("Kitob o'chirildi");
+        showToast(res.message || "Kitob olib tashlandi");
         adminData.libraryBooks = (adminData.libraryBooks || []).filter(b => Number(b.id) !== Number(bookId));
+        if (Array.isArray(studentBooksList)) {
+          studentBooksList = studentBooksList.filter(b => Number(b.id) !== Number(bookId));
+        }
         setAdminBooksFilter(adminData.adminBooksFilter || "all");
       }
     } catch (err) {
