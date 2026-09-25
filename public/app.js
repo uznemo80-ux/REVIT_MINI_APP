@@ -9835,7 +9835,9 @@ function renderAdminLibrarySubTabContent(subTab) {
     (f.course_title && f.course_title.toLowerCase().includes(search))
   ) : files;
 
+  if (subTab === "drive") return renderAdminLibraryDrive();
   if (subTab === "books") return renderAdminLibraryBooks();
+  if (subTab === "errors") return renderAdminLibraryErrors();
   if (subTab === "sources") return renderAdminLibrarySectionResources('sources', 'Manbalar / Fayllar');
   if (subTab === "tests") return renderAdminLibrarySectionResources('tests', 'Test va Vazifalar');
   if (subTab === "materials") return renderAdminLibrarySectionResources('materials', 'Qurilish Materiallari');
@@ -9849,9 +9851,24 @@ function renderAdminLibrarySubTabContent(subTab) {
   return renderAdminLibraryBooks();
 }
 
+function toggleAdminLibraryOtherSections(e) {
+  if (e) {
+    if (typeof e.preventDefault === "function") e.preventDefault();
+    if (typeof e.stopPropagation === "function") e.stopPropagation();
+  }
+  adminData.showLibraryOtherSections = !adminData.showLibraryOtherSections;
+  const wrap = document.getElementById("admin-library-wrapper");
+  if (wrap && wrap.parentElement) {
+    wrap.parentElement.innerHTML = renderAdminLibrary();
+  } else {
+    renderAdminPanel();
+  }
+}
+
 function renderAdminLibrary() {
   const subTab = adminData.librarySubTab || "books";
   const books = adminData.libraryBooks || [];
+  const failedBooks = books.filter(b => b.status === 'FAILED' || b.status === 'failed' || b.sync_error);
   const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
   const sources = allRes.filter(r => r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative');
   const tests = allRes.filter(r => r.section_slug === 'tests' || r.type === 'test');
@@ -9859,41 +9876,397 @@ function renderAdminLibrary() {
   const files = adminData.libraryFiles || [];
   const showcases = state.showcases || [];
 
+  const isOtherTab = ["sources", "tests", "materials", "categories", "support", "files", "showcases"].includes(subTab);
+  const showOthers = Boolean(adminData.showLibraryOtherSections || isOtherTab);
+
   return `
-    <div>
-      <div class="category-chips" id="admin-library-subtab-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px;">
-        <div class="chip ${subTab === "books" ? "active" : ""}" data-subtab="books" onclick="setAdminLibraryTab('books', event)">
+    <div id="admin-library-wrapper" class="admin-library-wrapper">
+      <!-- 1. ASOSIY 3 TA TAB (APPLE-STYLE SODDA VA ANIQ) -->
+      <div class="category-chips" id="admin-library-subtab-chips" style="display:flex; gap:8px; margin-bottom:14px; padding-bottom:6px; overflow-x:auto;">
+        <div class="chip ${subTab === "drive" ? "active" : ""}" data-subtab="drive" onclick="setAdminLibraryTab('drive', event)" style="font-weight:700; cursor:pointer;">
+          📁 Google Drive
+        </div>
+        <div class="chip ${subTab === "books" ? "active" : ""}" data-subtab="books" onclick="setAdminLibraryTab('books', event)" style="font-weight:700; cursor:pointer;">
           📚 Kitoblar (${books.length})
         </div>
-        <div class="chip ${subTab === "sources" ? "active" : ""}" data-subtab="sources" onclick="setAdminLibraryTab('sources', event)">
-          📦 Manbalar (${sources.length})
+        <div class="chip ${subTab === "errors" ? "active" : ""}" data-subtab="errors" onclick="setAdminLibraryTab('errors', event)" style="font-weight:700; cursor:pointer; ${failedBooks.length > 0 ? 'color:#ff3b30;' : ''}">
+          ⚠️ Xatolar (${failedBooks.length})
         </div>
-        <div class="chip ${subTab === "tests" ? "active" : ""}" data-subtab="tests" onclick="setAdminLibraryTab('tests', event)">
-          ✓ Testlar (${tests.length})
-        </div>
-        <div class="chip ${subTab === "materials" ? "active" : ""}" data-subtab="materials" onclick="setAdminLibraryTab('materials', event)">
-          🧱 Materiallar (${mats.length})
-        </div>
-        <div class="chip ${subTab === "categories" ? "active" : ""}" data-subtab="categories" onclick="setAdminLibraryTab('categories', event)">
-          🏷️ Kategoriyalar (${(libraryV2Categories || []).length})
-        </div>
-        <div class="chip ${subTab === "support" ? "active" : ""}" data-subtab="support" onclick="setAdminLibraryTab('support', event)">
-          💳 Qo‘llab-quvvatlash
-        </div>
-        <div class="chip ${subTab === "files" ? "active" : ""}" data-subtab="files" onclick="setAdminLibraryTab('files', event)">
-          📁 Dars Fayllari (${files.length})
-        </div>
-        <div class="chip ${subTab === "showcases" ? "active" : ""}" data-subtab="showcases" onclick="setAdminLibraryTab('showcases', event)">
-          🎓 Natijalar (PDF) (${showcases.length})
+        <div class="chip" onclick="toggleAdminLibraryOtherSections(event)" style="margin-left:auto; opacity:0.85; font-size:12px; cursor:pointer;">
+          ⚙️ Boshqa bo‘limlar ${showOthers ? '▲' : '▼'}
         </div>
       </div>
 
+      <!-- 2. QO'SHIMCHA BO'LIMLAR (KATEGORIYALAR, TESTLAR, MATERIALLAR) -->
+      ${showOthers ? `
+        <div class="category-chips" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:16px; padding:8px 10px; background:var(--bg-secondary); border-radius:12px; border:1px solid var(--border);">
+          <div class="chip ${subTab === "sources" ? "active" : ""}" data-subtab="sources" onclick="setAdminLibraryTab('sources', event)" style="font-size:12px; padding:4px 10px;">
+            📦 Manbalar (${sources.length})
+          </div>
+          <div class="chip ${subTab === "tests" ? "active" : ""}" data-subtab="tests" onclick="setAdminLibraryTab('tests', event)" style="font-size:12px; padding:4px 10px;">
+            ✓ Testlar (${tests.length})
+          </div>
+          <div class="chip ${subTab === "materials" ? "active" : ""}" data-subtab="materials" onclick="setAdminLibraryTab('materials', event)" style="font-size:12px; padding:4px 10px;">
+            🧱 Materiallar (${mats.length})
+          </div>
+          <div class="chip ${subTab === "categories" ? "active" : ""}" data-subtab="categories" onclick="setAdminLibraryTab('categories', event)" style="font-size:12px; padding:4px 10px;">
+            🏷️ Kategoriyalar (${(libraryV2Categories || []).length})
+          </div>
+          <div class="chip ${subTab === "files" ? "active" : ""}" data-subtab="files" onclick="setAdminLibraryTab('files', event)" style="font-size:12px; padding:4px 10px;">
+            📁 Dars Fayllari (${files.length})
+          </div>
+          <div class="chip ${subTab === "showcases" ? "active" : ""}" data-subtab="showcases" onclick="setAdminLibraryTab('showcases', event)" style="font-size:12px; padding:4px 10px;">
+            🎓 Natijalar (${showcases.length})
+          </div>
+          <div class="chip ${subTab === "support" ? "active" : ""}" data-subtab="support" onclick="setAdminLibraryTab('support', event)" style="font-size:12px; padding:4px 10px;">
+            💳 Qo‘llab-quvvatlash
+          </div>
+        </div>
+      ` : ""}
+
+      <!-- 3. TAB MAZMUNI -->
       <div id="admin-library-subtab-content">
         ${renderAdminLibrarySubTabContent(subTab)}
       </div>
     </div>
   `;
 }
+
+// ----------------------------------------------------
+// TAB 1: GOOGLE DRIVE ULASH VA TEKSHIRISH
+// ----------------------------------------------------
+
+function fillDriveFolderInput(folderId) {
+  const inp = document.getElementById("admin-drive-folder-url");
+  if (inp) {
+    inp.value = folderId;
+    inp.focus();
+    showToast("Papka ID joylandi");
+  }
+}
+
+async function loadAdminDriveStatus() {
+  adminData.driveStatusLoaded = true;
+  try {
+    const res = await adminApi("/api/admin/drive/status");
+    if (res && res.ok) {
+      if (res.active_source) {
+        if (!adminData.driveSources) adminData.driveSources = [];
+        const exists = adminData.driveSources.some(s => s.id === res.active_source.id);
+        if (!exists) adminData.driveSources.unshift(res.active_source);
+      }
+      adminData.driveEnvKeyConfigured = res.has_env_key || res.drive_api_key_configured;
+      adminData.activeDriveSource = res.active_source;
+    }
+  } catch (e) {
+    console.warn("loadAdminDriveStatus:", e);
+  }
+}
+
+function renderAdminLibraryDrive() {
+  const sources = adminData.driveSources || [];
+  const activeSource = adminData.activeDriveSource || sources[0] || null;
+  const lastSync = adminData.lastSyncStats;
+
+  if (!adminData.driveStatusLoaded) {
+    loadAdminDriveStatus();
+  }
+
+  return `
+    <div class="admin-drive-panel" style="max-width:680px; margin:0 auto;">
+      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:18px; padding:20px; box-shadow:0 8px 24px rgba(0,0,0,0.15); margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:42px; height:42px; border-radius:12px; background:rgba(0,122,255,0.12); display:flex; align-items:center; justify-content:center; font-size:22px;">
+              📁
+            </div>
+            <div>
+              <div style="font-size:16px; font-weight:800; color:var(--text-primary);">Google Drive Papkasini Bog'lash</div>
+              <div style="font-size:12px; color:var(--text-secondary);">500+ PDF kitoblarni bitta papka orqali avtomatik import qilish</div>
+            </div>
+          </div>
+          <button class="btn secondary" style="margin:0; padding:6px 12px; font-size:12px; border-radius:8px;" onclick="openAdminDriveSourcesModal()" title="Saqlangan manbalar">
+            ⚙️ Manbalar (${sources.length})
+          </button>
+        </div>
+
+        ${activeSource ? `
+          <div style="padding:10px 14px; border-radius:12px; background:rgba(52,199,89,0.08); border:1px solid rgba(52,199,89,0.25); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+            <div>
+              <div style="font-weight:700; color:#34c759; display:flex; align-items:center; gap:6px;">
+                <span>🟢</span> Ulangan papka: <b>${escapeHtml(activeSource.name || 'Asosiy Papka')}</b>
+              </div>
+              <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                ID: <code>${escapeHtml(activeSource.root_folder_id || '')}</code>
+              </div>
+            </div>
+            <button class="btn secondary" style="margin:0; padding:5px 10px; font-size:11.5px; border-radius:8px;" onclick="fillDriveFolderInput('${escapeJsString(activeSource.root_folder_id || '')}')">
+              Qayta tekshirish
+            </button>
+          </div>
+        ` : ""}
+
+        <div class="apple-field" style="margin-bottom:14px;">
+          <label style="font-weight:700; font-size:13px; display:flex; justify-content:space-between;">
+            <span>Google Drive Papka Havolasi yoki ID *</span>
+            <span style="font-weight:400; font-size:11.5px; color:var(--text-muted);">PDF fayllar</span>
+          </label>
+          <input id="admin-drive-folder-url"
+                 class="apple-input"
+                 type="text"
+                 placeholder="https://drive.google.com/drive/folders/1aBcDeFg... yoki 1aBcDeFg..."
+                 value="${escapeHtml(activeSource ? (activeSource.root_folder_id || '') : '')}">
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px; line-height:1.45;">
+            💡 <b>Ko'rsatma:</b> Google Drive-da papkaga sichqonchaning o'ng tugmasini bosing ➔ <b>Share (Поделиться)</b> ➔ General access bo'limida <b>"Anyone with the link" (Все, у кого есть ссылка)</b> qiling va havolani bu yerga joylang.
+          </div>
+        </div>
+
+        <details style="margin-bottom:16px; background:var(--bg-secondary); border-radius:10px; padding:8px 12px; font-size:12.5px;">
+          <summary style="cursor:pointer; font-weight:600; color:var(--text-secondary);">
+            🔑 Google Drive API Kaliti (Ixtiyoriy - yuqori tezlik va barqarorlik uchun)
+          </summary>
+          <div style="margin-top:10px;">
+            <input id="admin-drive-api-key"
+                   class="apple-input"
+                   type="password"
+                   placeholder="AIzaSy... (Google Cloud Console kaliti)"
+                   value="${escapeHtml(adminData.driveApiKey || '')}">
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+              ${adminData.driveEnvKeyConfigured ? '🟢 Serverda API kaliti sozlangan.' : 'Google Cloud-da Drive API kalitingiz bo\'lsa, shu yerga kiritishingiz mumkin.'}
+            </div>
+          </div>
+        </details>
+
+        <div style="display:flex; gap:10px;">
+          <button id="btn-test-drive"
+                  class="btn"
+                  style="flex:1; background:var(--accent); color:#fff; font-weight:700; padding:11px 16px; border-radius:10px; font-size:14px; margin:0;"
+                  onclick="testAdminDriveFolder()">
+            🔍 1. Papkani tekshirish
+          </button>
+        </div>
+
+        <div id="admin-drive-test-result" style="margin-top:16px;"></div>
+      </div>
+
+      ${lastSync ? `
+        <div style="padding:14px; border-radius:14px; background:var(--bg-surface); border:1px solid var(--border); font-size:13px;">
+          <div style="font-weight:700; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+            <span>📊</span> Oxirgi sinxronizatsiya natijasi:
+          </div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--text-secondary);">
+            <div>Topilgan fayllar: <b style="color:var(--text-primary);">${lastSync.found || 0} ta</b></div>
+            <div>Yangi import qilingan: <b style="color:#34c759;">+${lastSync.new || 0} ta</b></div>
+            <div>Avvaldan mavjud: <b>${lastSync.existing || 0} ta</b></div>
+            ${lastSync.failed ? `<div style="color:#ff3b30;">Xatolik: <b>${lastSync.failed} ta</b></div>` : ''}
+          </div>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+async function testAdminDriveFolder() {
+  const urlInput = document.getElementById("admin-drive-folder-url");
+  const keyInput = document.getElementById("admin-drive-api-key");
+  const resultBox = document.getElementById("admin-drive-test-result");
+  const btn = document.getElementById("btn-test-drive");
+
+  const folderUrl = urlInput ? urlInput.value.trim() : "";
+  const apiKey = keyInput ? keyInput.value.trim() : "";
+  if (apiKey) adminData.driveApiKey = apiKey;
+
+  if (!folderUrl) {
+    return showAlert("Iltimos, Google Drive papka havolasini yoki ID sini kiriting!");
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Tekshirilmoqda..."; }
+  if (resultBox) {
+    resultBox.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px; padding:14px; background:var(--bg-secondary); border-radius:12px; font-size:13px; color:var(--text-secondary);">
+        <div class="spinner" style="width:18px; height:18px;"></div>
+        <span>Google Drive papkasi tekshirilmoqda va PDF fayllar qidirilmoqda...</span>
+      </div>
+    `;
+  }
+
+  try {
+    const res = await adminApi("/api/admin/drive/test-folder", {
+      folder_url: folderUrl,
+      api_key: apiKey
+    });
+
+    if (btn) { btn.disabled = false; btn.textContent = "🔍 1. Papkani tekshirish"; }
+
+    if (res && res.ok) {
+      haptic("success");
+      const sampleFiles = res.sample_files || [];
+      const sampleListHtml = sampleFiles.length > 0 ? `
+        <div style="margin-top:10px; max-height:160px; overflow-y:auto; border-radius:8px; background:rgba(0,0,0,0.1); padding:8px 12px; font-size:12px;">
+          <div style="font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Papkadagi ayrim kitoblar:</div>
+          ${sampleFiles.map((f, i) => `<div style="padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📄 ${i+1}. ${escapeHtml(f.name || f.title || 'PDF Fayl')}</div>`).join("")}
+        </div>
+      ` : "";
+
+      resultBox.innerHTML = `
+        <div style="padding:16px; border-radius:14px; background:rgba(52,199,89,0.1); border:1px solid rgba(52,199,89,0.3); font-size:13px;">
+          <div style="font-size:15px; font-weight:800; color:#34c759; display:flex; align-items:center; gap:8px;">
+            <span>✓</span> Papka muvaffaqiyatli tekshirildi!
+          </div>
+          <div style="margin-top:8px; color:var(--text-primary); line-height:1.5;">
+            <div>📁 Papka ID: <code>${escapeHtml(res.folder_id)}</code></div>
+            <div>📚 Topilgan PDF kitoblar: <b style="font-size:15px; color:#34c759;">${res.pdf_count || res.total_found || 0} ta</b></div>
+          </div>
+          ${sampleListHtml}
+          <div style="margin-top:14px;">
+            <button id="btn-import-drive"
+                    class="btn"
+                    style="width:100%; background:#34c759; color:#fff; font-weight:800; font-size:14px; padding:12px; border-radius:10px; margin:0;"
+                    onclick="startAdminDriveSyncFromTest('${escapeJsString(res.folder_id)}', '${escapeJsString(apiKey)}')">
+              🚀 2. Kitoblarni Bazaga Import Qilish (${res.pdf_count || res.total_found || 0} ta PDF)
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      haptic("error");
+      renderDriveErrorBox(resultBox, res || {});
+    }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.textContent = "🔍 1. Papkani tekshirish"; }
+    haptic("error");
+    renderDriveErrorBox(resultBox, {
+      error: err.message || "Ulanishda xatolik yuz berdi",
+      reason_code: "CONNECTION_ERROR",
+      suggestion: "Internet aloqasini yoki server holatini tekshiring."
+    });
+  }
+}
+
+function renderDriveErrorBox(resultBox, res) {
+  const errorMsg = res.error || "Papkaga kirib bo'lmadi";
+  const suggestion = res.suggestion || "Google Drive havolasini tekshiring.";
+
+  resultBox.innerHTML = `
+    <div style="padding:16px; border-radius:14px; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.3); font-size:13px;">
+      <div style="font-size:15px; font-weight:800; color:#ff3b30; display:flex; align-items:center; gap:8px;">
+        <span>❌</span> Papkaga ulanishda muammo aniqlandi
+      </div>
+      <div style="margin-top:8px; color:var(--text-primary); font-weight:600;">
+        ${escapeHtml(errorMsg)}
+      </div>
+      <div style="margin-top:10px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.15); font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
+        <b>💡 Qanday to'g'irlash kerak:</b><br>
+        ${escapeHtml(suggestion)}
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn secondary" style="margin:0; padding:6px 12px; font-size:12px;" onclick="testAdminDriveFolder()">
+          🔄 Qayta tekshirish
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function startAdminDriveSyncFromTest(folderId, apiKey) {
+  const btn = document.getElementById("btn-import-drive");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Import qilinmoqda (bu bir necha daqiqa olishi mumkin)..."; }
+
+  try {
+    showToast("🚀 Google Drive kitoblari import qilinmoqda... Kuting...");
+    const res = await adminApi("/api/admin/books/sync-drive", {
+      folder_id: folderId,
+      api_key: apiKey || null
+    });
+
+    if (res && res.ok) {
+      adminData.lastSyncStats = res.stats;
+      showToast(res.message || "Kitoblar muvaffaqiyatli import qilindi! 📚");
+      await refreshAdminBooks();
+      setAdminLibraryTab("books");
+    }
+  } catch (err) {
+    showAlert(err.message || "Import qilishda xatolik yuz berdi");
+    if (btn) { btn.disabled = false; btn.textContent = "🔄 Qayta urinish"; }
+  }
+}
+
+// ----------------------------------------------------
+// TAB 3: XATOLAR PANELI
+// ----------------------------------------------------
+
+function renderAdminLibraryErrors() {
+  const books = adminData.libraryBooks || [];
+  const failedBooks = books.filter(b => b.status === 'FAILED' || b.status === 'failed' || b.sync_error);
+
+  if (failedBooks.length === 0) {
+    return `
+      <div style="max-width:540px; margin:40px auto; text-align:center; padding:32px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px;">
+        <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:6px;">Hech qanday xatolik yo'q!</div>
+        <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+          Barcha kitoblar va fayllar soz holatda. O'quvchilar kitoblarni bemalol o'qishlari mumkin.
+        </div>
+        <button class="btn secondary" style="margin-top:16px;" onclick="setAdminLibraryTab('books')">
+          📚 Kitoblar ro'yxatiga o'tish
+        </button>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="max-width:720px; margin:0 auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div>
+          <div style="font-size:16px; font-weight:800; color:#ff3b30; display:flex; align-items:center; gap:8px;">
+            <span>⚠️</span> Xatolik bergan kitoblar (${failedBooks.length} ta)
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary);">Quyidagi kitoblarda fayl yuklash yoki o'qish muammosi mavjud:</div>
+        </div>
+        <button class="btn secondary" style="margin:0; padding:6px 12px; font-size:12px; border-radius:8px;" onclick="refreshAdminBooks()">
+          🔄 Yangilash
+        </button>
+      </div>
+
+      <div class="admin-error-books-list" style="display:flex; flex-direction:column; gap:10px;">
+        ${failedBooks.map(b => `
+          <div style="background:var(--bg-surface); border:1px solid rgba(255,59,48,0.3); border-radius:14px; padding:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:240px;">
+              <div style="font-weight:700; font-size:14px; color:var(--text-primary); margin-bottom:2px;">
+                ${escapeHtml(b.title)}
+              </div>
+              <div style="font-size:12px; color:var(--text-muted);">
+                Drive File ID: <code>${escapeHtml(b.drive_file_id || 'Mavjud emas')}</code>
+              </div>
+              ${b.sync_error ? `
+                <div style="font-size:12px; color:#ff3b30; margin-top:4px;">
+                  ⚠️ Sabab: ${escapeHtml(b.sync_error)}
+                </div>
+              ` : `
+                <div style="font-size:12px; color:#ffab00; margin-top:4px;">
+                  ⚠️ Status: ${escapeHtml(b.status)}
+                </div>
+              `}
+            </div>
+
+            <div style="display:flex; gap:8px;">
+              <button class="btn secondary" style="margin:0; padding:6px 10px; font-size:12px; border-radius:8px;" onclick="openAdminBookReviewModal(${Number(b.id)})">
+                ✏️ Tahrirlash
+              </button>
+              <button class="btn danger" style="margin:0; padding:6px 10px; font-size:12px; border-radius:8px;" onclick="deleteAdminBookConfirm(${Number(b.id)})">
+                🗑️ O'chirish
+              </button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// TAB 2: KITOBLAR ROYXATI (MINIMALIST APPLE-STYLE)
+// ----------------------------------------------------
 
 function renderAdminLibraryBooks() {
   if (!adminData.selectedBookIds) adminData.selectedBookIds = new Set();
@@ -9928,8 +10301,6 @@ function renderAdminLibraryBooks() {
     return true;
   });
 
-  const lastSync = adminData.lastSyncStats;
-
   return `
     <div class="admin-books-container">
       <!-- 1. STATISTIKA PANELI -->
@@ -9946,30 +10317,13 @@ function renderAdminLibraryBooks() {
         <div class="stat-pill" style="background:rgba(0,122,255,0.12); border:1px solid rgba(0,122,255,0.3); padding:6px 12px; border-radius:12px; font-size:12px; color:#007aff;">
           <strong style="font-size:14px;">${stats.discovered || 0}</strong> Yangi Drive
         </div>
-        ${stats.failed > 0 ? `
-          <div class="stat-pill" style="background:rgba(255,59,48,0.12); border:1px solid rgba(255,59,48,0.3); padding:6px 12px; border-radius:12px; font-size:12px; color:#ff3b30;">
-            <strong style="font-size:14px;">${stats.failed}</strong> Xatolik
-          </div>
-        ` : ""}
       </div>
 
-      <!-- 2. OXIRGI SYNC BILDIRISHNOMASI -->
-      ${lastSync ? `
-        <div style="padding:10px 14px; border-radius:12px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.2); margin-bottom:14px; font-size:12.5px; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            🔄 Oxirgi skanerlash: Topildi: <b>${lastSync.found}</b> ta | Yangi qo'shildi: <b style="color:#34c759;">${lastSync.new}</b> ta | Avvaldan mavjud: <b>${lastSync.existing}</b> ta
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 3. BOSHQARUV TUGMALARI -->
+      <!-- 2. BOSHQARUV TUGMALARI -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
         <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-          <button class="btn" style="background:#1a73e8; color:#fff; border:none; padding:8px 14px; font-weight:700; border-radius:10px; font-size:13px; margin:0;" onclick="openAdminDriveSyncModal()">
-            🔄 Google Drive Sync
-          </button>
-          <button class="btn secondary" style="padding:8px 12px; font-size:13px; border-radius:10px; margin:0;" onclick="openAdminDriveSourcesModal()">
-            ⚙️ Manbalar
+          <button class="btn" style="background:#1a73e8; color:#fff; border:none; padding:8px 14px; font-weight:700; border-radius:10px; font-size:13px; margin:0;" onclick="setAdminLibraryTab('drive')">
+            📁 Drive Papka
           </button>
           <button id="admin-batch-ai-btn" class="btn secondary" style="padding:8px 12px; font-size:13px; border-radius:10px; margin:0;" onclick="batchGenerateAdminAiMetadata()">
             🤖 AI Metadata ${adminData.selectedBookIds.size ? `(${adminData.selectedBookIds.size})` : ''}
@@ -9986,7 +10340,7 @@ function renderAdminLibraryBooks() {
         </div>
       </div>
 
-      <!-- QIDIRUV -->
+      <!-- 3. QIDIRUV -->
       <div>
         <input id="admin-books-search-input"
                class="apple-input"
@@ -9996,7 +10350,7 @@ function renderAdminLibraryBooks() {
                oninput="onAdminBooksSearch(this.value)">
       </div>
 
-      <!-- FILTR CHIPLARI -->
+      <!-- 4. FILTR CHIPLARI -->
       <div class="admin-books-filter-bar" style="margin-top:10px;">
         <div class="admin-filter-chip ${filter === 'all' ? 'active' : ''}" onclick="setAdminBooksFilter('all')">Barchasi (${allBooks.length})</div>
         <div class="admin-filter-chip ${filter === 'needs_review' ? 'active' : ''}" onclick="setAdminBooksFilter('needs_review')">🟡 Ko'rib chiqish (${stats.needs_review || 0})</div>
@@ -10005,10 +10359,9 @@ function renderAdminLibraryBooks() {
         <div class="admin-filter-chip ${filter === 'recommended' ? 'active' : ''}" onclick="setAdminBooksFilter('recommended')">⭐ Tavsiya etilgan</div>
         <div class="admin-filter-chip ${filter === 'free' ? 'active' : ''}" onclick="setAdminBooksFilter('free')">Bepul</div>
         <div class="admin-filter-chip ${filter === 'pro' ? 'active' : ''}" onclick="setAdminBooksFilter('pro')">Pro</div>
-        <div class="admin-filter-chip ${filter === 'failed' ? 'active' : ''}" onclick="setAdminBooksFilter('failed')">🔴 Xatolik</div>
       </div>
 
-      <!-- BARCHASINI TANLASH CHECKBOX -->
+      <!-- 5. TANLASH CHECKBOX -->
       <div style="display:flex; align-items:center; gap:8px; margin-top:12px; margin-bottom:8px; font-size:13px; color:var(--text-secondary);">
         <input type="checkbox" id="admin-books-select-all" onchange="toggleSelectAllAdminBooks(this.checked)" style="width:16px; height:16px; cursor:pointer;" ${adminData.selectedBookIds.size > 0 && adminData.selectedBookIds.size === filteredBooks.length ? 'checked' : ''}>
         <label for="admin-books-select-all" style="cursor:pointer; font-weight:600;">
@@ -10449,10 +10802,12 @@ function openAdminBookReviewModal(bookId) {
           <div style="width:110px; flex-shrink:0;">
             <img src="${escapeHtml(coverUrl || '/admin.jpg')}" style="width:110px; height:155px; border-radius:10px; object-fit:cover; background:#000; border:1px solid var(--border);" onerror="this.src='/admin.jpg'">
             ${book.pdf_url ? `
-              <button class="btn secondary" style="width:100%; margin-top:8px; padding:6px 8px; font-size:11px;" onclick="openPdfViewerModal('${escapeJsString(book.pdf_url)}', '${escapeJsString(book.title)}')">
-                📖 PDF ochish
+              <button class="btn" style="width:100%; margin-top:8px; padding:7px 6px; font-size:11px; font-weight:700; background:#007aff; color:#fff; border-radius:8px; border:none;" onclick="closeAdminBookReviewModal(); openPdfViewerModal('${escapeJsString(book.pdf_url)}', '${escapeJsString(book.title)}')">
+                📖 O'qib ko'rish
               </button>
-            ` : ""}
+            ` : `
+              <div style="font-size:10.5px; color:var(--text-muted); margin-top:6px; text-align:center;">PDF fayl yo'q</div>
+            `}
           </div>
 
           <!-- Asosiy tahrirlash maydonlari -->

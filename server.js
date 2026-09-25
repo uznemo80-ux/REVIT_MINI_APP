@@ -6011,32 +6011,159 @@ app.post('/api/admin/library/inspect-pdf', requireAdmin, async function (req, re
 // GOOGLE DRIVE SCANNER & AI METADATA HELPER FUNCTIONS
 // ======================================================
 
+// ======================================================
+// GOOGLE DRIVE SCANNER & AI METADATA HELPER FUNCTIONS
+// ======================================================
+
 function extractGoogleDriveFolderId(raw) {
   if (!raw || typeof raw !== 'string') return null;
   var str = raw.trim();
-  if (/^[a-zA-Z0-9_-]{20,}$/.test(str) && !str.includes('/') && !str.includes('.')) {
+  // 1. To'g'ridan-to'g'ri folder ID (15+ harf/raqam/tire)
+  if (/^[a-zA-Z0-9_-]{15,}$/.test(str) && !str.includes('/') && !str.includes('.')) {
     return str;
   }
-  var m = str.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  // 2. drive.google.com/drive/folders/ID yoki drive.google.com/drive/u/0/folders/ID
+  var m = str.match(/\/folders\/([a-zA-Z0-9_-]+)/i);
   if (m && m[1]) return m[1];
-  m = str.match(/id=([a-zA-Z0-9_-]+)/);
+  // 3. drive.google.com/open?id=ID yoki ?id=ID
+  m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
   if (m && m[1]) return m[1];
   return null;
+}
+
+// Google Drive papkasini tekshirish (CASE 1 - CASE 9 diagnostikasi)
+async function testGoogleDriveFolderAccess(folderId, apiKey) {
+  if (!folderId) {
+    return {
+      ok: false,
+      case: 6,
+      error: "Google Drive papka manzili noto'g'ri. Iltimos, havola 'https://drive.google.com/drive/folders/...' ko'rinishida ekanini tekshiring."
+    };
+  }
+
+  var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+  if (!key) {
+    return {
+      ok: false,
+      case: 4,
+      needs_api_key: true,
+      error: "Google Drive API kaliti (API Key) topilmadi. Google Cloud Console'dan Google Drive API v3 kalitini kiritishingiz yoki server muhitida GOOGLE_DRIVE_API_KEY ni sozlashingiz kerak."
+    };
+  }
+
+  try {
+    // 1. Papka mavjudligi va ruxsatlarini tekshirish
+    var metaUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=id,name,mimeType,trashed&key=${encodeURIComponent(key)}`;
+    var metaRes = await fetch(metaUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    var metaData = await metaRes.json().catch(() => ({}));
+
+    if (!metaRes.ok) {
+      var errObj = metaData.error || {};
+      var code = metaRes.status;
+      var reason = (errObj.errors && errObj.errors[0] && errObj.errors[0].reason) || '';
+      var msg = errObj.message || '';
+
+      if (code === 404) {
+        return {
+          ok: false,
+          case: 2,
+          error: "Google Drive papkasi topilmadi yoki papka yopiq (Private). Iltimos, Google Drive'da ushbu papka havolasini 'Havolaga ega bo'lgan har kim (Anyone with the link)' ko'rishi mumkin qilib sozlang."
+        };
+      }
+      if (reason === 'accessNotConfigured' || msg.includes('has not been used') || msg.includes('disabled')) {
+        return {
+          ok: false,
+          case: 5,
+          error: "Google Cloud loyihangizda Google Drive API yoqilmagan (Disabled). Google Cloud Console'da Google Drive API'ni 'Enable' qiling."
+        };
+      }
+      if (reason === 'keyInvalid' || code === 400 || msg.includes('API key not valid')) {
+        return {
+          ok: false,
+          case: 4,
+          needs_api_key: true,
+          error: "Google Drive API kaliti noto'g'ri kiritilgan. Iltimos, API kalit to'g'riligini tekshiring."
+        };
+      }
+      return {
+        ok: false,
+        case: 3,
+        error: "Google Drive papkasiga kirish huquqi yo'q. Papkani Google Drive'da 'Havolaga ega bo'lgan har kim ko'rishi mumkin' qilib sozlang."
+      };
+    }
+
+    if (metaData.trashed) {
+      return {
+        ok: false,
+        case: 1,
+        error: "Ushbu Google Drive papkasi savatchaga (Trash) tashlangan."
+      };
+    }
+
+    var folderName = metaData.name || 'Google Drive Papkasi';
+
+    // 2. Ichidagi PDF fayllar ro'yxatini tekshirish
+    var query = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+    var listUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink)&pageSize=1000&key=${encodeURIComponent(key)}`;
+    var listRes = await fetch(listUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    var listData = await listRes.json().catch(() => ({}));
+
+    if (!listRes.ok) {
+      return {
+        ok: false,
+        case: 8,
+        error: "Papka topildi, lekin ichidagi fayllarni o'qishda xatolik yuz berdi: " + ((listData.error && listData.error.message) || 'Noma\'lum xatolik')
+      };
+    }
+
+    var allFiles = listData.files || [];
+    var pdfFiles = allFiles.filter(item =>
+      item.mimeType === 'application/pdf' ||
+      (item.name && item.name.toLowerCase().endsWith('.pdf'))
+    );
+
+    if (pdfFiles.length === 0) {
+      return {
+        ok: false,
+        case: 7,
+        folder_id: folderId,
+        folder_name: folderName,
+        total_items: allFiles.length,
+        error: `Ushbu papkada PDF kitoblar topilmadi (jami ${allFiles.length} ta boshqa turdagi fayllar mavjud). Papka ichida .pdf kengaytmali fayllar borligini tekshiring.`
+      };
+    }
+
+    return {
+      ok: true,
+      folder_id: folderId,
+      folder_name: folderName,
+      pdf_count: pdfFiles.length,
+      sample_files: pdfFiles.slice(0, 5).map(f => f.name),
+      message: `✓ Google Drive papkasi muvaffaqiyatli ulandi! ${pdfFiles.length} ta PDF kitob topildi.`
+    };
+  } catch (netErr) {
+    console.warn("testGoogleDriveFolderAccess error:", netErr);
+    return {
+      ok: false,
+      case: 8,
+      error: "Google Drive serveriga ulanishda tarmoq xatoligi yuz berdi: " + netErr.message
+    };
+  }
 }
 
 async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
   var results = [];
   var visited = new Set();
+  var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
 
   async function traverse(fId, currentCategory, depth) {
     if (depth > 4 || visited.has(fId)) return;
     visited.add(fId);
 
-    // 1. Agar API Key mavjud bo'lsa (Google Drive REST API v3)
-    if (apiKey) {
+    if (key) {
       try {
         var query = encodeURIComponent(`'${fId}' in parents and trashed = false`);
-        var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(apiKey)}`;
+        var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(key)}`;
         var res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (res.ok) {
           var data = await res.json();
@@ -6061,43 +6188,6 @@ async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
       } catch (apiErr) {
         console.warn('Drive API v3 fetch warning:', apiErr.message);
       }
-    }
-
-    // 2. Web payload fallback (Ochiq papkalar uchun)
-    try {
-      var folderWebUrl = `https://drive.google.com/drive/folders/${fId}`;
-      var webRes = await fetch(folderWebUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      });
-      if (webRes.ok) {
-        var html = await webRes.text();
-        var idNameRegex = /\["([a-zA-Z0-9_-]{25,})",\s*\["([^"]+\.pdf)"/gi;
-        var match;
-        while ((match = idNameRegex.exec(html)) !== null) {
-          var fFileId = match[1];
-          var fFileName = match[2];
-          if (!results.some(r => r.id === fFileId)) {
-            results.push({
-              id: fFileId,
-              name: fFileName,
-              size: 0,
-              mimeType: 'application/pdf',
-              webViewLink: `https://drive.google.com/file/d/${fFileId}/view`,
-              category: currentCategory || 'Boshqa'
-            });
-          }
-        }
-        var subfolderRegex = /\["([a-zA-Z0-9_-]{25,})",\s*\["([^"]+)",\s*"application\/vnd\.google-apps\.folder"/gi;
-        while ((match = subfolderRegex.exec(html)) !== null) {
-          var subId = match[1];
-          var subName = match[2];
-          await traverse(subId, subName, depth + 1);
-        }
-      }
-    } catch (webErr) {
-      console.warn('Drive web scraper fallback warning:', webErr.message);
     }
   }
 
@@ -6295,6 +6385,77 @@ app.post('/api/admin/books/list', requireAdmin, async function (req, res) {
   }
 });
 
+// Admin: Google Drive papkasini tekshirish (Test & Diagnostics - CASE 1 - CASE 9)
+app.post('/api/admin/drive/test-folder', requireAdmin, async function (req, res) {
+  try {
+    if (!libraryBooksTableReady) await ensureLibraryBooksTable();
+
+    var rawUrl = (req.body.folder_url || req.body.root_folder_id || '').trim();
+    if (!rawUrl) {
+      // Agar bo'sh bo'lsa, saqlangan oxirgi manbani tekshirish
+      var savedSrc = await pool.query('SELECT * FROM drive_sources WHERE is_active = true ORDER BY id DESC LIMIT 1');
+      if (savedSrc.rows.length && savedSrc.rows[0].root_folder_id) {
+        rawUrl = savedSrc.rows[0].root_folder_id;
+      } else {
+        return res.status(400).json({ ok: false, case: 6, error: 'Google Drive papka manzili kiritilmadi' });
+      }
+    }
+
+    var folderId = extractGoogleDriveFolderId(rawUrl);
+    if (!folderId) {
+      return res.status(400).json({
+        ok: false,
+        case: 6,
+        error: "Google Drive papka manzili noto'g'ri. Iltimos, havola 'https://drive.google.com/drive/folders/...' ko'rinishida ekanini tekshiring."
+      });
+    }
+
+    var apiKey = (req.body.api_key || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+    if (!apiKey) {
+      var saved = await pool.query('SELECT api_key FROM drive_sources WHERE is_active = true AND api_key IS NOT NULL AND api_key != \'\' ORDER BY id DESC LIMIT 1');
+      if (saved.rows.length && saved.rows[0].api_key) {
+        apiKey = saved.rows[0].api_key;
+      }
+    }
+
+    var checkResult = await testGoogleDriveFolderAccess(folderId, apiKey);
+    if (checkResult.ok) {
+      // Saqlangan drive_sources ga kiritish yoki yangilash
+      try {
+        var existing = await pool.query('SELECT id FROM drive_sources WHERE root_folder_id = $1 LIMIT 1', [folderId]);
+        if (existing.rows.length) {
+          await pool.query('UPDATE drive_sources SET name = $1, api_key = COALESCE(NULLIF($2, \'\'), api_key), is_active = true, updated_at = NOW() WHERE id = $3', [checkResult.folder_name, apiKey, existing.rows[0].id]);
+        } else {
+          await pool.query('INSERT INTO drive_sources (name, root_folder_id, api_key, is_active) VALUES ($1, $2, $3, true)', [checkResult.folder_name, folderId, apiKey]);
+        }
+      } catch (sErr) {}
+    }
+
+    return res.json(checkResult);
+  } catch (err) {
+    console.error('DRIVE TEST FOLDER ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Papkani tekshirishda server xatoligi: ' + err.message });
+  }
+});
+
+// Admin: Hozirgi ulangan Google Drive holatini olish
+app.get('/api/admin/drive/status', requireAdmin, async function (req, res) {
+  try {
+    if (!libraryBooksTableReady) await ensureLibraryBooksTable();
+    var result = await pool.query('SELECT * FROM drive_sources WHERE is_active = true ORDER BY id DESC LIMIT 1');
+    var activeSource = result.rows.length ? result.rows[0] : null;
+
+    var hasEnvKey = Boolean(process.env.GOOGLE_DRIVE_API_KEY);
+    return res.json({
+      ok: true,
+      active_source: activeSource,
+      has_env_key: hasEnvKey
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Drive holatini olishda xatolik' });
+  }
+});
+
 // Admin: Google Drive papkasini skanerlash va yangi kitoblarni import qilish (Incremental Sync)
 app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) {
   try {
@@ -6307,13 +6468,17 @@ app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) 
     var apiKey = (req.body.api_key || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
     var sourceName = 'Google Drive';
 
-    if (sourceId) {
-      var sRes = await pool.query('SELECT * FROM drive_sources WHERE id = $1', [sourceId]);
+    // Agar ma'lumotlar berilmagan bo'lsa, oxirgi saqlangan manbadan olish
+    if (!folderIdInput || !apiKey) {
+      var sRes = sourceId
+        ? await pool.query('SELECT * FROM drive_sources WHERE id = $1', [sourceId])
+        : await pool.query('SELECT * FROM drive_sources WHERE is_active = true ORDER BY id DESC LIMIT 1');
       if (sRes.rows.length) {
         var src = sRes.rows[0];
+        sourceId = src.id;
         if (!folderIdInput) folderIdInput = src.root_folder_id;
-        if (!apiKey) apiKey = src.api_key || '';
-        sourceName = src.name;
+        if (!apiKey) apiKey = src.api_key || process.env.GOOGLE_DRIVE_API_KEY || '';
+        sourceName = src.name || 'Google Drive';
       }
     }
 
