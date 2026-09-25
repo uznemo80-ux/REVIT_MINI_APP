@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 var crypto = require('crypto');
+var fs = require('fs');
+var path = require('path');
 var express = require('express');
 var cors = require('cors');
 var pgModule = require('pg');
@@ -1647,7 +1649,7 @@ function getYouTubeVideoId(url) {
 function generateYouTubePlayerUrl(youtubeUrl) {
   var videoId = getYouTubeVideoId(youtubeUrl);
   if (!videoId) return null;
-  return 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1&enablejsapi=1';
+  return 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1&enablejsapi=1&playsinline=1&controls=1&iv_load_policy=3&showinfo=0';
 }
 
 // Google Drive va boshqa rasm linklarini to'g'ridan-to'g'ri rasm CDN formatiga o'tkazish
@@ -2521,7 +2523,8 @@ app.post('/api/lesson/:id', async function (req, res) {
     if (youtubePlayerUrl) {
       return res.json({
         id: lesson.id, title: lesson.title, video_type: 'youtube',
-        youtube_url: rawVideoUrl, youtube_player_url: youtubePlayerUrl,
+        youtube_url: isMainAdminUser ? rawVideoUrl : null,
+        youtube_player_url: youtubePlayerUrl,
         task_text: lesson.task_text || '', warning_text: warningText, files: files, my_submission: mySubmission, watched: isWatched,
         questions: questions
       });
@@ -4716,59 +4719,142 @@ function extractGoogleDriveId(rawUrl) {
   return null;
 }
 
-// PDF fayllarni frontend uchun CORS va cheklovlarsiz proxy qilish
-app.get('/api/pdf-proxy', async function (req, res) {
+// PDF fayllarni frontend uchun CORS, Range streaming (206) va disk kesh bilan proxy qilish
+var pdfCacheDir = path.join(__dirname, '.cache', 'pdf');
+try {
+  if (!fs.existsSync(pdfCacheDir)) {
+    fs.mkdirSync(pdfCacheDir, { recursive: true });
+  }
+} catch (cErr) {
+  console.warn('PDF cache dir init warning:', cErr.message);
+}
+
+function streamPdfFromLocalFile(filePath, req, res) {
   try {
-    var rawUrl = req.query.url ? String(req.query.url).trim() : '';
-    var fileId = req.query.id ? String(req.query.id).trim() : extractGoogleDriveId(rawUrl);
-    var targetUrl = '';
-
-    if (fileId) {
-      targetUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download';
-    } else if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
-      targetUrl = rawUrl;
-    } else {
-      return res.status(400).json({ error: 'Fayl manzili ko‘rsatilmadi' });
-    }
-
-    var headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    };
-    if (req.headers.range) {
-      headers['Range'] = req.headers.range;
-    }
-
-    var fetchRes = await fetch(targetUrl, {
-      method: 'GET',
-      headers: headers,
-      redirect: 'follow'
-    });
-
-    if (!fetchRes.ok && fileId) {
-      targetUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
-      fetchRes = await fetch(targetUrl, {
-        method: 'GET',
-        headers: headers,
-        redirect: 'follow'
-      });
-    }
+    var stat = fs.statSync(filePath);
+    var fileSize = stat.size;
+    var range = req.headers.range;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
-    res.setHeader('Content-Type', fetchRes.headers.get('content-type') || 'application/pdf');
-    if (fetchRes.headers.get('content-length')) {
-      res.setHeader('Content-Length', fetchRes.headers.get('content-length'));
-    }
-    if (fetchRes.headers.get('content-range')) {
-      res.setHeader('Content-Range', fetchRes.headers.get('content-range'));
-      res.status(206);
-    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
     res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+
+    if (range) {
+      var parts = range.replace(/bytes=/, '').split('-');
+      var start = parseInt(parts[0], 10);
+      var end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      if (isNaN(start) || start >= fileSize) {
+        res.setHeader('Content-Range', 'bytes */' + fileSize);
+        return res.status(416).send('Requested range not satisfiable');
+      }
+      if (end >= fileSize) end = fileSize - 1;
+      var chunksize = (end - start) + 1;
+      res.status(206);
+      res.setHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + fileSize);
+      res.setHeader('Content-Length', chunksize);
+      var fileStream = fs.createReadStream(filePath, { start: start, end: end });
+      return fileStream.pipe(res);
+    } else {
+      res.setHeader('Content-Length', fileSize);
+      var fileStream = fs.createReadStream(filePath);
+      return fileStream.pipe(res);
+    }
+  } catch (stErr) {
+    console.error('STREAM CACHED PDF ERROR:', stErr.message);
+    return res.status(500).json({ error: 'Faylni o\'qishda xatolik' });
+  }
+}
+
+app.get('/api/pdf-proxy', async function (req, res) {
+  try {
+    var rawUrl = req.query.url ? String(req.query.url).trim() : '';
+    var fileId = req.query.id ? String(req.query.id).trim() : extractGoogleDriveId(rawUrl);
+
+    if (!fileId && (!rawUrl || !/^https?:\/\//i.test(rawUrl))) {
+      return res.status(400).json({ error: 'Fayl manzili ko‘rsatilmadi' });
+    }
+
+    var cacheKey = crypto.createHash('md5').update(fileId || rawUrl).digest('hex');
+    var cacheFile = path.join(pdfCacheDir, cacheKey + '.pdf');
+
+    // 1. Agar keshda mavjud bo'lsa va hajmi > 1024 bayt bo'lsa — bir zumda keshdan uzatish
+    if (fs.existsSync(cacheFile)) {
+      try {
+        var stat = fs.statSync(cacheFile);
+        if (stat.size > 1024) {
+          return streamPdfFromLocalFile(cacheFile, req, res);
+        }
+      } catch (checkErr) {}
+    }
+
+    // 2. Keshda yo'q bo'lsa, manbadan yuklab olib keshga yozish
+    var targetUrl = '';
+    if (fileId) {
+      targetUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=t';
+    } else {
+      targetUrl = rawUrl;
+    }
+
+    var fetchRes = await fetch(targetUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      redirect: 'follow'
+    });
+
+    var cType = (fetchRes.headers.get('content-type') || '').toLowerCase();
+    if (!fetchRes.ok || cType.includes('text/html')) {
+      if (fileId) {
+        var fbUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId) + '&confirm=t';
+        var fbRes = await fetch(fbUrl, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          redirect: 'follow'
+        });
+        var fbType = (fbRes.headers.get('content-type') || '').toLowerCase();
+        if (fbRes.ok && !fbType.includes('text/html')) {
+          fetchRes = fbRes;
+        } else {
+          var html = await fbRes.text();
+          var confirmMatch = html.match(/confirm=([0-9a-zA-Z_-]+)/) || html.match(/name="confirm"\s+value="([0-9a-zA-Z_-]+)"/);
+          if (confirmMatch && confirmMatch[1]) {
+            var confirmedUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=' + confirmMatch[1];
+            var confRes = await fetch(confirmedUrl, {
+              method: 'GET',
+              headers: { 'User-Agent': 'Mozilla/5.0' },
+              redirect: 'follow'
+            });
+            if (confRes.ok) {
+              fetchRes = confRes;
+            }
+          }
+        }
+      }
+    }
+
+    if (!fetchRes.ok) {
+      return res.status(502).json({ error: 'PDF faylni manbadan yuklab bo‘lmadi (' + fetchRes.status + ')' });
+    }
 
     var arrayBuffer = await fetchRes.arrayBuffer();
-    return res.send(Buffer.from(arrayBuffer));
+    var buffer = Buffer.from(arrayBuffer);
+
+    // Keshga saqlash
+    try {
+      fs.writeFileSync(cacheFile, buffer);
+      return streamPdfFromLocalFile(cacheFile, req, res);
+    } catch (saveErr) {
+      console.warn('PDF cache save error:', saveErr.message);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline');
+      return res.send(buffer);
+    }
   } catch (error) {
     console.error('PDF PROXY ERROR:', error);
     return res.status(500).json({ error: 'PDF faylni yuklashda xatolik yuz berdi' });

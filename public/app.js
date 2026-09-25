@@ -23,6 +23,11 @@ try {
 const initData = tg.initData || "";
 const app = document.getElementById("app");
 
+// PDF.js Web Worker sozlamasi (UI thread qotib qolmasligi uchun)
+if (window.pdfjsLib) {
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
 // Har bir qurilma uchun doimiy identifikator (bitta hisob = bitta faol qurilma nazorati uchun)
 function getDeviceId() {
   try {
@@ -1295,6 +1300,12 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
     ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}`
     : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
 
+  // Agar avvalgi chizish davom etayotgan bo'lsa, bekor qilamiz
+  if (canvas._renderTask) {
+    try { canvas._renderTask.cancel(); } catch (e) {}
+    canvas._renderTask = null;
+  }
+
   try {
     let docPromise = pdfDocPromiseCache.get(proxyUrl);
     if (!docPromise) {
@@ -1310,16 +1321,25 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
     const actualPageNum = Math.min(Math.max(1, pageNum), pdfDoc.numPages);
     const page = await pdfDoc.getPage(actualPageNum);
 
+    // Katta A0/A1 chizmalarda xotira to'lib ketmasligi uchun adaptiv masshtab
     const containerWidth = canvas.parentElement?.clientWidth || 360;
     const unscaledViewport = page.getViewport({ scale: 1 });
-    const scale = Math.max(1.2, (containerWidth / unscaledViewport.width) * 1.5);
+    const maxDim = 1600;
+    let targetScale = (containerWidth / (unscaledViewport.width || 1)) * 1.4;
+    if (unscaledViewport.width * targetScale > maxDim || unscaledViewport.height * targetScale > maxDim) {
+      targetScale = Math.min(maxDim / unscaledViewport.width, maxDim / unscaledViewport.height);
+    }
+    const scale = Math.max(0.7, Math.min(2.0, targetScale));
     const viewport = page.getViewport({ scale });
 
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    const renderTask = page.render({ canvasContext: ctx, viewport });
+    canvas._renderTask = renderTask;
+    await renderTask.promise;
+    canvas._renderTask = null;
     canvas.dataset.rendered = "true";
 
     const spinner = canvas.parentElement?.querySelector(".pdf-sheet-spinner");
@@ -1328,7 +1348,13 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
       setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 300);
     }
   } catch (err) {
+    if (err && err.name === "RenderingCancelledException") return;
     console.warn("PDF sheet render error:", err);
+    pdfDocPromiseCache.delete(proxyUrl);
+    const spinner = canvas?.parentElement?.querySelector(".pdf-sheet-spinner");
+    if (spinner) {
+      spinner.innerHTML = `<span style="font-size:12px; color:#ff6b6b;">Yuklab bo'lmadi</span>`;
+    }
   }
 }
 
@@ -1562,9 +1588,15 @@ function renderFullscreenModalContent() {
     <div class="sf-container">
       <!-- Yuqori boshqaruv paneli -->
       <div class="sf-header">
-        <div class="sf-info">
-          <div class="sf-title">📄 ${slide.pageNum}-list</div>
-          <div class="sf-subtitle">🎓 ${escapeHtml(slide.sc.course_title || "Revit kursi")} bitiruvchi natijasi</div>
+        <div class="sf-left">
+          <button class="sf-back-btn" onclick="closeShowcaseFullscreenModal()" title="Orqaga">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Orqaga</span>
+          </button>
+          <div class="sf-info">
+            <div class="sf-title">📄 ${slide.pageNum}-list <span class="sf-page-badge">${fullscreenShowcaseIdx + 1} / ${slides.length}</span></div>
+            <div class="sf-subtitle">🎓 ${escapeHtml(slide.sc.course_title || "Revit kursi")} bitiruvchi natijasi</div>
+          </div>
         </div>
         <div class="sf-actions">
           <div class="sf-zoom-controls">
@@ -1584,7 +1616,7 @@ function renderFullscreenModalContent() {
           <canvas id="fullscreen-sheet-canvas"></canvas>
           <div id="fullscreen-sheet-spinner" class="pdf-sheet-spinner">
             <div class="spinner"></div>
-            <span style="font-size:12.5px; color:#fff; margin-top:10px;">${slide.pageNum}-list yuqori sifatda yuklanmoqda...</span>
+            <span style="font-size:12.5px; color:#fff; margin-top:10px;">${slide.pageNum}-list yuklanmoqda...</span>
           </div>
         </div>
       </div>
@@ -1652,7 +1684,16 @@ function nextFullscreenSlide(e) {
   renderFullscreenModalContent();
 }
 
-async function renderFullscreenHighResCanvas(slide) {
+function retryFullscreenRender() {
+  haptic("medium");
+  const slides = getShowcaseSlides();
+  const slide = slides[fullscreenShowcaseIdx];
+  if (slide) {
+    renderFullscreenHighResCanvas(slide, true);
+  }
+}
+
+async function renderFullscreenHighResCanvas(slide, force = false) {
   const canvas = document.getElementById("fullscreen-sheet-canvas");
   const spinner = document.getElementById("fullscreen-sheet-spinner");
   if (!canvas || !slide) return;
@@ -1661,6 +1702,26 @@ async function renderFullscreenHighResCanvas(slide) {
   const proxyUrl = slide.driveId
     ? `/api/pdf-proxy?id=${slide.driveId}`
     : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
+
+  if (force) {
+    pdfDocPromiseCache.delete(proxyUrl);
+  }
+
+  // Spinner holatini tiklash
+  if (spinner) {
+    spinner.style.display = "flex";
+    spinner.style.opacity = "1";
+    spinner.innerHTML = `
+      <div class="spinner"></div>
+      <span style="font-size:12.5px; color:#fff; margin-top:10px;">${slide.pageNum}-list yuklanmoqda...</span>
+    `;
+  }
+
+  // Avvalgi chizishni bekor qilish
+  if (canvas._renderTask) {
+    try { canvas._renderTask.cancel(); } catch (e) {}
+    canvas._renderTask = null;
+  }
 
   try {
     let docPromise = pdfDocPromiseCache.get(proxyUrl);
@@ -1677,22 +1738,41 @@ async function renderFullscreenHighResCanvas(slide) {
     const actualPageNum = Math.min(Math.max(1, slide.pageNum), pdfDoc.numPages);
     const page = await pdfDoc.getPage(actualPageNum);
 
-    // High resolution render for zoom clarity
-    const viewport = page.getViewport({ scale: 2.2 });
+    // Katta A0/A1 formatli PDF larda xotira to'lib ketmasligi uchun 2048px bilan cheklaymiz
+    const unscaled = page.getViewport({ scale: 1 });
+    const maxDimension = 2048;
+    const fitScale = Math.min(maxDimension / unscaled.width, maxDimension / unscaled.height);
+    const scale = Math.max(1.0, Math.min(2.0, fitScale));
+    const viewport = page.getViewport({ scale });
+
     const ctx = canvas.getContext("2d");
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    const renderTask = page.render({ canvasContext: ctx, viewport });
+    canvas._renderTask = renderTask;
+    await renderTask.promise;
+    canvas._renderTask = null;
 
     if (spinner) {
       spinner.style.opacity = "0";
       setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 250);
     }
   } catch (err) {
+    if (err && err.name === "RenderingCancelledException") return;
     console.warn("Fullscreen PDF sheet render error:", err);
+    pdfDocPromiseCache.delete(proxyUrl);
     if (spinner) {
-      spinner.innerHTML = `<span style="color:#ff6b6b; font-size:12px;">Yuklashda xatolik yuz berdi.</span>`;
+      spinner.style.display = "flex";
+      spinner.style.opacity = "1";
+      spinner.innerHTML = `
+        <div class="sf-error-box">
+          <div style="font-size:24px; margin-bottom:8px;">⚠️</div>
+          <div style="font-weight:600; color:#fff; margin-bottom:4px;">Chizmani yuklab bo'lmadi</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:12px;">Tarmoq yoki fayl ulanishida uzilish bo'ldi</div>
+          <button class="sf-retry-btn" onclick="retryFullscreenRender()">🔄 Qayta urinish</button>
+        </div>
+      `;
     }
   }
 }
@@ -5306,12 +5386,15 @@ async function openLesson(id) {
       var clean = url.trim();
       var srcMatch = clean.match(/src=["']([^"']+)["']/i);
       if (srcMatch && srcMatch[1]) clean = srcMatch[1];
+      let videoId = null;
       if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) {
-        return `https://www.youtube.com/embed/${clean}?rel=0&modestbranding=1&enablejsapi=1`;
+        videoId = clean;
+      } else {
+        var m = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+        if (m && m[1]) videoId = m[1];
       }
-      var m = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
-      if (m && m[1]) {
-        return `https://www.youtube.com/embed/${m[1]}?rel=0&modestbranding=1&enablejsapi=1`;
+      if (videoId) {
+        return `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0&playsinline=1&controls=1&iv_load_policy=3&showinfo=0&disablekb=1`;
       }
       return null;
     }
@@ -5321,8 +5404,6 @@ async function openLesson(id) {
       getClientYouTubeEmbed(lesson.bunny_player_url) ||
       getClientYouTubeEmbed(lesson.bunny_video_id);
 
-    const directStreamUrl = (lesson.youtube_url || lesson.bunny_player_url || lesson.bunny_video_id || "").trim();
-
     let videoHtml = "";
     if (ytEmbed) {
       videoHtml = `
@@ -5330,13 +5411,6 @@ async function openLesson(id) {
           <iframe src="${escapeHtml(ytEmbed)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
           ${watermarkHtml}
         </div>
-        ${directStreamUrl && /^https?:\/\//i.test(directStreamUrl) ? `
-          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-            <a href="${escapeHtml(directStreamUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
-              <span>▶ Jonli Efir / YouTube'da ochish ↗</span>
-            </a>
-          </div>
-        ` : ""}
       `;
     } else if (lesson.bunny_player_url && /\.mp4($|\?)/i.test(lesson.bunny_player_url)) {
       videoHtml = `
@@ -5354,13 +5428,6 @@ async function openLesson(id) {
           <iframe src="${escapeHtml(lesson.bunny_player_url)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
           ${watermarkHtml}
         </div>
-        ${directStreamUrl && /^https?:\/\//i.test(directStreamUrl) ? `
-          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-            <a href="${escapeHtml(directStreamUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
-              <span>▶ Stream / Videoni to'g'ridan-to'g'ri ochish ↗</span>
-            </a>
-          </div>
-        ` : ""}
       `;
     } else if (lesson.files && lesson.files.length > 0 && lesson.files.some(f => /youtube|youtu\.be|mediadelivery|bunny|drive\.google|\.mp4/i.test(f.file_url || ''))) {
       const vidFile = lesson.files.find(f => /youtube|youtu\.be|mediadelivery|bunny|drive\.google|\.mp4/i.test(f.file_url || ''));
@@ -5370,11 +5437,6 @@ async function openLesson(id) {
           <div class="video-container">
             <iframe src="${escapeHtml(embedFromFile)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             ${watermarkHtml}
-          </div>
-          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-            <a href="${escapeHtml(vidFile.file_url)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; border-radius:8px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.15);">
-              <span>▶ Jonli Efir / Video havolasini ochish ↗</span>
-            </a>
           </div>
         `;
       } else {
@@ -5524,12 +5586,18 @@ async function submitPractice(lessonId) {
 
 function renderLessonFiles(files) {
   if (!Array.isArray(files) || !files.length) return "";
+  // Video va stream havolalarini yuklab olish bo'limidan chiqarib tashlaymiz
+  const downloadableFiles = files.filter(f => {
+    const url = (f.file_url || "").toLowerCase();
+    return !url.includes("youtube.com") && !url.includes("youtu.be") && !url.includes("mediadelivery.net");
+  });
+  if (!downloadableFiles.length) return "";
   return `
     <div class="lesson-section">
       <div class="section-title" style="margin-left:0; margin-right:0;">📥 Dars Materiallari</div>
       <div class="files-description">Ushbu darsga biriktirilgan manbalar va ishchi fayllarni yuklab oling:</div>
       <div class="lesson-files">
-        ${files.map(f => `
+        ${downloadableFiles.map(f => `
           <div class="lesson-file">
             <div class="lesson-file-info">
               <span class="lesson-file-icon">${getResourceIcon(f.file_name)}</span>
