@@ -597,7 +597,9 @@ async function loadAuth() {
       registered: Boolean(data.registered),
       has_access: Boolean(data.has_access),
       is_admin: Boolean(data.is_admin),
-      admin_role: data.admin_role || null
+      admin_role: data.admin_role || null,
+      terms_accepted: Boolean(data.terms_accepted),
+      terms_accepted_at: data.terms_accepted_at || null
     };
     return data;
   } catch (error) {
@@ -620,6 +622,9 @@ async function loadContent() {
       phone: data.phone ?? state.phone ?? "",
       telegram_id: data.telegram_id ?? state.telegram_id ?? "",
       registered: data.registered ?? state.registered ?? false,
+      terms_accepted: data.terms_accepted !== undefined ? Boolean(data.terms_accepted) : (state.terms_accepted ?? false),
+      terms_accepted_at: data.terms_accepted_at || state.terms_accepted_at || null,
+      support_cards: Array.isArray(data.support_cards) ? data.support_cards : (state.support_cards || []),
       is_admin: state.is_admin,
       admin_role: state.admin_role,
       last_lesson: data.last_lesson || null,
@@ -2073,173 +2078,184 @@ function deleteShowcaseItem(id) {
 // ----------------------------------------------------
 
 // ----------------------------------------------------
-// SUPPORT / QO'LLAB-QUVVATLASH MINIMAL COMPONENT
+// SUPPORT CARDS (QO'LLAB-QUVVATLASH TIZIMI)
 // ----------------------------------------------------
 
-function renderDonateBlock() {
-  const settings = state.settings || {};
-  const cardNum = settings.donate_card_number || settings.support_card_number || "8600 5304 1234 5678";
-  const firstName = settings.support_first_name || "";
-  const lastName = settings.support_last_name || "";
-  const cardHolder = [firstName, lastName].filter(Boolean).join(" ") || settings.donate_card_holder || settings.support_card_holder || "Abdulloh S.";
-  const paymentType = settings.donate_payment_type || settings.support_payment_type || "UZCARD / HUMO";
-  const desc = settings.support_description || settings.support_subtitle || settings.donate_description || "Platforma rivojiga o'z xohishingiz bilan hissa qo'shishingiz mumkin.";
-  const title = settings.support_title || settings.donate_title || "Qo'llab-quvvatlash";
-  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
-  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
-  const displayTg = "@" + cleanTg;
+function formatCardNumber(num) {
+  const digits = String(num || "").replace(/\D/g, "");
+  if (!digits) return String(num || "");
+  return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+}
 
-  return `
-    <div class="donate-card">
-      <div class="donate-header">
-        <div class="donate-title">${escapeHtml(title)}</div>
-        <div class="donate-text">${escapeHtml(desc)}</div>
-      </div>
+function copySupportCard(cardNumber, btn) {
+  haptic("medium");
+  const cleanDigits = String(cardNumber || "").replace(/\s+/g, "");
 
-      <div class="donate-card-box">
-        <div class="donate-card-top-row">
-          <div class="donate-card-holder">Karta egasi: <strong>${escapeHtml(cardHolder)}</strong></div>
-          <span class="donate-card-type-badge">${escapeHtml(paymentType)}</span>
-        </div>
-        <div>
-          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Karta raqami:</div>
-          <div id="donate-card-val" class="donate-card-number">${escapeHtml(cardNum)}</div>
-        </div>
-        <button id="copy-donate-btn" class="donate-copy-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-          📋 Raqamni nusxalash
+  function onSuccess() {
+    if (btn) {
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Nusxalandi ✓`;
+      btn.style.background = "#10b981";
+      setTimeout(() => {
+        btn.innerHTML = origHtml;
+        btn.style.background = "";
+      }, 2000);
+    }
+    showToast("Karta raqami nusxalandi");
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(cleanDigits).then(onSuccess).catch(() => {
+      fallbackCopy(cleanDigits);
+      onSuccess();
+    });
+  } else {
+    fallbackCopy(cleanDigits);
+    onSuccess();
+  }
+}
+
+function openSupportCardsModal() {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  const rawCards = (state.support_cards && state.support_cards.length)
+    ? state.support_cards
+    : [
+        { card_type: "UZCARD", card_number: "8600 5304 1234 5678", cardholder_name: "ABDULLOH TANGIRBERGANOV", is_active: true },
+        { card_type: "HUMO", card_number: "9860 1234 5678 9012", cardholder_name: "ABDULLOH TANGIRBERGANOV", is_active: true }
+      ];
+
+  const activeCards = rawCards.filter(c => c.is_active !== false);
+
+  const cardsHtml = activeCards.length ? activeCards.map(c => `
+    <div class="support-card-item">
+      <div class="support-card-top">
+        <span class="support-card-type-badge">${escapeHtml(String(c.card_type || "UZCARD").toUpperCase())}</span>
+        <button class="support-card-copy-btn" onclick="copySupportCard('${escapeJsString(c.card_number)}', this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Nusxalash
         </button>
       </div>
 
-      <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
-        Ixtiyoriy tezkor summalar:
-      </div>
-      <div class="donate-pills">
-        <div class="donate-pill" onclick="openDonateModal('15 000 so\\'m')">15 000</div>
-        <div class="donate-pill" onclick="openDonateModal('50 000 so\\'m')">50 000</div>
-        <div class="donate-pill" onclick="openDonateModal('100 000 so\\'m')">100 000</div>
-        <div class="donate-pill" onclick="openDonateModal('250 000 so\\'m')">250 000</div>
+      <div class="support-card-label">Karta raqami</div>
+      <div class="support-card-num-box">
+        <span class="support-card-num">${escapeHtml(formatCardNumber(c.card_number))}</span>
       </div>
 
-      <div class="donate-telegram-row" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')" title="Telegramda ochish">
-        <span class="donate-telegram-label">Savol yoki murojaat uchun:</span>
-        <span class="donate-telegram-handle">
-          ${escapeHtml(displayTg)}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-        </span>
+      <div class="support-card-holder-box">
+        <span style="color:var(--text-secondary); font-size:12px;">Karta egasi:</span>
+        <span class="support-card-holder-name">${escapeHtml(String(c.cardholder_name || "").toUpperCase())}</span>
+      </div>
+    </div>
+  `).join("") : `
+    <div class="support-empty-notice">
+      Hozircha qo‘llab-quvvatlash uchun karta ma’lumotlari mavjud emas.
+    </div>
+  `;
+
+  currentView = {
+    html: `
+      <div class="page support-cards-page">
+        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
+
+        <div class="support-cards-header">
+          <div class="support-cards-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            Ehson va Hissa
+          </div>
+          <div class="support-cards-title">Platformani qo‘llab-quvvatlash</div>
+          <div class="support-cards-subtitle">YOSHUZBEKK Academy rivojiga o‘z hissangizni qo‘shmoqchi bo‘lsangiz, quyidagi kartalardan foydalanishingiz mumkin.</div>
+        </div>
+
+        <div class="support-cards-list">
+          ${cardsHtml}
+        </div>
+      </div>
+    `
+  };
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ----------------------------------------------------
+// FOYDALANISH QOIDALARI: ONBOARDING GATE
+// ----------------------------------------------------
+
+function renderTermsOnboardingHtml() {
+  const cardsHtml = PLATFORM_RULES_SECTIONS.map((sec, idx) => `
+    <div class="rules-card">
+      <div class="rules-card-header">
+        <span class="rules-card-num">${idx + 1}</span>
+        <span class="rules-card-title">${escapeHtml(sec.title)}</span>
+      </div>
+      <ul class="rules-list">
+        ${sec.items.map(item => `
+          <li class="rules-item">
+            <span class="rules-item-bullet"></span>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")}
+      </ul>
+    </div>
+  `).join("");
+
+  return `
+    <div class="page rules-page terms-gate-container">
+      <div class="rules-header-card">
+        <div class="rules-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          YOSHUZBEKK ACADEMY
+        </div>
+        <div class="rules-main-title">Foydalanish qoidalari</div>
+        <div class="rules-subtitle">Platformadan to‘liq foydalanish uchun quyidagi rasmiy qoidalar bilan tanishib chiqing va ularni qabul qiling.</div>
+      </div>
+
+      <div class="rules-content-wrap">
+        ${cardsHtml}
+      </div>
+
+      <div class="rules-footer">
+        <div class="rules-footer-brand">YOSHUZBEKK Academy</div>
+        <div class="rules-footer-motto">Bilim &rarr; Amaliyot &rarr; Natija</div>
+      </div>
+
+      <div class="terms-accept-bar">
+        <button id="terms-accept-btn" class="terms-accept-btn" onclick="acceptPlatformTerms()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Qoidalarni qabul qilaman
+        </button>
       </div>
     </div>
   `;
 }
 
-function copyDonateCard(cardNumber) {
+async function acceptPlatformTerms() {
   haptic("medium");
-  const clean = String(cardNumber || "").replace(/\s+/g, "");
-
-  function setCopiedUi() {
-    const btn = document.getElementById("copy-donate-btn") || document.getElementById("support-copy-btn");
-    const label = document.getElementById("support-copy-label");
+  const btn = document.getElementById("terms-accept-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;"></span> Qabul qilinmoqda...`;
+  }
+  try {
+    const res = await api("/api/user/accept-terms");
+    state.terms_accepted = true;
+    state.terms_accepted_at = (res && res.terms_accepted_at) || new Date().toISOString();
+    showToast("Foydalanish qoidalari qabul qilindi!");
+    render();
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  } catch (err) {
     if (btn) {
-      const orig = btn.innerHTML;
-      btn.innerHTML = "Nusxalandi ✓";
-      btn.style.background = "#10b981";
-      btn.style.color = "#fff";
-      setTimeout(() => {
-        btn.innerHTML = orig;
-        btn.style.background = "";
-        btn.style.color = "";
-      }, 2000);
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Qoidalarni qabul qilaman`;
     }
-    if (label) {
-      label.textContent = "Nusxalandi ✓";
-      setTimeout(() => { label.textContent = "Nusxalash"; }, 2000);
-    }
-    showToast("Karta raqami nusxalandi!");
+    showAlert(err.message || "Qoidalarni qabul qilishda xatolik yuz berdi. Qayta urinib ko'ring.");
   }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(clean).then(setCopiedUi).catch(() => {
-      fallbackCopy(clean);
-      setCopiedUi();
-    });
-  } else {
-    fallbackCopy(clean);
-    setCopiedUi();
-  }
-}
-
-function openModal(title, content) {
-  haptic("light");
-  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-  lastDetailReturnScroll = scrollY;
-  currentView = {
-    html: `
-      <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga</div>
-        <div class="card" style="margin-top:16px;">
-          ${title ? `<div class="card-title" style="margin-bottom:12px;">${escapeHtml(title)}</div>` : ""}
-          ${content}
-        </div>
-      </div>
-    `
-  };
-  render();
-  window.scrollTo(0, 0);
-}
-
-function openDonateModal(summaLabel = "") {
-  haptic("light");
-  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-  const settings = state.settings || {};
-  const cardNum = settings.donate_card_number || settings.support_card_number || "8600 5304 1234 5678";
-  const firstName = settings.support_first_name || "";
-  const lastName = settings.support_last_name || "";
-  const cardHolder = [firstName, lastName].filter(Boolean).join(" ") || settings.donate_card_holder || settings.support_card_holder || "Abdulloh S.";
-  const paymentType = settings.donate_payment_type || settings.support_payment_type || "UZCARD / HUMO";
-  const rawTg = settings.support_telegram_contact || settings.contact_telegram || "@texnikuzb";
-  const cleanTg = String(rawTg).replace(/^@/, "").trim() || "texnikuzb";
-  const displayTg = "@" + cleanTg;
-
-  currentView = {
-    html: `
-      <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
-        <div class="page-title">Qo'llab-quvvatlash</div>
-
-        <div class="card" style="text-align:center; padding:24px 18px; margin-bottom:16px;">
-          <div style="font-size:17px; font-weight:700; margin-bottom:6px;">Platforma rivojiga hissa qo'shish</div>
-          <div style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin-bottom:18px;">
-            Sizning qo'llab-quvvatlashingiz akademiyada yangi bepul darsliklar, Revit oilalari va ochiq normativlarni tayyorlashga sarflanadi.
-          </div>
-
-          ${summaLabel ? `
-            <div style="background:rgba(41,121,255,0.1); border:1px solid rgba(41,121,255,0.25); border-radius:8px; padding:10px; font-weight:700; color:var(--accent); margin-bottom:16px;">
-              Tanlangan summa: ${escapeHtml(summaLabel)}
-            </div>
-          ` : ""}
-
-          <div class="donate-card-box" style="text-align:left;">
-            <div class="donate-card-top-row">
-              <div class="donate-card-holder">Karta egasi: <strong>${escapeHtml(cardHolder)}</strong></div>
-              <span class="donate-card-type-badge">${escapeHtml(paymentType)}</span>
-            </div>
-            <div>
-              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Karta raqami:</div>
-              <div class="donate-card-number">${escapeHtml(cardNum)}</div>
-            </div>
-            <button id="support-copy-btn" class="donate-copy-btn" onclick="copyDonateCard('${escapeJsString(cardNum)}')">
-              📋 Raqamni nusxalash
-            </button>
-          </div>
-
-          <button class="btn secondary" style="margin-bottom:0;" onclick="openDirectAdminTelegram('${escapeJsString(cleanTg)}')">
-            💬 Bog'lanish (${escapeHtml(displayTg)})
-          </button>
-        </div>
-      </div>
-    `
-  };
-  render();
-  window.scrollTo(0, 0);
 }
 
 const PLATFORM_RULES_SECTIONS = [
@@ -7834,8 +7850,22 @@ function renderProfile() {
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
 
-      <!-- 1-TALAB: QO'LLAB-QUVVATLASH (SUPPORT) BO'LIMI -->
-      ${renderDonateBlock()}
+      <!-- 1-TALAB: PLATFORMANI QO'LLAB-QUVVATLASH (FAQAT BITTA TUGMA) -->
+      <div class="profile-action-row" onclick="openSupportCardsModal()" role="button" tabindex="0">
+        <div class="profile-action-left">
+          <div class="profile-action-icon" style="color:#ec4899;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <span class="profile-action-label">Platformani qo‘llab-quvvatlash</span>
+        </div>
+        <div class="profile-action-chevron">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
 
       <!-- 4-TALAB: PLATFORMADAN FOYDALANISH QOIDALARI -->
       <div class="profile-action-row" onclick="openPlatformRulesModal()" role="button" tabindex="0">
@@ -8182,6 +8212,9 @@ function renderAdminPanel() {
           <button class="${adminView === "library" ? "active" : ""}" onclick="adminSetTab('library')">
             📚 Kutubxona
           </button>
+          <button class="${adminView === "support_cards" ? "active" : ""}" onclick="adminSetTab('support_cards')">
+            💳 Qo‘llab-quvvatlash
+          </button>
           <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
             📤 Vazifalar
           </button>
@@ -8197,6 +8230,7 @@ function renderAdminPanel() {
           ${adminView === "students" ? renderAdminStudents() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
           ${adminView === "library" ? renderAdminLibrary() : ""}
+          ${adminView === "support_cards" ? renderAdminSupportCards() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
           ${adminView === "practice" ? renderAdminPractice() : ""}
         </div>
@@ -8306,6 +8340,13 @@ async function adminSetTab(tab) {
         } catch (fe) {
           adminData.libraryFiles = [];
           adminData.libraryV2Resources = [];
+        }
+      } else if (tab === "support_cards") {
+        try {
+          const scData = await adminApi("/api/admin/support-cards/list");
+          adminData.supportCards = scData.cards || [];
+        } catch (e) {
+          adminData.supportCards = [];
         }
       } else if (tab === "admins") {
         const data = await adminApi("/api/admin/admins");
@@ -10079,6 +10120,214 @@ async function submitUpdateSupportSettings() {
 }
 
 // ------------------------------------------------------
+// ADMIN SUPPORT CARDS CRUD (Qo'llab-quvvatlash kartalari)
+// ------------------------------------------------------
+
+function renderAdminSupportCards() {
+  const cards = adminData.supportCards || [];
+
+  const cardsHtml = cards.length ? cards.map(c => {
+    const isAct = c.is_active !== false;
+    return `
+      <div class="admin-support-card-box">
+        <div class="admin-support-card-header">
+          <span style="font-size:14px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-primary);">
+            ${escapeHtml(c.card_type || "UZCARD")}
+          </span>
+          <span class="admin-status-pill ${isAct ? "active" : "inactive"}">
+            ${isAct ? "🟢 Faol" : "⚪ Nofaol"}
+          </span>
+        </div>
+
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:3px;">
+          Karta raqami
+        </div>
+        <div style="font-family:var(--font-mono, monospace); font-size:15.5px; font-weight:750; color:var(--text-primary); margin-bottom:12px; letter-spacing:1px;">
+          ${escapeHtml(formatCardNumber(c.card_number))}
+        </div>
+
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:3px;">
+          Karta egasi
+        </div>
+        <div style="font-size:13.5px; font-weight:700; color:var(--text-secondary); margin-bottom:16px;">
+          ${escapeHtml(String(c.cardholder_name || "").toUpperCase())}
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="openAdminEditSupportCardModal(${c.id})">
+            ✏️ Tahrirlash
+          </button>
+          <button class="btn secondary" style="margin-bottom:0; width:auto; padding:0 14px;" onclick="toggleAdminSupportCard(${c.id})" title="${isAct ? "Vaqtincha o'chirish" : "Yoqish"}">
+            ${isAct ? "O'chirish" : "Yoqish"}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("") : `
+    <div class="support-empty-notice" style="margin-bottom:16px;">
+      Hech qanday qo‘llab-quvvatlash kartasi topilmadi.
+    </div>
+  `;
+
+  return `
+    <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div>
+          <div class="admin-section-title" style="margin-bottom:2px;">💳 Qo‘llab-quvvatlash kartalari</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Foydalanuvchilarga ko‘rinadigan UZCARD va HUMO kartalarini boshqarish</div>
+        </div>
+        <button class="btn" style="width:auto; margin-bottom:0; padding:8px 14px; font-size:12.5px;" onclick="openAdminAddSupportCardModal()">
+          + Yangi karta
+        </button>
+      </div>
+
+      <div class="admin-support-cards-grid">
+        ${cardsHtml}
+      </div>
+    </div>
+  `;
+}
+
+function openAdminEditSupportCardModal(id) {
+  const card = (adminData.supportCards || []).find(c => c.id === id);
+  if (!card) return showAlert("Karta topilmadi");
+
+  showConfirm(
+    `${escapeHtml(card.card_type)} kartasini tahrirlash`,
+    `
+      <div style="text-align:left; margin-top:12px;">
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta turi *</label>
+          <select id="edit-sc-type" class="apple-input">
+            <option value="UZCARD" ${card.card_type === "UZCARD" ? "selected" : ""}>UZCARD</option>
+            <option value="HUMO" ${card.card_type === "HUMO" ? "selected" : ""}>HUMO</option>
+          </select>
+        </div>
+
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta raqami *</label>
+          <input id="edit-sc-num" class="apple-input" type="text" value="${escapeHtml(card.card_number)}" placeholder="8600 1234 5678 9012">
+        </div>
+
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta egasi *</label>
+          <input id="edit-sc-holder" class="apple-input" type="text" value="${escapeHtml(card.cardholder_name)}" placeholder="ABDULLOH TANGIRBERGANOV">
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+          <input id="edit-sc-active" type="checkbox" ${card.is_active !== false ? "checked" : ""} style="width:18px; height:18px;">
+          <label for="edit-sc-active" style="font-size:13px; font-weight:600; color:var(--text-primary); cursor:pointer;">
+            Ilovada ko'rsatilsin (Faol)
+          </label>
+        </div>
+      </div>
+    `,
+    "Saqlash",
+    async () => {
+      const type = document.getElementById("edit-sc-type")?.value || "UZCARD";
+      const num = document.getElementById("edit-sc-num")?.value?.trim() || "";
+      const holder = document.getElementById("edit-sc-holder")?.value?.trim() || "";
+      const active = Boolean(document.getElementById("edit-sc-active")?.checked);
+
+      if (!num) return showAlert("Karta raqamini kiriting");
+      if (!holder) return showAlert("Karta egasini kiriting");
+
+      try {
+        haptic("medium");
+        await adminApi(`/api/admin/support-cards/${id}/update`, {
+          card_type: type,
+          card_number: num,
+          cardholder_name: holder,
+          is_active: active
+        });
+        showToast("Karta ma'lumotlari muvaffaqiyatli saqlindi!");
+        const scData = await adminApi("/api/admin/support-cards/list");
+        adminData.supportCards = scData.cards || [];
+        state.support_cards = adminData.supportCards.filter(c => c.is_active);
+        renderAdminPanel();
+      } catch (err) {
+        showAlert(err.message || "Saqlashda xatolik");
+      }
+    }
+  );
+}
+
+function openAdminAddSupportCardModal() {
+  showConfirm(
+    "Yangi qo‘llab-quvvatlash kartasi qo‘shish",
+    `
+      <div style="text-align:left; margin-top:12px;">
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta turi *</label>
+          <select id="add-sc-type" class="apple-input">
+            <option value="UZCARD">UZCARD</option>
+            <option value="HUMO">HUMO</option>
+          </select>
+        </div>
+
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta raqami *</label>
+          <input id="add-sc-num" class="apple-input" type="text" placeholder="8600 1234 5678 9012">
+        </div>
+
+        <div class="apple-field" style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Karta egasi *</label>
+          <input id="add-sc-holder" class="apple-input" type="text" placeholder="ABDULLOH TANGIRBERGANOV">
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+          <input id="add-sc-active" type="checkbox" checked style="width:18px; height:18px;">
+          <label for="add-sc-active" style="font-size:13px; font-weight:600; color:var(--text-primary); cursor:pointer;">
+            Ilovada ko'rsatilsin (Faol)
+          </label>
+        </div>
+      </div>
+    `,
+    "Qo'shish",
+    async () => {
+      const type = document.getElementById("add-sc-type")?.value || "UZCARD";
+      const num = document.getElementById("add-sc-num")?.value?.trim() || "";
+      const holder = document.getElementById("add-sc-holder")?.value?.trim() || "";
+      const active = Boolean(document.getElementById("add-sc-active")?.checked);
+
+      if (!num) return showAlert("Karta raqamini kiriting");
+      if (!holder) return showAlert("Karta egasini kiriting");
+
+      try {
+        haptic("medium");
+        await adminApi("/api/admin/support-cards/add", {
+          card_type: type,
+          card_number: num,
+          cardholder_name: holder,
+          is_active: active
+        });
+        showToast("Yangi karta qo'shildi!");
+        const scData = await adminApi("/api/admin/support-cards/list");
+        adminData.supportCards = scData.cards || [];
+        state.support_cards = adminData.supportCards.filter(c => c.is_active);
+        renderAdminPanel();
+      } catch (err) {
+        showAlert(err.message || "Karta qo'shishda xatolik");
+      }
+    }
+  );
+}
+
+async function toggleAdminSupportCard(id) {
+  try {
+    haptic("light");
+    await adminApi(`/api/admin/support-cards/${id}/toggle`);
+    showToast("Karta holati o'zgartirildi");
+    const scData = await adminApi("/api/admin/support-cards/list");
+    adminData.supportCards = scData.cards || [];
+    state.support_cards = adminData.supportCards.filter(c => c.is_active);
+    renderAdminPanel();
+  } catch (err) {
+    showAlert(err.message || "Holatni o'zgartirishda xatolik");
+  }
+}
+
+// ------------------------------------------------------
 // ADMIN ADD / EDIT RESOURCE MODAL
 // ------------------------------------------------------
 
@@ -10898,6 +11147,10 @@ function renderNav() {
 }
 
 function setTab(id) {
+  if (!state.terms_accepted && !state.is_admin) {
+    render();
+    return;
+  }
   haptic("light");
   if (!currentView) {
     savedTabScrolls[activeTab] = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
@@ -11016,6 +11269,18 @@ function handleTelegramBackClick() {
 
 function render() {
   if (!app) return;
+
+  // Foydalanish qoidalarini qabul qilmagan foydalanuvchini bloklaymiz (Onboarding gate)
+  if (!state.terms_accepted && !state.is_admin) {
+    app.innerHTML = `
+      <div class="screen">
+        ${renderTermsOnboardingHtml()}
+      </div>
+    `;
+    updateTelegramBackButton();
+    return;
+  }
+
   const body = currentView ? currentView.html : renderTab();
   app.innerHTML = `
     <div class="screen">

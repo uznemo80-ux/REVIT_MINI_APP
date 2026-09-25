@@ -93,6 +93,8 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted BOOLEAN DEFAULT false');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_by BIGINT');
@@ -692,6 +694,31 @@ async function initExtendedTables() {
       ('donate_description', 'Akademiyamiz darslari, ochiq manbalar va bepul testlar rivoji uchun ixtiyoriy moliyaviy qo''llab-quvvatlash (ehson/donat).')
       ON CONFLICT (key) DO NOTHING
     `);
+
+    // ======================================================
+    // 5. SUPPORT CARDS (QO'LLAB-QUVVATLASH KARTALARI BAZASI)
+    // ======================================================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS support_cards (
+        id SERIAL PRIMARY KEY,
+        card_type VARCHAR(50) NOT NULL,
+        card_number VARCHAR(100) NOT NULL,
+        cardholder_name VARCHAR(255) NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    var scCount = await pool.query('SELECT COUNT(*)::int AS count FROM support_cards');
+    if (scCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO support_cards (card_type, card_number, cardholder_name, is_active) VALUES
+        ('UZCARD', '8600 5304 1234 5678', 'ABDULLOH TANGIRBERGANOV', true),
+        ('HUMO', '9860 1234 5678 9012', 'ABDULLOH TANGIRBERGANOV', true)
+      `);
+      console.log('✅ SUPPORT CARDS: Standart UZCARD va HUMO kartalari kiritildi');
+    }
 
     // =================== KUTUBXONA V2: Jadvallar ensureLibraryV2Tables() orqali to'liq sozlanadi ===================
   } catch (error) {
@@ -1743,11 +1770,39 @@ app.post('/api/auth', async function (req, res) {
       has_access: hasAccess(user),
       access_until: user.access_until || null,
       is_admin: Boolean(admin || isMainAdmin),
-      admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null)
+      admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null),
+      terms_accepted: Boolean(user.terms_accepted),
+      terms_accepted_at: user.terms_accepted_at || null
     });
   } catch (error) {
     console.error('AUTH ERROR:', error);
     return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// ======================================================
+// TERMS OF USE ACCEPTANCE (FOYDALANISH QOIDALARINI QABUL QILISH)
+// ======================================================
+
+app.post('/api/user/accept-terms', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body && req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var now = new Date();
+    await pool.query(
+      'UPDATE users SET terms_accepted = true, terms_accepted_at = $1 WHERE id = $2',
+      [now, user.id]
+    );
+
+    return res.json({
+      success: true,
+      terms_accepted: true,
+      terms_accepted_at: now
+    });
+  } catch (error) {
+    console.error('ACCEPT TERMS ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi: ' + error.message });
   }
 });
 
@@ -1956,12 +2011,23 @@ app.post('/api/content', async function (req, res) {
       console.warn('MATERIALS QUERY WARNING:', matErr.message);
     }
 
+    // Platformani qo'llab-quvvatlash kartalari (faqat faol kartalar)
+    var supportCards = [];
+    try {
+      var scRes = await pool.query('SELECT id, card_type, card_number, cardholder_name, is_active FROM support_cards WHERE is_active = true ORDER BY id ASC');
+      supportCards = scRes.rows;
+    } catch (scErr) {
+      console.warn('SUPPORT CARDS QUERY WARNING:', scErr.message);
+    }
+
     return res.json({
       has_access: userHasAccess, access_until: user.access_until || null,
       telegram_id: user.telegram_id.toString(),
       first_name: user.first_name || '', last_name: user.last_name || '',
       phone: user.phone || '', username: user.username || '',
       registered: Boolean(user.first_name && user.last_name && user.phone),
+      terms_accepted: Boolean(user.terms_accepted),
+      terms_accepted_at: user.terms_accepted_at || null,
       modules: data,
       last_lesson: lastLesson,
       courses: courses,
@@ -1970,7 +2036,8 @@ app.post('/api/content', async function (req, res) {
       testimonials: testimonials,
       showcases: showcases,
       open_resources: openResources,
-      materials: materials
+      materials: materials,
+      support_cards: supportCards
     });
   } catch (error) {
     console.error('CONTENT ERROR:', error);
@@ -4308,6 +4375,100 @@ app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
   } catch (error) {
     console.error('SETTINGS UPDATE ERROR:', error);
     return res.status(500).json({ error: 'Sozlamalarni saqlashda xato' });
+  }
+});
+
+// ======================================================
+// SUPPORT CARDS API (FOYDALANUVCHILAR VA ADMIN BOSHQARUVI)
+// ======================================================
+
+// Ommaviy / Foydalanuvchi: Faol kartalar ro'yxati
+app.get('/api/support-cards', async function (req, res) {
+  try {
+    var result = await pool.query(
+      'SELECT id, card_type, card_number, cardholder_name, is_active FROM support_cards WHERE is_active = true ORDER BY id ASC'
+    );
+    return res.json({ success: true, cards: result.rows });
+  } catch (error) {
+    console.error('SUPPORT CARDS GET ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// Admin: Barcha kartalar ro'yxati (faol va nofaol)
+app.post('/api/admin/support-cards/list', requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query('SELECT * FROM support_cards ORDER BY id ASC');
+    return res.json({ success: true, cards: result.rows });
+  } catch (error) {
+    console.error('ADMIN SUPPORT CARDS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// Admin: Yangi karta qo'shish
+app.post('/api/admin/support-cards/add', requireAdmin, async function (req, res) {
+  try {
+    var cardType = String(req.body.card_type || 'UZCARD').trim().toUpperCase();
+    var cardNumber = String(req.body.card_number || '').trim();
+    var cardholderName = String(req.body.cardholder_name || '').trim().toUpperCase();
+    var isActive = req.body.is_active !== undefined ? Boolean(req.body.is_active) : true;
+
+    if (!cardNumber) return res.status(400).json({ error: 'Karta raqamini kiriting' });
+    if (!cardholderName) return res.status(400).json({ error: 'Karta egasini kiriting' });
+
+    var result = await pool.query(
+      'INSERT INTO support_cards (card_type, card_number, cardholder_name, is_active) VALUES ($1, $2, $3, $4) RETURNING *',
+      [cardType, cardNumber, cardholderName, isActive]
+    );
+    return res.json({ success: true, card: result.rows[0] });
+  } catch (error) {
+    console.error('ADMIN SUPPORT CARDS ADD ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// Admin: Karta ma'lumotlarini tahrirlash / saqlash
+app.post('/api/admin/support-cards/:id/update', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ error: 'ID notogri' });
+
+    var cardType = String(req.body.card_type || 'UZCARD').trim().toUpperCase();
+    var cardNumber = String(req.body.card_number || '').trim();
+    var cardholderName = String(req.body.cardholder_name || '').trim().toUpperCase();
+    var isActive = req.body.is_active !== undefined ? Boolean(req.body.is_active) : true;
+
+    if (!cardNumber) return res.status(400).json({ error: 'Karta raqamini kiriting' });
+    if (!cardholderName) return res.status(400).json({ error: 'Karta egasini kiriting' });
+
+    var result = await pool.query(
+      'UPDATE support_cards SET card_type = $1, card_number = $2, cardholder_name = $3, is_active = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
+      [cardType, cardNumber, cardholderName, isActive, id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Karta topilmadi' });
+    return res.json({ success: true, card: result.rows[0] });
+  } catch (error) {
+    console.error('ADMIN SUPPORT CARDS UPDATE ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi' });
+  }
+});
+
+// Admin: Karta faolligini yoqish / o'chirish (Toggle)
+app.post('/api/admin/support-cards/:id/toggle', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ error: 'ID notogri' });
+
+    var result = await pool.query(
+      'UPDATE support_cards SET is_active = NOT is_active, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Karta topilmadi' });
+    return res.json({ success: true, card: result.rows[0] });
+  } catch (error) {
+    console.error('ADMIN SUPPORT CARDS TOGGLE ERROR:', error);
+    return res.status(500).json({ error: 'Server xatosi' });
   }
 });
 
