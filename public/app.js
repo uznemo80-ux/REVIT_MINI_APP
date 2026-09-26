@@ -2226,24 +2226,31 @@ function copySupportCard(cardNumber, btn) {
   }
 }
 
-function openSupportCardsModal() {
-  haptic("light");
-  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+function buildSupportInfoFromSettings(sets) {
+  sets = sets || {};
+  const cardNumber = sets.donate_card_number || sets.support_card_number || "";
+  const firstName = sets.support_first_name || "";
+  const lastName = sets.support_last_name || "";
+  const holderFromParts = [firstName, lastName].filter(Boolean).join(" ");
+  const cardHolder = holderFromParts || sets.donate_card_holder || sets.support_card_holder || "";
+  return {
+    title: sets.support_title || "Platformani qo‘llab-quvvatlash",
+    description: sets.support_description || sets.support_subtitle || "Agar sizga platformadagi darslar, materiallar va imkoniyatlar foydali bo‘layotgan bo‘lsa, uni rivojlantirishga ixtiyoriy ravishda hissa qo‘shishingiz mumkin.",
+    card_number: cardNumber,
+    card_holder: cardHolder,
+    payment_type: sets.donate_payment_type || sets.support_payment_type || "UZCARD / HUMO",
+    telegram_contact: sets.support_telegram_contact || ""
+  };
+}
 
-  const rawCards = (state.support_cards && state.support_cards.length)
-    ? state.support_cards
-    : [
-        { card_type: "UZCARD", card_number: "8600 5304 1234 5678", cardholder_name: "ABDULLOH TANGIRBERGANOV", is_active: true },
-        { card_type: "HUMO", card_number: "9860 1234 5678 9012", cardholder_name: "ABDULLOH TANGIRBERGANOV", is_active: true }
-      ];
+function renderSupportCardPageHtml(info) {
+  const hasCard = Boolean(info.card_number);
 
-  const activeCards = rawCards.filter(c => c.is_active !== false);
-
-  const cardsHtml = activeCards.length ? activeCards.map(c => `
+  const cardHtml = hasCard ? `
     <div class="support-card-item">
       <div class="support-card-top">
-        <span class="support-card-type-badge">${escapeHtml(String(c.card_type || "UZCARD").toUpperCase())}</span>
-        <button class="support-card-copy-btn" onclick="copySupportCard('${escapeJsString(c.card_number)}', this)">
+        <span class="support-card-type-badge">${escapeHtml(String(info.payment_type || "UZCARD / HUMO").toUpperCase())}</span>
+        <button class="support-card-copy-btn" onclick="copySupportCard('${escapeJsString(info.card_number)}', this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -2254,44 +2261,97 @@ function openSupportCardsModal() {
 
       <div class="support-card-label">Karta raqami</div>
       <div class="support-card-num-box">
-        <span class="support-card-num">${escapeHtml(formatCardNumber(c.card_number))}</span>
+        <span class="support-card-num">${escapeHtml(formatCardNumber(info.card_number))}</span>
       </div>
 
+      ${info.card_holder ? `
       <div class="support-card-holder-box">
         <span style="color:var(--text-secondary); font-size:12px;">Karta egasi:</span>
-        <span class="support-card-holder-name">${escapeHtml(String(c.cardholder_name || "").toUpperCase())}</span>
-      </div>
+        <span class="support-card-holder-name">${escapeHtml(String(info.card_holder).toUpperCase())}</span>
+      </div>` : ""}
     </div>
-  `).join("") : `
+  ` : `
     <div class="support-empty-notice">
       Hozircha qo‘llab-quvvatlash uchun karta ma’lumotlari mavjud emas.
     </div>
   `;
 
-  currentView = {
-    html: `
-      <div class="page support-cards-page">
-        <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
+  const contactHtml = info.telegram_contact ? `
+    <div class="support-card-item" style="margin-top:10px; cursor:pointer;" onclick="openSupportTelegramContact('${escapeJsString(info.telegram_contact)}')">
+      <div class="support-card-label">Savolingiz bo‘lsa</div>
+      <div class="support-card-holder-name" style="font-size:15px;">${escapeHtml(info.telegram_contact)} bilan bog‘laning →</div>
+    </div>
+  ` : "";
 
-        <div class="support-cards-header">
-          <div class="support-cards-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-            Ehson va Hissa
-          </div>
-          <div class="support-cards-title">Platformani qo‘llab-quvvatlash</div>
-          <div class="support-cards-subtitle">YOSHUZBEKK Academy rivojiga o‘z hissangizni qo‘shmoqchi bo‘lsangiz, quyidagi kartalardan foydalanishingiz mumkin.</div>
-        </div>
+  return `
+    <div class="page support-cards-page">
+      <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
 
-        <div class="support-cards-list">
-          ${cardsHtml}
+      <div class="support-cards-header">
+        <div class="support-cards-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          Ehson va Hissa
         </div>
+        <div class="support-cards-title">${escapeHtml(info.title)}</div>
+        <div class="support-cards-subtitle">${escapeHtml(info.description)}</div>
       </div>
-    `
-  };
+
+      <div class="support-cards-list">
+        ${cardHtml}
+        ${contactHtml}
+      </div>
+    </div>
+  `;
+}
+
+function openSupportTelegramContact(contact) {
+  haptic("light");
+  const handle = String(contact || "").trim();
+  if (!handle) return;
+  const url = handle.startsWith("http") ? handle : `https://t.me/${handle.replace(/^@/, "")}`;
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+    window.Telegram.WebApp.openTelegramLink(url);
+  } else {
+    window.open(url, "_blank");
+  }
+}
+
+function openSupportCardsModal() {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  // 1. Darhol joriy (keshdagi) ma'lumot bilan ko'rsatamiz — UI bo'sh turib qolmasin
+  currentView = { html: renderSupportCardPageHtml(buildSupportInfoFromSettings(state.settings)) };
   render();
   window.scrollTo(0, 0);
+
+  // 2. Fon rejimida serverdan eng yangi ma'lumotni qayta yuklaymiz (admin yangilagan bo'lishi mumkin)
+  api("/api/support/info").then(data => {
+    if (!data || !data.support) return;
+    const s = data.support;
+    state.settings = {
+      ...state.settings,
+      support_title: s.title,
+      support_description: s.description,
+      support_subtitle: s.subtitle,
+      donate_card_number: s.card_number,
+      support_card_number: s.card_number,
+      donate_card_holder: s.card_holder,
+      support_card_holder: s.card_holder,
+      support_first_name: s.first_name,
+      support_last_name: s.last_name,
+      donate_payment_type: s.payment_type,
+      support_payment_type: s.payment_type,
+      support_telegram_contact: s.telegram_contact
+    };
+    // Foydalanuvchi hali shu sahifada bo'lsagina qayta chizamiz
+    if (currentView && currentView.html && currentView.html.indexOf("support-cards-page") !== -1) {
+      currentView = { html: renderSupportCardPageHtml(buildSupportInfoFromSettings(state.settings)) };
+      render();
+    }
+  }).catch(() => { /* jim: keshdagi ma'lumot ko'rsatilgan bo'ladi */ });
 }
 
 // ----------------------------------------------------
