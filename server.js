@@ -946,8 +946,35 @@ async function ensureLibraryBooksTable() {
       `);
     }
 
+    // 3. Foydalanuvchilar saqlagan kitoblar (Bookmarks / Saved books)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS saved_books (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INT NOT NULL REFERENCES library_books(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, book_id)
+      )
+    `);
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_saved_books_user ON saved_books(user_id)'); } catch(e){}
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_saved_books_book ON saved_books(book_id)'); } catch(e){}
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_saved_books_created ON saved_books(created_at)'); } catch(e){}
+
+    // 4. Kitob o''qish jarayoni va oxirgi sahifa (Reading progress)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reading_progress (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INT NOT NULL REFERENCES library_books(id) ON DELETE CASCADE,
+        page_number INT NOT NULL DEFAULT 1,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, book_id)
+      )
+    `);
+    try { await pool.query('CREATE INDEX IF NOT EXISTS idx_reading_progress_user_book ON reading_progress(user_id, book_id)'); } catch(e){}
+
     libraryBooksTableReady = true;
-    console.log('✅ LIBRARY BOOKS TABLE: library_books va drive_sources jadvallari to\'liq tekshirildi');
+    console.log('✅ LIBRARY BOOKS TABLE: library_books, drive_sources, saved_books va reading_progress jadvallari to\'liq tekshirildi');
   } catch (err) {
     console.error('ensureLibraryBooksTable error:', err.message);
   }
@@ -5467,11 +5494,20 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
       await pool.query('INSERT INTO library_views (user_id, resource_id, viewed_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING', [user.id, bookId]).catch(() => {});
     } catch (vErr) {}
 
-    // Bookmark holati
+    // Bookmark & Saqlanganlik holati
     var isBookmarked = false;
+    var isSaved = false;
+    var savedCount = 0;
+    var lastPage = 1;
     try {
+      var sbResult = await pool.query('SELECT id FROM saved_books WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+      isSaved = sbResult.rows.length > 0;
       var bmResult = await pool.query('SELECT id FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, bookId]);
-      isBookmarked = bmResult.rows.length > 0;
+      isBookmarked = isSaved || bmResult.rows.length > 0;
+      var countRes = await pool.query('SELECT COUNT(*)::int AS count FROM saved_books WHERE book_id = $1', [bookId]);
+      savedCount = countRes.rows[0].count || 0;
+      var rpRes = await pool.query('SELECT page_number FROM reading_progress WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+      if (rpRes.rows.length) lastPage = rpRes.rows[0].page_number || 1;
     } catch (bmErr) {}
 
     var whatLearn = [];
@@ -5512,6 +5548,9 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
         drive_file_name: bRow.drive_file_name,
         status: bRow.status,
         is_bookmarked: isBookmarked,
+        is_saved: isSaved,
+        saved_count: savedCount,
+        last_page: lastPage,
         view_count: (bRow.view_count || 0) + 1
       }
     });
@@ -5594,6 +5633,144 @@ app.post('/api/library/v2/resource/:id', async function (req, res) {
   } catch (error) {
     console.error('LIBRARY V2 RESOURCE DETAIL ERROR:', error);
     return res.status(500).json({ error: 'Resurs ma\'lumotlarini olishda xatolik' });
+  }
+});
+
+// ======================================================
+// KUTUBXONA V2: SAQLANGAN KITOBLAR (SAVED BOOKS) & READING PROGRESS
+// ======================================================
+
+// Kitobni saqlash (Saved books / bookmark toggle)
+app.post('/api/library/v2/saved-books/toggle', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var bookId = parseInt(req.body.book_id);
+    if (!bookId || isNaN(bookId)) return res.status(400).json({ error: 'book_id majburiy' });
+
+    var existing = await pool.query('SELECT id FROM saved_books WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+    var saved = false;
+
+    if (existing.rows.length > 0) {
+      await pool.query('DELETE FROM saved_books WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+      await pool.query('DELETE FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, bookId]).catch(() => {});
+      saved = false;
+    } else {
+      await pool.query('INSERT INTO saved_books (user_id, book_id) VALUES ($1, $2) ON CONFLICT (user_id, book_id) DO NOTHING', [user.id, bookId]);
+      await pool.query('INSERT INTO library_bookmarks (user_id, resource_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, bookId]).catch(() => {});
+      saved = true;
+    }
+
+    var countRes = await pool.query('SELECT COUNT(*)::int AS count FROM saved_books WHERE book_id = $1', [bookId]);
+    var savedCount = countRes.rows[0].count || 0;
+
+    return res.json({
+      ok: true,
+      saved: saved,
+      bookmarked: saved,
+      saved_count: savedCount,
+      message: saved ? 'Kitob saqlanganlarga qo‘shildi' : 'Kitob saqlanganlardan olib tashlandi'
+    });
+  } catch (error) {
+    console.error('SAVED BOOKS TOGGLE ERROR:', error);
+    return res.status(500).json({ error: 'Kitobni saqlashda xatolik yuz berdi' });
+  }
+});
+
+// Foydalanuvchining shaxsiy saqlagan kitoblari ro'yxati (reading_progress bilan birga)
+app.post('/api/library/v2/saved-books/list', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var result = await pool.query(`
+      SELECT lb.*,
+             sb.created_at AS saved_at,
+             COALESCE(rp.page_number, 1) AS last_page,
+             COALESCE((SELECT COUNT(*)::int FROM saved_books c_sb WHERE c_sb.book_id = lb.id), 0) AS saved_count,
+             true AS is_saved
+      FROM library_books lb
+      JOIN saved_books sb ON sb.book_id = lb.id
+      LEFT JOIN reading_progress rp ON rp.book_id = lb.id AND rp.user_id = $1
+      WHERE sb.user_id = $1 AND lb.status = 'published'
+      ORDER BY sb.created_at DESC
+    `, [user.id]);
+
+    return res.json({ ok: true, books: result.rows });
+  } catch (error) {
+    console.error('SAVED BOOKS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Saqlangan kitoblarni yuklashda xatolik' });
+  }
+});
+
+// Eng ko'p saqlangan kitoblar reytingi (barcha o'quvchilar bo'yicha)
+app.post('/api/library/v2/books/top-saved', async function (req, res) {
+  try {
+    var user = req.body.initData ? await getOrCreateUser(req.body.initData).catch(() => null) : null;
+    var limit = Math.min(30, Math.max(1, parseInt(req.body.limit) || 10));
+
+    var query = `
+      SELECT lb.*,
+             COUNT(sb.id)::int AS saved_count,
+             ${user ? `EXISTS(SELECT 1 FROM saved_books usb WHERE usb.book_id = lb.id AND usb.user_id = ${user.id})` : 'false'} AS is_saved,
+             ${user ? `COALESCE((SELECT rp.page_number FROM reading_progress rp WHERE rp.book_id = lb.id AND rp.user_id = ${user.id}), 1)` : '1'} AS last_page
+      FROM library_books lb
+      JOIN saved_books sb ON sb.book_id = lb.id
+      WHERE lb.status = 'published'
+      GROUP BY lb.id
+      ORDER BY saved_count DESC, lb.is_recommended DESC, lb.id DESC
+      LIMIT $1
+    `;
+
+    var result = await pool.query(query, [limit]);
+    return res.json({ ok: true, books: result.rows });
+  } catch (error) {
+    console.error('TOP SAVED BOOKS ERROR:', error);
+    return res.status(500).json({ error: 'Eng ko‘p saqlangan kitoblarni yuklashda xatolik' });
+  }
+});
+
+// Kitob mutolaa sahifasini eslab qolish (Reading progress)
+app.post('/api/library/v2/reading-progress/save', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var bookId = parseInt(req.body.book_id);
+    var pageNum = Math.max(1, parseInt(req.body.page_number) || 1);
+    if (!bookId || isNaN(bookId)) return res.status(400).json({ error: 'book_id majburiy' });
+
+    await pool.query(`
+      INSERT INTO reading_progress (user_id, book_id, page_number, updated_at)
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (user_id, book_id)
+      DO UPDATE SET page_number = EXCLUDED.page_number, updated_at = NOW()
+    `, [user.id, bookId, pageNum]);
+
+    return res.json({ ok: true, book_id: bookId, page_number: pageNum });
+  } catch (error) {
+    console.error('READING PROGRESS SAVE ERROR:', error);
+    return res.status(500).json({ error: 'Sahifani saqlashda xatolik' });
+  }
+});
+
+// Kitob mutolaa sahifasini olish (Reading progress)
+app.post('/api/library/v2/reading-progress/get', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+
+    var bookId = parseInt(req.body.book_id);
+    if (!bookId || isNaN(bookId)) return res.status(400).json({ error: 'book_id majburiy' });
+
+    var result = await pool.query('SELECT page_number FROM reading_progress WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+    var pageNumber = result.rows.length ? result.rows[0].page_number : 1;
+
+    return res.json({ ok: true, book_id: bookId, page_number: pageNumber });
+  } catch (error) {
+    console.error('READING PROGRESS GET ERROR:', error);
+    return res.status(500).json({ error: 'Sahifani yuklashda xatolik' });
   }
 });
 
@@ -6511,7 +6688,7 @@ app.post('/api/admin/books/list', requireAdmin, async function (req, res) {
     }
 
     var where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-    var q = 'SELECT * FROM library_books ' + where + ' ORDER BY is_recommended DESC, id DESC';
+    var q = 'SELECT lb.*, COALESCE((SELECT COUNT(*)::int FROM saved_books sb WHERE sb.book_id = lb.id), 0) AS saved_count FROM library_books lb ' + where + ' ORDER BY lb.is_recommended DESC, lb.id DESC';
     var result = await pool.query(q, params);
 
     // Umumiy statistika hisoblash
@@ -7035,6 +7212,7 @@ app.post('/api/admin/drive-sources/:id/delete', requireAdmin, async function (re
 // Foydalanuvchilar uchun: 500+ kitoblarni qidirish va sahifalab olish (Faqat published)
 app.post('/api/library/v2/books/search', async function (req, res) {
   try {
+    var user = req.body.initData ? await getOrCreateUser(req.body.initData).catch(() => null) : null;
     var search = (req.body.search || '').trim().toLowerCase();
     var category = req.body.category || 'all';
     var accessType = req.body.access_type || 'all'; // all, free, pro
@@ -7042,33 +7220,42 @@ app.post('/api/library/v2/books/search', async function (req, res) {
     var limit = Math.min(60, Math.max(6, parseInt(req.body.limit) || 24));
     var offset = (page - 1) * limit;
 
-    var conditions = ["status = 'published'"];
+    var conditions = ["lb.status = 'published'"];
     var params = [];
     var pIdx = 1;
 
     if (search) {
-      conditions.push('(LOWER(title) LIKE $' + pIdx + ' OR LOWER(COALESCE(author, \'\')) LIKE $' + pIdx + ' OR LOWER(COALESCE(short_description, \'\')) LIKE $' + pIdx + ' OR array_to_string(categories, \' \') ILIKE $' + pIdx + ')');
+      conditions.push('(LOWER(lb.title) LIKE $' + pIdx + ' OR LOWER(COALESCE(lb.author, \'\')) LIKE $' + pIdx + ' OR LOWER(COALESCE(lb.short_description, \'\')) LIKE $' + pIdx + ' OR array_to_string(lb.categories, \' \') ILIKE $' + pIdx + ')');
       params.push('%' + search + '%');
       pIdx++;
     }
 
     if (category && category !== 'all' && category !== 'Barchasi') {
-      conditions.push('$' + pIdx + ' = ANY(categories)');
+      conditions.push('$' + pIdx + ' = ANY(lb.categories)');
       params.push(category);
       pIdx++;
     }
 
     if (accessType && accessType !== 'all') {
-      conditions.push('access_type = $' + pIdx);
+      conditions.push('lb.access_type = $' + pIdx);
       params.push(accessType);
       pIdx++;
     }
 
     var where = 'WHERE ' + conditions.join(' AND ');
-    var countRes = await pool.query('SELECT COUNT(*)::int AS total FROM library_books ' + where, params);
+    var countRes = await pool.query('SELECT COUNT(*)::int AS total FROM library_books lb ' + where, params);
     var total = countRes.rows[0].total || 0;
 
-    var query = 'SELECT * FROM library_books ' + where + ' ORDER BY is_recommended DESC, id DESC LIMIT $' + pIdx + ' OFFSET $' + (pIdx + 1);
+    var query = `
+      SELECT lb.*,
+             COALESCE((SELECT COUNT(*)::int FROM saved_books sb WHERE sb.book_id = lb.id), 0) AS saved_count,
+             ${user ? `EXISTS(SELECT 1 FROM saved_books usb WHERE usb.book_id = lb.id AND usb.user_id = ${user.id})` : 'false'} AS is_saved,
+             ${user ? `COALESCE((SELECT rp.page_number FROM reading_progress rp WHERE rp.book_id = lb.id AND rp.user_id = ${user.id}), 1)` : '1'} AS last_page
+      FROM library_books lb
+      ${where}
+      ORDER BY lb.is_recommended DESC, lb.id DESC
+      LIMIT $${pIdx} OFFSET $${pIdx + 1}
+    `;
     params.push(limit, offset);
 
     var booksRes = await pool.query(query, params);

@@ -5906,12 +5906,14 @@ async function toggleLibraryBookmark(resId, e) {
   if (e) e.stopPropagation();
   haptic("light");
   const idNum = Number(resId);
-  const isBookmarked = libraryV2Bookmarks.has(idNum);
+  const isBookmarked = libraryV2Bookmarks.has(idNum) || libraryV2SavedBookIds.has(idNum);
 
   if (isBookmarked) {
     libraryV2Bookmarks.delete(idNum);
+    libraryV2SavedBookIds.delete(idNum);
   } else {
     libraryV2Bookmarks.add(idNum);
+    libraryV2SavedBookIds.add(idNum);
   }
 
   const btn = document.getElementById(`lib-bm-btn-${idNum}`);
@@ -5923,7 +5925,11 @@ async function toggleLibraryBookmark(resId, e) {
   }
 
   try {
-    await api("/api/library/v2/bookmark/toggle", { resource_id: idNum }, "POST");
+    studentShelvesLoaded = false;
+    await Promise.all([
+      api("/api/library/v2/saved-books/toggle", { book_id: idNum }, "POST").catch(() => {}),
+      api("/api/library/v2/bookmark/toggle", { resource_id: idNum }, "POST").catch(() => {})
+    ]);
   } catch (err) {
     console.warn("Bookmark toggle error:", err);
   }
@@ -6381,6 +6387,10 @@ async function loadStudentBooks() {
       studentBooksTotal = studentBooksList.length;
       studentBooksTotalPages = 1;
     }
+
+    if (!studentShelvesLoaded) {
+      loadStudentShelves();
+    }
   } catch (err) {
     console.warn("loadStudentBooks error:", err);
     studentBooksList = (libraryV2Resources || []).filter(r => r.section_slug === "books" || r.type === "book");
@@ -6402,6 +6412,29 @@ async function loadStudentBooks() {
   }
 }
 
+async function loadStudentShelves() {
+  try {
+    const [savedRes, topRes] = await Promise.all([
+      api("/api/library/v2/saved-books/list", {}, "POST").catch(() => null),
+      api("/api/library/v2/books/top-saved", { limit: 12 }, "POST").catch(() => null)
+    ]);
+
+    if (savedRes && savedRes.ok && Array.isArray(savedRes.books)) {
+      studentSavedBooksList = savedRes.books;
+      savedRes.books.forEach(b => libraryV2SavedBookIds.add(Number(b.id)));
+    }
+    if (topRes && topRes.ok && Array.isArray(topRes.books)) {
+      studentTopSavedBooksList = topRes.books;
+    }
+    studentShelvesLoaded = true;
+    if (libraryActiveSection === "books") {
+      render();
+    }
+  } catch (err) {
+    console.warn("loadStudentShelves error:", err);
+  }
+}
+
 function changeStudentBooksPage(delta) {
   const newPage = studentBooksPage + delta;
   if (newPage < 1 || newPage > studentBooksTotalPages) return;
@@ -6411,9 +6444,56 @@ function changeStudentBooksPage(delta) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function renderSavedBookShelfCard(book) {
+  const cover = formatImageUrl(book.preview_image_url || book.cover_url || book.generated_cover_url || "");
+  const author = book.author || "Autodesk BIM";
+  const lastPage = Number(book.last_page || 1);
+
+  return `
+    <div class="lib-shelf-card" onclick="openBookReader(${Number(book.id)}, ${lastPage})">
+      <div class="lib-shelf-cover-box">
+        ${cover ? `<img src="${escapeHtml(cover)}" class="lib-shelf-cover-img" onerror="handleImageError(this)" alt="" />` : `
+          <div class="lib-book-cover-placeholder" style="border-radius:0;">
+            ${libIcons.book('lib-cover-svg', 30)}
+          </div>
+        `}
+        ${lastPage > 1 ? `<span class="lib-shelf-badge">📖 ${lastPage}-bet</span>` : `<span class="lib-shelf-badge">♥ Saqlangan</span>`}
+      </div>
+      <div class="lib-shelf-body">
+        <div class="lib-shelf-name" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</div>
+        <div class="lib-shelf-author">${escapeHtml(author)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTopSavedBookShelfCard(book) {
+  const cover = formatImageUrl(book.preview_image_url || book.cover_url || book.generated_cover_url || "");
+  const author = book.author || "Autodesk BIM";
+  const count = Number(book.saved_count || 1);
+
+  return `
+    <div class="lib-shelf-card" onclick="openBookDetail(${Number(book.id)})">
+      <div class="lib-shelf-cover-box">
+        ${cover ? `<img src="${escapeHtml(cover)}" class="lib-shelf-cover-img" onerror="handleImageError(this)" alt="" />` : `
+          <div class="lib-book-cover-placeholder" style="border-radius:0;">
+            ${libIcons.book('lib-cover-svg', 30)}
+          </div>
+        `}
+        <span class="lib-shelf-badge" style="color:#ff6b81;">♥ ${count}</span>
+      </div>
+      <div class="lib-shelf-body">
+        <div class="lib-shelf-name" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</div>
+        <div class="lib-shelf-author">${escapeHtml(author)}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderBooksSectionHtml() {
   const cats = SECTION_CATEGORIES.books;
   const cat = librarySectionSelectedCategory;
+  const isSearching = Boolean((librarySectionSearchQuery || "").trim());
 
   let books = Array.isArray(studentBooksList) ? studentBooksList : libraryV2Resources.filter(r =>
     r.section_slug === "books" ||
@@ -6438,6 +6518,9 @@ function renderBooksSectionHtml() {
   if (studentBooksList === null && !studentBooksLoading) {
     setTimeout(loadStudentBooks, 50);
   }
+  if (!studentShelvesLoaded) {
+    setTimeout(loadStudentShelves, 60);
+  }
 
   const paginationHtml = studentBooksTotalPages > 1 ? `
     <div class="lib-books-pagination">
@@ -6455,16 +6538,17 @@ function renderBooksSectionHtml() {
 
   return `
     <div class="page lib-container lib-page-enter">
+      <!-- 1. HEADER -->
       <div class="lib-back-nav" onclick="closeLibrarySection()">
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
       <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">Kitoblar va Qo‘llanmalar</h2>
+        <h2 class="lib-page-title">Kitoblar</h2>
         <p class="lib-page-desc">Revit, BIM standartlari, arxitektura va ShNQ rasmiy qo'llanmalari (${totalDesc})</p>
       </div>
 
-      <!-- SEARCH & SORT -->
+      <!-- 2. SEARCH & SORT -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap">
           <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
@@ -6480,7 +6564,7 @@ function renderBooksSectionHtml() {
         </select>
       </div>
 
-      <!-- KATEGORIYA CHIPLARI -->
+      <!-- 3. KATEGORIYA CHIPLARI -->
       <div class="category-chips lib-chips-row">
         ${cats.map(c => `
           <div class="chip ${cat === c ? "active" : ""}" onclick="setLibrarySectionCategory('${escapeJsString(c)}')">
@@ -6489,7 +6573,49 @@ function renderBooksSectionHtml() {
         `).join("")}
       </div>
 
-      <!-- KITOBLAR GRIDI (RATIO 2:3) -->
+      <!-- QIDIRUV BO'LMAGANDA: 4. SAQLANGANLAR VA 5. ENG KO'P SAQLANGAN -->
+      ${!isSearching && cat === "Barchasi" ? `
+        <!-- 4. SAQLANGAN KITOBLARIM -->
+        <div class="lib-shelf-section">
+          <div class="lib-shelf-header">
+            <div class="lib-shelf-title">
+              <span>Saqlangan kitoblarim</span>
+              ${studentSavedBooksList.length ? `<span style="font-size:12px; color:var(--text-secondary); font-weight:500;">(${studentSavedBooksList.length})</span>` : ""}
+            </div>
+          </div>
+          ${studentSavedBooksList.length ? `
+            <div class="lib-shelf-scroll">
+              ${studentSavedBooksList.map(renderSavedBookShelfCard).join("")}
+            </div>
+          ` : `
+            <div class="lib-shelf-empty">
+              Saqlangan kitoblaringiz shu yerda ko‘rinadi
+            </div>
+          `}
+        </div>
+
+        <!-- 5. ENG KO'P SAQLANGAN -->
+        ${studentTopSavedBooksList.length ? `
+          <div class="lib-shelf-section">
+            <div class="lib-shelf-header">
+              <div class="lib-shelf-title">
+                <span>Eng ko‘p saqlangan</span>
+              </div>
+            </div>
+            <div class="lib-shelf-scroll">
+              ${studentTopSavedBooksList.map(renderTopSavedBookShelfCard).join("")}
+            </div>
+          </div>
+        ` : ""}
+      ` : ""}
+
+      <!-- 6. BARCHA KITOBLAR -->
+      <div class="lib-shelf-header" style="margin-top: ${isSearching || cat !== 'Barchasi' ? '8px' : '16px'};">
+        <div class="lib-shelf-title">
+          <span>${isSearching ? "Qidiruv natijalari" : (cat !== "Barchasi" ? cat : "Barcha kitoblar")}</span>
+        </div>
+      </div>
+
       <div id="lib-section-list-container" class="lib-books-grid">
         ${studentBooksLoading ? `
           <div style="grid-column: 1 / -1; text-align: center; padding: 40px 0;">
@@ -6515,6 +6641,7 @@ function renderBookCardHtml(book) {
   const pages = book.page_count ? `${book.page_count} bet` : (book.drive_file_size || "PDF");
   const lang = (book.language || "UZ").toUpperCase();
   const cat = book.category || (Array.isArray(book.categories) ? book.categories[0] : "Kitob");
+  const savedCount = Number(book.saved_count || 0);
 
   return `
     <div class="lib-book-card" onclick="openBookDetail(${Number(book.id)})">
@@ -6533,7 +6660,10 @@ function renderBookCardHtml(book) {
         <div class="lib-book-author">${escapeHtml(author)}</div>
         <div class="lib-book-meta-footer">
           <span>${escapeHtml(pages)} • ${escapeHtml(lang)}</span>
-          <span class="lib-book-read-btn">O‘qish →</span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            ${savedCount > 0 ? `<span style="font-size:11px; color:#ff334b; font-weight:600;">♥ ${savedCount}</span>` : ""}
+            <span class="lib-book-read-btn">O‘qish →</span>
+          </span>
         </div>
       </div>
     </div>
@@ -6870,84 +7000,200 @@ let libReaderProxyUrl = '';
 let libReaderRenderTask = null;
 let libReaderTitle = '';
 
-function openPdfViewerModal(pdfUrl, title) {
+let currentBookReaderId = null;
+let currentReaderIsSaved = false;
+let currentReaderSavedCount = 0;
+let readingProgressSaveTimeout = null;
+let readerIsTransitioning = false;
+let readerTouchStartX = 0;
+let readerTouchStartY = 0;
+let readerTouchDistX = 0;
+let readerTouchDistY = 0;
+
+let studentSavedBooksList = [];
+let studentTopSavedBooksList = [];
+let studentShelvesLoaded = false;
+let libraryV2SavedBookIds = new Set();
+
+async function openBookReader(bookIdOrObj, initialPage) {
   haptic("light");
-  if (!pdfUrl) return showAlert("Kitob yoki fayl havolasi mavjud emas.");
 
   lastPdfReturnView = currentView;
   lastPdfReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  let book = null;
+  let bookId = null;
+
+  if (typeof bookIdOrObj === "object" && bookIdOrObj !== null) {
+    book = bookIdOrObj;
+    bookId = Number(book.id);
+  } else {
+    bookId = Number(bookIdOrObj);
+    book = (Array.isArray(studentBooksList) ? studentBooksList.find(b => Number(b.id) === bookId) : null) ||
+           (Array.isArray(studentSavedBooksList) ? studentSavedBooksList.find(b => Number(b.id) === bookId) : null) ||
+           (Array.isArray(studentTopSavedBooksList) ? studentTopSavedBooksList.find(b => Number(b.id) === bookId) : null) ||
+           (adminData.libraryBooks ? adminData.libraryBooks.find(b => Number(b.id) === bookId) : null);
+  }
+
+  currentBookReaderId = bookId;
+
+  // Agar kitob topilmagan bo'lsa yoki PDF havolasi to'liq bo'lmasa, serverdan olish
+  if (!book || (!book.pdf_url && !book.content_url && !book.drive_file_id)) {
+    try {
+      const data = await api(`/api/library/v2/book/${bookId}`).catch(() => null);
+      if (data && data.book) book = data.book;
+    } catch (e) {}
+  }
+
+  if (!book) return showAlert("Kitob ma'lumotlari topilmadi.");
+
+  currentReaderIsSaved = Boolean(book.is_saved || libraryV2SavedBookIds.has(bookId));
+  currentReaderSavedCount = Number(book.saved_count || 0);
+
+  const pdfUrl = book.pdf_url || book.content_url || (book.drive_file_id ? `https://drive.google.com/file/d/${book.drive_file_id}/view` : "");
+  if (!pdfUrl) return showAlert("Kitob fayli mavjud emas.");
 
   const driveId = extractGoogleDriveId(pdfUrl);
   libReaderProxyUrl = driveId
     ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}`
     : `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`;
 
-  libReaderTitle = title || "Kitob Mutolaasi";
-  libReaderPageNum = 1;
-  libReaderTotalPages = 1;
-  libReaderScale = 1.0;
-  libReaderDoc = null;
+  libReaderTitle = book.title || "Kitob Mutolaasi";
 
-  renderLibReaderView();
-  loadLibReaderDocument();
+  // Oxirgi o'qilgan sahifani aniqlash (Davom ettirish)
+  if (typeof initialPage === "number" && initialPage > 0) {
+    libReaderPageNum = initialPage;
+  } else if (typeof book.last_page === "number" && book.last_page > 0) {
+    libReaderPageNum = book.last_page;
+  } else {
+    libReaderPageNum = 1;
+    // Fondan reading_progress tekshirish
+    if (bookId > 0) {
+      api("/api/library/v2/reading-progress/get", { book_id: bookId }, "POST").then(res => {
+        if (res && res.page_number && res.page_number > 1 && libReaderPageNum === 1) {
+          libReaderPageNum = res.page_number;
+          renderReaderActivePage();
+        }
+      }).catch(() => {});
+    }
+  }
+
+  libReaderTotalPages = book.page_count || 1;
+  libReaderDoc = null;
+  readerIsTransitioning = false;
+
+  renderMinimalReaderView();
+  loadMinimalReaderDocument();
 }
 
-function renderLibReaderView() {
+function openPdfViewerModal(pdfUrl, title, bookId) {
+  if (bookId) {
+    return openBookReader(bookId);
+  }
+  return openBookReader({
+    id: 0,
+    title: title || "Kitob Mutolaasi",
+    pdf_url: pdfUrl
+  });
+}
+
+function renderMinimalReaderView() {
   currentView = {
     html: `
-      <div class="page lib-container lib-page-enter lib-reader-fullscreen" style="padding-bottom: 24px;">
-        <!-- Yuqori Reader Boshqaruv Toolbari -->
-        <div class="lib-reader-top-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-          <div class="lib-back-nav" style="margin:0;" onclick="closePdfViewerModal()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            <span>Chiqish</span>
+      <div class="book-reader-view" id="book-reader-view">
+        <!-- TOP BAR: Left: Back, Center: Title, Right: Heart Bookmark -->
+        <div class="reader-top-bar">
+          <button class="reader-action-btn" onclick="closeBookReader()" title="Orqaga">
+            ${libIcons.back('reader-svg-back', 18)}
+          </button>
+
+          <div class="reader-book-title-subtle">
+            ${escapeHtml(libReaderTitle)}
           </div>
 
-          <!-- Sahifalar nazorati -->
-          <div class="sf-zoom-controls" style="background:var(--bg-secondary); border:1px solid var(--border);">
-            <button class="sf-tool-btn" onclick="prevLibReaderPage()" title="Oldingi sahifa">◀</button>
-            <span id="lib-reader-page-indicator" class="sf-zoom-label" style="min-width:65px; text-align:center;">
-              ${libReaderPageNum} / ${libReaderTotalPages}
-            </span>
-            <button class="sf-tool-btn" onclick="nextLibReaderPage()" title="Keyingi sahifa">▶</button>
-          </div>
-
-          <!-- Zoom boshqaruvi -->
-          <div class="sf-zoom-controls" style="background:var(--bg-secondary); border:1px solid var(--border);">
-            <button class="sf-tool-btn" onclick="zoomLibReader(-0.25)" title="Kichiklashtirish">➖</button>
-            <button class="sf-tool-btn sf-zoom-label" onclick="resetLibReaderZoom()" title="Asl o'lcham">
-              <span id="lib-reader-zoom-text">${Math.round(libReaderScale * 100)}%</span>
-            </button>
-            <button class="sf-tool-btn" onclick="zoomLibReader(0.25)" title="Kattalashtirish">➕</button>
-          </div>
+          <button id="reader-heart-btn" class="reader-action-btn ${currentReaderIsSaved ? 'saved' : ''}" onclick="toggleReaderBookmark(event)" title="Saqlash">
+            <span id="reader-heart-icon" style="font-size:18px; line-height:1;">${currentReaderIsSaved ? '♥' : '♡'}</span>
+          </button>
         </div>
 
-        <!-- Sarlavha -->
-        <div style="font-size:13px; font-weight:700; color:var(--text-secondary); margin-bottom:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center;">
-          📖 ${escapeHtml(libReaderTitle)}
-        </div>
+        <!-- VIEWPORT: Touch swipe surface & Dual Canvas Stage -->
+        <div class="reader-viewport" id="reader-viewport">
+          <div class="reader-stage" id="reader-stage">
+            <div class="reader-canvas-card slide-active" id="reader-card-current">
+              <canvas id="reader-canvas-current"></canvas>
+            </div>
+            <div class="reader-canvas-card" id="reader-card-next" style="display:none;">
+              <canvas id="reader-canvas-next"></canvas>
+            </div>
 
-        <!-- Canvas ko'rish maydoni -->
-        <div class="sf-viewport" id="lib-reader-viewport" style="background:#0f111a; border-radius:16px; border:1px solid var(--border); min-height:560px; max-height:82vh; overflow:auto; display:flex; align-items:center; justify-content:center; position:relative; padding:20px 10px;">
-          <div class="sf-canvas-wrap" id="lib-reader-canvas-wrap" style="transform: scale(${libReaderScale}); transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1); transform-origin: center center;">
-            <canvas id="lib-reader-canvas" style="max-width:100%; max-height:80vh; border-radius:6px; box-shadow:0 8px 30px rgba(0,0,0,0.5); display:block; background:#fff;"></canvas>
-            <div id="lib-reader-spinner" class="pdf-sheet-spinner">
+            <!-- Minimal Spinner -->
+            <div id="reader-spinner" class="reader-spinner-overlay">
               <div class="spinner"></div>
-              <span style="font-size:12.5px; color:#fff; margin-top:10px;">Kitob yuklanmoqda...</span>
+              <span id="reader-spinner-text" style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:10px;">Kitob yuklanmoqda...</span>
             </div>
           </div>
+        </div>
+
+        <!-- FLOATING BOTTOM NAVIGATION CAPSULE -->
+        <div class="reader-floating-nav" id="reader-floating-nav">
+          <button class="reader-nav-btn" id="reader-prev-btn" onclick="readerTurnPage(-1)">
+            ← Oldingi
+          </button>
+          <span class="reader-nav-indicator" id="reader-page-indicator">
+            ${libReaderPageNum} / ${libReaderTotalPages}
+          </span>
+          <button class="reader-nav-btn" id="reader-next-btn" onclick="readerTurnPage(1)">
+            Keyingi →
+          </button>
         </div>
       </div>
     `
   };
   render();
   window.scrollTo(0, 0);
+
+  // Setup Touch Listeners for Swipe Gestures
+  setupReaderTouchGestures();
 }
 
-async function loadLibReaderDocument() {
+function setupReaderTouchGestures() {
+  const vp = document.getElementById("reader-viewport");
+  if (!vp) return;
+
+  vp.addEventListener("touchstart", function (e) {
+    if (!e.touches || e.touches.length !== 1) return;
+    readerTouchStartX = e.touches[0].clientX;
+    readerTouchStartY = e.touches[0].clientY;
+    readerTouchDistX = 0;
+    readerTouchDistY = 0;
+  }, { passive: true });
+
+  vp.addEventListener("touchmove", function (e) {
+    if (!e.touches || e.touches.length !== 1) return;
+    readerTouchDistX = e.touches[0].clientX - readerTouchStartX;
+    readerTouchDistY = e.touches[0].clientY - readerTouchStartY;
+  }, { passive: true });
+
+  vp.addEventListener("touchend", function () {
+    const absX = Math.abs(readerTouchDistX);
+    const absY = Math.abs(readerTouchDistY);
+
+    if (absX > 45 && absX > absY * 1.2) {
+      if (readerTouchDistX < 0) {
+        readerTurnPage(1);
+      } else {
+        readerTurnPage(-1);
+      }
+    }
+    readerTouchDistX = 0;
+    readerTouchDistY = 0;
+  }, { passive: true });
+}
+
+async function loadMinimalReaderDocument() {
   if (typeof window.pdfjsLib === "undefined") {
-    const spinner = document.getElementById("lib-reader-spinner");
-    if (spinner) spinner.innerHTML = `<span style="color:#ff6b6b; font-size:12px;">PDF kutubxonasi yuklanmadi</span>`;
+    const sp = document.getElementById("reader-spinner-text");
+    if (sp) sp.textContent = "PDF kutubxonasi yuklanmadi";
     return;
   }
 
@@ -6965,130 +7211,205 @@ async function loadLibReaderDocument() {
     libReaderDoc = await docPromise;
     libReaderTotalPages = libReaderDoc.numPages || 1;
 
-    const ind = document.getElementById("lib-reader-page-indicator");
-    if (ind) ind.textContent = `${libReaderPageNum} / ${libReaderTotalPages}`;
+    if (libReaderPageNum > libReaderTotalPages) libReaderPageNum = libReaderTotalPages;
+    if (libReaderPageNum < 1) libReaderPageNum = 1;
 
-    await renderLibReaderCurrentPage();
+    updateReaderNavUI();
+    await renderReaderActivePage();
   } catch (err) {
-    console.warn("Lib reader doc load error:", err);
+    console.warn("loadMinimalReaderDocument error:", err);
     pdfDocPromiseCache.delete(libReaderProxyUrl);
-    const spinner = document.getElementById("lib-reader-spinner");
-    if (spinner) {
-      spinner.innerHTML = `
-        <div class="sf-error-box">
-          <div style="font-size:24px; margin-bottom:8px;">⚠️</div>
-          <div style="font-weight:600; color:#fff; margin-bottom:4px;">Kitobni yuklab bo'lmadi</div>
-          <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:12px;">Internet ulanishini tekshiring</div>
-          <button class="sf-retry-btn" onclick="retryLibReader()">🔄 Qayta urinish</button>
-        </div>
+    const sp = document.getElementById("reader-spinner");
+    if (sp) {
+      sp.innerHTML = `
+        <div style="font-size:24px; margin-bottom:8px;">⚠️</div>
+        <div style="font-weight:600; color:#fff; font-size:13px; margin-bottom:6px;">Kitobni ochib bo‘lmadi</div>
+        <div style="font-size:11.5px; color:rgba(255,255,255,0.6); margin-bottom:14px;">Internet yoki fayl ulanishini tekshiring</div>
+        <button class="lib-page-btn" onclick="retryMinimalReader()" style="background:#fff; color:#000;">🔄 Qayta urinish</button>
       `;
     }
   }
 }
 
-async function renderLibReaderCurrentPage() {
-  if (!libReaderDoc) return;
-  const canvas = document.getElementById("lib-reader-canvas");
-  const spinner = document.getElementById("lib-reader-spinner");
-  if (!canvas) return;
+async function renderPageOnCanvas(pageNum, canvasEl) {
+  if (!libReaderDoc || !canvasEl) return;
+  const page = await libReaderDoc.getPage(pageNum);
+  const unscaled = page.getViewport({ scale: 1 });
+  const maxDim = window.devicePixelRatio && window.devicePixelRatio > 1.5 ? 2400 : 1800;
+  const fitScale = Math.min(maxDim / unscaled.width, maxDim / unscaled.height);
+  const scale = Math.max(1.0, Math.min(2.2, fitScale));
+  const viewport = page.getViewport({ scale });
+
+  const ctx = canvasEl.getContext("2d");
+  canvasEl.height = viewport.height;
+  canvasEl.width = viewport.width;
+
+  const renderTask = page.render({ canvasContext: ctx, viewport });
+  await renderTask.promise;
+}
+
+async function renderReaderActivePage() {
+  const canvas = document.getElementById("reader-canvas-current");
+  const spinner = document.getElementById("reader-spinner");
+  if (!canvas || !libReaderDoc) return;
 
   if (spinner) {
     spinner.style.display = "flex";
     spinner.style.opacity = "1";
-    spinner.innerHTML = `
-      <div class="spinner"></div>
-      <span style="font-size:12.5px; color:#fff; margin-top:10px;">${libReaderPageNum}-sahifa yuklanmoqda...</span>
-    `;
-  }
-
-  if (libReaderRenderTask) {
-    try { libReaderRenderTask.cancel(); } catch (e) {}
-    libReaderRenderTask = null;
+    const spText = document.getElementById("reader-spinner-text");
+    if (spText) spText.textContent = `${libReaderPageNum}-sahifa yuklanmoqda...`;
   }
 
   try {
-    const page = await libReaderDoc.getPage(libReaderPageNum);
-    const unscaled = page.getViewport({ scale: 1 });
-    const maxDim = 2048;
-    const fitScale = Math.min(maxDim / unscaled.width, maxDim / unscaled.height);
-    const scale = Math.max(1.0, Math.min(2.0, fitScale));
-    const viewport = page.getViewport({ scale });
-
-    const ctx = canvas.getContext("2d");
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    libReaderRenderTask = page.render({ canvasContext: ctx, viewport });
-    await libReaderRenderTask.promise;
-    libReaderRenderTask = null;
-
+    await renderPageOnCanvas(libReaderPageNum, canvas);
     if (spinner) {
       spinner.style.opacity = "0";
       setTimeout(() => { if (spinner) spinner.style.display = "none"; }, 250);
     }
-  } catch (err) {
-    if (err && err.name === "RenderingCancelledException") return;
-    console.warn("Lib reader page render error:", err);
-    if (spinner) {
-      spinner.innerHTML = `
-        <div class="sf-error-box">
-          <div style="font-size:20px; margin-bottom:6px;">⚠️</div>
-          <div style="font-size:12px; color:#fff; margin-bottom:8px;">Sahifani yuklashda xatolik</div>
-          <button class="sf-retry-btn" onclick="renderLibReaderCurrentPage()">🔄 Qayta urinish</button>
-        </div>
-      `;
+  } catch (e) {
+    console.warn("renderReaderActivePage error:", e);
+  }
+}
+
+async function readerTurnPage(delta) {
+  if (readerIsTransitioning || !libReaderDoc) return;
+
+  const targetPage = libReaderPageNum + delta;
+  if (targetPage < 1 || targetPage > libReaderTotalPages) return;
+
+  readerIsTransitioning = true;
+  haptic("light");
+
+  const currentCard = document.getElementById("reader-card-current");
+  const nextCard = document.getElementById("reader-card-next");
+  const nextCanvas = document.getElementById("reader-canvas-next");
+
+  if (!currentCard || !nextCard || !nextCanvas) {
+    libReaderPageNum = targetPage;
+    updateReaderNavUI();
+    await renderReaderActivePage();
+    scheduleSaveReadingProgress();
+    readerIsTransitioning = false;
+    return;
+  }
+
+  // Pre-render target page onto next canvas
+  try {
+    await renderPageOnCanvas(targetPage, nextCanvas);
+  } catch (e) {
+    console.warn("Pre-render error:", e);
+  }
+
+  // Set initial position for next card
+  const isForward = delta > 0;
+  nextCard.className = isForward ? "reader-canvas-card slide-enter-right" : "reader-canvas-card slide-enter-left";
+  nextCard.style.display = "flex";
+
+  // Force reflow
+  void nextCard.offsetWidth;
+
+  // Animate slide
+  currentCard.className = isForward ? "reader-canvas-card slide-exit-left" : "reader-canvas-card slide-exit-right";
+  nextCard.className = "reader-canvas-card slide-active";
+
+  setTimeout(() => {
+    libReaderPageNum = targetPage;
+    updateReaderNavUI();
+
+    currentCard.id = "reader-card-next";
+    currentCard.style.display = "none";
+    currentCard.className = "reader-canvas-card";
+    const currentCanvas = currentCard.querySelector("canvas");
+    if (currentCanvas) currentCanvas.id = "reader-canvas-next";
+
+    nextCard.id = "reader-card-current";
+    if (nextCanvas) nextCanvas.id = "reader-canvas-current";
+
+    readerIsTransitioning = false;
+    scheduleSaveReadingProgress();
+  }, 330);
+}
+
+function updateReaderNavUI() {
+  const ind = document.getElementById("reader-page-indicator");
+  if (ind) ind.textContent = `${libReaderPageNum} / ${libReaderTotalPages}`;
+
+  const prevBtn = document.getElementById("reader-prev-btn");
+  if (prevBtn) prevBtn.disabled = libReaderPageNum <= 1;
+
+  const nextBtn = document.getElementById("reader-next-btn");
+  if (nextBtn) nextBtn.disabled = libReaderPageNum >= libReaderTotalPages;
+}
+
+async function toggleReaderBookmark(e) {
+  if (e) e.stopPropagation();
+  haptic("medium");
+
+  currentReaderIsSaved = !currentReaderIsSaved;
+
+  const btn = document.getElementById("reader-heart-btn");
+  const icon = document.getElementById("reader-heart-icon");
+
+  if (btn) {
+    btn.classList.toggle("saved", currentReaderIsSaved);
+    btn.classList.remove("heart-pop-anim");
+    void btn.offsetWidth;
+    btn.classList.add("heart-pop-anim");
+    setTimeout(() => btn.classList.remove("heart-pop-anim"), 350);
+  }
+  if (icon) {
+    icon.textContent = currentReaderIsSaved ? "♥" : "♡";
+  }
+
+  if (currentBookReaderId) {
+    if (currentReaderIsSaved) {
+      libraryV2SavedBookIds.add(currentBookReaderId);
+    } else {
+      libraryV2SavedBookIds.delete(currentBookReaderId);
     }
   }
-}
 
-function prevLibReaderPage() {
-  if (libReaderPageNum <= 1) return;
-  haptic("light");
-  libReaderPageNum--;
-  const ind = document.getElementById("lib-reader-page-indicator");
-  if (ind) ind.textContent = `${libReaderPageNum} / ${libReaderTotalPages}`;
-  renderLibReaderCurrentPage();
-}
-
-function nextLibReaderPage() {
-  if (libReaderPageNum >= libReaderTotalPages) return;
-  haptic("light");
-  libReaderPageNum++;
-  const ind = document.getElementById("lib-reader-page-indicator");
-  if (ind) ind.textContent = `${libReaderPageNum} / ${libReaderTotalPages}`;
-  renderLibReaderCurrentPage();
-}
-
-function zoomLibReader(delta) {
-  haptic("light");
-  libReaderScale = Math.max(0.6, Math.min(3.0, libReaderScale + delta));
-  applyLibReaderTransform();
-}
-
-function resetLibReaderZoom() {
-  haptic("light");
-  libReaderScale = 1.0;
-  applyLibReaderTransform();
-}
-
-function applyLibReaderTransform() {
-  const wrap = document.getElementById("lib-reader-canvas-wrap");
-  const zoomText = document.getElementById("lib-reader-zoom-text");
-  if (wrap) wrap.style.transform = `scale(${libReaderScale})`;
-  if (zoomText) zoomText.textContent = `${Math.round(libReaderScale * 100)}%`;
-}
-
-function retryLibReader() {
-  haptic("medium");
-  loadLibReaderDocument();
-}
-
-function closePdfViewerModal() {
-  haptic("light");
-  if (libReaderRenderTask) {
-    try { libReaderRenderTask.cancel(); } catch (e) {}
-    libReaderRenderTask = null;
+  try {
+    const res = await api("/api/library/v2/saved-books/toggle", { book_id: currentBookReaderId }, "POST");
+    if (res && res.ok) {
+      currentReaderIsSaved = res.saved;
+      if (res.saved) {
+        libraryV2SavedBookIds.add(currentBookReaderId);
+      } else {
+        libraryV2SavedBookIds.delete(currentBookReaderId);
+      }
+      studentShelvesLoaded = false;
+    }
+  } catch (err) {
+    console.warn("toggleReaderBookmark error:", err);
   }
+}
+
+function scheduleSaveReadingProgress() {
+  clearTimeout(readingProgressSaveTimeout);
+  readingProgressSaveTimeout = setTimeout(() => {
+    saveReadingProgress();
+  }, 1000);
+}
+
+function saveReadingProgress() {
+  if (!currentBookReaderId || !libReaderPageNum || currentBookReaderId <= 0) return;
+  api("/api/library/v2/reading-progress/save", {
+    book_id: currentBookReaderId,
+    page_number: libReaderPageNum
+  }, "POST").catch(() => {});
+}
+
+function retryMinimalReader() {
+  haptic("medium");
+  loadMinimalReaderDocument();
+}
+
+function closeBookReader() {
+  haptic("light");
+  clearTimeout(readingProgressSaveTimeout);
+  saveReadingProgress();
+
   if (lastPdfReturnView) {
     currentView = lastPdfReturnView;
     render();
@@ -7096,6 +7417,10 @@ function closePdfViewerModal() {
   } else {
     closeDetail();
   }
+}
+
+function closePdfViewerModal() {
+  closeBookReader();
 }
 
 let currentDetailBookRequestId = 0;
@@ -7219,8 +7544,8 @@ async function openBookDetail(resId) {
           <!-- ACTION BUTTONS: FAQAT O'QISH (ASL MANBA VA ULASHISH YO'Q) -->
           <div class="lib-detail-actions" style="margin-top:24px;">
             ${readUrl ? `
-              <button class="lib-download-btn" style="width:100%;" onclick="openPdfViewerModal('${escapeJsString(readUrl)}', '${escapeJsString(book.title)}')">
-                ${libIcons.book('lib-btn-svg', 18)} O‘QISHNI BOSHLASH
+              <button class="lib-download-btn" style="width:100%;" onclick="openBookReader(${Number(book.id)}, ${Number(book.last_page || 1)})">
+                ${libIcons.book('lib-btn-svg', 18)} ${book.last_page && book.last_page > 1 ? `${book.last_page}-SAHIFADAN DAVOM ETTIRISH` : 'O‘QISHNI BOSHLASH'}
               </button>
             ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Kitob mutolaa havolasi kiritilmagan</button>`}
           </div>
@@ -10575,6 +10900,7 @@ function renderAdminBooksGridHtml(books) {
             <span>📄 ${b.page_count || 0} sahifa</span>
             <span>⏱️ ${readTime}</span>
             <span>👁️ ${b.view_count || 0}</span>
+            <span style="color:#ff334b; font-weight:600;">♥ ${b.saved_count || 0} saqlangan</span>
           </div>
 
           <div class="admin-book-actions" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
@@ -10918,7 +11244,7 @@ function openAdminBookReviewModal(bookId) {
           <div style="width:110px; flex-shrink:0;">
             <img src="${escapeHtml(coverUrl || '/admin.jpg')}" style="width:110px; height:155px; border-radius:10px; object-fit:cover; background:#000; border:1px solid var(--border);" onerror="this.src='/admin.jpg'">
             ${book.pdf_url ? `
-              <button class="btn" style="width:100%; margin-top:8px; padding:7px 6px; font-size:11px; font-weight:700; background:#007aff; color:#fff; border-radius:8px; border:none;" onclick="closeAdminBookReviewModal(); openPdfViewerModal('${escapeJsString(book.pdf_url)}', '${escapeJsString(book.title)}')">
+              <button class="btn" style="width:100%; margin-top:8px; padding:7px 6px; font-size:11px; font-weight:700; background:#007aff; color:#fff; border-radius:8px; border:none;" onclick="closeAdminBookReviewModal(); openBookReader(${Number(book.id)})">
                 📖 O'qib ko'rish
               </button>
             ` : `
