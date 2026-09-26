@@ -314,6 +314,64 @@ function showConfirm(title, message, confirmLabel, onConfirm) {
   });
 }
 
+// showConfirm HTML-formani escape qilib yuborgani uchun (matn sifatida chiqib
+// qolgani) forma elementlari bo'lgan modallar uchun alohida, escape qilmaydigan
+// funksiya: bodyHtml xom HTML sifatida ko'rsatiladi, faqat title escape qilinadi.
+function showFormModal(title, bodyHtml, confirmLabel, onConfirm) {
+  if (!confirmLabel) confirmLabel = "Saqlash";
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-title">${escapeHtml(title || "")}</div>
+      <div class="modal-msg">${bodyHtml || ""}</div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel">Bekor qilish</button>
+        <button type="button" class="modal-btn confirm">${escapeHtml(confirmLabel)}</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const closeOverlay = () => {
+    overlay.classList.add("closing");
+    setTimeout(() => overlay.remove(), 180);
+  };
+
+  overlay.querySelector(".cancel")?.addEventListener("click", () => {
+    haptic();
+    closeOverlay();
+  });
+
+  overlay.querySelector(".confirm")?.addEventListener("click", async (e) => {
+    haptic("medium");
+    const confirmBtn = e.currentTarget;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = "0.6";
+    }
+    if (typeof onConfirm === "function") {
+      try {
+        await onConfirm();
+        closeOverlay();
+      } catch (error) {
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.style.opacity = "1";
+        }
+        console.error("FORM MODAL ERROR:", error);
+        showAlert(error.message || "Amalni bajarishda xatolik yuz berdi.");
+      }
+    } else {
+      closeOverlay();
+    }
+  });
+
+  return overlay;
+}
+
 // ======================================================
 // GLOBAL STATE
 // ======================================================
@@ -2226,31 +2284,14 @@ function copySupportCard(cardNumber, btn) {
   }
 }
 
-function buildSupportInfoFromSettings(sets) {
-  sets = sets || {};
-  const cardNumber = sets.donate_card_number || sets.support_card_number || "";
-  const firstName = sets.support_first_name || "";
-  const lastName = sets.support_last_name || "";
-  const holderFromParts = [firstName, lastName].filter(Boolean).join(" ");
-  const cardHolder = holderFromParts || sets.donate_card_holder || sets.support_card_holder || "";
-  return {
-    title: sets.support_title || "Platformani qo‘llab-quvvatlash",
-    description: sets.support_description || sets.support_subtitle || "Agar sizga platformadagi darslar, materiallar va imkoniyatlar foydali bo‘layotgan bo‘lsa, uni rivojlantirishga ixtiyoriy ravishda hissa qo‘shishingiz mumkin.",
-    card_number: cardNumber,
-    card_holder: cardHolder,
-    payment_type: sets.donate_payment_type || sets.support_payment_type || "UZCARD / HUMO",
-    telegram_contact: sets.support_telegram_contact || ""
-  };
-}
+function renderSupportCardsListHtml(cards) {
+  const activeCards = (cards || []).filter(c => c.is_active !== false);
 
-function renderSupportCardPageHtml(info) {
-  const hasCard = Boolean(info.card_number);
-
-  const cardHtml = hasCard ? `
+  return activeCards.length ? activeCards.map(c => `
     <div class="support-card-item">
       <div class="support-card-top">
-        <span class="support-card-type-badge">${escapeHtml(String(info.payment_type || "UZCARD / HUMO").toUpperCase())}</span>
-        <button class="support-card-copy-btn" onclick="copySupportCard('${escapeJsString(info.card_number)}', this)">
+        <span class="support-card-type-badge">${escapeHtml(String(c.card_type || "UZCARD").toUpperCase())}</span>
+        <button class="support-card-copy-btn" onclick="copySupportCard('${escapeJsString(c.card_number)}', this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -2261,28 +2302,22 @@ function renderSupportCardPageHtml(info) {
 
       <div class="support-card-label">Karta raqami</div>
       <div class="support-card-num-box">
-        <span class="support-card-num">${escapeHtml(formatCardNumber(info.card_number))}</span>
+        <span class="support-card-num">${escapeHtml(formatCardNumber(c.card_number))}</span>
       </div>
 
-      ${info.card_holder ? `
       <div class="support-card-holder-box">
         <span style="color:var(--text-secondary); font-size:12px;">Karta egasi:</span>
-        <span class="support-card-holder-name">${escapeHtml(String(info.card_holder).toUpperCase())}</span>
-      </div>` : ""}
+        <span class="support-card-holder-name">${escapeHtml(String(c.cardholder_name || "").toUpperCase())}</span>
+      </div>
     </div>
-  ` : `
+  `).join("") : `
     <div class="support-empty-notice">
       Hozircha qo‘llab-quvvatlash uchun karta ma’lumotlari mavjud emas.
     </div>
   `;
+}
 
-  const contactHtml = info.telegram_contact ? `
-    <div class="support-card-item" style="margin-top:10px; cursor:pointer;" onclick="openSupportTelegramContact('${escapeJsString(info.telegram_contact)}')">
-      <div class="support-card-label">Savolingiz bo‘lsa</div>
-      <div class="support-card-holder-name" style="font-size:15px;">${escapeHtml(info.telegram_contact)} bilan bog‘laning →</div>
-    </div>
-  ` : "";
-
+function renderSupportCardsPageHtml(cards) {
   return `
     <div class="page support-cards-page">
       <div class="back-btn" onclick="closeDetail()">← Profilga qaytish</div>
@@ -2294,28 +2329,15 @@ function renderSupportCardPageHtml(info) {
           </svg>
           Ehson va Hissa
         </div>
-        <div class="support-cards-title">${escapeHtml(info.title)}</div>
-        <div class="support-cards-subtitle">${escapeHtml(info.description)}</div>
+        <div class="support-cards-title">Platformani qo‘llab-quvvatlash</div>
+        <div class="support-cards-subtitle">YOSHUZBEKK Academy rivojiga o‘z hissangizni qo‘shmoqchi bo‘lsangiz, quyidagi kartalardan foydalanishingiz mumkin.</div>
       </div>
 
       <div class="support-cards-list">
-        ${cardHtml}
-        ${contactHtml}
+        ${renderSupportCardsListHtml(cards)}
       </div>
     </div>
   `;
-}
-
-function openSupportTelegramContact(contact) {
-  haptic("light");
-  const handle = String(contact || "").trim();
-  if (!handle) return;
-  const url = handle.startsWith("http") ? handle : `https://t.me/${handle.replace(/^@/, "")}`;
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-    window.Telegram.WebApp.openTelegramLink(url);
-  } else {
-    window.open(url, "_blank");
-  }
 }
 
 function openSupportCardsModal() {
@@ -2323,35 +2345,24 @@ function openSupportCardsModal() {
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
   // 1. Darhol joriy (keshdagi) ma'lumot bilan ko'rsatamiz — UI bo'sh turib qolmasin
-  currentView = { html: renderSupportCardPageHtml(buildSupportInfoFromSettings(state.settings)) };
+  currentView = { html: renderSupportCardsPageHtml(state.support_cards || []) };
   render();
   window.scrollTo(0, 0);
 
-  // 2. Fon rejimida serverdan eng yangi ma'lumotni qayta yuklaymiz (admin yangilagan bo'lishi mumkin)
-  api("/api/support/info").then(data => {
-    if (!data || !data.support) return;
-    const s = data.support;
-    state.settings = {
-      ...state.settings,
-      support_title: s.title,
-      support_description: s.description,
-      support_subtitle: s.subtitle,
-      donate_card_number: s.card_number,
-      support_card_number: s.card_number,
-      donate_card_holder: s.card_holder,
-      support_card_holder: s.card_holder,
-      support_first_name: s.first_name,
-      support_last_name: s.last_name,
-      donate_payment_type: s.payment_type,
-      support_payment_type: s.payment_type,
-      support_telegram_contact: s.telegram_contact
-    };
-    // Foydalanuvchi hali shu sahifada bo'lsagina qayta chizamiz
-    if (currentView && currentView.html && currentView.html.indexOf("support-cards-page") !== -1) {
-      currentView = { html: renderSupportCardPageHtml(buildSupportInfoFromSettings(state.settings)) };
-      render();
-    }
-  }).catch(() => { /* jim: keshdagi ma'lumot ko'rsatilgan bo'ladi */ });
+  // 2. Fon rejimida serverdan eng yangi ma'lumotni qayta yuklaymiz (admin yangilagan bo'lishi mumkin,
+  // Mini App'ni yopib-ochganda ham eng so'nggi ma'lumot chiqishi uchun)
+  fetch("/api/support-cards")
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.success || !Array.isArray(data.cards)) return;
+      state.support_cards = data.cards;
+      // Foydalanuvchi hali shu sahifada bo'lsagina qayta chizamiz
+      if (currentView && currentView.html && currentView.html.indexOf("support-cards-page") !== -1) {
+        currentView = { html: renderSupportCardsPageHtml(state.support_cards) };
+        render();
+      }
+    })
+    .catch(() => { /* jim: keshdagi ma'lumot ko'rsatilgan bo'ladi */ });
 }
 
 // ----------------------------------------------------
@@ -12226,8 +12237,8 @@ function openAdminEditSupportCardModal(id) {
   const card = (adminData.supportCards || []).find(c => c.id === id);
   if (!card) return showAlert("Karta topilmadi");
 
-  showConfirm(
-    `${escapeHtml(card.card_type)} kartasini tahrirlash`,
+  showFormModal(
+    `${card.card_type} kartasini tahrirlash`,
     `
       <div style="text-align:left; margin-top:12px;">
         <div class="apple-field" style="margin-bottom:12px;">
@@ -12287,7 +12298,7 @@ function openAdminEditSupportCardModal(id) {
 }
 
 function openAdminAddSupportCardModal() {
-  showConfirm(
+  showFormModal(
     "Yangi qo‘llab-quvvatlash kartasi qo‘shish",
     `
       <div style="text-align:left; margin-top:12px;">
