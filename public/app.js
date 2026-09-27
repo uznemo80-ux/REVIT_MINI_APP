@@ -1,4 +1,4 @@
-// ======================================================
+﻿// ======================================================
 // YOSHUZBEKK Academy — Telegram Mini App Frontend
 // Single Page Application (SPA) Engine
 // ======================================================
@@ -6662,6 +6662,18 @@ function renderBooksSectionHtml() {
         <p class="lib-page-desc">Revit, BIM standartlari, arxitektura va ShNQ rasmiy qo'llanmalari (${totalDesc})</p>
       </div>
 
+      <!-- O'RGANISH KNOWLEDGE CENTER BANNER -->
+      <div class="learning-entry-banner" onclick="openLearningCenter()" style="margin-bottom:14px;">
+        <div class="learning-entry-left">
+          <div class="learning-entry-icon">🏛️</div>
+          <div>
+            <div class="learning-entry-title">Arxitektura va RD O‘rganish Markazi</div>
+            <div class="learning-entry-sub">9 bosqichli bilimlar bazasi, ShNQ/QMQ, GOST, spetsifikatsiyalar</div>
+          </div>
+        </div>
+        <div class="learning-entry-arrow">O‘rganish →</div>
+      </div>
+
       <!-- 2. SEARCH & SORT -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap">
@@ -7869,6 +7881,10 @@ async function openBookDetail(resId) {
                 ${libIcons.book('lib-btn-svg', 18)} ${book.last_page && book.last_page > 1 ? `${book.last_page}-SAHIFADAN DAVOM ETTIRISH` : 'O‘QISHNI BOSHLASH'}
               </button>
             ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Kitob mutolaa havolasi kiritilmagan</button>`}
+
+            <button class="lib-learning-btn" style="width:100%; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:var(--radius-full, 99px); background:var(--bg-surface-elevated, rgba(0,0,0,0.05)); border:1.5px solid var(--accent); color:var(--text-primary); font-weight:750; font-size:13.5px; cursor:pointer;" onclick="openLearningCenter()">
+              📐 «O‘rganish» — Arxitektura & RD Markazi →
+            </button>
           </div>
         </div>
       </div>
@@ -9322,6 +9338,9 @@ function renderAdminPanel() {
           <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
             📤 Vazifalar
           </button>
+          <button class="${adminView === "learning" ? "active" : ""}" onclick="adminSetTab('learning')">
+            🏛️ O‘rganish Bazasi
+          </button>
           ${state.admin_role === "super_admin" ? `
             <button class="${adminView === "admins" ? "active" : ""}" onclick="adminSetTab('admins')">
               👥 Adminlar
@@ -9334,6 +9353,7 @@ function renderAdminPanel() {
           ${adminView === "students" ? renderAdminStudents() : ""}
           ${adminView === "lessons" ? renderAdminLessons() : ""}
           ${adminView === "library" ? renderAdminLibrary() : ""}
+          ${adminView === "learning" ? renderAdminLearning() : ""}
           ${adminView === "support_cards" ? renderAdminSupportCards() : ""}
           ${adminView === "admins" ? renderAdminAdmins() : ""}
           ${adminView === "practice" ? renderAdminPractice() : ""}
@@ -9462,6 +9482,8 @@ async function adminSetTab(tab) {
       } else if (tab === "practice") {
         const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
         adminData.practice = data.submissions || [];
+      } else if (tab === "learning") {
+        await loadLearningContent();
       }
     }
     renderAdminPanel();
@@ -14393,6 +14415,588 @@ function handleTelegramBackClick() {
     closeLibrarySection();
   }
 }
+
+// ======================================================
+// LEARNING CENTER (ARXITEKTURA VA ISHCHI HUJJATLAR BAZASI)
+// ======================================================
+
+let learningState = {
+  stages: [],
+  resources: [],
+  tables: [],
+  completed_stages: [],
+  has_access: false,
+  loaded: false,
+  loading: false
+};
+let learningFilter = "all";
+let learningSearchQuery = "";
+let learningExpandedStages = { 1: true };
+
+async function loadLearningContent() {
+  if (learningState.loading) return;
+  learningState.loading = true;
+  try {
+    const data = await api("/api/learning/content");
+    learningState = {
+      ...learningState,
+      stages: Array.isArray(data.stages) ? data.stages : [],
+      resources: Array.isArray(data.resources) ? data.resources : [],
+      tables: Array.isArray(data.tables) ? data.tables : [],
+      completed_stages: Array.isArray(data.completed_stages) ? data.completed_stages : [],
+      has_access: Boolean(data.has_access),
+      loaded: true,
+      loading: false
+    };
+  } catch (err) {
+    console.error("LOAD LEARNING ERROR:", err);
+    learningState.loading = false;
+  }
+}
+
+async function openLearningCenter() {
+  haptic("light");
+  if (!learningState.loaded) {
+    showToast("📚 O‘rganish markazi yuklanmoqda...");
+    await loadLearningContent();
+  }
+  currentView = {
+    type: "learning",
+    html: renderLearningCenter()
+  };
+  render();
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+}
+
+function setLearningFilter(filter) {
+  haptic("light");
+  learningFilter = filter;
+  if (currentView && currentView.type === "learning") {
+    currentView.html = renderLearningCenter();
+    render();
+  }
+}
+
+function setLearningSearch(query) {
+  learningSearchQuery = query;
+  if (currentView && currentView.type === "learning") {
+    currentView.html = renderLearningCenter();
+    render();
+    const input = document.getElementById("learning-search-input");
+    if (input) {
+      input.focus();
+      input.setSelectionRange(query.length, query.length);
+    }
+  }
+}
+
+function toggleStageExpand(stageNum) {
+  haptic("light");
+  learningExpandedStages[stageNum] = !learningExpandedStages[stageNum];
+  if (currentView && currentView.type === "learning") {
+    currentView.html = renderLearningCenter();
+    render();
+  }
+}
+
+async function toggleLearningStage(stageId) {
+  haptic("medium");
+  try {
+    const res = await api("/api/learning/progress/toggle", { stage_id: Number(stageId) });
+    if (res.ok) {
+      learningState.completed_stages = res.completed_stages || [];
+      showToast(res.completed ? "🎉 Bosqich tugatildi deb belgilandi!" : "Bosqich bekor qilindi");
+      if (currentView && currentView.type === "learning") {
+        currentView.html = renderLearningCenter();
+        render();
+      }
+    }
+  } catch (err) {
+    showAlert(err.message || "Progressni saqlashda xatolik.");
+  }
+}
+
+function safeOpenExternal(url) {
+  if (!url) return;
+  haptic("light");
+  try {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+      window.Telegram.WebApp.openLink(url);
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  } catch (e) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+function renderLearningCenter() {
+  const stages = learningState.stages || [];
+  const resources = learningState.resources || [];
+  const tables = learningState.tables || [];
+  const completedIds = learningState.completed_stages || [];
+
+  const totalStages = stages.length || 9;
+  const completedCount = completedIds.length;
+  const progressPct = totalStages ? Math.round((completedCount / totalStages) * 100) : 0;
+
+  const q = (learningSearchQuery || "").trim().toLowerCase();
+
+  // Filter chips
+  const filterChips = [
+    { id: "all", label: "Barchasi" },
+    { id: "stages", label: "Bosqichlar (01-09)" },
+    { id: "books", label: "Kitoblar" },
+    { id: "standards", label: "Normativlar (ShNQ/GOST)" },
+    { id: "projects", label: "Real Loyihalar" },
+    { id: "checklist", label: "Interyer Rabochka" },
+    { id: "revit", label: "Revit BIM" }
+  ];
+
+  // Filtering stages
+  const filteredStages = stages.filter(s => {
+    if (learningFilter === "books" || learningFilter === "standards" || learningFilter === "projects" || learningFilter === "checklist") {
+      const stageRes = resources.filter(r => r.stage_id === s.id);
+      if (learningFilter === "books" && !stageRes.some(r => r.resource_type === "book")) return false;
+      if (learningFilter === "standards" && !stageRes.some(r => r.resource_type === "standard")) return false;
+      if (learningFilter === "projects" && !stageRes.some(r => r.resource_type === "project_album")) return false;
+      if (learningFilter === "revit" && !stageRes.some(r => r.resource_type === "revit_guide") && s.stage_number !== 8) return false;
+    }
+    if (!q) return true;
+    const inTitle = (s.title || "").toLowerCase().includes(q);
+    const inSub = (s.subtitle || "").toLowerCase().includes(q);
+    const inDesc = (s.description || "").toLowerCase().includes(q);
+    const inTopics = (s.topics || []).some(t => String(t).toLowerCase().includes(q));
+    const inRes = resources.some(r => r.stage_id === s.id && (
+      (r.title || "").toLowerCase().includes(q) ||
+      (r.author || "").toLowerCase().includes(q) ||
+      (r.topic || "").toLowerCase().includes(q)
+    ));
+    return inTitle || inSub || inDesc || inTopics || inRes;
+  });
+
+  // Filtering tables
+  const filteredTables = tables.filter(t => {
+    if (learningFilter === "stages") return false;
+    if (learningFilter === "standards" && t.table_key !== "uzbekistan_norms" && t.table_key !== "spds_gost_standards") return false;
+    if (learningFilter === "checklist" && t.table_key !== "interior_drawings_checklist") return false;
+    if (learningFilter === "books" && t.table_key !== "top_10_sources") return false;
+    if (!q) return true;
+    const inTitle = (t.title || "").toLowerCase().includes(q);
+    const inSub = (t.subtitle || "").toLowerCase().includes(q);
+    const inRows = (t.rows || []).some(row => row.some(cell => String(cell).toLowerCase().includes(q)));
+    return inTitle || inSub || inRows;
+  });
+
+  return `
+    <div class="learning-container">
+      <div class="back-btn" onclick="closeDetail()">← Kutubxonaga qaytish</div>
+
+      <!-- HERO BANNER -->
+      <div class="learning-hero">
+        <div class="learning-hero-badge">YOSHUZBEKK ACADEMY • KNOWLEDGE CENTER</div>
+        <h1 class="learning-hero-title">Arxitektura loyihalash va professional loyiha hujjatlari</h1>
+        <p class="learning-hero-desc">
+          O‘zbekiston sharoitida arxitektura loyihalash, ishchi hujjatlar, grafik rasmiylashtirish, komponovka, spetsifikatsiya va normativ hujjatlarni bosqichma-bosqich o‘rganish.
+        </p>
+
+        <!-- PROGRESS CARD -->
+        <div class="learning-progress-card">
+          <div class="learning-progress-header">
+            <span class="learning-progress-label">Sizning o‘rganish progressi</span>
+            <span class="learning-progress-count">${completedCount} / ${totalStages} bosqich (${progressPct}%)</span>
+          </div>
+          <div class="learning-progress-track">
+            <div class="learning-progress-bar" style="width: ${progressPct}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH & FILTER -->
+      <div class="learning-controls">
+        <div class="learning-search-wrap">
+          <span class="learning-search-icon">🔍</span>
+          <input
+            id="learning-search-input"
+            class="learning-search-input"
+            type="text"
+            placeholder="Mavzu, kitob, normativ yoki spetsifikatsiyani qidiring..."
+            value="${escapeHtml(learningSearchQuery)}"
+            oninput="setLearningSearch(this.value)"
+          />
+        </div>
+
+        <div class="learning-filter-chips">
+          ${filterChips.map(f => `
+            <div class="learning-chip ${learningFilter === f.id ? "active" : ""}" onclick="setLearningFilter('${f.id}')">
+              ${f.label}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- STAGES ACCORDION LIST -->
+      ${filteredStages.length ? `
+        <div class="learning-sec-label" style="margin-bottom: 12px;">ROADMAP: 01 DAN 09 BOSQICHLAR</div>
+        ${filteredStages.map(stage => {
+          const isExpanded = Boolean(learningExpandedStages[stage.stage_number]);
+          const isCompleted = completedIds.includes(stage.id);
+          const stageRes = resources.filter(r => r.stage_id === stage.id);
+
+          return `
+            <div class="learning-stage-card ${isExpanded ? "expanded" : ""} ${isCompleted ? "completed" : ""}">
+              <div class="learning-stage-header" onclick="toggleStageExpand(${stage.stage_number})">
+                <div class="learning-stage-info">
+                  <div class="learning-stage-top-meta">
+                    <span class="learning-stage-num">${String(stage.stage_number).padStart(2, "0")}-BOSQICH</span>
+                    ${isCompleted ? `<span class="learning-completed-badge">✓ Tugatildi</span>` : ""}
+                  </div>
+                  <div class="learning-stage-title">${escapeHtml(stage.title)}</div>
+                  <div class="learning-stage-subtitle">${escapeHtml(stage.subtitle || "")}</div>
+                </div>
+                <div class="learning-stage-chevron">▼</div>
+              </div>
+
+              <div class="learning-stage-body">
+                <div class="learning-sec-label">Tushuntirish:</div>
+                <div class="learning-stage-desc">${escapeHtml(stage.description || "")}</div>
+
+                ${Array.isArray(stage.topics) && stage.topics.length ? `
+                  <div class="learning-sec-label">Nimalarni o'rganasiz:</div>
+                  <div class="learning-topics-box">
+                    <ul class="learning-topics-list">
+                      ${stage.topics.map(t => `<li>${escapeHtml(t)}</li>`).join("")}
+                    </ul>
+                  </div>
+                ` : ""}
+
+                ${stageRes.length ? `
+                  <div class="learning-sec-label">Bosqich manbalari va adabiyotlari (${stageRes.length} ta):</div>
+                  <div class="learning-res-list">
+                    ${stageRes.map(res => `
+                      <div class="learning-res-card">
+                        <div class="learning-res-top">
+                          <div class="learning-res-title">${escapeHtml(res.title)}</div>
+                          <span class="learning-res-tag">${escapeHtml(res.resource_type)}</span>
+                        </div>
+                        <div class="learning-res-meta">
+                          ${res.author ? `<span>Muallif: <b>${escapeHtml(res.author)}</b></span> · ` : ""}
+                          ${res.year ? `<span>Yil: ${escapeHtml(res.year)}</span> · ` : ""}
+                          ${res.language ? `<span>Til: ${escapeHtml(res.language.toUpperCase())}</span>` : ""}
+                        </div>
+                        ${res.topic ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Mavzu: ${escapeHtml(res.topic)}</div>` : ""}
+                        ${res.benefit_description ? `
+                          <div class="learning-res-benefit">
+                            <b>Foydasi:</b> ${escapeHtml(res.benefit_description)}
+                          </div>
+                        ` : ""}
+                        <div class="learning-res-actions">
+                          ${res.pdf_url ? `
+                            <button class="learning-action-btn primary" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">
+                              📄 PDFni o‘qish →
+                            </button>
+                          ` : ""}
+                          ${res.web_url ? `
+                            <button class="learning-action-btn" onclick="safeOpenExternal('${escapeJsString(res.web_url)}')">
+                              🌐 Online manba →
+                            </button>
+                          ` : ""}
+                        </div>
+                      </div>
+                    `).join("")}
+                  </div>
+                ` : ""}
+
+                <div class="learning-stage-footer">
+                  <button class="learning-toggle-btn ${isCompleted ? "completed" : ""}" onclick="toggleLearningStage(${stage.id})">
+                    ${isCompleted ? "✓ Tugatildi (Bekor qilish)" : "○ Bosqichni tugatildi deb belgilash"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      ` : ""}
+
+      <!-- TABLES SECTION -->
+      ${filteredTables.length ? `
+        <div class="learning-sec-label" style="margin: 28px 0 14px;">STANDARTLAR, NORMATIVLAR VA ASOSIY JADVALLAR</div>
+        ${filteredTables.map(tbl => `
+          <div class="learning-table-card">
+            <div class="learning-table-header">
+              <div class="learning-table-title">${escapeHtml(tbl.title)}</div>
+              ${tbl.subtitle ? `<div class="learning-table-subtitle">${escapeHtml(tbl.subtitle)}</div>` : ""}
+            </div>
+            <div class="learning-table-scroll">
+              <table class="learning-table">
+                <thead>
+                  <tr>
+                    ${(tbl.columns || []).map(col => `<th>${escapeHtml(col)}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(tbl.rows || []).map(row => `
+                    <tr>
+                      ${row.map((cell, idx) => {
+                        const cellStr = String(cell || "");
+                        if (cellStr.startsWith("http://") || cellStr.startsWith("https://")) {
+                          return `
+                            <td>
+                              <a class="learning-table-link" href="#" onclick="safeOpenExternal('${escapeJsString(cellStr)}'); return false;">
+                                Ochish ↗
+                              </a>
+                            </td>
+                          `;
+                        }
+                        if (cellStr === "AMALDA") {
+                          return `<td><span class="learning-status-badge active">AMALDA</span></td>`;
+                        }
+                        if (cellStr === "BEKOR QILINGAN") {
+                          return `<td><span class="learning-status-badge deprecated">BEKOR QILINGAN</span></td>`;
+                        }
+                        return `<td>${escapeHtml(cellStr)}</td>`;
+                      }).join("")}
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `).join("")}
+      ` : ""}
+
+      ${!filteredStages.length && !filteredTables.length ? `
+        <div class="empty-box" style="margin-top: 30px;">
+          Hech narsa topilmadi. Qidiruv so'zini o'zgartirib ko'ring yoki boshqa filtrni tanlang.
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+// Admin Learning Management UI
+function renderAdminLearning() {
+  const stages = learningState.stages || [];
+  const resources = learningState.resources || [];
+  const tables = learningState.tables || [];
+
+  return `
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h3 style="margin: 0; font-size: 18px;">📚 O‘rganish Bazasi Boshqaruvi</h3>
+          <p style="margin: 4px 0 0; font-size: 12.5px; color: var(--text-secondary);">
+            Arxitektura va ishchi loyihalar o‘quv markazi ma'lumotlarini boshqarish
+          </p>
+        </div>
+        <button class="btn" style="width: auto; padding: 8px 14px; font-size: 12.5px; margin: 0;" onclick="openAddLearningResourceModal()">
+          ➕ Yangi Resurs
+        </button>
+      </div>
+
+      <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 20px;">
+        <div class="stat-card">
+          <div class="stat-num">${stages.length}</div>
+          <div class="stat-label">Bosqichlar (Roadmap)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${resources.length}</div>
+          <div class="stat-label">Kitoblar & Standartlar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${tables.length}</div>
+          <div class="stat-label">Me'yoriy Jadvallar</div>
+        </div>
+      </div>
+
+      <div class="section-title">01..09 Bosqichlar va Resurslar</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        ${stages.map(stage => {
+          const stageRes = resources.filter(r => r.stage_id === stage.id);
+          return `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase;">
+                    ${String(stage.stage_number).padStart(2, "0")}-BOSQICH
+                  </span>
+                  <div style="font-weight: 750; font-size: 15px; color: var(--text-primary); margin: 2px 0;">
+                    ${escapeHtml(stage.title)}
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-secondary);">
+                    ${escapeHtml(stage.subtitle || "")}
+                  </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="admin-small-btn" onclick="openAddLearningResourceModal(${stage.id})">
+                    ➕ Resurs qo‘shish
+                  </button>
+                </div>
+              </div>
+
+              ${stageRes.length ? `
+                <div style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                  ${stageRes.map(res => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding: 8px 12px; border-radius: 8px; font-size: 12.5px;">
+                      <div>
+                        <b>${escapeHtml(res.title)}</b>
+                        <span style="color: var(--text-secondary); margin-left: 6px;">(${escapeHtml(res.resource_type)} · ${escapeHtml(res.year || '')})</span>
+                      </div>
+                      <div style="display: flex; gap: 6px;">
+                        ${res.pdf_url ? `<button class="admin-small-btn" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">PDF ↗</button>` : ""}
+                        <button class="admin-small-btn" style="background: rgba(235,59,59,0.8);" onclick="deleteLearningResource(${res.id})">🗑️</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              ` : `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">Ushbu bosqichda alohida resurs biriktirilmagan.</div>`}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function openAddLearningResourceModal(defaultStageId = null) {
+  const stages = learningState.stages || [];
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width: 480px; width: 92vw; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-title">➕ Yangi O‘rganish Resursi</div>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin: 16px 0;">
+        <div class="apple-field">
+          <label>Qaysi bosqichga biriktiriladi?</label>
+          <select id="lr-new-stage" class="apple-input">
+            <option value="">-- Bosqichsiz (Umumiy) --</option>
+            ${stages.map(s => `
+              <option value="${s.id}" ${defaultStageId === s.id ? "selected" : ""}>
+                ${String(s.stage_number).padStart(2, "0")} — ${escapeHtml(s.title)}
+              </option>
+            `).join("")}
+          </select>
+        </div>
+
+        <div class="apple-field">
+          <label>Resurs / Kitob nomi *</label>
+          <input id="lr-new-title" class="apple-input" type="text" placeholder="Masalan: Строительное черчение">
+        </div>
+
+        <div class="apple-field">
+          <label>Muallif</label>
+          <input id="lr-new-author" class="apple-input" type="text" placeholder="Masalan: Будасов Б.В.">
+        </div>
+
+        <div class="apple-field">
+          <label>Yil</label>
+          <input id="lr-new-year" class="apple-input" type="text" placeholder="Masalan: 2003">
+        </div>
+
+        <div class="apple-field">
+          <label>Til</label>
+          <select id="lr-new-lang" class="apple-input">
+            <option value="uz">O‘zbekcha (UZ)</option>
+            <option value="ru" selected>Ruscha (RU)</option>
+            <option value="en">Inglizcha (EN)</option>
+          </select>
+        </div>
+
+        <div class="apple-field">
+          <label>Resurs turi</label>
+          <select id="lr-new-type" class="apple-input">
+            <option value="book" selected>Kitob / Darslik</option>
+            <option value="standard">Normativ / Standart (ShNQ/GOST)</option>
+            <option value="project_album">Real Loyiha Albomi (PDF)</option>
+            <option value="revit_guide">Revit / BIM Qo‘llanma</option>
+            <option value="checklist">Checklist / Ma'lumotnoma</option>
+          </select>
+        </div>
+
+        <div class="apple-field">
+          <label>Asosiy mavzusi</label>
+          <input id="lr-new-topic" class="apple-input" type="text" placeholder="Mavzusi">
+        </div>
+
+        <div class="apple-field">
+          <label>Amaliy foydasi (Qisqa izoh)</label>
+          <textarea id="lr-new-benefit" class="apple-input" rows="2" placeholder="O‘quvchiga nima foyda beradi..."></textarea>
+        </div>
+
+        <div class="apple-field">
+          <label>PDF URL havolasi</label>
+          <input id="lr-new-pdf" class="apple-input" type="url" placeholder="https://...">
+        </div>
+
+        <div class="apple-field">
+          <label>Online manba URL havolasi</label>
+          <input id="lr-new-web" class="apple-input" type="url" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" onclick="this.closest('.modal-overlay').remove()">Bekor qilish</button>
+        <button type="button" class="modal-btn confirm" onclick="submitAddLearningResource()">💾 Saqlash</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function submitAddLearningResource() {
+  const stageId = document.getElementById("lr-new-stage")?.value || null;
+  const title = document.getElementById("lr-new-title")?.value.trim();
+  const author = document.getElementById("lr-new-author")?.value.trim();
+  const year = document.getElementById("lr-new-year")?.value.trim();
+  const language = document.getElementById("lr-new-lang")?.value || "ru";
+  const resourceType = document.getElementById("lr-new-type")?.value || "book";
+  const topic = document.getElementById("lr-new-topic")?.value.trim();
+  const benefit = document.getElementById("lr-new-benefit")?.value.trim();
+  const pdfUrl = document.getElementById("lr-new-pdf")?.value.trim();
+  const webUrl = document.getElementById("lr-new-web")?.value.trim();
+
+  if (!title) return showAlert("Resurs nomi kiritilishi shart!");
+
+  try {
+    haptic("medium");
+    await adminApi("/api/admin/learning/resource/save", {
+      stage_id: stageId ? Number(stageId) : null,
+      title,
+      author,
+      year,
+      language,
+      resource_type: resourceType,
+      topic,
+      benefit_description: benefit,
+      pdf_url: pdfUrl,
+      web_url: webUrl,
+      is_free: true,
+      is_pro: false
+    });
+    showToast("Resurs muvaffaqiyatli saqlandi!");
+    document.querySelector(".modal-overlay")?.remove();
+    await loadLearningContent();
+    renderAdminPanel();
+  } catch (err) {
+    showAlert(err.message || "Saqlashda xatolik");
+  }
+}
+
+async function deleteLearningResource(id) {
+  showConfirm(
+    "Resurs o‘chirilsinmi?",
+    "Ushbu resurs o‘quv markazidan butunlay olib tashlanadi.",
+    "Ha, o‘chirish",
+    async () => {
+      await adminApi("/api/admin/learning/resource/delete", { id: Number(id) });
+      showToast("Resurs o‘chirildi!");
+      await loadLearningContent();
+      renderAdminPanel();
+    }
+  );
+}
+
+
 
 function render() {
   if (!app) return;

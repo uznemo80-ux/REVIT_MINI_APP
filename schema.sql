@@ -176,3 +176,65 @@ CREATE INDEX IF NOT EXISTS idx_course_showcases_course_id ON course_showcases(co
 CREATE INDEX IF NOT EXISTS idx_construction_materials_category ON construction_materials(category);
 CREATE INDEX IF NOT EXISTS idx_library_open_resources_type ON library_open_resources(type);
 
+-- ======================================================
+-- LEARNING CENTER (ARXITEKTURA VA ISHCHI HUJJATLAR KNOWLEDGE BASE)
+-- ======================================================
+
+-- 01..09 O'RGANISH BOSQICHLARI (ROADMAP)
+CREATE TABLE IF NOT EXISTS learning_stages (
+  id            SERIAL PRIMARY KEY,
+  stage_number  INT NOT NULL UNIQUE,
+  title         VARCHAR(255) NOT NULL,
+  subtitle      VARCHAR(500),
+  description   TEXT,
+  topics        JSONB NOT NULL DEFAULT '[]',
+  order_index   INT NOT NULL DEFAULT 0,
+  is_pro        BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- KITOBLAR, QO'LLANMALAR, STANDARTLAR VA REAL PROYEKTLAR RESURSLARI
+CREATE TABLE IF NOT EXISTS learning_resources (
+  id                  SERIAL PRIMARY KEY,
+  stage_id            INT REFERENCES learning_stages(id) ON DELETE SET NULL,
+  title               VARCHAR(500) NOT NULL,
+  author              VARCHAR(255),
+  year                VARCHAR(50),
+  language            VARCHAR(50) DEFAULT 'uz',
+  topic               VARCHAR(255),
+  benefit_description TEXT,
+  resource_type       VARCHAR(50) NOT NULL,
+  pdf_url             TEXT,
+  web_url             TEXT,
+  is_free             BOOLEAN DEFAULT TRUE,
+  is_pro              BOOLEAN DEFAULT FALSE,
+  order_index         INT NOT NULL DEFAULT 0,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- MAXSUS JADVALLAR (NORMATIVLAR, TOP 10, CHECKLISTLAR)
+CREATE TABLE IF NOT EXISTS learning_tables (
+  id          SERIAL PRIMARY KEY,
+  table_key   VARCHAR(100) NOT NULL UNIQUE,
+  title       VARCHAR(255) NOT NULL,
+  subtitle    TEXT,
+  columns     JSONB NOT NULL DEFAULT '[]',
+  rows        JSONB NOT NULL DEFAULT '[]',
+  order_index INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FOYDALANUVCHILARNING O'RGANISH PROGRESSI (TUGATILGAN BOSQICHLAR)
+CREATE TABLE IF NOT EXISTS learning_progress (
+  id            SERIAL PRIMARY KEY,
+  user_id       INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  stage_id      INT NOT NULL REFERENCES learning_stages(id) ON DELETE CASCADE,
+  completed_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, stage_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_learning_stages_order ON learning_stages(order_index, stage_number);
+CREATE INDEX IF NOT EXISTS idx_learning_resources_stage ON learning_resources(stage_id, resource_type);
+CREATE INDEX IF NOT EXISTS idx_learning_progress_user ON learning_progress(user_id);
+
+

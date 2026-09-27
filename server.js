@@ -12,6 +12,8 @@ var verifyModule = require('./verifyTelegram');
 var verifyInitData = verifyModule.verifyInitData;
 var botModule = require('./bot');
 var notifyAdmin = botModule.notifyAdmin;
+var learningModule = require('./learningData');
+var initLearningTables = learningModule.initLearningTables;
 
 var app = express();
 
@@ -1646,6 +1648,7 @@ async function ensureLibraryV2Tables() {
 initExtendedTables();
 ensureUserActivityTable();
 ensureLibraryV2Tables();
+initLearningTables(pool);
 
 // ======================================================
 // USER RESTRICTIONS (BAN & RESTRICTION SYSTEM)
@@ -6207,6 +6210,199 @@ app.post('/api/library/v2/categories', async function (req, res) {
   } catch (error) {
     console.error('LIBRARY V2 CATEGORIES ERROR:', error);
     return res.status(500).json({ error: 'Kategoriyalarni yuklashda xatolik' });
+  }
+});
+
+// ======================================================
+// LEARNING CENTER API (ARXITEKTURA VA ISHCHI HUJJATLAR)
+// ======================================================
+
+app.post('/api/learning/content', async function (req, res) {
+  try {
+    var user = null;
+    var completedStageIds = [];
+    var hasAccess = false;
+
+    if (req.body && req.body.initData) {
+      try {
+        var tgUser = verifyInitData(req.body.initData);
+        if (tgUser && tgUser.id) {
+          var uRes = await pool.query('SELECT id, access_until FROM users WHERE telegram_id = $1', [tgUser.id]);
+          if (uRes.rows[0]) {
+            user = uRes.rows[0];
+            hasAccess = Boolean(user.access_until && new Date(user.access_until) > new Date());
+            var pRes = await pool.query('SELECT stage_id FROM learning_progress WHERE user_id = $1', [user.id]);
+            completedStageIds = pRes.rows.map(function (r) { return r.stage_id; });
+          }
+        }
+      } catch (authErr) {}
+    }
+
+    var stagesResult = await pool.query(
+      'SELECT id, stage_number, title, subtitle, description, topics, order_index, is_pro FROM learning_stages ORDER BY order_index ASC, stage_number ASC'
+    );
+
+    var resourcesResult = await pool.query(
+      'SELECT id, stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index FROM learning_resources ORDER BY order_index ASC, id ASC'
+    );
+
+    var tablesResult = await pool.query(
+      'SELECT id, table_key, title, subtitle, columns, rows, order_index FROM learning_tables ORDER BY order_index ASC, id ASC'
+    );
+
+    return res.json({
+      ok: true,
+      stages: stagesResult.rows,
+      resources: resourcesResult.rows,
+      tables: tablesResult.rows,
+      completed_stages: completedStageIds,
+      has_access: hasAccess
+    });
+  } catch (error) {
+    console.error('GET LEARNING CONTENT ERROR:', error);
+    return res.status(500).json({ error: 'O\'rganish ma\'lumotlarini olishda server xatosi' });
+  }
+});
+
+app.post('/api/learning/progress/toggle', async function (req, res) {
+  try {
+    if (!req.body || !req.body.initData) {
+      return res.status(401).json({ error: 'Avtorizatsiya talab qilinadi' });
+    }
+    var tgUser = verifyInitData(req.body.initData);
+    if (!tgUser || !tgUser.id) {
+      return res.status(401).json({ error: 'Yaroqsiz autentifikatsiya' });
+    }
+
+    var stageId = parseInt(req.body.stage_id, 10);
+    if (!stageId || isNaN(stageId)) {
+      return res.status(400).json({ error: 'stage_id ko\'rsatilishi shart' });
+    }
+
+    var uRes = await pool.query('SELECT id FROM users WHERE telegram_id = $1', [tgUser.id]);
+    if (!uRes.rows[0]) {
+      return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    }
+    var userId = uRes.rows[0].id;
+
+    var checkRes = await pool.query(
+      'SELECT id FROM learning_progress WHERE user_id = $1 AND stage_id = $2',
+      [userId, stageId]
+    );
+
+    var isCompleted = false;
+    if (checkRes.rows[0]) {
+      await pool.query('DELETE FROM learning_progress WHERE user_id = $1 AND stage_id = $2', [userId, stageId]);
+      isCompleted = false;
+    } else {
+      await pool.query(
+        'INSERT INTO learning_progress (user_id, stage_id, completed_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING',
+        [userId, stageId]
+      );
+      isCompleted = true;
+    }
+
+    var pRes = await pool.query('SELECT stage_id FROM learning_progress WHERE user_id = $1', [userId]);
+    var completedStageIds = pRes.rows.map(function (r) { return r.stage_id; });
+
+    return res.json({
+      ok: true,
+      completed: isCompleted,
+      completed_stages: completedStageIds
+    });
+  } catch (error) {
+    console.error('TOGGLE LEARNING PROGRESS ERROR:', error);
+    return res.status(500).json({ error: 'Progressni yangilashda xatolik yuz berdi' });
+  }
+});
+
+app.post('/api/admin/learning/stage/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    var id = b.id ? parseInt(b.id, 10) : null;
+    var stageNumber = parseInt(b.stage_number, 10);
+    var title = String(b.title || '').trim();
+    var subtitle = String(b.subtitle || '').trim();
+    var description = String(b.description || '').trim();
+    var topics = Array.isArray(b.topics) ? b.topics : [];
+    var orderIndex = parseInt(b.order_index, 10) || stageNumber;
+    var isPro = Boolean(b.is_pro);
+
+    if (!title || !stageNumber) {
+      return res.status(400).json({ error: 'Sarlavha va bosqich raqami shart' });
+    }
+
+    if (id) {
+      await pool.query(
+        'UPDATE learning_stages SET stage_number = $1, title = $2, subtitle = $3, description = $4, topics = $5, order_index = $6, is_pro = $7 WHERE id = $8',
+        [stageNumber, title, subtitle, description, JSON.stringify(topics), orderIndex, isPro, id]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO learning_stages (stage_number, title, subtitle, description, topics, order_index, is_pro) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [stageNumber, title, subtitle, description, JSON.stringify(topics), orderIndex, isPro]
+      );
+    }
+
+    return res.json({ ok: true, message: 'Bosqich muvaffaqiyatli saqlandi' });
+  } catch (error) {
+    console.error('ADMIN STAGE SAVE ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/learning/resource/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body;
+    var id = b.id ? parseInt(b.id, 10) : null;
+    var stageId = b.stage_id ? parseInt(b.stage_id, 10) : null;
+    var title = String(b.title || '').trim();
+    var author = String(b.author || '').trim();
+    var year = String(b.year || '').trim();
+    var language = String(b.language || 'uz').trim();
+    var topic = String(b.topic || '').trim();
+    var benefit = String(b.benefit_description || '').trim();
+    var resourceType = String(b.resource_type || 'book').trim();
+    var pdfUrl = String(b.pdf_url || '').trim();
+    var webUrl = String(b.web_url || '').trim();
+    var isFree = b.is_free !== undefined ? Boolean(b.is_free) : true;
+    var isPro = Boolean(b.is_pro);
+    var orderIndex = parseInt(b.order_index, 10) || 0;
+
+    if (!title) {
+      return res.status(400).json({ error: 'Resurs nomi ko\'rsatilishi shart' });
+    }
+
+    if (id) {
+      await pool.query(
+        `UPDATE learning_resources SET stage_id = $1, title = $2, author = $3, year = $4, language = $5, topic = $6,
+         benefit_description = $7, resource_type = $8, pdf_url = $9, web_url = $10, is_free = $11, is_pro = $12, order_index = $13 WHERE id = $14`,
+        [stageId, title, author, year, language, topic, benefit, resourceType, pdfUrl, webUrl, isFree, isPro, orderIndex, id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO learning_resources (stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [stageId, title, author, year, language, topic, benefit, resourceType, pdfUrl, webUrl, isFree, isPro, orderIndex]
+      );
+    }
+
+    return res.json({ ok: true, message: 'Resurs saqlandi' });
+  } catch (error) {
+    console.error('ADMIN RESOURCE SAVE ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/learning/resource/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.body.id, 10);
+    if (!id) return res.status(400).json({ error: 'ID topilmadi' });
+    await pool.query('DELETE FROM learning_resources WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Resurs o\'chirildi' });
+  } catch (error) {
+    console.error('ADMIN RESOURCE DELETE ERROR:', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
