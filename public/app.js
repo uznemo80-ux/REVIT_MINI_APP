@@ -11061,7 +11061,7 @@ function renderAdminLibrary() {
   const files = adminData.libraryFiles || [];
   const showcases = state.showcases || [];
 
-  const isOtherTab = ["sources", "tests", "materials", "categories", "support", "files", "showcases"].includes(subTab);
+  const isOtherTab = ["sources", "tests", "materials", "categories", "support", "files", "showcases", "resources_v2"].includes(subTab);
   const showOthers = Boolean(adminData.showLibraryOtherSections || isOtherTab);
 
   return `
@@ -11093,6 +11093,9 @@ function renderAdminLibrary() {
           </div>
           <div class="chip ${subTab === "materials" ? "active" : ""}" data-subtab="materials" onclick="setAdminLibraryTab('materials', event)" style="font-size:12px; padding:4px 10px;">
             🧱 Materiallar (${mats.length})
+          </div>
+          <div class="chip ${subTab === "resources_v2" ? "active" : ""}" data-subtab="resources_v2" onclick="setAdminLibraryTab('resources_v2', event)" style="font-size:12px; padding:4px 10px; ${subTab !== "resources_v2" ? "background:rgba(255,59,48,0.12); color:#ff3b30; font-weight:700;" : ""}" title="Kitoblar/Manbalar/Testlar/Materiallar bo'limlariga to'g'ri kelmagan barcha resurslar shu yerda ko'rinadi">
+            📄 Barcha resurslar (${(adminData.libraryV2Resources || libraryV2Resources || []).length})
           </div>
           <div class="chip ${subTab === "categories" ? "active" : ""}" data-subtab="categories" onclick="setAdminLibraryTab('categories', event)" style="font-size:12px; padding:4px 10px;">
             🏷️ Kategoriyalar (${(libraryV2Categories || []).length})
