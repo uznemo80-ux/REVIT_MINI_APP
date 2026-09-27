@@ -7510,3 +7510,158 @@ html.light .reader-spinner-overlay {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* ======================================================
+   ACCESS RESTRICTED SCREEN (BAN SYSTEM)
+   ====================================================== */
+
+.access-restricted-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg-primary);
+  box-sizing: border-box;
+}
+
+.access-restricted-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.access-restricted-icon-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px auto;
+  border-radius: 50%;
+  background: rgba(255, 69, 58, 0.12);
+  border: 1px solid rgba(255, 69, 58, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.access-restricted-icon {
+  font-size: 36px;
+}
+
+.access-restricted-title {
+  font-size: 18px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
+}
+
+.access-restricted-subtitle {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+}
+
+.access-restricted-details {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.restricted-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6px 0;
+  font-size: 12.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.restricted-info-row:last-child {
+  border-bottom: none;
+}
+
+.restricted-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex: 0 0 110px;
+}
+
+.restricted-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}
+
+.highlight-danger {
+  color: #ff453a !important;
+}
+
+.highlight-warn {
+  color: #ffd60a !important;
+}
+
+.restricted-contact-btn {
+  background: #2979ff !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: none !important;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.access-restricted-footer-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 16px;
+}
+
+/* Ban Badges & Pills */
+.badge.danger {
+  background: rgba(255, 69, 58, 0.15);
+  color: #ff453a;
+  border: 1px solid rgba(255, 69, 58, 0.3);
+}
+
+.badge.warn {
+  background: rgba(255, 214, 10, 0.15);
+  color: #ffd60a;
+  border: 1px solid rgba(255, 214, 10, 0.3);
+}
+
+.badge.ok {
+  background: rgba(48, 209, 88, 0.15);
+  color: #30d158;
+  border: 1px solid rgba(48, 209, 88, 0.3);
+}
+
+.info-val.danger {
+  color: #ff453a !important;
+}
+
+.ban-dur-pill {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.ban-dur-pill.active {
+  background: var(--text-primary) !important;
+  color: var(--bg-primary) !important;
+  font-weight: 700;
+}

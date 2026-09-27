@@ -523,10 +523,123 @@ async function api(path, body = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 403 && data && data.restricted) {
+      state.isRestricted = true;
+      state.restriction = data.restriction;
+      renderAccessRestrictedScreen();
+      const err = new Error(data.error || "Platformadan foydalanish cheklangan");
+      err.restricted = true;
+      throw err;
+    }
     throw new Error(data.message || data.error || "Server xatosi");
   }
 
   return data;
+}
+
+// ======================================================
+// ACCESS RESTRICTED SCREEN (BAN & RESTRICTION SYSTEM)
+// ======================================================
+
+function renderAccessRestrictedScreen() {
+  const appEl = document.getElementById("app");
+  if (!appEl) return;
+
+  const r = state.restriction || {};
+  const isPermanent = Boolean(r.is_permanent || r.type === "PERMANENT_BAN");
+
+  let formattedExpiry = "Doimiy";
+  if (!isPermanent && r.expires_at) {
+    try {
+      const d = new Date(r.expires_at);
+      formattedExpiry = d.toLocaleString("uz-UZ", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    } catch (e) {
+      formattedExpiry = String(r.expires_at);
+    }
+  }
+
+  let formattedStart = "";
+  if (r.starts_at) {
+    try {
+      const d = new Date(r.starts_at);
+      formattedStart = d.toLocaleString("uz-UZ", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    } catch (e) {}
+  }
+
+  const adminContact = (state.settings && state.settings.telegram_link)
+    ? state.settings.telegram_link
+    : "https://t.me/yoshuzbekk_admin";
+
+  appEl.innerHTML = `
+    <div class="access-restricted-page">
+      <div class="access-restricted-card">
+        <div class="access-restricted-icon-wrap">
+          <div class="access-restricted-icon">🔒</div>
+        </div>
+
+        <h1 class="access-restricted-title">Platformadan foydalanish cheklangan</h1>
+        <p class="access-restricted-subtitle">
+          Sizning akkauntingizdan foydalanish platforma qoidalariga muvofiq ${isPermanent ? "doimiy ravishda" : "vaqtincha"} to‘xtatildi.
+        </p>
+
+        <div class="access-restricted-details">
+          <div class="restricted-info-row">
+            <span class="restricted-label">📋 Sabab</span>
+            <span class="restricted-val highlight-danger">${escapeHtml(r.reason || "Platforma qoidalarini buzish")}</span>
+          </div>
+
+          ${r.admin_note ? `
+            <div class="restricted-info-row">
+              <span class="restricted-label">📝 Izoh</span>
+              <span class="restricted-val">${escapeHtml(r.admin_note)}</span>
+            </div>
+          ` : ""}
+
+          <div class="restricted-info-row">
+            <span class="restricted-label">⏳ Cheklov turi</span>
+            <span class="restricted-val">${isPermanent ? "🔴 Doimiy taqiq (Permanent)" : "🟡 Vaqtincha cheklov"}</span>
+          </div>
+
+          ${formattedStart ? `
+            <div class="restricted-info-row">
+              <span class="restricted-label">📅 Boshlangan vaqt</span>
+              <span class="restricted-val">${escapeHtml(formattedStart)}</span>
+            </div>
+          ` : ""}
+
+          <div class="restricted-info-row">
+            <span class="restricted-label">⌛ Tugash vaqti</span>
+            <span class="restricted-val ${isPermanent ? 'highlight-danger' : 'highlight-warn'}">
+              ${escapeHtml(formattedExpiry)}
+            </span>
+          </div>
+        </div>
+
+        <div class="access-restricted-actions">
+          <a href="${adminContact.startsWith('http') ? adminContact : 'https://' + adminContact}" target="_blank" class="btn restricted-contact-btn">
+            💬 Administrator bilan bog‘lanish
+          </a>
+          <button class="btn secondary" style="margin-top: 10px;" onclick="location.reload()">
+            🔄 Holatni qayta tekshirish
+          </button>
+        </div>
+
+        <div class="access-restricted-footer-note">
+          Agar ushbu cheklov xatolik tufayli qo‘yilgan deb hisoblasangiz, yuqoridagi tugma orqali murojaat qilishingiz mumkin.
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Pastki navigatsiya va floating elementlarni yashirish
+  const nav = document.querySelector(".nav");
+  if (nav) nav.style.display = "none";
 }
 
 // ======================================================
@@ -743,6 +856,7 @@ async function loadContent() {
     }
   } catch (error) {
     console.error("CONTENT LOAD ERROR:", error);
+    if (error && error.restricted) return;
     if (app) {
       app.innerHTML = `
         <div class="page">
@@ -9767,33 +9881,142 @@ async function openStudentsDetailList(filter, title) {
   }
 }
 
-// Admin Students
-function renderAdminStudents() {
-  const students = adminData.students || [];
-  if (!students.length) return `<div class="empty-box">O'quvchilar ro'yxati bo'sh.</div>`;
+// ======================================================
+// ADMIN STUDENTS: BAN & RESTRICTION SYSTEM
+// ======================================================
+
+let adminStudentsSearchQuery = "";
+let adminStudentsFilterTab = "all";
+
+function setAdminStudentsFilterTab(tab) {
+  adminStudentsFilterTab = tab;
+  render();
+}
+
+function onAdminStudentsSearch(val) {
+  adminStudentsSearchQuery = val.trim();
+  const listEl = document.getElementById("admin-students-list-wrap");
+  if (listEl) {
+    listEl.innerHTML = renderAdminStudentsListHtml();
+  } else {
+    render();
+  }
+}
+
+function getFilteredAdminStudents() {
+  const allStudents = adminData.students || [];
+  const query = (adminStudentsSearchQuery || "").toLowerCase();
+
+  return allStudents.filter(st => {
+    // 1. Tab filter
+    const status = st.restriction_status || "active";
+    if (adminStudentsFilterTab === "active" && status !== "active") return false;
+    if (adminStudentsFilterTab === "temporary" && status !== "temporary") return false;
+    if (adminStudentsFilterTab === "permanent" && status !== "permanent") return false;
+    if (adminStudentsFilterTab === "resolved" && (status !== "expired" && status !== "revoked")) return false;
+
+    // 2. Search query
+    if (query) {
+      const fn = (st.first_name || "").toLowerCase();
+      const ln = (st.last_name || "").toLowerCase();
+      const tg = String(st.telegram_id || "").toLowerCase();
+      const un = (st.username || "").toLowerCase();
+      const ph = (st.phone || "").toLowerCase();
+      if (!fn.includes(query) && !ln.includes(query) && !tg.includes(query) && !un.includes(query) && !ph.includes(query)) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function renderAdminStudentsListHtml() {
+  const filtered = getFilteredAdminStudents();
+  if (!filtered.length) {
+    return `<div class="empty-box" style="margin-top: 14px;">Mos keluvchi o'quvchilar topilmadi.</div>`;
+  }
 
   return `
-    <div class="admin-list">
-      ${students.map(st => `
-        <div class="admin-student-card" onclick="openAdminStudentModal(${Number(st.id)})">
-          <div class="admin-student-avatar">
-            ${(st.first_name || "O")[0].toUpperCase()}
+    <div class="admin-list" style="margin-top: 14px;">
+      ${filtered.map(st => {
+        const rStatus = st.restriction_status || "active";
+        return `
+          <div class="admin-student-card" onclick="openAdminStudentModal(${Number(st.id)})">
+            <div class="admin-student-avatar">
+              ${(st.first_name || "O")[0].toUpperCase()}
+            </div>
+            <div class="admin-student-info">
+              <div class="admin-student-name" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span>${escapeHtml([st.first_name, st.last_name].filter(Boolean).join(" "))}</span>
+                ${rStatus === "permanent" ? `
+                  <span class="badge danger" style="font-size: 10px; padding: 1px 6px;">🔴 Doimiy</span>
+                ` : rStatus === "temporary" ? `
+                  <span class="badge warn" style="font-size: 10px; padding: 1px 6px;">🟡 Vaqtincha</span>
+                ` : `
+                  <span class="badge ok" style="font-size: 10px; padding: 1px 6px;">🟢 Faol</span>
+                `}
+              </div>
+              <div class="admin-student-username">
+                ${st.phone ? escapeHtml(st.phone) : "Tel yo'q"} · ${st.username ? "@" + escapeHtml(st.username) : "ID: " + st.telegram_id}
+              </div>
+              <div class="admin-student-progress">
+                Darslar: ${st.watched_lessons || 0} / ${st.total_lessons || 0}
+                ${st.current_position ? `<br>📍 ${escapeHtml(st.current_position.course_title || '')} — ${escapeHtml(st.current_position.module_title || '')} / ${escapeHtml(st.current_position.lesson_title || '')}` : ""}
+              </div>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <span title="Kursga obuna holati">${st.has_access ? "🟢" : "🔴"}</span>
+              <span style="font-size: 10px; color: var(--text-secondary);">${st.has_access ? "Obuna faol" : "Obunasiz"}</span>
+            </div>
           </div>
-          <div class="admin-student-info">
-            <div class="admin-student-name">
-              ${escapeHtml([st.first_name, st.last_name].filter(Boolean).join(" "))}
-            </div>
-            <div class="admin-student-username">
-              ${st.phone ? escapeHtml(st.phone) : "Tel yo'q"} · ${st.username ? "@" + escapeHtml(st.username) : "ID: " + st.telegram_id}
-            </div>
-            <div class="admin-student-progress">
-              Darslar: ${st.watched_lessons || 0} / ${st.total_lessons || 0}
-              ${st.current_position ? `<br>📍 ${escapeHtml(st.current_position.course_title || '')} — ${escapeHtml(st.current_position.module_title || '')} / ${escapeHtml(st.current_position.lesson_title || '')}` : ""}
-            </div>
-          </div>
-          <div>${st.has_access ? "🟢" : "🔴"}</div>
-        </div>
-      `).join("")}
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderAdminStudents() {
+  const allStudents = adminData.students || [];
+  if (!allStudents.length) return `<div class="empty-box">O'quvchilar ro'yxati bo'sh.</div>`;
+
+  return `
+    <div style="margin-bottom: 12px;">
+      <div style="position: relative; margin-bottom: 10px;">
+        <input
+          id="admin-students-search-input"
+          class="apple-input"
+          type="text"
+          placeholder="🔍 Ism, familiya, ID, tel, username..."
+          value="${escapeHtml(adminStudentsSearchQuery)}"
+          oninput="onAdminStudentsSearch(this.value)"
+          style="padding-left: 14px;"
+        />
+        ${adminStudentsSearchQuery ? `
+          <button style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); font-size: 15px; cursor: pointer;" onclick="document.getElementById('admin-students-search-input').value=''; onAdminStudentsSearch('');">✕</button>
+        ` : ""}
+      </div>
+
+      <div class="lib-cats-bar" style="padding: 2px 0 8px 0; overflow-x: auto; display: flex; gap: 6px;">
+        <button class="chip ${adminStudentsFilterTab === 'all' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('all')">
+          Barchasi (${allStudents.length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'active' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('active')">
+          🟢 Faol (${allStudents.filter(s => (s.restriction_status || 'active') === 'active').length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'temporary' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('temporary')">
+          🟡 Vaqtincha (${allStudents.filter(s => s.restriction_status === 'temporary').length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'permanent' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('permanent')">
+          🔴 Doimiy (${allStudents.filter(s => s.restriction_status === 'permanent').length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'resolved' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('resolved')">
+          ⚪ Tugagan/Bekor (${allStudents.filter(s => s.restriction_status === 'expired' || s.restriction_status === 'revoked').length})
+        </button>
+      </div>
+    </div>
+
+    <div id="admin-students-list-wrap">
+      ${renderAdminStudentsListHtml()}
     </div>
   `;
 }
@@ -9803,6 +10026,8 @@ async function openAdminStudentModal(id) {
     haptic("light");
     const data = await adminApi(`/api/admin/student/${Number(id)}`);
     const st = data.student || {};
+    const activeRes = data.current_restriction || null;
+    const historyList = Array.isArray(data.restriction_history) ? data.restriction_history : [];
     const progress = Array.isArray(data.progress) ? data.progress : [];
     const courses = Array.isArray(data.courses) ? data.courses : [];
     const modules = Array.isArray(data.modules) ? data.modules : [];
@@ -9810,11 +10035,13 @@ async function openAdminStudentModal(id) {
 
     const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "O'quvchi";
 
-    // "Hozirgi holati" — eng oxirgi ko'rilgan darsdan keyingisi (yoki eng oxirgi ko'rilgani, agar hammasi tugagan bo'lsa)
     const watchedRows = progress.filter(p => p.watched);
     const lastWatched = watchedRows.length ? watchedRows[watchedRows.length - 1] : null;
     const nextIndex = lastWatched ? progress.findIndex(p => p.lesson_id === lastWatched.lesson_id) + 1 : 0;
     const currentRow = progress[nextIndex] || lastWatched;
+
+    // Admin o'zini o'zi bloklamasligi uchun tekshirish
+    const isSelf = String(st.telegram_id) === String(state.telegram_id);
 
     currentView = {
       html: `
@@ -9846,11 +10073,92 @@ async function openAdminStudentModal(id) {
               <span class="info-val">${escapeHtml(fmtDate(st.access_until) || "Belgilanmagan")}</span>
             </div>
             <div class="info-row">
+              <span class="info-label">🛡️ Platforma cheklovi</span>
+              <span class="info-val ${activeRes ? (activeRes.is_permanent ? 'danger' : 'warn') : 'ok'}">
+                ${activeRes ? (activeRes.is_permanent ? '🔴 Doimiy taqiq' : `🟡 Vaqtincha (${fmtDate(activeRes.expires_at) || ''} gacha)`) : '🟢 Cheklov yo‘q (Faol)'}
+              </span>
+            </div>
+            <div class="info-row">
               <span class="info-label">📍 Hozirgi holati</span>
               <span class="info-val">
                 ${currentRow ? `${escapeHtml(currentRow.module_title)} — ${escapeHtml(currentRow.lesson_title)}` : "Hali boshlamagan"}
               </span>
             </div>
+          </div>
+
+          <!-- BAN / UNBAN MANAGEMENT -->
+          ${isSelf ? `
+            <div class="apple-registration-form" style="background: rgba(255,255,255,0.03); border: 1px dashed var(--border); padding: 14px 16px; border-radius: var(--radius-md); margin-bottom: 18px; text-align: center;">
+              <span style="font-size: 13px; color: var(--text-secondary);">🛡️ Bu sizning administrator akkauntingiz. O‘z-o‘zini bloklash xavfsizlik nuqtai nazaridan taqiqlangan.</span>
+            </div>
+          ` : activeRes ? `
+            <div class="apple-registration-form restriction-active-box" style="background: rgba(255,69,58,0.06); border: 1px solid rgba(255,69,58,0.25); padding: 16px; border-radius: var(--radius-md); margin-bottom: 18px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <div style="font-size: 14px; font-weight: 750; color: #ff453a; display: flex; align-items: center; gap: 6px;">
+                  🔒 Faol Taqiq (${activeRes.is_permanent ? "Doimiy" : "Vaqtincha"})
+                </div>
+                <span class="badge danger" style="font-size: 10.5px;">Aktiv</span>
+              </div>
+              <div style="font-size: 13px; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px;">
+                <div><strong>Sabab:</strong> ${escapeHtml(activeRes.reason)}</div>
+                ${activeRes.admin_note ? `<div><strong>Izoh:</strong> ${escapeHtml(activeRes.admin_note)}</div>` : ""}
+                <div><strong>Muddat:</strong> ${activeRes.is_permanent ? "Doimiy (Muddatsiz)" : (fmtDate(activeRes.expires_at) + " gacha")}</div>
+                <div><strong>Boshlangan:</strong> ${fmtDate(activeRes.starts_at)}</div>
+              </div>
+              <button class="btn" style="background: #30d158; color: #fff; margin: 0;" onclick="confirmRevokeStudentBan(${Number(st.id)})">
+                🔓 Cheklovni bekor qilish
+              </button>
+            </div>
+          ` : `
+            <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-size: 14px; font-weight: 750; color: var(--text-primary); margin-bottom: 2px;">
+                    🚫 Foydalanishni cheklash / Bloklash
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-secondary);">
+                    Mini App va Telegram botdan foydalanishni vaqtincha yoki doimiy taqiqlash.
+                  </div>
+                </div>
+                <button class="btn danger" style="width: auto; padding: 8px 14px; font-size: 13px; margin: 0;" onclick="openStudentBanConfigModal(${Number(st.id)})">
+                  Bloklash
+                </button>
+              </div>
+            </div>
+          `}
+
+          <!-- RESTRICTION HISTORY -->
+          <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
+            <div style="font-size: 13.5px; font-weight: 750; color: var(--text-primary); margin-bottom: 10px;">
+              📜 Cheklovlar tarixi (${historyList.length})
+            </div>
+            ${!historyList.length ? `
+              <div style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 10px 0;">
+                Ushbu o‘quvchida hech qanday cheklov qayd etilmagan.
+              </div>
+            ` : `
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${historyList.map(h => `
+                  <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                      <span style="font-weight: 700; color: ${h.is_active ? '#ff453a' : 'var(--text-secondary)'};">
+                        ${h.is_permanent ? '🔴 Doimiy Taqiq' : '🟡 Vaqtincha Cheklov'}
+                      </span>
+                      <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: ${h.is_active ? 'rgba(255,69,58,0.15); color: #ff453a;' : h.revoked_at ? 'rgba(48,209,88,0.15); color: #30d158;' : 'rgba(255,255,255,0.08); color: var(--text-secondary);'}">
+                        ${h.is_active ? 'Faol' : h.revoked_at ? 'Bekor qilingan' : 'Muddati tugagan'}
+                      </span>
+                    </div>
+                    <div><strong>Sabab:</strong> ${escapeHtml(h.reason || '')}</div>
+                    ${h.admin_note ? `<div><strong>Izoh:</strong> ${escapeHtml(h.admin_note)}</div>` : ''}
+                    <div style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;">
+                      Qo‘yildi: ${fmtDate(h.starts_at)} ${h.creator_name ? `(${escapeHtml(h.creator_name)})` : ''}
+                      ${h.expires_at && !h.is_permanent ? ` · Tugash: ${fmtDate(h.expires_at)}` : ''}
+                      ${h.revoked_at ? `<br>Bekor qilindi: ${fmtDate(h.revoked_at)} ${h.revoker_name ? `(${escapeHtml(h.revoker_name)})` : ''}` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
           </div>
 
           <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
@@ -9880,10 +10188,239 @@ async function openAdminStudentModal(id) {
       `
     };
     window.__studentGrantData = { modules, grantedModuleIds };
+    window.__currentAdminStudent = st;
     render();
   } catch (error) {
     showAlert(error.message || "O'quvchi ma'lumotlarini yuklashda xato.");
   }
+}
+
+// ======================================================
+// BAN MODALS & ACTIONS
+// ======================================================
+
+let currentBanFormState = {
+  reason: "Materiallarni tarqatish",
+  durationDays: 15,
+  isPermanent: false,
+  customExpiry: ""
+};
+
+function selectBanDurationPreset(days, isPermanent) {
+  currentBanFormState.durationDays = days;
+  currentBanFormState.isPermanent = isPermanent;
+
+  document.querySelectorAll(".ban-dur-pill").forEach(el => el.classList.remove("active"));
+  const activeBtn = document.getElementById(isPermanent ? "ban-dur-perm" : `ban-dur-${days}`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  const customWrap = document.getElementById("ban-custom-expiry-wrap");
+  if (customWrap) customWrap.style.display = (days === 0 && !isPermanent) ? "block" : "none";
+
+  const preview = document.getElementById("ban-duration-preview");
+  if (preview) {
+    if (isPermanent) {
+      preview.innerHTML = `<span style="color:#ff453a; font-weight:700;">🔴 Taqiq: Doimiy (Muddatsiz)</span>`;
+    } else if (days > 0) {
+      const exp = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      preview.innerHTML = `<span>⏳ Taqiq tugaydi: <strong>${exp.toLocaleString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false })}</strong> (${days} kun)</span>`;
+    } else {
+      preview.innerHTML = `<span>Sana va vaqtni pastda ko‘rsating</span>`;
+    }
+  }
+}
+
+function openStudentBanConfigModal(studentId) {
+  const st = window.__currentAdminStudent || (adminData.students ? adminData.students.find(s => Number(s.id) === Number(studentId)) : null);
+  if (!st) return showAlert("O‘quvchi topilmadi.");
+
+  if (String(st.telegram_id) === String(state.telegram_id)) {
+    return showAlert("Siz o‘zingizning administrator akkauntingizga taqiq qo‘ya olmaysiz.");
+  }
+
+  currentBanFormState = {
+    reason: "Materiallarni tarqatish",
+    durationDays: 15,
+    isPermanent: false,
+    customExpiry: ""
+  };
+
+  const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "O‘quvchi";
+
+  const default15DaysExpiry = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleString('uz-UZ', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+  });
+
+  const bodyHtml = `
+    <div style="font-size: 13px; text-align: left;">
+      <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+        <div style="font-weight: 750; font-size: 14px; margin-bottom: 2px;">${escapeHtml(fullName)}</div>
+        <div style="color: var(--text-secondary); font-size: 12px;">
+          Telegram ID: <strong>${escapeHtml(st.telegram_id)}</strong> · Tel: ${escapeHtml(st.phone || "yo'q")} ${st.username ? " · @" + escapeHtml(st.username) : ""}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="font-weight: 700; display: block; margin-bottom: 6px;">📋 Bloklash sababi:</label>
+        <select id="ban-reason-select" class="apple-input" style="margin-bottom: 8px;" onchange="currentBanFormState.reason = this.value">
+          <option value="Materiallarni tarqatish" selected>Materiallarni tarqatish</option>
+          <option value="Kurs qoidalarini buzish">Kurs qoidalarini buzish</option>
+          <option value="Akkauntdan noqonuniy foydalanish">Akkauntdan noqonuniy foydalanish</option>
+          <option value="Boshqa">Boshqa qoidabuzarlik</option>
+          <option value="Maxsus sabab">Maxsus sabab (izohda yoziladi)</option>
+        </select>
+        <textarea id="ban-admin-note" class="apple-input" rows="2" placeholder="Qo‘shimcha izoh / sabab tafsilotlari (ixtiyoriy)..." style="resize: none; font-size: 12.5px;"></textarea>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="font-weight: 700; display: block; margin-bottom: 6px;">⏳ Blok muddati:</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+          <button type="button" id="ban-dur-1" class="chip ban-dur-pill" onclick="selectBanDurationPreset(1, false)">1 kun</button>
+          <button type="button" id="ban-dur-3" class="chip ban-dur-pill" onclick="selectBanDurationPreset(3, false)">3 kun</button>
+          <button type="button" id="ban-dur-7" class="chip ban-dur-pill" onclick="selectBanDurationPreset(7, false)">7 kun</button>
+          <button type="button" id="ban-dur-15" class="chip ban-dur-pill active" onclick="selectBanDurationPreset(15, false)">15 kun</button>
+          <button type="button" id="ban-dur-30" class="chip ban-dur-pill" onclick="selectBanDurationPreset(30, false)">30 kun</button>
+          <button type="button" id="ban-dur-0" class="chip ban-dur-pill" onclick="selectBanDurationPreset(0, false)">Custom</button>
+          <button type="button" id="ban-dur-perm" class="chip ban-dur-pill" style="border-color: rgba(255,69,58,0.4); color: #ff453a;" onclick="selectBanDurationPreset(0, true)">Doimiy taqiq</button>
+        </div>
+
+        <div id="ban-custom-expiry-wrap" style="display: none; margin-bottom: 8px;">
+          <label style="font-size: 11.5px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tugash sana va vaqti:</label>
+          <input type="datetime-local" id="ban-custom-expiry-input" class="apple-input" />
+        </div>
+
+        <div id="ban-duration-preview" style="font-size: 12px; color: var(--text-secondary); padding: 4px 2px;">
+          <span>⏳ Taqiq tugaydi: <strong>${default15DaysExpiry}</strong> (15 kun)</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  showFormModal("🚫 Foydalanishni cheklash", bodyHtml, "Davom etish →", async () => {
+    const reasonSelect = document.getElementById("ban-reason-select");
+    const adminNoteInput = document.getElementById("ban-admin-note");
+    const customExpiryInput = document.getElementById("ban-custom-expiry-input");
+
+    const reason = reasonSelect ? reasonSelect.value.trim() : currentBanFormState.reason;
+    const adminNote = adminNoteInput ? adminNoteInput.value.trim() : "";
+    const isPermanent = Boolean(currentBanFormState.isPermanent);
+    let durationDays = currentBanFormState.durationDays;
+    let customExpiresAt = null;
+
+    if (!isPermanent) {
+      if (durationDays === 0) {
+        if (!customExpiryInput || !customExpiryInput.value) {
+          throw new Error("Iltimos, custom tugash sanasini tanlang.");
+        }
+        customExpiresAt = new Date(customExpiryInput.value);
+        if (isNaN(customExpiresAt.getTime()) || customExpiresAt <= new Date()) {
+          throw new Error("Tugash sanasi kelajakdagi vaqt bo‘lishi shart.");
+        }
+      }
+    }
+
+    // Step 2: Confirmation modal
+    setTimeout(() => {
+      openStudentBanConfirmStep2(studentId, {
+        fullName,
+        reason,
+        adminNote,
+        isPermanent,
+        durationDays,
+        customExpiresAt
+      });
+    }, 200);
+  });
+}
+
+function openStudentBanConfirmStep2(studentId, params) {
+  const { fullName, reason, adminNote, isPermanent, durationDays, customExpiresAt } = params;
+
+  let durationText = "Doimiy";
+  if (!isPermanent) {
+    if (customExpiresAt) {
+      durationText = customExpiresAt.toLocaleString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false }) + " gacha";
+    } else {
+      const exp = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+      durationText = `${durationDays} kun (${exp.toLocaleString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false })} gacha)`;
+    }
+  }
+
+  if (isPermanent) {
+    // 15-talab: Kuchliroq Warning Doimiy Taqiq uchun
+    const warningMsg = `Siz ushbu o‘quvchining platformadan foydalanishini muddatsiz cheklamoqdasiz.
+
+O‘quvchi: ${fullName}
+Sabab: ${reason}${adminNote ? ` (${adminNote})` : ''}
+
+Bu taqiq faqat administrator tomonidan qo‘lda bekor qilinadi. Mini App va Telegram bot butunlay yopiladi.`;
+
+    showConfirm("⚠️ DOIMIY TAQIQ (OGOHLANTIRISH)", warningMsg, "Doimiy bloklashni tasdiqlash", async () => {
+      await executeStudentBan(studentId, {
+        reason,
+        admin_note: adminNote,
+        is_permanent: true
+      });
+    });
+  } else {
+    // 14-talab: Vaqtincha bloklash ogohlantirishi
+    const warningMsg = `Siz quyidagi o‘quvchini bloklamoqdasiz:
+
+${fullName}
+
+Muddat: ${durationText}
+Sabab: ${reason}${adminNote ? ` (${adminNote})` : ''}
+
+Ushbu amal o‘quvchining Mini App va Telegram botdan foydalanishini cheklaydi.`;
+
+    showConfirm("⚠️ O‘quvchini bloklash", warningMsg, "Bloklash", async () => {
+      await executeStudentBan(studentId, {
+        reason,
+        admin_note: adminNote,
+        is_permanent: false,
+        duration_days: durationDays,
+        expires_at: customExpiresAt ? customExpiresAt.toISOString() : null
+      });
+    });
+  }
+}
+
+async function executeStudentBan(studentId, payload) {
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/student/${Number(studentId)}/restriction`, payload);
+    showToast("✅ O‘quvchiga taqiq qo‘yildi va bot orqali xabar yuborildi");
+
+    // Talabalar ro'yxatini va joriy modalni yangilash
+    const studentsRes = await adminApi("/api/admin/students");
+    adminData.students = studentsRes.students || [];
+
+    openAdminStudentModal(studentId);
+  } catch (error) {
+    showAlert(error.message || "Taqiq qo‘yishda xatolik yuz berdi.");
+  }
+}
+
+async function confirmRevokeStudentBan(studentId) {
+  showConfirm(
+    "🔓 Cheklovni bekor qilish",
+    "Ushbu o‘quvchining taqiqini hozir bekor qilmoqchimisiz? O‘quvchi darhol Mini App va Telegram botdan qayta foydalana oladi.",
+    "Bekor qilish",
+    async () => {
+      try {
+        haptic("medium");
+        await adminApi(`/api/admin/student/${Number(studentId)}/restriction/revoke`);
+        showToast("✅ Cheklov bekor qilindi va o‘quvchiga xabar yuborildi");
+
+        const studentsRes = await adminApi("/api/admin/students");
+        adminData.students = studentsRes.students || [];
+
+        openAdminStudentModal(studentId);
+      } catch (error) {
+        showAlert(error.message || "Cheklovni bekor qilishda xato.");
+      }
+    }
+  );
 }
 
 function renderStudentModuleGrantList(studentId) {

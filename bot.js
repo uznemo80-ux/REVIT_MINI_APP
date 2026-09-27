@@ -362,12 +362,64 @@ async function notifyAdmin(text, telegramId = null) {
 }
 
 // ======================================================
-// BOT ERROR HANDLER & FALLBACK
+// BOT RESTRICTION MIDDLEWARE & FALLBACK
 // ======================================================
 
-bot.use(function (ctx, next) {
+bot.use(async function (ctx, next) {
   if (ctx.from) {
-    console.log('📨 BOTGA XABAR KELDI:', ctx.updateType, 'from:', ctx.from.id, ctx.from.username || '');
+    const telegramId = Number(ctx.from.id);
+    console.log('📨 BOTGA XABAR KELDI:', ctx.updateType, 'from:', telegramId, ctx.from.username || '');
+
+    // Bosh admin hech qachon bloklanmaydi
+    if (telegramId === ADMIN_ID) {
+      return next();
+    }
+
+    if (pool) {
+      try {
+        const banRes = await pool.query(`
+          SELECT r.* FROM user_restrictions r
+          JOIN users u ON u.id = r.user_id
+          WHERE u.telegram_id = $1 AND r.is_active = true
+          ORDER BY r.id DESC LIMIT 1
+        `, [telegramId]);
+
+        if (banRes.rows.length > 0) {
+          const r = banRes.rows[0];
+
+          // Muddati tugaganligini tekshiramiz
+          if (!r.is_permanent && r.expires_at) {
+            if (new Date(r.expires_at) <= new Date()) {
+              // Avtomatik muddat tugashi: is_active = false qilamiz
+              await pool.query('UPDATE user_restrictions SET is_active = false WHERE id = $1', [r.id]);
+              return next();
+            }
+          }
+
+          // Foydalanuvchi hozirda bloklangan!
+          const expText = r.is_permanent
+            ? 'Doimiy'
+            : new Date(r.expires_at).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent', hour12: false });
+
+          const restrictionMsg =
+            '⚠️ <b>Sizning platformadan foydalanishingiz cheklangan.</b>\n\n' +
+            '📋 <b>Sabab:</b>\n' + (r.reason || 'Qoidabuzarlik') +
+            (r.admin_note ? '\n<i>Izoh: ' + r.admin_note + '</i>' : '') + '\n\n' +
+            '⏳ <b>Taqiq muddati:</b> ' + expText + '\n\n' +
+            'Agar xato deb hisoblasangiz, administrator bilan bog‘laning.';
+
+          if (ctx.callbackQuery) {
+            try {
+              await ctx.answerCbQuery('Platformadan foydalanishingiz cheklangan', { show_alert: true });
+            } catch (e) {}
+          }
+          await ctx.reply(restrictionMsg, { parse_mode: 'HTML' });
+          return; // Keyingi bot komandalari va xabarlar ishlamaydi
+        }
+      } catch (err) {
+        console.error('BOT RESTRICTION CHECK ERROR:', err.message);
+      }
+    }
   }
   return next();
 });
@@ -395,6 +447,59 @@ bot.on('text', async function (ctx) {
     console.warn('Fallback reply error:', e.message);
   }
 });
+
+// ======================================================
+// BAN & UNBAN NOTIFICATIONS
+// ======================================================
+
+async function sendBanNotification(telegramId, restriction) {
+  if (!telegramId) return;
+  try {
+    const isPermanent = Boolean(restriction.is_permanent);
+    const expText = isPermanent
+      ? 'Doimiy'
+      : new Date(restriction.expires_at).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent', hour12: false });
+
+    const msg =
+      '🔒 <b>Platformadan foydalanish cheklangan</b>\n\n' +
+      (isPermanent
+        ? 'Sizning akkauntingizdan foydalanish muddatsiz (doimiy) cheklandi.\n\n'
+        : 'Sizning akkauntingiz vaqtincha bloklandi.\n\n') +
+      '📋 <b>Sabab:</b> ' + (restriction.reason || 'Platforma qoidalarini buzish') + '\n' +
+      (restriction.admin_note ? '<i>Izoh: ' + restriction.admin_note + '</i>\n' : '') +
+      '⏳ <b>' + (isPermanent ? 'Blok muddati:' : 'Blok tugaydi:') + '</b> ' + expText + '\n\n' +
+      'Agar xato deb hisoblasangiz, administrator bilan bog‘lanishingiz mumkin.';
+
+    await bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'HTML' });
+    console.log('✅ BAN NOTIFICATION SENT to:', telegramId);
+  } catch (err) {
+    console.warn('⚠️ Ban notification yuborishda xato:', err.message);
+  }
+}
+
+async function sendUnbanNotification(telegramId) {
+  if (!telegramId) return;
+  try {
+    const freshUrl = getFreshAppUrl();
+    const replyMarkup = freshUrl ? {
+      inline_keyboard: [
+        [{ text: '📚 Darslarni ochish', web_app: { url: freshUrl } }]
+      ]
+    } : undefined;
+
+    const msg =
+      '✅ <b>Platformadan foydalanish qayta tiklandi</b>\n\n' +
+      'Sizning akkauntingizdan foydalanishga qo‘yilgan cheklov bekor qilindi. Endi Mini App va botdan erkin foydalanishingiz mumkin.';
+
+    await bot.telegram.sendMessage(telegramId, msg, {
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup
+    });
+    console.log('✅ UNBAN NOTIFICATION SENT to:', telegramId);
+  } catch (err) {
+    console.warn('⚠️ Unban notification yuborishda xato:', err.message);
+  }
+}
 
 // ======================================================
 // SAFE LAUNCH BOT
@@ -447,4 +552,12 @@ startBot();
 process.once('SIGINT', () => { bot.stop('SIGINT'); });
 process.once('SIGTERM', () => { bot.stop('SIGTERM'); });
 
-module.exports = { bot, notifyAdmin, startBot, sendAccessGrantedMessage, sendAccessLimitedMessage };
+module.exports = {
+  bot,
+  notifyAdmin,
+  startBot,
+  sendAccessGrantedMessage,
+  sendAccessLimitedMessage,
+  sendBanNotification,
+  sendUnbanNotification
+};

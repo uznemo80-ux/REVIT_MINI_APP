@@ -1647,6 +1647,39 @@ initExtendedTables();
 ensureUserActivityTable();
 ensureLibraryV2Tables();
 
+// ======================================================
+// USER RESTRICTIONS (BAN & RESTRICTION SYSTEM)
+// ======================================================
+
+async function ensureUserRestrictionsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_restrictions (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        restriction_type VARCHAR(50) NOT NULL,
+        reason VARCHAR(255) NOT NULL,
+        admin_note TEXT,
+        starts_at TIMESTAMPTZ DEFAULT NOW(),
+        expires_at TIMESTAMPTZ,
+        is_permanent BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        created_by BIGINT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        revoked_at TIMESTAMPTZ,
+        revoked_by BIGINT
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_restrictions_user_active ON user_restrictions(user_id, is_active)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_restrictions_expires ON user_restrictions(expires_at)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_user_restrictions_user ON user_restrictions(user_id)');
+    console.log('✅ USER RESTRICTIONS: user_restrictions jadvali va indekslari sozlandi');
+  } catch (err) {
+    console.error('ensureUserRestrictionsTable xatosi:', err.message);
+  }
+}
+
+ensureUserRestrictionsTable();
 
 // ======================================================
 // BUNNY STREAM
@@ -1823,6 +1856,66 @@ async function getAdminByTelegramId(telegramId) {
     [telegramId]
   );
   return result.rows[0] || null;
+}
+
+// ======================================================
+// USER RESTRICTION CHECK (BAN & RESTRICTION SYSTEM)
+// ======================================================
+
+async function checkUserRestriction(userIdOrTelegramId) {
+  if (!userIdOrTelegramId) return { isRestricted: false };
+
+  try {
+    // 1. Asosiy Super Admin va boshqa adminlar hech qachon bloklanmaydi
+    var mainAdminCheck = await pool.query(
+      'SELECT id FROM users WHERE (id = $1 OR telegram_id = $1) AND telegram_id = $2 LIMIT 1',
+      [userIdOrTelegramId, ADMIN_TELEGRAM_ID]
+    );
+    if (mainAdminCheck.rows.length > 0) return { isRestricted: false };
+
+    var adminCheck = await pool.query(
+      'SELECT a.id FROM admins a JOIN users u ON u.telegram_id = a.telegram_id WHERE u.id = $1 OR u.telegram_id = $1 LIMIT 1',
+      [userIdOrTelegramId]
+    );
+    if (adminCheck.rows.length > 0) return { isRestricted: false };
+
+    // 2. Faol cheklovni qidiramiz
+    var banRes = await pool.query(`
+      SELECT r.*, u.first_name, u.last_name, u.telegram_id
+      FROM user_restrictions r
+      JOIN users u ON u.id = r.user_id
+      WHERE (r.user_id = $1 OR u.telegram_id = $1) AND r.is_active = true
+      ORDER BY r.id DESC LIMIT 1
+    `, [userIdOrTelegramId]);
+
+    if (banRes.rows.length === 0) return { isRestricted: false };
+
+    var r = banRes.rows[0];
+
+    // 3. Avtomatik muddat tugashi tekshiruvi:
+    if (!r.is_permanent && r.expires_at) {
+      if (new Date(r.expires_at) <= new Date()) {
+        await pool.query('UPDATE user_restrictions SET is_active = false WHERE id = $1', [r.id]);
+        return { isRestricted: false };
+      }
+    }
+
+    return {
+      isRestricted: true,
+      restriction: {
+        id: r.id,
+        type: r.restriction_type,
+        reason: r.reason,
+        admin_note: r.admin_note,
+        starts_at: r.starts_at,
+        expires_at: r.expires_at,
+        is_permanent: Boolean(r.is_permanent)
+      }
+    };
+  } catch (e) {
+    console.error('checkUserRestriction error:', e.message);
+    return { isRestricted: false };
+  }
 }
 
 // ======================================================
@@ -2064,6 +2157,15 @@ app.post('/api/content', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var restrictionCheck = await checkUserRestriction(user.id);
+    if (restrictionCheck.isRestricted) {
+      return res.status(403).json({
+        error: 'Platformadan foydalanish cheklangan',
+        restricted: true,
+        restriction: restrictionCheck.restriction
+      });
+    }
 
     var userHasAccess = hasAccess(user);
 
@@ -3696,8 +3798,35 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
     var lastPositionMap = {};
     lastPositionResult.rows.forEach(function (r) { lastPositionMap[r.user_id] = r; });
 
+    // Eng so'nggi restrictionlarni olamiz
+    var restrictionsResult = await pool.query(`
+      SELECT DISTINCT ON (user_id)
+        id, user_id, restriction_type, reason, admin_note, starts_at, expires_at,
+        is_permanent, is_active, created_by, created_at, revoked_at, revoked_by
+      FROM user_restrictions
+      ORDER BY user_id, id DESC
+    `);
+    var restrictionMap = {};
+    restrictionsResult.rows.forEach(function (r) { restrictionMap[r.user_id] = r; });
+
+    var now = new Date();
     var students = result.rows.map(function (s) {
       var pos = lastPositionMap[s.id];
+      var r = restrictionMap[s.id] || null;
+
+      var restrictionStatus = 'active'; // Faol (cheklovsiz)
+      if (r) {
+        if (r.is_active && r.is_permanent) {
+          restrictionStatus = 'permanent';
+        } else if (r.is_active && !r.is_permanent && r.expires_at && new Date(r.expires_at) > now) {
+          restrictionStatus = 'temporary';
+        } else if (r.revoked_at) {
+          restrictionStatus = 'revoked';
+        } else if (r.expires_at && new Date(r.expires_at) <= now) {
+          restrictionStatus = 'expired';
+        }
+      }
+
       return {
         id: s.id, telegram_id: s.telegram_id.toString(),
         first_name: s.first_name || '', last_name: s.last_name || '',
@@ -3705,7 +3834,17 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
         access_until: s.access_until || null, created_at: s.created_at,
         watched_lessons: s.watched_lessons, total_lessons: s.total_lessons,
         has_access: s.access_until && new Date(s.access_until) > new Date(),
-        current_position: pos ? { course_title: pos.course_title, module_title: pos.module_title, lesson_title: pos.lesson_title, watched_at: pos.watched_at } : null
+        current_position: pos ? { course_title: pos.course_title, module_title: pos.module_title, lesson_title: pos.lesson_title, watched_at: pos.watched_at } : null,
+        restriction_status: restrictionStatus,
+        restriction: (restrictionStatus === 'permanent' || restrictionStatus === 'temporary') ? {
+          id: r.id,
+          type: r.restriction_type,
+          reason: r.reason,
+          admin_note: r.admin_note,
+          starts_at: r.starts_at,
+          expires_at: r.expires_at,
+          is_permanent: r.is_permanent
+        } : null
       };
     });
 
@@ -3744,6 +3883,34 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
     var grantsResult = await pool.query('SELECT module_id FROM module_access_grants WHERE user_id = $1', [student.id]);
     var grantedModuleIds = grantsResult.rows.map(function (r) { return r.module_id; });
 
+    // Restriction tarixi va joriy faol cheklov
+    var historyResult = await pool.query(`
+      SELECT r.*,
+             ca.first_name AS creator_name,
+             ra.first_name AS revoker_name
+      FROM user_restrictions r
+      LEFT JOIN admins ca ON ca.telegram_id::text = r.created_by::text
+      LEFT JOIN admins ra ON ra.telegram_id::text = r.revoked_by::text
+      WHERE r.user_id = $1
+      ORDER BY r.id DESC
+    `, [student.id]);
+
+    var activeRestriction = null;
+    var now = new Date();
+    for (var bi = 0; bi < historyResult.rows.length; bi++) {
+      var row = historyResult.rows[bi];
+      if (row.is_active) {
+        if (row.is_permanent || (row.expires_at && new Date(row.expires_at) > now)) {
+          activeRestriction = row;
+          break;
+        } else if (!row.is_permanent && row.expires_at && new Date(row.expires_at) <= now) {
+          // Muddati tugagan, statusni yangilash
+          pool.query('UPDATE user_restrictions SET is_active = false WHERE id = $1', [row.id]).catch(function () {});
+          row.is_active = false;
+        }
+      }
+    }
+
     return res.json({
       ok: true,
       student: {
@@ -3753,6 +3920,8 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
         access_until: student.access_until || null, created_at: student.created_at,
         has_access: student.access_until && new Date(student.access_until) > new Date()
       },
+      current_restriction: activeRestriction,
+      restriction_history: historyResult.rows,
       progress: progressResult.rows,
       tests: testResult.rows,
       courses: coursesResult.rows,
@@ -3762,6 +3931,192 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
   } catch (error) {
     console.error('ADMIN STUDENT DETAIL ERROR:', error);
     return res.status(500).json({ error: 'Oquvchi malumotlarini olishda xato' });
+  }
+});
+
+// ======================================================
+// BAN & RESTRICTION SYSTEM: ADMIN API
+// ======================================================
+
+// O'quvchini bloklash / cheklash
+app.post('/api/admin/student/:id/restriction', requireAdmin, async function (req, res) {
+  try {
+    var targetStudentId = Number(req.params.id);
+    var currentAdminTelegramId = String(req.admin.telegram_id);
+    var currentAdminUserId = req.user ? Number(req.user.id) : null;
+    var currentAdminRole = String(req.admin.role || 'admin');
+    var isMainSuperAdmin = currentAdminTelegramId === String(ADMIN_TELEGRAM_ID);
+
+    var stRes = await pool.query('SELECT id, telegram_id, first_name, last_name, phone, username FROM users WHERE id = $1 LIMIT 1', [targetStudentId]);
+    if (stRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Oquvchi topilmadi' });
+    }
+    var target = stRes.rows[0];
+    var targetTelegramId = String(target.telegram_id);
+
+    // 1. ENG MUHIM XAVFSIZLIK: Admin o'zini bloklay olmasin!
+    if (targetStudentId === currentAdminUserId || targetTelegramId === currentAdminTelegramId) {
+      return res.status(403).json({
+        error: 'Siz o‘zingizning administrator akkauntingizga taqiq qo‘ya olmaysiz.'
+      });
+    }
+
+    // 2. Bosh Super Adminni hech kim bloklay olmaydi!
+    if (targetTelegramId === String(ADMIN_TELEGRAM_ID)) {
+      return res.status(403).json({
+        error: 'Bosh administrator akkauntini cheklash taqiqlanadi.'
+      });
+    }
+
+    // 3. Adminlar iyerarxiyasi:
+    var targetAdminRes = await pool.query('SELECT id, role FROM admins WHERE telegram_id = $1 LIMIT 1', [targetTelegramId]);
+    if (targetAdminRes.rows.length > 0) {
+      if (!isMainSuperAdmin && currentAdminRole !== 'super_admin') {
+        return res.status(403).json({
+          error: 'Oddiy administrator boshqa administratorni cheklay olmaydi. Bu amal faqat Bosh Administrator (Super Admin) tomonidan amalga oshiriladi.'
+        });
+      }
+    }
+
+    var reason = String(req.body.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'Bloklash sababi ko‘rsatilishi shart' });
+
+    var adminNote = String(req.body.admin_note || '').trim() || null;
+    var isPermanent = Boolean(req.body.is_permanent);
+    var durationDays = Number(req.body.duration_days) || 0;
+    var customExpiresAt = req.body.expires_at ? new Date(req.body.expires_at) : null;
+
+    var expiresAt = null;
+    var restrictionType = isPermanent ? 'PERMANENT_BAN' : 'TEMPORARY_BAN';
+
+    if (!isPermanent) {
+      if (customExpiresAt && !isNaN(customExpiresAt.getTime()) && customExpiresAt > new Date()) {
+        expiresAt = customExpiresAt;
+      } else if (durationDays > 0) {
+        expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+      } else {
+        return res.status(400).json({ error: 'Bloklash muddati notogri kiritildi' });
+      }
+    }
+
+    // Oldingi faol restrictionlarni yopamiz (tarix saqlanadi, is_active = false)
+    await pool.query(
+      'UPDATE user_restrictions SET is_active = false WHERE user_id = $1 AND is_active = true',
+      [targetStudentId]
+    );
+
+    // Yangi restriction yozuvini kiritamiz
+    var insertRes = await pool.query(`
+      INSERT INTO user_restrictions (
+        user_id, restriction_type, reason, admin_note, starts_at, expires_at,
+        is_permanent, is_active, created_by, created_at
+      ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, true, $7, NOW())
+      RETURNING *
+    `, [
+      targetStudentId, restrictionType, reason, adminNote, expiresAt,
+      isPermanent, currentAdminTelegramId
+    ]);
+
+    var newRestriction = insertRes.rows[0];
+
+    // Telegram Bot orqali ogohlantirish yuborish
+    if (target.telegram_id && botModule && typeof botModule.sendBanNotification === 'function') {
+      botModule.sendBanNotification(target.telegram_id, newRestriction).catch(function (e) {
+        console.warn('sendBanNotification warning:', e.message);
+      });
+    }
+
+    console.log(`ADMIN ACTION: User ${targetStudentId} (${targetTelegramId}) restricted by admin ${currentAdminTelegramId}. Reason: ${reason}`);
+
+    return res.json({
+      ok: true,
+      message: 'Foydalanuvchiga muvaffaqiyatli taqiq qo‘yildi',
+      restriction: newRestriction
+    });
+  } catch (error) {
+    console.error('SET RESTRICTION ERROR:', error);
+    return res.status(500).json({ error: 'Cheklov ornatishda xatolik yuz berdi: ' + error.message });
+  }
+});
+
+// O'quvchi blokini bekor qilish
+app.post('/api/admin/student/:id/restriction/revoke', requireAdmin, async function (req, res) {
+  try {
+    var targetStudentId = Number(req.params.id);
+    var currentAdminTelegramId = String(req.admin.telegram_id);
+    var currentAdminRole = String(req.admin.role || 'admin');
+    var isMainSuperAdmin = currentAdminTelegramId === String(ADMIN_TELEGRAM_ID);
+
+    var stRes = await pool.query('SELECT id, telegram_id, first_name, last_name FROM users WHERE id = $1 LIMIT 1', [targetStudentId]);
+    if (stRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Oquvchi topilmadi' });
+    }
+    var target = stRes.rows[0];
+
+    var activeBanRes = await pool.query(
+      'SELECT * FROM user_restrictions WHERE user_id = $1 AND is_active = true ORDER BY id DESC LIMIT 1',
+      [targetStudentId]
+    );
+
+    if (activeBanRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Ushbu oquvchida faol taqiq mavjud emas' });
+    }
+
+    var ban = activeBanRes.rows[0];
+
+    var targetAdminRes = await pool.query('SELECT id FROM admins WHERE telegram_id = $1 LIMIT 1', [String(target.telegram_id)]);
+    if (targetAdminRes.rows.length > 0 && !isMainSuperAdmin && currentAdminRole !== 'super_admin') {
+      return res.status(403).json({
+        error: 'Administratorga qoyilgan taqiqni faqat Bosh Administrator (Super Admin) bekor qilishi mumkin'
+      });
+    }
+
+    await pool.query(`
+      UPDATE user_restrictions
+      SET is_active = false, revoked_at = NOW(), revoked_by = $1
+      WHERE id = $2
+    `, [currentAdminTelegramId, ban.id]);
+
+    if (target.telegram_id && botModule && typeof botModule.sendUnbanNotification === 'function') {
+      botModule.sendUnbanNotification(target.telegram_id).catch(function (e) {
+        console.warn('sendUnbanNotification warning:', e.message);
+      });
+    }
+
+    console.log(`ADMIN ACTION: Restriction #${ban.id} for User ${targetStudentId} revoked by admin ${currentAdminTelegramId}`);
+
+    return res.json({
+      ok: true,
+      message: 'Taqiq muvaffaqiyatli bekor qilindi'
+    });
+  } catch (error) {
+    console.error('REVOKE RESTRICTION ERROR:', error);
+    return res.status(500).json({ error: 'Taqiqni bekor qilishda xato: ' + error.message });
+  }
+});
+
+// O'quvchi restriction tarixi
+app.post('/api/admin/student/:id/restrictions/history', requireAdmin, async function (req, res) {
+  try {
+    var targetStudentId = Number(req.params.id);
+    var historyRes = await pool.query(`
+      SELECT r.*,
+             ca.first_name AS creator_name,
+             ra.first_name AS revoker_name
+      FROM user_restrictions r
+      LEFT JOIN admins ca ON ca.telegram_id::text = r.created_by::text
+      LEFT JOIN admins ra ON ra.telegram_id::text = r.revoked_by::text
+      WHERE r.user_id = $1
+      ORDER BY r.id DESC
+    `, [targetStudentId]);
+
+    return res.json({
+      ok: true,
+      history: historyRes.rows
+    });
+  } catch (error) {
+    console.error('RESTRICTION HISTORY ERROR:', error);
+    return res.status(500).json({ error: 'Tarixni olishda xato' });
   }
 });
 
