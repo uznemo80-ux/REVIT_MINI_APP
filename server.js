@@ -7837,9 +7837,16 @@ app.post('/api/admin/books/:id/delete', requireAdmin, async function (req, res) 
     await pool.query("UPDATE library_books SET status = 'archived', updated_at = NOW() WHERE id = $1", [id]);
 
     // library_resources dagi barcha bog'liq nusxalarni to'liq tozalash
+    // (avvalgi: faqat book_id mos kelsa yoki title+section_slug='books' bo'lsa o'chirilardi -
+    // bu ko'p holatlarda mos kelmay, "arxivlangan" kitobning eski nusxasi
+    // library_resources'da published holida qolib ketardi va talaba tomonida
+    // qayta ko'rinardi. Endi sarlavha bo'yicha (katta-kichik harf va bo'shliqlarga
+    // e'tibor bermay) TURIGA QARAMASDAN barcha mos nusxalar tozalanadi.)
     if (title) {
       await pool.query(
-        "DELETE FROM library_resources WHERE (content_data->>'book_id' = $1::text) OR (title = $2 AND section_slug = 'books')",
+        `DELETE FROM library_resources
+         WHERE (content_data->>'book_id' = $1::text)
+            OR (TRIM(LOWER(title)) = TRIM(LOWER($2)))`,
         [id.toString(), title]
       );
     }
