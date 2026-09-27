@@ -7011,6 +7011,7 @@ let materialsState = {
   loading: false,
   categories: [],
   manufacturers: [],
+  allMaterials: [],
   materials: [],
   total: 0,
   searchQuery: "",
@@ -7022,12 +7023,65 @@ let materialsState = {
   filterMoisture: false,
   filterFire: false,
   sortBy: "newest",
-  limit: 30,
+  limit: 100,
   offset: 0
 };
 
 let activeMaterialDetail = null;
 let activeSpecSourceInfo = null;
+
+function filterMaterialsLocally() {
+  let list = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
+             materialsState.allMaterials : (materialsState.materials || []);
+  const scope = materialsState.selectedScope || "all";
+  const cat = materialsState.selectedCategory || "all";
+  const search = (materialsState.searchQuery || "").trim().toLowerCase();
+
+  // 1. Scope filter (Qurilish vs Interyer vs Barchasi)
+  if (scope && scope !== "all") {
+    if (scope === "architecture") {
+      list = list.filter(m => m.scope === "architecture" || m.scope === "both");
+    } else if (scope === "interior") {
+      list = list.filter(m => m.scope === "interior" || m.scope === "both");
+    }
+  }
+
+  // 2. Category filter
+  if (cat && cat !== "all") {
+    list = list.filter(m => m.category_slug === cat);
+  }
+
+  // 3. Search query
+  if (search) {
+    list = list.filter(m => {
+      const text = ((m.name || m.title || '') + ' ' + (m.original_name || '') + ' ' + (m.description || '') + ' ' + (m.material_type || '') + ' ' + (m.category_name || '') + ' ' + (m.brand_name || '') + ' ' + (m.usage_area || '')).toLowerCase();
+      return text.includes(search);
+    });
+  }
+
+  // 4. Quick filter chips
+  if (materialsState.filterVerified) {
+    list = list.filter(m => m.verification_status === "verified" || m.is_verified);
+  }
+  if (materialsState.filterMoisture) {
+    list = list.filter(m => (m.moisture_resistance && m.moisture_resistance.toLowerCase().includes("yuqori")) || (m.material_type && m.material_type.toLowerCase().includes("nam")));
+  }
+  if (materialsState.filterFire) {
+    list = list.filter(m => (m.fire_rating && (m.fire_rating.includes("KM0") || m.fire_rating.includes("NG") || m.fire_rating.includes("G1"))));
+  }
+  if (materialsState.filterInterior) {
+    list = list.filter(m => m.scope === "interior" || m.scope === "both");
+  }
+
+  materialsState.materials = list;
+
+  // Dynamically update category item counts
+  (materialsState.categories || []).forEach(c => {
+    c.materials_count = (materialsState.allMaterials || []).filter(m => 
+      m.category_slug === c.slug && (scope === "all" || m.scope === scope || m.scope === "both")
+    ).length;
+  });
+}
 
 async function loadMaterialsData(forceReload) {
   if (materialsState.loading && !forceReload) return;
@@ -7045,17 +7099,12 @@ async function loadMaterialsData(forceReload) {
     }
 
     const payload = {
-      search: materialsState.searchQuery,
-      scope: materialsState.selectedScope,
-      category_slug: materialsState.selectedCategory,
-      manufacturer_slug: materialsState.selectedManufacturer,
-      filter_verified: materialsState.filterVerified,
-      filter_interior: materialsState.filterInterior,
-      filter_moisture: materialsState.filterMoisture,
-      filter_fire: materialsState.filterFire,
-      sort: materialsState.sortBy,
-      limit: materialsState.limit,
-      offset: materialsState.offset
+      search: "",
+      scope: "all",
+      category_slug: "all",
+      manufacturer_slug: "all",
+      limit: 100,
+      offset: 0
     };
 
     const listRes = await api("/api/materials/list", payload).catch(err => {
@@ -7063,71 +7112,66 @@ async function loadMaterialsData(forceReload) {
       return null;
     });
     if (listRes && listRes.ok) {
-      materialsState.materials = Array.isArray(listRes.materials) ? listRes.materials : [];
-      materialsState.total = listRes.total || materialsState.materials.length;
+      materialsState.allMaterials = Array.isArray(listRes.materials) ? listRes.materials : [];
+      materialsState.total = listRes.total || materialsState.allMaterials.length;
     }
   } catch (err) {
     console.error("LOAD MATERIALS DATA ERROR:", err);
   } finally {
     materialsState.loaded = true;
     materialsState.loading = false;
+    filterMaterialsLocally();
   }
 }
 
-async function setMaterialScope(scope) {
+function setMaterialScope(scope) {
   haptic("light");
   materialsState.selectedScope = scope;
   materialsState.selectedCategory = "all";
   materialsState.offset = 0;
-  await loadMaterialsData();
+  filterMaterialsLocally();
   if (libraryActiveSection === "materials") {
     render();
   }
 }
 
-async function setMaterialCategory(catSlug) {
+function setMaterialCategory(catSlug) {
   haptic("light");
   materialsState.selectedCategory = catSlug;
   materialsState.offset = 0;
-  await loadMaterialsData();
+  filterMaterialsLocally();
   if (libraryActiveSection === "materials") {
     render();
   }
 }
 
-async function setMaterialManufacturer(mfgSlug) {
+function setMaterialManufacturer(mfgSlug) {
   haptic("light");
   materialsState.selectedManufacturer = mfgSlug;
   materialsState.offset = 0;
-  await loadMaterialsData();
+  filterMaterialsLocally();
   if (libraryActiveSection === "materials") {
     render();
   }
 }
 
-let materialSearchDebounce = null;
 function setMaterialSearch(query) {
   materialsState.searchQuery = query;
-  if (materialSearchDebounce) clearTimeout(materialSearchDebounce);
-  materialSearchDebounce = setTimeout(async () => {
-    materialsState.offset = 0;
-    await loadMaterialsData();
-    if (libraryActiveSection === "materials") {
-      render();
-      const inp = document.getElementById("lib-materials-search-input");
-      if (inp) {
-        inp.focus();
-        inp.setSelectionRange(query.length, query.length);
-      }
+  filterMaterialsLocally();
+  if (libraryActiveSection === "materials") {
+    render();
+    const inp = document.getElementById("lib-materials-search-input");
+    if (inp) {
+      inp.focus();
+      inp.setSelectionRange(query.length, query.length);
     }
-  }, 250);
+  }
 }
 
-async function toggleMaterialFilter(filterKey) {
+function toggleMaterialFilter(filterKey) {
   haptic("light");
   materialsState[filterKey] = !materialsState[filterKey];
-  materialsState.offset = 0;
-  await loadMaterialsData();
+  filterMaterialsLocally();
   if (libraryActiveSection === "materials") {
     render();
   }
@@ -7177,17 +7221,17 @@ function renderMaterialsSectionHtml() {
         </p>
       </div>
 
-      <!-- 1. ASOSIY BO'LIM TANLASH: ARXITEKTURA / INTERYER / BARCHASI -->
+      <!-- 1. ASOSIY BO'LIM TANLASH: QURILISH / INTERYER / BARCHASI -->
       <div class="lib-mat-scope-bar">
-        <div class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" onclick="setMaterialScope('all')">
-          🌐 Barchasi (${materialsState.total || mats.length})
-        </div>
-        <div class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" onclick="setMaterialScope('architecture')">
-          🏛️ Qurilish & Arxitektura
-        </div>
-        <div class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" onclick="setMaterialScope('interior')">
-          🛋️ Interyer & Dizayn
-        </div>
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" onclick="setMaterialScope('all')">
+          🌐 Barchasi
+        </button>
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" onclick="setMaterialScope('architecture')">
+          🏛️ Qurilish
+        </button>
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" onclick="setMaterialScope('interior')">
+          🛋️ Interyer
+        </button>
       </div>
 
       <!-- SEARCH BAR (Multilingual: MDF, Knauf, Travertin, Gazoblok...) -->
@@ -7268,18 +7312,17 @@ function renderMaterialCardHtml(mat) {
 
   return `
     <div class="lib-material-card-v2" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
-      <div class="lib-mat-thumb-wrap-v2">
+      <div class="lib-mat-thumb-wrap-v2" style="position:relative; overflow:hidden;">
+        <div class="lib-material-thumb-placeholder" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px; position:absolute; top:0; left:0; z-index:1; background:var(--bg-card);">
+          ${escapeHtml(mat.category_icon || '🧱')}
+        </div>
         ${img ? `
-          <img src="${escapeHtml(img)}" class="lib-mat-thumb-img" onerror="handleImageError(this)" alt="" />
-        ` : `
-          <div class="lib-material-thumb-placeholder" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px;">
-            ${escapeHtml(mat.category_icon || '🧱')}
-          </div>
-        `}
+          <img src="${escapeHtml(img)}" class="lib-mat-thumb-img" style="position:relative; z-index:2; width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';" alt="" />
+        ` : ""}
         ${isVerified ? `
-          <span class="lib-mat-badge-verified">✓ Verified</span>
+          <span class="lib-mat-badge-verified" style="z-index:3;">✓ Verified</span>
         ` : `
-          <span class="lib-mat-badge-pending">🟡 Tekshiruvda</span>
+          <span class="lib-mat-badge-pending" style="z-index:3;">🟡 Tekshiruvda</span>
         `}
       </div>
 

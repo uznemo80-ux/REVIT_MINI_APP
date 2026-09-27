@@ -6470,7 +6470,7 @@ app.all('/api/materials/list', async function (req, res) {
     var filterFire = Boolean(b.filter_fire === true || b.filter_fire === 'true');
     var status = (b.status || 'published').trim();
     var sort = b.sort || 'newest';
-    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 30, 1), 100);
+    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 100, 1), 300);
     var offset = Math.max(parseInt(b.offset, 10) || 0, 0);
 
     var whereClauses = [];
@@ -6486,9 +6486,9 @@ app.all('/api/materials/list', async function (req, res) {
     // Scope filtering (Arxitektura vs Interyer vs Barchasi)
     if (scope && scope !== 'all' && scope !== 'barchasi') {
       if (scope === 'architecture' || scope === 'arxitektura' || scope === 'qurilish') {
-        whereClauses.push("(m.scope = 'architecture' OR m.scope = 'both' OR c.scope = 'architecture' OR c.scope = 'both')");
+        whereClauses.push("(COALESCE(m.scope, 'both') IN ('architecture', 'both') OR COALESCE(c.scope, 'both') IN ('architecture', 'both'))");
       } else if (scope === 'interior' || scope === 'interyer' || scope === 'dizayn') {
-        whereClauses.push("(m.scope = 'interior' OR m.scope = 'both' OR c.scope = 'interior' OR c.scope = 'both')");
+        whereClauses.push("(COALESCE(m.scope, 'both') IN ('interior', 'both') OR COALESCE(c.scope, 'both') IN ('interior', 'both'))");
       }
     }
 

@@ -8313,34 +8313,47 @@ html.light .reader-spinner-overlay {
 
 /* SCOPE SWITCHER (ARXITEKTURA / INTERYER / BARCHASI) */
 .lib-mat-scope-bar {
-  display: flex;
-  background: var(--bg-surface-elevated, rgba(0, 0, 0, 0.05));
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--bg-surface-elevated, rgba(120, 120, 128, 0.08));
   padding: 4px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   gap: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .lib-mat-scope-btn {
-  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
   text-align: center;
-  padding: 9px 8px;
-  font-size: 12.5px;
+  padding: 9px 2px;
+  font-size: 13px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  box-sizing: border-box;
   white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lib-mat-scope-btn:hover {
   color: var(--text-primary);
+}
+
+.lib-mat-scope-btn:active {
+  transform: scale(0.97);
 }
 
 .lib-mat-scope-btn.active {
