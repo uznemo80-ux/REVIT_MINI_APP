@@ -14,6 +14,8 @@ var botModule = require('./bot');
 var notifyAdmin = botModule.notifyAdmin;
 var learningModule = require('./learningData');
 var initLearningTables = learningModule.initLearningTables;
+var materialsModule = require('./materialsData');
+var initMaterialsTables = materialsModule.initMaterialsTables;
 
 var app = express();
 
@@ -1649,6 +1651,7 @@ initExtendedTables();
 ensureUserActivityTable();
 ensureLibraryV2Tables();
 initLearningTables(pool);
+initMaterialsTables(pool);
 
 // ======================================================
 // USER RESTRICTIONS (BAN & RESTRICTION SYSTEM)
@@ -6402,6 +6405,709 @@ app.post('/api/admin/learning/resource/delete', requireAdmin, async function (re
     return res.json({ ok: true, message: 'Resurs o\'chirildi' });
   } catch (error) {
     console.error('ADMIN RESOURCE DELETE ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ======================================================
+// MATERIALLAR KUTUBXONASI (MATERIALS KNOWLEDGE BASE) API
+// ======================================================
+
+// 1. Kategoriyalar va ishlab chiqaruvchilar ro'yxati
+app.get('/api/materials/categories', async function (req, res) {
+  try {
+    var catRes = await pool.query(`
+      SELECT c.*, COUNT(m.id)::int AS materials_count
+      FROM material_categories c
+      LEFT JOIN materials m ON m.category_id = c.id AND m.status = 'published'
+      WHERE c.is_active = true
+      GROUP BY c.id
+      ORDER BY c.sort_order ASC, c.id ASC
+    `);
+
+    var mfgRes = await pool.query(`
+      SELECT id, name, slug, country, logo, website, description
+      FROM material_manufacturers
+      ORDER BY name ASC
+    `);
+
+    return res.json({
+      ok: true,
+      categories: catRes.rows,
+      manufacturers: mfgRes.rows
+    });
+  } catch (error) {
+    console.error('GET MATERIALS CATEGORIES ERROR:', error);
+    return res.status(500).json({ error: 'Kategoriyalarni yuklashda xatolik yuz berdi' });
+  }
+});
+
+// 2. Materiallar ro'yxati (Search, Filters, Pagination)
+app.post('/api/materials/list', async function (req, res) {
+  try {
+    var b = req.body || {};
+    var search = (b.search || '').trim().toLowerCase();
+    var categorySlug = (b.category_slug || '').trim();
+    var manufacturerSlug = (b.manufacturer_slug || '').trim();
+    var filterVerified = Boolean(b.filter_verified);
+    var filterInterior = Boolean(b.filter_interior);
+    var filterMoisture = Boolean(b.filter_moisture);
+    var filterFire = Boolean(b.filter_fire);
+    var status = (b.status || 'published').trim();
+    var sort = b.sort || 'newest';
+    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 20, 1), 100);
+    var offset = Math.max(parseInt(b.offset, 10) || 0, 0);
+
+    var whereClauses = [];
+    var params = [];
+    var paramIdx = 1;
+
+    // Status filtering
+    if (status !== 'all') {
+      whereClauses.push('m.status = $' + paramIdx++);
+      params.push(status);
+    }
+
+    // Category filter
+    if (categorySlug && categorySlug !== 'all' && categorySlug !== 'barchasi') {
+      whereClauses.push('c.slug = $' + paramIdx++);
+      params.push(categorySlug);
+    }
+
+    // Manufacturer filter
+    if (manufacturerSlug && manufacturerSlug !== 'all') {
+      whereClauses.push('mfg.slug = $' + paramIdx++);
+      params.push(manufacturerSlug);
+    }
+
+    // Verified only
+    if (filterVerified) {
+      whereClauses.push("m.verification_status = 'verified'");
+    }
+
+    // Interior filter
+    if (filterInterior) {
+      whereClauses.push("(m.material_type ILIKE '%ichki%' OR m.material_type ILIKE '%indoor%' OR m.description ILIKE '%ichki%')");
+    }
+
+    // Moisture resistance filter
+    if (filterMoisture) {
+      whereClauses.push("(m.material_type ILIKE '%nam%' OR m.description ILIKE '%namlik%' OR EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter ILIKE '%moisture%'))");
+    }
+
+    // Fire resistance filter
+    if (filterFire) {
+      whereClauses.push("(EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter = 'fire_rating' AND (ms.value ILIKE '%A1%' OR ms.value ILIKE '%G1%' OR ms.value ILIKE '%НГ%')))");
+    }
+
+    // Multilingual Search
+    if (search) {
+      whereClauses.push(`(
+        m.name ILIKE $` + paramIdx + ` OR
+        m.original_name ILIKE $` + paramIdx + ` OR
+        m.english_name ILIKE $` + paramIdx + ` OR
+        m.product_code ILIKE $` + paramIdx + ` OR
+        m.description ILIKE $` + paramIdx + ` OR
+        mfg.name ILIKE $` + paramIdx + ` OR
+        c.name ILIKE $` + paramIdx + ` OR
+        EXISTS (
+          SELECT 1 FROM unnest(m.aliases) a WHERE a ILIKE $` + paramIdx + `
+        )
+      )`);
+      params.push('%' + search + '%');
+      paramIdx++;
+    }
+
+    var whereSql = whereClauses.length ? 'WHERE ' + whereClauses.join(' AND ') : '';
+
+    // Sorting
+    var orderSql = 'ORDER BY m.id DESC';
+    if (sort === 'name_asc') orderSql = 'ORDER BY m.name ASC';
+    else if (sort === 'verified') orderSql = 'ORDER BY m.verification_status ASC, m.last_verified_at DESC';
+    else if (sort === 'newest') orderSql = 'ORDER BY m.created_at DESC, m.id DESC';
+
+    // Total count
+    var countQuery = `
+      SELECT COUNT(m.id)::int AS total
+      FROM materials m
+      LEFT JOIN material_categories c ON c.id = m.category_id
+      LEFT JOIN material_manufacturers mfg ON mfg.id = m.manufacturer_id
+      ${whereSql}
+    `;
+    var countRes = await pool.query(countQuery, params);
+    var total = countRes.rows[0] ? countRes.rows[0].total : 0;
+
+    // List query
+    var listParams = params.slice();
+    listParams.push(limit);
+    var limitIdx = paramIdx++;
+    listParams.push(offset);
+    var offsetIdx = paramIdx++;
+
+    var listQuery = `
+      SELECT
+        m.id, m.name, m.slug, m.original_name, m.english_name, m.aliases,
+        m.subcategory_name, m.product_code, m.material_type, m.cover_image,
+        m.description, m.dimensions_info, m.status, m.verification_status,
+        m.access_type, m.last_verified_at, m.created_at,
+        c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
+        mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
+        (SELECT COUNT(ms.id)::int FROM material_specifications ms WHERE ms.material_id = m.id) AS specs_count,
+        (SELECT COUNT(md.id)::int FROM material_documents md WHERE md.material_id = m.id) AS docs_count,
+        (SELECT COUNT(msrc.id)::int FROM material_sources msrc WHERE msrc.material_id = m.id) AS sources_count
+      FROM materials m
+      LEFT JOIN material_categories c ON c.id = m.category_id
+      LEFT JOIN material_manufacturers mfg ON mfg.id = m.manufacturer_id
+      ${whereSql}
+      ${orderSql}
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}
+    `;
+
+    var listRes = await pool.query(listQuery, listParams);
+
+    return res.json({
+      ok: true,
+      materials: listRes.rows,
+      total: total,
+      limit: limit,
+      offset: offset
+    });
+  } catch (error) {
+    console.error('GET MATERIALS LIST ERROR:', error);
+    return res.status(500).json({ error: 'Materiallar ro\'yxatini yuklashda xatolik yuz berdi' });
+  }
+});
+
+// 3. Materialning batafsil sahifasi (Detail View)
+app.post('/api/materials/detail', async function (req, res) {
+  try {
+    var id = parseInt(req.body.id, 10);
+    var slug = (req.body.slug || '').trim();
+
+    if (!id && !slug) {
+      return res.status(400).json({ error: 'Material ID yoki slug talab qilinadi' });
+    }
+
+    var matQuery = `
+      SELECT
+        m.*,
+        c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
+        mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug,
+        mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country, mfg.website AS manufacturer_website,
+        mfg.description AS manufacturer_description
+      FROM materials m
+      LEFT JOIN material_categories c ON c.id = m.category_id
+      LEFT JOIN material_manufacturers mfg ON mfg.id = m.manufacturer_id
+      WHERE ${id ? 'm.id = $1' : 'm.slug = $1'}
+      LIMIT 1
+    `;
+    var matRes = await pool.query(matQuery, [id || slug]);
+    if (!matRes.rows.length) {
+      return res.status(404).json({ error: 'Material topilmadi' });
+    }
+
+    var mat = matRes.rows[0];
+    var materialId = mat.id;
+
+    // Specifications
+    var specsRes = await pool.query(`
+      SELECT
+        ms.*,
+        msrc.title AS source_title, msrc.url AS source_url, msrc.document_name AS source_document_name,
+        msrc.document_version AS source_document_version, msrc.status AS source_status
+      FROM material_specifications ms
+      LEFT JOIN material_sources msrc ON msrc.id = ms.source_id
+      WHERE ms.material_id = $1
+      ORDER BY ms.order_index ASC, ms.id ASC
+    `, [materialId]);
+
+    // Sources
+    var sourcesRes = await pool.query(`
+      SELECT *
+      FROM material_sources
+      WHERE material_id = $1
+      ORDER BY is_primary DESC, id ASC
+    `, [materialId]);
+
+    // Documents
+    var docsRes = await pool.query(`
+      SELECT *
+      FROM material_documents
+      WHERE material_id = $1
+      ORDER BY order_index ASC, id ASC
+    `, [materialId]);
+
+    // Applications
+    var appsRes = await pool.query(`
+      SELECT ma.*, msrc.title AS source_title
+      FROM material_applications ma
+      LEFT JOIN material_sources msrc ON msrc.id = ma.source_id
+      WHERE ma.material_id = $1
+      ORDER BY ma.application_type ASC, ma.id ASC
+    `, [materialId]);
+
+    // Requirements & installation
+    var reqsRes = await pool.query(`
+      SELECT mr.*, msrc.title AS source_title
+      FROM material_requirements mr
+      LEFT JOIN material_sources msrc ON msrc.id = mr.source_id
+      WHERE mr.material_id = $1
+      ORDER BY mr.order_index ASC, mr.step_number ASC NULLS LAST, mr.id ASC
+    `, [materialId]);
+
+    // Version history
+    var historyRes = await pool.query(`
+      SELECT mvh.*, u.first_name, u.last_name
+      FROM material_version_history mvh
+      LEFT JOIN users u ON u.id = mvh.changed_by
+      WHERE mvh.material_id = $1
+      ORDER BY mvh.created_at DESC
+      LIMIT 15
+    `, [materialId]);
+
+    return res.json({
+      ok: true,
+      material: mat,
+      specifications: specsRes.rows,
+      sources: sourcesRes.rows,
+      documents: docsRes.rows,
+      applications: appsRes.rows,
+      requirements: reqsRes.rows,
+      version_history: historyRes.rows
+    });
+  } catch (error) {
+    console.error('GET MATERIAL DETAIL ERROR:', error);
+    return res.status(500).json({ error: 'Material ma\'lumotlarini olishda xatolik yuz berdi' });
+  }
+});
+
+// 4. Admin: Statistika (Analytics overview)
+app.post('/api/admin/materials/stats', requireAdmin, async function (req, res) {
+  try {
+    var countsRes = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(CASE WHEN status = 'published' THEN 1 END)::int AS published,
+        COUNT(CASE WHEN status = 'pending_review' THEN 1 END)::int AS pending,
+        COUNT(CASE WHEN status = 'archived' THEN 1 END)::int AS archived,
+        MAX(updated_at) AS last_update
+      FROM materials
+    `);
+
+    var sourcesRes = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total_sources,
+        COUNT(CASE WHEN status = 'broken_unavailable' THEN 1 END)::int AS broken_sources
+      FROM material_sources
+    `);
+
+    var mfgCountRes = await pool.query('SELECT COUNT(*)::int AS total_mfg FROM material_manufacturers');
+    var catCountRes = await pool.query('SELECT COUNT(*)::int AS total_cats FROM material_categories');
+
+    var s = countsRes.rows[0] || {};
+    var src = sourcesRes.rows[0] || {};
+
+    return res.json({
+      ok: true,
+      stats: {
+        total: s.total || 0,
+        published: s.published || 0,
+        pending: s.pending || 0,
+        archived: s.archived || 0,
+        sources: src.total_sources || 0,
+        broken_sources: src.broken_sources || 0,
+        manufacturers: mfgCountRes.rows[0]?.total_mfg || 0,
+        categories: catCountRes.rows[0]?.total_cats || 0,
+        last_update: s.last_update || new Date()
+      }
+    });
+  } catch (error) {
+    console.error('ADMIN MATERIALS STATS ERROR:', error);
+    return res.status(500).json({ error: 'Statistika olishda xatolik' });
+  }
+});
+
+// 5. Admin: Material yaratish yoki tahrirlash (Save with history & audit)
+app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body || {};
+    var id = parseInt(b.id, 10) || null;
+    var name = (b.name || '').trim();
+    var slug = (b.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')).trim();
+    var originalName = (b.original_name || '').trim();
+    var englishName = (b.english_name || '').trim();
+    var aliases = Array.isArray(b.aliases) ? b.aliases : (b.aliases ? String(b.aliases).split(',').map(s => s.trim()).filter(Boolean) : []);
+    var categoryId = parseInt(b.category_id, 10) || null;
+    var subcategoryName = (b.subcategory_name || '').trim();
+    var manufacturerId = parseInt(b.manufacturer_id, 10) || null;
+    var productCode = (b.product_code || '').trim();
+    var materialType = (b.material_type || '').trim();
+    var coverImage = (b.cover_image || '').trim();
+    var description = (b.description || '').trim();
+    var dimensionsInfo = (b.dimensions_info || '').trim();
+    var status = b.status || 'published';
+    var verificationStatus = b.verification_status || 'verified';
+    var accessType = b.access_type || 'free';
+    var adminUser = req.user || {};
+    var adminId = adminUser.id || null;
+    var adminName = adminUser.first_name || 'Admin';
+
+    if (!name) return res.status(400).json({ error: 'Material nomi majburiy' });
+
+    var materialId = id;
+
+    if (id) {
+      // Version history tracking: compare existing specifications
+      var oldSpecs = await pool.query('SELECT parameter, value FROM material_specifications WHERE material_id = $1', [id]);
+      var oldMap = {};
+      oldSpecs.rows.forEach(r => { oldMap[r.parameter] = r.value; });
+
+      var newSpecs = Array.isArray(b.specifications) ? b.specifications : [];
+      for (var sp of newSpecs) {
+        var oldVal = oldMap[sp.parameter];
+        if (oldVal && oldVal !== sp.value) {
+          await pool.query(`
+            INSERT INTO material_version_history (material_id, parameter, old_value, new_value, change_difference, source_document, changed_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [id, sp.parameter, oldVal, sp.value, `${oldVal} → ${sp.value}`, sp.source_document || 'Admin update', adminId]);
+        }
+      }
+
+      await pool.query(`
+        UPDATE materials
+        SET name = $1, slug = $2, original_name = $3, english_name = $4, aliases = $5,
+            category_id = $6, subcategory_name = $7, manufacturer_id = $8, product_code = $9,
+            material_type = $10, cover_image = $11, description = $12, dimensions_info = $13,
+            status = $14, verification_status = $15, access_type = $16, last_verified_at = NOW(),
+            updated_at = NOW()
+        WHERE id = $17
+      `, [name, slug, originalName, englishName, aliases, categoryId, subcategoryName, manufacturerId, productCode, materialType, coverImage, description, dimensionsInfo, status, verificationStatus, accessType, id]);
+
+      await pool.query(`
+        INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
+        VALUES ($1, $2, $3, 'update_material', $4)
+      `, [id, adminId, adminName, JSON.stringify({ name, status, verificationStatus })]);
+    } else {
+      var insRes = await pool.query(`
+        INSERT INTO materials (name, slug, original_name, english_name, aliases, category_id, subcategory_name, manufacturer_id, product_code, material_type, cover_image, description, dimensions_info, status, verification_status, access_type, last_verified_at, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW(), NOW())
+        RETURNING id
+      `, [name, slug, originalName, englishName, aliases, categoryId, subcategoryName, manufacturerId, productCode, materialType, coverImage, description, dimensionsInfo, status, verificationStatus, accessType]);
+      materialId = insRes.rows[0].id;
+
+      await pool.query(`
+        INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
+        VALUES ($1, $2, $3, 'create_material', $4)
+      `, [materialId, adminId, adminName, JSON.stringify({ name, slug })]);
+    }
+
+    // Save sources
+    if (Array.isArray(b.sources)) {
+      await pool.query('DELETE FROM material_sources WHERE material_id = $1', [materialId]);
+      for (var s of b.sources) {
+        if (s.title && s.url) {
+          await pool.query(`
+            INSERT INTO material_sources (material_id, source_type, title, url, publisher, document_name, document_version, published_date, status, is_primary)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          `, [materialId, s.source_type || 'official_product_page', s.title, s.url, s.publisher || '', s.document_name || '', s.document_version || '', s.published_date || '', s.status || 'verified', Boolean(s.is_primary)]);
+        }
+      }
+    }
+
+    // Save specifications
+    if (Array.isArray(b.specifications)) {
+      await pool.query('DELETE FROM material_specifications WHERE material_id = $1', [materialId]);
+      var sIdx = 1;
+      for (var sp of b.specifications) {
+        if (sp.parameter && sp.value) {
+          await pool.query(`
+            INSERT INTO material_specifications (material_id, parameter, parameter_label, value, unit, source_document_page, confidence, order_index)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [materialId, sp.parameter, sp.parameter_label || sp.parameter, sp.value, sp.unit || '', sp.source_document_page || null, sp.confidence || 1.0, sIdx++]);
+        }
+      }
+    }
+
+    // Save documents
+    if (Array.isArray(b.documents)) {
+      await pool.query('DELETE FROM material_documents WHERE material_id = $1', [materialId]);
+      var dIdx = 1;
+      for (var doc of b.documents) {
+        if (doc.title && doc.url) {
+          await pool.query(`
+            INSERT INTO material_documents (material_id, title, document_type, url, version, language, published_date, order_index)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [materialId, doc.title, doc.document_type || 'technical_datasheet', doc.url, doc.version || '', doc.language || 'uz', doc.published_date || '', dIdx++]);
+        }
+      }
+    }
+
+    // Save applications
+    if (Array.isArray(b.applications)) {
+      await pool.query('DELETE FROM material_applications WHERE material_id = $1', [materialId]);
+      for (var app of b.applications) {
+        if (app.description) {
+          await pool.query(`
+            INSERT INTO material_applications (material_id, application_type, title, description)
+            VALUES ($1, $2, $3, $4)
+          `, [materialId, app.application_type || 'recommended', app.title || '', app.description]);
+        }
+      }
+    }
+
+    // Save requirements
+    if (Array.isArray(b.requirements)) {
+      await pool.query('DELETE FROM material_requirements WHERE material_id = $1', [materialId]);
+      var rIdx = 1;
+      for (var req of b.requirements) {
+        if (req.description) {
+          await pool.query(`
+            INSERT INTO material_requirements (material_id, requirement_type, title, description, step_number, order_index)
+            VALUES ($1, $2, $3, $4, $5, $6)
+          `, [materialId, req.requirement_type || 'pro', req.title || '', req.description, req.step_number || null, rIdx++]);
+        }
+      }
+    }
+
+    return res.json({ ok: true, material_id: materialId, message: 'Material muvaffaqiyatli saqlandi' });
+  } catch (error) {
+    console.error('ADMIN MATERIAL SAVE ERROR:', error);
+    return res.status(500).json({ error: error.message || 'Materialni saqlashda xatolik yuz berdi' });
+  }
+});
+
+// 6. Admin: Material statusini o'zgartirish (Approve / Reject / Archive)
+app.post('/api/admin/materials/status', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.body.id, 10);
+    var status = (req.body.status || '').trim();
+    var verificationStatus = (req.body.verification_status || '').trim();
+    var adminUser = req.user || {};
+
+    if (!id) return res.status(400).json({ error: 'ID topilmadi' });
+
+    var updates = [];
+    var params = [];
+    var pIdx = 1;
+
+    if (status) {
+      updates.push('status = $' + pIdx++);
+      params.push(status);
+    }
+    if (verificationStatus) {
+      updates.push('verification_status = $' + pIdx++);
+      params.push(verificationStatus);
+    }
+    updates.push('updated_at = NOW()');
+    params.push(id);
+
+    await pool.query(`
+      UPDATE materials
+      SET ${updates.join(', ')}
+      WHERE id = $${pIdx}
+    `, params);
+
+    await pool.query(`
+      INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
+      VALUES ($1, $2, $3, 'change_status', $4)
+    `, [id, adminUser.id || null, adminUser.first_name || 'Admin', JSON.stringify({ status, verificationStatus })]);
+
+    return res.json({ ok: true, message: 'Material holati yangilandi' });
+  } catch (error) {
+    console.error('ADMIN MATERIAL STATUS ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Admin: Materialni o'chirish
+app.post('/api/admin/materials/delete', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.body.id, 10);
+    if (!id) return res.status(400).json({ error: 'ID topilmadi' });
+    var adminUser = req.user || {};
+
+    await pool.query('DELETE FROM materials WHERE id = $1', [id]);
+
+    await pool.query(`
+      INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
+      VALUES ($1, $2, $3, 'delete_material', $4)
+    `, [null, adminUser.id || null, adminUser.first_name || 'Admin', JSON.stringify({ deleted_id: id })]);
+
+    return res.json({ ok: true, message: 'Material butunlay o\'chirildi' });
+  } catch (error) {
+    console.error('ADMIN MATERIAL DELETE ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Admin: Avtomatlashtirilgan Manbalarni Tekshirish (Update & Verification Engine)
+app.post('/api/admin/materials/verify-sources', requireAdmin, async function (req, res) {
+  try {
+    var sourcesRes = await pool.query(`
+      SELECT id, material_id, title, url, status
+      FROM material_sources
+      ORDER BY id ASC
+      LIMIT 100
+    `);
+
+    var totalChecked = 0;
+    var verifiedCount = 0;
+    var brokenCount = 0;
+    var unchangedCount = 0;
+
+    for (var s of sourcesRes.rows) {
+      totalChecked++;
+      try {
+        var isOk = false;
+        var controller = new AbortController();
+        var timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        try {
+          var response = await fetch(s.url, {
+            method: 'HEAD',
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (response.ok || response.status < 400 || response.status === 403) {
+            isOk = true;
+          }
+        } catch (headErr) {
+          clearTimeout(timeoutId);
+          // If HEAD fails, test with lightweight GET
+          var getCtrl = new AbortController();
+          var getTimeout = setTimeout(() => getCtrl.abort(), 6000);
+          try {
+            var getRes = await fetch(s.url, {
+              method: 'GET',
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+              signal: getCtrl.signal
+            });
+            clearTimeout(getTimeout);
+            if (getRes.ok || getRes.status < 400 || getRes.status === 403) {
+              isOk = true;
+            }
+          } catch (e2) {
+            clearTimeout(getTimeout);
+            isOk = false;
+          }
+        }
+
+        if (isOk) {
+          verifiedCount++;
+          await pool.query(`
+            UPDATE material_sources
+            SET status = 'verified', last_checked_at = NOW()
+            WHERE id = $1
+          `, [s.id]);
+        } else {
+          brokenCount++;
+          await pool.query(`
+            UPDATE material_sources
+            SET status = 'broken_unavailable', last_checked_at = NOW()
+            WHERE id = $1
+          `, [s.id]);
+          await pool.query(`
+            UPDATE materials
+            SET verification_status = 'broken_source'
+            WHERE id = $1
+          `, [s.material_id]);
+        }
+      } catch (err) {
+        unchangedCount++;
+      }
+    }
+
+    var adminUser = req.user || {};
+    await pool.query(`
+      INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
+      VALUES (NULL, $1, $2, 'verify_sources_batch', $3)
+    `, [adminUser.id || null, adminUser.first_name || 'Admin', JSON.stringify({
+      totalChecked, verifiedCount, brokenCount, timestamp: new Date()
+    })]);
+
+    return res.json({
+      ok: true,
+      results: {
+        checked: totalChecked,
+        verified: verifiedCount,
+        broken: brokenCount,
+        unchanged: unchangedCount,
+        timestamp: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('VERIFY SOURCES ENGINE ERROR:', error);
+    return res.status(500).json({ error: 'Manbalarni tekshirishda xatolik yuz berdi' });
+  }
+});
+
+// 9. Admin: Kategoriya va Ishlab chiqaruvchi qo'shish/tahrirlash
+app.post('/api/admin/materials/category/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body || {};
+    var id = parseInt(b.id, 10);
+    var name = (b.name || '').trim();
+    var slug = (b.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-')).trim();
+    var icon = (b.icon || '🧱').trim();
+    var description = (b.description || '').trim();
+    var sortOrder = parseInt(b.sort_order, 10) || 0;
+
+    if (!name || !slug) return res.status(400).json({ error: 'Nomi va slugi majburiy' });
+
+    if (id) {
+      await pool.query(`
+        UPDATE material_categories
+        SET name = $1, slug = $2, icon = $3, description = $4, sort_order = $5
+        WHERE id = $6
+      `, [name, slug, icon, description, sortOrder, id]);
+    } else {
+      await pool.query(`
+        INSERT INTO material_categories (name, slug, icon, description, sort_order)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name, icon = EXCLUDED.icon, description = EXCLUDED.description, sort_order = EXCLUDED.sort_order
+      `, [name, slug, icon, description, sortOrder]);
+    }
+
+    return res.json({ ok: true, message: 'Kategoriya saqlandi' });
+  } catch (error) {
+    console.error('ADMIN CATEGORY SAVE ERROR:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/materials/manufacturer/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body || {};
+    var id = parseInt(b.id, 10);
+    var name = (b.name || '').trim();
+    var slug = (b.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-')).trim();
+    var logo = (b.logo || '').trim();
+    var website = (b.website || '').trim();
+    var country = (b.country || '').trim();
+    var description = (b.description || '').trim();
+
+    if (!name || !slug) return res.status(400).json({ error: 'Nomi va slugi majburiy' });
+
+    if (id) {
+      await pool.query(`
+        UPDATE material_manufacturers
+        SET name = $1, slug = $2, logo = $3, website = $4, country = $5, description = $6
+        WHERE id = $7
+      `, [name, slug, logo, website, country, description, id]);
+    } else {
+      await pool.query(`
+        INSERT INTO material_manufacturers (name, slug, logo, website, country, description)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name, logo = EXCLUDED.logo, website = EXCLUDED.website, country = EXCLUDED.country, description = EXCLUDED.description
+      `, [name, slug, logo, website, country, description]);
+    }
+
+    return res.json({ ok: true, message: 'Ishlab chiqaruvchi saqlandi' });
+  } catch (error) {
+    console.error('ADMIN MANUFACTURER SAVE ERROR:', error);
     return res.status(500).json({ error: error.message });
   }
 });

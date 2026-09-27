@@ -237,4 +237,152 @@ CREATE INDEX IF NOT EXISTS idx_learning_stages_order ON learning_stages(order_in
 CREATE INDEX IF NOT EXISTS idx_learning_resources_stage ON learning_resources(stage_id, resource_type);
 CREATE INDEX IF NOT EXISTS idx_learning_progress_user ON learning_progress(user_id);
 
+-- ======================================================
+-- MATERIALLAR KUTUBXONASI (MATERIALS KNOWLEDGE BASE)
+-- ======================================================
+
+CREATE TABLE IF NOT EXISTS material_categories (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(255) NOT NULL,
+  slug        VARCHAR(100) NOT NULL UNIQUE,
+  icon        VARCHAR(50) DEFAULT '🧱',
+  description TEXT,
+  sort_order  INT DEFAULT 0,
+  is_active   BOOLEAN DEFAULT TRUE,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_manufacturers (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(255) NOT NULL,
+  slug        VARCHAR(100) NOT NULL UNIQUE,
+  logo        VARCHAR(500),
+  website     VARCHAR(500),
+  country     VARCHAR(100),
+  description TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS materials (
+  id                  SERIAL PRIMARY KEY,
+  name                VARCHAR(255) NOT NULL,
+  slug                VARCHAR(255) NOT NULL UNIQUE,
+  original_name       VARCHAR(255),
+  english_name        VARCHAR(255),
+  aliases             TEXT[] DEFAULT '{}',
+  category_id         INT REFERENCES material_categories(id) ON DELETE SET NULL,
+  subcategory_name    VARCHAR(255),
+  manufacturer_id     INT REFERENCES material_manufacturers(id) ON DELETE SET NULL,
+  product_code        VARCHAR(100),
+  material_type       VARCHAR(255),
+  cover_image         VARCHAR(500),
+  gallery             JSONB DEFAULT '[]',
+  description         TEXT,
+  dimensions_info     TEXT,
+  status              VARCHAR(50) DEFAULT 'published',
+  verification_status VARCHAR(50) DEFAULT 'verified',
+  access_type         VARCHAR(50) DEFAULT 'free',
+  last_verified_at    TIMESTAMPTZ DEFAULT NOW(),
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_sources (
+  id               SERIAL PRIMARY KEY,
+  material_id      INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  source_type      VARCHAR(50) NOT NULL,
+  title            VARCHAR(500) NOT NULL,
+  url              TEXT NOT NULL,
+  publisher        VARCHAR(255),
+  document_name    VARCHAR(255),
+  document_version VARCHAR(100),
+  published_date   VARCHAR(100),
+  retrieved_at     TIMESTAMPTZ DEFAULT NOW(),
+  last_checked_at  TIMESTAMPTZ DEFAULT NOW(),
+  status           VARCHAR(50) DEFAULT 'verified',
+  is_primary       BOOLEAN DEFAULT FALSE,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_specifications (
+  id                    SERIAL PRIMARY KEY,
+  material_id           INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  parameter             VARCHAR(100) NOT NULL,
+  parameter_label       VARCHAR(255) NOT NULL,
+  value                 VARCHAR(255) NOT NULL,
+  unit                  VARCHAR(50),
+  source_id             INT REFERENCES material_sources(id) ON DELETE SET NULL,
+  source_document_page  VARCHAR(50),
+  confidence            NUMERIC(3,2) DEFAULT 1.0,
+  verified_at           TIMESTAMPTZ DEFAULT NOW(),
+  order_index           INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS material_documents (
+  id              SERIAL PRIMARY KEY,
+  material_id     INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  title           VARCHAR(500) NOT NULL,
+  document_type   VARCHAR(50) NOT NULL,
+  url             TEXT NOT NULL,
+  file_url        TEXT,
+  version         VARCHAR(100),
+  language        VARCHAR(50) DEFAULT 'uz',
+  published_date  VARCHAR(100),
+  order_index     INT DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_applications (
+  id                SERIAL PRIMARY KEY,
+  material_id       INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  application_type  VARCHAR(50) NOT NULL,
+  title             VARCHAR(255),
+  description       TEXT NOT NULL,
+  source_id         INT REFERENCES material_sources(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS material_requirements (
+  id                SERIAL PRIMARY KEY,
+  material_id       INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  requirement_type  VARCHAR(50) NOT NULL,
+  title             VARCHAR(255),
+  description       TEXT NOT NULL,
+  step_number       INT,
+  source_id         INT REFERENCES material_sources(id) ON DELETE SET NULL,
+  order_index       INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS material_version_history (
+  id                SERIAL PRIMARY KEY,
+  material_id       INT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  parameter         VARCHAR(100) NOT NULL,
+  old_value         TEXT,
+  new_value         TEXT,
+  change_difference TEXT,
+  source_document   VARCHAR(255),
+  source_id         INT REFERENCES material_sources(id) ON DELETE SET NULL,
+  changed_by        INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_audit_logs (
+  id          SERIAL PRIMARY KEY,
+  material_id INT REFERENCES materials(id) ON DELETE SET NULL,
+  admin_id    INT REFERENCES users(id) ON DELETE SET NULL,
+  admin_name  VARCHAR(255),
+  action      VARCHAR(100) NOT NULL,
+  details     JSONB DEFAULT '{}',
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category_id, status);
+CREATE INDEX IF NOT EXISTS idx_materials_mfg ON materials(manufacturer_id);
+CREATE INDEX IF NOT EXISTS idx_materials_slug ON materials(slug);
+CREATE INDEX IF NOT EXISTS idx_material_specs_mat ON material_specifications(material_id);
+CREATE INDEX IF NOT EXISTS idx_material_sources_mat ON material_sources(material_id);
+CREATE INDEX IF NOT EXISTS idx_material_docs_mat ON material_documents(material_id);
+CREATE INDEX IF NOT EXISTS idx_material_apps_mat ON material_applications(material_id);
+CREATE INDEX IF NOT EXISTS idx_material_reqs_mat ON material_requirements(material_id);
+
+
 

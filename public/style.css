@@ -8266,3 +8266,527 @@ html.light .reader-spinner-overlay {
   font-weight: 700;
 }
 
+/* ======================================================
+   MATERIALLAR KUTUBXONASI (MATERIALS KNOWLEDGE BASE)
+   ====================================================== */
+
+.lib-materials-v2-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lib-mat-hero {
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.08) 0%, rgba(255, 69, 58, 0.04) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  padding: 18px;
+  margin-bottom: 6px;
+}
+
+.lib-mat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ff9500;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.lib-mat-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+}
+
+.lib-mat-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.lib-mat-cat-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 8px 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.lib-mat-cat-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.lib-mat-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.lib-mat-cat-pill:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.lib-mat-cat-pill.active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25);
+}
+
+.lib-mat-cat-count {
+  font-size: 10.5px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.lib-mat-cat-pill.active .lib-mat-cat-count {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.lib-materials-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .lib-materials-grid-v2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lib-material-card-v2 {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.lib-material-card-v2:active {
+  transform: scale(0.985);
+}
+
+.lib-material-card-v2:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.lib-mat-thumb-wrap-v2 {
+  position: relative;
+  width: 100%;
+  height: 155px;
+  background: var(--bg-surface-elevated, rgba(0,0,0,0.04));
+  overflow: hidden;
+}
+
+.lib-mat-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.lib-material-card-v2:hover .lib-mat-thumb-img {
+  transform: scale(1.03);
+}
+
+.lib-mat-badge-verified {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 750;
+  background: rgba(16, 185, 129, 0.92);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.lib-mat-badge-pending {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 750;
+  background: rgba(245, 158, 11, 0.92);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+}
+
+.lib-mat-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.lib-mat-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.lib-mat-card-cat-tag {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.lib-mat-card-mfg-tag {
+  background: var(--bg-surface-elevated, rgba(0,0,0,0.05));
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.lib-mat-card-title {
+  font-size: 15.5px;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin: 0 0 4px 0;
+}
+
+.lib-mat-card-type {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lib-mat-card-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.lib-mat-card-specs-count {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.lib-mat-card-arrow {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* DETAIL PAGE */
+.lib-mat-detail-page {
+  animation: libFadeIn 0.25s ease-out;
+}
+
+.lib-mat-detail-hero {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.lib-mat-hero-banner {
+  width: 100%;
+  max-height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.lib-mat-hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lib-mat-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  margin-bottom: 10px;
+}
+
+.lib-mat-verified-pill.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.lib-mat-detail-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.lib-mat-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.lib-mat-specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lib-mat-specs-table tr {
+  border-bottom: 1px solid var(--border);
+}
+.lib-mat-specs-table tr:last-child {
+  border-bottom: none;
+}
+
+.lib-mat-specs-table td {
+  padding: 9px 6px;
+  vertical-align: middle;
+}
+
+.lib-mat-spec-label {
+  color: var(--text-secondary);
+  width: 45%;
+}
+
+.lib-mat-spec-val {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.lib-mat-spec-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: 6px;
+  cursor: pointer;
+  border: none;
+  vertical-align: middle;
+}
+.lib-mat-spec-info-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.lib-mat-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lib-mat-step-item {
+  display: flex;
+  gap: 12px;
+  background: var(--bg-surface-elevated, rgba(0,0,0,0.02));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.lib-mat-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lib-mat-step-content {
+  flex: 1;
+}
+
+.lib-mat-step-title {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.lib-mat-step-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.lib-mat-apps-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .lib-mat-apps-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.lib-mat-app-card {
+  border-radius: 10px;
+  padding: 12px;
+  border-left: 4px solid #10b981;
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.lib-mat-app-card.warning {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.lib-mat-app-title {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.lib-mat-app-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.lib-mat-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lib-mat-doc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-surface-elevated, rgba(0,0,0,0.02));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lib-mat-doc-btn:hover {
+  border-color: var(--accent);
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.lib-mat-source-box {
+  background: linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ADMIN MATERIALS CMS */
+.admin-mat-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-mat-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.admin-mat-stat-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.admin-mat-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.admin-mat-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+
