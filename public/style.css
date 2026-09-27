@@ -7233,7 +7233,7 @@ html.light .reader-book-title-subtle {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  touch-action: pan-y;
+  touch-action: none;
   padding: 12px 16px 80px 16px;
 }
 
@@ -7257,6 +7257,9 @@ html.light .reader-book-title-subtle {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.2);
   background: #ffffff;
   overflow: hidden;
+  transform-origin: center center;
+  user-select: none;
+  -webkit-user-select: none;
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
   will-change: transform, opacity;
 }

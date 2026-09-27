@@ -7010,6 +7010,19 @@ let readerTouchStartY = 0;
 let readerTouchDistX = 0;
 let readerTouchDistY = 0;
 
+let readerScale = 1.0;
+let readerPanX = 0;
+let readerPanY = 0;
+let readerStartScale = 1.0;
+let readerStartPanX = 0;
+let readerStartPanY = 0;
+let readerPinchStartDist = 0;
+let readerPinchStartMidX = 0;
+let readerPinchStartMidY = 0;
+let readerIsPinching = false;
+let readerIsPanning = false;
+let readerLastTapTime = 0;
+
 let studentSavedBooksList = [];
 let studentTopSavedBooksList = [];
 let studentShelvesLoaded = false;
@@ -7081,6 +7094,11 @@ async function openBookReader(bookIdOrObj, initialPage) {
   libReaderTotalPages = book.page_count || 1;
   libReaderDoc = null;
   readerIsTransitioning = false;
+  readerScale = 1.0;
+  readerPanX = 0;
+  readerPanY = 0;
+  readerIsPinching = false;
+  readerIsPanning = false;
 
   renderMinimalReaderView();
   loadMinimalReaderDocument();
@@ -7156,29 +7174,208 @@ function renderMinimalReaderView() {
   setupReaderTouchGestures();
 }
 
+function applyReaderTransform(animate) {
+  const card = document.getElementById("reader-card-current");
+  if (!card) return;
+
+  if (animate) {
+    card.style.transition = "transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)";
+  } else {
+    card.style.transition = "none";
+  }
+
+  card.style.transform = `translate3d(${Math.round(readerPanX)}px, ${Math.round(readerPanY)}px, 0px) scale(${readerScale.toFixed(3)})`;
+}
+
+function clampReaderPan() {
+  const card = document.getElementById("reader-card-current");
+  if (!card) return;
+
+  if (readerScale <= 1.05) {
+    readerScale = 1.0;
+    readerPanX = 0;
+    readerPanY = 0;
+    return;
+  }
+
+  const w = card.offsetWidth || 340;
+  const h = card.offsetHeight || 500;
+  const maxPanX = Math.max(0, ((w * readerScale) - w) / 2 + 25);
+  const maxPanY = Math.max(0, ((h * readerScale) - h) / 2 + 35);
+
+  readerPanX = Math.max(-maxPanX, Math.min(maxPanX, readerPanX));
+  readerPanY = Math.max(-maxPanY, Math.min(maxPanY, readerPanY));
+}
+
+function resetReaderZoom(animate) {
+  readerScale = 1.0;
+  readerPanX = 0;
+  readerPanY = 0;
+  readerIsPinching = false;
+  readerIsPanning = false;
+  applyReaderTransform(animate !== false);
+}
+
 function setupReaderTouchGestures() {
   const vp = document.getElementById("reader-viewport");
   if (!vp) return;
 
   vp.addEventListener("touchstart", function (e) {
-    if (!e.touches || e.touches.length !== 1) return;
-    readerTouchStartX = e.touches[0].clientX;
-    readerTouchStartY = e.touches[0].clientY;
-    readerTouchDistX = 0;
-    readerTouchDistY = 0;
-  }, { passive: true });
+    if (!e.touches) return;
+
+    if (e.touches.length === 2) {
+      // 2 BARMOQ: PINCH-TO-ZOOM BOSHLANDI
+      e.preventDefault();
+      readerIsPinching = true;
+      readerIsPanning = false;
+
+      const x1 = e.touches[0].clientX;
+      const y1 = e.touches[0].clientY;
+      const x2 = e.touches[1].clientX;
+      const y2 = e.touches[1].clientY;
+
+      readerPinchStartDist = Math.hypot(x1 - x2, y1 - y2);
+      readerPinchStartMidX = (x1 + x2) / 2;
+      readerPinchStartMidY = (y1 + y2) / 2;
+
+      readerStartScale = readerScale;
+      readerStartPanX = readerPanX;
+      readerStartPanY = readerPanY;
+
+      const card = document.getElementById("reader-card-current");
+      if (card) card.style.transition = "none";
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      // 1 BARMOQ: SWIPE YOKI KATTALASHTIRILGAN SAHIFADA PAN
+      readerIsPinching = false;
+      readerTouchStartX = e.touches[0].clientX;
+      readerTouchStartY = e.touches[0].clientY;
+      readerTouchDistX = 0;
+      readerTouchDistY = 0;
+
+      readerStartPanX = readerPanX;
+      readerStartPanY = readerPanY;
+
+      if (readerScale > 1.05) {
+        readerIsPanning = true;
+        const card = document.getElementById("reader-card-current");
+        if (card) card.style.transition = "none";
+      } else {
+        readerIsPanning = false;
+      }
+    }
+  }, { passive: false });
 
   vp.addEventListener("touchmove", function (e) {
-    if (!e.touches || e.touches.length !== 1) return;
-    readerTouchDistX = e.touches[0].clientX - readerTouchStartX;
-    readerTouchDistY = e.touches[0].clientY - readerTouchStartY;
-  }, { passive: true });
+    if (!e.touches) return;
+
+    if (e.touches.length === 2 && readerIsPinching) {
+      // 2 BARMOQ: PINCH-TO-ZOOM MASSHTABLASH
+      e.preventDefault();
+      const x1 = e.touches[0].clientX;
+      const y1 = e.touches[0].clientY;
+      const x2 = e.touches[1].clientX;
+      const y2 = e.touches[1].clientY;
+
+      const currentDist = Math.hypot(x1 - x2, y1 - y2);
+      const currentMidX = (x1 + x2) / 2;
+      const currentMidY = (y1 + y2) / 2;
+
+      if (readerPinchStartDist > 0) {
+        const factor = currentDist / readerPinchStartDist;
+        let newScale = readerStartScale * factor;
+
+        // [1.0, 3.8] chegarasidan oshganda elastik rubber-band qarshilik
+        if (newScale < 1.0) {
+          newScale = 1.0 - (1.0 - newScale) * 0.35;
+          if (newScale < 0.75) newScale = 0.75;
+        } else if (newScale > 3.8) {
+          newScale = 3.8 + (newScale - 3.8) * 0.25;
+          if (newScale > 4.6) newScale = 4.6;
+        }
+
+        readerScale = newScale;
+
+        // Pan harakati barmoqlar o'rta nuqtasiga ergashadi
+        const dMidX = currentMidX - readerPinchStartMidX;
+        const dMidY = currentMidY - readerPinchStartMidY;
+        readerPanX = readerStartPanX + dMidX;
+        readerPanY = readerStartPanY + dMidY;
+
+        applyReaderTransform(false);
+      }
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      readerTouchDistX = e.touches[0].clientX - readerTouchStartX;
+      readerTouchDistY = e.touches[0].clientY - readerTouchStartY;
+
+      if (readerScale > 1.05 && readerIsPanning) {
+        // ZOOM HOLATIDA 1 BARMOQ BILAN PAN / DRAG
+        e.preventDefault();
+        readerPanX = readerStartPanX + readerTouchDistX;
+        readerPanY = readerStartPanY + readerTouchDistY;
+        applyReaderTransform(false);
+      }
+    }
+  }, { passive: false });
 
   vp.addEventListener("touchend", function () {
+    if (readerIsPinching) {
+      readerIsPinching = false;
+      if (readerScale < 1.1) {
+        resetReaderZoom(true);
+      } else {
+        if (readerScale > 3.8) readerScale = 3.8;
+        clampReaderPan();
+        applyReaderTransform(true);
+      }
+      return;
+    }
+
+    if (readerIsPanning) {
+      readerIsPanning = false;
+      clampReaderPan();
+      applyReaderTransform(true);
+      return;
+    }
+
     const absX = Math.abs(readerTouchDistX);
     const absY = Math.abs(readerTouchDistY);
 
-    if (absX > 45 && absX > absY * 1.2) {
+    // DOUBLE TAP ANIQLASH (agar surilmagan bo'lsa)
+    if (absX < 14 && absY < 14) {
+      const now = Date.now();
+      if (now - readerLastTapTime < 280) {
+        // Double tap muvaffaqiyatli!
+        haptic("medium");
+        readerLastTapTime = 0;
+
+        if (readerScale > 1.15) {
+          // Normal 1.0x ga qaytish
+          resetReaderZoom(true);
+        } else {
+          // 2.2x ga silliq kattalashtirish (bosilgan joyga moslab)
+          readerScale = 2.2;
+          const rect = vp.getBoundingClientRect();
+          const tapRelX = (readerTouchStartX - (rect.left + rect.width / 2)) * 0.7;
+          const tapRelY = (readerTouchStartY - (rect.top + rect.height / 2)) * 0.7;
+          readerPanX = -tapRelX;
+          readerPanY = -tapRelY;
+          clampReaderPan();
+          applyReaderTransform(true);
+        }
+        return;
+      }
+      readerLastTapTime = now;
+      return;
+    }
+
+    // SAHIFA O'TKAZISH (faqat zoom qilinmagan bo'lsa)
+    if (readerScale <= 1.05 && absX > 45 && absX > absY * 1.2) {
       if (readerTouchDistX < 0) {
         readerTurnPage(1);
       } else {
@@ -7279,6 +7476,7 @@ async function readerTurnPage(delta) {
 
   readerIsTransitioning = true;
   haptic("light");
+  resetReaderZoom(false);
 
   const currentCard = document.getElementById("reader-card-current");
   const nextCard = document.getElementById("reader-card-next");
@@ -7319,11 +7517,19 @@ async function readerTurnPage(delta) {
     currentCard.id = "reader-card-next";
     currentCard.style.display = "none";
     currentCard.className = "reader-canvas-card";
+    currentCard.style.transform = "";
     const currentCanvas = currentCard.querySelector("canvas");
     if (currentCanvas) currentCanvas.id = "reader-canvas-next";
 
     nextCard.id = "reader-card-current";
+    nextCard.style.transform = "";
     if (nextCanvas) nextCanvas.id = "reader-canvas-current";
+
+    readerScale = 1.0;
+    readerPanX = 0;
+    readerPanY = 0;
+    readerIsPinching = false;
+    readerIsPanning = false;
 
     readerIsTransitioning = false;
     scheduleSaveReadingProgress();
@@ -7407,6 +7613,7 @@ function retryMinimalReader() {
 
 function closeBookReader() {
   haptic("light");
+  resetReaderZoom(false);
   clearTimeout(readingProgressSaveTimeout);
   saveReadingProgress();
 
