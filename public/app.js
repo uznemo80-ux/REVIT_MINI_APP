@@ -6142,6 +6142,13 @@ function openLibrarySection(slug) {
     studentBooksList = null;
     loadStudentBooks();
   }
+  if (slug === "materials") {
+    if (!materialsState.loaded && !materialsState.loading) {
+      loadMaterialsData().then(() => {
+        if (libraryActiveSection === "materials") render();
+      });
+    }
+  }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
@@ -7022,11 +7029,14 @@ let activeMaterialDetail = null;
 let activeSpecSourceInfo = null;
 
 async function loadMaterialsData(forceReload) {
-  if (materialsState.loading) return;
+  if (materialsState.loading && !forceReload) return;
   materialsState.loading = true;
   try {
     if (!materialsState.categories.length || forceReload) {
-      const catRes = await api("/api/materials/categories");
+      const catRes = await api("/api/materials/categories").catch(err => {
+        console.warn("Categories fetch error:", err);
+        return null;
+      });
       if (catRes && catRes.ok) {
         materialsState.categories = Array.isArray(catRes.categories) ? catRes.categories : [];
         materialsState.manufacturers = Array.isArray(catRes.manufacturers) ? catRes.manufacturers : [];
@@ -7046,15 +7056,18 @@ async function loadMaterialsData(forceReload) {
       offset: materialsState.offset
     };
 
-    const listRes = await api("/api/materials/list", payload);
+    const listRes = await api("/api/materials/list", payload).catch(err => {
+      console.warn("Materials list fetch error:", err);
+      return null;
+    });
     if (listRes && listRes.ok) {
       materialsState.materials = Array.isArray(listRes.materials) ? listRes.materials : [];
-      materialsState.total = listRes.total || 0;
+      materialsState.total = listRes.total || materialsState.materials.length;
     }
-    materialsState.loaded = true;
-    materialsState.loading = false;
   } catch (err) {
     console.error("LOAD MATERIALS DATA ERROR:", err);
+  } finally {
+    materialsState.loaded = true;
     materialsState.loading = false;
   }
 }
@@ -7064,7 +7077,7 @@ async function setMaterialCategory(catSlug) {
   materialsState.selectedCategory = catSlug;
   materialsState.offset = 0;
   await loadMaterialsData();
-  if (currentView && currentView.type === "tasks" && libraryActiveSection === "materials") {
+  if (libraryActiveSection === "materials") {
     render();
   }
 }
@@ -7074,7 +7087,7 @@ async function setMaterialManufacturer(mfgSlug) {
   materialsState.selectedManufacturer = mfgSlug;
   materialsState.offset = 0;
   await loadMaterialsData();
-  if (currentView && currentView.type === "tasks" && libraryActiveSection === "materials") {
+  if (libraryActiveSection === "materials") {
     render();
   }
 }
@@ -7086,7 +7099,7 @@ function setMaterialSearch(query) {
   materialSearchDebounce = setTimeout(async () => {
     materialsState.offset = 0;
     await loadMaterialsData();
-    if (currentView && currentView.type === "tasks" && libraryActiveSection === "materials") {
+    if (libraryActiveSection === "materials") {
       render();
       const inp = document.getElementById("lib-materials-search-input");
       if (inp) {
@@ -7102,14 +7115,31 @@ async function toggleMaterialFilter(filterKey) {
   materialsState[filterKey] = !materialsState[filterKey];
   materialsState.offset = 0;
   await loadMaterialsData();
-  if (currentView && currentView.type === "tasks" && libraryActiveSection === "materials") {
+  if (libraryActiveSection === "materials") {
     render();
   }
 }
 
 function renderMaterialsSectionHtml() {
   if (!materialsState.loaded && !materialsState.loading) {
-    loadMaterialsData().then(() => render());
+    loadMaterialsData().then(() => {
+      if (libraryActiveSection === "materials") render();
+    });
+  }
+
+  if (materialsState.loading && !materialsState.loaded) {
+    return `
+      <div class="page lib-container lib-page-enter lib-materials-v2-container">
+        <div class="lib-back-nav" onclick="closeLibrarySection()">
+          ${libIcons.back('lib-back-svg', 16)} Kutubxona
+        </div>
+        <div style="padding: 80px 20px; text-align: center;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Materiallar yuklanmoqda...</div>
+          <div style="font-size: 12.5px; color: var(--text-secondary);">GOST, SHNQ va rasmiy kataloglar tekshirilmoqda</div>
+        </div>
+      </div>
+    `;
   }
 
   const cats = materialsState.categories || [];
@@ -7198,11 +7228,12 @@ function renderMaterialsSectionHtml() {
 }
 
 function renderMaterialCardHtml(mat) {
-  const img = formatImageUrl(mat.cover_image || "");
-  const isVerified = mat.verification_status === "verified";
+  const title = mat.name || mat.title || "Material";
+  const img = formatImageUrl(mat.cover_image || mat.featured_image || "");
+  const isVerified = mat.verification_status === "verified" || mat.is_verified;
   const catName = mat.category_name || "Qurilish";
   const mfgName = mat.manufacturer_name || "";
-  const dimensions = mat.dimensions_info ? mat.dimensions_info.split(".")[0] : "";
+  const dimensions = mat.dimensions_info ? mat.dimensions_info.split(".")[0] : (Array.isArray(mat.standard_sizes) ? mat.standard_sizes[0] : "");
 
   return `
     <div class="lib-material-card-v2" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
@@ -7227,11 +7258,11 @@ function renderMaterialCardHtml(mat) {
           ${mfgName ? `<span class="lib-mat-card-mfg-tag">🏭 ${escapeHtml(mfgName)}</span>` : ""}
         </div>
 
-        <h3 class="lib-mat-card-title">${escapeHtml(mat.name)}</h3>
+        <h3 class="lib-mat-card-title">${escapeHtml(title)}</h3>
         ${mat.original_name ? `<div style="font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">${escapeHtml(mat.original_name)}</div>` : ""}
 
         <div class="lib-mat-card-type">
-          ${escapeHtml(mat.material_type || mat.description || "")}
+          ${escapeHtml(mat.material_type || mat.generic_name || mat.description || "")}
         </div>
 
         <div class="lib-mat-card-footer">
