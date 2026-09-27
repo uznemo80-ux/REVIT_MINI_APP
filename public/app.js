@@ -1,4 +1,4 @@
-﻿// ======================================================
+// ======================================================
 // YOSHUZBEKK Academy — Telegram Mini App Frontend
 // Single Page Application (SPA) Engine
 // ======================================================
@@ -14520,11 +14520,23 @@ function safeOpenExternal(url) {
   if (!url) return;
   haptic("light");
   try {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-      window.Telegram.WebApp.openLink(url);
-    } else {
-      window.open(url, "_blank", "noopener,noreferrer");
+    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === "function") {
+      window.Telegram.WebApp.openLink(url, { try_instant_view: false });
+      return;
     }
+  } catch (e) {
+    console.warn("Telegram openLink fallback:", e);
+  }
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch (ignore) {}
+    }, 150);
   } catch (e) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -14691,16 +14703,62 @@ function renderLearningCenter() {
                           </div>
                         ` : ""}
                         <div class="learning-res-actions">
-                          ${res.pdf_url ? `
-                            <button class="learning-action-btn primary" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">
-                              📄 PDFni o‘qish →
-                            </button>
-                          ` : ""}
-                          ${res.web_url ? `
-                            <button class="learning-action-btn" onclick="safeOpenExternal('${escapeJsString(res.web_url)}')">
-                              🌐 Online manba →
-                            </button>
-                          ` : ""}
+                          ${(() => {
+                            const isSame = res.pdf_url && res.web_url && (res.pdf_url === res.web_url);
+                            if (isSame) {
+                              let label = "🌐 Manbani to‘liq ochish →";
+                              if (res.resource_type === "standard") {
+                                label = "🏛️ Rasmiy me'yor / Hujjatni ochish →";
+                              } else if (res.resource_type === "revit_guide") {
+                                label = "📐 ADSK Shablon / Qo‘llanmani ochish →";
+                              } else if (res.resource_type === "project_album") {
+                                label = "📑 Real Loyiha Albomini ko‘rish →";
+                              } else if (res.resource_type === "book") {
+                                label = "📖 Kitobni o‘qish / Yuklab olish →";
+                              }
+                              return `
+                                <button class="learning-action-btn primary" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">
+                                  ${label}
+                                </button>
+                              `;
+                            }
+
+                            let html = "";
+                            if (res.pdf_url) {
+                              const isPdfFile = res.pdf_url.toLowerCase().endsWith(".pdf") || res.pdf_url.includes(".pdf");
+                              let pdfLabel = isPdfFile ? "📄 PDFni o‘qish / Yuklash →" : "📄 To‘g‘ridan-to‘g‘ri o‘qish (PDF) →";
+                              if (res.resource_type === "revit_guide" && res.pdf_url.includes("github")) {
+                                pdfLabel = "💻 BIM 2.0 GitHub Repo →";
+                              } else if (res.resource_type === "standard" && res.pdf_url.includes("lex.uz")) {
+                                pdfLabel = "🏛️ Lex.uz Hujjat matni →";
+                              }
+                              html += `
+                                <button class="learning-action-btn primary" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">
+                                  ${pdfLabel}
+                                </button>
+                              `;
+                            }
+                            if (res.web_url) {
+                              let webLabel = "🌐 Online manba →";
+                              if (res.resource_type === "standard" && res.web_url.includes("stroyinf.ru")) {
+                                webLabel = "🌐 Standartning to‘liq matni →";
+                              } else if (res.resource_type === "book" && res.web_url.includes("unilibrary")) {
+                                webLabel = "📚 UniLibrary.uz sahifasi →";
+                              } else if (res.resource_type === "book" && res.web_url.includes("studfile")) {
+                                webLabel = "📖 Studfile online o‘qish →";
+                              } else if (res.resource_type === "project_album" && res.web_url.includes("dwg.ru")) {
+                                webLabel = "📐 DWG.RU loyiha bazasi →";
+                              } else if (res.resource_type === "revit_guide" && res.web_url.includes("bim2b")) {
+                                webLabel = "📐 BIM2B rasmiy shablonlar →";
+                              }
+                              html += `
+                                <button class="learning-action-btn" onclick="safeOpenExternal('${escapeJsString(res.web_url)}')">
+                                  ${webLabel}
+                                </button>
+                              `;
+                            }
+                            return html;
+                          })()}
                         </div>
                       </div>
                     `).join("")}
@@ -14740,10 +14798,14 @@ function renderLearningCenter() {
                       ${row.map((cell, idx) => {
                         const cellStr = String(cell || "");
                         if (cellStr.startsWith("http://") || cellStr.startsWith("https://")) {
+                          let linkText = "Ochish ↗";
+                          if (cellStr.includes("lex.uz")) linkText = "Lex.uz ↗";
+                          else if (cellStr.includes("stroyinf.ru") || cellStr.includes("allgosts.ru")) linkText = "GOST Matni ↗";
+                          else if (cellStr.includes(".pdf")) linkText = "PDF ↗";
                           return `
                             <td>
-                              <a class="learning-table-link" href="#" onclick="safeOpenExternal('${escapeJsString(cellStr)}'); return false;">
-                                Ochish ↗
+                              <a class="learning-table-link" href="${escapeHtml(cellStr)}" target="_blank" rel="noopener noreferrer" onclick="safeOpenExternal('${escapeJsString(cellStr)}'); return false;">
+                                ${linkText}
                               </a>
                             </td>
                           `;

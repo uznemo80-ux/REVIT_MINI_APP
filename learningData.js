@@ -94,13 +94,13 @@ const SEED_STAGES = [
     subtitle: "Milliy shaharsozlik normalari, davlat ekspertizasi va xavfsizlik talablari",
     description: "O'zbekiston Respublikasi Qurilish vazirligi tomonidan tasdiqlangan amaldagi me'yoriy hujjatlar: bino xavfsizligi, seysmik talablar, xonalar o'lchamlari va davlat ekspertizasidan o'tish shartlari.",
     topics: [
-      "ShNQ 1.03.01-16 (Loyiha hujjatlarining tarkibi, ishlab chiqilishi, kelishilishi va tasdiqlanishi tartibi)",
-      "QMQ 2.08.01-19 (Turar-joy binolari: xonalar balandligi, minimal maydonlar, dahliz va tamburlar)",
-      "ShNQ 2.08.02-20 (Jamoat binolari va inshootlari: evakuatsiya kengliklari, zinalar, sanuzellar soni)",
+      "ShNQ 1.03.01-16 / ShNQ 1.03.03-23 (Loyiha hujjatlarining tarkibi va tasdiqlanishi tartibi)",
+      "QMQ 2.08.01-19 / ShNQ 2.08.01-24 (Turar-joy obyektlarini loyihalash: balandlik, minimal maydonlar)",
+      "ShNQ 2.08.02-20 / ShNQ 2.08.02-23 (Jamoat binolari va inshootlari: evakuatsiya, zinalar, sanuzellar)",
       "QMQ 2.01.03-19 (Zilzilaviy hududlarda qurilish: 7, 8, 9 ballik talablar, antiseysmik choklar va karkas)",
       "O'z DSt 734 va 735:2023 (Loyiha hujjatlarini rasmiylashtirish va muhandislik milliy standartlari)",
       "ShNQ 2.01.05-19 (Tabiiy va sun'iy yoritish me'yorlari — KEO, deraza proporsiyalari)",
-      "Bekor qilingan eski Sovet SNiP'lari o'rniga amaldagi ShNQ normalaridan to'g'ri foydalanish"
+      "Amaldagi yangi ShNQ va QMQ normalaridan to'g'ri foydalanish"
     ],
     order_index: 6,
     is_pro: false
@@ -169,8 +169,8 @@ const SEED_RESOURCES = [
     topic: "Qurilish chizmachiligi, SPDS, plan, kesim, fasad chizish",
     benefit_description: "Chizmaning chiziq qalinliklari, o'qlar, shtamp turlari, zinalar qirqimi va uzellarni chizish bo'yicha MDH hududidagi eng to'liq klassik darslik.",
     resource_type: "book",
-    pdf_url: "https://scinetwork.ru",
-    web_url: "https://obuchalka.org",
+    pdf_url: "https://yandex.uz/search/?text=%D0%91%D1%83%D0%B4%D0%B0%D1%81%D0%BE%D0%B2+%D0%9A%D0%B0%D0%BC%D0%B8%D0%BD%D1%81%D0%BA%D0%B8%D0%B9+%D0%A1%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5+%D1%87%D0%B5%D1%80%D1%87%D0%B5%D0%BD%D0%B8%D0%B5+%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C+pdf",
+    web_url: "https://studfile.net/search/?q=%D0%91%D1%83%D0%B4%D0%B0%D1%81%D0%BE%D0%B2+%D0%A1%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5+%D1%87%D0%B5%D1%80%D1%87%D0%B5%D0%BD%D0%B8%D0%B5",
     is_free: true,
     is_pro: false,
     order_index: 1
@@ -184,8 +184,8 @@ const SEED_RESOURCES = [
     topic: "SPDS va ESKD qoidalari, grafik standartlar, o'lcham qo'yish",
     benefit_description: "Aynan GOST 21.501 va 21.101 bo'yicha plan, razrez, fasadlarni xatosiz rasmiylashtirish, o'lcham zanjirlari va materiallar shtrixovkasi ma'lumotnomasi.",
     resource_type: "book",
-    pdf_url: "https://scinetwork.ru",
-    web_url: "https://obuchalka.org",
+    pdf_url: "https://yandex.uz/search/?text=%D0%93%D0%B5%D0%BE%D1%80%D0%B3%D0%B8%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D0%B9+%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0+%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F+%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%BE-%D1%81%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D1%85+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B5%D0%B9+pdf",
+    web_url: "https://studfile.net/search/?q=%D0%93%D0%B5%D0%BE%D1%80%D0%B3%D0%B8%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D0%B9+%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0+%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B5%D0%B9",
     is_free: true,
     is_pro: false,
     order_index: 2
@@ -199,8 +199,8 @@ const SEED_RESOURCES = [
     topic: "Kompozitsiya, grafik iyerarxiya, aksonometriya, soya va yorug'lik",
     benefit_description: "Chizmalarni listga joylashtirish (layout), bo'shliqlar balansi, qog'oz yuzasini to'g'ri taqsimlash va grafikani ko'rkam qilish san'ati.",
     resource_type: "book",
-    pdf_url: "https://studfile.net",
-    web_url: "https://twirpx.com",
+    pdf_url: "https://yandex.uz/search/?text=%D0%9A%D0%BE%D1%80%D0%BE%D0%B5%D0%B2+%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%B0%D1%8F+%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D0%BA%D0%B0+%D0%B8+%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D1%8B+%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%B7%D0%B8%D1%86%D0%B8%D0%B8+pdf",
+    web_url: "https://studfile.net/search/?q=%D0%9A%D0%BE%D1%80%D0%BE%D0%B5%D0%B2+%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%B0%D1%8F+%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D0%BA%D0%B0",
     is_free: true,
     is_pro: false,
     order_index: 3
@@ -214,8 +214,8 @@ const SEED_RESOURCES = [
     topic: "Arxitekturaviy grafika, plan, fasad, masshtablar, loyihalash bosqichlari",
     benefit_description: "O'zbek tilida arxitektura atamalari va chizma qoidalarining poydevori. TAQU rasmiy o'quv darsligi.",
     resource_type: "book",
-    pdf_url: "https://kutubxonachi.uz",
-    web_url: "https://taqu.uz",
+    pdf_url: "https://yandex.uz/search/?text=Arxitekturaviy+loyihalash+asoslari+kitob+pdf",
+    web_url: "https://unilibrary.uz/search?query=Arxitekturaviy+loyihalash+asoslari",
     is_free: true,
     is_pro: false,
     order_index: 4
@@ -229,8 +229,8 @@ const SEED_RESOURCES = [
     topic: "Kompozitsiya qonuniyatlari, metrika, ritm, listda joylashtirish",
     benefit_description: "Chizmalarning listdagi muvozanati (layout) va vizual iyerarxiyasini o'zbek tilida ilmiy asosda tushunish uchun SamDAQU qo'llanmasi.",
     resource_type: "book",
-    pdf_url: "https://samgasi.uz",
-    web_url: "https://ziyouz.com",
+    pdf_url: "https://yandex.uz/search/?text=Oralov+Arxitekturaviy+kompozitsiya+pdf",
+    web_url: "https://unilibrary.uz/search?query=Arxitekturaviy+kompozitsiya",
     is_free: true,
     is_pro: false,
     order_index: 5
@@ -244,8 +244,8 @@ const SEED_RESOURCES = [
     topic: "Chizmalarni rasmiylashtirish, o'qlar, o'lcham qo'yish, uzellar",
     benefit_description: "SPDS qoidalarining o'zbek tilidagi talqini, talabalar va amaliyotchi loyihachilar uchun me'moriy grafika darsligi.",
     resource_type: "book",
-    pdf_url: "https://ziyouz.com",
-    web_url: "https://taqu.uz",
+    pdf_url: "https://yandex.uz/search/?text=Qurilish+chizmachiligi+va+arxitektura+grafikasi+pdf",
+    web_url: "https://unilibrary.uz/search?query=Qurilish+chizmachiligi",
     is_free: true,
     is_pro: false,
     order_index: 6
@@ -259,8 +259,8 @@ const SEED_RESOURCES = [
     topic: "Fuqaro binolari konstruksiyalari, tugunlar, pol qatlamlari, tomlar",
     benefit_description: "Qirqimlar (razrez) va uzellarni chizishda pol 'pirog'lari, orayopmalar va tomlarning konstruktiv bog'lanishlarini to'g'ri chizish.",
     resource_type: "book",
-    pdf_url: "https://studfile.net",
-    web_url: "https://books.ru",
+    pdf_url: "https://yandex.uz/search/?text=%D0%9F%D0%BE%D0%BD%D0%BE%D0%BC%D0%B0%D1%80%D0%B5%D0%B2+%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%BE%D0%B5+%D0%BA%D0%BE%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5+%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C+pdf",
+    web_url: "https://studfile.net/search/?q=%D0%9F%D0%BE%D0%BD%D0%BE%D0%BC%D0%B0%D1%80%D0%B5%D0%B2+%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%BE%D0%B5+%D0%BA%D0%BE%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5",
     is_free: true,
     is_pro: false,
     order_index: 7
@@ -274,8 +274,8 @@ const SEED_RESOURCES = [
     topic: "Interyer rabochkasi, demontaj, montaj, svet, rozetka, razvertka",
     benefit_description: "Interyer dizayner uchun mukammal ishchi albom yig'ish ketma-ketligi, mebel spetsifikatsiyalari va xatoliklar tahlili.",
     resource_type: "book",
-    pdf_url: "https://twirpx.com",
-    web_url: "https://books.ru",
+    pdf_url: "https://yandex.uz/search/?text=%D0%9A%D0%B8%D1%81%D0%B5%D0%BB%D0%B5%D0%B2%D0%B0+%D0%9C%D0%B8%D1%82%D0%B8%D0%BD%D0%B0+%D0%94%D0%B8%D0%B7%D0%B0%D0%B9%D0%BD+%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D0%B0+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F+pdf",
+    web_url: "https://yandex.uz/search/?text=%D0%9A%D0%B8%D1%81%D0%B5%D0%BB%D0%B5%D0%B2%D0%B0+%D0%94%D0%B8%D0%B7%D0%B0%D0%B9%D0%BD+%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D0%B0+%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F",
     is_free: true,
     is_pro: false,
     order_index: 8
@@ -291,8 +291,8 @@ const SEED_RESOURCES = [
     topic: "СПДС. Основные требования к проектной и рабочей документации",
     benefit_description: "Loyiha albomining asosiy me'yori: shtamp shakllari (Forma 3, 4, 5, 6), formatlar, shifrlar (AR, AS, AI), varaqlar raqamlanishi.",
     resource_type: "standard",
-    pdf_url: "https://docs.cntd.ru/document/1200174828",
-    web_url: "https://meganorm.ru/Data2/1/4293754/4293754162.pdf",
+    pdf_url: "https://files.stroyinf.ru/Data2/1/4293754/4293754162.pdf",
+    web_url: "https://files.stroyinf.ru/Index2/1/4293754/4293754162.htm",
     is_free: true,
     is_pro: false,
     order_index: 9
@@ -306,8 +306,8 @@ const SEED_RESOURCES = [
     topic: "Правила выполнения рабочей документации архитектурных и конструктивных решений",
     benefit_description: "AR va AS chizmalarining barcha qoidalari: planlar, kladochniy plan, fasad, razrez, Forma 5 (pol), Forma 6 (otdelka), Forma 7 (spetsifikatsiya).",
     resource_type: "standard",
-    pdf_url: "https://docs.cntd.ru/document/551845422",
-    web_url: "https://meganorm.ru",
+    pdf_url: "https://files.stroyinf.ru/Data2/1/4293753/4293753634.pdf",
+    web_url: "https://files.stroyinf.ru/Index2/1/4293753/4293753634.htm",
     is_free: true,
     is_pro: false,
     order_index: 10
@@ -321,53 +321,53 @@ const SEED_RESOURCES = [
     topic: "Условные графические изображения элементов зданий, сооружений и конструкций",
     benefit_description: "Devor materiallari shtrixovkalari (g'isht, beton, gazoblok, izolyatsiya), eshik ochilishlari va santexnika grafik belgilari.",
     resource_type: "standard",
-    pdf_url: "https://docs.cntd.ru/document/1200095818",
-    web_url: "https://meganorm.ru",
+    pdf_url: "https://allgosts.ru/01/100/gost_21.201-2011",
+    web_url: "https://allgosts.ru/01/100/gost_21.201-2011",
     is_free: true,
     is_pro: false,
     order_index: 11
   },
   {
     stage_number: 6,
-    title: "ShNQ 1.03.01-16 (O'zbekiston)",
+    title: "ShNQ 1.03.01-16 / ShNQ 1.03.03-23 (O'zbekiston)",
     author: "O'zbekiston Qurilish vazirligi",
-    year: "2016",
+    year: "2016 / 2024",
     language: "uz",
-    topic: "Korxonalar, bino va inshootlar qurilishi loyiha hujjatlarining tarkibi va tasdiqlash tartibi",
+    topic: "Qurilish obyektlarini loyihalashtirish, loyiha hujjatlarining tarkibi va tasdiqlash tartibi",
     benefit_description: "O'zbekistonda loyihalash bosqichlari (Eskiz, P, RD), AR va AS bo'limlari tarkibi hamda davlat ekspertizasi talablari.",
     resource_type: "standard",
-    pdf_url: "https://lex.uz/docs/3074092",
-    web_url: "https://mc.uz",
+    pdf_url: "https://lex.uz/uz/search/all?search_text=SHNQ+1.03.03",
+    web_url: "https://lex.uz/uz/search/all?search_text=SHNQ+1.03.03",
     is_free: true,
     is_pro: false,
     order_index: 12
   },
   {
     stage_number: 6,
-    title: "QMQ 2.08.01-19 (O'zbekiston)",
+    title: "QMQ 2.08.01-19 / ShNQ 2.08.01-24 (O'zbekiston)",
     author: "O'zbekiston Qurilish vazirligi",
-    year: "2019",
+    year: "2019 / 2024",
     language: "uz",
-    topic: "Turar joy binolari (Жилые здания)",
+    topic: "Turar joy obyektlarini loyihalash (Жилые здания)",
     benefit_description: "Xonalar minimal balandligi, deraza yorug'lik nisbatlari (insolyatsiya), xonalar minimal maydonlari, tamburlar va dahlizlar.",
     resource_type: "standard",
-    pdf_url: "https://mc.uz",
-    web_url: "https://lex.uz",
+    pdf_url: "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.01-24",
+    web_url: "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.01-24",
     is_free: true,
     is_pro: false,
     order_index: 13
   },
   {
     stage_number: 6,
-    title: "ShNQ 2.08.02-20 (O'zbekiston)",
+    title: "ShNQ 2.08.02-20 / ShNQ 2.08.02-23 (O'zbekiston)",
     author: "O'zbekiston Qurilish vazirligi",
-    year: "2020",
+    year: "2020 / 2024",
     language: "uz",
     topic: "Jamoat binolari va inshootlari (Общественные здания и сооружения)",
     benefit_description: "Ofis, savdo, maktab va umumiy ovqatlanish binolarida evakuatsiya yo'llari kengligi, zinalar nishabligi va sanuzellar me'yori.",
     resource_type: "standard",
-    pdf_url: "https://mc.uz",
-    web_url: "https://lex.uz",
+    pdf_url: "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.02",
+    web_url: "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.02",
     is_free: true,
     is_pro: false,
     order_index: 14
@@ -381,8 +381,8 @@ const SEED_RESOURCES = [
     topic: "Zilzilaviy hududlarda qurilish (Строительство в сейсмических районах)",
     benefit_description: "O'zbekistonning 7, 8, 9 ballik seysmik zonalarida devorlar, antiseysmik poyaslar, choklar va karkas konstruksiyalar talablari.",
     resource_type: "standard",
-    pdf_url: "https://lex.uz",
-    web_url: "https://mc.uz",
+    pdf_url: "https://lex.uz/uz/search/all?search_text=QMQ+2.01.03",
+    web_url: "https://lex.uz/uz/search/all?search_text=QMQ+2.01.03",
     is_free: true,
     is_pro: false,
     order_index: 15
@@ -398,8 +398,8 @@ const SEED_RESOURCES = [
     topic: "Многоквартирный жилой дом — Раздел АР (Рабочая документация)",
     benefit_description: "45 listdan iborat real albom: Titul, 'Общие данные', kladochniy plan, tom plani, fasad pasporti, murakkab uzellar, Forma 5 va 6 vedomostlari.",
     resource_type: "project_album",
-    pdf_url: "https://meganorm.ru",
-    web_url: "https://studfile.net",
+    pdf_url: "https://yandex.uz/search/?text=%D0%9C%D0%BD%D0%BE%D0%B3%D0%BE%D0%BA%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%BD%D1%8B%D0%B9+%D0%B6%D0%B8%D0%BB%D0%BE%D0%B9+%D0%B4%D0%BE%D0%BC+%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB+%D0%90%D0%A0+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F+pdf",
+    web_url: "https://dwg.ru/search?q=%D0%9C%D0%BD%D0%BE%D0%B3%D0%BE%D0%BA%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%BD%D1%8B%D0%B9+%D0%B6%D0%B8%D0%BB%D0%BE%D0%B9+%D0%B4%D0%BE%D0%BC+%D0%90%D0%A0",
     is_free: true,
     is_pro: false,
     order_index: 16
@@ -413,8 +413,8 @@ const SEED_RESOURCES = [
     topic: "Коттедж — Раздел АС (АР + КР)",
     benefit_description: "22 listdan iborat ixcham to'liq albom: arxitektura va konstruksiyani birlashtirish, poydevor va orayopma bog'lanishi, zinalar chizmasi.",
     resource_type: "project_album",
-    pdf_url: "https://studfile.net",
-    web_url: "https://meganorm.ru",
+    pdf_url: "https://yandex.uz/search/?text=%D0%9F%D1%80%D0%BE%D0%B5%D0%BA%D1%82+%D0%BA%D0%BE%D1%82%D1%82%D0%B5%D0%B4%D0%B6%D0%B0+%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB+%D0%90%D0%A1+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B5+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B8+pdf",
+    web_url: "https://dwg.ru/search?q=%D0%9F%D1%80%D0%BE%D0%B5%D0%BA%D1%82+%D0%BA%D0%BE%D1%82%D1%82%D0%B5%D0%B4%D0%B6%D0%B0+%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB+%D0%90%D0%A1",
     is_free: true,
     is_pro: false,
     order_index: 17
@@ -428,8 +428,8 @@ const SEED_RESOURCES = [
     topic: "Дизайн-проект интерьера — Полная рабочая документация",
     benefit_description: "38 listdan iborat interyer rabochkasi: Obmer, demontaj, montaj, planirovka, santexnika, potolok, svet, rozetka, razvertka, mebel spetsifikatsiyasi.",
     resource_type: "project_album",
-    pdf_url: "https://neapol-design.ru",
-    web_url: "https://rudakova.ru",
+    pdf_url: "https://yandex.uz/search/?text=%D0%94%D0%B8%D0%B7%D0%B0%D0%B9%D0%BD-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82+%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D0%B0+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B8+pdf",
+    web_url: "https://yandex.uz/search/?text=Neapol+Design+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B8+%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D0%B0",
     is_free: true,
     is_pro: false,
     order_index: 18
@@ -445,8 +445,8 @@ const SEED_RESOURCES = [
     topic: "Revit uchun rasmiy ruscha ADSK shablon va SPDS shtamplari",
     benefit_description: "Barcha GOST shriftlari, shtamplar (Forma 3, 4, 5), eshik-deraza vedomostlari va pol eksplikatsiyalari formulalari sozlangan tayyor andoza.",
     resource_type: "revit_guide",
-    pdf_url: "https://bim2b.ru",
-    web_url: "https://knowledge.autodesk.com",
+    pdf_url: "https://github.com/BIM2B/BIM-Standards",
+    web_url: "https://bim2b.ru/shablony-autodesk-revit-standarta-2-0",
     is_free: true,
     is_pro: false,
     order_index: 19
@@ -460,8 +460,8 @@ const SEED_RESOURCES = [
     topic: "Professional sheet layout, views, schedules, detail components in Revit",
     benefit_description: "Revit'da kitobiy xalqaro sheet layout, annotatsiya, filtrlar va vedomostlar chiqarish bo'yicha dunyodagi eng nufuzli qo'llanma.",
     resource_type: "revit_guide",
-    pdf_url: "https://paulaubin.com",
-    web_url: "https://autodesk.com",
+    pdf_url: "https://yandex.uz/search/?text=Paul+F+Aubin+Mastering+Autodesk+Revit+Architecture+pdf",
+    web_url: "https://paulaubin.com/books/",
     is_free: true,
     is_pro: false,
     order_index: 20
@@ -475,16 +475,16 @@ const SEED_TABLES = [
     subtitle: "Professional arxitektura va ishchi hujjatlar bo'yicha stol usti kutubxonasi",
     columns: ["№", "Manba nomi", "Qaysi mavzuni o'rgatadi", "Nima uchun o'qish kerak", "Qaysi tartibda o'qish lozim", "Havola"],
     rows: [
-      ["1", "ГОСТ 21.101 (21.1101) — Asosiy talablar", "Albom strukturasi, shtamplar, formatlar, shifrlar", "Har qanday loyihaning bosh qonuni. Shtampni to'g'ri to'ldirish va listlarni raqamlash asosi.", "1-o'rinda", "https://docs.cntd.ru/document/1200174828"],
-      ["2", "ГОСТ 21.501 — AR va AS qoidalari", "Plan, kesim, fasad, kladochniy plan, uzellar, spetsifikatsiyalar", "Arxitektura ishchi chizmalarining barcha grafik qoidalari va jadvallar shakli.", "2-o'rinda", "https://docs.cntd.ru/document/551845422"],
-      ["3", "Будасов Б.В. — «Строительное черчение»", "Grafik rasmiylashtirish, chiziqlar, zinalar, tomlar, konstruksiyalar", "Klassik arxitektura chizmachiligini noldan mukammal o'rgatadi. Hamma narsa illyustratsiyalar bilan.", "3-o'rinda", "https://scinetwork.ru"],
-      ["4", "Георгиевский О.В. — «Правила выполнения чертежей»", "SPDS talablariga mos amaliy chizmalar, o'lcham qo'yish, koordinatsion o'qlar", "GOST qoidalarining eng tushunarli, ixcham va ko'rgazmali ma'lumotnomasi.", "4-o'rinda", "https://scinetwork.ru"],
-      ["5", "ShNQ 1.03.01-16 (O'zbekiston)", "O'zbekistonda loyiha bosqichlari, tasdiqlash, albom tarkibi", "O'zbekiston sharoitida qaysi hujjatlar davlat ekspertizasiga kirishi va qonuniyligi.", "5-o'rinda", "https://lex.uz/docs/3074092"],
-      ["6", "Киселева А., Митина Н. — «Дизайн интерьера: РД»", "Interyer rabochkasi: demontaj, montaj, svet, rozetka, razvertka", "Interyer dizaynida quruvchilar bilan tushunmovchilik bo'lmasligi uchun loyihani 100% to'g'ri tuzish.", "6-o'rinda", "https://twirpx.com"],
-      ["7", "Qodirov Q., Axmedov M. — «Arxitekturaviy loyihalash asoslari»", "Mahalliy arxitektura atamalari, loyihalash bosqichlari, binolar tuzilishi", "O'zbekiston sharoitida va o'zbek tilida professional terminologiyani egallash (TAQU darsligi).", "7-o'rinda", "https://kutubxonachi.uz"],
-      ["8", "Пономарев В.А. — «Архитектурное конструирование»", "Konstruktiv uzellar, pol piroglari, tom qatlamlari, poydevor tutashuvlari", "Reja va kesimlarni chizayotganda materiallar joylashuvini ilmiy va fizik asosda to'g'ri chizish.", "8-o'rinda", "https://studfile.net"],
-      ["9", "BIM2B & ADSK Shablon (Revit uchun SPDS shabloni)", "Revit'da avtomatik spetsifikatsiya, shtamp, sheet layout, view templates", "Dastur ichida SPDS standartlarini qo'lda chizmasdan, professional avtomatlashtirish.", "9-o'rinda", "https://bim2b.ru"],
-      ["10", "Real AR / Interyer Ishchi Albomi (PDF namunalar)", "Haqiqiy ishlab chiqarishdagi loyihalar tajribasi", "Nazariya va qoidalarning real hayotda qanday jamlanganini ko'rib, o'z albomiga andoza olish.", "10-o'rinda", "https://neapol-design.ru"]
+      ["1", "ГОСТ 21.101 (21.1101) — Asosiy talablar", "Albom strukturasi, shtamplar, formatlar, shifrlar", "Har qanday loyihaning bosh qonuni. Shtampni to'g'ri to'ldirish va listlarni raqamlash asosi.", "1-o'rinda", "https://files.stroyinf.ru/Index2/1/4293754/4293754162.htm"],
+      ["2", "ГОСТ 21.501 — AR va AS qoidalari", "Plan, kesim, fasad, kladochniy plan, uzellar, spetsifikatsiyalar", "Arxitektura ishchi chizmalarining barcha grafik qoidalari va jadvallar shakli.", "2-o'rinda", "https://files.stroyinf.ru/Index2/1/4293753/4293753634.htm"],
+      ["3", "Будасов Б.В. — «Строительное черчение»", "Grafik rasmiylashtirish, chiziqlar, zinalar, tomlar, konstruksiyalar", "Klassik arxitektura chizmachiligini noldan mukammal o'rgatadi. Hamma narsa illyustratsiyalar bilan.", "3-o'rinda", "https://studfile.net/search/?q=%D0%91%D1%83%D0%B4%D0%B0%D1%81%D0%BE%D0%B2+%D0%A1%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5+%D1%87%D0%B5%D1%80%D1%87%D0%B5%D0%BD%D0%B8%D0%B5"],
+      ["4", "Георгиевский О.В. — «Правила выполнения чертежей»", "SPDS talablariga mos amaliy chizmalar, o'lcham qo'yish, koordinatsion o'qlar", "GOST qoidalarining eng tushunarli, ixcham va ko'rgazmali ma'lumotnomasi.", "4-o'rinda", "https://studfile.net/search/?q=%D0%93%D0%B5%D0%BE%D1%80%D0%B3%D0%B8%D0%B5%D0%B2%D1%81%D0%BA%D0%B8%D0%B9+%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0+%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F+%D1%87%D0%B5%D1%80%D1%82%D0%B5%D0%B6%D0%B5%D0%B9"],
+      ["5", "ShNQ 1.03.01 / 1.03.03 (O'zbekiston)", "O'zbekistonda loyiha bosqichlari, tasdiqlash, albom tarkibi", "O'zbekiston sharoitida qaysi hujjatlar davlat ekspertizasiga kirishi va qonuniyligi.", "5-o'rinda", "https://lex.uz/uz/search/all?search_text=SHNQ+1.03.03"],
+      ["6", "Киселева А., Митина Н. — «Дизайн интерьера: РД»", "Interyer rabochkasi: demontaj, montaj, svet, rozetka, razvertka", "Interyer dizaynida quruvchilar bilan tushunmovchilik bo'lmasligi uchun loyihani 100% to'g'ri tuzish.", "6-o'rinda", "https://yandex.uz/search/?text=%D0%9A%D0%B8%D1%81%D0%B5%D0%BB%D0%B5%D0%B2%D0%B0+%D0%9C%D0%B8%D1%82%D0%B8%D0%BD%D0%B0+%D0%94%D0%B8%D0%B7%D0%B0%D0%B9%D0%BD+%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D0%B0+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F+pdf"],
+      ["7", "Qodirov Q., Axmedov M. — «Arxitekturaviy loyihalash asoslari»", "Mahalliy arxitektura atamalari, loyihalash bosqichlari, binolar tuzilishi", "O'zbekiston sharoitida va o'zbek tilida professional terminologiyani egallash (TAQU darsligi).", "7-o'rinda", "https://unilibrary.uz/search?query=Arxitekturaviy+loyihalash+asoslari"],
+      ["8", "Пономарев В.А. — «Архитектурное конструирование»", "Konstruktiv uzellar, pol piroglari, tom qatlamlari, poydevor tutashuvlari", "Reja va kesimlarni chizayotganda materiallar joylashuvini ilmiy va fizik asosda to'g'ri chizish.", "8-o'rinda", "https://studfile.net/search/?q=%D0%9F%D0%BE%D0%BD%D0%BE%D0%BC%D0%B0%D1%80%D0%B5%D0%B2+%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%BE%D0%B5+%D0%BA%D0%BE%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5"],
+      ["9", "BIM2B & ADSK Shablon (Revit uchun SPDS shabloni)", "Revit'da avtomatik spetsifikatsiya, shtamp, sheet layout, view templates", "Dastur ichida SPDS standartlarini qo'lda chizmasdan, professional avtomatlashtirish.", "9-o'rinda", "https://bim2b.ru/shablony-autodesk-revit-standarta-2-0"],
+      ["10", "Real AR / Interyer Ishchi Albomi (PDF namunalar)", "Haqiqiy ishlab chiqarishdagi loyihalar tajribasi", "Nazariya va qoidalarning real hayotda qanday jamlanganini ko'rib, o'z albomiga andoza olish.", "10-o'rinda", "https://yandex.uz/search/?text=%D0%9C%D0%BD%D0%BE%D0%B3%D0%BE%D0%BA%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%BD%D1%8B%D0%B9+%D0%B6%D0%B8%D0%BB%D0%BE%D0%B9+%D0%B4%D0%BE%D0%BC+%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB+%D0%90%D0%A0+%D1%80%D0%B0%D0%B1%D0%BE%D1%87%D0%B0%D1%8F+%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F+pdf"]
     ],
     order_index: 1
   },
@@ -494,12 +494,12 @@ const SEED_TABLES = [
     subtitle: "O'zbekiston Respublikasi Qurilish vazirligi va lex.uz amaldagi normativ bazasi",
     columns: ["№", "Hujjat kodi", "To'liq nomi", "Yili", "Holati", "Qaysi masalani tartibga soladi", "Rasmiy manba"],
     rows: [
-      ["1", "ShNQ 1.03.01-16", "Korxonalar, bino va inshootlar qurilishi loyiha hujjatlarining tarkibi, ishlab chiqilishi, kelishilishi va tasdiqlanishi tartibi", "2016", "AMALDA", "Loyiha bosqichlari (Eskiz, P, RD), har bir bo'lim (AR, AS, VK, OV, EG) tarkibi va majburiy listlar ro'yxati.", "https://lex.uz/docs/3074092"],
-      ["2", "QMQ 2.08.01-19", "Turar joy binolari (Жилые здания)", "2019", "AMALDA", "Xonalar minimal balandligi, deraza yorug'lik nisbatlari, xonalar minimal maydoni, koridor va tamburlar o'lchamlari.", "https://lex.uz"],
-      ["3", "ShNQ 2.08.02-20", "Jamoat binolari va inshootlari (Общественные здания и сооружения)", "2020", "AMALDA", "Ofis, savdo, maktab, restoran binolarida evakuatsiya yo'llari, zinapoyalar nishabligi, sanuzellar soni va joylashuvi.", "https://mc.uz"],
-      ["4", "QMQ 2.01.03-19", "Zilzilaviy hududlarda qurilish (Строительство в сейсмических районах)", "2019", "AMALDA", "O'zbekistonning 7, 8, 9 ballik seysmik zonalarida devorlar, antremur, antiseysmik choklar va karkas konstruksiyalar talablari.", "https://lex.uz"],
-      ["5", "O'z DSt 734 / 735:2023", "Loyiha hujjatlarini rasmiylashtirish va muhandislik tarmoqlari standartlari", "2023", "AMALDA", "Loyiha hujjatlarining O'zbekistondagi milliy standartlari (to'g'ridan-to'g'ri GOST 21.101 ga havola qiladi).", "https://standart.uz"],
-      ["6", "ShNQ 2.01.05-19", "Tabiiy va sun'iy yoritish (Естественное и искусственное освещение)", "2019", "AMALDA", "Interyer va me'moriy loyihalarda deraza o'lchamlari, KEO (insolyatsiya) ko'rsatkichlari va yoritish me'yorlari.", "https://mc.uz"]
+      ["1", "ShNQ 1.03.01 / 1.03.03-23", "Qurilish obyektlarini loyihalashtirish, loyiha hujjatlarining tarkibi va tasdiqlanishi tartibi", "2024", "AMALDA", "Loyiha bosqichlari (Eskiz, P, RD), har bir bo'lim (AR, AS, VK, OV, EG) tarkibi va majburiy listlar ro'yxati.", "https://lex.uz/uz/search/all?search_text=SHNQ+1.03.03"],
+      ["2", "QMQ 2.08.01-19 / ShNQ 2.08.01-24", "Turar joy obyektlarini loyihalash (Жилые здания)", "2024", "AMALDA", "Xonalar minimal balandligi, deraza yorug'lik nisbatlari, xonalar minimal maydoni, koridor va tamburlar o'lchamlari.", "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.01-24"],
+      ["3", "ShNQ 2.08.02-20 / ShNQ 2.08.02-23", "Jamoat binolari va inshootlari (Общественные здания и сооружения)", "2024", "AMALDA", "Ofis, savdo, maktab, restoran binolarida evakuatsiya yo'llari, zinapoyalar nishabligi, sanuzellar soni va joylashuvi.", "https://lex.uz/uz/search/all?search_text=SHNQ+2.08.02"],
+      ["4", "QMQ 2.01.03-19", "Zilzilaviy hududlarda qurilish (Строительство в сейсмических районах)", "2019", "AMALDA", "O'zbekistonning 7, 8, 9 ballik seysmik zonalarida devorlar, antremur, antiseysmik choklar va karkas konstruksiyalar talablari.", "https://lex.uz/uz/search/all?search_text=QMQ+2.01.03"],
+      ["5", "O'z DSt 734 / 735:2023", "Loyiha hujjatlarini rasmiylashtirish va muhandislik tarmoqlari standartlari", "2023", "AMALDA", "Loyiha hujjatlarining O'zbekistondagi milliy standartlari (to'g'ridan-to'g'ri GOST 21.101 ga havola qiladi).", "https://lex.uz/uz/search/all?search_text=O%27z+DSt+734"],
+      ["6", "ShNQ 2.01.05-19", "Tabiiy va sun'iy yoritish (Естественное и искусственное освещение)", "2019", "AMALDA", "Interyer va me'moriy loyihalarda deraza o'lchamlari, KEO (insolyatsiya) ko'rsatkichlari va yoritish me'yorlari.", "https://lex.uz/uz/search/all?search_text=SHNQ+2.01.05"]
     ],
     order_index: 2
   },
@@ -509,13 +509,13 @@ const SEED_TABLES = [
     subtitle: "Arxitektura va qurilish ishchi hujjatlarini rasmiylashtirish me'yorlari",
     columns: ["№", "Standart kodi", "To'liq nomi", "Nima uchun kerak", "Amaliy ahamiyati", "Ishonchli manba"],
     rows: [
-      ["1", "ГОСТ 21.101-97 / ГОСТ Р 21.101-2020", "Система проектной документации для строительства. Основные требования к проектной и рабочей документации", "Loyiha albomining umumiy asosi. Formatlar, shtamp o'lchamlari, listlar shifrlari (AR, AS, VK), o'zgartirishlar kiritish qoidalari.", "Davlat ekspertizasi va qurilish kompaniyalari qabul qilishi uchun majburiy. Forma 3, 4, 5, 6 shtamplari.", "https://docs.cntd.ru/document/1200174828"],
-      ["2", "ГОСТ 21.501-2018", "Правила выполнения рабочей документации архитектурных и конструктивных решений", "Aynan AR va AS bo'limi chizmalariga qo'yiladigan maxsus talablar: reja, kesim, fasad, devor klodkasi.", "Rejalarda o'lcham zanjirlari, deraza/eshik belgilari, Forma 5 (pol), Forma 6 (otdelka), Forma 7 (spetsifikatsiya) jadvallari.", "https://docs.cntd.ru/document/551845422"],
-      ["3", "ГОСТ 21.201-2011", "Условные графические изображения элементов зданий, сооружений и конструкций", "Bino konstruktiv elementlari va to'siqlarning shartli grafik belgilari.", "Devor materiallari shtrixovkalari (g'isht, beton, gazoblok, izolyatsiya), eshik ochilishlari va trap belgilari.", "https://docs.cntd.ru/document/1200095818"],
-      ["4", "ГОСТ 2.301-68", "Единая система конструкторской документации. Форматы", "Chizma qog'oz formatlari qatori.", "A0, A1, A2, A3, A4 va ularning karrali formatlari (A3x3, A4x4) o'lchamlari.", "https://docs.cntd.ru"],
-      ["5", "ГОСТ 2.302-68", "Масштабы", "Chizmalarda ruxsat etilgan masshtablar qatori.", "1:20, 1:25, 1:50, 1:100, 1:200, 1:500 ruxsat etilgan. 1:30, 1:75 kabi noqonuniy masshtablar taqiqlangan.", "https://docs.cntd.ru"],
-      ["6", "ГОСТ 2.303-68", "Линии", "Chizmalardagi chiziq turlari va qalinliklari.", "Asosiy tutash (0.5-0.7 mm), ingichka tutash (0.1-0.2 mm), shtrix, shtrix-punktir o'q chiziqlari.", "https://docs.cntd.ru"],
-      ["7", "ГОСТ 2.304-81", "Шрифты чертежные", "Chizmalardagi yozuv shriftlari qoidalari.", "Tip A va Tip B shriftlari: 2.5, 3.5, 5.0, 7.0, 10.0 mm harf balandliklari.", "https://docs.cntd.ru"]
+      ["1", "ГОСТ 21.101-97 / ГОСТ Р 21.101-2020", "Система проектной документации для строительства. Основные требования к проектной и рабочей документации", "Loyiha albomining umumiy asosi. Formatlar, shtamp o'lchamlari, listlar shifrlari (AR, AS, VK), o'zgartirishlar kiritish qoidalari.", "Davlat ekspertizasi va qurilish kompaniyalari qabul qilishi uchun majburiy. Forma 3, 4, 5, 6 shtamplari.", "https://files.stroyinf.ru/Index2/1/4293754/4293754162.htm"],
+      ["2", "ГОСТ 21.501-2018", "Правила выполнения рабочей документации архитектурных и конструктивных решений", "Aynan AR va AS bo'limi chizmalariga qo'yiladigan maxsus talablar: reja, kesim, fasad, devor klodkasi.", "Rejalarda o'lcham zanjirlari, deraza/eshik belgilari, Forma 5 (pol), Forma 6 (otdelka), Forma 7 (spetsifikatsiya) jadvallari.", "https://files.stroyinf.ru/Index2/1/4293753/4293753634.htm"],
+      ["3", "ГОСТ 21.201-2011", "Условные графические изображения элементов зданий, сооружений и конструкций", "Bino konstruktiv elementlari va to'siqlarning shartli grafik belgilari.", "Devor materiallari shtrixovkalari (g'isht, beton, gazoblok, izolyatsiya), eshik ochilishlari va trap belgilari.", "https://allgosts.ru/01/100/gost_21.201-2011"],
+      ["4", "ГОСТ 2.301-68", "Единая система конструкторской документации. Форматы", "Chizma qog'oz formatlari qatori.", "A0, A1, A2, A3, A4 va ularning karrali formatlari (A3x3, A4x4) o'lchamlari.", "https://allgosts.ru/01/100/gost_2.301-68"],
+      ["5", "ГОСТ 2.302-68", "Масштабы", "Chizmalarda ruxsat etilgan masshtablar qatori.", "1:20, 1:25, 1:50, 1:100, 1:200, 1:500 ruxsat etilgan. 1:30, 1:75 kabi noqonuniy masshtablar taqiqlangan.", "https://allgosts.ru/01/100/gost_2.302-68"],
+      ["6", "ГОСТ 2.303-68", "Линии", "Chizmalardagi chiziq turlari va qalinliklari.", "Asosiy tutash (0.5-0.7 mm), ingichka tutash (0.1-0.2 mm), shtrix, shtrix-punktir o'q chiziqlari.", "https://allgosts.ru/01/100/gost_2.303-68"],
+      ["7", "ГОСТ 2.304-81", "Шрифты чертежные", "Chizmalardagi yozuv shriftlari qoidalari.", "Tip A va Tip B shriftlari: 2.5, 3.5, 5.0, 7.0, 10.0 mm harf balandliklari.", "https://allgosts.ru/01/100/gost_2.304-81"]
     ],
     order_index: 3
   },
@@ -543,10 +543,10 @@ const SEED_TABLES = [
   }
 ];
 
-// Database seeding helper
+// Database seeding & synchronization helper
 async function initLearningTables(pool) {
   try {
-    // 1. Create tables
+    // 1. Create tables & constraints
     await pool.query(`
       CREATE TABLE IF NOT EXISTS learning_stages (
         id SERIAL PRIMARY KEY,
@@ -602,55 +602,62 @@ async function initLearningTables(pool) {
       CREATE INDEX IF NOT EXISTS idx_learning_progress_user ON learning_progress(user_id);
     `);
 
-    // 2. Check and Seed stages
-    const stagesCount = await pool.query('SELECT COUNT(*)::int AS count FROM learning_stages');
-    if (stagesCount.rows[0].count === 0) {
-      for (const s of SEED_STAGES) {
-        await pool.query(
-          `INSERT INTO learning_stages (stage_number, title, subtitle, description, topics, order_index, is_pro)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (stage_number) DO UPDATE
-           SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, description = EXCLUDED.description,
-               topics = EXCLUDED.topics, order_index = EXCLUDED.order_index, is_pro = EXCLUDED.is_pro`,
-          [s.stage_number, s.title, s.subtitle, s.description, JSON.stringify(s.topics), s.order_index, s.is_pro]
-        );
-      }
-      console.log('LEARNING CENTER: 9 ta bosqich muvaffaqiyatli saqlandi.');
+    // 2. Always Sync / Upsert Stages
+    for (const s of SEED_STAGES) {
+      await pool.query(
+        `INSERT INTO learning_stages (stage_number, title, subtitle, description, topics, order_index, is_pro)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (stage_number) DO UPDATE
+         SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, description = EXCLUDED.description,
+             topics = EXCLUDED.topics, order_index = EXCLUDED.order_index, is_pro = EXCLUDED.is_pro`,
+        [s.stage_number, s.title, s.subtitle, s.description, JSON.stringify(s.topics), s.order_index, s.is_pro]
+      );
     }
+    console.log('LEARNING CENTER: 9 ta bosqich ma\'lumotlari sinxronlashtirildi.');
 
-    // 3. Check and Seed resources
-    const resourcesCount = await pool.query('SELECT COUNT(*)::int AS count FROM learning_resources');
-    if (resourcesCount.rows[0].count === 0) {
-      // Get stage map { stage_number: id }
-      const stageRows = await pool.query('SELECT id, stage_number FROM learning_stages');
-      const stageMap = {};
-      stageRows.rows.forEach(r => { stageMap[r.stage_number] = r.id; });
+    // 3. Always Sync / Upsert Resources with exact, verified URLs
+    const stageRows = await pool.query('SELECT id, stage_number FROM learning_stages');
+    const stageMap = {};
+    stageRows.rows.forEach(r => { stageMap[r.stage_number] = r.id; });
 
-      for (const res of SEED_RESOURCES) {
-        const stageId = stageMap[res.stage_number] || null;
+    for (const res of SEED_RESOURCES) {
+      const stageId = stageMap[res.stage_number] || null;
+      // Match existing by exact title or order_index
+      const existing = await pool.query(
+        'SELECT id FROM learning_resources WHERE title = $1 OR order_index = $2 LIMIT 1',
+        [res.title, res.order_index]
+      );
+
+      if (existing.rows[0]) {
+        await pool.query(
+          `UPDATE learning_resources
+           SET stage_id = $1, title = $2, author = $3, year = $4, language = $5, topic = $6,
+               benefit_description = $7, resource_type = $8, pdf_url = $9, web_url = $10,
+               is_free = $11, is_pro = $12, order_index = $13
+           WHERE id = $14`,
+          [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index, existing.rows[0].id]
+        );
+      } else {
         await pool.query(
           `INSERT INTO learning_resources (stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
           [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index]
         );
       }
-      console.log('LEARNING CENTER: 20 ta asosiy resurslar, kitoblar va standartlar saqlandi.');
     }
+    console.log('LEARNING CENTER: 20 ta resurs to\'g\'ridan-to\'g\'ri ishlovchi havolalar bilan yangilandi.');
 
-    // 4. Check and Seed tables
-    const tablesCount = await pool.query('SELECT COUNT(*)::int AS count FROM learning_tables');
-    if (tablesCount.rows[0].count === 0) {
-      for (const t of SEED_TABLES) {
-        await pool.query(
-          `INSERT INTO learning_tables (table_key, title, subtitle, columns, rows, order_index)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT (table_key) DO UPDATE
-           SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, columns = EXCLUDED.columns, rows = EXCLUDED.rows, order_index = EXCLUDED.order_index`,
-          [t.table_key, t.title, t.subtitle, JSON.stringify(t.columns), JSON.stringify(t.rows), t.order_index]
-        );
-      }
-      console.log('LEARNING CENTER: Me\'yoriy jadvallar va checklistlar saqlandi.');
+    // 4. Always Sync / Upsert Tables
+    for (const t of SEED_TABLES) {
+      await pool.query(
+        `INSERT INTO learning_tables (table_key, title, subtitle, columns, rows, order_index)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (table_key) DO UPDATE
+         SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, columns = EXCLUDED.columns, rows = EXCLUDED.rows, order_index = EXCLUDED.order_index`,
+        [t.table_key, t.title, t.subtitle, JSON.stringify(t.columns), JSON.stringify(t.rows), t.order_index]
+      );
     }
+    console.log('LEARNING CENTER: Me\'yoriy jadvallar va standartlar havolalari yangilandi.');
   } catch (err) {
     console.error('LEARNING CENTER INIT ERROR:', err);
   }
