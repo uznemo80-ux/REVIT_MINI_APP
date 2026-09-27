@@ -12927,7 +12927,10 @@ function renderAdminLibraryBooks() {
     failed: allBooks.filter(b => b.status === 'FAILED' || b.status === 'failed').length
   };
 
-  const filteredBooks = allBooks.filter(b => {
+  const archivedCount = allBooks.filter(b => b.status === 'archived' || b.status === 'ARCHIVED').length;
+  const visibleBooks = allBooks.filter(b => b.status !== 'archived' && b.status !== 'ARCHIVED');
+
+  const filteredBooks = visibleBooks.filter(b => {
     if (search) {
       const match = (b.title && b.title.toLowerCase().includes(search)) ||
                     (b.author && b.author.toLowerCase().includes(search)) ||
@@ -12944,8 +12947,13 @@ function renderAdminLibraryBooks() {
     if (filter === "pro") return b.access_type === "pro";
     if (filter === "recommended") return Boolean(b.is_recommended);
     if (filter === "uncategorized") return !b.categories || b.categories.length === 0;
+    if (filter === "archived") return false; // archived alohida ro'yxatdan chiqadi, pastda
     return true;
   });
+
+  const archivedFilteredBooks = filter === "archived"
+    ? allBooks.filter(b => (b.status === 'archived' || b.status === 'ARCHIVED') && (!search || (b.title && b.title.toLowerCase().includes(search))))
+    : [];
 
   return `
     <div class="admin-books-container">
@@ -12998,14 +13006,20 @@ function renderAdminLibraryBooks() {
 
       <!-- 4. FILTR CHIPLARI -->
       <div class="admin-books-filter-bar" style="margin-top:10px;">
-        <div class="admin-filter-chip ${filter === 'all' ? 'active' : ''}" onclick="setAdminBooksFilter('all')">Barchasi (${allBooks.length})</div>
+        <div class="admin-filter-chip ${filter === 'all' ? 'active' : ''}" onclick="setAdminBooksFilter('all')">Barchasi (${visibleBooks.length})</div>
         <div class="admin-filter-chip ${filter === 'needs_review' ? 'active' : ''}" onclick="setAdminBooksFilter('needs_review')">🟡 Ko'rib chiqish (${stats.needs_review || 0})</div>
         <div class="admin-filter-chip ${filter === 'published' ? 'active' : ''}" onclick="setAdminBooksFilter('published')">🟢 Nashr qilingan (${stats.published || 0})</div>
         <div class="admin-filter-chip ${filter === 'discovered' ? 'active' : ''}" onclick="setAdminBooksFilter('discovered')">🔵 Yangi Drive (${stats.discovered || 0})</div>
         <div class="admin-filter-chip ${filter === 'recommended' ? 'active' : ''}" onclick="setAdminBooksFilter('recommended')">⭐ Tavsiya etilgan</div>
         <div class="admin-filter-chip ${filter === 'free' ? 'active' : ''}" onclick="setAdminBooksFilter('free')">Bepul</div>
         <div class="admin-filter-chip ${filter === 'pro' ? 'active' : ''}" onclick="setAdminBooksFilter('pro')">Pro</div>
+        <div class="admin-filter-chip ${filter === 'archived' ? 'active' : ''}" onclick="setAdminBooksFilter('archived')">🗄️ O'chirilgan (${archivedCount})</div>
       </div>
+
+      ${filter === 'archived' ? `
+      <div style="margin-top:10px; margin-bottom:4px; font-size:12px; color:var(--text-muted); padding:8px 10px; background:var(--bg-secondary); border-radius:10px;">
+        Bu yerdagi kitoblar "O'chirish" bosilganda arxivlangan (talabalarga ko'rinmaydi, Drive fayli buzilmagan). Kerak bo'lsa qayta tiklashingiz mumkin.
+      </div>` : ''}
 
       <!-- 5. TANLASH CHECKBOX -->
       <div style="display:flex; align-items:center; gap:8px; margin-top:12px; margin-bottom:8px; font-size:13px; color:var(--text-secondary);">
@@ -13016,10 +13030,31 @@ function renderAdminLibraryBooks() {
       </div>
 
       <div id="admin-books-grid" class="admin-books-grid">
-        ${renderAdminBooksGridHtml(filteredBooks)}
+        ${filter === 'archived' ? renderAdminArchivedBooksGridHtml(archivedFilteredBooks) : renderAdminBooksGridHtml(filteredBooks)}
       </div>
     </div>
   `;
+}
+
+function renderAdminArchivedBooksGridHtml(books) {
+  if (!books.length) {
+    return `<div class="empty-box">Arxivlangan kitoblar yo'q.</div>`;
+  }
+  return books.map(b => `
+    <div class="admin-book-card" style="opacity:0.75;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div style="min-width:0;">
+          <div style="font-weight:750; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(b.title || "Nomsiz")}</div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">🗄️ Arxivlangan ${b.author ? `· 👤 ${escapeHtml(b.author)}` : ""}</div>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="admin-small-btn" style="font-weight:700; color:#34c759;" onclick="restoreAdminBook(${Number(b.id)})" title="Qayta tiklash">
+            ♻️ Tiklash
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join("");
 }
 
 function renderAdminBooksGridHtml(books) {
@@ -13645,7 +13680,8 @@ function setAdminBooksFilter(filter) {
   if (!grid) return;
   const allBooks = adminData.libraryBooks || [];
   const search = (adminData.adminBooksSearch || "").toLowerCase().trim();
-  const filtered = allBooks.filter(b => {
+  const visibleBooks = allBooks.filter(b => b.status !== 'archived' && b.status !== 'ARCHIVED');
+  const filtered = visibleBooks.filter(b => {
     if (search) {
       const match = (b.title && b.title.toLowerCase().includes(search)) ||
                     (b.author && b.author.toLowerCase().includes(search)) ||
@@ -13662,8 +13698,15 @@ function setAdminBooksFilter(filter) {
     if (filter === "pro") return b.access_type === "pro";
     if (filter === "recommended") return Boolean(b.is_recommended);
     if (filter === "uncategorized") return !b.categories || b.categories.length === 0;
+    if (filter === "archived") return false;
     return true;
   });
+
+  if (filter === "archived") {
+    const archived = allBooks.filter(b => (b.status === 'archived' || b.status === 'ARCHIVED') && (!search || (b.title && b.title.toLowerCase().includes(search))));
+    grid.innerHTML = renderAdminArchivedBooksGridHtml(archived);
+    return;
+  }
   grid.innerHTML = renderAdminBooksGridHtml(filtered);
 }
 
@@ -13696,6 +13739,20 @@ async function toggleAdminBookPublish(bookId) {
     }
   } catch (err) {
     showAlert(err.message || "Statusni o'zgartirishda xatolik");
+  }
+}
+
+async function restoreAdminBook(bookId) {
+  try {
+    const res = await adminApi(`/api/admin/books/${bookId}/publish`, { status: "published" });
+    if (res && res.ok) {
+      const book = (adminData.libraryBooks || []).find(b => Number(b.id) === Number(bookId));
+      if (book) book.status = "published";
+      showToast("Kitob qayta tiklandi va nashr qilindi ✓");
+      setAdminBooksFilter("archived");
+    }
+  } catch (err) {
+    showAlert(err.message || "Qayta tiklashda xatolik");
   }
 }
 
