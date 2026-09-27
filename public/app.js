@@ -7014,6 +7014,7 @@ let materialsState = {
   materials: [],
   total: 0,
   searchQuery: "",
+  selectedScope: "all", // 'all' | 'architecture' | 'interior'
   selectedCategory: "all",
   selectedManufacturer: "all",
   filterVerified: false,
@@ -7045,6 +7046,7 @@ async function loadMaterialsData(forceReload) {
 
     const payload = {
       search: materialsState.searchQuery,
+      scope: materialsState.selectedScope,
       category_slug: materialsState.selectedCategory,
       manufacturer_slug: materialsState.selectedManufacturer,
       filter_verified: materialsState.filterVerified,
@@ -7069,6 +7071,17 @@ async function loadMaterialsData(forceReload) {
   } finally {
     materialsState.loaded = true;
     materialsState.loading = false;
+  }
+}
+
+async function setMaterialScope(scope) {
+  haptic("light");
+  materialsState.selectedScope = scope;
+  materialsState.selectedCategory = "all";
+  materialsState.offset = 0;
+  await loadMaterialsData();
+  if (libraryActiveSection === "materials") {
+    render();
   }
 }
 
@@ -7142,7 +7155,9 @@ function renderMaterialsSectionHtml() {
     `;
   }
 
-  const cats = materialsState.categories || [];
+  const allCats = materialsState.categories || [];
+  const currentScope = materialsState.selectedScope || "all";
+  const cats = currentScope === "all" ? allCats : allCats.filter(c => c.scope === currentScope || c.scope === "both");
   const mats = materialsState.materials || [];
   const activeCat = materialsState.selectedCategory || "all";
   const search = materialsState.searchQuery || "";
@@ -7155,14 +7170,27 @@ function renderMaterialsSectionHtml() {
 
       <!-- HERO BANNER -->
       <div class="lib-mat-hero">
-        <div class="lib-mat-badge">🧱 MATERIALLAR KUTUBXONASI • KNOWLEDGE BASE</div>
+        <div class="lib-mat-badge">🧱 MATERIALLAR KUTUBXONASI • PROFESSIONAL BAZA</div>
         <h1 class="lib-mat-title">Qurilish va Interyer Materiallari</h1>
         <p class="lib-mat-desc">
-          Qurilish va interyerda ishlatiladigan professional materiallar bo‘yicha texnik ma’lumotlar, spetsifikatsiyalar, o‘lchamlar, montaj yo‘riqnomalari va rasmiy tasdiqlangan hujjatlar bazasi.
+          Arxitektorlar, interyer dizaynerlari va quruvchilar uchun spetsifikatsiyalar, standart o‘lchamlar, narxlar va me'yoriy hujjatlar bazasi.
         </p>
       </div>
 
-      <!-- SEARCH BAR (Multilingual) -->
+      <!-- 1. ASOSIY BO'LIM TANLASH: ARXITEKTURA / INTERYER / BARCHASI -->
+      <div class="lib-mat-scope-bar">
+        <div class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" onclick="setMaterialScope('all')">
+          🌐 Barchasi (${materialsState.total || mats.length})
+        </div>
+        <div class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" onclick="setMaterialScope('architecture')">
+          🏛️ Qurilish & Arxitektura
+        </div>
+        <div class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" onclick="setMaterialScope('interior')">
+          🛋️ Interyer & Dizayn
+        </div>
+      </div>
+
+      <!-- SEARCH BAR (Multilingual: MDF, Knauf, Travertin, Gazoblok...) -->
       <div class="lib-filter-bar">
         <div class="lib-search-input-wrap" style="width:100%;">
           <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
@@ -7170,7 +7198,7 @@ function renderMaterialsSectionHtml() {
             id="lib-materials-search-input"
             type="text"
             class="apple-input lib-search-field"
-            placeholder="Material qidiring (MDF, Knauf, GKL, Gazoblok, Keramogranit...)"
+            placeholder="Material qidiring (LDSP, MDF, Knauf, Gazoblok, Klinker, SPC...)"
             value="${escapeHtml(search)}"
             oninput="setMaterialSearch(this.value)"
           />
@@ -7180,7 +7208,7 @@ function renderMaterialsSectionHtml() {
         </div>
       </div>
 
-      <!-- KATEGORIYALAR (Horizontal Scroll with Icons and Counts) -->
+      <!-- 24 TA KATEGORIYA (Horizontal Scroll with Icons and Counts) -->
       <div class="lib-mat-cat-scroll">
         <div class="lib-mat-cat-pill ${activeCat === 'all' ? 'active' : ''}" onclick="setMaterialCategory('all')">
           🌐 Barchasi
@@ -7204,7 +7232,7 @@ function renderMaterialsSectionHtml() {
           💧 Namlikka chidamli
         </div>
         <div class="chip ${materialsState.filterFire ? 'active' : ''}" onclick="toggleMaterialFilter('filterFire')">
-          🔥 Yong'in klassi A1/G1
+          🔥 Yong'in klassi A1/KM0
         </div>
         <div class="chip ${materialsState.filterInterior ? 'active' : ''}" onclick="toggleMaterialFilter('filterInterior')">
           🏠 Ichki ishlar
@@ -7218,7 +7246,7 @@ function renderMaterialsSectionHtml() {
             <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
             <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
             <div style="font-size: 12.5px; color: var(--text-secondary);">
-              Qidiruv so'zini yoki tanlangan kategoriyani o'zgartirib ko'ring.
+              Tanlangan bo‘lim yoki qidiruv so‘zini o‘zgartirib ko‘ring.
             </div>
           </div>
         `}
@@ -7234,6 +7262,9 @@ function renderMaterialCardHtml(mat) {
   const catName = mat.category_name || "Qurilish";
   const mfgName = mat.manufacturer_name || "";
   const dimensions = mat.dimensions_info ? mat.dimensions_info.split(".")[0] : (Array.isArray(mat.standard_sizes) ? mat.standard_sizes[0] : "");
+  const scopeTag = mat.scope === 'architecture' ? '<span class="lib-mat-scope-tag arx">🏛️ Qurilish</span>' :
+                   mat.scope === 'interior' ? '<span class="lib-mat-scope-tag int">🛋️ Interyer</span>' :
+                   '<span class="lib-mat-scope-tag both">🏛️🛋️ Universal</span>';
 
   return `
     <div class="lib-material-card-v2" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
@@ -7253,8 +7284,11 @@ function renderMaterialCardHtml(mat) {
       </div>
 
       <div class="lib-mat-card-body">
-        <div class="lib-mat-card-tags">
-          <span class="lib-mat-card-cat-tag">${escapeHtml(catName)}</span>
+        <div class="lib-mat-card-tags" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            ${scopeTag}
+            <span class="lib-mat-card-cat-tag">${escapeHtml(catName)}</span>
+          </div>
           ${mfgName ? `<span class="lib-mat-card-mfg-tag">🏭 ${escapeHtml(mfgName)}</span>` : ""}
         </div>
 
@@ -7263,6 +7297,21 @@ function renderMaterialCardHtml(mat) {
 
         <div class="lib-mat-card-type">
           ${escapeHtml(mat.material_type || mat.generic_name || mat.description || "")}
+        </div>
+
+        ${mat.thicknesses ? `
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+            📏 Qalinliklar: <b style="color:var(--text-primary);">${escapeHtml(mat.thicknesses)}</b>
+          </div>
+        ` : ""}
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:4px;">
+          ${mat.approx_price ? `
+            <span class="lib-mat-price-badge">💰 ${escapeHtml(mat.approx_price.split('(')[0].trim())}</span>
+          ` : ""}
+          ${mat.uzb_market_availability ? `
+            <span class="lib-mat-avail-badge">📍 Mavjud</span>
+          ` : ""}
         </div>
 
         <div class="lib-mat-card-footer">
@@ -8240,6 +8289,86 @@ function renderMaterialDetailPage(detailData) {
           </div>
         </div>
       </div>
+
+      <!-- 1. ARXITEKTOR VA DIZAYNERGA FOYDALI ESLATMA (BIM / Revit / Montaj) -->
+      ${m.architect_notes ? `
+        <div class="lib-mat-arch-note-box">
+          <div class="lib-mat-arch-note-header">
+            <span>📐 ARXITEKTOR VA DIZAYNERGA ESLATMA (BIM / Revit / Montaj)</span>
+          </div>
+          <div class="lib-mat-arch-note-content">
+            ${escapeHtml(m.architect_notes)}
+          </div>
+        </div>
+      ` : ""}
+
+      <!-- 2. NARX VA BOZORDA MAVJUDLIGI -->
+      ${(m.approx_price || m.uzb_market_availability || m.lifespan || m.standards_info) ? `
+        <div class="lib-mat-detail-section">
+          <div class="lib-mat-sec-title">💰 Bozor ma'lumoti va Narx ko'rsatkichlari</div>
+          <div class="lib-mat-spec-quick-grid">
+            ${m.approx_price ? `
+              <div class="lib-mat-spec-quick-item">
+                <div class="lib-mat-spec-quick-label">Taxminiy o'rtacha narxi</div>
+                <div class="lib-mat-spec-quick-val" style="color:#10b981;">${escapeHtml(m.approx_price)}</div>
+              </div>
+            ` : ""}
+            ${m.uzb_market_availability ? `
+              <div class="lib-mat-spec-quick-item">
+                <div class="lib-mat-spec-quick-label">O'zbekistonda mavjudligi</div>
+                <div class="lib-mat-spec-quick-val" style="color:#007aff;">${escapeHtml(m.uzb_market_availability)}</div>
+              </div>
+            ` : ""}
+            ${m.lifespan ? `
+              <div class="lib-mat-spec-quick-item">
+                <div class="lib-mat-spec-quick-label">Xizmat muddati</div>
+                <div class="lib-mat-spec-quick-val">${escapeHtml(m.lifespan)}</div>
+              </div>
+            ` : ""}
+            ${m.standards_info ? `
+              <div class="lib-mat-spec-quick-item">
+                <div class="lib-mat-spec-quick-label">Standart / Sertifikat</div>
+                <div class="lib-mat-spec-quick-val">${escapeHtml(m.standards_info)}</div>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      ` : ""}
+
+      <!-- 3. TARKIBI VA QALINLIKLARI -->
+      ${(m.thicknesses || m.composition || m.usage_area || m.moisture_resistance || m.fire_rating) ? `
+        <div class="lib-mat-detail-section">
+          <div class="lib-mat-sec-title">🔍 Tarkibi, Qalinliklari va Chidamlilik</div>
+          <div style="font-size:13px; line-height:1.6; color:var(--text-secondary); display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:12px; border-radius:10px; border:1px solid var(--border);">
+            ${m.thicknesses ? `<div><b>Mavjud qalinliklar:</b> <span style="color:var(--text-primary); font-weight:700;">${escapeHtml(m.thicknesses)}</span></div>` : ""}
+            ${m.composition ? `<div><b>Tarkibi:</b> ${escapeHtml(m.composition)}</div>` : ""}
+            ${m.usage_area ? `<div><b>Qayerda ishlatiladi:</b> ${escapeHtml(m.usage_area)}</div>` : ""}
+            ${m.moisture_resistance ? `<div><b>Namlikka chidamliligi:</b> ${escapeHtml(m.moisture_resistance)}</div>` : ""}
+            ${m.fire_rating ? `<div><b>Yong'inga chidamliligi:</b> ${escapeHtml(m.fire_rating)}</div>` : ""}
+          </div>
+        </div>
+      ` : ""}
+
+      <!-- 4. AFZALLIKLARI VA KAMCHILIKLARI -->
+      ${(m.pros || m.cons) ? `
+        <div class="lib-mat-detail-section">
+          <div class="lib-mat-sec-title">⚖️ Afzalliklari va Cheklovlari</div>
+          <div class="lib-mat-apps-grid">
+            ${m.pros ? `
+              <div class="lib-mat-app-card">
+                <div class="lib-mat-app-title">✓ Afzalliklari</div>
+                <div class="lib-mat-app-desc">${escapeHtml(m.pros)}</div>
+              </div>
+            ` : ""}
+            ${m.cons ? `
+              <div class="lib-mat-app-card warning">
+                <div class="lib-mat-app-title" style="color:#ef4444;">⚠️ Cheklovlari va Ehtiyot choralari</div>
+                <div class="lib-mat-app-desc">${escapeHtml(m.cons)}</div>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      ` : ""}
 
       <!-- 8. QISQACHA TAVSIF -->
       ${m.description ? `

@@ -8311,6 +8311,149 @@ html.light .reader-spinner-overlay {
   margin: 0;
 }
 
+/* SCOPE SWITCHER (ARXITEKTURA / INTERYER / BARCHASI) */
+.lib-mat-scope-bar {
+  display: flex;
+  background: var(--bg-surface-elevated, rgba(0, 0, 0, 0.05));
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.lib-mat-scope-btn {
+  flex: 1;
+  text-align: center;
+  padding: 9px 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.lib-mat-scope-btn:hover {
+  color: var(--text-primary);
+}
+
+.lib-mat-scope-btn.active {
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.lib-mat-scope-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 750;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+.lib-mat-scope-tag.arx {
+  background: rgba(0, 122, 255, 0.12);
+  color: #007aff;
+  border: 1px solid rgba(0, 122, 255, 0.25);
+}
+.lib-mat-scope-tag.int {
+  background: rgba(175, 82, 222, 0.12);
+  color: #af52de;
+  border: 1px solid rgba(175, 82, 222, 0.25);
+}
+.lib-mat-scope-tag.both {
+  background: rgba(52, 199, 89, 0.12);
+  color: #34c759;
+  border: 1px solid rgba(52, 199, 89, 0.25);
+}
+
+/* ARCHITECT NOTE BOX */
+.lib-mat-arch-note-box {
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.09) 0%, rgba(255, 204, 0, 0.04) 100%);
+  border: 1.5px solid rgba(255, 149, 0, 0.35);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.lib-mat-arch-note-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ff9500;
+  margin-bottom: 6px;
+}
+
+.lib-mat-arch-note-content {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+/* META SPECIFICATION GRID */
+.lib-mat-spec-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 480px) {
+  .lib-mat-spec-quick-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.lib-mat-spec-quick-item {
+  background: var(--bg-surface-elevated, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.lib-mat-spec-quick-label {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.lib-mat-spec-quick-val {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+
+.lib-mat-price-badge {
+  font-size: 12px;
+  font-weight: 750;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lib-mat-avail-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.09);
+  padding: 2px 7px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .lib-mat-cat-scroll {
   display: flex;
   gap: 8px;

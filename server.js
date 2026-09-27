@@ -6463,13 +6463,14 @@ app.all('/api/materials/list', async function (req, res) {
     var search = (b.search || '').trim().toLowerCase();
     var categorySlug = (b.category_slug || '').trim();
     var manufacturerSlug = (b.manufacturer_slug || '').trim();
+    var scope = (b.scope || '').trim().toLowerCase();
     var filterVerified = Boolean(b.filter_verified === true || b.filter_verified === 'true');
     var filterInterior = Boolean(b.filter_interior === true || b.filter_interior === 'true');
     var filterMoisture = Boolean(b.filter_moisture === true || b.filter_moisture === 'true');
     var filterFire = Boolean(b.filter_fire === true || b.filter_fire === 'true');
     var status = (b.status || 'published').trim();
     var sort = b.sort || 'newest';
-    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 20, 1), 100);
+    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 30, 1), 100);
     var offset = Math.max(parseInt(b.offset, 10) || 0, 0);
 
     var whereClauses = [];
@@ -6480,6 +6481,15 @@ app.all('/api/materials/list', async function (req, res) {
     if (status !== 'all') {
       whereClauses.push('m.status = $' + paramIdx++);
       params.push(status);
+    }
+
+    // Scope filtering (Arxitektura vs Interyer vs Barchasi)
+    if (scope && scope !== 'all' && scope !== 'barchasi') {
+      if (scope === 'architecture' || scope === 'arxitektura' || scope === 'qurilish') {
+        whereClauses.push("(m.scope = 'architecture' OR m.scope = 'both' OR c.scope = 'architecture' OR c.scope = 'both')");
+      } else if (scope === 'interior' || scope === 'interyer' || scope === 'dizayn') {
+        whereClauses.push("(m.scope = 'interior' OR m.scope = 'both' OR c.scope = 'interior' OR c.scope = 'both')");
+      }
     }
 
     // Category filter
@@ -6501,17 +6511,17 @@ app.all('/api/materials/list', async function (req, res) {
 
     // Interior filter
     if (filterInterior) {
-      whereClauses.push("(m.material_type ILIKE '%ichki%' OR m.material_type ILIKE '%indoor%' OR m.description ILIKE '%ichki%')");
+      whereClauses.push("(m.scope = 'interior' OR m.material_type ILIKE '%ichki%' OR m.material_type ILIKE '%indoor%' OR m.description ILIKE '%ichki%')");
     }
 
     // Moisture resistance filter
     if (filterMoisture) {
-      whereClauses.push("(m.material_type ILIKE '%nam%' OR m.description ILIKE '%namlik%' OR EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter ILIKE '%moisture%'))");
+      whereClauses.push("(m.moisture_resistance ILIKE '%yuqori%' OR m.moisture_resistance ILIKE '%100%' OR m.material_type ILIKE '%nam%' OR m.description ILIKE '%namlik%' OR EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter ILIKE '%moisture%'))");
     }
 
     // Fire resistance filter
     if (filterFire) {
-      whereClauses.push("(EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter = 'fire_rating' AND (ms.value ILIKE '%A1%' OR ms.value ILIKE '%G1%' OR ms.value ILIKE '%НГ%')))");
+      whereClauses.push("(m.fire_rating ILIKE '%KM0%' OR m.fire_rating ILIKE '%NG%' OR m.fire_rating ILIKE '%G1%' OR EXISTS (SELECT 1 FROM material_specifications ms WHERE ms.material_id = m.id AND ms.parameter = 'fire_rating' AND (ms.value ILIKE '%A1%' OR ms.value ILIKE '%G1%' OR ms.value ILIKE '%НГ%')))");
     }
 
     // Multilingual Search
@@ -6522,6 +6532,7 @@ app.all('/api/materials/list', async function (req, res) {
         m.english_name ILIKE $` + paramIdx + ` OR
         m.product_code ILIKE $` + paramIdx + ` OR
         m.description ILIKE $` + paramIdx + ` OR
+        m.usage_area ILIKE $` + paramIdx + ` OR
         mfg.name ILIKE $` + paramIdx + ` OR
         c.name ILIKE $` + paramIdx + ` OR
         EXISTS (
@@ -6562,9 +6573,11 @@ app.all('/api/materials/list', async function (req, res) {
       SELECT
         m.id, m.name, m.name AS title, m.slug, m.original_name, m.english_name, m.aliases,
         m.subcategory_name, m.product_code, m.material_type, m.cover_image, m.cover_image AS featured_image,
-        m.description, m.dimensions_info, m.status, m.verification_status,
-        m.access_type, m.last_verified_at, m.created_at,
-        c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
+        m.description, m.dimensions_info, m.thicknesses, m.composition, m.usage_area, m.pros, m.cons,
+        m.approx_price, m.uzb_market_availability, m.architect_notes, m.standards_info, m.lifespan,
+        m.moisture_resistance, m.fire_rating, m.standard_sizes, m.scope,
+        m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
+        c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
         (SELECT COUNT(ms.id)::int FROM material_specifications ms WHERE ms.material_id = m.id) AS specs_count,
         (SELECT COUNT(md.id)::int FROM material_documents md WHERE md.material_id = m.id) AS docs_count,
@@ -6580,10 +6593,30 @@ app.all('/api/materials/list', async function (req, res) {
     var listRes = await pool.query(listQuery, listParams);
 
     var returnedMaterials = listRes.rows || [];
-    if (!returnedMaterials.length && !search && (!categorySlug || categorySlug === 'all') && materialsModule.SEED_MATERIALS) {
+    if (!returnedMaterials.length && materialsModule.SEED_MATERIALS) {
       returnedMaterials = materialsModule.SEED_MATERIALS.map(function(sm, idx) {
         return Object.assign({ id: idx + 1, title: sm.name, featured_image: sm.cover_image }, sm);
       });
+
+      if (scope && scope !== 'all' && scope !== 'barchasi') {
+        if (scope === 'architecture' || scope === 'arxitektura' || scope === 'qurilish') {
+          returnedMaterials = returnedMaterials.filter(function(m) { return m.scope === 'architecture' || m.scope === 'both'; });
+        } else if (scope === 'interior' || scope === 'interyer' || scope === 'dizayn') {
+          returnedMaterials = returnedMaterials.filter(function(m) { return m.scope === 'interior' || m.scope === 'both'; });
+        }
+      }
+
+      if (categorySlug && categorySlug !== 'all' && categorySlug !== 'barchasi') {
+        returnedMaterials = returnedMaterials.filter(function(m) { return m.category_slug === categorySlug; });
+      }
+
+      if (search) {
+        returnedMaterials = returnedMaterials.filter(function(m) {
+          var text = (m.name + ' ' + (m.description || '') + ' ' + (m.material_type || '')).toLowerCase();
+          return text.includes(search);
+        });
+      }
+
       total = returnedMaterials.length;
     }
 
@@ -6599,11 +6632,19 @@ app.all('/api/materials/list', async function (req, res) {
     var fallbackSeed = (materialsModule.SEED_MATERIALS || []).map(function(sm, idx) {
       return Object.assign({ id: idx + 1, title: sm.name, featured_image: sm.cover_image }, sm);
     });
+    var sc = (b.scope || '').trim().toLowerCase();
+    if (sc && sc !== 'all') {
+      if (sc === 'architecture' || sc === 'arxitektura') {
+        fallbackSeed = fallbackSeed.filter(function(m) { return m.scope === 'architecture' || m.scope === 'both'; });
+      } else if (sc === 'interior' || sc === 'interyer') {
+        fallbackSeed = fallbackSeed.filter(function(m) { return m.scope === 'interior' || m.scope === 'both'; });
+      }
+    }
     return res.json({
       ok: true,
       materials: fallbackSeed,
       total: fallbackSeed.length,
-      limit: limit || 20,
+      limit: limit || 30,
       offset: 0
     });
   }
