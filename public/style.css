@@ -227,7 +227,8 @@ html.light .nav {
 }
 
 .nav-item {
-  flex: 1;
+  flex: 1 1 0px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -268,6 +269,7 @@ html.light .nav {
 
 .nav-icon {
   font-size: 20px;
+  height: 24px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -287,6 +289,12 @@ html.light .nav {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: -0.2px;
+  white-space: nowrap !important;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
   transition: font-size var(--transition-fast);
 }
 
@@ -3727,29 +3735,49 @@ input, textarea, select {
     border-right: 1px solid var(--border);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
     height: 72px;
-    padding: 0 16px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
   }
 
   .nav-item {
-    font-size: 12.5px;
-    gap: 5px;
-    padding: 6px 12px;
+    flex: 1 1 0px;
+    min-width: 0;
+    font-size: 12px;
+    gap: 4px;
+    padding: 6px 4px;
     border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
   }
 
   .nav-icon {
-    font-size: 25px;
+    font-size: 24px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .nav-svg,
   .nav-icon svg {
-    width: 25px !important;
-    height: 25px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
 
   .nav-label {
-    font-size: 13px !important;
+    font-size: 12px !important;
     font-weight: 650;
+    white-space: nowrap !important;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .admin-page {
@@ -3772,16 +3800,30 @@ input, textarea, select {
     max-width: 880px;
     height: 72px;
     border-radius: 24px 24px 0 0;
+    padding: 0 16px;
   }
 
   .nav-item {
-    font-size: 13px;
-    gap: 5px;
+    flex: 1 1 0px;
+    min-width: 0;
+    font-size: 12.5px;
+    gap: 4px;
+    padding: 6px 6px;
+  }
+
+  .nav-icon {
+    height: 26px;
   }
 
   .nav-item svg {
-    width: 25px;
-    height: 25px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-label {
+    font-size: 12.5px !important;
+    white-space: nowrap !important;
+    text-align: center;
   }
 
   .admin-page {
@@ -7323,6 +7365,78 @@ html.light .reader-canvas-card {
   transform: translateX(-105%) scale(0.95);
   opacity: 0;
   z-index: 1;
+}
+
+/* Two-Zone Navigation Overlay (Split Screen: Left = Prev, Right = Next) */
+.reader-flip-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 8;
+  pointer-events: auto;
+}
+
+.reader-zone {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.reader-zone-left {
+  justify-content: flex-start;
+  padding-left: 14px;
+}
+
+.reader-zone-right {
+  justify-content: flex-end;
+  padding-right: 14px;
+}
+
+.reader-zone-hint {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(22, 23, 30, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+html.light .reader-zone-hint {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1a1a1e;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+@media (hover: hover) {
+  .reader-zone-left:hover .reader-zone-hint,
+  .reader-zone-right:hover .reader-zone-hint {
+    opacity: 0.88;
+    transform: scale(1);
+  }
+  .reader-zone-left:active .reader-zone-hint,
+  .reader-zone-right:active .reader-zone-hint {
+    transform: scale(0.92);
+    opacity: 1;
+  }
 }
 
 /* Floating Bottom Navigation Capsule */

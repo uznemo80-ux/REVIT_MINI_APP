@@ -8050,26 +8050,54 @@ function openPdfViewerModal(pdfUrl, title, bookId) {
   });
 }
 
+function handleReaderZoneClick(side, e) {
+  if (e) e.stopPropagation();
+  if (readerScale > 1.05) return;
+  haptic("light");
+  if (side === "left") {
+    readerTurnPage(-1);
+  } else {
+    readerTurnPage(1);
+  }
+}
+
+function updateReaderZonesInteraction() {
+  const overlay = document.getElementById("reader-flip-overlay");
+  if (overlay) {
+    overlay.style.pointerEvents = readerScale > 1.05 ? "none" : "auto";
+  }
+}
+
 function renderMinimalReaderView() {
   currentView = {
+    isReader: true,
+    type: "book_reader",
     html: `
       <div class="book-reader-view" id="book-reader-view">
-        <!-- TOP BAR: Left: Back, Center: Title, Right: Heart Bookmark -->
+        <!-- TOP BAR: Left: Exit button, Center: Title, Right: Bookmark + Close X -->
         <div class="reader-top-bar">
-          <button class="reader-action-btn" onclick="closeBookReader()" title="Orqaga">
-            ${libIcons.back('reader-svg-back', 18)}
-          </button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="reader-action-btn" onclick="closeBookReader()" title="Orqaga / Chiqish" style="display:flex; align-items:center; gap:6px; width:auto; padding:0 14px; border-radius:20px;">
+              ${libIcons.back('reader-svg-back', 16)}
+              <span style="font-size:12.5px; font-weight:700;">Chiqish</span>
+            </button>
+          </div>
 
           <div class="reader-book-title-subtle">
             ${escapeHtml(libReaderTitle)}
           </div>
 
-          <button id="reader-heart-btn" class="reader-action-btn ${currentReaderIsSaved ? 'saved' : ''}" onclick="toggleReaderBookmark(event)" title="Saqlash">
-            <span id="reader-heart-icon" style="font-size:18px; line-height:1;">${currentReaderIsSaved ? '♥' : '♡'}</span>
-          </button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="reader-heart-btn" class="reader-action-btn ${currentReaderIsSaved ? 'saved' : ''}" onclick="toggleReaderBookmark(event)" title="Saqlash">
+              <span id="reader-heart-icon" style="font-size:18px; line-height:1;">${currentReaderIsSaved ? '♥' : '♡'}</span>
+            </button>
+            <button class="reader-action-btn" onclick="closeBookReader()" title="Yopish" style="font-weight:800; font-size:17px; line-height:1;">
+              ✕
+            </button>
+          </div>
         </div>
 
-        <!-- VIEWPORT: Touch swipe surface & Dual Canvas Stage -->
+        <!-- VIEWPORT: Touch swipe surface, Wheel Zoom & Dual Canvas Stage -->
         <div class="reader-viewport" id="reader-viewport">
           <div class="reader-stage" id="reader-stage">
             <div class="reader-canvas-card slide-active" id="reader-card-current">
@@ -8079,7 +8107,17 @@ function renderMinimalReaderView() {
               <canvas id="reader-canvas-next"></canvas>
             </div>
 
-            <!-- Minimal Spinner -->
+            <!-- TWO-ZONE OVERLAY FOR LEFT / RIGHT PAGE FLIP NAVIGATION -->
+            <div class="reader-flip-overlay" id="reader-flip-overlay">
+              <div class="reader-zone reader-zone-left" id="reader-zone-left" onclick="handleReaderZoneClick('left', event)" title="Oldingi sahifa (Chap yarmi)">
+                <div class="reader-zone-hint">‹</div>
+              </div>
+              <div class="reader-zone reader-zone-right" id="reader-zone-right" onclick="handleReaderZoneClick('right', event)" title="Keyingi sahifa (O‘ng yarmi)">
+                <div class="reader-zone-hint">›</div>
+              </div>
+            </div>
+
+            <!-- Minimal Spinner & Error Feedback -->
             <div id="reader-spinner" class="reader-spinner-overlay">
               <div class="spinner"></div>
               <span id="reader-spinner-text" style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:10px;">Kitob yuklanmoqda...</span>
@@ -8105,8 +8143,8 @@ function renderMinimalReaderView() {
   render();
   window.scrollTo(0, 0);
 
-  // Setup Touch Listeners for Swipe Gestures
-  setupReaderTouchGestures();
+  // Setup Touch and Mouse Controls
+  setupReaderInteractions();
 }
 
 function applyReaderTransform(animate) {
@@ -8120,6 +8158,7 @@ function applyReaderTransform(animate) {
   }
 
   card.style.transform = `translate3d(${Math.round(readerPanX)}px, ${Math.round(readerPanY)}px, 0px) scale(${readerScale.toFixed(3)})`;
+  updateReaderZonesInteraction();
 }
 
 function clampReaderPan() {
@@ -8149,12 +8188,16 @@ function resetReaderZoom(animate) {
   readerIsPinching = false;
   readerIsPanning = false;
   applyReaderTransform(animate !== false);
+  updateReaderZonesInteraction();
 }
 
-function setupReaderTouchGestures() {
+function setupReaderInteractions() {
   const vp = document.getElementById("reader-viewport");
   if (!vp) return;
 
+  // ----------------------------------------------------
+  // 1. MOBILE TOUCH GESTURES (Swipe, Pinch, Double Tap)
+  // ----------------------------------------------------
   vp.addEventListener("touchstart", function (e) {
     if (!e.touches) return;
 
@@ -8285,15 +8328,12 @@ function setupReaderTouchGestures() {
     if (absX < 14 && absY < 14) {
       const now = Date.now();
       if (now - readerLastTapTime < 280) {
-        // Double tap muvaffaqiyatli!
         haptic("medium");
         readerLastTapTime = 0;
 
         if (readerScale > 1.15) {
-          // Normal 1.0x ga qaytish
           resetReaderZoom(true);
         } else {
-          // 2.2x ga silliq kattalashtirish (bosilgan joyga moslab)
           readerScale = 2.2;
           const rect = vp.getBoundingClientRect();
           const tapRelX = (readerTouchStartX - (rect.left + rect.width / 2)) * 0.7;
@@ -8320,12 +8360,156 @@ function setupReaderTouchGestures() {
     readerTouchDistX = 0;
     readerTouchDistY = 0;
   }, { passive: true });
+
+  // ----------------------------------------------------
+  // 2. MOUSE WHEEL ZOOM (G'ildirakni aylantirganda masshtablash)
+  // ----------------------------------------------------
+  vp.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+    let newScale = readerScale * zoomFactor;
+    if (newScale < 1.0) newScale = 1.0;
+    if (newScale > 4.0) newScale = 4.0;
+
+    if (newScale <= 1.05) {
+      readerScale = 1.0;
+      readerPanX = 0;
+      readerPanY = 0;
+    } else {
+      const rect = vp.getBoundingClientRect();
+      const mouseX = e.clientX - (rect.left + rect.width / 2);
+      const mouseY = e.clientY - (rect.top + rect.height / 2);
+      const ratio = newScale / readerScale;
+      readerPanX = mouseX - ratio * (mouseX - readerPanX);
+      readerPanY = mouseY - ratio * (mouseY - readerPanY);
+      readerScale = newScale;
+      clampReaderPan();
+    }
+    applyReaderTransform(false);
+  }, { passive: false });
+
+  // ----------------------------------------------------
+  // 3. MOUSE WHEEL CLICK & MOUSE DRAG TO PAN
+  // ----------------------------------------------------
+  let isMouseDragging = false;
+  let mouseDragStartX = 0;
+  let mouseDragStartY = 0;
+  let mouseStartPanX = 0;
+  let mouseStartPanY = 0;
+
+  vp.addEventListener("mousedown", function (e) {
+    // Sichqoncha g'ildiragi bosilganda (button === 1) -> Masshtabni asl holatiga tiklash!
+    if (e.button === 1) {
+      e.preventDefault();
+      haptic("medium");
+      resetReaderZoom(true);
+      return;
+    }
+
+    // Zoom qilingan holatda chap tugma bilan sahifani ushlab surish (Pan)
+    if (e.button === 0 && readerScale > 1.05) {
+      isMouseDragging = true;
+      mouseDragStartX = e.clientX;
+      mouseDragStartY = e.clientY;
+      mouseStartPanX = readerPanX;
+      mouseStartPanY = readerPanY;
+      vp.style.cursor = "grabbing";
+      const card = document.getElementById("reader-card-current");
+      if (card) card.style.transition = "none";
+    }
+  });
+
+  window.addEventListener("mousemove", function (e) {
+    if (isMouseDragging && readerScale > 1.05) {
+      readerPanX = mouseStartPanX + (e.clientX - mouseDragStartX);
+      readerPanY = mouseStartPanY + (e.clientY - mouseDragStartY);
+      clampReaderPan();
+      applyReaderTransform(false);
+    }
+  });
+
+  window.addEventListener("mouseup", function (e) {
+    if (isMouseDragging) {
+      isMouseDragging = false;
+      if (vp) vp.style.cursor = "";
+      clampReaderPan();
+      applyReaderTransform(true);
+    }
+  });
+
+  // ----------------------------------------------------
+  // 4. DOUBLE CLICK ZOOM TOGGLE
+  // ----------------------------------------------------
+  vp.addEventListener("dblclick", function (e) {
+    e.preventDefault();
+    haptic("medium");
+    if (readerScale > 1.05) {
+      resetReaderZoom(true);
+    } else {
+      readerScale = 2.0;
+      const rect = vp.getBoundingClientRect();
+      const tapRelX = (e.clientX - (rect.left + rect.width / 2)) * 0.7;
+      const tapRelY = (e.clientY - (rect.top + rect.height / 2)) * 0.7;
+      readerPanX = -tapRelX;
+      readerPanY = -tapRelY;
+      clampReaderPan();
+      applyReaderTransform(true);
+    }
+  });
+
+  // ----------------------------------------------------
+  // 5. RIGHT CLICK TO NEXT PAGE
+  // ----------------------------------------------------
+  vp.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    if (readerScale <= 1.05) {
+      haptic("light");
+      readerTurnPage(1);
+    }
+  });
+}
+
+function setupReaderTouchGestures() {
+  setupReaderInteractions();
 }
 
 async function loadMinimalReaderDocument() {
+  if (window._readerLoadTimeout) clearTimeout(window._readerLoadTimeout);
+  window._readerLoadTimeout = setTimeout(() => {
+    if (!libReaderDoc) {
+      const sp = document.getElementById("reader-spinner");
+      if (sp) {
+        sp.style.display = "flex";
+        sp.style.opacity = "1";
+        sp.innerHTML = `
+          <div style="font-size:28px; margin-bottom:8px;">⏳</div>
+          <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:6px;">Kitobni yuklash ko‘p vaqt olyapti</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:16px; text-align:center; max-width:260px;">Internet aloqasini tekshiring yoki qayta urinib ko‘ring</div>
+          <div style="display:flex; gap:10px;">
+            <button class="lib-page-btn" onclick="retryMinimalReader()" style="background:#fff; color:#000; font-weight:700;">🔄 Qayta urinish</button>
+            <button class="lib-page-btn" onclick="closeBookReader()" style="background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.3); font-weight:700;">← Chiqish</button>
+          </div>
+        `;
+      }
+    }
+  }, 18000);
+
   if (typeof window.pdfjsLib === "undefined") {
-    const sp = document.getElementById("reader-spinner-text");
-    if (sp) sp.textContent = "PDF kutubxonasi yuklanmadi";
+    if (window._readerLoadTimeout) clearTimeout(window._readerLoadTimeout);
+    const sp = document.getElementById("reader-spinner");
+    if (sp) {
+      sp.style.display = "flex";
+      sp.style.opacity = "1";
+      sp.innerHTML = `
+        <div style="font-size:28px; margin-bottom:8px;">⚠️</div>
+        <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:6px;">PDF kutubxonasi yuklanmadi</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:16px; text-align:center; max-width:260px;">Iltimos, internetingizni tekshirib qayta kiring</div>
+        <div style="display:flex; gap:10px;">
+          <button class="lib-page-btn" onclick="retryMinimalReader()" style="background:#fff; color:#000; font-weight:700;">🔄 Qayta urinish</button>
+          <button class="lib-page-btn" onclick="closeBookReader()" style="background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.3); font-weight:700;">← Chiqish</button>
+        </div>
+      `;
+    }
     return;
   }
 
@@ -8341,6 +8525,7 @@ async function loadMinimalReaderDocument() {
     }
 
     libReaderDoc = await docPromise;
+    if (window._readerLoadTimeout) clearTimeout(window._readerLoadTimeout);
     libReaderTotalPages = libReaderDoc.numPages || 1;
 
     if (libReaderPageNum > libReaderTotalPages) libReaderPageNum = libReaderTotalPages;
@@ -8350,14 +8535,20 @@ async function loadMinimalReaderDocument() {
     await renderReaderActivePage();
   } catch (err) {
     console.warn("loadMinimalReaderDocument error:", err);
+    if (window._readerLoadTimeout) clearTimeout(window._readerLoadTimeout);
     pdfDocPromiseCache.delete(libReaderProxyUrl);
     const sp = document.getElementById("reader-spinner");
     if (sp) {
+      sp.style.display = "flex";
+      sp.style.opacity = "1";
       sp.innerHTML = `
-        <div style="font-size:24px; margin-bottom:8px;">⚠️</div>
-        <div style="font-weight:600; color:#fff; font-size:13px; margin-bottom:6px;">Kitobni ochib bo‘lmadi</div>
-        <div style="font-size:11.5px; color:rgba(255,255,255,0.6); margin-bottom:14px;">Internet yoki fayl ulanishini tekshiring</div>
-        <button class="lib-page-btn" onclick="retryMinimalReader()" style="background:#fff; color:#000;">🔄 Qayta urinish</button>
+        <div style="font-size:28px; margin-bottom:8px;">⚠️</div>
+        <div style="font-weight:700; color:#fff; font-size:14px; margin-bottom:6px;">Kitobni ochib bo‘lmadi</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:16px; text-align:center; max-width:260px;">Internet yoki fayl ulanishini tekshiring</div>
+        <div style="display:flex; gap:10px;">
+          <button class="lib-page-btn" onclick="retryMinimalReader()" style="background:#fff; color:#000; font-weight:700;">🔄 Qayta urinish</button>
+          <button class="lib-page-btn" onclick="closeBookReader()" style="background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.3); font-weight:700;">← Chiqish</button>
+        </div>
       `;
     }
   }
@@ -8548,17 +8739,28 @@ function retryMinimalReader() {
 
 function closeBookReader() {
   haptic("light");
+  if (window._readerLoadTimeout) {
+    clearTimeout(window._readerLoadTimeout);
+    window._readerLoadTimeout = null;
+  }
   resetReaderZoom(false);
   clearTimeout(readingProgressSaveTimeout);
   saveReadingProgress();
 
-  if (lastPdfReturnView) {
-    currentView = lastPdfReturnView;
+  const prev = lastPdfReturnView;
+  const prevScroll = lastPdfReturnScroll || 0;
+  lastPdfReturnView = null;
+  lastPdfReturnScroll = 0;
+  currentBookReaderId = null;
+
+  if (prev && prev !== currentView) {
+    currentView = prev;
     render();
-    window.scrollTo(0, lastPdfReturnScroll || 0);
+    window.scrollTo(0, prevScroll);
   } else {
     closeDetail();
   }
+  updateTelegramBackButton();
 }
 
 function closePdfViewerModal() {
@@ -16283,10 +16485,17 @@ function closeDetail() {
   haptic("light");
   stopAdminLivePolling();
   clearActivitySpecialState();
+  if (window._readerLoadTimeout) {
+    clearTimeout(window._readerLoadTimeout);
+    window._readerLoadTimeout = null;
+  }
+  clearTimeout(readingProgressSaveTimeout);
   if (window._quizState) {
     if (window._quizState.lockTimer) clearTimeout(window._quizState.lockTimer);
     window._quizState = null;
   }
+  lastPdfReturnView = null;
+  currentBookReaderId = null;
   currentView = null;
   activeMaterialDetail = null;
   const targetY = lastDetailReturnScroll || savedTabScrolls[activeTab] || 0;
@@ -16327,6 +16536,10 @@ function updateTelegramBackButton() {
 }
 
 function handleTelegramBackClick() {
+  if (document.getElementById("book-reader-view") || (currentView && (currentView.isReader || currentView.type === "book_reader"))) {
+    closeBookReader();
+    return;
+  }
   if (currentView) {
     if (currentView.type === "material_detail") {
       closeMaterialDetail();
