@@ -2626,7 +2626,7 @@ function renderSupportCardsPageHtml(cards) {
           Ehson va Hissa
         </div>
         <div class="support-cards-title">Platformani qo‘llab-quvvatlash</div>
-        <div class="support-cards-subtitle">YOSHUZBEKK Academy rivojiga o‘z hissangizni qo‘shmoqchi bo‘lsangiz, quyidagi kartalardan foydalanishingiz mumkin.</div>
+        <div class="support-cards-subtitle">YOSHUZBEKK rivojiga o‘z hissangizni qo‘shmoqchi bo‘lsangiz, quyidagi kartalardan foydalanishingiz mumkin.</div>
       </div>
 
       <div class="support-cards-list">
