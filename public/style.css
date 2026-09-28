@@ -40,7 +40,13 @@
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 22px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
+  
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --card-bg: #14141f;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   
   --nav-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -78,6 +84,12 @@ html.light {
   --border: rgba(0, 0, 0, 0.08);
   --border-focus: rgba(29, 114, 254, 0.4);
   --border-light: rgba(0, 0, 0, 0.04);
+  
+  --bg-hover: rgba(0, 0, 0, 0.06);
+  --border-hover: rgba(0, 0, 0, 0.2);
+  --card-bg: #ffffff;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-xl: 24px;
   
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.06);
@@ -177,6 +189,7 @@ input, button, select, textarea {
    ------------------------------------------------------ */
 .screen {
   min-height: 100vh;
+  min-height: 100dvh;
   padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 24px);
   padding-top: var(--safe-top);
   animation: fadeIn 0.25s ease;
@@ -1328,6 +1341,7 @@ html.light .nav {
    ------------------------------------------------------ */
 .apple-registration {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 28px 20px;
   display: flex;
   flex-direction: column;
@@ -3732,6 +3746,7 @@ input, textarea, select {
     width: 100%;
     max-width: 860px;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--bg-primary);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     position: relative;
@@ -7382,6 +7397,7 @@ html.light .reader-canvas-card {
   display: block;
   max-width: 100%;
   max-height: calc(100vh - 150px);
+  max-height: calc(100dvh - 150px);
   object-fit: contain;
   background: #fff;
 }
@@ -7699,6 +7715,7 @@ html.light .reader-spinner-overlay {
 
 .access-restricted-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9011,6 +9028,17 @@ html.light .h-scroll-arrow {
 }
 
 /* DETAIL PAGE */
+@keyframes libFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .lib-mat-detail-page {
   animation: libFadeIn 0.25s ease-out;
 }

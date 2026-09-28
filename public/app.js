@@ -1203,26 +1203,6 @@ const DEFAULT_SHOWCASES = [];
 
 const DEFAULT_OPEN_RESOURCES = [
   {
-    id: 4,
-    type: "video",
-    title: "Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)",
-    category: "Video dars",
-    description: "Ochiq video darslik: devorlarni darajalarga bog'lash, eshik-derazalar va o'lcham zanjirlarini qo'yish.",
-    link_url: "https://youtu.be/dQw4w9WgXcQ",
-    icon: "🎬",
-    order_index: 4
-  },
-  {
-    id: 5,
-    type: "source",
-    title: "Revit Professional Oilalari (Families) Kutubxonasi",
-    category: "Ochiq manba",
-    description: "O'zbekiston interyerlariga mos eshiklar, zamonaviy derazalar, santexnika jihozlari va mebel oilalari.",
-    link_url: "https://t.me/texnikuzb",
-    icon: "📦",
-    order_index: 5
-  },
-  {
     id: 6,
     type: "test",
     title: "Revit Bazaviy Bilim Testi (Erkin Sinov)",
@@ -2576,6 +2556,36 @@ function copySupportCard(cardNumber, btn) {
     });
   } else {
     fallbackCopy(cleanDigits);
+    onSuccess();
+  }
+}
+
+function copyDonateCard(text, msg = "Havola nusxalandi!", btn) {
+  haptic("medium");
+  const str = String(text || "").trim();
+  if (!str) {
+    showToast("Nusxalash uchun havola mavjud emas");
+    return;
+  }
+  const el = btn || (window.event && window.event.currentTarget ? window.event.currentTarget : null);
+  function onSuccess() {
+    if (el && el.tagName) {
+      const origHtml = el.innerHTML;
+      el.innerHTML = "✓ Nusxalandi";
+      setTimeout(() => {
+        el.innerHTML = origHtml;
+      }, 2000);
+    }
+    showToast(msg || "Havola nusxalandi!");
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(str).then(onSuccess).catch(() => {
+      fallbackCopy(str);
+      onSuccess();
+    });
+  } else {
+    fallbackCopy(str);
     onSuccess();
   }
 }

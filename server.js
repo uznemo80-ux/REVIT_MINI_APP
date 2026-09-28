@@ -35,6 +35,126 @@ console.log('ADMIN TELEGRAM ID: ' + ADMIN_TELEGRAM_ID);
 // MIDDLEWARE
 // ======================================================
 
+// 5-TALAB: Xavfsizlik sarlavhalari (Security Headers)
+app.use(function securityHeaders(req, res, next) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Telegram WebApp iframe ichida to'g'ri ishlashi uchun frame-ancestors Telegram domenlariga ruxsat beradi
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; " +
+    "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org telegram:; " +
+    "img-src 'self' data: blob: https:; " +
+    "media-src 'self' blob: https:; " +
+    "connect-src 'self' blob: https:;"
+  );
+  next();
+});
+
+// 4-TALAB: Gzip siqish (Compression - yuklanish tezligini 4-5 barobar oshiradi)
+var zlib = require('zlib');
+try {
+  var compression = require('compression');
+  app.use(compression());
+} catch (e) {
+  // Built-in zlib fallback siqish mexanizmi (agar compression npm paketi o'rnatilmagan bo'lsa)
+  app.use(function builtInCompression(req, res, next) {
+    var enc = req.headers['accept-encoding'] || '';
+    if (!enc.includes('gzip')) return next();
+
+    res.on('pipe', function (src) {
+      var ct = res.getHeader('Content-Type') || '';
+      if (/text|javascript|json|css|svg|xml/i.test(ct)) {
+        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.removeHeader('Content-Length');
+        var gz = zlib.createGzip();
+        src.unpipe(res);
+        src.pipe(gz).pipe(res);
+      }
+    });
+
+    var origSend = res.send;
+    res.send = function (body) {
+      if (res.headersSent) return origSend.call(this, body);
+      var ct = res.getHeader('Content-Type') || '';
+      if ((/text|javascript|json|css|svg|xml/i.test(ct) || typeof body === 'string') && body) {
+        var buf = Buffer.isBuffer(body) ? body : Buffer.from(typeof body === 'string' ? body : JSON.stringify(body));
+        if (buf.length >= 1024) {
+          zlib.gzip(buf, function (err, gzipped) {
+            if (err) return origSend.call(res, body);
+            res.removeHeader('Content-Length');
+            res.setHeader('Content-Encoding', 'gzip');
+            res.setHeader('Vary', 'Accept-Encoding');
+            return origSend.call(res, gzipped);
+          });
+          return;
+        }
+      }
+      return origSend.call(this, body);
+    };
+
+    next();
+  });
+}
+
+// 5-TALAB: So'rovlar chegarasi (Rate Limiter)
+var rateLimitMap = new Map();
+var RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 daqiqa
+var MAX_REQUESTS_PER_WINDOW = 180; // Umumiy API uchun minutiga 180 ta so'rov
+var MAX_AUTH_REQUESTS = 40; // Auth/admin uchun minutiga 40 ta
+
+setInterval(function () {
+  var now = Date.now();
+  for (var entry of rateLimitMap.entries()) {
+    var key = entry[0];
+    var record = entry[1];
+    if (now - record.resetTime > RATE_LIMIT_WINDOW_MS) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+app.use(function rateLimiter(req, res, next) {
+  // Statik fayllar (css, js, rasmlar) uchun rate limit qo'llanilmaydi
+  if (req.method === 'GET' && !req.path.startsWith('/api')) {
+    return next();
+  }
+
+  var forwarded = req.headers['x-forwarded-for'];
+  var clientIp = (forwarded ? forwarded.split(',')[0].trim() : null) || req.socket.remoteAddress || 'unknown';
+  var isAuthOrAdmin = req.path.includes('/auth') || req.path.includes('/admin') || req.path.includes('/login');
+  var limit = isAuthOrAdmin ? MAX_AUTH_REQUESTS : MAX_REQUESTS_PER_WINDOW;
+  var key = clientIp + ':' + (isAuthOrAdmin ? 'auth' : 'api');
+
+  var now = Date.now();
+  var record = rateLimitMap.get(key);
+
+  if (!record || now > record.resetTime) {
+    record = { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitMap.set(key, record);
+  } else {
+    record.count++;
+  }
+
+  res.setHeader('X-RateLimit-Limit', limit);
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - record.count));
+  res.setHeader('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000));
+
+  if (record.count > limit) {
+    var retryAfterSec = Math.ceil((record.resetTime - now) / 1000);
+    res.setHeader('Retry-After', retryAfterSec);
+    return res.status(429).json({
+      ok: false,
+      error: "Juda ko'p so'rov yuborildi. Iltimos, birozdan keyin qayta urinib ko'ring.",
+      retry_after: retryAfterSec
+    });
+  }
+
+  next();
+});
+
 app.use(cors());
 
 app.use(express.json({ limit: '10mb' }));
@@ -387,30 +507,6 @@ async function initExtendedTables() {
 
     var lrCount = await pool.query('SELECT COUNT(*)::int AS c FROM library_open_resources');
     if (lrCount.rows[0].c === 0) {
-      // Standart ochiq kitoblar va manbalar
-      await pool.query(`
-        INSERT INTO library_open_resources (type, title, category, description, link_url, icon, order_index)
-        VALUES
-        (
-          'video',
-          'Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)',
-          'Video dars',
-          'Ochiq video darslik: devorlarni to''g''ri darajalarga (Levels) bog''lash, eshik-derazalar o''rnatish va o''lcham zanjirlarini qo''yish.',
-          'https://youtu.be/dQw4w9WgXcQ',
-          '🎬',
-          4
-        ),
-        (
-          'source',
-          'Revit Professional Oilalari (Families) Kutubxonasi',
-          'Ochiq manba',
-          'O''zbekiston interyerlariga mos eshiklar, zamonaviy derazalar, santexnika jihozlari va mebel oilalari to''plami.',
-          'https://t.me/texnikuzb',
-          '📦',
-          5
-        )
-      `);
-
       // Erkin sinov testlari
       var freeRevitQuestions = [
         { q: "Revit-da ishchi loyiha faylining asosiy formati qaysi?", options: ["RTE", "RVT", "RFA", "RFT"], correct: 1 },
@@ -437,7 +533,7 @@ async function initExtendedTables() {
           'Revit dasturidagi asosiy terminlar, fayl turlari va modellashtirish qoidalarini tekshirish uchun bepul test sinovi.',
           $1,
           '🎯',
-          6
+          4
         ),
         (
           'test',
@@ -446,9 +542,16 @@ async function initExtendedTables() {
           'Loyiha chizmalari, o''lchamlar, eshik-deraza standartlari va shaharsozlik me''yorlari bo''yicha erkin sinov testi.',
           $2,
           '📝',
-          7
+          5
         )
       `, [JSON.stringify(freeRevitQuestions), JSON.stringify(freeArchQuestions)]);
+    }
+
+    // 3-TALAB: Namuna Rick Astley demo video va noto'g'ri manba yozuvlarini bazadan tozalash
+    try {
+      await pool.query("DELETE FROM library_open_resources WHERE link_url LIKE '%dQw4w9WgXcQ%' OR (type IN ('video', 'source') AND title LIKE '%Revit-da 0 dan%')");
+    } catch (eClean) {
+      console.warn("CLEANUP OPEN RESOURCES WARNING:", eClean.message);
     }
 
     // 3. QURILISH VA REMONT MATERIALLARI BAZASI (MARKETPLACE / ENSIKLOPEDIYA) (Talab 6)

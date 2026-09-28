@@ -9,7 +9,8 @@ const crypto = require('crypto');
  */
 function verifyInitData(initData, botToken) {
   try {
-    if (!initData || !botToken) {
+    const token = botToken || process.env.BOT_TOKEN;
+    if (!initData || !token) {
       return null;
     }
 
@@ -18,6 +19,18 @@ function verifyInitData(initData, botToken) {
 
     if (!hash) {
       return null;
+    }
+
+    // 2-TALAB: Telegram initData muddati tekshiruvi (24 soat = 86400 soniya)
+    const authDateStr = params.get('auth_date');
+    if (authDateStr) {
+      const authDate = parseInt(authDateStr, 10);
+      const now = Math.floor(Date.now() / 1000);
+      const MAX_AGE = 86400; // 24 soat
+      if (now - authDate > MAX_AGE) {
+        console.warn('VERIFY TELEGRAM: initData muddati o‘tgan (24 soatdan ko‘p)');
+        return null;
+      }
     }
 
     params.delete('hash');
@@ -32,7 +45,7 @@ function verifyInitData(initData, botToken) {
 
     const secretKey = crypto
       .createHmac('sha256', 'WebAppData')
-      .update(botToken)
+      .update(token)
       .digest();
 
     const computedHash = crypto
