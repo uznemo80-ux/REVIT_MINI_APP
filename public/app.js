@@ -16,9 +16,48 @@ const tg = window.Telegram?.WebApp || {
 try {
   tg.ready();
   tg.expand();
+  // Telegram Mini Apps: so'nggi versiyada vertical swipe-to-close ni o'chirish
+  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+  // isVerticalSwipesEnabled mavjud bo'lsa false qilamiz
+  if (typeof tg.isVerticalSwipesEnabled !== 'undefined') {
+    try { tg.disableVerticalSwipes(); } catch(_) {}
+  }
 } catch (e) {
   console.warn("Telegram WebApp API topilmadi yoki browserda ochildi", e);
 }
+
+// ======================================================
+// iOS OVERSCROLL / BOUNCE PREVENTION
+// Telegram Mini App da pastga tortganda mini app yopilib ketishini oldini oladi
+// ======================================================
+(function() {
+  try {
+    document.documentElement.style.overscrollBehaviorY = 'none';
+    document.body.style.overscrollBehaviorY = 'none';
+    document.body.style.webkitOverflowScrolling = 'touch';
+  } catch (_) {}
+
+  // iOS Telegram WebApp da tepadan pastga tortganda ilovadan chiqib ketmaslik uchun
+  let touchStartClientY = 0;
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length === 1) {
+      touchStartClientY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length === 1) {
+      const touchCurrentY = e.touches[0].clientY;
+      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      // Agar sahifaning eng tepasida (scrollY <= 0) bo'lib, barmoqni pastga (downward) tortsa
+      if (scrollY <= 0 && touchCurrentY > touchStartClientY) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      }
+    }
+  }, { passive: false });
+})();
 
 const initData = tg.initData || "";
 const app = document.getElementById("app");
@@ -7118,6 +7157,82 @@ const MATERIAL_PURPOSES = {
 let activeMaterialDetail = null;
 let activeSpecSourceInfo = null;
 
+function transliterateUzRu(str) {
+  if (!str) return "";
+  const ruToLat = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'j', 'з': 'z',
+    'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r',
+    'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh',
+    'ъ': '', 'ы': 'i', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+  };
+  const latToRu = {
+    'sh': 'ш', 'ch': 'ч', 'yo': 'ё', 'yu': 'ю', 'ya': 'я', 'ts': 'ц',
+    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е', 'j': 'ж', 'z': 'з',
+    'i': 'и', 'y': 'й', 'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р',
+    's': 'с', 't': 'т', 'u': 'у', 'f': 'ф', 'x': 'х', 'h': 'х', 'q': 'к'
+  };
+
+  let low = str.toLowerCase();
+  let toCyr = low;
+  for (let k of ['sh', 'ch', 'yo', 'yu', 'ya', 'ts']) {
+    toCyr = toCyr.split(k).join(latToRu[k] || '');
+  }
+  toCyr = toCyr.split('').map(c => latToRu[c] || c).join('');
+  let toLat = low.split('').map(c => ruToLat[c] || c).join('');
+  return low + " " + toLat + " " + toCyr;
+}
+
+function getMaterialSearchCorpus(m) {
+  const aliasesStr = Array.isArray(m.aliases) ? m.aliases.join(" ") : "";
+  const typesStr = Array.isArray(m.types) ? m.types.map(t => (t.name_uz || "") + " " + (t.name_ru || "") + " " + (t.dimensions || "")).join(" ") : "";
+  const raw = (
+    (m.name || "") + " " +
+    (m.name_uz || "") + " " +
+    (m.name_ru || "") + " " +
+    (m.original_name || "") + " " +
+    (m.english_name || "") + " " +
+    (m.subcategory_name || "") + " " +
+    (m.description || "") + " " +
+    (m.description_uz || "") + " " +
+    (m.description_ru || "") + " " +
+    (m.material_type || "") + " " +
+    (m.category_name || "") + " " +
+    (m.manufacturer_name || "") + " " +
+    (m.usage_area || "") + " " +
+    (m.purpose_uz || "") + " " +
+    (m.purpose_ru || "") + " " +
+    (m.advantages_uz || "") + " " +
+    (m.advantages_ru || "") + " " +
+    aliasesStr + " " +
+    typesStr
+  ).toLowerCase();
+
+  return raw + " " + transliterateUzRu(raw);
+}
+
+function matchMaterialSearch(m, search) {
+  if (!search) return true;
+  const corpus = getMaterialSearchCorpus(m);
+
+  let cleanSearch = search.toLowerCase().trim()
+    .replace(/gipsakarton/g, "gipsokarton")
+    .replace(/гипсакартон/g, "гипсокартон")
+    .replace(/aquapanel/g, "akvapanel")
+    .replace(/gazoblok/g, "gazobeton")
+    .replace(/газоблок/g, "газобетон")
+    .replace(/rotbant/g, "rotband")
+    .replace(/ротбант/g, "ротбанд");
+
+  const tokens = cleanSearch.split(/\s+/).filter(Boolean);
+  if (!tokens.length) return true;
+
+  return tokens.every(token => {
+    if (corpus.includes(token)) return true;
+    const tokenVariations = transliterateUzRu(token).split(/\s+/).filter(Boolean);
+    return tokenVariations.some(tv => corpus.includes(tv));
+  });
+}
+
 function filterMaterialsLocally() {
   let list = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
              materialsState.allMaterials : (materialsState.materials || []);
@@ -7157,28 +7272,16 @@ function filterMaterialsLocally() {
     list = list.filter(m => m.is_frequent === true);
   }
 
-  // 6. Multilingual search query across UZ, RU, English, Aliases, Subcategories
+  // 6. Multilingual 100% search matching with cross-category fallback
   if (search) {
-    list = list.filter(m => {
-      const aliasesStr = Array.isArray(m.aliases) ? m.aliases.join(" ") : "";
-      const text = (
-        (m.name || "") + " " +
-        (m.name_uz || "") + " " +
-        (m.name_ru || "") + " " +
-        (m.original_name || "") + " " +
-        (m.english_name || "") + " " +
-        (m.subcategory_name || "") + " " +
-        (m.description || "") + " " +
-        (m.description_uz || "") + " " +
-        (m.description_ru || "") + " " +
-        (m.material_type || "") + " " +
-        (m.category_name || "") + " " +
-        (m.manufacturer_name || "") + " " +
-        (m.usage_area || "") + " " +
-        aliasesStr
-      ).toLowerCase();
-      return text.includes(search);
-    });
+    let searchFiltered = list.filter(m => matchMaterialSearch(m, search));
+    // Agar tanlangan kategoriya ichida topilmasa, butun baza bo'yicha qidirib 100% natija beradi
+    if (!searchFiltered.length && (cat !== "all" || subcat !== "all" || scope !== "all" || purpose !== "all")) {
+      const allList = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
+                      materialsState.allMaterials : (materialsState.materials || []);
+      searchFiltered = allList.filter(m => matchMaterialSearch(m, search));
+    }
+    list = searchFiltered;
   }
 
   // 7. Quick filter chips
@@ -15832,6 +15935,9 @@ const NAV_ICONS = {
   }
 };
 
+let lastNavTapTime = 0;
+let lastNavTapId = null;
+
 function renderNav() {
   const tabs = [
     { id: "home", label: "Bosh sahifa" },
@@ -15849,7 +15955,7 @@ function renderNav() {
         const svgInner = isActive ? icon.filled : icon.outline;
         const strokeProps = isActive ? "" : `fill="none" stroke="currentColor" stroke-width="1.6"`;
         return `
-        <div class="nav-item ${isActive ? "active" : ""}" onclick="setTab('${t.id}')">
+        <div class="nav-item ${isActive ? "active" : ""}" data-tab="${t.id}" onclick="setTab('${t.id}', event)">
           <div class="nav-icon">
             <svg class="nav-svg" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
           </div>
@@ -15861,18 +15967,75 @@ function renderNav() {
   `;
 }
 
-function setTab(id) {
+function setTab(id, event) {
   if (!state.terms_accepted && !state.is_admin) {
     render();
     return;
   }
+
+  const now = Date.now();
+  const isDoubleTap = (lastNavTapId === id && (now - lastNavTapTime) < 450);
+  const isAlreadyActive = (activeTab === id && !currentView);
+  lastNavTapTime = now;
+  lastNavTapId = id;
+
   haptic("light");
+
+  // Ikonka animatsiyasini ishga tushirish (bounce / spring effekti)
+  const clickedTarget = event ? event.currentTarget : document.querySelector(`.nav-item[data-tab="${id}"]`);
+  if (clickedTarget) {
+    clickedTarget.classList.remove("nav-item-bounce");
+    void clickedTarget.offsetWidth; // reflow
+    clickedTarget.classList.add("nav-item-bounce");
+    setTimeout(() => {
+      if (clickedTarget) clickedTarget.classList.remove("nav-item-bounce");
+    }, 450);
+  }
+
+  // Double tap yoki ayni shu tab turgan paytda yana bosilsa -> Sahifani eng tepasiga ravon (smooth) chiqarib yuborish
+  if (isDoubleTap || isAlreadyActive) {
+    savedTabScrolls[id] = 0;
+    // Agar Kutubxona ichidagi biror bo'limda (masalan, materiallar yoki kitoblar) bo'lsa
+    if (id === "tasks" && libraryActiveSection) {
+      const currentY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      if (currentY > 40) {
+        // Agar pastga tushilgan bo'lsa, eng tepasiga ko'taradi
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      } else {
+        // Agar allaqachon tepasida bo'lsa, asosiy Kutubxona bosh sahifasiga qaytaradi
+        closeLibrarySection();
+      }
+      return;
+    }
+    // Boshqa barcha bo'limlarda eng tepasiga chiqaradi
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    const sc = document.getElementById("app");
+    if (sc && sc.scrollTop > 0) {
+      sc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    }
+    return;
+  }
+
   if (!currentView) {
     savedTabScrolls[activeTab] = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   }
   activeTab = id;
   currentView = null;
   render();
+
+  // Yangi aktiv bo'lgan ikonka animatsiyasi
+  requestAnimationFrame(() => {
+    const newActiveEl = document.querySelector(`.nav-item.active`);
+    if (newActiveEl) {
+      newActiveEl.classList.remove("nav-item-bounce");
+      void newActiveEl.offsetWidth;
+      newActiveEl.classList.add("nav-item-bounce");
+      setTimeout(() => {
+        if (newActiveEl) newActiveEl.classList.remove("nav-item-bounce");
+      }, 450);
+    }
+  });
+
   const targetY = savedTabScrolls[id] || 0;
   requestAnimationFrame(() => {
     window.scrollTo({ top: targetY, left: 0, behavior: "instant" });

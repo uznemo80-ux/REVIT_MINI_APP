@@ -4,7 +4,8 @@
 // ======================================================
 
 const { SEED_CATEGORIES, SEED_MANUFACTURERS } = require('./materialsSeed');
-const { SEED_MATERIALS } = require('./materialsCatalog');
+const catalogModule = require('./materialsCatalog');
+const SEED_MATERIALS = Array.isArray(catalogModule) ? catalogModule : (catalogModule.SEED_MATERIALS || []);
 
 async function initMaterialsTables(pool) {
   try {
@@ -170,6 +171,66 @@ async function initMaterialsTables(pool) {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+
+    // 6. Create Material Specifications Table (for detail page specs grid)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_specifications (
+        id SERIAL PRIMARY KEY,
+        material_id INT REFERENCES materials(id) ON DELETE CASCADE,
+        parameter VARCHAR(255) NOT NULL,
+        value TEXT NOT NULL,
+        unit VARCHAR(50),
+        source_id INT,
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    // 7. Create Material Documents Table (datasheets, PDFs, certificates)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_documents (
+        id SERIAL PRIMARY KEY,
+        material_id INT REFERENCES materials(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        document_type VARCHAR(100) DEFAULT 'datasheet',
+        url TEXT NOT NULL,
+        file_size VARCHAR(50),
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    // 8. Create Material Applications Table (recommended / not recommended uses)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_applications (
+        id SERIAL PRIMARY KEY,
+        material_id INT REFERENCES materials(id) ON DELETE CASCADE,
+        application_type VARCHAR(50) DEFAULT 'recommended',
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        icon VARCHAR(50),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    // 9. Create Material Requirements Table (installation steps, conditions)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_requirements (
+        id SERIAL PRIMARY KEY,
+        material_id INT REFERENCES materials(id) ON DELETE CASCADE,
+        requirement_type VARCHAR(100) DEFAULT 'installation_step',
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        step_number INT,
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    // Add status column to material_sources if missing
+    await pool.query(`
+      ALTER TABLE material_sources ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'verified';
+    `).catch(e => console.warn('Sources status col warn:', e.message));
 
     // Backfill legacy rows with bilingual values if empty
     await pool.query(`

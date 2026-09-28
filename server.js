@@ -6616,8 +6616,8 @@ app.all('/api/materials/list', async function (req, res) {
         m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
-        (SELECT COUNT(ms.id)::int FROM material_specifications ms WHERE ms.material_id = m.id) AS specs_count,
-        (SELECT COUNT(md.id)::int FROM material_documents md WHERE md.material_id = m.id) AS docs_count,
+        0 AS specs_count,
+        0 AS docs_count,
         (SELECT COUNT(msrc.id)::int FROM material_sources msrc WHERE msrc.material_id = m.id) AS sources_count,
         (SELECT COUNT(mt.id)::int FROM material_types mt WHERE mt.material_id = m.id) AS types_count
       FROM materials m
@@ -6756,7 +6756,7 @@ app.all('/api/materials/detail', async function (req, res) {
       ORDER BY sort_order ASC, id ASC
     `, [materialId]);
 
-    // Specifications
+    // Specifications (graceful fallback if table missing)
     var specsRes = await pool.query(`
       SELECT
         ms.*,
@@ -6765,7 +6765,7 @@ app.all('/api/materials/detail', async function (req, res) {
       LEFT JOIN material_sources msrc ON msrc.id = ms.source_id
       WHERE ms.material_id = $1
       ORDER BY ms.order_index ASC, ms.id ASC
-    `, [materialId]);
+    `, [materialId]).catch(function() { return { rows: [] }; });
 
     // Sources (Verified catalogs / official pages)
     var sourcesRes = await pool.query(`
@@ -6773,7 +6773,7 @@ app.all('/api/materials/detail', async function (req, res) {
       FROM material_sources
       WHERE material_id = $1
       ORDER BY sort_order ASC, id ASC
-    `, [materialId]);
+    `, [materialId]).catch(function() { return { rows: [] }; });
 
     // Related materials in the same category
     var relatedRes = await pool.query(`
@@ -6782,31 +6782,31 @@ app.all('/api/materials/detail', async function (req, res) {
       WHERE category_id = $1 AND id != $2 AND status = 'published'
       ORDER BY is_frequent DESC, id DESC
       LIMIT 4
-    `, [mat.category_id, materialId]);
+    `, [mat.category_id, materialId]).catch(function() { return { rows: [] }; });
 
-    // Documents
+    // Documents (graceful fallback if table missing)
     var docsRes = await pool.query(`
       SELECT *
       FROM material_documents
       WHERE material_id = $1
       ORDER BY order_index ASC, id ASC
-    `, [materialId]);
+    `, [materialId]).catch(function() { return { rows: [] }; });
 
-    // Applications
+    // Applications (graceful fallback if table missing)
     var appsRes = await pool.query(`
       SELECT *
       FROM material_applications
       WHERE material_id = $1
       ORDER BY id ASC
-    `, [materialId]);
+    `, [materialId]).catch(function() { return { rows: [] }; });
 
-    // Requirements & installation
+    // Requirements & installation (graceful fallback if table missing)
     var reqsRes = await pool.query(`
       SELECT *
       FROM material_requirements
       WHERE material_id = $1
       ORDER BY order_index ASC, id ASC
-    `, [materialId]);
+    `, [materialId]).catch(function() { return { rows: [] }; });
 
     mat.title = mat.name_uz || mat.name;
     mat.cover_image = mat.image_url || mat.cover_image;
