@@ -6641,9 +6641,9 @@ input, textarea, select {
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #ec4899;
-  background: rgba(236, 72, 153, 0.08);
-  border: 1px solid rgba(236, 72, 153, 0.2);
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--text-primary);
   padding: 4px 10px;
   border-radius: 20px;
   margin-bottom: 12px;
