@@ -4467,9 +4467,12 @@ function renderHome() {
   const adminPhoto = formatImageUrl(rawAdminPhoto);
   const retryAdminPhoto = getDriveFallbackUrl(rawAdminPhoto);
 
-  // 2-TALAB: Faqat admin belgilagan kurslarni chiqarish (show_on_home)
-  const featuredCourses = (state.courses || []).filter(c => c.show_on_home);
-  const coursesToShow = featuredCourses.length > 0 ? featuredCourses : (state.courses || []).slice(0, 1);
+  // 2-TALAB: Faqat admin belgilagan va faol (active) kurslarni chiqarish
+  const availableCourses = state.is_admin
+    ? (state.courses || [])
+    : (state.courses || []).filter(c => c.status === 'active');
+  const featuredCourses = availableCourses.filter(c => c.show_on_home);
+  const coursesToShow = featuredCourses.length > 0 ? featuredCourses : availableCourses.slice(0, 1);
 
   // 5-TALAB: O'quvchilar fikri (Dinamik bazadan)
   const testimonialsList = state.testimonials && state.testimonials.length ? state.testimonials : TESTIMONIALS;
@@ -4593,8 +4596,8 @@ function renderHome() {
             </div>
             <div class="course-price-wrap">
               ${renderCoursePriceBlock(course)}
-              <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); setTab('chat')">
-                ${state.has_access ? "Kirish faol ✅" : "Sotib olish 💳"}
+              <button class="btn" style="width: auto; margin-bottom: 0; padding: 10px 20px;" onclick="event.stopPropagation(); ${(state.has_access || state.is_admin || isCourseFreeCheck(course)) ? `openCourseCatalog(${Number(course.id)})` : `openCourseAccessModal(${Number(course.id)})`}">
+                ${(state.has_access || state.is_admin || isCourseFreeCheck(course)) ? "Darslarni ochish →" : "Darsga a'zo bo'lish 💳"}
               </button>
             </div>
           </div>
@@ -4862,21 +4865,15 @@ function renderCoursePriceBlock(course) {
   return `<div class="course-price">${escapeHtml(course.price || '')}</div>`;
 }
 
+function isCourseFreeCheck(c) {
+  if (!c) return false;
+  return Boolean(!c.price || c.price === '0' || String(c.price).includes('0 so') || (c.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(c.title)));
+}
+
 function getFilteredCoursesList() {
-  const allCourses = state.courses && state.courses.length ? state.courses : [
-    {
-      id: 1,
-      title: "INTPRO — Revit dasturida interyer loyihalash",
-      subtitle: "Interyer Loyihalash & BIM Modellashtirish",
-      price: "1 500 000 so'm",
-      category: "Revit",
-      total_modules: 11,
-      total_lessons: 140,
-      status: "active",
-      release_date: "Faol kurs",
-      cover_url: ""
-    }
-  ];
+  const rawCourses = Array.isArray(state.courses) ? state.courses : [];
+  // Qoralama (draft) kurslar faqat adminga ko'rinadi! O'quvchilarga ko'rsatilmaydi!
+  const allCourses = state.is_admin ? rawCourses : rawCourses.filter(c => c.status === 'active');
 
   const q = courseSearchQuery.trim().toLowerCase();
   return allCourses.filter(c => {
@@ -4935,9 +4932,19 @@ function renderCourseCardsListHtml() {
           <span>🎬 ${course.total_lessons || 0} Dars</span>
           ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
         </div>
-        <button class="btn" style="margin-bottom:0; padding:10px 16px;">
-          Darslarni ochish →
-        </button>
+        ${(() => {
+          const isFree = isCourseFreeCheck(course);
+          const hasAccess = Boolean(state.has_access || state.is_admin || isFree);
+          if (hasAccess) {
+            return `<button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="event.stopPropagation(); openCourseCatalog(${Number(course.id)})">
+              Darslarni ochish →
+            </button>`;
+          } else {
+            return `<button class="btn" style="margin-bottom:0; padding:10px 16px; background:linear-gradient(135deg, #00c853, #009624);" onclick="event.stopPropagation(); openCourseAccessModal(${Number(course.id)})">
+              💳 Darsga a'zo bo'lish
+            </button>`;
+          }
+        })()}
       </div>
     </div>
   `;
@@ -5438,6 +5445,33 @@ function renderCourseModules() {
         ${modules.length} ta modul · Kerakli modulni tanlang va darslarni boshlang:
       </p>
 
+      ${(() => {
+        const isFree = isCourseFreeCheck(course);
+        const hasAccess = Boolean(courseModulesData.has_access || state.has_access || state.is_admin || isFree);
+        if (!hasAccess) {
+          return `
+            <div style="background:linear-gradient(135deg, rgba(41,121,255,0.12), rgba(0,230,118,0.08)); border:1.5px solid var(--accent); border-radius:var(--radius-md); padding:16px; margin-bottom:18px;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <span style="font-size:24px;">🔒</span>
+                <div>
+                  <div style="font-weight:800; font-size:15px; color:var(--text-primary);">Ushbu kurs to'liq pullik (PRO) hisoblanadi</div>
+                  <div style="font-size:12px; color:var(--text-secondary);">Darslarni ko'rish va materiallarni yuklab olish uchun kursga a'zo bo'lishingiz kerak.</div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
+                <div style="font-size:15px; font-weight:800; color:var(--accent);">
+                  ${escapeHtml(course.discount_price || course.price || "1 500 000 so'm")}
+                </div>
+                <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+                  💳 Darsga a'zo bo'lish
+                </button>
+              </div>
+            </div>
+          `;
+        }
+        return "";
+      })()}
+
       ${state.is_admin ? `
         <div id="course-status-card-${course.id}" class="course-status-card ${course.status === 'active' ? 'active-mode' : 'draft-mode'}">
           <div class="course-status-header">
@@ -5505,7 +5539,7 @@ function renderCourseModules() {
 
           <div class="lesson-list ${expandedModuleIds.has(Number(mod.id)) ? "open" : ""}" id="mod-${Number(mod.id)}">
             ${lessons.length ? lessons.map(lesson => `
-              <div class="lesson ${lesson.available ? "" : "disabled"}" onclick="${lesson.available ? `openLesson(${Number(lesson.id)})` : `showLockedInfo()`}">
+              <div class="lesson ${lesson.available ? "" : "disabled"}" onclick="${lesson.available ? `openLesson(${Number(lesson.id)})` : `showLockedInfo(${Number(course.id)})`}">
                 <div class="lesson-left">
                   <span class="lesson-status-icon">${lesson.watched ? "✅" : (lesson.available ? "▶" : "🔒")}</span>
                   <span>${escapeHtml(lesson.title)}</span>
@@ -5711,9 +5745,18 @@ function toggleModule(id) {
   if (el) el.classList.toggle("open");
 }
 
-function showLockedInfo() {
-  haptic();
-  showAlert("Ushbu dars qulflangan. Kursga to'liq kirish uchun 'Chat' bo'limi orqali adminga murojaat qiling.");
+function showLockedInfo(courseId) {
+  haptic("medium");
+  const cid = Number(courseId) || Number(selectedCourseId);
+  const course = (state.courses || []).find(c => Number(c.id) === cid) || (courseModulesData?.course);
+  const isFree = isCourseFreeCheck(course);
+  if (isFree) {
+    showAlert("Ushbu dars ketma-ketlik bo'yicha yopiq. Avvalgi darslarni ketma-ket tomosha qilishingiz kerak.");
+  } else if (cid) {
+    openCourseAccessModal(cid);
+  } else {
+    showAlert("Ushbu dars qulflangan. Kursga to'liq kirish uchun adminga murojaat qiling.");
+  }
 }
 
 // ======================================================
@@ -6042,20 +6085,35 @@ function renderLessonQABox(lessonId, questions) {
         Ushbu darsda tushunmagan joyingiz bo‘lsa, savolingizni yozing. Ustoz sizga javob qaytaradi.
       </div>
 
-      <div class="qa-form">
-        <textarea
-          id="qa-input-${lessonId}"
-          class="qa-textarea"
-          placeholder="Dars yuzasidan savolingizni aniq yozing..."
-        ></textarea>
-        <button
-          type="button"
-          class="qa-submit-btn"
-          onclick="submitLessonQuestion(${Number(lessonId)})"
-        >
-          🚀 Savolni ustozga yuborish
-        </button>
-      </div>
+      ${(state.has_access || state.is_admin) ? `
+        <div class="qa-form">
+          <textarea
+            id="qa-input-${lessonId}"
+            class="qa-textarea"
+            placeholder="Dars yuzasidan savolingizni aniq yozing..."
+          ></textarea>
+          <button
+            type="button"
+            class="qa-submit-btn"
+            onclick="submitLessonQuestion(${Number(lessonId)})"
+          >
+            🚀 Savolni ustozga yuborish
+          </button>
+        </div>
+      ` : `
+        <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:20px; margin-bottom:6px;">🔒</div>
+          <div style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+            Dars bo'yicha savol berish faqat kursga a'zo bo'lgan o'quvchilar uchun ochiq
+          </div>
+          <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
+            Ustozdan to'liq amaliy yordam va savol-javob imkoniyatidan foydalanish uchun kursga a'zo bo'ling.
+          </div>
+          <button class="btn" style="width:auto; margin:0 auto; padding:8px 18px; font-size:12.5px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(selectedCourseId || 1)})">
+            💳 Kursga a'zo bo'lish
+          </button>
+        </div>
+      `}
 
       <div class="qa-list" id="qa-list-${lessonId}">
         ${qList.length ? qList.map(q => renderSingleLessonQaCard(q, lessonId)).join("") : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`}
@@ -6186,6 +6244,10 @@ async function reloadLessonQuestions(lessonId) {
 }
 
 async function submitLessonQuestion(lessonId) {
+  if (!state.has_access && !state.is_admin) {
+    showAlert("Dars bo'yicha savol berish faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun mavjud.");
+    return openCourseAccessModal(selectedCourseId || 1);
+  }
   const input = document.getElementById(`qa-input-${lessonId}`);
   const text = input ? input.value.trim() : "";
   if (!text) {
@@ -10055,10 +10117,12 @@ function setAdminQuestionsFilter(filter) {
   render();
 }
 
-function openDirectAdminTelegram(username) {
+function openDirectAdminTelegram(username, messageText) {
   haptic("light");
-  const cleanUser = username.replace(/^@/, "").trim();
-  const url = `https://t.me/${cleanUser}`;
+  const cleanUser = (username || "texnik_uzb").replace(/^@/, "").trim() || "texnik_uzb";
+  const url = messageText
+    ? `https://t.me/${cleanUser}?text=${encodeURIComponent(messageText)}`
+    : `https://t.me/${cleanUser}`;
   try {
     tg.openTelegramLink(url);
   } catch (e) {
@@ -17430,3 +17494,85 @@ function render() {
     }
   }
 })();
+
+
+// ======================================================
+// COURSE ACCESS MODAL & FLOW (PULLIK KURSLARGA A'ZO BO'LISH)
+// ======================================================
+
+async function openCourseAccessModal(courseId) {
+  haptic("medium");
+  const cid = Number(courseId) || 1;
+  const course = (state.courses || []).find(c => Number(c.id) === cid) ||
+    (courseModulesData && Number(courseModulesData.course?.id) === cid ? courseModulesData.course : {
+      id: cid,
+      title: "INTPRO — Revit dasturida interyer loyihalash",
+      subtitle: "Interyer Loyihalash & BIM Modellashtirish",
+      price: "1 500 000 so'm",
+      total_modules: 11,
+      total_lessons: 140
+    });
+
+  const priceText = course.discount_price && course.is_discount_active
+    ? `${course.discount_price} (Eski narxi: ${course.price})`
+    : (course.price || "1 500 000 so'm");
+
+  const contactTg = (state.settings?.contact_telegram || "@texnik_uzb").replace(/^@/, "");
+
+  currentView = {
+    html: `
+      <div class="page">
+        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        
+        <div style="background:linear-gradient(135deg, rgba(41,121,255,0.12), rgba(0,230,118,0.06)); border:1.5px solid var(--accent); border-radius:var(--radius-lg); padding:20px; margin-bottom:20px; text-align:center;">
+          <div style="font-size:36px; margin-bottom:8px;">💎</div>
+          <div class="page-title" style="margin-bottom:6px; font-size:18px;">${escapeHtml(course.title)}</div>
+          <p style="color:var(--text-secondary); font-size:13px; margin-bottom:14px;">${escapeHtml(course.subtitle || "Mukammal professional Revit kursi")}</p>
+          
+          <div style="display:inline-block; background:var(--bg-surface); padding:8px 18px; border-radius:24px; border:1px solid var(--border); font-size:16px; font-weight:800; color:var(--accent); margin-bottom:14px;">
+            💰 Narxi: ${escapeHtml(priceText)}
+          </div>
+
+          <div style="text-align:left; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:18px; font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
+            <div style="font-weight:750; color:var(--text-primary); margin-bottom:6px;">✨ Kurs a'zolariga nimalar beriladi:</div>
+            <div>✅ <b>${course.total_modules || 11} ta modul</b> va <b>${course.total_lessons || 140} ta video dars</b>ga 1 yil to'liq kirish</div>
+            <div>✅ Revit loyiha andozalari, oilalari (family) va ishchi fayllar</div>
+            <div>✅ Har bir dars ostida ustoz bilan to'g'ridan-to'g'ri savol-javob</div>
+            <div>✅ Amaliy uy vazifalarini ustoz tomonidan tekshirish va baholash</div>
+            <div>✅ Kurs yakunida rasmiy sertifikat va portfolio himoyasi</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <button class="btn" style="margin-bottom:0; background:linear-gradient(135deg, #00c853, #009624);" onclick="submitCourseAccessRequest(${cid})">
+              🚀 Kursga a'zo bo'lish so'rovini yuborish
+            </button>
+
+            <button class="btn" style="margin-bottom:0; background:linear-gradient(135deg, #0088cc, #2979ff);" onclick="openDirectAdminTelegram('${escapeJsString(contactTg)}', 'Assalomu alaykum! Men "${escapeJsString(course.title)}" kursiga a\'zo bo\'lmoqchiman.')">
+              💬 Adminga Telegram'dan yozish (@${escapeHtml(contactTg)})
+            </button>
+
+            <button class="btn secondary" style="margin-bottom:0;" onclick="openCourseCatalog(${cid})">
+              📋 Modullar mundarijasini ko'rish
+            </button>
+          </div>
+        </div>
+      </div>
+    `
+  };
+  render();
+}
+
+async function submitCourseAccessRequest(courseId) {
+  try {
+    haptic("medium");
+    const res = await api("/api/request-access", { course_id: courseId });
+    if (res.ok) {
+      showToast(res.already_pending ? "So'rovingiz adminga yetkazilgan!" : "So'rov adminga muvaffaqiyatli yuborildi!");
+      showAlert("So'rovingiz adminga yuborildi! Tez orada admin siz bilan bog'lanadi va kursga to'liq ruxsat ochiladi.");
+    } else {
+      showAlert(res.error || "So'rov yuborishda xatolik.");
+    }
+  } catch (err) {
+    showAlert(err.message || "So'rov yuborishda xatolik yuz berdi.");
+  }
+}

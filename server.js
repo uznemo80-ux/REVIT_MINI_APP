@@ -391,7 +391,7 @@ async function initExtendedTables() {
     // Default aloqa va ijtimoiy tarmoq sozlamalari
     await pool.query(`
       INSERT INTO academy_settings (key, value) VALUES
-      ('contact_telegram', 'texnikuzb'),
+      ('contact_telegram', 'texnik_uzb'),
       ('contact_phone', '+998900000000'),
       ('admin_photo_url', '/admin.jpg'),
       ('social_telegram', 'https://t.me/yoshuzbekk'),
@@ -425,7 +425,7 @@ async function initExtendedTables() {
     // Eski standart qiymatni ('yoshuzbekk') haqiqiy admin nikiga bir martalik yangilash
     await pool.query(`
       UPDATE academy_settings
-      SET value = 'texnikuzb'
+      SET value = 'texnik_uzb'
       WHERE key = 'contact_telegram' AND (value = 'yoshuzbekk' OR value = '' OR value IS NULL)
     `);
 
@@ -2188,16 +2188,52 @@ app.post('/api/content', async function (req, res) {
     }
 
     var userHasAccess = hasAccess(user);
+    var admin = await getAdminByTelegramId(user.telegram_id);
+    var isMainAdmin = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var isAdminUser = Boolean(admin || isMainAdmin);
 
-    var modulesResult = await pool.query(
-      'SELECT id, course_id, title, order_index FROM modules ORDER BY order_index ASC, id ASC'
-    );
+    // Kurslar ro'yxati: Qoralama (status != 'active') bo'lgan kurslar o'quvchilarga ko'rinmasin!
+    var courses = [];
+    try {
+      var coursesQuery = isAdminUser
+        ? 'SELECT * FROM courses ORDER BY order_index ASC, id ASC'
+        : "SELECT * FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC";
+      var coursesRes = await pool.query(coursesQuery);
+      courses = coursesRes.rows.map(function (c) {
+        var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
+        var isFree = Boolean(!c.price || c.price === '0' || c.price.includes('0 so') || (c.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(c.title)));
+        return Object.assign({}, c, {
+          cover_url: formatDirectImageUrl(c.cover_url),
+          is_discount_active: isDiscountActive,
+          is_free: isFree,
+          original_price: c.price,
+          display_price: isDiscountActive ? c.discount_price : c.price
+        });
+      });
+    } catch (cErr) {
+      console.warn('COURSES QUERY WARNING:', cErr.message);
+    }
+
+    var activeCourseIds = courses.map(function (c) { return c.id; });
+    var activeCourseMap = new Map();
+    courses.forEach(function (c) { activeCourseMap.set(c.id, c); });
+
+    var modulesResult = isAdminUser
+      ? await pool.query('SELECT id, course_id, title, order_index FROM modules ORDER BY order_index ASC, id ASC')
+      : (activeCourseIds.length
+          ? await pool.query('SELECT id, course_id, title, order_index FROM modules WHERE course_id = ANY($1) ORDER BY order_index ASC, id ASC', [activeCourseIds])
+          : { rows: [] });
     var modules = modulesResult.rows;
+    var moduleIds = modules.map(function (m) { return m.id; });
 
-    var lessonsResult = await pool.query(
-      'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free FROM lessons ORDER BY module_id ASC, order_index ASC, id ASC'
-    );
-    var lessons = lessonsResult.rows;
+    var lessons = [];
+    if (moduleIds.length) {
+      var lessonsResult = await pool.query(
+        'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free FROM lessons WHERE module_id = ANY($1) ORDER BY order_index ASC, id ASC',
+        [moduleIds]
+      );
+      lessons = lessonsResult.rows;
+    }
 
     var progressResult = await pool.query(
       'SELECT lesson_id FROM progress WHERE user_id = $1 AND watched = true',
@@ -2205,16 +2241,21 @@ app.post('/api/content', async function (req, res) {
     );
     var watchedSet = new Set(progressResult.rows.map(function (r) { return r.lesson_id; }));
 
-    var firstModuleId = modules.length ? modules[0].id : null;
-
     var data = modules.map(function (mod) {
-      var isFirstModule = mod.id === firstModuleId;
-      var moduleUnlocked = isFirstModule || userHasAccess;
+      var course = activeCourseMap.get(mod.course_id);
+      var isFreeCourse = Boolean(course && course.is_free);
+      var isStreamCourseOrModule = isFreeCourse ||
+        /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
+        (course && course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
+
+      var moduleUnlocked = isStreamCourseOrModule || userHasAccess || isAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var available = Boolean(lesson.is_free) || moduleUnlocked;
+        var isStreamLesson = isStreamCourseOrModule ||
+          /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '');
+        var available = Boolean(lesson.is_free) || isStreamLesson || isAdminUser || (userHasAccess && moduleUnlocked);
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
         return {
@@ -2239,30 +2280,6 @@ app.post('/api/content', async function (req, res) {
       lastLesson = lastLessonResult.rows[0] || null;
     } catch (llError) {
       console.warn('LAST LESSON QUERY WARNING:', llError.message);
-    }
-
-    var admin = await getAdminByTelegramId(user.telegram_id);
-    var isMainAdmin = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
-    var isAdminUser = Boolean(admin || isMainAdmin);
-
-    // Kurslar ro'yxati (Talab 3)
-    var courses = [];
-    try {
-      var coursesQuery = isAdminUser
-        ? 'SELECT * FROM courses ORDER BY order_index ASC, id ASC'
-        : "SELECT * FROM courses WHERE (status != 'hidden' AND status != 'archived') OR status IS NULL ORDER BY order_index ASC, id ASC";
-      var coursesRes = await pool.query(coursesQuery);
-      courses = coursesRes.rows.map(function (c) {
-        var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
-        return Object.assign({}, c, {
-          cover_url: formatDirectImageUrl(c.cover_url),
-          is_discount_active: isDiscountActive,
-          original_price: c.price,
-          display_price: isDiscountActive ? c.discount_price : c.price
-        });
-      });
-    } catch (cErr) {
-      console.warn('COURSES QUERY WARNING:', cErr.message);
     }
 
     // FAQ savol-javoblar (Talab 2)
@@ -2377,8 +2394,8 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var adminUser = await getAdminByTelegramId(user.telegram_id);
     var isAdmin = Boolean(isMainAdminUser || adminUser);
 
-    if ((course.status === 'hidden' || course.status === 'archived') && !isAdmin) {
-      return res.status(403).json({ error: 'Ushbu kurs hozirda mavjud emas' });
+    if (course.status !== 'active' && !isAdmin) {
+      return res.status(403).json({ error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq (Qoralama holatida)." });
     }
 
     var isFreeCourse = Boolean(
@@ -2451,42 +2468,39 @@ app.post('/api/course/:id/modules', async function (req, res) {
       });
     });
 
-    // Har bir darsning "ketma-ketlikda ochiqmi" holatini hisoblaymiz:
-    // birinchi dars har doim ochiq, keyingisi — oldingisi ko'rilgandan keyingina ochiladi;
-    // modul chegarasidan o'tishda esa oldingi modul testi (bo'lsa) 65%+ o'tilgan bo'lishi shart
+    var hasCourseAccess = isFreeCourse || userHasAccess || isAdmin;
     var sequentialUnlockedSet = new Set();
-    var chainOpen = true;
-    var prevModuleId = null;
-    flatLessons.forEach(function (l) {
-      if (chainOpen && prevModuleId !== null && l.module_id !== prevModuleId) {
-        if (modulesWithTestsSet.has(prevModuleId) && !passedModulesSet.has(prevModuleId)) {
-          chainOpen = false;
+    if (hasCourseAccess) {
+      var chainOpen = true;
+      var prevModuleId = null;
+      flatLessons.forEach(function (l) {
+        if (chainOpen && prevModuleId !== null && l.module_id !== prevModuleId) {
+          if (modulesWithTestsSet.has(prevModuleId) && !passedModulesSet.has(prevModuleId)) {
+            chainOpen = false;
+          }
         }
-      }
-      if (chainOpen) {
-        sequentialUnlockedSet.add(l.id);
-        if (!watchedSet.has(l.id)) chainOpen = false;
-      }
-      prevModuleId = l.module_id;
-    });
+        if (chainOpen) {
+          sequentialUnlockedSet.add(l.id);
+          if (!watchedSet.has(l.id)) chainOpen = false;
+        }
+        prevModuleId = l.module_id;
+      });
+    }
 
     var data = modules.map(function (mod) {
-      var isFirstModule = mod.id === firstModuleId;
       var isGranted = grantedModuleIds.has(mod.id);
       var isStreamCourseOrModule = isFreeCourse ||
         /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
         (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
-      var moduleUnlocked = isStreamCourseOrModule || (isFirstModule && isNeverPaidUser(user)) || userHasAccess || isGranted || isMainAdminUser;
+      var moduleUnlocked = isStreamCourseOrModule || userHasAccess || isGranted || isAdmin;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
         var isStreamLesson = isStreamCourseOrModule ||
           /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '');
-        var available = Boolean(lesson.is_free) || isStreamLesson || isMainAdminUser || isGranted ||
-          (isNeverPaidUser(user) && isFirstModule) ||
-          userHasAccess ||
-          sequentialUnlockedSet.has(lesson.id);
+        var available = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted ||
+          (userHasAccess && sequentialUnlockedSet.has(lesson.id));
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
         return {
@@ -2507,8 +2521,10 @@ app.post('/api/course/:id/modules', async function (req, res) {
     if (course && course.cover_url) {
       course.cover_url = formatDirectImageUrl(course.cover_url);
     }
+    course.is_free = isFreeCourse;
+    course.has_access = hasCourseAccess;
 
-    return res.json({ ok: true, course: course, modules: data });
+    return res.json({ ok: true, course: course, modules: data, has_access: hasCourseAccess });
   } catch (error) {
     console.error('COURSE MODULES ERROR:', error);
     return res.status(500).json({ error: 'Kurs modullarini olishda xato' });
@@ -2561,6 +2577,14 @@ app.post('/api/lesson/:id', async function (req, res) {
 
     var courseRes = await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [mod.course_id]);
     var courseData = courseRes.rows[0];
+    var adminUser = await getAdminByTelegramId(user.telegram_id);
+    var isAdmin = Boolean(isMainAdminUser || adminUser);
+
+    // 1. Qoralama (draft) kurs tekshiruvi: faqat adminga ochiq
+    if (courseData && courseData.status !== 'active' && !isAdmin) {
+      return res.status(403).json({ error: 'draft', message: "Ushbu dars tegishli bo'lgan kurs hozircha qoralama holatida." });
+    }
+
     var isFreeCourse = Boolean(
       courseData && (!courseData.price || courseData.price === '0' || courseData.price.includes('0 so') || (courseData.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title)))
     );
@@ -2569,7 +2593,7 @@ app.post('/api/lesson/:id', async function (req, res) {
       (courseData && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title || '')) ||
       /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '');
 
-    var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isMainAdminUser || isGranted || userHasAccess || (isNeverPaidUser(user) && isFirstModule);
+    var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted || (isFreeCourse && isFirstModule);
 
     if (!lessonAvailable && userHasAccess) {
       // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
@@ -2630,11 +2654,16 @@ app.post('/api/lesson/:id', async function (req, res) {
     }
 
     if (!lessonAvailable) {
-      return res.status(403).json({ error: 'locked', message: 'Bu dars hali yopiq. Avvalgi darslarni ketma-ket tugatishingiz kerak, yoki kursga kirish uchun tolov qilishingiz kerak.' });
+      return res.status(403).json({
+        error: 'locked',
+        message: isFreeCourse
+          ? 'Bu dars hali yopiq. Avvalgi darslarni ketma-ket tugatishingiz kerak.'
+          : "Bu dars faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun ochiq. Kursga a'zo bo'lish uchun adminga murojaat qiling."
+      });
     }
 
     // Bitta hisob — bitta qurilma nazorati (faqat haqiqiy to'lovchi o'quvchilar uchun, admin bundan mustasno)
-    if (userHasAccess && !isMainAdminUser) {
+    if (userHasAccess && !isAdmin) {
       var deviceLockResult = await checkDeviceLock(user, req.body.device_id);
       if (deviceLockResult) {
         return res.status(403).json(deviceLockResult);
@@ -2895,6 +2924,18 @@ app.post('/api/lesson/:id/question', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+
+    var userHasAccess = hasAccess(user);
+    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var adminUser = await getAdminByTelegramId(user.telegram_id);
+    var isAdmin = Boolean(isMainAdminUser || adminUser);
+
+    if (!userHasAccess && !isAdmin) {
+      return res.status(403).json({
+        error: 'forbidden',
+        message: "Dars bo'yicha savol berish faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun mavjud."
+      });
+    }
 
     var lessonId = Number(req.params.id);
     var questionText = String(req.body.question || '').trim();
@@ -3356,11 +3397,11 @@ app.post('/api/request-access', async function (req, res) {
       [user.id]
     );
 
-    var adminMsg2 = (isRenewal ? 'MUDDATNI UZAYTIRISH SOROVI!' : 'YANGI TOLOV SOROVI!') +
-      '\n\nIsm: ' + fullName + '\nTelefon: ' + (user.phone || 'Telefon yoq') + '\nUsername: @' + (user.username || 'username yoq') + '\nTelegram ID: ' + user.telegram_id + courseLine +
+    var adminMsg2 = (isRenewal ? '🔄 MUDDATNI UZAYTIRISH SO\'ROVI!' : '💳 YANGI KURSGA A\'ZO BO\'LISH SO\'ROVI!') +
+      '\n\n👤 Ism: ' + fullName + '\n📱 Telefon: ' + (user.phone || 'Telefon yo\'q') + '\n🌐 Username: @' + (user.username || 'username yo\'q') + '\n🆔 Telegram ID: ' + user.telegram_id + courseLine +
       (isRenewal
-        ? ('\nJoriy muddat: ' + new Date(user.access_until).toLocaleDateString('uz-UZ') + ' sanasigacha\n\nO\'quvchi kirish muddatini uzaytirishni soramoqda.')
-        : '\n\nKursga kirish uchun sorov yuborildi.');
+        ? ('\n⏳ Joriy muddat: ' + new Date(user.access_until).toLocaleDateString('uz-UZ') + ' sanasigacha\n\nO\'quvchi kirish muddatini uzaytirishni so\'ramoqda.')
+        : '\n\n⚡ Admin panelda "O\'quvchilar" bo\'limidan "Ruxsat berish" yoki "Rad etish" mumkin.');
     await notifyAdmin(adminMsg2, user.telegram_id.toString());
 
     return res.json({ ok: true, already_pending: false, message: 'Sorov adminga yuborildi' });
@@ -5766,7 +5807,7 @@ app.post('/api/library/v2/recommended', async function (req, res) {
 // Kurslar ro'yxati (Test filter dropdown uchun)
 app.all(['/api/library/v2/courses'], async function (req, res) {
   try {
-    var result = await pool.query("SELECT id, title FROM courses WHERE (status != 'hidden' AND status != 'archived') OR status IS NULL ORDER BY order_index ASC, id ASC");
+    var result = await pool.query("SELECT id, title FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC");
     return res.json({ ok: true, courses: result.rows });
   } catch (err) {
     console.error('LIBRARY COURSES ERROR:', err.message);
@@ -5793,7 +5834,7 @@ app.all(['/api/support/info'], async function (req, res) {
         first_name: settings.support_first_name || '',
         last_name: settings.support_last_name || '',
         payment_type: settings.donate_payment_type || settings.support_payment_type || 'UZCARD / HUMO',
-        telegram_contact: settings.support_telegram_contact || '@texnikuzb'
+        telegram_contact: settings.support_telegram_contact || '@texnik_uzb'
       }
     });
   } catch (err) {
@@ -7857,7 +7898,7 @@ app.post('/api/admin/support/update', requireAdmin, async function (req, res) {
     var holder = (b.card_holder || b.support_card_holder || [firstName, lastName].filter(Boolean).join(' ') || 'Abdulloh S.').trim();
     var cardNum = (b.card_number || b.donate_card_number || b.support_card_number || '8600 5304 1234 5678').trim();
     var paymentType = (b.payment_type || b.donate_payment_type || b.support_payment_type || 'UZCARD / HUMO').trim();
-    var tgContact = (b.telegram_contact || b.support_telegram_contact || b.support_contact || '@texnikuzb').trim();
+    var tgContact = (b.telegram_contact || b.support_telegram_contact || b.support_contact || '@texnik_uzb').trim();
     if (tgContact && !tgContact.startsWith('@') && !tgContact.startsWith('http')) {
       tgContact = '@' + tgContact;
     }
