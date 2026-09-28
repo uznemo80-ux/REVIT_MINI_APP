@@ -5448,15 +5448,82 @@ function renderCourseModules() {
       ${(() => {
         const isFree = isCourseFreeCheck(course);
         const hasAccess = Boolean(courseModulesData.has_access || state.has_access || state.is_admin || isFree);
+        const daysLeft = courseModulesData.days_left !== undefined ? courseModulesData.days_left : (course.days_left !== undefined ? course.days_left : (state.days_left || 0));
+        const expDate = courseModulesData.course?.access_expires_at || state.access_expires_at || state.access_until;
+        const accState = courseModulesData.access_state || state.access_state || (hasAccess ? 'ACTIVE' : 'NO_ACCESS');
+
+        if (hasAccess && !isFree) {
+          return `
+            <div style="background:linear-gradient(135deg, rgba(0,200,83,0.12), rgba(41,121,255,0.06)); border:1.5px solid #00c853; border-radius:var(--radius-md); padding:14px 16px; margin-bottom:18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:22px;">🟢</span>
+                  <div>
+                    <div style="font-weight:750; font-size:14px; color:var(--text-primary);">Sizda kursga to'liq a'zolik faol</div>
+                    <div style="font-size:12px; color:var(--text-secondary);">
+                      ${state.is_admin ? "👑 Bosh administrator (Cheksiz kirish)" : `Qolgan vaqt: <b style="color:var(--text-primary);">${daysLeft} kun</b>${expDate ? ` (${fmtDate(expDate)} gacha)` : ''}`}
+                    </div>
+                  </div>
+                </div>
+                <span class="tag" style="background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853;">${state.is_admin ? '👑 Admin' : 'Faol Obuna'}</span>
+              </div>
+            </div>
+          `;
+        }
+
         if (!hasAccess) {
+          if (accState === 'EXPIRED') {
+            return `
+              <div style="background:linear-gradient(135deg, rgba(235,59,59,0.12), rgba(255,149,0,0.08)); border:1.5px solid #eb3b3b; border-radius:var(--radius-md); padding:16px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                  <span style="font-size:24px;">🔴</span>
+                  <div>
+                    <div style="font-weight:800; font-size:15px; color:#ff5252;">Kursga kirish muddati tugagan</div>
+                    <div style="font-size:12px; color:var(--text-secondary);">Darslarni ko'rishni davom ettirish uchun a'zolik muddatini uzaytiring.</div>
+                  </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
+                  <div style="font-size:13px; color:var(--text-secondary);">
+                    Tugagan sana: <b>${fmtDate(expDate) || '-'}</b>
+                  </div>
+                  <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+                    💳 A'zolikni yangilash
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+
+          if (accState === 'REVOKED') {
+            return `
+              <div style="background:linear-gradient(135deg, rgba(235,59,59,0.12), rgba(255,59,48,0.08)); border:1.5px solid #eb3b3b; border-radius:var(--radius-md); padding:16px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                  <span style="font-size:24px;">🚫</span>
+                  <div>
+                    <div style="font-weight:800; font-size:15px; color:#ff5252;">Kirish huquqi bekor qilingan</div>
+                    <div style="font-size:12px; color:var(--text-secondary);">Kursga kirish huquqi administrator tomonidan to'xtatilgan.</div>
+                  </div>
+                </div>
+                <div style="margin-top:10px;">
+                  <button class="btn secondary" style="margin:0; padding:8px 18px; font-size:13px;" onclick="openContactAdminDirect()">
+                    💬 Administratorga murojaat qilish
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+
           return `
             <div style="background:linear-gradient(135deg, rgba(41,121,255,0.12), rgba(0,230,118,0.08)); border:1.5px solid var(--accent); border-radius:var(--radius-md); padding:16px; margin-bottom:18px;">
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                 <span style="font-size:24px;">🔒</span>
                 <div>
                   <div style="font-weight:800; font-size:15px; color:var(--text-primary);">Ushbu kurs to'liq pullik (PRO) hisoblanadi</div>
-                  <div style="font-size:12px; color:var(--text-secondary);">Darslarni ko'rish va materiallarni yuklab olish uchun kursga a'zo bo'lishingiz kerak.</div>
+                  <div style="font-size:12px; color:var(--text-secondary);">1 yillik to'liq kirish (365 kun), 11 ta modul, 140 ta darslik va amaliy materiallar.</div>
                 </div>
+              </div>
+              <div style="font-size:12px; color:var(--accent); margin-bottom:8px; padding:6px 10px; background:rgba(41,121,255,0.1); border-radius:6px;">
+                💡 1-moduldagi namuna darslarni hoziroq bepul ko'rishingiz mumkin!
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
                 <div style="font-size:15px; font-weight:800; color:var(--accent);">
@@ -5753,11 +5820,17 @@ function showLockedInfo(courseId, isSequentialOnly) {
   const course = (state.courses || []).find(c => Number(c.id) === cid) || (courseModulesData?.course);
   const isFree = isCourseFreeCheck(course);
   const userHasAccess = Boolean(courseModulesData?.has_access || state.has_access || state.is_admin || isFree);
+  const accState = courseModulesData?.access_state || state.access_state || (userHasAccess ? 'ACTIVE' : 'NO_ACCESS');
 
   if (userHasAccess || isSequentialOnly) {
     showAlert("Ushbu dars hali ochilmagan. Qachonki siz bundan oldingi darslikni to'liq ko'rib bo'lganingizdan keyin ('To'liq ko'rib bo'ldim' tugmasini bosgach), keyingi darslik ochiladi.");
+  } else if (accState === 'EXPIRED') {
+    showAlert("INTPRO kursiga kirish muddati tugagan. Qayta darslarni ko'rish uchun kurs a'zoligini yangilang.");
+    openCourseAccessModal(cid || 1);
+  } else if (accState === 'REVOKED') {
+    showAlert("Kursga kirish huquqi administrator tomonidan bekor qilingan. Iltimos, administratorga murojaat qiling.");
   } else if (cid) {
-    showAlert("Ushbu kurs pullik (PRO) hisoblanadi. Darslarni ko'rish uchun avval to'lov qilishingiz va kursga a'zo bo'lishingiz kerak.");
+    showAlert("Ushbu kurs pullik (PRO) hisoblanadi. Darslarni ko'rish uchun avval to'lov qilishingiz va 1 yillik a'zolikni faollashtirishingiz kerak.");
     openCourseAccessModal(cid);
   } else {
     showAlert("Ushbu dars qulflangan. Kursga to'liq kirish uchun adminga murojaat qiling.");
@@ -10376,6 +10449,58 @@ async function requestAccess() {
 // TAB 5: PROFILE
 // ======================================================
 
+function renderProfileCourseAccessCard() {
+  const isAdmin = Boolean(state.is_admin);
+  const accState = isAdmin ? 'ADMIN' : (state.access_state || (state.has_access ? 'ACTIVE' : 'NO_ACCESS'));
+  const daysLeft = state.days_left || 0;
+  const startedAt = state.access_started_at;
+  const expiresAt = state.access_expires_at || state.access_until;
+
+  let badge = '';
+  let title = '';
+  let desc = '';
+  let btnHtml = '';
+
+  if (isAdmin) {
+    badge = '<span class="tag" style="background:rgba(255,215,0,0.2); color:#ffd700; border:1px solid #ffd700;">👑 Admin</span>';
+    title = 'INTPRO — Revit Kursi (To\'liq kirish)';
+    desc = 'Sizda bosh administrator huquqi mavjud. Barcha 11 ta modul va 140 ta dars ochiq.';
+  } else if (accState === 'ACTIVE') {
+    badge = `<span class="tag" style="background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853;">🟢 Faol · ${daysLeft} kun qoldi</span>`;
+    title = 'INTPRO — Revit Kursi (1 Yillik A\'zolik)';
+    desc = `Boshlangan sana: <b>${fmtDate(startedAt) || '-'}</b><br>Tugash sanasi: <b>${fmtDate(expiresAt) || '-'}</b> (${daysLeft} kun qoldi)`;
+    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px;" onclick="openCourseCatalog(1)">Kurs darslariga o'tish ▶</button>`;
+  } else if (accState === 'EXPIRED') {
+    badge = '<span class="tag" style="background:rgba(235,59,59,0.2); color:#ff5252; border:1px solid #eb3b3b;">🔴 Muddati tugagan</span>';
+    title = 'INTPRO — Revit Kursi';
+    desc = `Kursga a'zolik muddati <b>${fmtDate(expiresAt) || '-'}</b> sanasida yakunlangan. Darslarni qayta ko'rish uchun a'zolikni uzaytiring.`;
+    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(1)">A'zolikni yangilash 💳</button>`;
+  } else if (accState === 'REVOKED') {
+    badge = '<span class="tag" style="background:rgba(235,59,59,0.2); color:#ff5252; border:1px solid #eb3b3b;">🚫 Bekor qilingan</span>';
+    title = 'INTPRO — Revit Kursi';
+    desc = 'Kursga kirish huquqi administrator tomonidan bekor qilingan.';
+    btnHtml = `<button class="btn secondary" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px;" onclick="openContactAdminDirect()">Administrator bilan bog'lanish 💬</button>`;
+  } else {
+    badge = '<span class="tag" style="background:rgba(41,121,255,0.2); color:#2979ff; border:1px solid #2979ff;">🔒 Access yo\'q</span>';
+    title = 'INTPRO — Revit Kursi (Pullik)';
+    desc = 'Kurs 11 ta modul va 140 ta darsdan iborat. Kursga to\'liq a\'zo bo\'lish 1 yilga (365 kunga) beriladi.';
+    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(1)">Kursga a'zo bo'lish 💳</button>`;
+  }
+
+  return `
+    <div class="card" style="background:linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-elevated) 100%); border:1px solid var(--accent-glow); margin-bottom:18px; padding:18px; border-radius:var(--radius-md);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:8px;">
+        <div style="font-weight:750; font-size:15px; color:var(--text-primary);">${title}</div>
+        ${badge}
+      </div>
+      <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:6px;">
+        ${desc}
+      </div>
+      ${btnHtml}
+    </div>
+  `;
+}
+
 function renderProfile() {
   const fullName = [state.first_name, state.last_name].filter(Boolean).join(" ") || "Foydalanuvchi";
   const lastLesson = state.last_lesson;
@@ -10391,6 +10516,9 @@ function renderProfile() {
         <div class="profile-name">${escapeHtml(fullName)}</div>
         <div class="profile-id">Telegram ID: ${escapeHtml(state.telegram_id)}</div>
       </div>
+
+      <!-- INTPRO Kursi Kirish Holati Kartasi -->
+      ${renderProfileCourseAccessCard()}
 
       <!-- Oxirgi ko'rilgan dars kartasi -->
       ${state.has_access && lastLesson ? `
@@ -10430,13 +10558,13 @@ function renderProfile() {
         <div class="info-row">
           <span class="info-label">Kursga kirish holati</span>
           <span class="info-val ${state.has_access ? "ok" : "warn"}">
-            ${state.has_access ? "🟢 Faol" : "🔴 Faol emas"}
+            ${state.is_admin ? "👑 Admin" : (state.access_state === 'ACTIVE' || state.has_access) ? `🟢 Faol (${state.days_left || 0} kun qoldi)` : state.access_state === 'EXPIRED' ? "🔴 Muddati tugagan" : state.access_state === 'REVOKED' ? "🚫 Bekor qilingan" : "🔒 Access yo'q"}
           </span>
         </div>
-        ${state.has_access ? `
+        ${(state.access_state === 'ACTIVE' || state.has_access) ? `
           <div class="info-row">
             <span class="info-label">Kirish tugash sanasi</span>
-            <span class="info-val">${escapeHtml(fmtDate(state.access_until) || "-")}</span>
+            <span class="info-val">${escapeHtml(fmtDate(state.access_expires_at || state.access_until) || "-")}</span>
           </div>
         ` : ""}
         <div class="info-row">
@@ -11415,12 +11543,22 @@ function getFilteredAdminStudents() {
   const query = (adminStudentsSearchQuery || "").toLowerCase();
 
   return allStudents.filter(st => {
-    // 1. Tab filter
-    const status = st.restriction_status || "active";
-    if (adminStudentsFilterTab === "active" && status !== "active") return false;
-    if (adminStudentsFilterTab === "temporary" && status !== "temporary") return false;
-    if (adminStudentsFilterTab === "permanent" && status !== "permanent") return false;
-    if (adminStudentsFilterTab === "resolved" && (status !== "expired" && status !== "revoked")) return false;
+    // 1. Course Access & Restriction Filter
+    const accState = st.access_state || (st.has_access ? "ACTIVE" : (st.access_revoked_at ? "REVOKED" : (st.access_until && new Date(st.access_until) <= new Date() ? "EXPIRED" : "NO_ACCESS")));
+    const daysLeft = st.days_left !== undefined ? st.days_left : 0;
+    const isAct = accState === "ACTIVE" || Boolean(st.has_access);
+    const isExpiring = isAct && daysLeft <= 30;
+    const isExpired = accState === "EXPIRED" || (!st.has_access && st.access_until && new Date(st.access_until) <= new Date() && !st.access_revoked_at);
+    const isRev = accState === "REVOKED" || Boolean(st.access_revoked_at);
+    const isNoAcc = accState === "NO_ACCESS" || (!st.has_access && !st.access_until && !st.access_revoked_at);
+    const isBanned = (st.restriction_status === "permanent" || st.restriction_status === "temporary");
+
+    if (adminStudentsFilterTab === "active" && (!isAct || isExpiring)) return false;
+    if (adminStudentsFilterTab === "expiring" && !isExpiring) return false;
+    if (adminStudentsFilterTab === "expired" && !isExpired) return false;
+    if (adminStudentsFilterTab === "revoked" && !isRev) return false;
+    if (adminStudentsFilterTab === "no_access" && !isNoAcc) return false;
+    if (adminStudentsFilterTab === "banned" && !isBanned) return false;
 
     // 2. Search query
     if (query) {
@@ -11446,7 +11584,14 @@ function renderAdminStudentsListHtml() {
   return `
     <div class="admin-list" style="margin-top: 14px;">
       ${filtered.map(st => {
+        const accState = st.access_state || (st.has_access ? "ACTIVE" : (st.access_revoked_at ? "REVOKED" : (st.access_until && new Date(st.access_until) <= new Date() ? "EXPIRED" : "NO_ACCESS")));
+        const daysLeft = st.days_left !== undefined ? st.days_left : 0;
+        const isAct = accState === "ACTIVE" || Boolean(st.has_access);
+        const isExpiring = isAct && daysLeft <= 30;
+        const isExpired = accState === "EXPIRED" || (!st.has_access && st.access_until && new Date(st.access_until) <= new Date() && !st.access_revoked_at);
+        const isRev = accState === "REVOKED" || Boolean(st.access_revoked_at);
         const rStatus = st.restriction_status || "active";
+
         return `
           <div class="admin-student-card" onclick="openAdminStudentModal(${Number(st.id)})">
             <div class="admin-student-avatar">
@@ -11455,13 +11600,22 @@ function renderAdminStudentsListHtml() {
             <div class="admin-student-info">
               <div class="admin-student-name" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                 <span>${escapeHtml([st.first_name, st.last_name].filter(Boolean).join(" "))}</span>
-                ${rStatus === "permanent" ? `
-                  <span class="badge danger" style="font-size: 10px; padding: 1px 6px;">🔴 Doimiy</span>
-                ` : rStatus === "temporary" ? `
-                  <span class="badge warn" style="font-size: 10px; padding: 1px 6px;">🟡 Vaqtincha</span>
+                ${isRev ? `
+                  <span class="badge danger" style="font-size: 10px; padding: 1px 6px;">🚫 Revoked</span>
+                ` : isExpired ? `
+                  <span class="badge danger" style="font-size: 10px; padding: 1px 6px;">🔴 Expired</span>
+                ` : isExpiring ? `
+                  <span class="badge warn" style="font-size: 10px; padding: 1px 6px;">🟠 ${daysLeft} k qoldi</span>
+                ` : isAct ? `
+                  <span class="badge ok" style="font-size: 10px; padding: 1px 6px;">🟢 Active (${daysLeft ? daysLeft + ' k' : '365 k'})</span>
                 ` : `
-                  <span class="badge ok" style="font-size: 10px; padding: 1px 6px;">🟢 Faol</span>
+                  <span class="badge secondary" style="font-size: 10px; padding: 1px 6px; background: rgba(255,255,255,0.08);">🔒 Access yo'q</span>
                 `}
+                ${rStatus === "permanent" ? `
+                  <span class="badge danger" style="font-size: 10px; padding: 1px 6px;">🛡️ Doimiy taqiq</span>
+                ` : rStatus === "temporary" ? `
+                  <span class="badge warn" style="font-size: 10px; padding: 1px 6px;">🛡️ Vaqtincha cheklov</span>
+                ` : ""}
               </div>
               <div class="admin-student-username">
                 ${st.phone ? escapeHtml(st.phone) : "Tel yo'q"} · ${st.username ? "@" + escapeHtml(st.username) : "ID: " + st.telegram_id}
@@ -11472,8 +11626,8 @@ function renderAdminStudentsListHtml() {
               </div>
             </div>
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-              <span title="Kursga obuna holati">${st.has_access ? "🟢" : "🔴"}</span>
-              <span style="font-size: 10px; color: var(--text-secondary);">${st.has_access ? "Obuna faol" : "Obunasiz"}</span>
+              <span title="Kursga obuna holati">${isAct ? "🟢" : isExpired ? "🔴" : isRev ? "🚫" : "🔒"}</span>
+              <span style="font-size: 10px; color: var(--text-secondary);">${isAct ? `${daysLeft} kun qoldi` : isExpired ? "Tugagan" : isRev ? "Bekor qilingan" : "Access yo'q"}</span>
             </div>
           </div>
         `;
@@ -11508,16 +11662,22 @@ function renderAdminStudents() {
           Barchasi (${allStudents.length})
         </button>
         <button class="chip ${adminStudentsFilterTab === 'active' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('active')">
-          🟢 Faol (${allStudents.filter(s => (s.restriction_status || 'active') === 'active').length})
+          🟢 Active (${allStudents.filter(s => (s.access_state === 'ACTIVE' || s.has_access) && ((s.days_left || 0) > 30 || s.days_left === undefined)).length})
         </button>
-        <button class="chip ${adminStudentsFilterTab === 'temporary' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('temporary')">
-          🟡 Vaqtincha (${allStudents.filter(s => s.restriction_status === 'temporary').length})
+        <button class="chip ${adminStudentsFilterTab === 'expiring' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('expiring')">
+          🟠 Yaqinlashgan (${allStudents.filter(s => (s.access_state === 'ACTIVE' || s.has_access) && s.days_left !== undefined && s.days_left <= 30).length})
         </button>
-        <button class="chip ${adminStudentsFilterTab === 'permanent' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('permanent')">
-          🔴 Doimiy (${allStudents.filter(s => s.restriction_status === 'permanent').length})
+        <button class="chip ${adminStudentsFilterTab === 'expired' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('expired')">
+          🔴 Expired (${allStudents.filter(s => s.access_state === 'EXPIRED' || (!s.has_access && s.access_until && new Date(s.access_until) <= new Date() && !s.access_revoked_at)).length})
         </button>
-        <button class="chip ${adminStudentsFilterTab === 'resolved' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('resolved')">
-          ⚪ Tugagan/Bekor (${allStudents.filter(s => s.restriction_status === 'expired' || s.restriction_status === 'revoked').length})
+        <button class="chip ${adminStudentsFilterTab === 'revoked' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('revoked')">
+          🚫 Revoked (${allStudents.filter(s => s.access_state === 'REVOKED' || s.access_revoked_at).length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'no_access' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('no_access')">
+          🔒 Access yo'q (${allStudents.filter(s => s.access_state === 'NO_ACCESS' || (!s.has_access && !s.access_until && !s.access_revoked_at)).length})
+        </button>
+        <button class="chip ${adminStudentsFilterTab === 'banned' ? 'active' : ''}" onclick="setAdminStudentsFilterTab('banned')">
+          🛡️ Taqiqlar (${allStudents.filter(s => s.restriction_status === 'permanent' || s.restriction_status === 'temporary').length})
         </button>
       </div>
     </div>
@@ -11668,14 +11828,48 @@ async function openAdminStudentModal(id) {
             `}
           </div>
 
-          <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
-            <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 8px;">
-              🗓️ Kirish muddatini belgilash / uzaytirish:
-            </label>
-            <input id="grant-access-date" class="apple-input" type="date" value="${st.access_until ? new Date(st.access_until).toISOString().split('T')[0] : ''}">
-            <button class="btn" style="margin-top: 12px;" onclick="grantStudentAccess(${Number(st.id)})">
-              ✅ Saqlash va Ruxsat berish
-            </button>
+          <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1.5px solid var(--accent); margin-bottom: 18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
+              <span style="font-size: 14px; font-weight: 750; color: var(--text-primary);">
+                💎 INTPRO Kursi Access Boshqaruvi
+              </span>
+              <span class="badge ${st.access_state === 'ACTIVE' || st.has_access ? 'ok' : st.access_state === 'EXPIRED' ? 'danger' : st.access_state === 'REVOKED' ? 'danger' : 'secondary'}">
+                ${st.access_state === 'ACTIVE' || st.has_access ? `🟢 Faol (${st.days_left || 0} kun)` : st.access_state === 'EXPIRED' ? '🔴 Tugagan' : st.access_state === 'REVOKED' ? '🚫 Bekor qilingan' : '🔒 Access yo\'q'}
+              </span>
+            </div>
+
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px; line-height:1.6; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px;">
+              <div>• <b>Boshlangan sana:</b> ${fmtDate(st.access_started_at || st.created_at) || '-'}</div>
+              <div>• <b>Tugash sanasi:</b> ${fmtDate(st.access_expires_at || st.access_until) || 'Belgilanmagan'}</div>
+              <div>• <b>Qolgan muddat:</b> ${st.days_left !== undefined ? `${st.days_left} kun` : '-'}</div>
+              ${st.access_revoked_at ? `<div style="color:#ff453a;">• <b>Bekor qilingan:</b> ${fmtDate(st.access_revoked_at)}</div>` : ''}
+            </div>
+
+            <!-- Tezkor amallar -->
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+              <button class="btn" style="margin:0; background:linear-gradient(135deg, #00c853, #009624); font-size:13.5px;" onclick="grantStudentAccess(${Number(st.id)}, 'grant_1year')">
+                ⚡ 1 Yillik Access Berish (365 kun)
+              </button>
+
+              ${st.has_access || st.access_until ? `
+                <button class="btn danger" style="margin:0; font-size:13px; background:rgba(235,59,59,0.85);" onclick="grantStudentAccess(${Number(st.id)}, 'revoke')">
+                  🚫 Accessni Bekor Qilish (To'xtatish)
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Ixtiyoriy sana belgilash -->
+            <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:6px;">
+              <label style="font-size: 12px; font-weight: 600; color:var(--text-secondary); display: block; margin-bottom: 6px;">
+                Ixtiyoriy sana belgilash:
+              </label>
+              <div style="display:flex; gap:8px;">
+                <input id="grant-access-date" class="apple-input" type="date" value="${st.access_expires_at ? new Date(st.access_expires_at).toISOString().split('T')[0] : (st.access_until ? new Date(st.access_until).toISOString().split('T')[0] : '')}" style="margin:0; font-size:13px;">
+                <button class="btn secondary" style="width:auto; margin:0; padding:8px 14px; font-size:12.5px; white-space:nowrap;" onclick="grantStudentAccess(${Number(st.id)})">
+                  Saqlash
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="apple-registration-form" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 18px;">
@@ -11979,32 +12173,45 @@ async function saveStudentModuleGrants(studentId, courseId) {
   }
 }
 
-async function grantStudentAccess(id) {
-  const dateVal = document.getElementById("grant-access-date")?.value;
-  if (!dateVal) return showAlert("Iltimos, sanani tanlang.");
+async function grantStudentAccess(id, action) {
+  let reqBody = {};
+  let confirmTitle = "";
+  let confirmDesc = "";
+  let confirmBtn = "";
 
-  const isRevoking = new Date(dateVal) <= new Date();
+  if (action === "grant_1year") {
+    reqBody = { action: "grant_1year" };
+  } else if (action === "revoke") {
+    reqBody = { action: "revoke" };
+    confirmTitle = "Kursga kirish huquqi bekor qilinsinmi?";
+    confirmDesc = "Diqqat: o'quvchining barcha darslar progressi, test natijalari va modul ruxsatlari tozalanadi — u qayta kirganida yangi o'quvchi kabi boshlaydi.";
+    confirmBtn = "Ha, bekor qilish";
+  } else {
+    const dateVal = document.getElementById("grant-access-date")?.value;
+    if (!dateVal) return showAlert("Iltimos, sanani tanlang.");
+    reqBody = { access_until: dateVal };
+    if (new Date(dateVal) <= new Date()) {
+      confirmTitle = "Kirish huquqi cheklansinmi?";
+      confirmDesc = "Kiritilgan sana o'tib ketgan. O'quvchining kirish huquqi cheklanadi va progress tozalanadi.";
+      confirmBtn = "Ha, cheklash";
+    }
+  }
 
   const doSave = async () => {
     try {
       haptic("medium");
-      await adminApi(`/api/admin/student/${Number(id)}/access`, {
-        access_until: dateVal
-      });
-      showToast(isRevoking ? "Kirish huquqi cheklandi, o'quvchi boshlang'ich holatga qaytarildi!" : "Kirish muddati muvaffaqiyatli saqlandi!");
-      adminSetTab("students");
+      const res = await adminApi(`/api/admin/student/${Number(id)}/access`, reqBody);
+      showToast(res.message || (action === "revoke" ? "Kirish huquqi bekor qilindi!" : "Kirish huquqi muvaffaqiyatli saqlandi!"));
+      // Talabalar ro'yxatini yangilash va modalni qayta ochish
+      await adminSetTab("students");
+      openAdminStudentModal(id);
     } catch (error) {
       showAlert(error.message || "Kirish muddatini saqlashda xato.");
     }
   };
 
-  if (isRevoking) {
-    showConfirm(
-      "Kirish huquqi cheklansinmi?",
-      "Diqqat: bu o'quvchining barcha darslar progressi, test natijalari va alohida modul ruxsatlari butunlay o'chiriladi — u qayta kirganida xuddi yangi (hech qachon to'lamagan) o'quvchi kabi boshlaydi. Bu amalni ortga qaytarib bo'lmaydi.",
-      "Ha, cheklash",
-      doSave
-    );
+  if (confirmTitle) {
+    showConfirm(confirmTitle, confirmDesc, confirmBtn, doSave);
   } else {
     await doSave();
   }

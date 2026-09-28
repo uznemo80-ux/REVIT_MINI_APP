@@ -216,6 +216,15 @@ const MODULE2_TEST_SEED = [
 async function initExtendedTables() {
   try {
     await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_started_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_revoked_at TIMESTAMPTZ');
+    await pool.query(`
+      UPDATE users 
+      SET access_expires_at = access_until,
+          access_started_at = COALESCE(access_started_at, created_at, NOW())
+      WHERE access_until IS NOT NULL AND access_expires_at IS NULL
+    `);
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
@@ -1802,15 +1811,87 @@ function formatDirectImageUrl(url) {
 }
 
 // ======================================================
-// ACCESS
+// ACCESS (STRICT INTPRO & PAID COURSE ACCESS CONTROL)
 // ======================================================
 
+function getUserAccessState(user) {
+  if (!user) {
+    return {
+      state: 'NO_ACCESS',
+      is_active: false,
+      started_at: null,
+      expires_at: null,
+      revoked_at: null,
+      days_left: 0
+    };
+  }
+
+  var isMainAdmin = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+  if (isMainAdmin) {
+    return {
+      state: 'ADMIN',
+      is_active: true,
+      started_at: user.access_started_at || user.created_at || null,
+      expires_at: null,
+      revoked_at: null,
+      days_left: 9999
+    };
+  }
+
+  // Revoked (Bekor qilingan)
+  if (user.access_revoked_at) {
+    return {
+      state: 'REVOKED',
+      is_active: false,
+      started_at: user.access_started_at || null,
+      expires_at: user.access_expires_at || user.access_until || null,
+      revoked_at: user.access_revoked_at,
+      days_left: 0
+    };
+  }
+
+  var expiresAt = user.access_expires_at || user.access_until || null;
+  if (!expiresAt) {
+    return {
+      state: 'NO_ACCESS',
+      is_active: false,
+      started_at: null,
+      expires_at: null,
+      revoked_at: null,
+      days_left: 0
+    };
+  }
+
+  var expDate = new Date(expiresAt);
+  var now = new Date();
+
+  if (expDate <= now) {
+    return {
+      state: 'EXPIRED',
+      is_active: false,
+      started_at: user.access_started_at || null,
+      expires_at: expDate.toISOString(),
+      revoked_at: null,
+      days_left: 0
+    };
+  }
+
+  var diffMs = expDate.getTime() - now.getTime();
+  var daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+
+  return {
+    state: 'ACTIVE',
+    is_active: true,
+    started_at: user.access_started_at || user.created_at || null,
+    expires_at: expDate.toISOString(),
+    revoked_at: null,
+    days_left: daysLeft
+  };
+}
+
 function hasAccess(user) {
-  if (!user) return false;
-  // Asosiy admin har doim barcha darslarga to'liq kirisha oladi
-  if (String(user.telegram_id) === String(ADMIN_TELEGRAM_ID)) return true;
-  if (!user.access_until) return false;
-  return new Date(user.access_until) > new Date();
+  var acc = getUserAccessState(user);
+  return acc.is_active;
 }
 
 // Hech qachon kirish huquqi berilmagan (hali to'lov qilmagan / yangi) foydalanuvchimi?
@@ -2072,7 +2153,11 @@ app.post('/api/auth', async function (req, res) {
       username: user.username || '',
       registered: Boolean(user.first_name && user.last_name && user.phone),
       has_access: hasAccess(user),
-      access_until: user.access_until || null,
+      access_state: getUserAccessState(user).state,
+      access_started_at: getUserAccessState(user).started_at,
+      access_expires_at: getUserAccessState(user).expires_at,
+      days_left: getUserAccessState(user).days_left,
+      access_until: user.access_until || user.access_expires_at || null,
       is_admin: Boolean(admin || isMainAdmin),
       admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null),
       terms_accepted: Boolean(user.terms_accepted),
@@ -2350,8 +2435,15 @@ app.post('/api/content', async function (req, res) {
       console.warn('SUPPORT CARDS QUERY WARNING:', scErr.message);
     }
 
+    var userAcc = getUserAccessState(user);
+    if (isAdminUser) { userAcc.state = 'ADMIN'; userAcc.is_active = true; }
     return res.json({
-      has_access: userHasAccess, access_until: user.access_until || null,
+      has_access: userAcc.is_active,
+      access_state: userAcc.state,
+      access_started_at: userAcc.started_at,
+      access_expires_at: userAcc.expires_at,
+      days_left: userAcc.days_left,
+      access_until: user.access_until || user.access_expires_at || null,
       telegram_id: user.telegram_id.toString(),
       first_name: user.first_name || '', last_name: user.last_name || '',
       phone: user.phone || '', username: user.username || '',
@@ -2541,10 +2633,16 @@ app.post('/api/course/:id/modules', async function (req, res) {
     if (course && course.cover_url) {
       course.cover_url = formatDirectImageUrl(course.cover_url);
     }
+    var courseAcc = getUserAccessState(user);
+    if (isAdmin) { courseAcc.state = 'ADMIN'; courseAcc.is_active = true; }
     course.is_free = isFreeCourse;
     course.has_access = hasCourseAccess;
+    course.access_state = courseAcc.state;
+    course.access_started_at = courseAcc.started_at;
+    course.access_expires_at = courseAcc.expires_at;
+    course.days_left = courseAcc.days_left;
 
-    return res.json({ ok: true, course: course, modules: data, has_access: hasCourseAccess });
+    return res.json({ ok: true, course: course, modules: data, has_access: hasCourseAccess, access_state: courseAcc.state, days_left: courseAcc.days_left });
   } catch (error) {
     console.error('COURSE MODULES ERROR:', error);
     return res.status(500).json({ error: 'Kurs modullarini olishda xato' });
@@ -2690,12 +2788,28 @@ app.post('/api/lesson/:id', async function (req, res) {
     }
 
     if (!lessonAvailable) {
+      var userAccState = getUserAccessState(user);
+      var errCode = 'COURSE_ACCESS_REQUIRED';
+      var errMsg = "INTPRO kursiga faol access talab qilinadi.";
+
+      if (userAccState.state === 'EXPIRED') {
+        errCode = 'COURSE_ACCESS_EXPIRED';
+        errMsg = "INTPRO kursiga kirish muddati tugagan. Qayta darslarni ko'rish uchun kurs a'zoligini yangilang.";
+      } else if (userAccState.state === 'REVOKED') {
+        errCode = 'COURSE_ACCESS_REVOKED';
+        errMsg = "INTPRO kursiga kirish huquqi bekor qilingan.";
+      } else if (userAccState.state === 'ACTIVE' || userHasAccess) {
+        errCode = 'LESSON_LOCKED_SEQUENTIAL';
+        errMsg = "Ushbu dars hali ochilmagan. Qachonki siz bundan oldingi darslikni to'liq ko'rib bo'lganingizdan keyin ('To'liq ko'rib bo'ldim' tugmasini bosgach), keyingi darslik ochiladi.";
+      }
+
       return res.status(403).json({
-        error: 'locked',
-        reason: userHasAccess ? 'sequential' : 'unpaid',
-        message: userHasAccess
-          ? "Ushbu dars hali ochilmagan. Qachonki siz bundan oldingi darslikni to'liq ko'rib bo'lganingizdan keyin ('To'liq ko'rib bo'ldim' tugmasini bosgach), keyingi darslik ochiladi."
-          : "Ushbu dars faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun ochiq. Kursga a'zo bo'lish uchun to'lov qiling va adminga murojaat qiling."
+        success: false,
+        error: errCode,
+        reason: (userAccState.state === 'ACTIVE' || userHasAccess) ? 'sequential' : 'unpaid',
+        message: errMsg,
+        access_state: userAccState.state,
+        locked: true
       });
     }
 
@@ -3926,7 +4040,7 @@ app.post('/api/admin/students/detail-list', requireAdmin, async function (req, r
 app.post('/api/admin/students', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query(
-      'SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.phone, u.username, u.access_until, u.created_at, COUNT(DISTINCT CASE WHEN p.watched = true THEN p.lesson_id END)::int AS watched_lessons, (SELECT COUNT(*)::int FROM lessons) AS total_lessons FROM users u LEFT JOIN progress p ON p.user_id = u.id GROUP BY u.id ORDER BY u.created_at DESC'
+      'SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.phone, u.username, u.access_until, u.access_started_at, u.access_expires_at, u.access_revoked_at, u.created_at, COUNT(DISTINCT CASE WHEN p.watched = true THEN p.lesson_id END)::int AS watched_lessons, (SELECT COUNT(*)::int FROM lessons) AS total_lessons FROM users u LEFT JOIN progress p ON p.user_id = u.id GROUP BY u.id ORDER BY u.created_at DESC'
     );
 
     var lastPositionResult = await pool.query(`
@@ -3970,13 +4084,20 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
         }
       }
 
+      var sAcc = getUserAccessState(s);
       return {
         id: s.id, telegram_id: s.telegram_id.toString(),
         first_name: s.first_name || '', last_name: s.last_name || '',
         phone: s.phone || null, username: s.username || null,
-        access_until: s.access_until || null, created_at: s.created_at,
+        access_until: s.access_until || s.access_expires_at || null,
+        access_started_at: sAcc.started_at,
+        access_expires_at: sAcc.expires_at,
+        access_revoked_at: sAcc.revoked_at,
+        access_state: sAcc.state,
+        days_left: sAcc.days_left,
+        created_at: s.created_at,
         watched_lessons: s.watched_lessons, total_lessons: s.total_lessons,
-        has_access: s.access_until && new Date(s.access_until) > new Date(),
+        has_access: sAcc.is_active,
         current_position: pos ? { course_title: pos.course_title, module_title: pos.module_title, lesson_title: pos.lesson_title, watched_at: pos.watched_at } : null,
         restriction_status: restrictionStatus,
         restriction: (restrictionStatus === 'permanent' || restrictionStatus === 'temporary') ? {
@@ -4005,7 +4126,7 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
 app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
   try {
     var studentResult = await pool.query(
-      'SELECT id, telegram_id, first_name, last_name, phone, username, access_until, created_at FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id, first_name, last_name, phone, username, access_until, access_started_at, access_expires_at, access_revoked_at, created_at FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     var student = studentResult.rows[0];
@@ -4054,14 +4175,21 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
       }
     }
 
+    var detailAcc = getUserAccessState(student);
     return res.json({
       ok: true,
       student: {
         id: student.id, telegram_id: student.telegram_id.toString(),
         first_name: student.first_name || '', last_name: student.last_name || '',
         phone: student.phone || null, username: student.username || null,
-        access_until: student.access_until || null, created_at: student.created_at,
-        has_access: student.access_until && new Date(student.access_until) > new Date()
+        access_until: student.access_until || student.access_expires_at || null,
+        access_started_at: detailAcc.started_at,
+        access_expires_at: detailAcc.expires_at,
+        access_revoked_at: detailAcc.revoked_at,
+        access_state: detailAcc.state,
+        days_left: detailAcc.days_left,
+        created_at: student.created_at,
+        has_access: detailAcc.is_active
       },
       current_restriction: activeRestriction,
       restriction_history: historyResult.rows,
@@ -4269,32 +4397,51 @@ app.post('/api/admin/student/:id/restrictions/history', requireAdmin, async func
 
 app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res) {
   try {
-    var accessUntil = req.body.access_until;
-    if (!accessUntil) return res.status(400).json({ error: 'access_until majburiy' });
-
     var studentResult = await pool.query(
-      'SELECT id, telegram_id, access_until FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id, access_until, access_started_at, access_expires_at, access_revoked_at FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     if (studentResult.rows.length === 0) return res.status(404).json({ error: 'Oquvchi topilmadi' });
+    var student = studentResult.rows[0];
 
-    var wasAlreadyActive = studentResult.rows[0].access_until && new Date(studentResult.rows[0].access_until) > new Date();
-    var newAccessUntil = new Date(accessUntil);
-    var isGrantingOrExtending = newAccessUntil > new Date();
+    var action = req.body.action; // 'grant_1year', 'revoke', or custom date in access_until
+    var accessUntil = req.body.access_until;
 
-    var studentTelegramId = studentResult.rows[0].telegram_id;
+    var newAccessUntil = null;
+    var newAccessStartedAt = student.access_started_at || new Date();
+    var isGrantingOrExtending = false;
+
+    if (action === 'grant_1year') {
+      isGrantingOrExtending = true;
+      newAccessStartedAt = new Date();
+      // 1 yil = 365 kun
+      newAccessUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    } else if (action === 'revoke') {
+      isGrantingOrExtending = false;
+    } else if (accessUntil) {
+      newAccessUntil = new Date(accessUntil);
+      isGrantingOrExtending = newAccessUntil > new Date();
+      if (isGrantingOrExtending && !student.access_started_at) {
+        newAccessStartedAt = new Date();
+      }
+    } else {
+      return res.status(400).json({ error: 'Amal (action) yoki access_until sanasi kiritilishi shart' });
+    }
+
+    var wasAlreadyActive = Boolean(student.access_expires_at && new Date(student.access_expires_at) > new Date() && !student.access_revoked_at);
+    var studentTelegramId = student.telegram_id;
 
     if (isGrantingOrExtending) {
       await pool.query(
-        'UPDATE users SET access_until = $1 WHERE id = $2',
-        [newAccessUntil, req.params.id]
+        'UPDATE users SET access_until = $1, access_expires_at = $1, access_started_at = $2, access_revoked_at = NULL WHERE id = $3',
+        [newAccessUntil, newAccessStartedAt, req.params.id]
       );
 
       await pool.query(
         "UPDATE payment_requests SET status = 'approved', approved_at = NOW() WHERE user_id = $1 AND status = 'pending'",
         [req.params.id]
       );
-      console.log('STUDENT ACCESS GRANTED: user_id=' + req.params.id);
+      console.log('STUDENT ACCESS GRANTED (1 year / extended): user_id=' + req.params.id);
 
       if (studentTelegramId) {
         botModule.sendAccessGrantedMessage(studentTelegramId, newAccessUntil, wasAlreadyActive).catch(function (e) {
@@ -4302,10 +4449,9 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
         });
       }
     } else {
-      // Kirish huquqi cheklansa/tugatilsa — o'quvchi boshidagi ("yangi o'quvchi") holatiga to'liq qaytariladi:
-      // muddat, progress, test natijalari, alohida modul ruxsatlari va qurilma bog'lanishi tozalanadi
+      // Kirish huquqi bekor qilinadi (Revoked)
       await pool.query(
-        'UPDATE users SET access_until = NULL, active_device_id = NULL, device_last_seen = NULL WHERE id = $1',
+        'UPDATE users SET access_until = NULL, access_expires_at = NOW(), access_revoked_at = NOW(), active_device_id = NULL, device_last_seen = NULL WHERE id = $1',
         [req.params.id]
       );
       await pool.query('DELETE FROM progress WHERE user_id = $1', [req.params.id]);
@@ -4318,7 +4464,7 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
         [req.params.id]
       );
 
-      console.log('STUDENT ACCESS LIMITED (full reset): user_id=' + req.params.id);
+      console.log('STUDENT ACCESS REVOKED: user_id=' + req.params.id);
 
       if (studentTelegramId) {
         botModule.sendAccessLimitedMessage(studentTelegramId).catch(function (e) {
@@ -4327,7 +4473,18 @@ app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res
       }
     }
 
-    return res.json({ ok: true, message: isGrantingOrExtending ? 'Kirish huquqi berildi' : 'Kirish huquqi cheklandi va oquvchi boshlangich holatga qaytarildi' });
+    var updatedStudentRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    var updatedStudent = updatedStudentRes.rows[0];
+    var accState = getUserAccessState(updatedStudent);
+
+    return res.json({
+      ok: true,
+      message: isGrantingOrExtending ? '1 yillik kirish huquqi berildi' : 'Kirish huquqi bekor qilindi (Revoked)',
+      access_state: accState.state,
+      access_started_at: accState.started_at,
+      access_expires_at: accState.expires_at,
+      days_left: accState.days_left
+    });
   } catch (error) {
     console.error('ADMIN STUDENT ACCESS ERROR:', error);
     return res.status(500).json({ error: 'Kirish huquqini berishda xato' });
