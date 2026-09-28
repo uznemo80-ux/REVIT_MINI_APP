@@ -4091,6 +4091,39 @@ input, textarea, select {
   transform: scale(0.92);
 }
 
+/* MOBIL: fullscreen ko'ruvchi sarlavhasi — matn tiqilib qolmasligi uchun 2 qatorga bo'linadi.
+   1-qator: Orqaga | zoom | yopish; 2-qator: list nomi + bitiruvchi natijasi matni (pastroqda).
+   Kompyuter ko'rinishi (>768px) o'zgarmaydi. */
+@media (max-width: 768px) {
+  .sf-header {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 10px;
+    padding: 12px 14px 22px;
+  }
+  .sf-left {
+    display: contents;
+  }
+  .sf-back-btn {
+    order: 1;
+  }
+  .sf-actions {
+    order: 2;
+    margin-left: auto;
+  }
+  .sf-info {
+    order: 3;
+    flex: 0 0 100%;
+    min-width: 0;
+    text-align: left;
+  }
+  .sf-info .sf-subtitle {
+    white-space: normal;
+    line-height: 1.35;
+    margin-top: 4px;
+  }
+}
+
 .sf-viewport {
   flex: 1;
   width: 100%;
