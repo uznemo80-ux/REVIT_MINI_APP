@@ -1203,36 +1203,6 @@ const DEFAULT_SHOWCASES = [];
 
 const DEFAULT_OPEN_RESOURCES = [
   {
-    id: 1,
-    type: "book",
-    title: "Revit 2024: Rasmiy qo'llanma va BIM standartlari (PDF)",
-    category: "Adabiyotlar",
-    description: "Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo'yicha to'liq qo'llanma kitobi.",
-    link_url: "https://drive.google.com/file/d/1_Revit_Guide_Book/preview",
-    icon: "📚",
-    order_index: 1
-  },
-  {
-    id: 2,
-    type: "book",
-    title: "Arxitektura va bino loyihalash me'yorlari (ShNQ & KMK to'plami)",
-    category: "Normativlar",
-    description: "O'zbekiston Respublikasi shaharsozlik normalari: xonalar minimal balandligi va maydonlari talablari.",
-    link_url: "https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview",
-    icon: "📐",
-    order_index: 2
-  },
-  {
-    id: 3,
-    type: "book",
-    title: "Interyer dizaynerlari uchun ergonomika va o'lchamlar (Noifert)",
-    category: "Ergonomika",
-    description: "Mebel joylashuvi, o'tish masofalari, eshik va deraza me'yorlari, oshxona va sanuzel ergonomikasi.",
-    link_url: "https://drive.google.com/file/d/1_Ergonomika_Noifert/preview",
-    icon: "📏",
-    order_index: 3
-  },
-  {
     id: 4,
     type: "video",
     title: "Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)",
@@ -6652,9 +6622,8 @@ function renderTasks() {
 function renderTasksHomeHtml() {
   const sections = librarySections.filter(s => s.is_active !== false);
   const recentList = libraryV2RecentList || [];
-  const recommendedList = (libraryV2RecommendedList && libraryV2RecommendedList.length)
-    ? libraryV2RecommendedList
-    : libraryV2Resources.filter(r => r.is_featured).slice(0, 6);
+  // Faqat admin "tavsiya" qilib belgilagan resurslar ko'rsatiladi (avtomatik to'ldirish yo'q)
+  const recommendedList = libraryV2RecommendedList || [];
 
   // SVG helper for default 4 sections
   function getSectionSvg(slug) {
@@ -6734,6 +6703,7 @@ function renderTasksHomeHtml() {
       ` : ""}
 
       <!-- TAVSIYA ETILGANLAR (Recommended Grid) -->
+      ${recommendedList.length ? `
       <div class="lib-home-section">
         <div class="lib-section-header-row">
           <div class="lib-section-heading">Tavsiya etilgan manbalar</div>
@@ -6763,6 +6733,7 @@ function renderTasksHomeHtml() {
           }).join("")}
         </div>
       </div>
+      ` : ""}
     </div>
   `;
 }

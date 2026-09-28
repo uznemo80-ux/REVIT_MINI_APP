@@ -392,33 +392,6 @@ async function initExtendedTables() {
         INSERT INTO library_open_resources (type, title, category, description, link_url, icon, order_index)
         VALUES
         (
-          'book',
-          'Revit 2024: Rasmiy qo''llanma va BIM standartlari (PDF)',
-          'Adabiyotlar',
-          'Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo''yicha to''liq o''zbekcha va ruscha qo''llanma kitobi.',
-          'https://drive.google.com/file/d/1_Revit_Guide_Book/preview',
-          '📚',
-          1
-        ),
-        (
-          'book',
-          'Arxitektura va bino loyihalash me''yorlari (ShNQ & KMK to''plami)',
-          'Normativlar',
-          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari: turar-joy va jamoat binolari talablari, xonalar minimal balandligi va maydonlari.',
-          'https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview',
-          '📐',
-          2
-        ),
-        (
-          'book',
-          'Interyer dizaynerlari uchun ergonomika va o''lchamlar (Noifert)',
-          'Ergonomika',
-          'Mebel joylashuvi, o''tish masofalari, eshik va deraza me''yorlari, oshxona va sanuzel ergonomikasi bo''yicha asosiy spravochnik.',
-          'https://drive.google.com/file/d/1_Ergonomika_Noifert/preview',
-          '📏',
-          3
-        ),
-        (
           'video',
           'Revit-da 0 dan boshlab xonadon rejasini chizish (Master-klass)',
           'Video dars',
@@ -1249,92 +1222,27 @@ async function ensureLibraryV2Tables() {
       console.warn('update library_resources section_slug:', updErr.message);
     }
 
-    // 5. PRESERVE & SEED THE 3 CORE BOOKS
-    var book1 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Revit 2024: Rasmiy qo%'");
-    if (book1.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO library_resources (
-          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
-          content_url, content_type, content_data, is_featured, order_index, status
-        ) VALUES (
-          'book', 'books', 'Revit 2024: Rasmiy qo''llanma va BIM standartlari (PDF)',
-          'Autodesk rasmiy o''quv qo''llanmasi',
-          'Revit interfeysi, modellashtirish prinsiplari, listlar va shablonlar bo''yicha to''liq o''zbekcha va ruscha qo''llanma kitobi.',
-          'Revit / BIM', 'Autodesk & BIM Experts', '45 MB', 320, 'uz',
-          'https://drive.google.com/file/d/1_Revit_Guide_Book/preview', 'pdf',
-          $1, true, 1, 'published'
-        )
-      `, [JSON.stringify({
-        what_you_learn: [
-          "Revit parametrli elementlar va oilalar (Families) bilan ishlash",
-          "BIM 360 va jamoaviy loyihalash asoslari",
-          "Ishchi chizmalar va spetsifikatsiyalarni avtomatlashtirish",
-          "Xalqaro BIM standartlar va LOD talablari"
-        ],
-        year: 2024,
-        format: "PDF",
-        level: "Boshlang'ich va Professional"
-      })]);
-    } else {
-      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'Autodesk & BIM Experts'), file_size = COALESCE(file_size, '45 MB'), page_count = COALESCE(page_count, 320), language = COALESCE(language, 'uz') WHERE id = $1", [book1.rows[0].id]);
-    }
-
-    var book2 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Arxitektura va bino loyihalash me%'");
-    if (book2.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO library_resources (
-          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
-          content_url, content_type, content_data, is_featured, order_index, status
-        ) VALUES (
-          'book', 'books', 'Arxitektura va bino loyihalash me''yorlari (ShNQ & KMK to''plami)',
-          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari',
-          'O''zbekiston Respublikasi shaharsozlik normalari va qoidalari: turar-joy va jamoat binolari talablari, xonalar minimal balandligi va maydonlari.',
-          'Normativ', 'O''zbekiston Qurilish Vazirligi', '28 MB', 215, 'uz',
-          'https://drive.google.com/file/d/1_ShNQ_KMK_Standards/preview', 'pdf',
-          $1, true, 2, 'published'
-        )
-      `, [JSON.stringify({
-        what_you_learn: [
-          "O'zbekiston shaharsozlik qonun-qoidalari (KMK va ShNQ)",
-          "Yong'in xavfsizligi va evakuatsiya talablari",
-          "Turar-joy xonalari insolyatsiyasi va minimal gabaritlari",
-          "Ekspertizadan o'tish talablari va ruxsatnomalar"
-        ],
-        year: 2023,
-        format: "PDF",
-        level: "Barcha darajalar"
-      })]);
-    } else {
-      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'O''zbekiston Qurilish Vazirligi'), file_size = COALESCE(file_size, '28 MB'), page_count = COALESCE(page_count, 215), language = COALESCE(language, 'uz') WHERE id = $1", [book2.rows[0].id]);
-    }
-
-    var book3 = await pool.query("SELECT id FROM library_resources WHERE title LIKE '%Interyer dizaynerlari uchun ergonomika%'");
-    if (book3.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO library_resources (
-          type, section_slug, title, subtitle, description, category, author, file_size, page_count, language,
-          content_url, content_type, content_data, is_featured, order_index, status
-        ) VALUES (
-          'book', 'books', 'Interyer dizaynerlari uchun ergonomika va o''lchamlar (Noifert)',
-          'Arxitektura va interyer ergonomikasi ensiklopediyasi',
-          'Mebel joylashuvi, o''tish masofalari, eshik va deraza me''yorlari, oshxona va sanuzel ergonomikasi bo''yicha asosiy spravochnik.',
-          'Interyer', 'Ernst Neufert', '62 MB', 480, 'ru',
-          'https://drive.google.com/file/d/1_Ergonomika_Noifert/preview', 'pdf',
-          $1, true, 3, 'published'
-        )
-      `, [JSON.stringify({
-        what_you_learn: [
-          "Odam antropometriyasi va bino fazoviy ergonomikasi",
-          "Oshxona, yotoqxona va sanuzel funksional zonalari",
-          "Eshik va dahliz o'tish kengliklari qoidalari",
-          "Mebel o'lchamlari va qulaylik standartlari"
-        ],
-        year: 2022,
-        format: "PDF",
-        level: "Arxitektor va Dizaynerlar"
-      })]);
-    } else {
-      await pool.query("UPDATE library_resources SET section_slug = 'books', author = COALESCE(author, 'Ernst Neufert'), file_size = COALESCE(file_size, '62 MB'), page_count = COALESCE(page_count, 480), language = COALESCE(language, 'ru') WHERE id = $1", [book3.rows[0].id]);
+    // 5. TAYYOR (DEMO) KITOBLARNI TOZALASH
+    // Avval bu 3 ta namuna kitob har safar server ishga tushganda qayta yaratilardi
+    // (soxta Drive havolalari bilan). Endi ular seed qilinmaydi va bazadan o'chiriladi.
+    // Faqat soxta placeholder havolali yozuvlar o'chiriladi — admin yuklagan haqiqiy kitoblarga tegilmaydi.
+    try {
+      var demoUrlPatterns = ['%1_Revit_Guide_Book%', '%1_ShNQ_KMK_Standards%', '%1_Ergonomika_Noifert%'];
+      var demoRes = await pool.query(
+        "SELECT id FROM library_resources WHERE content_url LIKE ANY($1::text[])",
+        [demoUrlPatterns]
+      );
+      var demoIds = demoRes.rows.map(function (r) { return r.id; });
+      if (demoIds.length) {
+        try { await pool.query('DELETE FROM library_views WHERE resource_id = ANY($1::int[])', [demoIds]); } catch (e) {}
+        try { await pool.query('DELETE FROM library_bookmarks WHERE resource_id = ANY($1::int[])', [demoIds]); } catch (e) {}
+        await pool.query('DELETE FROM library_resources WHERE id = ANY($1::int[])', [demoIds]);
+        console.log('Demo kitoblar tozalandi:', demoIds.length);
+      }
+      try { await pool.query("DELETE FROM library_open_resources WHERE link_url LIKE ANY($1::text[])", [demoUrlPatterns]); } catch (e) {}
+      try { await pool.query("DELETE FROM library_books WHERE pdf_url LIKE ANY($1::text[])", [demoUrlPatterns]); } catch (e) {}
+    } catch (demoErr) {
+      console.warn('demo kitoblarni tozalashda xatolik:', demoErr.message);
     }
 
     // 6. SEED SAMPLE MANBALAR (SOURCES)
