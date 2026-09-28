@@ -6172,6 +6172,7 @@ function closeMaterialDetail() {
   haptic("light");
   currentView = null;
   activeMaterialDetail = null;
+  activeTab = "tasks";
   libraryActiveSection = "materials";
   render();
   window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
@@ -7034,14 +7035,52 @@ let materialsState = {
   selectedScope: "all", // 'all' | 'architecture' | 'interior'
   selectedPurpose: "all", // 'all' | purpose_tag
   selectedCategory: "all",
+  selectedSubcategory: "all",
+  selectedFrequent: false,
   selectedManufacturer: "all",
   filterVerified: false,
   filterInterior: false,
   filterMoisture: false,
   filterFire: false,
   sortBy: "newest",
-  limit: 100,
+  limit: 150,
   offset: 0
+};
+
+const MATERIAL_QUICK_PICKS = [
+  { id: "gipsokarton", name: "Gipsokarton", icon: "🧩", query: "gipsokarton" },
+  { id: "tenevoy", name: "Tenevoy profil", icon: "📐", query: "tenevoy" },
+  { id: "mdf", name: "MDF panellar", icon: "🪵", query: "mdf" },
+  { id: "ldsp", name: "LDSP plitalar", icon: "🪚", query: "ldsp" },
+  { id: "keramogranit", name: "Keramogranit", icon: "🪜", query: "keramogranit" },
+  { id: "gazobeton", name: "Gazobeton", icon: "🧱", query: "gazobeton" },
+  { id: "santexnika", name: "Santexnika", icon: "🚿", query: "vanna" }
+];
+
+const CATEGORY_SUBCATEGORIES_MAP = {
+  profillar: [
+    { id: "all", name: "Barcha profillar" },
+    { id: "Soya profillari (Tenevoy)", name: "Soya profillari (Tenevoy)" },
+    { id: "Razdelitelniy profillar", name: "Razdelitelniy" },
+    { id: "Tenevoy plintuslar", name: "Tenevoy plintus" },
+    { id: "Yashirin karnizlar", name: "Yashirin karniz" },
+    { id: "LED va yoritish profillari", name: "LED profillar" },
+    { id: "Burchak va montaj profillari", name: "Burchak & Montaj" }
+  ],
+  "gipsokarton-quruq": [
+    { id: "all", name: "Barchasi" },
+    { id: "GKL standart", name: "GKL Standart" },
+    { id: "GKLV namga chidamli", name: "GKLV Namga chidamli" },
+    { id: "GKLO olovbardosh", name: "GKLO Olovbardosh" },
+    { id: "Akvapanel", name: "Akvapanel plita" },
+    { id: "Akustik plita", name: "Silent Akustik" }
+  ],
+  "santexnika-sanuzel": [
+    { id: "all", name: "Barchasi" },
+    { id: "Vannalar", name: "Vannalar" },
+    { id: "Dush tizimlari", name: "Dush traplari" },
+    { id: "Installyatsiya", name: "Installyatsiyalar" }
+  ]
 };
 
 const MATERIAL_PURPOSES = {
@@ -7056,7 +7095,7 @@ const MATERIAL_PURPOSES = {
   interior: [
     { id: "all", name: "Barchasi", icon: "🌐" },
     { id: "pol", name: "Pol qoplamalari", icon: "🪵" },
-    { id: "patalok", name: "Patalok turlari", icon: "☁️" },
+    { id: "patalok", name: "Shift tizimlari", icon: "☁️" },
     { id: "gipsokarton", name: "Gipsokarton (KNAUF)", icon: "🧩" },
     { id: "santexnika_vanna", name: "Santexnika & Vannalar", icon: "🚿" },
     { id: "eshik_deraza", name: "Eshik & Derazalar", icon: "🚪" },
@@ -7065,6 +7104,7 @@ const MATERIAL_PURPOSES = {
   ],
   all: [
     { id: "all", name: "Barchasi", icon: "🌐" },
+    { id: "profillar", name: "Soya & Profillar", icon: "📐" },
     { id: "gipsokarton", name: "Knauf tizimlari", icon: "🧩" },
     { id: "santexnika_vanna", name: "Vannalar & Santexnika", icon: "🚿" },
     { id: "devor", name: "Devor & Bloklar", icon: "🧱" },
@@ -7084,6 +7124,8 @@ function filterMaterialsLocally() {
   const scope = materialsState.selectedScope || "all";
   const purpose = materialsState.selectedPurpose || "all";
   const cat = materialsState.selectedCategory || "all";
+  const subcat = materialsState.selectedSubcategory || "all";
+  const isFreq = materialsState.selectedFrequent;
   const search = (materialsState.searchQuery || "").trim().toLowerCase();
 
   // 1. Scope filter (Qurilish vs Interyer vs Barchasi)
@@ -7095,7 +7137,7 @@ function filterMaterialsLocally() {
     }
   }
 
-  // 2. Purpose / Zona filter (Qurilish: poydevor, devor, tom... | Interyer: pol, patalok, gipsokarton, vanna...)
+  // 2. Purpose / Zona filter
   if (purpose && purpose !== "all") {
     list = list.filter(m => m.purpose_tag === purpose);
   }
@@ -7105,17 +7147,43 @@ function filterMaterialsLocally() {
     list = list.filter(m => m.category_slug === cat);
   }
 
-  // 4. Search query
+  // 4. Subcategory filter
+  if (subcat && subcat !== "all") {
+    list = list.filter(m => (m.subcategory_name || "").toLowerCase().includes(subcat.toLowerCase()));
+  }
+
+  // 5. Frequent only
+  if (isFreq) {
+    list = list.filter(m => m.is_frequent === true);
+  }
+
+  // 6. Multilingual search query across UZ, RU, English, Aliases, Subcategories
   if (search) {
     list = list.filter(m => {
-      const text = ((m.name || m.title || '') + ' ' + (m.original_name || '') + ' ' + (m.description || '') + ' ' + (m.material_type || '') + ' ' + (m.category_name || '') + ' ' + (m.brand_name || '') + ' ' + (m.usage_area || '')).toLowerCase();
+      const aliasesStr = Array.isArray(m.aliases) ? m.aliases.join(" ") : "";
+      const text = (
+        (m.name || "") + " " +
+        (m.name_uz || "") + " " +
+        (m.name_ru || "") + " " +
+        (m.original_name || "") + " " +
+        (m.english_name || "") + " " +
+        (m.subcategory_name || "") + " " +
+        (m.description || "") + " " +
+        (m.description_uz || "") + " " +
+        (m.description_ru || "") + " " +
+        (m.material_type || "") + " " +
+        (m.category_name || "") + " " +
+        (m.manufacturer_name || "") + " " +
+        (m.usage_area || "") + " " +
+        aliasesStr
+      ).toLowerCase();
       return text.includes(search);
     });
   }
 
-  // 5. Quick filter chips
+  // 7. Quick filter chips
   if (materialsState.filterVerified) {
-    list = list.filter(m => m.verification_status === "verified" || m.is_verified);
+    list = list.filter(m => m.verification_status === "verified" || m.image_verified === true);
   }
   if (materialsState.filterMoisture) {
     list = list.filter(m => (m.moisture_resistance && m.moisture_resistance.toLowerCase().includes("yuqori")) || (m.material_type && m.material_type.toLowerCase().includes("nam")));
@@ -7158,7 +7226,7 @@ async function loadMaterialsData(forceReload) {
       scope: "all",
       category_slug: "all",
       manufacturer_slug: "all",
-      limit: 150,
+      limit: 200,
       offset: 0
     };
 
@@ -7186,7 +7254,7 @@ function updateMaterialsUiInPlace() {
     return;
   }
 
-  // 1. Update Scope Switcher active classes
+  // 1. Update Scope Switcher
   const currentScope = materialsState.selectedScope || "all";
   container.querySelectorAll(".lib-mat-scope-btn").forEach(btn => {
     const s = btn.getAttribute("data-scope");
@@ -7194,10 +7262,10 @@ function updateMaterialsUiInPlace() {
     else btn.classList.remove("active");
   });
 
-  // 2. Update Purpose Chips Bar
-  const purpBar = container.querySelector(".lib-mat-purpose-bar");
-  if (purpBar) {
-    purpBar.innerHTML = renderMaterialPurposeChipsHtml();
+  // 2. Update Quick Picks
+  const qpBar = container.querySelector(".lib-mat-quickpicks-scroll");
+  if (qpBar) {
+    qpBar.innerHTML = renderMaterialQuickPicksHtml();
   }
 
   // 3. Update Category Pills
@@ -7206,7 +7274,13 @@ function updateMaterialsUiInPlace() {
     catScroll.innerHTML = renderMaterialCategoryPillsHtml();
   }
 
-  // 4. Update Quick Filter Chips
+  // 4. Update Subcategories Bar
+  const subcatBar = container.querySelector(".lib-mat-subcategories-bar");
+  if (subcatBar) {
+    subcatBar.innerHTML = renderMaterialSubcategoriesHtml();
+  }
+
+  // 5. Update Quick Filter Chips
   const chips = container.querySelectorAll(".lib-chips-row .chip");
   chips.forEach(ch => {
     const key = ch.getAttribute("data-filter-key");
@@ -7214,7 +7288,7 @@ function updateMaterialsUiInPlace() {
     else if (key) ch.classList.remove("active");
   });
 
-  // 5. Update Grid
+  // 6. Update Grid
   const grid = container.querySelector(".lib-materials-grid-v2");
   if (grid) {
     const mats = materialsState.materials || [];
@@ -7226,7 +7300,7 @@ function updateMaterialsUiInPlace() {
           <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
           <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
           <div style="font-size: 12.5px; color: var(--text-secondary);">
-            Tanlangan bo‘lim, yo‘nalish yoki qidiruv so‘zini o‘zgartirib ko‘ring.
+            Tanlangan bo‘lim, kategoriya yoki qidiruv so‘zini o‘zgartirib ko‘ring.
           </div>
         </div>
       `;
@@ -7239,15 +7313,7 @@ function setMaterialScope(scope) {
   materialsState.selectedScope = scope;
   materialsState.selectedPurpose = "all";
   materialsState.selectedCategory = "all";
-  materialsState.offset = 0;
-  filterMaterialsLocally();
-  updateMaterialsUiInPlace();
-}
-
-function setMaterialPurpose(purposeTag) {
-  haptic("light");
-  materialsState.selectedPurpose = purposeTag;
-  materialsState.selectedCategory = "all";
+  materialsState.selectedSubcategory = "all";
   materialsState.offset = 0;
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
@@ -7256,15 +7322,25 @@ function setMaterialPurpose(purposeTag) {
 function setMaterialCategory(catSlug) {
   haptic("light");
   materialsState.selectedCategory = catSlug;
+  materialsState.selectedSubcategory = "all";
   materialsState.offset = 0;
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
 }
 
-function setMaterialManufacturer(mfgSlug) {
+function setMaterialSubcategory(subcat) {
   haptic("light");
-  materialsState.selectedManufacturer = mfgSlug;
+  materialsState.selectedSubcategory = subcat;
   materialsState.offset = 0;
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
+}
+
+function setMaterialQuickPick(query) {
+  haptic("light");
+  materialsState.searchQuery = query;
+  const inp = document.getElementById("lib-materials-search-input");
+  if (inp) inp.value = query;
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
 }
@@ -7312,17 +7388,17 @@ function toggleMaterialFilter(filterKey) {
   updateMaterialsUiInPlace();
 }
 
-function renderMaterialPurposeChipsHtml() {
-  const scope = materialsState.selectedScope || "all";
-  const items = MATERIAL_PURPOSES[scope] || MATERIAL_PURPOSES.all;
-  const activePurp = materialsState.selectedPurpose || "all";
-
-  return items.map(p => `
-    <button type="button" class="lib-mat-purpose-chip ${activePurp === p.id ? 'active' : ''}" onclick="setMaterialPurpose('${escapeJsString(p.id)}')">
-      <span>${p.icon}</span>
-      <span>${escapeHtml(p.name)}</span>
-    </button>
-  `).join("");
+function renderMaterialQuickPicksHtml() {
+  const currentQuery = (materialsState.searchQuery || "").toLowerCase();
+  return MATERIAL_QUICK_PICKS.map(p => {
+    const isActive = currentQuery === p.query;
+    return `
+      <button type="button" class="lib-mat-quickpick-chip ${isActive ? 'active' : ''}" onclick="setMaterialQuickPick('${escapeJsString(p.query)}')">
+        <span>${p.icon}</span>
+        <span>${escapeHtml(p.name)}</span>
+      </button>
+    `;
+  }).join("");
 }
 
 function renderMaterialCategoryPillsHtml() {
@@ -7347,6 +7423,26 @@ function renderMaterialCategoryPillsHtml() {
   `;
 }
 
+function renderMaterialSubcategoriesHtml() {
+  const activeCat = materialsState.selectedCategory;
+  const subcats = CATEGORY_SUBCATEGORIES_MAP[activeCat];
+  if (!subcats || !subcats.length) return "";
+
+  const activeSubcat = materialsState.selectedSubcategory || "all";
+  return `
+    <div class="lib-mat-subcat-wrapper">
+      <div class="lib-mat-subcat-label">Toifalar:</div>
+      <div class="lib-mat-subcat-scroll">
+        ${subcats.map(sc => `
+          <button type="button" class="lib-mat-subcat-pill ${activeSubcat === sc.id ? 'active' : ''}" onclick="setMaterialSubcategory('${escapeJsString(sc.id)}')">
+            ${escapeHtml(sc.name)}
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderMaterialsSectionHtml() {
   if (!materialsState.loaded && !materialsState.loading) {
     loadMaterialsData().then(() => {
@@ -7362,8 +7458,8 @@ function renderMaterialsSectionHtml() {
         </div>
         <div style="padding: 80px 20px; text-align: center;">
           <div class="spinner" style="margin: 0 auto 16px;"></div>
-          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Materiallar yuklanmoqda...</div>
-          <div style="font-size: 12.5px; color: var(--text-secondary);">GOST, SHNQ va rasmiy kataloglar tekshirilmoqda</div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Materiallar katalogi yuklanmoqda...</div>
+          <div style="font-size: 12.5px; color: var(--text-secondary);">Rasmiy ishlab chiqaruvchilar va GOST spetsifikatsiyalari tekshirilmoqda</div>
         </div>
       </div>
     `;
@@ -7379,16 +7475,16 @@ function renderMaterialsSectionHtml() {
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
-      <!-- HERO BANNER -->
+      <!-- APPLE-LIKE HERO HEADER -->
       <div class="lib-mat-hero">
-        <div class="lib-mat-badge">🧱 MATERIALLAR KUTUBXONASI • PROFESSIONAL BAZA</div>
-        <h1 class="lib-mat-title">Qurilish va Interyer Materiallari</h1>
+        <div class="lib-mat-badge">🧱 MATERIALLAR KATALOGI • BILINGUAL UZ / RU</div>
+        <h1 class="lib-mat-title">Qurilish & Interyer Materiallari</h1>
         <p class="lib-mat-desc">
-          Arxitektorlar, interyer dizaynerlari va quruvchilar uchun spetsifikatsiyalar, standart o‘lchamlar, narxlar va me'yoriy hujjatlar bazasi.
+          Arxitektorlar va dizaynerlar uchun spetsifikatsiyalar, standart o‘lchamlar, tasdiqlangan rasmlar va rasmiy manbalar bazasi.
         </p>
       </div>
 
-      <!-- 1. ASOSIY BO'LIM TANLASH: QURILISH / INTERYER / BARCHASI -->
+      <!-- 1. ASOSIY BO'LIM TANLASH (Barchasi / Qurilish / Interyer) -->
       <div class="lib-mat-scope-bar">
         <button type="button" class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" data-scope="all" onclick="setMaterialScope('all')">
           🌐 Barchasi
@@ -7401,20 +7497,15 @@ function renderMaterialsSectionHtml() {
         </button>
       </div>
 
-      <!-- 2. MAXSUS YO'NALISHLAR (PURPOSE / ZONA CHIPS) -->
-      <div class="lib-mat-purpose-bar">
-        ${renderMaterialPurposeChipsHtml()}
-      </div>
-
-      <!-- SEARCH BAR (Multilingual: MDF, Knauf, Travertin, Gazoblok...) -->
-      <div class="lib-filter-bar">
+      <!-- 2. SEARCH BAR (UZ / RU / Inglizcha / Aliaslar) -->
+      <div class="lib-filter-bar" style="margin-top: 10px;">
         <div class="lib-search-input-wrap" style="width:100%;">
           <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input
             id="lib-materials-search-input"
             type="text"
             class="apple-input lib-search-field"
-            placeholder="Material qidiring (LDSP, MDF, Knauf, Gazoblok, Klinker, SPC...)"
+            placeholder="Material qidiring (Gipsokarton, Tenevoy profil, LDSP, MDF, Gazobeton...)"
             value="${escapeHtml(search)}"
             oninput="setMaterialSearch(this.value)"
           />
@@ -7426,13 +7517,26 @@ function renderMaterialsSectionHtml() {
         </div>
       </div>
 
-      <!-- 24 TA KATEGORIYA (Horizontal Scroll with Icons and Counts) -->
-      <div class="lib-mat-cat-scroll">
+      <!-- 3. KO'P ISHLATILADIGANLAR (QUICK PICKS) -->
+      <div class="lib-mat-quickpicks-section">
+        <div class="lib-mat-section-subtitle">⚡ Ko‘p ishlatiladiganlar:</div>
+        <div class="lib-mat-quickpicks-scroll">
+          ${renderMaterialQuickPicksHtml()}
+        </div>
+      </div>
+
+      <!-- 4. KATEGORIYALAR (Horizontal Scroll with Icons and Counts) -->
+      <div class="lib-mat-cat-scroll" style="margin-top: 12px;">
         ${renderMaterialCategoryPillsHtml()}
       </div>
 
-      <!-- QUICK FILTER CHIPS -->
-      <div class="category-chips lib-chips-row" style="margin-top: -4px;">
+      <!-- 5. SUBKATEGORIYALAR (e.g. Profillar: Tenevoy, Razdelitelniy, Plintus, Karniz...) -->
+      <div class="lib-mat-subcategories-bar">
+        ${renderMaterialSubcategoriesHtml()}
+      </div>
+
+      <!-- 6. QUICK FILTER CHIPS -->
+      <div class="category-chips lib-chips-row" style="margin-top: 6px;">
         <div class="chip ${materialsState.filterVerified ? 'active' : ''}" data-filter-key="filterVerified" onclick="toggleMaterialFilter('filterVerified')">
           ✓ Faqat tekshirilgan
         </div>
@@ -7440,21 +7544,21 @@ function renderMaterialsSectionHtml() {
           💧 Namlikka chidamli
         </div>
         <div class="chip ${materialsState.filterFire ? 'active' : ''}" data-filter-key="filterFire" onclick="toggleMaterialFilter('filterFire')">
-          🔥 Yong'in klassi A1/KM0
+          🔥 Yong'in klassi NG/KM0
         </div>
         <div class="chip ${materialsState.filterInterior ? 'active' : ''}" data-filter-key="filterInterior" onclick="toggleMaterialFilter('filterInterior')">
           🏠 Ichki ishlar
         </div>
       </div>
 
-      <!-- MATERIALLAR GRIDI -->
+      <!-- 7. MATERIALLAR GRIDI (2-Column Mobile, 3-4 Column Tablet/Desktop) -->
       <div class="lib-materials-grid-v2">
         ${mats.length ? mats.map(renderMaterialCardHtml).join("") : `
           <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
             <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
             <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
             <div style="font-size: 12.5px; color: var(--text-secondary);">
-              Tanlangan bo‘lim yoki qidiruv so‘zini o‘zgartirib ko‘ring.
+              Tanlangan bo‘lim, kategoriya yoki qidiruv so‘zini o‘zgartirib ko‘ring.
             </div>
           </div>
         `}
@@ -7464,55 +7568,49 @@ function renderMaterialsSectionHtml() {
 }
 
 function renderMaterialCardHtml(mat) {
-  const title = mat.name || mat.title || "Material";
-  const img = formatImageUrl(mat.cover_image || mat.featured_image || "");
-  const isVerified = mat.verification_status === "verified" || mat.is_verified;
+  const titleUz = mat.name_uz || mat.name || mat.title || "Material";
+  const titleRu = mat.name_ru || mat.original_name || "";
+  const img = formatImageUrl(mat.image_url || mat.cover_image || mat.featured_image || "");
+  const isVerified = mat.image_verified !== false && (mat.verification_status === "verified" || mat.is_verified);
   const catName = mat.category_name || "Qurilish";
+  const subcatName = mat.subcategory_name || "";
   const mfgName = mat.manufacturer_name || "";
-  const dimensions = mat.dimensions_info ? mat.dimensions_info.split(".")[0] : (Array.isArray(mat.standard_sizes) ? mat.standard_sizes[0] : "");
-  const scopeTag = mat.scope === 'architecture' ? '<span class="lib-mat-scope-tag arx">🏛️ Qurilish</span>' :
-                   mat.scope === 'interior' ? '<span class="lib-mat-scope-tag int">🛋️ Interyer</span>' :
-                   '<span class="lib-mat-scope-tag both">🏛️🛋️ Universal</span>';
+  const typesCount = Number(mat.types_count || (Array.isArray(mat.types) ? mat.types.length : 0));
+  const dimensions = mat.dimensions_info_uz || mat.dimensions_info || "";
 
   return `
     <div class="lib-material-card-v2" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
-      <div class="lib-mat-thumb-wrap-v2" style="position:relative; overflow:hidden;">
-        <div class="lib-material-thumb-placeholder" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px; position:absolute; top:0; left:0; z-index:1; background:var(--bg-card);">
+      <div class="lib-mat-thumb-wrap-v2">
+        <div class="lib-material-thumb-placeholder">
           ${escapeHtml(mat.category_icon || '🧱')}
         </div>
         ${img ? `
-          <img src="${escapeHtml(img)}" class="lib-mat-thumb-img" style="position:relative; z-index:2; width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';" alt="" />
+          <img src="${escapeHtml(img)}" class="lib-mat-thumb-img" onerror="this.style.display='none';" alt="${escapeHtml(titleUz)}" loading="lazy" />
         ` : ""}
         ${isVerified ? `
-          <span class="lib-mat-badge-verified" style="z-index:3;">✓ Verified</span>
+          <span class="lib-mat-badge-verified">✓ Tasdiqlangan</span>
         ` : `
-          <span class="lib-mat-badge-pending" style="z-index:3;">🟡 Tekshiruvda</span>
+          <span class="lib-mat-badge-pending">🟡 Tekshiruvda</span>
         `}
+        ${typesCount > 0 ? `
+          <span class="lib-mat-badge-types">${typesCount} xil turi</span>
+        ` : ""}
       </div>
 
       <div class="lib-mat-card-body">
-        <div class="lib-mat-card-tags" style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            ${scopeTag}
-            <span class="lib-mat-card-cat-tag">${escapeHtml(catName)}</span>
-          </div>
-          ${mfgName ? `<span class="lib-mat-card-mfg-tag">🏭 ${escapeHtml(mfgName)}</span>` : ""}
+        <div class="lib-mat-card-tags">
+          <span class="lib-mat-card-cat-tag">${escapeHtml(subcatName || catName)}</span>
+          ${mfgName ? `<span class="lib-mat-card-mfg-tag">${escapeHtml(mfgName)}</span>` : ""}
         </div>
 
-        <h3 class="lib-mat-card-title">${escapeHtml(title)}</h3>
-        ${mat.original_name ? `<div style="font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">${escapeHtml(mat.original_name)}</div>` : ""}
+        <h3 class="lib-mat-card-title">${escapeHtml(titleUz)}</h3>
+        ${titleRu ? `<div class="lib-mat-card-sub-title">${escapeHtml(titleRu)}</div>` : ""}
 
         <div class="lib-mat-card-type">
-          ${escapeHtml(mat.material_type || mat.generic_name || mat.description || "")}
+          ${escapeHtml(mat.material_type || mat.short_description_uz || "")}
         </div>
 
-        ${mat.thicknesses ? `
-          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
-            📏 Qalinliklar: <b style="color:var(--text-primary);">${escapeHtml(mat.thicknesses)}</b>
-          </div>
-        ` : ""}
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:4px;">
+        <div class="lib-mat-card-price-row">
           ${mat.approx_price ? `
             <span class="lib-mat-price-badge">💰 ${escapeHtml(mat.approx_price.split('(')[0].trim())}</span>
           ` : ""}
@@ -7523,8 +7621,7 @@ function renderMaterialCardHtml(mat) {
 
         <div class="lib-mat-card-footer">
           <span class="lib-mat-card-specs-count">
-            ${mat.specs_count ? `📐 ${mat.specs_count} parametr` : ""}
-            ${dimensions ? ` · 📏 ${escapeHtml(dimensions.slice(0, 24))}` : ""}
+            ${dimensions ? `📏 ${escapeHtml(dimensions.slice(0, 22))}` : "Spetsifikatsiya"}
           </span>
           <span class="lib-mat-card-arrow">Batafsil →</span>
         </div>
@@ -8411,395 +8508,268 @@ async function openMaterialKnowledgeDetail(matId) {
 
 function renderMaterialDetailPage(detailData) {
   const m = detailData.material || {};
+  const types = detailData.types || [];
   const specs = detailData.specifications || [];
   const sources = detailData.sources || [];
   const docs = detailData.documents || [];
   const apps = detailData.applications || [];
   const reqs = detailData.requirements || [];
-  const history = detailData.version_history || [];
+  const related = detailData.related_materials || [];
 
-  const isVerified = m.verification_status === "verified";
+  const titleUz = m.name_uz || m.name || m.title || "Material";
+  const titleRu = m.name_ru || m.original_name || "";
+  const isVerified = m.image_verified !== false && (m.verification_status === "verified" || m.is_verified);
   const verifiedDate = m.last_verified_at ? new Date(m.last_verified_at).toLocaleDateString('uz-UZ') : "28.09.2026";
-  const img = formatImageUrl(m.cover_image || "");
+  const img = formatImageUrl(m.image_url || m.cover_image || "");
+  const subcatName = m.subcategory_name || "";
+  const catName = m.category_name || "Qurilish";
 
   const recommendedApps = apps.filter(a => a.application_type === "recommended");
   const notRecommendedApps = apps.filter(a => a.application_type === "not_recommended");
   const steps = reqs.filter(r => r.requirement_type === "installation_step").sort((a,b) => (a.step_number || 0) - (b.step_number || 0));
-  const reqMaterials = reqs.filter(r => r.requirement_type === "required_material");
-  const reqTools = reqs.filter(r => r.requirement_type === "required_tool");
-  const surfacePreps = reqs.filter(r => r.requirement_type === "surface_prep");
-  const pros = reqs.filter(r => r.requirement_type === "pro");
-  const cons = reqs.filter(r => r.requirement_type === "con");
-  const storageReqs = reqs.filter(r => r.requirement_type === "storage" || r.requirement_type === "transport");
-  const lifespanReqs = reqs.filter(r => r.requirement_type === "lifespan");
 
   return `
     <div class="page lib-container lib-mat-detail-page">
-      <!-- TOP NAVIGATION BAR -->
+      <!-- TOP NAVIGATION BAR (RELIABLE BACK BUTTON) -->
       <div class="lib-detail-top-bar" style="margin-bottom: 14px;">
-        <div class="lib-back-nav" style="margin:0;" onclick="closeMaterialDetail()">
-          ${libIcons.back('lib-back-svg', 16)} Materiallar
-        </div>
+        <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeMaterialDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Materiallar katalogi
+        </button>
       </div>
 
       <!-- HERO SECTION -->
       <div class="lib-mat-detail-hero">
         ${img ? `
-          <div class="lib-mat-hero-banner">
-            <img src="${escapeHtml(img)}" onerror="handleImageError(this)" alt="${escapeHtml(m.name)}" />
+          <div class="lib-mat-hero-banner" style="position:relative;">
+            <img src="${escapeHtml(img)}" onerror="handleImageError(this)" alt="${escapeHtml(titleUz)}" />
+            <div class="lib-mat-img-source-tag">
+              📷 Manba: ${escapeHtml(m.image_source || 'Rasmiy ishlab chiqaruvchi')}
+            </div>
           </div>
         ` : ""}
 
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-top:12px;">
           <div>
             ${isVerified ? `
               <div class="lib-mat-verified-pill">
-                ✓ Verified • Oxirgi tekshiruv: ${verifiedDate}
+                ✓ Verified • Tekshirilgan: ${verifiedDate}
               </div>
             ` : `
               <div class="lib-mat-verified-pill pending">
-                🟡 Tekshiruvda • Oxirgi o'zgarish: ${verifiedDate}
+                🟡 Tekshiruvda • ${verifiedDate}
               </div>
             `}
           </div>
-          ${m.category_name ? `
-            <div style="font-size:12px; font-weight:750; color:var(--accent);">
-              ${escapeHtml(m.category_icon || '🧱')} ${escapeHtml(m.category_name)}
-            </div>
-          ` : ""}
+          <div style="font-size:12px; font-weight:750; color:var(--accent);">
+            ${escapeHtml(m.category_icon || '🧱')} ${escapeHtml(subcatName || catName)}
+          </div>
         </div>
 
-        <h1 class="lib-detail-title" style="margin:6px 0 4px 0; font-size:22px;">${escapeHtml(m.name)}</h1>
-        ${m.original_name ? `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:2px;">Original: <b>${escapeHtml(m.original_name)}</b></div>` : ""}
-        ${m.english_name ? `<div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">English: ${escapeHtml(m.english_name)}</div>` : ""}
+        <h1 class="lib-detail-title" style="margin:8px 0 2px 0; font-size:22px; font-weight:800; color:var(--text-primary);">
+          ${escapeHtml(titleUz)}
+        </h1>
+        ${titleRu ? `
+          <div style="font-size:14px; font-weight:600; color:var(--text-secondary); margin-bottom:8px;">
+            ${escapeHtml(titleRu)}
+          </div>
+        ` : ""}
 
         <!-- QUICK META GRID -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; padding:12px; background:var(--bg-surface-elevated, rgba(0,0,0,0.03)); border-radius:12px; margin-top:8px;">
+        <div class="lib-mat-quick-meta-grid">
           <div>
-            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Ishlab chiqaruvchi</div>
-            <div style="font-weight:750; font-size:13.5px; color:var(--text-primary); margin-top:2px;">
-              ${escapeHtml(m.manufacturer_name || "Ko'rsatilmagan")}
-            </div>
-            ${m.manufacturer_country ? `<div style="font-size:11.5px; color:var(--text-secondary);">${escapeHtml(m.manufacturer_country)}</div>` : ""}
+            <div class="lib-mat-meta-label">Ishlab chiqaruvchi</div>
+            <div class="lib-mat-meta-val">${escapeHtml(m.manufacturer_name || "Standart")}</div>
+            ${m.manufacturer_country ? `<div style="font-size:11px; color:var(--text-muted);">${escapeHtml(m.manufacturer_country)}</div>` : ""}
           </div>
           <div>
-            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Mahsulot kodi</div>
-            <div style="font-weight:750; font-size:13.5px; color:var(--text-primary); margin-top:2px;">
-              ${escapeHtml(m.product_code || "—")}
-            </div>
+            <div class="lib-mat-meta-label">Mahsulot kodi</div>
+            <div class="lib-mat-meta-val">${escapeHtml(m.product_code || "—")}</div>
           </div>
           <div>
-            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Material turi</div>
-            <div style="font-weight:750; font-size:13px; color:var(--text-primary); margin-top:2px;">
-              ${escapeHtml(m.material_type || m.subcategory_name || "Qurilish materiali")}
-            </div>
+            <div class="lib-mat-meta-label">Turi / Toifasi</div>
+            <div class="lib-mat-meta-val">${escapeHtml(subcatName || m.material_type || "Standart")}</div>
+          </div>
+          <div>
+            <div class="lib-mat-meta-label">Bozor narxi</div>
+            <div class="lib-mat-meta-val" style="color:#10b981;">${escapeHtml(m.approx_price ? m.approx_price.split('(')[0].trim() : "Mavjud")}</div>
           </div>
         </div>
       </div>
 
-      <!-- 1. ARXITEKTOR VA DIZAYNERGA FOYDALI ESLATMA (BIM / Revit / Montaj) -->
-      ${m.architect_notes ? `
-        <div class="lib-mat-arch-note-box">
-          <div class="lib-mat-arch-note-header">
-            <span>📐 ARXITEKTOR VA DIZAYNERGA ESLATMA (BIM / Revit / Montaj)</span>
-          </div>
-          <div class="lib-mat-arch-note-content">
-            ${escapeHtml(m.architect_notes)}
+      <!-- 1. BU NIMA? (BILINGUAL DESCRIPTION) -->
+      ${(m.description_uz || m.description) ? `
+        <div class="lib-mat-detail-section">
+          <div class="lib-mat-sec-title">📝 Bu nima? (Tushunarli tavsif)</div>
+          <div class="lib-mat-bilingual-desc">
+            <div class="lib-mat-desc-text">
+              ${escapeHtml(m.description_uz || m.description)}
+            </div>
+            ${(m.description_ru && m.description_ru !== m.description_uz) ? `
+              <div class="lib-mat-ru-note">
+                <span class="lib-lang-chip">RU</span>
+                <span>${escapeHtml(m.description_ru)}</span>
+              </div>
+            ` : ""}
           </div>
         </div>
       ` : ""}
 
-      <!-- 2. NARX VA BOZORDA MAVJUDLIGI -->
-      ${(m.approx_price || m.uzb_market_availability || m.lifespan || m.standards_info) ? `
+      <!-- 2. TURLARI VA VARIANTLARI (TYPES / VARIANTS CARDS) -->
+      ${types.length ? `
         <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">💰 Bozor ma'lumoti va Narx ko'rsatkichlari</div>
-          <div class="lib-mat-spec-quick-grid">
-            ${m.approx_price ? `
-              <div class="lib-mat-spec-quick-item">
-                <div class="lib-mat-spec-quick-label">Taxminiy o'rtacha narxi</div>
-                <div class="lib-mat-spec-quick-val" style="color:#10b981;">${escapeHtml(m.approx_price)}</div>
+          <div class="lib-mat-sec-title">
+            <span>📐 Turlari va Variantlari (${types.length} xil)</span>
+          </div>
+          <div class="lib-mat-types-grid">
+            ${types.map((t, idx) => `
+              <div class="lib-mat-type-card">
+                ${t.photo_url ? `
+                  <div class="lib-mat-type-photo">
+                    <img src="${escapeHtml(formatImageUrl(t.photo_url))}" onerror="this.style.display='none';" alt="${escapeHtml(t.name_uz || t.name)}" loading="lazy" />
+                  </div>
+                ` : ""}
+                <div class="lib-mat-type-content">
+                  <div class="lib-mat-type-header">
+                    <span class="lib-mat-type-num">#${idx + 1}</span>
+                    <h4 class="lib-mat-type-title">${escapeHtml(t.name_uz || t.name)}</h4>
+                  </div>
+                  ${t.name_ru ? `
+                    <div class="lib-mat-type-ru">${escapeHtml(t.name_ru)}</div>
+                  ` : ""}
+                  ${t.dimensions ? `
+                    <div class="lib-mat-type-dim">📏 O‘lchamlari: <b>${escapeHtml(t.dimensions)}</b></div>
+                  ` : ""}
+                  ${t.approx_price ? `
+                    <div class="lib-mat-type-price">💰 ${escapeHtml(t.approx_price)}</div>
+                  ` : ""}
+                  ${t.description_uz ? `
+                    <div class="lib-mat-type-desc">${escapeHtml(t.description_uz)}</div>
+                  ` : ""}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
+
+      <!-- 3. STANDART O‘LCHAMLARI VA SPETSIFIKATSIYASI -->
+      ${(m.dimensions_info_uz || m.dimensions_info || m.thicknesses || specs.length) ? `
+        <div class="lib-mat-detail-section">
+          <div class="lib-mat-sec-title">📏 Standart o‘lchamlari va ko‘rsatkichlari</div>
+          <div class="lib-mat-specs-wrapper">
+            ${(m.dimensions_info_uz || m.dimensions_info) ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Standart o‘lchamlari:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.dimensions_info_uz || m.dimensions_info)}</b></span>
               </div>
             ` : ""}
-            ${m.uzb_market_availability ? `
-              <div class="lib-mat-spec-quick-item">
-                <div class="lib-mat-spec-quick-label">O'zbekistonda mavjudligi</div>
-                <div class="lib-mat-spec-quick-val" style="color:#007aff;">${escapeHtml(m.uzb_market_availability)}</div>
+            ${m.thicknesses ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Mavjud qalinliklar:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.thicknesses)}</b></span>
+              </div>
+            ` : ""}
+            ${m.composition ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Tarkibi / Xomashyo:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.composition)}</span>
+              </div>
+            ` : ""}
+            ${m.moisture_resistance ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Namlikka chidamliligi:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.moisture_resistance)}</span>
+              </div>
+            ` : ""}
+            ${m.fire_rating ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Yong'in xavfsizlik sinfi:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.fire_rating)}</span>
               </div>
             ` : ""}
             ${m.lifespan ? `
-              <div class="lib-mat-spec-quick-item">
-                <div class="lib-mat-spec-quick-label">Xizmat muddati</div>
-                <div class="lib-mat-spec-quick-val">${escapeHtml(m.lifespan)}</div>
-              </div>
-            ` : ""}
-            ${m.standards_info ? `
-              <div class="lib-mat-spec-quick-item">
-                <div class="lib-mat-spec-quick-label">Standart / Sertifikat</div>
-                <div class="lib-mat-spec-quick-val">${escapeHtml(m.standards_info)}</div>
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Xizmat muddati:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.lifespan)}</span>
               </div>
             ` : ""}
           </div>
         </div>
       ` : ""}
 
-      <!-- 3. TARKIBI VA QALINLIKLARI -->
-      ${(m.thicknesses || m.composition || m.usage_area || m.moisture_resistance || m.fire_rating) ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">🔍 Tarkibi, Qalinliklari va Chidamlilik</div>
-          <div style="font-size:13px; line-height:1.6; color:var(--text-secondary); display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            ${m.thicknesses ? `<div><b>Mavjud qalinliklar:</b> <span style="color:var(--text-primary); font-weight:700;">${escapeHtml(m.thicknesses)}</span></div>` : ""}
-            ${m.composition ? `<div><b>Tarkibi:</b> ${escapeHtml(m.composition)}</div>` : ""}
-            ${m.usage_area ? `<div><b>Qayerda ishlatiladi:</b> ${escapeHtml(m.usage_area)}</div>` : ""}
-            ${m.moisture_resistance ? `<div><b>Namlikka chidamliligi:</b> ${escapeHtml(m.moisture_resistance)}</div>` : ""}
-            ${m.fire_rating ? `<div><b>Yong'inga chidamliligi:</b> ${escapeHtml(m.fire_rating)}</div>` : ""}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 4. AFZALLIKLARI VA KAMCHILIKLARI -->
-      ${(m.pros || m.cons) ? `
+      <!-- 4. AFZALLIKLARI VA CHEKLOVLARI -->
+      ${(m.pros_uz || m.pros || m.cons_uz || m.cons) ? `
         <div class="lib-mat-detail-section">
           <div class="lib-mat-sec-title">⚖️ Afzalliklari va Cheklovlari</div>
           <div class="lib-mat-apps-grid">
-            ${m.pros ? `
+            ${(m.pros_uz || m.pros) ? `
               <div class="lib-mat-app-card">
                 <div class="lib-mat-app-title">✓ Afzalliklari</div>
-                <div class="lib-mat-app-desc">${escapeHtml(m.pros)}</div>
+                <div class="lib-mat-app-desc">${escapeHtml(m.pros_uz || m.pros)}</div>
               </div>
             ` : ""}
-            ${m.cons ? `
+            ${(m.cons_uz || m.cons) ? `
               <div class="lib-mat-app-card warning">
                 <div class="lib-mat-app-title" style="color:#ef4444;">⚠️ Cheklovlari va Ehtiyot choralari</div>
-                <div class="lib-mat-app-desc">${escapeHtml(m.cons)}</div>
+                <div class="lib-mat-app-desc">${escapeHtml(m.cons_uz || m.cons)}</div>
               </div>
             ` : ""}
           </div>
         </div>
       ` : ""}
 
-      <!-- 8. QISQACHA TAVSIF -->
-      ${m.description ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📝 Qisqacha tavsif</div>
-          <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
-            ${escapeHtml(m.description)}
+      <!-- 5. LOYIHALASH VA BIMDA E'TIBOR BERISH KERAK BO'LGAN JIHATLAR -->
+      ${(m.architect_notes_uz || m.architect_notes) ? `
+        <div class="lib-mat-arch-note-box">
+          <div class="lib-mat-arch-note-header">
+            <span>📐 ARXITEKTOR VA DIZAYNERGA ESLATMA (BIM / Revit / Chizmalar)</span>
+          </div>
+          <div class="lib-mat-arch-note-content">
+            ${escapeHtml(m.architect_notes_uz || m.architect_notes)}
           </div>
         </div>
       ` : ""}
 
-      <!-- 9. TEXNIK XUSUSIYATLAR (with ⓘ source info buttons) -->
-      ${specs.length ? `
+      <!-- 6. MONTAJ VA O'RNATISH YO'RIQNOMASI -->
+      ${(m.mounting_instructions_uz || steps.length) ? `
         <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">
-            <span>📐 Texnik xususiyatlar</span>
-            <span style="font-size:11.5px; font-weight:600; color:var(--text-muted); margin-left:auto;">
-              Manbani ko'rish uchun ⓘ bosing
-            </span>
-          </div>
-          <table class="lib-mat-specs-table">
-            <tbody>
-              ${specs.map(s => `
-                <tr>
-                  <td class="lib-mat-spec-label">${escapeHtml(s.parameter_label || s.parameter)}</td>
-                  <td class="lib-mat-spec-val">
-                    <span>${escapeHtml(s.value)}</span>
-                    ${s.unit ? `<span style="font-size:11.5px; color:var(--text-muted); margin-left:4px;">${escapeHtml(s.unit)}</span>` : ""}
-                    <button class="lib-mat-spec-info-btn" onclick="openSpecSourceInfo(${s.id})" title="Manba ma'lumotini ko'rish">
-                      ⓘ
-                    </button>
-                  </td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-      ` : ""}
-
-      <!-- 10. O‘LCHAMLAR VA GABARITLAR -->
-      ${m.dimensions_info ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📏 Standart o‘lchamlari va variantlari</div>
-          <div style="font-size:13px; color:var(--text-secondary); line-height:1.55; background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            ${escapeHtml(m.dimensions_info)}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 12. QAYERDA TAVSIYA ETILADI / ISHLATILMAYDI -->
-      ${(recommendedApps.length || notRecommendedApps.length) ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📍 Qo‘llanish sohalari va cheklovlar</div>
-          <div class="lib-mat-apps-grid">
-            ${recommendedApps.map(a => `
-              <div class="lib-mat-app-card">
-                <div class="lib-mat-app-title">✓ ${escapeHtml(a.title || 'Tavsiya etiladi')}</div>
-                <div class="lib-mat-app-desc">${escapeHtml(a.description)}</div>
-              </div>
-            `).join("")}
-            ${notRecommendedApps.map(a => `
-              <div class="lib-mat-app-card warning">
-                <div class="lib-mat-app-title" style="color:#ef4444;">⚠️ ${escapeHtml(a.title || 'Ishlatish tavsiya etilmaydi')}</div>
-                <div class="lib-mat-app-desc">${escapeHtml(a.description)}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 13. FOYDALANISH VA MONTAJ BO‘YICHA QADAMLAR -->
-      ${steps.length ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">🛠 Foydalanish / Montaj yo‘riqnomasi</div>
-          <div class="lib-mat-steps-list">
-            ${steps.map((st, idx) => `
-              <div class="lib-mat-step-item">
-                <div class="lib-mat-step-num">${st.step_number || (idx + 1)}</div>
-                <div class="lib-mat-step-content">
-                  <div class="lib-mat-step-title">${escapeHtml(st.title || `Qadam ${idx + 1}`)}</div>
-                  <div class="lib-mat-step-desc">${escapeHtml(st.description)}</div>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 14. KERAKLI MATERIALLAR VA ASBOBLAR -->
-      ${(reqMaterials.length || reqTools.length) ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">🧰 Kerakli materiallar va asboblar</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            ${reqMaterials.length ? `
-              <div>
-                <div style="font-size:12px; font-weight:750; color:var(--text-primary); margin-bottom:6px;">Biriktiruvchi materiallar:</div>
-                <ul style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
-                  ${reqMaterials.map(rm => `<li><b>${escapeHtml(rm.title)}:</b> ${escapeHtml(rm.description)}</li>`).join("")}
-                </ul>
-              </div>
-            ` : ""}
-            ${reqTools.length ? `
-              <div>
-                <div style="font-size:12px; font-weight:750; color:var(--text-primary); margin-bottom:6px;">Zarur asboblar:</div>
-                <ul style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
-                  ${reqTools.map(rt => `<li><b>${escapeHtml(rt.title)}:</b> ${escapeHtml(rt.description)}</li>`).join("")}
-                </ul>
-              </div>
-            ` : ""}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 15. ASOSGA TALABLAR -->
-      ${surfacePreps.length ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📋 Asosga qo‘yiladigan talablar</div>
-          <ul style="margin:0; padding-left:18px; font-size:13px; color:var(--text-secondary); line-height:1.55;">
-            ${surfacePreps.map(sp => `<li><b>${escapeHtml(sp.title)}:</b> ${escapeHtml(sp.description)}</li>`).join("")}
-          </ul>
-        </div>
-      ` : ""}
-
-      <!-- 16. AFZALLIKLARI VA CHEKLOVLARI -->
-      ${(pros.length || cons.length) ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">⚖️ Afzalliklari va Cheklovlari</div>
-          <div style="display:grid; grid-template-columns:1fr; gap:10px;">
-            ${pros.length ? `
-              <div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:12px;">
-                <div style="font-weight:750; font-size:13px; color:#10b981; margin-bottom:6px;">✓ Texnik afzalliklari</div>
-                <ul style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
-                  ${pros.map(p => `<li><b>${escapeHtml(p.title)}:</b> ${escapeHtml(p.description)}</li>`).join("")}
-                </ul>
-              </div>
-            ` : ""}
-            ${cons.length ? `
-              <div style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:12px;">
-                <div style="font-weight:750; font-size:13px; color:#ef4444; margin-bottom:6px;">⚠️ Cheklovlari va ehtiyot choralari</div>
-                <ul style="margin:0; padding-left:18px; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
-                  ${cons.map(c => `<li><b>${escapeHtml(c.title)}:</b> ${escapeHtml(c.description)}</li>`).join("")}
-                </ul>
-              </div>
-            ` : ""}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 17 & 18. SAQLASH, TASHISH VA XIZMAT MUDDATI -->
-      ${(storageReqs.length || lifespanReqs.length) ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📦 Saqlash, Tashish va Xizmat muddati</div>
-          <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.55;">
-            ${storageReqs.map(sr => `<p style="margin:0 0 6px 0;"><b>${escapeHtml(sr.title)}:</b> ${escapeHtml(sr.description)}</p>`).join("")}
-            ${lifespanReqs.map(lr => `<p style="margin:0 0 6px 0; color:var(--text-primary); font-weight:600;">⏳ <b>Xizmat muddati:</b> ${escapeHtml(lr.description)}</p>`).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 19. RASMIY TEXNIK HUJJATLAR -->
-      ${docs.length ? `
-        <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📄 Rasmiy Texnik Hujjatlar (${docs.length} ta)</div>
-          <div class="lib-mat-docs-list">
-            ${docs.map(doc => `
-              <div class="lib-mat-doc-btn" onclick="safeOpenExternal('${escapeJsString(doc.url)}')">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="font-size:16px;">📑</span>
-                  <div>
-                    <div>${escapeHtml(doc.title)}</div>
-                    <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(doc.document_type)} · ${escapeHtml(doc.language || 'ru').toUpperCase()}</div>
-                  </div>
-                </div>
-                <span style="font-size:13px; color:var(--accent);">Ochish ↗</span>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- 20 & 21. ASL MANBA VA TEKSHIRUV (SOURCE AUDIT) -->
-      <div class="lib-mat-detail-section">
-        <div class="lib-mat-sec-title">🔗 Asl Manba va Verifikatsiya</div>
-        <div class="lib-mat-source-box">
-          <div style="margin-bottom:6px;">
-            <b>Asosiy manba / Ishlab chiqaruvchi:</b> ${escapeHtml(m.manufacturer_name || 'Rasmiy standartlar')}
-          </div>
-          <div style="margin-bottom:6px;">
-            <b>Holati:</b>
-            ${isVerified ? `
-              <span style="color:#10b981; font-weight:700;">✓ Verified (Rasmiy manba orqali tekshirilgan)</span>
-            ` : `
-              <span style="color:#f59e0b; font-weight:700;">🟡 Tekshiruvda (Pending verification)</span>
-            `}
-          </div>
-          <div style="margin-bottom:6px;">
-            <b>Oxirgi tekshirilgan sana:</b> ${verifiedDate}
-          </div>
-          ${m.manufacturer_website ? `
-            <div style="margin-top:10px;">
-              <button class="lib-action-btn" style="width:auto; padding:7px 14px; font-size:12.5px; border-radius:8px;" onclick="safeOpenExternal('${escapeJsString(m.manufacturer_website)}')">
-                🌐 Rasmiy ishlab chiqaruvchi sahifasiga o‘tish ↗
-              </button>
+          <div class="lib-mat-sec-title">🛠️ Montaj va o‘rnatish yo‘riqnomasi</div>
+          ${m.mounting_instructions_uz ? `
+            <div style="font-size:13.5px; line-height:1.6; color:var(--text-secondary); background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:12px; border-radius:10px; border:1px solid var(--border);">
+              ${escapeHtml(m.mounting_instructions_uz)}
             </div>
           ` : ""}
-          <div style="margin-top:12px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:8px;">
-            ℹ️ <b>Texnik eslatma:</b> Ushbu material bo‘yicha texnik ko‘rsatkichlar ishlab chiqaruvchining rasmiy texnik ma'lumotlar varaqalari (Datasheet) asosida keltirilgan. Qurilish jarayonida qo‘llashdan oldin loyiha me'yorlari va ishlab chiqaruvchining amaldagi pasportini tekshirish tavsiya etiladi.
-          </div>
+          ${steps.length ? `
+            <div class="lib-mat-steps-list" style="margin-top:10px;">
+              ${steps.map((st, idx) => `
+                <div class="lib-mat-step-item">
+                  <div class="lib-mat-step-num">${st.step_number || (idx + 1)}</div>
+                  <div class="lib-mat-step-content">
+                    <div class="lib-mat-step-title">${escapeHtml(st.title || `Qadam ${idx + 1}`)}</div>
+                    <div class="lib-mat-step-desc">${escapeHtml(st.description)}</div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
         </div>
-      </div>
+      ` : ""}
 
-      <!-- 22. FOYDALANILGAN BARCHA MANBALAR RO‘YXATI -->
+      <!-- 7. RASMIY MANBALAR VA KATALOGLAR -->
       ${sources.length ? `
         <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">📚 Foydalanilgan manbalar (${sources.length} ta)</div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            ${sources.map((s, idx) => `
-              <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:8px 12px; border-radius:8px; font-size:12.5px; border:1px solid var(--border);">
-                <div>
-                  <span style="font-weight:750; color:var(--accent); margin-right:6px;">${String(idx + 1).padStart(2, '0')}.</span>
-                  <b>${escapeHtml(s.title)}</b>
-                  ${s.publisher ? `<div style="font-size:11px; color:var(--text-secondary);">${escapeHtml(s.publisher)} · ${escapeHtml(s.source_type)}</div>` : ""}
+          <div class="lib-mat-sec-title">🔗 Rasmiy Ishlab Chiqaruvchi va Kataloglar</div>
+          <div class="lib-mat-sources-list">
+            ${sources.map(s => `
+              <div class="lib-mat-source-row">
+                <div class="lib-mat-source-info">
+                  <span class="lib-mat-source-status-badge ${s.http_status === 200 ? 'status-ok' : ''}">
+                    ${s.http_status === 200 ? '✓ 200 OK' : '🔗 Rasmiy'}
+                  </span>
+                  <div class="lib-mat-source-title">${escapeHtml(s.title)}</div>
+                  <div class="lib-mat-source-url">${escapeHtml(s.url)}</div>
                 </div>
-                <button class="admin-small-btn" onclick="safeOpenExternal('${escapeJsString(s.url)}')">
+                <button type="button" class="lib-mat-source-open-btn" onclick="safeOpenExternal('${escapeJsString(s.url)}')">
                   Ochish ↗
                 </button>
               </div>
@@ -8808,18 +8778,21 @@ function renderMaterialDetailPage(detailData) {
         </div>
       ` : ""}
 
-      <!-- 25. O‘ZGARISHLAR TARIXI (VERSION HISTORY) -->
-      ${history.length ? `
+      <!-- 8. SHUNGA O'XSHASH MATERIALLAR (RELATED MATERIALS) -->
+      ${related.length ? `
         <div class="lib-mat-detail-section">
-          <div class="lib-mat-sec-title">🕒 Parametrlar o‘zgarish tarixi</div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            ${history.map(h => `
-              <div style="font-size:12px; padding:6px 10px; background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); border-radius:6px; border:1px solid var(--border);">
-                <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--text-primary);">
-                  <span>${escapeHtml(h.parameter)}: ${escapeHtml(h.change_difference || `${h.old_value} → ${h.new_value}`)}</span>
-                  <span style="font-size:10.5px; color:var(--text-muted);">${new Date(h.created_at).toLocaleDateString('uz-UZ')}</span>
+          <div class="lib-mat-sec-title">🔄 Shunga o‘xshash materiallar</div>
+          <div class="lib-mat-related-grid">
+            ${related.map(rm => `
+              <div class="lib-mat-related-card" onclick="openMaterialKnowledgeDetail(${Number(rm.id)})">
+                <div class="lib-mat-related-thumb">
+                  <img src="${escapeHtml(formatImageUrl(rm.image_url || rm.cover_image || ''))}" onerror="this.style.display='none';" alt="${escapeHtml(rm.name_uz || rm.name)}" loading="lazy" />
                 </div>
-                ${h.source_document ? `<div style="font-size:11px; color:var(--text-secondary);">Manba: ${escapeHtml(h.source_document)}</div>` : ""}
+                <div class="lib-mat-related-info">
+                  <div class="lib-mat-related-title">${escapeHtml(rm.name_uz || rm.name)}</div>
+                  ${rm.name_ru ? `<div class="lib-mat-related-ru">${escapeHtml(rm.name_ru)}</div>` : ""}
+                  ${rm.approx_price ? `<div class="lib-mat-related-price">${escapeHtml(rm.approx_price.split('(')[0].trim())}</div>` : ""}
+                </div>
               </div>
             `).join("")}
           </div>
@@ -13197,6 +13170,9 @@ let adminMaterialsState = {
   search: "",
   filterStatus: "all",
   filterCategory: "all",
+  activeSubTab: "list", // 'list' | 'audit'
+  auditList: [],
+  loadingAudit: false,
   verifyingSources: false
 };
 
@@ -13206,7 +13182,7 @@ async function loadAdminMaterialsData(forceReload) {
   try {
     const [statsRes, listRes, catRes] = await Promise.all([
       adminApi('/api/admin/materials/stats').catch(() => ({ stats: {} })),
-      api('/api/materials/list', { limit: 100, offset: 0, sort: 'newest' }).catch(() => ({ materials: [], total: 0 })),
+      api('/api/materials/list', { limit: 150, offset: 0, sort: 'newest' }).catch(() => ({ materials: [], total: 0 })),
       api('/api/materials/categories').catch(() => ({ categories: [], manufacturers: [] }))
     ]);
 
@@ -13231,11 +13207,41 @@ async function loadAdminMaterialsData(forceReload) {
   }
 }
 
+async function loadAdminMaterialsAudit() {
+  adminMaterialsState.loadingAudit = true;
+  try {
+    const res = await adminApi('/api/admin/materials/audit').catch(() => null);
+    if (res && res.ok && Array.isArray(res.audit)) {
+      adminMaterialsState.auditList = res.audit;
+    }
+  } catch (err) {
+    console.error("loadAdminMaterialsAudit error:", err);
+  } finally {
+    adminMaterialsState.loadingAudit = false;
+    const el = document.getElementById("admin-materials-cms-container");
+    if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+  }
+}
+
+function setAdminMaterialsSubTab(tab) {
+  haptic("light");
+  adminMaterialsState.activeSubTab = tab;
+  if (tab === "audit" && !adminMaterialsState.auditList.length) {
+    loadAdminMaterialsAudit();
+  }
+  const el = document.getElementById("admin-materials-cms-container");
+  if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+}
+
 function refreshAdminMaterials() {
   haptic("light");
   loadAdminMaterialsData(true).then(() => {
-    const el = document.getElementById("admin-materials-cms-container");
-    if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+    if (adminMaterialsState.activeSubTab === "audit") {
+      loadAdminMaterialsAudit();
+    } else {
+      const el = document.getElementById("admin-materials-cms-container");
+      if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+    }
   });
 }
 
@@ -13259,19 +13265,21 @@ function renderAdminMaterialsCMSInner() {
   const stats = adminMaterialsState.stats || { total: mats.length, verified: 0, pending: 0, draft: 0, documents_count: 0, sources_count: 0 };
   const search = (adminMaterialsState.search || "").toLowerCase().trim();
   const statusFilter = adminMaterialsState.filterStatus || "all";
+  const subTab = adminMaterialsState.activeSubTab || "list";
 
   const filtered = mats.filter(m => {
     if (search) {
-      const q = (m.title || "").toLowerCase() + " " +
-                (m.generic_name || "").toLowerCase() + " " +
+      const q = (m.name || m.title || "").toLowerCase() + " " +
+                (m.name_uz || "").toLowerCase() + " " +
+                (m.name_ru || "").toLowerCase() + " " +
+                (m.subcategory_name || "").toLowerCase() + " " +
                 (m.category_name || "").toLowerCase() + " " +
-                (m.manufacturer_name || "").toLowerCase() + " " +
-                (m.brand_name || "").toLowerCase();
+                (m.manufacturer_name || "").toLowerCase();
       if (!q.includes(search)) return false;
     }
-    if (statusFilter === "verified") return m.verification_status === "verified" || m.is_verified;
-    if (statusFilter === "pending") return m.verification_status === "pending" || (!m.is_verified && m.verification_status !== "draft");
-    if (statusFilter === "draft") return m.verification_status === "draft";
+    if (statusFilter === "verified") return m.verification_status === "verified" || m.image_verified;
+    if (statusFilter === "pending") return m.verification_status === "pending" || (!m.image_verified && m.status !== "published");
+    if (statusFilter === "draft") return m.status === "draft";
     return true;
   });
 
@@ -13280,8 +13288,8 @@ function renderAdminMaterialsCMSInner() {
       <!-- TOP ACTION BAR -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
         <div>
-          <div style="font-size:16px; font-weight:800; color:var(--text-primary);">🧱 Qurilish Materiallari Bazasi (CMS)</div>
-          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">GOST, SHNQ va rasmiy kataloglar asosida verifikatsiyalangan materiallar</div>
+          <div style="font-size:16px; font-weight:800; color:var(--text-primary);">🧱 Materiallar Bazasi (CMS & Audit)</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Bilingual UZ/RU, tasdiqlangan rasmlar va rasmiy manbalar nazorati</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <button class="btn secondary" style="margin:0; padding:8px 12px; font-size:12.5px; border-radius:10px;" onclick="runAdminVerifySources()" id="btn-verify-sources">
@@ -13301,46 +13309,202 @@ function renderAdminMaterialsCMSInner() {
           <div class="lib-mat-stat-label">Jami Materiallar</div>
         </div>
         <div class="lib-mat-stat-card" style="border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.05);">
-          <div class="lib-mat-stat-num" style="color:#10b981;">${stats.verified || 0}</div>
-          <div class="lib-mat-stat-label">✓ Verified</div>
+          <div class="lib-mat-stat-num" style="color:#10b981;">${stats.published || mats.filter(m => m.status === 'published').length}</div>
+          <div class="lib-mat-stat-label">✓ Nashr qilingan</div>
         </div>
         <div class="lib-mat-stat-card" style="border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.05);">
           <div class="lib-mat-stat-num" style="color:#f59e0b;">${stats.pending || 0}</div>
           <div class="lib-mat-stat-label">🟡 Tekshiruvda</div>
         </div>
         <div class="lib-mat-stat-card" style="border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.05);">
-          <div class="lib-mat-stat-num" style="color:#3b82f6;">${(stats.sources_count || 0) + (stats.documents_count || 0)}</div>
-          <div class="lib-mat-stat-label">Hujjatlar & Manbalar</div>
+          <div class="lib-mat-stat-num" style="color:#3b82f6;">${stats.sources || mats.reduce((acc, m) => acc + (m.sources_count || 0), 0)}</div>
+          <div class="lib-mat-stat-label">Rasmiy Havolalar</div>
         </div>
       </div>
 
-      <!-- SEARCH BAR -->
-      <div style="margin-bottom:12px;">
-        <input class="apple-input" type="text" placeholder="🔍 Nomi, brend, kategoriya yoki ishlab chiqaruvchi bo‘yicha qidirish..." value="${escapeHtml(adminMaterialsState.search || '')}" oninput="onAdminMaterialsSearch(this.value)">
+      <!-- SUB-TAB SWITCHER (LIST vs AUDIT) -->
+      <div style="display:flex; gap:8px; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+        <button type="button" class="btn ${subTab === 'list' ? '' : 'secondary'}" style="margin:0; padding:7px 14px; font-size:12.5px; border-radius:8px;" onclick="setAdminMaterialsSubTab('list')">
+          📋 Materiallar Ro‘yxati (${mats.length})
+        </button>
+        <button type="button" class="btn ${subTab === 'audit' ? '' : 'secondary'}" style="margin:0; padding:7px 14px; font-size:12.5px; border-radius:8px;" onclick="setAdminMaterialsSubTab('audit')">
+          🔍 Material Audit & Link Validator
+        </button>
       </div>
 
-      <!-- FILTER CHIPS -->
-      <div class="admin-books-filter-bar" style="margin-bottom:14px;">
-        <div class="admin-filter-chip ${statusFilter === 'all' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('all')">Barchasi (${mats.length})</div>
-        <div class="admin-filter-chip ${statusFilter === 'verified' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('verified')">✓ Verified (${stats.verified || mats.filter(m => m.is_verified).length})</div>
-        <div class="admin-filter-chip ${statusFilter === 'pending' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('pending')">🟡 Tekshiruvda (${stats.pending || mats.filter(m => !m.is_verified && m.verification_status !== 'draft').length})</div>
-        <div class="admin-filter-chip ${statusFilter === 'draft' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('draft')">⚪ Qoralama (${stats.draft || mats.filter(m => m.verification_status === 'draft').length})</div>
+      ${subTab === "audit" ? renderAdminMaterialAuditTabHtml() : `
+        <!-- SEARCH BAR -->
+        <div style="margin-bottom:12px;">
+          <input class="apple-input" type="text" placeholder="🔍 Nomi (UZ/RU), toifasi yoki ishlab chiqaruvchi bo‘yicha qidirish..." value="${escapeHtml(adminMaterialsState.search || '')}" oninput="onAdminMaterialsSearch(this.value)">
+        </div>
+
+        <!-- FILTER CHIPS -->
+        <div class="admin-books-filter-bar" style="margin-bottom:14px;">
+          <div class="admin-filter-chip ${statusFilter === 'all' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('all')">Barchasi (${mats.length})</div>
+          <div class="admin-filter-chip ${statusFilter === 'verified' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('verified')">✓ Nashr qilingan (${mats.filter(m => m.status === 'published').length})</div>
+          <div class="admin-filter-chip ${statusFilter === 'pending' ? 'active' : ''}" onclick="setAdminMaterialsStatusFilter('pending')">🟡 Tekshiruvda (${mats.filter(m => m.status !== 'published').length})</div>
+        </div>
+
+        <!-- MATERIALS LIST -->
+        ${filtered.length === 0 ? `
+          <div style="text-align:center; padding:35px 20px; color:var(--text-secondary); background:var(--bg-secondary); border-radius:12px; border:1px dashed var(--border);">
+            <div style="font-size:32px; margin-bottom:8px;">📦</div>
+            <div style="font-weight:700;">Materiallar topilmadi</div>
+            <div style="font-size:12px; margin-top:4px;">Qidiruv yoki filtr parametrlarini o‘zgartirib ko‘ring</div>
+          </div>
+        ` : `
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            ${filtered.map(m => renderAdminMaterialRowHtml(m)).join("")}
+          </div>
+        `}
+      `}
+    </div>
+  `;
+}
+
+function renderAdminMaterialAuditTabHtml() {
+  const auditList = adminMaterialsState.auditList || [];
+  const loading = adminMaterialsState.loadingAudit;
+
+  return `
+    <div>
+      <!-- LIVE LINK VALIDATOR TOOL -->
+      <div style="background:var(--bg-surface-elevated, rgba(0,0,0,0.03)); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:18px;">
+        <div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:4px;">
+          🧪 Havolani Real-Vaqtda Tekshirish (Live Link Validator)
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+          Ishlab chiqaruvchi yoki katalog URL manzilini kiriting. Tizim HTTP status (200 OK), sahifa sarlavhasi (&lt;title&gt;) va material nomi mosligini tekshiradi.
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px;">
+          <input id="admin-val-url" class="apple-input" type="url" placeholder="https://knauf.uz/products/..." style="font-size:12.5px;">
+          <input id="admin-val-mat-name" class="apple-input" type="text" placeholder="Material nomi (masalan: Gipsokarton)" style="font-size:12.5px;">
+          <button type="button" class="btn" style="margin:0; padding:8px 16px; font-size:12.5px;" onclick="runSingleLinkValidation()">
+            Tekshirish
+          </button>
+        </div>
+        <div id="admin-val-result" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:12.5px;"></div>
       </div>
 
-      <!-- MATERIALS LIST -->
-      ${filtered.length === 0 ? `
-        <div style="text-align:center; padding:35px 20px; color:var(--text-secondary); background:var(--bg-secondary); border-radius:12px; border:1px dashed var(--border);">
-          <div style="font-size:32px; margin-bottom:8px;">📦</div>
-          <div style="font-weight:700;">Materiallar topilmadi</div>
-          <div style="font-size:12px; margin-top:4px;">Qidiruv yoki filtr parametrlarini o‘zgartirib ko‘ring</div>
+      <!-- AUDIT TABLE -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="font-size:14px; font-weight:750; color:var(--text-primary);">
+          Barcha Materiallar Holati (${auditList.length} ta)
+        </div>
+        <button class="admin-small-btn" onclick="loadAdminMaterialsAudit()">🔄 Yangilash</button>
+      </div>
+
+      ${loading ? `
+        <div style="text-align:center; padding:40px 20px;">
+          <div class="spinner" style="margin:0 auto 10px;"></div>
+          <div style="font-size:13px; color:var(--text-secondary);">Audit ma'lumotlari yuklanmoqda...</div>
+        </div>
+      ` : auditList.length === 0 ? `
+        <div style="text-align:center; padding:30px; background:var(--bg-secondary); border-radius:12px;">
+          Audit ma'lumotlari topilmadi.
         </div>
       ` : `
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          ${filtered.map(m => renderAdminMaterialRowHtml(m)).join("")}
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${auditList.map(item => `
+            <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; gap:10px; align-items:center;">
+                <img src="${escapeHtml(formatImageUrl(item.image_url || ''))}" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none';" />
+                <div>
+                  <div style="font-weight:750; font-size:13.5px; color:var(--text-primary);">${escapeHtml(item.name_uz || item.name)}</div>
+                  ${item.name_ru ? `<div style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(item.name_ru)}</div>` : ""}
+                  <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
+                    ${escapeHtml(item.subcategory_name || item.category_name || '')} · <b>${item.types_count || 0} ta turi</b>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATUS BADGES -->
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <!-- Rasm -->
+                ${item.image_verified ? `
+                  <span style="font-size:11px; background:rgba(16,185,129,0.12); color:#10b981; padding:2px 7px; border-radius:6px; font-weight:700;">📷 Rasm: OK</span>
+                ` : `
+                  <span style="font-size:11px; background:rgba(239,68,68,0.12); color:#ef4444; padding:2px 7px; border-radius:6px; font-weight:700;">📷 Rasm: Tekshirilmagan</span>
+                `}
+
+                <!-- Tarjima -->
+                ${item.has_full_translation ? `
+                  <span style="font-size:11px; background:rgba(16,185,129,0.12); color:#10b981; padding:2px 7px; border-radius:6px; font-weight:700;">🇺🇿🇷🇺 To'liq</span>
+                ` : `
+                  <span style="font-size:11px; background:rgba(245,158,11,0.12); color:#f59e0b; padding:2px 7px; border-radius:6px; font-weight:700;">⚠️ Chala tarjima</span>
+                `}
+
+                <!-- Havola -->
+                ${item.has_working_link ? `
+                  <span style="font-size:11px; background:rgba(16,185,129,0.12); color:#10b981; padding:2px 7px; border-radius:6px; font-weight:700;">🔗 200 OK (${item.sources_count || 0})</span>
+                ` : `
+                  <span style="font-size:11px; background:rgba(239,68,68,0.12); color:#ef4444; padding:2px 7px; border-radius:6px; font-weight:700;">🔗 Havola yo'q / Xato</span>
+                `}
+
+                <!-- Holat -->
+                <span style="font-size:11px; padding:2px 7px; border-radius:6px; font-weight:700; background:rgba(0,0,0,0.06);">
+                  ${item.status === 'published' ? '🟢 Nashr qilingan' : '⚪ Qoralama'}
+                </span>
+
+                <button class="admin-small-btn" onclick="openMaterialKnowledgeDetail(${item.id})">👁️</button>
+                <button class="admin-small-btn" onclick="openAdminMaterialForm(${item.id})">✏️</button>
+              </div>
+            </div>
+          `).join("")}
         </div>
       `}
     </div>
   `;
+}
+
+async function runSingleLinkValidation() {
+  const url = document.getElementById("admin-val-url")?.value.trim();
+  const matName = document.getElementById("admin-val-mat-name")?.value.trim();
+  const resBox = document.getElementById("admin-val-result");
+  if (!url) return showAlert("Havola (URL) manzilini kiriting.");
+
+  if (resBox) {
+    resBox.style.display = "block";
+    resBox.style.background = "var(--bg-surface-elevated, #f3f4f6)";
+    resBox.style.color = "var(--text-primary)";
+    resBox.innerHTML = "⏳ Havola tekshirilmoqda...";
+  }
+
+  try {
+    const data = await adminApi('/api/admin/materials/validate-link', { url, material_name: matName });
+    if (!resBox) return;
+    if (data && data.ok) {
+      if (data.is_valid) {
+        resBox.style.background = "rgba(16,185,129,0.15)";
+        resBox.style.color = "#10b981";
+        resBox.innerHTML = `
+          <b>✓ Havola muvaffaqiyatli tekshirildi!</b><br>
+          HTTP Status: <b>${data.http_status} OK</b><br>
+          Sahifa sarlavhasi: <i>${escapeHtml(data.page_title || 'Noma\'lum')}</i><br>
+          Material mazmuni mosligi: <b>Mos keladi ✓</b>
+        `;
+      } else {
+        resBox.style.background = "rgba(239,68,68,0.12)";
+        resBox.style.color = "#ef4444";
+        resBox.innerHTML = `
+          <b>⚠️ Havolada kamchilik aniqlandi:</b><br>
+          HTTP Status: <b>${data.http_status}</b><br>
+          Sahifa sarlavhasi: <i>${escapeHtml(data.page_title || 'Topilmadi')}</i><br>
+          Xatolik: <b>${escapeHtml(data.error_message || 'Mos kelmadi')}</b>
+        `;
+      }
+    } else {
+      resBox.style.background = "rgba(239,68,68,0.12)";
+      resBox.style.color = "#ef4444";
+      resBox.innerHTML = `<b>❌ Xatolik:</b> ${escapeHtml(data?.error_message || data?.error || 'Ulanib bo‘lmadi')}`;
+    }
+  } catch (err) {
+    if (resBox) {
+      resBox.style.background = "rgba(239,68,68,0.12)";
+      resBox.style.color = "#ef4444";
+      resBox.innerHTML = `<b>❌ Server xatosi:</b> ${escapeHtml(err.message)}`;
+    }
+  }
 }
 
 function renderAdminMaterialRowHtml(m) {

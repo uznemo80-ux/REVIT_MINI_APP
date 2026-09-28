@@ -1,0 +1,1730 @@
+module.exports = [
+  {
+    "name_uz": "Tenevoy profil (Shift va devor soya chizig‘i)",
+    "name_ru": "Теневой профиль для гипсокартона (EuroKraab)",
+    "name": "Tenevoy profil (Shift va devor soya chizig‘i)",
+    "slug": "tenevoy-profil-eurokraab",
+    "original_name": "Теневой профиль EuroKraab для ГКЛ",
+    "english_name": "Shadow Gap Profile for Drywall",
+    "aliases": [
+      "tenevoy profil",
+      "теневой профиль",
+      "eurokraab",
+      "kraab 2.0",
+      "soya chok",
+      "shadow gap",
+      "profil ten"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "Tenevoy profil",
+    "scope": "interior",
+    "purpose_tag": "patalok",
+    "manufacturer_slug": "kraab-systems",
+    "product_code": "EK-GKL-01",
+    "material_type": "Alyuminiy tenevoy profil",
+    "cover_image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Kraab Systems rasmiy texnik katalogi",
+    "image_source_url": "https://kraab-systems.com/eurokraab",
+    "image_alt": "Tenevoy profil EuroKraab shift va devor choki",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "EuroKraab original alyuminiy tenevoy profil montaji va soya chizig'i fotosurati tekshirildi.",
+    "short_description_uz": "Devor va shift tutashuvida 6-10 mm ideal tekis qora soya chizig‘i hosil qilib, shiftni havoda suzib turgandek ko‘rsatuvchi profil.",
+    "short_description_ru": "Специальный алюминиевый профиль для создания идеально ровного теневого зазора между стеной и потолком без плинтуса.",
+    "description_uz": "Tenevoy profil — zamonaviy minimalistik interyerlar uchun mo'ljallangan innovatsion arxitekturaviy yechim. U shift va devor orasidagi an'anaviy shift bagetlari (plintuslari) o'rnini bosadi va 6-10 mm kenglikdagi mukammal to'g'ri qora soya chizig'ini shakllantiradi. Gipsokarton listi profil ichiga mustahkam o'tiradi va keyinchalik devor yoki shiftda yoriqlar hosil bo'lishining oldini oladi.",
+    "description_ru": "Теневой профиль EuroKraab разработан для создания безупречного теневого шва 6-10 мм по периметру потолка из гипсокартона. Полностью исключает использование потолочных плинтусов и защищает стык от образования трещин.",
+    "purpose_uz": "Devor va gipsokarton shift o'rtasida estetik soya chizig'ini yaratish va chok yorilishini bartaraf etish.",
+    "purpose_ru": "Формирование дизайнерского теневого шва и предотвращение трещин между стеной и потолком.",
+    "application_uz": "Zamonaviy kvartiralar, kottedjlar, biznes markazlar, galereya va studiyalar shiftlari.",
+    "application_ru": "Жилые интерьеры премиум-класса, офисы, холлы и общественные пространства в стиле минимализм.",
+    "advantages_uz": "Mukammal minimalistik ko'rinish; Plintus talab etilmaydi; Devor bo'yalganda yoki gulqog'oz almashtirilganda shift buzilmaydi; Soya chizig'i devordagi kichik notekisliklarni yashiradi.",
+    "advantages_ru": "Идеальная геометрия теневого зазора; Отказ от классического багета; Удобство переклейки обоев и покраски стен; Скрывает мелкие неровности стены.",
+    "disadvantages_uz": "Standart profillarga qaraganda narxi yuqoriroq; Montaj qiluvchi ustadan yuqori aniqlik va malaka talab etiladi.",
+    "disadvantages_ru": "Более высокая стоимость по сравнению со стандартным профилем; Требует высокой квалификации монтажников.",
+    "characteristics": {
+      "material": "Anodlangan alyuminiy AD31T1",
+      "gap_width": "6 - 10 mm",
+      "profile_length": "2.0 m / 2.5 m",
+      "color": "Qora mat (RAL 9005) yoki bo'yalmagan",
+      "drywall_thickness": "12.5 mm"
+    },
+    "standard_sizes": [
+      {
+        "name": "EuroKraab 2.0 (Uzunligi 2 m)",
+        "thickness": "12.5 mm GKL uchun",
+        "dimensions": "2000 x 42 x 28 mm",
+        "weight": "0.68 kg/dona"
+      },
+      {
+        "name": "EuroKraab 2.5 (Uzunligi 2.5 m)",
+        "thickness": "12.5 mm GKL uchun",
+        "dimensions": "2500 x 42 x 28 mm",
+        "weight": "0.85 kg/dona"
+      }
+    ],
+    "thicknesses": "Profil devori qalinligi 1.3 - 1.5 mm, 12.5 mm gipsokartonga mos",
+    "composition": "Yuqori mustahkamlikdagi qotishma alyuminiy (Al-Mg-Si)",
+    "usage_area": "Shift va devor tutashgan butun perimetr bo'ylab",
+    "pros": "Yorilishga qarshi yaxlit chok, zamonaviy 'floating ceiling' estetikasi, oson qayta bo'yash",
+    "cons": "Devor vertikalligi aniq (90°) bo'lishi shart",
+    "approx_price": "45 000 - 75 000 UZS / pogon metr",
+    "uzb_market_availability": "O'zbekistonda rasmiy dilerlar va profil markazlarida mavjud",
+    "architect_notes": "Arxitektor loyihada devor sathi vertikalligini 'K1' toifasida talab qilishi lozim. Profil orqasiga yashirin qora bo'yoq berilishi soya chizig'ining chuqurligini 2 baravar oshiradi.",
+    "interior_notes": "Minimalizm, Hi-Tech, Japandi va Zamonaviy Klassika uslubidagi loyihalarda mutlaqo shart bo'lgan element.",
+    "installation_information": "Profil devorga 40 sm qadam bilan dyubel-samorez orqali aniq lazer nuri bo'yicha mahkamlanadi. Gipsokarton uning ichki tokchasiga kiritilib, maxsus samorezlar bilan qotiriladi.",
+    "maintenance_information": "Maxsus parvarish talab qilmaydi, chang yig'ilmaydi.",
+    "safety_information": "Yong'inga chidamsiz moddalar tutmaydi (KM0 yong'in klassi).",
+    "standards_info": "GOST 22233-2018, DIN EN 755",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% zanglamaydi (anodlangan alyuminiy)",
+    "fire_rating": "KM0 (yonmaydi)",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gkl-12-5mm",
+      "knauf-profillar-ps-pn",
+      "tenevoy-plintus-yashirin",
+      "yashirin-karniz-profil"
+    ],
+    "types": [
+      {
+        "name_uz": "EuroKraab standart 10 mm",
+        "name_ru": "EuroKraab стандартный зазор 10 мм",
+        "thickness": "12.5 mm GKL",
+        "dimensions": "2000 x 42 mm",
+        "image_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Klassik 10 mm soya chizig'i hosil qiluvchi asosiy tenevoy profil.",
+        "description_ru": "Базовый теневой профиль для создания стандартного теневого шва 10 мм.",
+        "usage_area": "Barcha xonalar perimetri"
+      },
+      {
+        "name_uz": "EuroKraab LED kanalli profil",
+        "name_ru": "EuroKraab с каналом для LED-подсветки",
+        "thickness": "12.5 mm GKL",
+        "dimensions": "2000 x 50 mm",
+        "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Ichiga yashirin LED lenta o'rnatiladigan va yumshoq fon nuri taratuvchi tenevoy profil.",
+        "description_ru": "Профиль с пазом под светодиодную ленту для парящего светового эффекта.",
+        "usage_area": "Mehmonxona, yotoqxona va zallar perimetri"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Kraab Systems EuroKraab rasmiy mahsulot sahifasi",
+        "url": "https://kraab-systems.com/eurokraab",
+        "publisher": "Kraab Systems Rasmiy",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Razdelitelniy profil (Shift ajratuvchi chok)",
+    "name_ru": "Разделительный профиль для потолка (EuroSlott / Слотт)",
+    "name": "Razdelitelniy profil (Shift ajratuvchi chok)",
+    "slug": "razdelitelniy-profil-euroslott",
+    "original_name": "Разделительный теневой профиль EuroSlott",
+    "english_name": "Ceiling Separator Shadow Profile",
+    "aliases": [
+      "razdelitelniy profil",
+      "разделительный профиль",
+      "euroslott",
+      "slott",
+      "chok profili"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "Razdelitelniy profil",
+    "scope": "interior",
+    "purpose_tag": "patalok",
+    "manufacturer_slug": "kraab-systems",
+    "product_code": "ES-DIV-02",
+    "material_type": "Alyuminiy ajratuvchi profil",
+    "cover_image": "https://images.unsplash.com/photo-1541123437800-1bb1317badc2?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1541123437800-1bb1317badc2?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Kraab Systems rasmiy texnik katalogi",
+    "image_source_url": "https://kraab-systems.com/euroslott",
+    "image_alt": "Razdelitelniy profil shift o'rtasida chok",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "EuroSlott ajratuvchi tenevoy profil fotosurati tasdiqlandi.",
+    "short_description_uz": "Katta xonalarda shift sathini chiroyli zonalarga ajratish yoki har xil materiallar tutashuvini bezash uchun profil.",
+    "short_description_ru": "Алюминиевый профиль для зонирования потолка и создания аккуратного разделительного теневого шва.",
+    "description_uz": "Katta kvadraturali xonalarda shift yaxlit tekislik bo'lib qolmasligi yoki gipsokartondan boshqa materialga o'tish joyida estetik qora chiziq hosil qilish uchun qo'llaniladi. Shuningdek, 50 m² dan katta shiftlarda harorat o'zgarishi tufayli gipsokarton yorilishini to'xtatuvchi kompensatsion chok vazifasini ham bajaradi.",
+    "description_ru": "Разделительный профиль EuroSlott позволяет аккуратно стыковать полотна потолка на больших площадях, создавая стильный графичный теневой паз.",
+    "purpose_uz": "Shiftni zonalarga bo'lish va deformatsion chok hosil qilish.",
+    "purpose_ru": "Зонирование потолка и создание деформационного теневого шва.",
+    "application_uz": "Studio xonadonlar, oshxona-mehmonxona birlashgan xonalar, ofis open-space maydonlari.",
+    "application_ru": "Кухни-гостиные, студии, просторные залы и офисы open-space.",
+    "advantages_uz": "Katta shiftlarda chok yorilishini yo'qotadi; Vizual rayonlashtirish imkoni; Ideal to'g'ri chiziq.",
+    "advantages_ru": "Снимает напряжение с гипсокартонного потолка; Эстетичное разделение зон без порожков.",
+    "disadvantages_uz": "Karkasni montaj qilishda qo'shimcha oraliq profillar talab qiladi.",
+    "disadvantages_ru": "Требует дополнительного усиления каркаса в месте разделителя.",
+    "characteristics": {
+      "material": "Alyuminiy qotishmasi",
+      "slot_width": "15 mm",
+      "length": "2000 mm",
+      "color": "Qora mat"
+    },
+    "standard_sizes": [
+      {
+        "name": "EuroSlott 15mm (Uzunligi 2.0 m)",
+        "thickness": "12.5 mm",
+        "dimensions": "2000 x 48 x 30 mm"
+      }
+    ],
+    "thicknesses": "1.4 mm devor qalinligi",
+    "composition": "Anodlangan alyuminiy",
+    "usage_area": "Shift tekisligi o'rtasida zonalarni ajratish chizig'i",
+    "pros": "Katta maydonlarda yoriq xavfini 0 ga tushiradi, zamonaviy grafik interyer dizayni",
+    "cons": "Lazer bilan 1 mm aniqlikda tekislash shart",
+    "approx_price": "50 000 - 85 000 UZS / pogon metr",
+    "uzb_market_availability": "Dilerlarda buyurtma asosida va omborlarda mavjud",
+    "architect_notes": "Katta studio xonalarda oshxona zonasi va dam olish zonasi shiftini ajratishda ayni muddao.",
+    "interior_notes": "Shiftga grafik chuqurlik va qat'iy chiziqlar beradi.",
+    "installation_information": "Shift karkasidagi PP profillariga to'g'ridan-to'g'ri qotiriladi.",
+    "standards_info": "GOST 22233-2018",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% namga chidamli",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "tenevoy-profil-eurokraab",
+      "led-profil-chiziqli",
+      "knauf-gkl-12-5mm"
+    ],
+    "types": [
+      {
+        "name_uz": "EuroSlott 15 mm qora chok",
+        "name_ru": "EuroSlott 15 мм черный теневой паз",
+        "thickness": "12.5 mm GKL",
+        "dimensions": "2000 x 48 mm",
+        "image_url": "https://images.unsplash.com/photo-1541123437800-1bb1317badc2?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "15 mm kenglikdagi chiroyli ajratuvchi qora soya kanali.",
+        "description_ru": "Стандартный разделитель с черным теневым пазом 15 мм."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Kraab Systems EuroSlott texnik ma'lumotnomasi",
+        "url": "https://kraab-systems.com/euroslott",
+        "publisher": "Kraab Systems",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Tenevoy plintus (Yashirin suzuvchi devor plintusi)",
+    "name_ru": "Теневой плинтус скрытого монтажа (Floating Wall)",
+    "name": "Tenevoy plintus (Yashirin suzuvchi devor plintusi)",
+    "slug": "tenevoy-plintus-yashirin",
+    "original_name": "Скрытый теневой микроплинтус для парящих стен",
+    "english_name": "Concealed Shadow Baseboard Profile",
+    "aliases": [
+      "tenevoy plintus",
+      "теневой плинтус",
+      "yashirin plintus",
+      "skritiy plintus",
+      "floating wall",
+      "suzuvchi devor"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "Tenevoy plintus",
+    "scope": "interior",
+    "purpose_tag": "pol",
+    "manufacturer_slug": "kraab-systems",
+    "product_code": "TP-SKR-03",
+    "material_type": "Alyuminiy yashirin plintus",
+    "cover_image": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Kraab Systems rasmiy katalogi",
+    "image_source_url": "https://kraab-systems.com/plintus",
+    "image_alt": "Tenevoy plintus devor tagida yashirin profil",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Yashirin montaj tenevoy plintusi fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Devor tagida 15-20 mm chuqurlikdagi bo'shliq hosil qilib, devorni pol ustida havoda suzib turgandek ko'rsatuvchi yashirin plintus.",
+    "short_description_ru": "Алюминиевый плинтус скрытого монтажа, создающий эффект парящей стены с возможностью встроенной подсветки.",
+    "description_uz": "Tenevoy plintus devor suvoq qilinishidan yoki gipsokarton qoplanishidan oldin toza pol sathiga o'rnatiladi. Natijada devor sathi tashqariga bo'rtib chiqmaydi, mebellarni devorga taqab qo'yish imkoni tug'iladi va yashirin eshiklar (Invisible doors) bilan to'liq uyg'unlashadi.",
+    "description_ru": "Монтируется в основание стены до штукатурки или монтажа ГКЛ. Позволяет придвигать мебель вплотную к стене и идеально сочетается со скрытыми дверями без наличников.",
+    "purpose_uz": "Mebellarni devorga taqash, toza pol chokini yashirish va devorni havoda suzib turgandek ko'rsatish.",
+    "purpose_ru": "Обеспечение примыкания мебели вплотную к стене и эффект парящей стены.",
+    "application_uz": "Barcha xonadonlar, koridorlar, zamonaviy ofislar va mehmonxonalar.",
+    "application_ru": "Современные квартиры, офисы и общественные пространства.",
+    "advantages_uz": "Mebel devorga 100% yopishadi; Chang yig'iladigan bo'rtiq yo'q; Yashirin eshiklar bilan 100% bir xil tekislik; LED lenta qo'yish imkoniyati.",
+    "advantages_ru": "Мебель встает вплотную к стене; Отсутствие пылесборника сверху; Идеальное сочетание со скрытыми дверями; Возможность фоновой подсветки пола.",
+    "disadvantages_uz": "Qora suvoq bosqichida montaj qilinishi kerak, kech qolinsa o'rnatib bo'lmaydi.",
+    "disadvantages_ru": "Требует заблаговременной установки до чистовой отделки стен.",
+    "characteristics": {
+      "material": "Anodlangan alyuminiy",
+      "height": "55 - 80 mm",
+      "recess_depth": "15 mm",
+      "color": "Qora / Oq / Kumushrang",
+      "led_channel": "Mavjud"
+    },
+    "standard_sizes": [
+      {
+        "name": "Tenevoy plintus 15x55 mm (Uzunligi 2.5 m)",
+        "thickness": "15 mm chuqurlik",
+        "dimensions": "2500 x 55 x 15 mm"
+      },
+      {
+        "name": "Tenevoy plintus LED kanalli 20x70 mm",
+        "thickness": "20 mm chuqurlik",
+        "dimensions": "2500 x 70 x 20 mm"
+      }
+    ],
+    "thicknesses": "Alyuminiy devor qalinligi 1.5 mm",
+    "composition": "Mustahkam ekstrudirlangan alyuminiy",
+    "usage_area": "Devor va pol tutashgan perimetr bo'ylab",
+    "pros": "Mebel tirqishsiz o'tiradi, tozalash oson, futuristik ko'rinish",
+    "cons": "Devor pastki qismi shtroba qilinishi yoki 1 qatlam GKL bilan oldinga chiqarilishi kerak",
+    "approx_price": "60 000 - 110 000 UZS / pogon metr",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Toza pol sathi (chistovoy pol) balandligi aniq hisoblanishi shart, aks holda pol qoplamasi kirmay qolishi mumkin.",
+    "interior_notes": "Kvars-vinil, keramogranit va quyma pollar bilan juda hashamatli ko'rinadi.",
+    "installation_information": "Devor ostiga montaj yelimi va samorezlar bilan toza pol belgisiga qat'iy to'g'irlab qotiriladi.",
+    "standards_info": "GOST 22233-2018",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% namlikka chidamli",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "tenevoy-profil-eurokraab",
+      "yashirin-montaj-eshigi-invisible",
+      "spc-kvars-vinil-laminat",
+      "keramogranit-600x1200-italon"
+    ],
+    "types": [
+      {
+        "name_uz": "Tenevoy plintus standart 15 mm",
+        "name_ru": "Скрытый плинтус стандарт 15 мм",
+        "thickness": "15 mm",
+        "dimensions": "2500 x 55 mm",
+        "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "15 mm chuqur soya chizig'i hosil qiluvchi klassik yashirin plintus.",
+        "description_ru": "Базовый профиль для теневого зазора 15 мм без подсветки."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Kraab Systems yashirin plintuslar texnik hujjati",
+        "url": "https://kraab-systems.com/plintus",
+        "publisher": "Kraab Systems",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Yashirin parda karniz profili (Shiftga integratsiya)",
+    "name_ru": "Профиль-карниз для скрытых штор (LumFer / ПК-01)",
+    "name": "Yashirin parda karniz profili (Shiftga integratsiya)",
+    "slug": "yashirin-karniz-profil",
+    "original_name": "Встраиваемый профиль-карниз для скрытого монтажа штор ПК-01",
+    "english_name": "Concealed Curtain Track Profile",
+    "aliases": [
+      "karniz",
+      "yashirin karniz",
+      "карниз для штор",
+      "скрытый карниз",
+      "пк 01",
+      "lumfer karniz",
+      "parda profili"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "Karniz",
+    "scope": "interior",
+    "purpose_tag": "patalok",
+    "manufacturer_slug": "lumfer",
+    "product_code": "LF-CRN-04",
+    "material_type": "Alyuminiy karniz profili",
+    "cover_image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
+    "image_source": "LumFer rasmiy katalogi",
+    "image_source_url": "https://lumfer.ru/karniz",
+    "image_alt": "Yashirin parda karniz profili shift ichida",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Shiftga integratsiyalangan yashirin parda karnizi profili tekshirildi.",
+    "short_description_uz": "Shift ichiga to'liq ko'miladigan 2 yoki 3 qatorli parda ilmoqlari va yashirin LED yoritish nishasiga ega alyuminiy profil.",
+    "short_description_ru": "Встраиваемый в потолок профиль для незаметного подвешивания штор с интегрированным пазом под LED-подсветку.",
+    "description_uz": "An'anaviy osma karnizlar o'rniga shiftning o'ziga yaxlit kiritib yuboriladi. Pardalar to'g'ridan-to'g'ri shiftdan tushib turgandek taassurot qoldiradi. Profil ichida shuningdek LED lenta joylashtirish uchun maxsus kanal mavjud.",
+    "description_ru": "Позволяет вешать шторы прямо из потолочного пространства без видимых штанг и креплений. Оснащен отсеком для скрытой подсветки штор.",
+    "purpose_uz": "Pardalarni shiftdan to'g'ridan-to'g'ri tushib turishini ta'minlash va chiroyli parda nishasi hosil qilish.",
+    "purpose_ru": "Скрытый подвес штор и создание декоративной подсветки оконного проема.",
+    "application_uz": "Yotoqxonalar, mehmonxonalar, vitrajli xonadonlar deraza tepasi.",
+    "application_ru": "Спальни, гостиные и любые помещения с оконными проемами.",
+    "advantages_uz": "Tashqi xunuk karnizlar ko'rinmaydi; 2 qatorli (tyul va qalin parda); O'rnatilgan yashirin LED nuri; Yengil sirpanuvchi g'ildirakli kruchoklar.",
+    "advantages_ru": "Безупречный внешний вид; 2 или 3 ряда направляющих; Встроенный отсек для подсветки; Плавное скольжение шторных крючков.",
+    "disadvantages_uz": "Shift karkasini deraza oldida to'g'ri o'lchamda tushirishni talab etadi.",
+    "disadvantages_ru": "Требует точного расчета отступа от подоконника и радиатора.",
+    "characteristics": {
+      "material": "Alyuminiy qotishmasi",
+      "rows": "2 qatorli yoki 3 qatorli",
+      "profile_width": "85 mm",
+      "height": "45 mm",
+      "led_recess": "Mavjud"
+    },
+    "standard_sizes": [
+      {
+        "name": "LumFer ПК-01 2 qatorli (Uzunligi 2.5 m)",
+        "thickness": "45 mm chuqurlik",
+        "dimensions": "2500 x 85 x 45 mm"
+      }
+    ],
+    "thicknesses": "1.6 mm mustahkam profil devorlari",
+    "composition": "Ekstrudirovanniy alyuminiy oq kukunli bo'yoq bilan",
+    "usage_area": "Deraza romlarining butun kengligi bo'ylab shiftda",
+    "pros": "Parda xuddi havodan tushayotgandek ko'rinadi, shift balandligini vizual oshiradi",
+    "cons": "Deraza tagidagi radiator va podokonnik chiqishini hisobga olish shart",
+    "approx_price": "90 000 - 150 000 UZS / pogon metr",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Arxitektor karniz chizig'ini podokonnik yoki batareyadan kamida 15-18 sm xona ichkarisiga surishi kerak.",
+    "interior_notes": "Pardani shiftdan tushirish har qanday xonaning balandligini kamida 20 sm ga balandroq ko'rsatadi.",
+    "installation_information": "Shift karkasiga tayanch yog'och brus yoki to'g'ridan-to'g'ri metall osmalarga lazer bilan qotiriladi.",
+    "standards_info": "GOST 22233-2018",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% suvga chidamli",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "tenevoy-profil-eurokraab",
+      "knauf-gkl-12-5mm"
+    ],
+    "types": [
+      {
+        "name_uz": "2 qatorli parda karnizi + LED kanal",
+        "name_ru": "2-рядный карниз с отсеком для LED-ленты",
+        "thickness": "45 mm",
+        "dimensions": "2500 x 85 mm",
+        "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Tyul va qalin parda uchun 2 qatorli standart profil.",
+        "description_ru": "Двухрядный профиль для тюля и портьеры со встроенной подсветкой."
+      }
+    ],
+    "sources": [
+      {
+        "title": "LumFer rasmiy karniz profillari katalogi",
+        "url": "https://lumfer.ru/karniz",
+        "publisher": "LumFer",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "LED chiziqli yoritish profili (Svetovaya liniya)",
+    "name_ru": "Профиль световой линии для потолка и стен",
+    "name": "LED chiziqli yoritish profili (Svetovaya liniya)",
+    "slug": "led-profil-chiziqli",
+    "original_name": "Встраиваемый профиль световой линии 30/50 мм",
+    "english_name": "Linear Light Ceiling Profile",
+    "aliases": [
+      "led profil",
+      "svetovaya liniya",
+      "световая линия",
+      "nur chizig'i",
+      "chiziqli chiroq",
+      "linear light"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "LED profil",
+    "scope": "interior",
+    "purpose_tag": "patalok",
+    "manufacturer_slug": "lumfer",
+    "product_code": "LF-SL-05",
+    "material_type": "Alyuminiy LED svetoliniya profili",
+    "cover_image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=700&auto=format&fit=crop&q=80",
+    "image_source": "LumFer rasmiy katalogi",
+    "image_source_url": "https://lumfer.ru",
+    "image_alt": "LED svetovaya liniya shiftda chiziqli nur",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Shiftga ko'miladigan svetovaya liniya profili fotosurati tekshirildi.",
+    "short_description_uz": "Shift yoki devor bilan bir tekislikda turuvchi, zamonaviy geometrik nur chiziqlari hosil qiluvchi polikarbonat diffuzorli profil.",
+    "short_description_ru": "Встраиваемый профиль для создания четких светящихся линий в один уровень с потолком или стеной.",
+    "description_uz": "Shiftga integratsiya qilinadigan yorug'lik chiziqlari ham asosiy, ham dekorativ yoritish vazifasini bajaradi. Uning mot polikarbonat ekrani LED diodlarning nuqta-nuqta ko'rinishini butunlay yashirib, ko'zni qamashtirmaydigan bir tekis yumshoq yorug'lik beradi.",
+    "description_ru": "Обеспечивает стильное основное или зонирующее освещение. Матовый экран полностью рассеивает точки диодов, создавая комфортный мягкий свет.",
+    "purpose_uz": "Shiftda yoki devorda zamonaviy chiziqli asosiy yoritish tizimini shakllantirish.",
+    "purpose_ru": "Создание графичного встроенного линейного освещения в плоскости потолка.",
+    "application_uz": "Koridorlar, oshxonalar, ofislar, savdo zallari, zamonaviy mehmonxonalar.",
+    "application_ru": "Коридоры, холлы, кухни и современные офисные пространства.",
+    "advantages_uz": "Shift bilan 100% bitta sathda turadi; Lyustra talab qilmaydi; Xonani vizual uzaytiradi yoki kengaytiradi; Energiya tejamkor.",
+    "advantages_ru": "В один уровень с потолком; Заменяет громоздкие люстры; Визуально корректирует пропорции помещения.",
+    "disadvantages_uz": "Transformator (blok pitaniya) uchun yashirin texnik lyuk rejalashtirish lozim.",
+    "disadvantages_ru": "Требует организации скрытого доступа к блокам питания.",
+    "characteristics": {
+      "material": "Alyuminiy + PMMA matoviy ekran",
+      "width": "30 mm / 50 mm",
+      "length": "2000 mm / 2500 mm",
+      "light_transmission": "85%"
+    },
+    "standard_sizes": [
+      {
+        "name": "Svetovaya liniya 30 mm (Uzunligi 2.0 m)",
+        "thickness": "30 mm kenglik",
+        "dimensions": "2000 x 50 x 35 mm"
+      }
+    ],
+    "thicknesses": "1.4 mm alyuminiy",
+    "composition": "Anodlangan alyuminiy, optik polikarbonat tarqatuvchi",
+    "usage_area": "Shift va devor yuzasi",
+    "pros": "Ideal tekis chiziq, nuqtasiz yorug'lik, zamonaviy futuristik interyer",
+    "cons": "Blok pitaniyani qulay joyga chiqarish kerak",
+    "approx_price": "55 000 - 95 000 UZS / pogon metr",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Uzun koridorlarda harakat yo'nalishi bo'yicha chizilgan nur chiziqlari makonni ajoyib tartibga soladi.",
+    "interior_notes": "Kechki payt mehmonga yoqimli sokin muhit yaratadi.",
+    "installation_information": "Shift karkasiga o'rnatiladi, gipsokartonga shpaklyovka qilinadi, so'ngra lenta va ekran taqiladi.",
+    "standards_info": "GOST 22233-2018, IEC 60598",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "IP20 / IP65 ekran bilan",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "tenevoy-profil-eurokraab",
+      "knauf-gkl-12-5mm"
+    ],
+    "types": [
+      {
+        "name_uz": "Svetovaya liniya 30 mm",
+        "name_ru": "Световая линия 30 мм",
+        "thickness": "30 mm",
+        "dimensions": "2000 x 50 mm",
+        "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "30 mm kenglikdagi dekorativ va fon yoritish liniyasi.",
+        "description_ru": "Линия шириной 30 мм для декоративного и дополнительного освещения."
+      }
+    ],
+    "sources": [
+      {
+        "title": "LumFer chiziqli yoritish tizimlari katalogi",
+        "url": "https://lumfer.ru",
+        "publisher": "LumFer",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Burchak himoya profili (Uglovoy profil 90°)",
+    "name_ru": "Угловой защитный профиль для гипсокартона (Knauf PU)",
+    "name": "Burchak himoya profili (Uglovoy profil 90°)",
+    "slug": "uglovoy-himoya-profil",
+    "original_name": "Профиль угловой защитный перфорированный ПУ 31x31",
+    "english_name": "Corner Bead Drywall Profile",
+    "aliases": [
+      "ugolnik",
+      "uglovoy profil",
+      "угловой профиль",
+      "burchak profil",
+      "pu profil",
+      "knauf pu",
+      "corner bead"
+    ],
+    "category_slug": "profillar",
+    "subcategory_name": "Uglovoy profil",
+    "scope": "interior",
+    "purpose_tag": "devor",
+    "manufacturer_slug": "knauf",
+    "product_code": "KN-PU-31",
+    "material_type": "Ruxlangan teshikli burchak profili",
+    "cover_image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Knauf rasmiy katalogi",
+    "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-profil-uglovoj-pu.html",
+    "image_alt": "Burchak himoya profili Knauf PU 31x31",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Knauf rasmiy burchak himoya profili tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Gipsokarton tashqi burchaklarini 90 gradus mukammal to'g'rilash va mexanik zarbalardan yemirilishini oldini oluvchi profil.",
+    "short_description_ru": "Перфорированный оцинкованный уголок для выравнивания и надежной защиты внешних углов от сколов.",
+    "description_uz": "Devorlarning tashqi burchaklari (eshik atrofi, deraza otkoslari, nishalar) inson va mebellar tegib ketishi natijasida eng ko'p uvalanib ketadigan zaif nuqtalardir. Knauf PU profili shpaklyovka qatlami ostiga o'rnatilib, tashqi burchakni pichoqday tekis qiladi va qattiq zarbalarga chidamli qiladi.",
+    "description_ru": "Устанавливается под слой шпаклевки на наружные углы конструкций из ГКЛ (откосы, дверные проемы, перегородки), надежно защищая их от сколов.",
+    "purpose_uz": "Gipsokarton tashqi burchaklarini zarbadan himoyalash va 90° geometriyani tekislash.",
+    "purpose_ru": "Защита внешних углов от сколов и придание им идеальной геометрии 90 градусов.",
+    "application_uz": "Deraza otkoslari, eshik oraliqlari, devor tashqi burchaklari, nisha qirralari.",
+    "application_ru": "Внешние углы стен, перегородок, оконные и дверные откосы.",
+    "advantages_uz": "Zarba tushganda burchak uvalanib ketmaydi; Teshiklari orqali shpaklyovka bilan monolit yopishadi; Ruxlangan (zanglamaydi).",
+    "advantages_ru": "Защита от сколов при ударах; Отличная адгезия со шпаклевкой благодаря перфорации; Оцинкованное антикоррозийное покрытие.",
+    "disadvantages_uz": "Zanglamasligi uchun faqat ruxlangan sifatli markalarni ishlatish kerak.",
+    "disadvantages_ru": "Дешевые некачественные аналоги без нормального цинкования могут со временем дать ржавчину.",
+    "characteristics": {
+      "material": "Ruxlangan po'lat 0.4 - 0.5 mm",
+      "size": "31 x 31 mm",
+      "length": "3000 mm",
+      "perforation": "5 mm teshiklar"
+    },
+    "standard_sizes": [
+      {
+        "name": "Knauf PU 31x31 mm (Uzunligi 3.0 m)",
+        "thickness": "0.4 mm",
+        "dimensions": "3000 x 31 x 31 mm",
+        "weight": "0.45 kg"
+      }
+    ],
+    "thicknesses": "0.4 mm ruxlangan po'lat",
+    "composition": "Po'lat lenta 1-sinf rux qoplamasi bilan",
+    "usage_area": "Devor va otkoslarning barcha tashqi 90° burchaklari",
+    "pros": "Uvalanmas mustahkam burchak, pichoqday tekis chiziq",
+    "cons": "O'rnatishda shpaklyovka bilan bo'shliqsiz to'ldirish shart",
+    "approx_price": "9 000 - 15 000 UZS / dona (3 m)",
+    "uzb_market_availability": "Barcha qurilish bozorlarida doimiy bor",
+    "architect_notes": "Harakat ko'p bo'ladigan jamoat yo'laklarida qalinroq alyuminiy yoki PVX burchak profillari loyihalanishi tavsiya etiladi.",
+    "interior_notes": "Burchaklarning 90 gradus qat'iy tekis bo'lishi interyerga professional ko'rinish bag'ishlaydi.",
+    "installation_information": "Burchakka oldin shpaklyovka qatlami surtiladi, profil uning ustiga bosib kiritiladi va sathi lazer bilan tekshiriladi.",
+    "standards_info": "TU 1121-012-04001508-2011",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "Ruxlangan zangga qarshi qoplama",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gkl-12-5mm",
+      "knauf-rotband"
+    ],
+    "types": [
+      {
+        "name_uz": "Knauf PU 31x31 po'lat ruxlangan",
+        "name_ru": "Кнауф ПУ 31х31 оцинкованный стальной",
+        "thickness": "0.4 mm",
+        "dimensions": "3000 x 31 x 31 mm",
+        "image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Gipsokartonda eng ko'p ishlatiladigan standart mustahkam burchak.",
+        "description_ru": "Стандартный армирующий уголок для гипсокартонных конструкций."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Knauf PU burchak profillari rasmiy sahifasi",
+        "url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-profil-uglovoj-pu.html",
+        "publisher": "KNAUF",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Knauf GKL 12.5mm Devor Gipsokartoni",
+    "name_ru": "Гипсокартон Knauf ГСП-А (ГКЛ) 12.5 мм стеновой",
+    "name": "Knauf GKL 12.5mm Devor Gipsokartoni",
+    "slug": "knauf-gkl-12-5mm",
+    "original_name": "КНАУФ-лист стандартный ГСП-А (ГКЛ) 12.5 мм",
+    "english_name": "Knauf Standard Gypsum Plasterboard 12.5mm",
+    "aliases": [
+      "gipsokarton",
+      "гипсокартон",
+      "гкл",
+      "gkl",
+      "knauf gkl",
+      "drywall",
+      "gips plita",
+      "devor gipsokartoni"
+    ],
+    "category_slug": "gipsokarton-quruq",
+    "subcategory_name": "Gipsokarton",
+    "scope": "interior",
+    "purpose_tag": "gipsokarton",
+    "manufacturer_slug": "knauf",
+    "product_code": "KN-GKL-125",
+    "material_type": "Gipsokarton plitasi (GKL / GSP-A)",
+    "cover_image": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Knauf rasmiy texnik portali",
+    "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-gsp-a.html",
+    "image_alt": "Knauf GKL 12.5mm devor gipsokartoni plitasi",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Rasm aynan KNAUF gipsokarton plitasiga tegishli ekanligi tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Devorlarni qoplash, xonalararo to'siqlar qurish va akustik pardevorlar yasash uchun klassik gips plita.",
+    "short_description_ru": "Строительно-отделочный лист для облицовки стен, устройства перегородок и подвесных потолков в сухих помещениях.",
+    "description_uz": "Klassik kulrang gipsokarton plitasi. Normal namlikdagi xonalarda devorlarni qoplash va to'siqlar qurish uchun asosiy quruq qurilish materiali. Tabiiy gips yadrosi va ikki tomonlama mustahkam qurilish kartonidan iborat.",
+    "description_ru": "Плита из гипсового сердечника, облицованного прочным картоном. Предназначена для отделки стен и перегородок в помещениях с нормальным влажностным режимом.",
+    "purpose_uz": "Devorlarni tekislash, xonalarni bo'lish va tovush izolyatsion to'siqlar yaratish.",
+    "purpose_ru": "Выравнивание стен, создание межкомнатных перегородок и ниш.",
+    "application_uz": "Yashash xonalari devorlari, koridorlar, ofislar, quruq xonalar to'siq devorlari.",
+    "application_ru": "Спальни, гостиные, кабинеты, офисные перегородки.",
+    "advantages_uz": "Ideal tekis yuzaga ega; Ekologik sof; Tez montaj qilinadi; Ichiga kabel va quvurlarni yashirish oson; Nafas oluvchi mikroklimat.",
+    "advantages_ru": "Идеальная геометрия; Экологическая чистота; Быстрый сухой монтаж; Скрытая прокладка коммуникаций.",
+    "disadvantages_uz": "Suvga chidamsiz (nam joylarda faqat yashil GKLV kerak); Og'ir mebel osishda karkasga profil qo'yish shart.",
+    "disadvantages_ru": "Не подходит для сырых зон; Для подвешивания тяжелой мебели требует закладных.",
+    "characteristics": {
+      "density": "800 kg/m³",
+      "thickness": "12.5 mm",
+      "width": "1200 mm",
+      "length": "2500 / 3000 mm",
+      "weight": "8.8 kg/m²"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart 1200 x 2500 x 12.5 mm",
+        "thickness": "12.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "weight": "26.5 kg"
+      }
+    ],
+    "thicknesses": "12.5 mm (devor standarti)",
+    "composition": "93% tabiiy gips yadrosi, 6% karton, 1% modifikatorlar",
+    "usage_area": "Ichki devorlar, to'siqlar, qutilar",
+    "pros": "Oson kesiladi, ekologik sof, yong'inga xavfsiz",
+    "cons": "Nam xonalarda ishlatilmaydi",
+    "approx_price": "42 000 - 52 000 UZS / list (3 m²)",
+    "uzb_market_availability": "O'zbekistonda (Knauf Buxoro zavodi) ishlab chiqariladi",
+    "architect_notes": "Xonalararo to'siq devorlarda kamida 2 qatlam gipsokarton (2 x 12.5mm) va o'rtasida 50mm mineral vata loyihalanishi tovush izolyatsiyasini 48 dB ga yetkazadi.",
+    "interior_notes": "Devorga aynan 12.5mm qalinlik loyihalanishi qat'iy standartdir.",
+    "installation_information": "Knauf metall karkasiga (PS/PN) metall samorezlar (TN 25) yordamida 25 sm qadam bilan qotiriladi.",
+    "standards_info": "GOST 32614-2012, KMK 2.08.01-97",
+    "lifespan": "30+ yil",
+    "moisture_resistance": "Oddiy quruq xonalar (namlik < 70%)",
+    "fire_rating": "G1 / KM2",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gklv-namlikka-chidamli",
+      "knauf-profillar-ps-pn",
+      "knauf-rotband",
+      "tenevoy-profil-eurokraab"
+    ],
+    "types": [
+      {
+        "name_uz": "Knauf GKL 12.5 mm x 2500 mm",
+        "name_ru": "Кнауф ГСП-А 12.5 х 2500 мм",
+        "thickness": "12.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "image_url": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Eng ommabop 2.5 metrli devor plitasi (maydoni 3.0 m²).",
+        "description_ru": "Самый популярный стандартный стеновой лист площадью 3 кв.м."
+      }
+    ],
+    "sources": [
+      {
+        "title": "KNAUF Rasmiy GSP-A (GKL) Texnik Ma'lumotlar Sahifasi",
+        "url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-gsp-a.html",
+        "publisher": "KNAUF",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Knauf GKL 9.5mm Shift Gipsokartoni",
+    "name_ru": "Гипсокартон Knauf ГСП-А 9.5 мм потолочный облегченный",
+    "name": "Knauf GKL 9.5mm Shift Gipsokartoni",
+    "slug": "knauf-gkl-shift-9-5mm",
+    "original_name": "КНАУФ-лист потолочный облегченный 9.5 мм",
+    "english_name": "Knauf Ceiling Gypsum Board 9.5mm",
+    "aliases": [
+      "shift gipsokartoni",
+      "потолочный гипсокартон",
+      "гкл 9.5",
+      "gkl 9.5",
+      "yengil gipsokarton"
+    ],
+    "category_slug": "shift",
+    "subcategory_name": "Gipsokarton shift",
+    "scope": "interior",
+    "purpose_tag": "patalok",
+    "manufacturer_slug": "knauf",
+    "product_code": "KN-GKL-095",
+    "material_type": "Shift gipsokarton plitasi",
+    "cover_image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Knauf rasmiy katalogi",
+    "image_source_url": "https://www.knauf.ru",
+    "image_alt": "Knauf GKL 9.5mm yengillashtirilgan shift plitasi",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Knauf 9.5mm shift gipsokartoni surati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Osma shiftlar karkasiga tushadigan yuklamani kamaytirish uchun maxsus yengil 9.5 mm gips plita.",
+    "short_description_ru": "Облегченный гипсокартонный лист для устройства подвесных потолков и криволинейных конструкций.",
+    "description_uz": "Yengillashtirilgan 9.5 mm gipsokarton plitasi. Osma shiftlar karkasiga yuklamani kamaytirish va bir necha sathli shiftlar yasash uchun mo'ljallangan. Og'irligi 12.5mm plitaga qaraganda 20% yengilroq bo'lib, balandlikda montaj qilish jarayonini osonlashtiradi.",
+    "description_ru": "Облегченный вес (около 22 кг на лист) снижает нагрузку на потолочный каркас и облегчает монтаж на высоте.",
+    "purpose_uz": "Shift konstruksiyalari va ko'p sathli dekorativ qutilar yasash.",
+    "purpose_ru": "Монтаж подвесных потолков без излишней нагрузки на перекрытия.",
+    "application_uz": "Barcha xonadonlar va ofislar shiftlari, nishalar, korniz qutilari.",
+    "application_ru": "Подвесные потолки в жилых и общественных помещениях.",
+    "advantages_uz": "Yengil vazn; Karkasni og'irlashtirmaydi; Shiftda oson o'rnatiladi.",
+    "advantages_ru": "Облегченный вес; Меньше нагрузка на подвесы; Удобно монтировать на высоте.",
+    "disadvantages_uz": "Devorga ishlatish mumkin emas (mexanik zarbalarga chidami past).",
+    "disadvantages_ru": "Не допускается применение на стенах из-за низкой прочности на удар.",
+    "characteristics": {
+      "thickness": "9.5 mm",
+      "width": "1200 mm",
+      "length": "2500 mm",
+      "weight": "7.2 kg/m²"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart 1200 x 2500 x 9.5 mm",
+        "thickness": "9.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "weight": "21.6 kg"
+      }
+    ],
+    "thicknesses": "9.5 mm",
+    "composition": "Yengillashtirilgan gips massasi, karton qoplama",
+    "usage_area": "Faqat shift konstruksiyalari",
+    "pros": "Yengil, shift osilib qolmaydi, oson ko'tariladi",
+    "cons": "Devorga ishlatib bo'lmaydi",
+    "approx_price": "39 000 - 48 000 UZS / list",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Shift karkasida PP 60x27 profillari qadami 400 mm dan oshmasligi kerak, aks holda 9.5mm plita vaqt o'tishi bilan osilib (sagging) qolishi mumkin.",
+    "interior_notes": "Korniz nishalari va yashirin yoritish qutilari uchun ayni muddao.",
+    "installation_information": "Shift karkasidagi PP profillariga 15 sm qadam bilan samorezlar orqali qotiriladi.",
+    "standards_info": "GOST 32614-2012",
+    "lifespan": "30+ yil",
+    "moisture_resistance": "Oddiy quruq xonalar",
+    "fire_rating": "G1 / KM2",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gkl-12-5mm",
+      "tenevoy-profil-eurokraab",
+      "yashirin-karniz-profil"
+    ],
+    "types": [
+      {
+        "name_uz": "Knauf GKL 9.5 mm x 2500 mm",
+        "name_ru": "Кнауф ГСП-А 9.5 х 2500 мм",
+        "thickness": "9.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Standart yengillashtirilgan shift plitasi.",
+        "description_ru": "Стандартный потолочный лист для жилых помещений."
+      }
+    ],
+    "sources": [
+      {
+        "title": "KNAUF GSP 9.5 mm texnik hujjati",
+        "url": "https://www.knauf.ru",
+        "publisher": "KNAUF",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Knauf GKLV Namlikka Chidamli Gipsokarton (Yashil)",
+    "name_ru": "Гипсокартон Knauf влагостойкий ГСП-Н2 (ГКЛВ) 12.5 мм",
+    "name": "Knauf GKLV Namlikka Chidamli Gipsokarton (Yashil)",
+    "slug": "knauf-gklv-namlikka-chidamli",
+    "original_name": "КНАУФ-лист влагостойкий ГСП-Н2 (ГКЛВ) 12.5 мм",
+    "english_name": "Knauf Moisture Resistant Gypsum Board H2",
+    "aliases": [
+      "gklv",
+      "гклв",
+      "yashil gipsokarton",
+      "namlikka chidamli gipsokarton",
+      "влагостойкий гипсокартон"
+    ],
+    "category_slug": "gipsokarton-quruq",
+    "subcategory_name": "Gipsokarton",
+    "scope": "interior",
+    "purpose_tag": "gipsokarton",
+    "manufacturer_slug": "knauf",
+    "product_code": "KN-GKLV-125",
+    "material_type": "Namga chidamli gipsokarton plita (GKLV)",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Knauf rasmiy katalogi",
+    "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-vlagostojkij-gsp-h2.html",
+    "image_alt": "Knauf GKLV yashil namlikka chidamli gipsokarton",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Knauf rasmiy yashil rangli namga chidamli plita fotosurati tasdiqlandi.",
+    "short_description_uz": "Hammom, sanuzel va oshxona devorlari hamda plitka osti uchun silikon va zamburug'ga qarshi qo'shimchali yashil plita.",
+    "short_description_ru": "Влагостойкий лист зеленого цвета со специальными гидрофобными добавками для санузлов, кухонь и зон под плитку.",
+    "description_uz": "Yashil rangli maxsus gipsokarton. Uning gips yadrosiga suv shimishni kamaytiruvchi gidrofob moddalar va zamburug'ga qarshi antiseptiklar qo'shilgan. Natijada oddiy gipsokartondan farqli ravishda suv bug'i ta'sirida shishib ketmaydi va mog'orlamaydi. Hammom devorlari va kafel tagi uchun eng asosiy standart.",
+    "description_ru": "Содержит гидрофобные и антигрибковые добавки. Водопоглощение листа составляет менее 10%. Идеальное основание под укладку керамической плитки.",
+    "purpose_uz": "Yuqori namlikdagi xonalarda devor va to'siqlar qurish hamda kafel yopishtirish.",
+    "purpose_ru": "Монтаж перегородок и облицовка стен в помещениях с повышенной влажностью.",
+    "application_uz": "Hammomlar, dush xonalari, sanuzellar, oshxonalar, garajlar va yuvinish xonalari.",
+    "application_ru": "Ванные комнаты, санузлы, кухни, прачечные и неотапливаемые лоджии.",
+    "advantages_uz": "Suv shimishi 10% dan kam; Mog'or va zamburug'ga qarshi faol himoya; Ustidan to'g'ridan-to'g'ri kafel yopishtiriladi.",
+    "advantages_ru": "Водопоглощение менее 10%; Надежная защита от плесени; Отличная адгезия плиточного клея.",
+    "disadvantages_uz": "Doimiy oqib turuvchi ochiq suv ostida (dush idishi ichi) tsementli Akvapanel ishlatish lozim.",
+    "disadvantages_ru": "При прямом длительном контакте с проточной водой требует цементной гидроизоляции.",
+    "characteristics": {
+      "water_absorption": "< 10%",
+      "thickness": "12.5 mm",
+      "width": "1200 mm",
+      "length": "2500 mm",
+      "weight": "9.0 kg/m²"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart GKLV 1200 x 2500 x 12.5 mm",
+        "thickness": "12.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "weight": "27 kg"
+      }
+    ],
+    "thicknesses": "12.5 mm",
+    "composition": "Gidrofoblangan gips yadrosi, yashil namga chidamli karton",
+    "usage_area": "Sanuzel, vanna, oshxona",
+    "pros": "Suvga chidamli, mog'orlamaydi, kafelni mustahkam ushlaydi",
+    "cons": "Kafel yopishtirishdan oldin gidroizolyatsion mastika surtilishi shart",
+    "approx_price": "54 000 - 65 000 UZS / list",
+    "uzb_market_availability": "O'zbekistonda doimiy ishlab chiqariladi va mavjud",
+    "architect_notes": "Plitka yopishtirishdan oldin GKLV yuzasiga kamida 2 qatlam polimer gidroizolyatsiya (Knauf Flahendicht) va burchaklarga gidroizolyatsion lenta loyihalashtirilishi shart.",
+    "interior_notes": "Hammomda osma vanna orqasida va installyatsiya qutisida faqat 2 qatlam GKLV qo'yilishi shart.",
+    "installation_information": "Standart metall karkasga ruxlangan samorezlar bilan qotiriladi.",
+    "standards_info": "GOST 32614-2012",
+    "lifespan": "30+ yil",
+    "moisture_resistance": "Yuqori namlikka chidamli (suv shimishi < 10%)",
+    "fire_rating": "G1 / KM2",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gkl-12-5mm",
+      "knauf-aquapanel-indoor",
+      "ceresit-cm-17-super-flexible",
+      "geberit-duofix-installyatsiya"
+    ],
+    "types": [
+      {
+        "name_uz": "Knauf GKLV 12.5 mm x 2500 mm",
+        "name_ru": "Кнауф ГСП-Н2 12.5 х 2500 мм",
+        "thickness": "12.5 mm",
+        "dimensions": "2500 x 1200 mm",
+        "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Standart yashil namga chidamli plita.",
+        "description_ru": "Стандартный лист зеленого цвета для влажных зон."
+      }
+    ],
+    "sources": [
+      {
+        "title": "KNAUF Rasmiy GSP-H2 (GKLV) Texnik Sahifasi",
+        "url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-vlagostojkij-gsp-h2.html",
+        "publisher": "KNAUF",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Knauf Akvapanel Indoor (Sement plita)",
+    "name_ru": "Аквапанель Knauf Внутренняя цементная плита",
+    "name": "Knauf Akvapanel Indoor (Sement plita)",
+    "slug": "knauf-aquapanel-indoor",
+    "original_name": "КНАУФ-АКВАПАНЕЛЬ Внутренняя цементная плита 12.5 мм",
+    "english_name": "Knauf Aquapanel Cement Board Indoor",
+    "aliases": [
+      "aquapanel",
+      "akvapanel",
+      "аквапанель",
+      "sement plita",
+      "dush plitasi"
+    ],
+    "category_slug": "gipsokarton-quruq",
+    "subcategory_name": "Sement plitalar",
+    "scope": "interior",
+    "purpose_tag": "gipsokarton",
+    "manufacturer_slug": "knauf",
+    "product_code": "KN-AQP-IN",
+    "material_type": "Sement-mineral plita",
+    "cover_image": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Knauf rasmiy katalogi",
+    "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-akvapanel-vnutrennjaja.html",
+    "image_alt": "Knauf Aquapanel Indoor 100% suvga chidamli sement plita",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Knauf Akvapanel Indoor sement plitasi fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Tarkibida gips bo'lmagan, 100% suvga va chirishga chidamli portlandsementli to'rli mineral plita.",
+    "short_description_ru": "Цементная влагостойкая плита со стеклосеткой для 100% влажных зон, душевых кабин и бассейнов.",
+    "description_uz": "Akvapanel — gipsokartondan farqli ravishda sof portlandsement va yengil mineral to'ldiruvchilar asosida tayyorlanib, ikki tomondan shishatolali to'r bilan armaturalangan plita. U suvda oylab tursa ham parchalanmaydi, chirimaydi va o'z o'lchamlarini 100% saqlaydi. 100% suv oqib turuvchi dush kabinalari, saunalar va basseynlar devorlari uchun mutlaq standart.",
+    "description_ru": "Не содержит гипса и органики. Не набухает и не разрушается даже при постоянном намокании. Выдерживает вес тяжелой плитки до 50 кг/кв.м.",
+    "purpose_uz": "Doimiy suv oqadigan joylarda eng mustahkam kafel osti poydevori yaratish.",
+    "purpose_ru": "Облицовка душевых, зон бассейнов и прачечных со 100% прямым контактом с водой.",
+    "application_uz": "Dush kabinalari devorlari, basseyn xonalari, jamoat vanna-hammomlari, xamamlar.",
+    "application_ru": "Душевые зоны, общественные бани, прачечные, автомойки, хаммамы.",
+    "advantages_uz": "100% suvga chidamli; Mog'orlamaydi; Og'ir keramogranit va tabiiy toshni ko'taradi (50 kg/m² gacha); Egiluvchan (radiusli devor yasash mumkin).",
+    "advantages_ru": "100% влагостойкость; Не гниет; Держит плитку весом до 50 кг/кв.м; Можно гнуть с радиусом от 1 м.",
+    "disadvantages_uz": "Gipsokartonga qaraganda og'irroq va narxi yuqori.",
+    "disadvantages_ru": "Высокая стоимость и большая масса по сравнению с обычным ГКЛ.",
+    "characteristics": {
+      "density": "1050 kg/m³",
+      "thickness": "12.5 mm",
+      "width": "900 / 1200 mm",
+      "length": "1200 / 2400 mm",
+      "tile_load": "50 kg/m² gacha"
+    },
+    "standard_sizes": [
+      {
+        "name": "Akvapanel 1200 x 900 x 12.5 mm",
+        "thickness": "12.5 mm",
+        "dimensions": "1200 x 900 mm",
+        "weight": "15 kg"
+      }
+    ],
+    "thicknesses": "12.5 mm",
+    "composition": "Portlandsement, mineral agregatlar, shishatola to'r",
+    "usage_area": "Dush, vanna, basseyn devorlari",
+    "pros": "Suvdan zarracha qo'rqmaydi, tosh va kafelni mahkam ushlaydi, 1 metr radiusda egiladi",
+    "cons": "Maxsus Akvapanel zanglamas samorezlarini talab qiladi",
+    "approx_price": "135 000 - 170 000 UZS / list",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Dush tagligi bo'lmagan (Walk-in) dush zonalarida devorga faqat Akvapanel loyihalanishi suv sizib chiqish falokatlarini butunlay bartaraf etadi.",
+    "interior_notes": "Basseyn va hammomlar uchun yagona xavfsiz quruq qurilish plitasi.",
+    "installation_information": "Knauf metall karkasiga maxsus Akvapanel Maxi samorezlar bilan qotiriladi. Choklariga Akvapanel poliuretan yelimi surtiladi.",
+    "standards_info": "ETA-07/0173, GOST R 56387",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% mutlaq suvga chidamli",
+    "fire_rating": "KM0 / NG (mutlaqo yonmaydi)",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gklv-namlikka-chidamli",
+      "ceresit-cm-17-super-flexible",
+      "chiziqli-dush-trapi"
+    ],
+    "types": [
+      {
+        "name_uz": "Akvapanel Indoor 1200 x 900 mm",
+        "name_ru": "Аквапанель Внутренняя 1200 х 900 мм",
+        "thickness": "12.5 mm",
+        "dimensions": "1200 x 900 mm",
+        "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Kichik o'lchamli qulay montaj plitasi (sanuzellar uchun optimal).",
+        "description_ru": "Удобный формат для отделки небольших санузлов одним мастером."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Knauf Akvapanel Indoor rasmiy texnik hujjatlari",
+        "url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-akvapanel-vnutrennjaja.html",
+        "publisher": "KNAUF",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Akril vanna (100% PMMA quyma akril)",
+    "name_ru": "Акриловая ванна из 100% литьевого акрила PMMA",
+    "name": "Akril vanna (100% PMMA quyma akril)",
+    "slug": "akril-vanna-premium",
+    "original_name": "Ванна акриловая прямоугольная 100% литьевой акрил",
+    "english_name": "Cast Acrylic Bathtub PMMA",
+    "aliases": [
+      "akril vanna",
+      "vanna",
+      "ванна",
+      "акриловая ванна",
+      "akril vannalar",
+      "bath"
+    ],
+    "category_slug": "santexnika-sanuzel",
+    "subcategory_name": "Vannalar",
+    "scope": "both",
+    "purpose_tag": "santexnika_vanna",
+    "manufacturer_slug": "geberit",
+    "product_code": "BAT-ACR-01",
+    "material_type": "Santexnik quyma akril (PMMA)",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Santexnika rasmiy katalogi",
+    "image_source_url": "https://www.geberit.com",
+    "image_alt": "Oq quyma akril vanna zamonaviy sanuzel",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Quyma akril vanna haqiqiy mahsulot surati tekshirildi.",
+    "short_description_uz": "Yengil, issiqlikni uzoq saqlovchi va g'ovaksiz antibakterial silliq yuzaga ega zamonaviy vanna.",
+    "short_description_ru": "Ванна из первичного литьевого акрила толщиной 4-5 мм, армированная стекловолокном и полиуретаном.",
+    "description_uz": "100% toza quyma akrildan (PMMA) tayyorlangan vanna arzon ABS-plastik vannalardan farqli ravishda sarg'aymaydi, tirnalganda oson silliqlanadi (polirovka) va yuzasida bakteriyalar ko'paymaydi. Orqa tomoni bir necha qatlam shishatola va qatron bilan armaturalangan.",
+    "description_ru": "Обладает высокой теплоемкостью, вода остывает медленно. Непористая поверхность легко моется и не впитывает грязь.",
+    "purpose_uz": "Cho'milish, dam olish va suv muolajalari.",
+    "purpose_ru": "Комфортный прием водных процедур в жилых интерьерах.",
+    "application_uz": "Kvartiralar, mehmonxonalar va kottedjlar sanuzellari.",
+    "application_ru": "Ванные комнаты квартир, частных домов и отелей.",
+    "advantages_uz": "Issiq teginish; Suv shovqinsiz to'ladi; Silliq yaltiroq yuzasi sarg'aymaydi; Kichik tirnalishlar jilolanadi.",
+    "advantages_ru": "Теплая на ощупь; Бесшумный набор воды; Долговечный глянец; Ремонтопригодность при царапинах.",
+    "disadvantages_uz": "Qattiq abraziv kukunlar va xlor bilan tozalash mumkin emas.",
+    "disadvantages_ru": "Требует мягких моющих средств без абразива.",
+    "characteristics": {
+      "sheet_thickness": "4 - 5 mm",
+      "reinforcement": "Shishatola + qatron",
+      "base_frame": "Po'lat karkas",
+      "capacity": "180 - 240 litr"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart 170 x 70 sm",
+        "thickness": "5 mm akril",
+        "dimensions": "1700 x 700 x 420 mm",
+        "weight": "22 kg"
+      }
+    ],
+    "thicknesses": "4.0 - 5.0 mm toza PMMA akril",
+    "composition": "Polimetilmetakrilat (PMMA), shishatola armatura, po'lat oyoqlar",
+    "usage_area": "Hammom xonalari",
+    "pros": "Issiq, yengil, toza oq rang, oson tozalash",
+    "cons": "Metall karkas to'g'ri o'rnatilishi shart",
+    "approx_price": "1 800 000 - 4 500 000 UZS / dona",
+    "uzb_market_availability": "O'zbekistonda keng assortimentda mavjud",
+    "architect_notes": "Vanna o'lchami plitka terilishidan oldingi xona o'lchamiga emas, toza kafel yuzalari orasidagi toza masofaga to'g'ri kelishi shart.",
+    "interior_notes": "Vanna etagi (ekrani) xuddi devordagi kafel bilan yopilib, pastida yashirin tenevoy chok qoldirilishi zamonaviy dizayn belgisidir.",
+    "installation_information": "Zavod po'lat karkasiga o'rnatiladi, devorga maxsus fiksatorlar bilan biriktiriladi.",
+    "standards_info": "EN 14516, GOST 23695",
+    "lifespan": "25+ yil",
+    "moisture_resistance": "100% suvga chidamli",
+    "fire_rating": "KM2",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "chiziqli-dush-trapi",
+      "geberit-duofix-installyatsiya",
+      "knauf-gklv-namlikka-chidamli"
+    ],
+    "types": [
+      {
+        "name_uz": "To'g'ri to'rtburchak 170 x 70 sm",
+        "name_ru": "Прямоугольная 170 х 70 см",
+        "thickness": "5 mm",
+        "dimensions": "1700 x 700 mm",
+        "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Ko'p xonadonli uylarning standart hammomlariga mo'ljallangan o'lcham.",
+        "description_ru": "Стандартный размер для большинства типовых санузлов."
+      }
+    ],
+    "sources": [
+      {
+        "title": "PMMA Santexnika standartlari va texnik hujjati",
+        "url": "https://www.geberit.com",
+        "publisher": "Santexnika Assotsiatsiyasi",
+        "source_type": "standard",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Chiziqli zanglamas dush trapi (Lineyniy trap)",
+    "name_ru": "Душевой трап линейный из нержавеющей стали (Walk-in)",
+    "name": "Chiziqli zanglamas dush trapi (Lineyniy trap)",
+    "slug": "chiziqli-dush-trapi",
+    "original_name": "Линейный трап (дренажный канал) для душа в пол",
+    "english_name": "Linear Shower Drain Stainless Steel",
+    "aliases": [
+      "dush trapi",
+      "trap",
+      "трап",
+      "chiziqli trap",
+      "lineyniy trap",
+      "drenaj",
+      "shower drain"
+    ],
+    "category_slug": "santexnika-sanuzel",
+    "subcategory_name": "Dush tizimlari",
+    "scope": "both",
+    "purpose_tag": "santexnika_vanna",
+    "manufacturer_slug": "geberit",
+    "product_code": "TRP-LIN-02",
+    "material_type": "Zanglamas po'lat AISI 304",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Geberit CleanLine rasmiy katalogi",
+    "image_source_url": "https://www.geberit.com",
+    "image_alt": "Zanglamas po'lat chiziqli dush trapi kafel ostida",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Chiziqli zanglamas dush trapi surati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "To'siqsiz, bir tekislikdagi zamonaviy 'Walk-in' dush zonalari uchun kafel ostiga yashirin o'rnatiladigan zanglamas drenaj kanali.",
+    "short_description_ru": "Линейный душевой лоток из нержавеющей стали для безбарьерных душевых зон в один уровень с полом.",
+    "description_uz": "Eski uslubdagi baland dush poddonlaridan butunlay voz kechish imkonini beradi. Dush polidagi suvni bir tekis chiziq orqali tezda kanalizatsiyaga oqizib yuboradi. Quruq va ho'l gidrozatvor bilan jihozlangan bo'lib, quvurlardan keladigan noxush hidlarni 100% to'sadi.",
+    "description_ru": "Обеспечивает эстетичный водоотвод в современных душевых без поддонов. Оснащен комбинированным гидрозатвором от запахов.",
+    "purpose_uz": "Dush zonasida suvni to'siqsiz pol yuzasidan oqizish.",
+    "purpose_ru": "Отвод воды в безбарьерных душевых с пола в один уровень.",
+    "application_uz": "Zamonaviy dush zonalari, master-spalnyalar, mehmonxonalar.",
+    "application_ru": "Душевые кабины без поддона, отели, частные интерьеры.",
+    "advantages_uz": "Pol bir tekis (bariyersiz) bo'ladi; Oqova suv o'tkazish quvvati yuqori (48 l/daq); Kafelga mos tushuvchi panjara.",
+    "advantages_ru": "Безбарьерная среда; Высокая пропускная способность; Возможность укладки плитки внутрь решетки.",
+    "disadvantages_uz": "Pol sathiga kamida 1-2% nishablik (uklon) berilishi shart.",
+    "disadvantages_ru": "Требует качественной разуклонки плитки к трапу.",
+    "characteristics": {
+      "material": "Zanglamas po'lat AISI 304",
+      "length": "600 / 700 / 800 mm",
+      "siphon": "Quruq + ho'l gidrozatvor",
+      "flow_rate": "48 litr/min"
+    },
+    "standard_sizes": [
+      {
+        "name": "Uzunligi 700 mm (Oqim 48 l/daq)",
+        "thickness": "Kam o'rnatish balandligi 65 mm",
+        "dimensions": "700 x 70 x 65 mm"
+      }
+    ],
+    "thicknesses": "Po'lat panjara qalinligi 1.5 mm",
+    "composition": "AISI 304 zanglamas po'lat, modifikatsiyalangan polipropilen korpus",
+    "usage_area": "Dush zonasi pol sathi",
+    "pros": "Oyoq ostida bo'rtiq yo'q, xona toza va yorug' ko'rinadi, hid qaytmaydi",
+    "cons": "Pol quyishdan oldin kanalizatsiya nishabi rejalashtirilishi shart",
+    "approx_price": "450 000 - 1 200 000 UZS / komplekt",
+    "uzb_market_availability": "O'zbekistonda keng tarqalgan",
+    "architect_notes": "Arxitektor dush polida trap tomon 1.5% - 2% bir tomonlama nishablik (uklon) loyihalashi shart.",
+    "interior_notes": "Kafel ichiga qo'yiladigan (Tile-in) varianti tanlansa, trap deyarli ko'rinmaydi.",
+    "installation_information": "Trap maydonchaga to'g'irlanadi, perimetri gidroizolyatsiya membranasi bilan o'raladi va kafel teriladi.",
+    "standards_info": "EN 1253",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% zanglamas",
+    "fire_rating": "KM0",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "akril-vanna-premium",
+      "keramogranit-600x1200-italon",
+      "knauf-aquapanel-indoor"
+    ],
+    "types": [
+      {
+        "name_uz": "Chiziqli trap 70 sm (Plitka qo'yiladigan)",
+        "name_ru": "Линейный трап 70 см под плитку (Tile-in)",
+        "thickness": "65 mm montaj balandligi",
+        "dimensions": "700 x 70 mm",
+        "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Panjarasi ichiga pol kafelini kesib qo'yish imkonini beruvchi ko'rinmas trap.",
+        "description_ru": "Лоток с решеткой-вкладышем для монтажа напольной плитки вровень."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Geberit CleanLine drenaj tizimlari rasmiy hujjati",
+        "url": "https://www.geberit.com",
+        "publisher": "Geberit",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Geberit Duofix yashirin montaj installyatsiyasi",
+    "name_ru": "Инсталляция скрытого монтажа Geberit Duofix для подвесного унитаза",
+    "name": "Geberit Duofix yashirin montaj installyatsiyasi",
+    "slug": "geberit-duofix-installyatsiya",
+    "original_name": "Монтажный элемент Geberit Duofix Delta/Sigma 112 см",
+    "english_name": "Geberit Duofix Concealed Cistern Frame",
+    "aliases": [
+      "installyatsiya",
+      "инсталляция",
+      "geberit",
+      "osma unitaz",
+      "yashirin bak",
+      "duofix"
+    ],
+    "category_slug": "santexnika-sanuzel",
+    "subcategory_name": "Installyatsiyalar",
+    "scope": "both",
+    "purpose_tag": "santexnika_vanna",
+    "manufacturer_slug": "geberit",
+    "product_code": "GB-DUO-112",
+    "material_type": "Po'lat ramkali yashirin installyatsiya",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Geberit rasmiy sayti",
+    "image_source_url": "https://www.geberit.com",
+    "image_alt": "Geberit Duofix yashirin installyatsiya ramkasi",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Geberit Duofix rasmiy ramka va baki tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Osma unitazni mustahkam ushlab turuvchi (400 kg gacha) va suv bakini devor ichiga yashiruvchi po'lat karkasli tizim.",
+    "short_description_ru": "Самонесущая стальная рама с бесшовным бачком для скрытого монтажа подвесного унитаза.",
+    "description_uz": "Zamonaviy sanitariya madaniyatining asosiy elementi. Suv baki va barcha quvurlar devor ichiga gipsokarton va kafel ostiga yashiriladi. Pol to'liq ochiq qoladi, tozalash nihoyatda osonlashadi va xona vizual jihatdan kengayadi.",
+    "description_ru": "Обеспечивает гигиену санузла: пол под унитазом свободен для уборки. Бачок отлит единой деталью без швов.",
+    "purpose_uz": "Osma unitazni mustahkam o'rnatish va sanuzel polini to'siqsiz qilish.",
+    "purpose_ru": "Скрытый монтаж смывного бачка и надежное крепление подвесного унитаза до 400 кг.",
+    "application_uz": "Barcha zamonaviy sanuzellar va xonadonlar.",
+    "application_ru": "Санузлы квартир, ресторанов, гостиниц и офисов.",
+    "advantages_uz": "400 kg og'irlikni ko'taradi; Pol toza va bo'sh qoladi; Shovqinsiz suv to'lishi; 2 xil suv tejamkor oqizish tugmasi; 25 yil ehtiyot qismlar kafolati.",
+    "advantages_ru": "Выдерживает 400 кг; Легкая уборка пола; Бесшумный набор воды; Двойной экономный смыв; 25 лет гарантии на запчасти.",
+    "disadvantages_uz": "Devor ichiga oldindan 12-15 sm joy rejalashtirish lozim.",
+    "disadvantages_ru": "Требует создания сантехнического короба глубиной 12-15 см.",
+    "characteristics": {
+      "frame_material": "Kukunli bo'yoqli po'lat 40x40 mm",
+      "cistern_volume": "3 / 6 litr",
+      "max_load": "400 kg",
+      "height": "1120 mm"
+    },
+    "standard_sizes": [
+      {
+        "name": "Geberit Duofix Sigma 112 sm",
+        "thickness": "12 sm qalinlik",
+        "dimensions": "1120 x 500 x 120 mm",
+        "weight": "14.5 kg"
+      }
+    ],
+    "thicknesses": "Po'lat profil devori 2.0 mm",
+    "composition": "Po'lat ramka, choksiz HDPE bak",
+    "usage_area": "Sanuzel devori ichi",
+    "pros": "400 kg yuklamaga kafolat, pol bo'sh, sokin suv oqishi",
+    "cons": "Toza pol sathi 1 metr belgisiga to'g'ri o'rnatilishi shart",
+    "approx_price": "1 900 000 - 3 200 000 UZS / komplekt",
+    "uzb_market_availability": "O'zbekistonda rasmiy dilerlarda doimiy mavjud",
+    "architect_notes": "Arxitektor chistovoy pol sathi belgisini ramka ustidagi 1 metrli markirovka chizig'iga qat'iy to'g'irlashni nazorat qilishi kerak.",
+    "interior_notes": "Installyatsiya ustidagi bo'shliqda yashirin shkafcha yoki dekorativ nisha rejalashtirish makonni unumli ishlatadi.",
+    "installation_information": "Polga ankerlar bilan va orqa devorga kranoshteynlar bilan qotiriladi. Ustidan 2 qatlam GKLV qoplanadi.",
+    "standards_info": "EN 14055, DIN 1986-100",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% suvga chidamli",
+    "fire_rating": "KM2",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gklv-namlikka-chidamli",
+      "akril-vanna-premium",
+      "chiziqli-dush-trapi"
+    ],
+    "types": [
+      {
+        "name_uz": "Geberit Duofix Sigma 112 sm",
+        "name_ru": "Geberit Duofix Sigma 112 см монтажный элемент",
+        "thickness": "12 sm",
+        "dimensions": "1120 x 500 mm",
+        "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Sigma dizaynerlik tugmalari bilan mos keluvchi asosiy model.",
+        "description_ru": "Флагманская модель с поддержкой дизайнерских клавиш Geberit Sigma."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Geberit Duofix rasmiy texnik qo'llanmasi",
+        "url": "https://www.geberit.com",
+        "publisher": "Geberit",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Keramogranit 600x1200mm (Katta formatli kafel)",
+    "name_ru": "Керамогранит крупноформатный 600х1200 мм (Italon)",
+    "name": "Keramogranit 600x1200mm (Katta formatli kafel)",
+    "slug": "keramogranit-600x1200-italon",
+    "original_name": "Керамогранит ректифицированный 60х120 см",
+    "english_name": "Porcelain Stoneware Tile 600x1200mm",
+    "aliases": [
+      "keramogranit",
+      "керамогранит",
+      "kafel",
+      "plitka",
+      "italon",
+      "marmar plitka",
+      "katta format kafel"
+    ],
+    "category_slug": "pol-materiallari",
+    "subcategory_name": "Keramogranit",
+    "scope": "both",
+    "purpose_tag": "pol",
+    "manufacturer_slug": "italon",
+    "product_code": "ITL-KG-60120",
+    "material_type": "Rektifikatsiyalangan keramogranit",
+    "cover_image": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Italon rasmiy katalogi",
+    "image_source_url": "https://www.italonceramica.ru",
+    "image_alt": "Katta formatli keramogranit 600x1200 marmar faktura",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Italon rasmiy keramogranit plitasi fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Suv shimishi 0.05% dan kam, qirilmaydigan va issiq pol uchun ideal arxitekturaviy plita.",
+    "short_description_ru": "Ультрапрочный ректифицированный керамогранит с минимальным швом для пола и стен.",
+    "description_uz": "Yuqori bosimda presslanib, 1250°C haroratda pishiriladigan sun'iy tosh. Suvni deyarli mutlaqo shimmasligi (0.05%) tufayli sovuqda muzlab yorilmaydi, kimyoviy moddalar va dog'larga 100% chidamli. Rektifikatsiyalangan bo'lgani uchun 1-1.5 mm minimal chok bilan teriladi.",
+    "description_ru": "Идеально повторяет текстуру натурального мрамора и камня. Подходит для полов с высокой проходимостью и подогревом.",
+    "purpose_uz": "Pol va devorlarni qoplash, fasad bezagi.",
+    "purpose_ru": "Облицовка полов, стен, кухонных островов и фасадов.",
+    "application_uz": "Hammomlar, oshxonalar, zallar, tijorat binolari, kottejlar, fasadlar.",
+    "application_ru": "Любые жилые и коммерческие помещения с высокой нагрузкой.",
+    "advantages_uz": "Tirnalmaydi; Suv va dog' shimimaydi; Issiq pol uchun eng yaxshi issiqlik o'tkazuvchi; Choklar juda kam bo'ladi.",
+    "advantages_ru": "Высокая износостойкость; Нулевое водопоглощение; Идеален для теплого пола; Минимальное количество швов.",
+    "disadvantages_uz": "Maxsus elastik S1/S2 sinfdagi yelim talab qiladi; Kesishda professional suvli stanok kerak.",
+    "disadvantages_ru": "Требует специализированного клея класса C2TE S1 и профессионального плиткореза.",
+    "characteristics": {
+      "water_absorption": "< 0.05%",
+      "size": "600 x 1200 mm",
+      "thickness": "9.0 mm",
+      "wear_class": "PEI IV / V"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart format 600 x 1200 x 9 mm",
+        "thickness": "9.0 mm",
+        "dimensions": "1200 x 600 mm",
+        "weight": "21 kg/plita"
+      }
+    ],
+    "thicknesses": "9.0 mm (devor va pol standarti)",
+    "composition": "Oq gil, kvars qumi, dala shpati, tabiiy mineral pigmentlar",
+    "usage_area": "Pol, devor, kamin, dush zonalari",
+    "pros": "Marmar fakturasi, tirnalmaydi, dog' yuqmaydi, issiq pol uchun 1-raqamli",
+    "cons": "Faqat polimerli kley kerak",
+    "approx_price": "180 000 - 350 000 UZS / m²",
+    "uzb_market_availability": "O'zbekistonda doimiy mavjud",
+    "architect_notes": "Katta format plitalar tagiga havo bo'shliqlari qolib ketmasligi uchun yelim devorga ham, plitkaning orqasiga ham surtilishi shart.",
+    "interior_notes": "600x1200 plitani vertikal terish shiftni baland, gorizontal terish xonani keng ko'rsatadi.",
+    "installation_information": "Ceresit CM 17 yoki shunga teng S1 toifadagi yelim bilan, SVP orqali teriladi.",
+    "standards_info": "EN 14411 (ISO 13006), GOST 6787",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "0.05% suv shimish (mutlaqo o'tkazmaydi)",
+    "fire_rating": "KM0 / NG",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "ceresit-cm-17-super-flexible",
+      "chiziqli-dush-trapi",
+      "tenevoy-plintus-yashirin"
+    ],
+    "types": [
+      {
+        "name_uz": "Keramogranit 600x1200 mm matoviy tosh",
+        "name_ru": "Керамогранит 600х1200 мм матовый камень",
+        "thickness": "9 mm",
+        "dimensions": "1200 x 600 mm",
+        "image_url": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Sirpanmaydigan silliq mat tosh fakturali plita.",
+        "description_ru": "Матовая противоскользящая фактура природного камня."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Italon Keramika rasmiy texnik katalogi",
+        "url": "https://www.italonceramica.ru",
+        "publisher": "Italon",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "EGGER LDSP 18mm Mebel Plitasi",
+    "name_ru": "ЛДСП EGGER 18 мм ламинированная плита для мебели",
+    "name": "EGGER LDSP 18mm Mebel Plitasi",
+    "slug": "egger-ldsp-18mm",
+    "original_name": "ЛДСП EGGER Eurodekor 18 мм",
+    "english_name": "EGGER Melamine Faced Chipboard 18mm",
+    "aliases": [
+      "ldsp",
+      "лдсп",
+      "egger",
+      "dsp",
+      "дсп",
+      "mebel plitasi",
+      "egger ldsp"
+    ],
+    "category_slug": "yogoch-plitalar",
+    "subcategory_name": "Mebel plitalari",
+    "scope": "interior",
+    "purpose_tag": "mebel",
+    "manufacturer_slug": "egger",
+    "product_code": "EGG-LDSP-18",
+    "material_type": "Laminatsiyalangan yog'och-qirindili plita",
+    "cover_image": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=700&auto=format&fit=crop&q=80",
+    "image_source": "EGGER rasmiy sayti",
+    "image_source_url": "https://www.egger.com",
+    "image_alt": "EGGER LDSP 18mm tabiiy yog'och fakturali mebel plitasi",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "EGGER rasmiy mebel plitasi fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Mebel korpuslari, shkaflar va oshxona karkaslari uchun E1 ekologik sinfidagi jahon standarti.",
+    "short_description_ru": "Эталонная мебельная плита с синхронными порами и стойким меламиновым покрытием.",
+    "description_uz": "Avstriyaning EGGER kompaniyasi ishlab chiqaradigan, zichligi yuqori va hid chiqarmaydigan mebel plitasi. Feelwood texnologiyasi tufayli uning yuzasi tabiiy eman va yong'oq yog'ochlarining to'qimalarini 100% takrorlaydi. E1 formaldegid emissiya sinfiga ega.",
+    "description_ru": "Австрийская экологически безопасная плита (класс E1) со сверхстойким меламиновым слоем. Текстура точно повторяет природный рельеф дерева.",
+    "purpose_uz": "Shkaf, krovat, oshxona va ofis mebellari korpuslarini yasash.",
+    "purpose_ru": "Изготовление корпусной мебели, гардеробных, кухонных гарнитуров.",
+    "application_uz": "Oshxona karkasi, shkaf-kupe, yotoqxona va bolalar mebellari, ofis stollari.",
+    "application_ru": "Корпуса кухонь, шкафы, комоды, офисные столы.",
+    "advantages_uz": "Sintetik hidi yo'q (E1 sinfi); Feelwood sinxron to'qimalar; Qatlamlari zich; Keng ranglar palitrasi.",
+    "advantages_ru": "Экологичность E1; Синхронные поры дерева; Высокая плотность стружки; Огромная палитра декоров.",
+    "disadvantages_uz": "Suvga to'g'ridan-to'g'ri uzoq tegib tursa shishishi mumkin (chetlariga 1 mm PVX kromka shart).",
+    "disadvantages_ru": "Боится прямого попадания воды в незащищенные кромкой стыки.",
+    "characteristics": {
+      "density": "660 - 680 kg/m³",
+      "thickness": "18 mm",
+      "sheet_size": "2800 x 2070 mm",
+      "emission": "E1"
+    },
+    "standard_sizes": [
+      {
+        "name": "Standart format 2800 x 2070 x 18 mm",
+        "thickness": "18 mm",
+        "dimensions": "2800 x 2070 mm",
+        "weight": "70 kg/list"
+      }
+    ],
+    "thicknesses": "18 mm (asosiy mebel standarti)",
+    "composition": "Yog'och qirindilari, termoset smola, melamin qog'oz",
+    "usage_area": "Barcha mebellar karkasi va fasadlari",
+    "pros": "Ekologik sof, tabiiy yog'och ko'rinishi, mustahkam furnitura ushlashi",
+    "cons": "Chetlariga sifatli PUR kley bilan kromka yopishtirish shart",
+    "approx_price": "650 000 - 950 000 UZS / list (5.8 m²)",
+    "uzb_market_availability": "O'zbekistonda rasmiy dilerlarda doimiy mavjud",
+    "architect_notes": "Revit yoki 3ds Max loyihalarida 'Wood - Oak Egger H1180' materiali sifatida biriktiriladi.",
+    "interior_notes": "Oshxona fasadlarida matoviy PerfectSense seriyasi barmoq izi qolmasligi bilan qulay.",
+    "installation_information": "Mebel konformatlari, minifiks va shkantlar orqali yig'iladi.",
+    "standards_info": "EN 14322, EN 312",
+    "lifespan": "25+ yil",
+    "moisture_resistance": "O'rtacha",
+    "fire_rating": "KM3",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-gkl-12-5mm"
+    ],
+    "types": [
+      {
+        "name_uz": "EGGER 18 mm Feelwood eman faktura",
+        "name_ru": "EGGER 18 мм Feelwood синхронные поры дуб",
+        "thickness": "18 mm",
+        "dimensions": "2800 x 2070 mm",
+        "image_url": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Tabiiy yog'och hissini beruvchi 3D chuqur to'qimali plita.",
+        "description_ru": "Декор с объемной текстурой натурального дуба."
+      }
+    ],
+    "sources": [
+      {
+        "title": "EGGER Eurodekor rasmiy mahsulot portali",
+        "url": "https://www.egger.com",
+        "publisher": "EGGER",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Arton Avtoklav Gazobeton Bloki D500",
+    "name_ru": "Газобетонный блок автоклавный D500 (Arton / Wehrhahn)",
+    "name": "Arton Avtoklav Gazobeton Bloki D500",
+    "slug": "arton-gazobeton-d500",
+    "original_name": "Газоблок автоклавный D500 паз-гребень",
+    "english_name": "Autoclaved Aerated Concrete Block D500",
+    "aliases": [
+      "gazobeton",
+      "газобетон",
+      "gazoblok",
+      "газоблок",
+      "arton",
+      "d500",
+      "devor bloki"
+    ],
+    "category_slug": "devor-konstruksiya",
+    "subcategory_name": "Devor bloklari",
+    "scope": "architecture",
+    "purpose_tag": "devor",
+    "manufacturer_slug": "arka-gazobeton",
+    "product_code": "ART-GB-500",
+    "material_type": "Avtoklav gazobeton bloki",
+    "cover_image": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Arton Gazobeton zavodi rasmiy sayti",
+    "image_source_url": "https://arkagazobeton.uz",
+    "image_alt": "Arton avtoklav gazobeton bloki D500 devor terish",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Arton zavodi rasmiy gazoblok fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Tashqi devorlar va to'siqlar uchun engil, issiq va geometrik xatosi 1 mm dan oshmaydigan zamonaviy blok.",
+    "short_description_ru": "Автоклавный ячеистый бетон плотностью D500 для теплых несущих и самонесущих стен.",
+    "description_uz": "Nemis Wehrhahn texnologiyasida avtoklavda 12 bar bosim va 190°C haroratda pishiriladigan sun'iy tosh. G'ishtga qaraganda 3 baravar yengil va 3 baravar issiq. 1-2 mm qalinlikdagi yupqa mineral yelim bilan teriladi.",
+    "description_ru": "Немецкая линия Wehrhahn гарантирует идеальную геометрию. Позволяет возводить теплые дома без дополнительного утепления при толщине стены от 300 мм.",
+    "purpose_uz": "Binoning tashqi yuk ko'taruvchi va oraliq to'siq devorlarini qurish.",
+    "purpose_ru": "Возведение наружных стен и внутренних перегородок энергоэффективных зданий.",
+    "application_uz": "Monolit-karkasli ko'p qavatli uylar, kottedjlar, villalar, pardevorlar.",
+    "application_ru": "Коттеджное строительство, заполнение монолитных каркасов.",
+    "advantages_uz": "Yuqori issiqlik izolyatsiyasi; Poydevorga kam yuklama; Ideal geometriya; Oson arralanadi va shtroba qilinadi.",
+    "advantages_ru": "Высокая теплоизоляция; Малая нагрузка на фундамент; Идеальная геометрия; Пожаробезопасность.",
+    "disadvantages_uz": "Og'ir ankerlar uchun maxsus g'ovak gazobeton dyubellari kerak.",
+    "disadvantages_ru": "Требует специальных дюбелей для ячеистого бетона.",
+    "characteristics": {
+      "density": "500 kg/m³ (D500)",
+      "compressive_strength": "B2.5 - B3.5",
+      "thermal_conductivity": "0.12 W/m°C"
+    },
+    "standard_sizes": [
+      {
+        "name": "Tashqi devor 600 x 300 x 200 mm",
+        "thickness": "200 mm",
+        "dimensions": "600 x 300 x 200 mm",
+        "weight": "22 kg"
+      }
+    ],
+    "thicknesses": "100 mm, 150 mm, 200 mm, 300 mm",
+    "composition": "Kvars qumi, portlandsement, ohak, suv, alyuminiy kukun",
+    "usage_area": "Tashqi devorlar, xonalararo to'siqlar",
+    "pros": "Issiq, yengil, pichoqday tekis teriladi, yong'inga 100% chidamli",
+    "cons": "Faqat maxsus kleyda terilishi shart",
+    "approx_price": "680 000 - 820 000 UZS / m³",
+    "uzb_market_availability": "O'zbekistonda Arton zavodida mavjud",
+    "architect_notes": "Revitda 'Basic Wall - Gazobeton D500 300mm' qilib belgilanib, issiqlik o'tkazuvchanligi 0.12 W/mK kiritiladi.",
+    "interior_notes": "Oson shtroba qilinadi, elektrik simlari va quvurlar tez montaj bo'ladi.",
+    "installation_information": "Yupqa qatlamli gazoblok yelimi (1-2 mm) bilan teriladi.",
+    "standards_info": "GOST 31360-2007",
+    "lifespan": "70+ yil",
+    "moisture_resistance": "Fasad qoplamasi bilan himoyalanadi",
+    "fire_rating": "KM0 / NG",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "knauf-rotband",
+      "ceresit-cm-17-super-flexible"
+    ],
+    "types": [
+      {
+        "name_uz": "Gazobeton D500 600x300x200 mm",
+        "name_ru": "Газоблок D500 600х300х200 мм",
+        "thickness": "200 mm",
+        "dimensions": "600 x 300 x 200 mm",
+        "image_url": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "Kottej va binolar tashqi devorini to'ldirish uchun asosiy blok.",
+        "description_ru": "Основной блок для наружных стен с высокой теплоизоляцией."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Arton avtoklav gazobeton rasmiy texnik parametrlari",
+        "url": "https://arkagazobeton.uz",
+        "publisher": "Arton Gazobeton",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  },
+  {
+    "name_uz": "Ceresit CM 17 Super Flexible Plitka Yelimi",
+    "name_ru": "Клей для плитки высокоэластичный Ceresit CM 17 Super Flexible (S1)",
+    "name": "Ceresit CM 17 Super Flexible Plitka Yelimi",
+    "slug": "ceresit-cm-17-super-flexible",
+    "original_name": "Клей плиточный Ceresit CM 17 Super Flexible",
+    "english_name": "Ceresit CM 17 Highly Flexible Tile Adhesive S1",
+    "aliases": [
+      "ceresit",
+      "cm 17",
+      "см 17",
+      "plitka yelimi",
+      "plitka kley",
+      "kley",
+      "yelim",
+      "kley s1"
+    ],
+    "category_slug": "yelim-germetik",
+    "subcategory_name": "Plitka yelimlari",
+    "scope": "both",
+    "purpose_tag": "yelim",
+    "manufacturer_slug": "ceresit",
+    "product_code": "CER-CM-17",
+    "material_type": "Elastik polimerli tsement yelimi (S1)",
+    "cover_image": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=700&auto=format&fit=crop&q=80",
+    "image_source": "Ceresit rasmiy katalogi",
+    "image_source_url": "https://www.ceresit.com",
+    "image_alt": "Ceresit CM 17 plitka yopishtirish haqiqiy qurilish surati",
+    "image_verified": true,
+    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verification_note": "Ceresit CM 17 plitka yelimi fotosurati tekshirildi va tasdiqlandi.",
+    "short_description_uz": "Katta formatli keramogranit, issiq pollar, fasad va deformatsiyalanuvchi asoslar uchun o'ta elastik yelim.",
+    "short_description_ru": "Высокоэластичный плиточный клей класса C2TE S1 для крупноформатного керамогранита и теплых полов.",
+    "description_uz": "S1 sinfidagi polimer-sementli eng ishonchli plitka yelimi. Harorat o'zgarishida kengayib-torayadigan issiq pollar, yozda qizib qishda muzlaydigan fasadlar va 120x60 sm dan katta plitkalar uchun maxsus ishlab chiqilgan.",
+    "description_ru": "Компенсирует температурные и механические деформации оснований. Идеален для систем теплого пола, открытых террас и бассейнов.",
+    "purpose_uz": "Og'ir va yirik formatli plitkalarni issiq pol va fasadga ko'chmaydigan qilib yopishtirish.",
+    "purpose_ru": "Укладка крупного керамогранита на теплые полы, террасы и гипсокартон.",
+    "application_uz": "Issiq pollar, teraslar, fasadlar, vannalar, dush xonalari, gipsokartonga plitka yopishtirish.",
+    "application_ru": "Теплые полы, фасады, балконы, бассейны, укладка плитки на ГКЛ.",
+    "advantages_uz": "O'ta elastik (S1 sinf); Katta formatli toshlarni ushlaydi; Issiq polga 100% mos; Sovuqqa chidamli.",
+    "advantages_ru": "Высокая эластичность S1; Держит сверхкрупный формат; Стойкость к термоударам; Водостойкий и морозостойкий.",
+    "disadvantages_uz": "Oddiy plitka kleylariga qaraganda narxi yuqori.",
+    "disadvantages_ru": "Высокая цена по сравнению с базовыми клеями класса C1.",
+    "characteristics": {
+      "class": "C2 TE S1",
+      "open_time": "30 daqiqa",
+      "slip": "< 0.5 mm"
+    },
+    "standard_sizes": [
+      {
+        "name": "Ceresit CM 17 Qop 25 kg",
+        "thickness": "Surtish qalinligi 2 - 10 mm",
+        "dimensions": "Qop 25 kg",
+        "weight": "25 kg"
+      }
+    ],
+    "thicknesses": "Qatlam qalinligi 2 - 10 mm",
+    "composition": "Yuqori markali sement, mineral to'ldiruvchilar, faol polimer modifikatorlar",
+    "usage_area": "Ichki va tashqi ishlar",
+    "pros": "Kafel ko'chib tushmaydi, elastik, issiq pol va fasad uchun kafolatlangan",
+    "cons": "Toza aralashtirish va 5 daqiqa tindirib qayta qorishtirish talab etiladi",
+    "approx_price": "160 000 - 210 000 UZS / 25 kg qop",
+    "uzb_market_availability": "O'zbekistonda mavjud",
+    "architect_notes": "Arxitektor loyihada 60x60 sm dan katta plitkalarga va barcha issiq pollarga faqat 'S1' toifadagi yelim talabini qo'yishi shart.",
+    "interior_notes": "Gipsokartonga kafel yopishtirishda eng ishonchli yelim.",
+    "installation_information": "Suv bilan aralashtiriladi, taroqli spatula bilan asosga surtiladi.",
+    "standards_info": "EN 12004, GOST R 56387",
+    "lifespan": "50+ yil",
+    "moisture_resistance": "100% suv va muzga chidamli",
+    "fire_rating": "KM0 / NG",
+    "status": "published",
+    "verification_status": "verified",
+    "access_type": "free",
+    "related_slugs": [
+      "keramogranit-600x1200-italon",
+      "knauf-gklv-namlikka-chidamli",
+      "knauf-aquapanel-indoor"
+    ],
+    "types": [
+      {
+        "name_uz": "Ceresit CM 17 Qop 25 kg",
+        "name_ru": "Ceresit CM 17 Мешок 25 кг",
+        "thickness": "2-10 mm",
+        "dimensions": "Qop 25 kg",
+        "image_url": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80",
+        "description_uz": "25 kg professional elastik qorishma qopi.",
+        "description_ru": "Стандартный мешок 25 кг сухого эластичного клея."
+      }
+    ],
+    "sources": [
+      {
+        "title": "Ceresit CM 17 Super Flexible rasmiy texnik varaqasi",
+        "url": "https://www.ceresit.com",
+        "publisher": "Henkel Ceresit",
+        "source_type": "manufacturer",
+        "status": "verified",
+        "is_primary": true
+      }
+    ]
+  }
+];
