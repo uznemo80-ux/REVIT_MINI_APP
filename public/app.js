@@ -1262,7 +1262,7 @@ const DEFAULT_MATERIALS = [
     title: "MDF (O'rta zichlikdagi yog'och tolali plita)",
     category: "Mebel",
     sub_category: "MDF",
-    image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80",
+    image_url: "https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=800&auto=format&fit=crop&q=80",
     short_desc: "Frezalash, bo'yash va profilli fasadlar tayyorlash uchun ideal zich va silliq plita.",
     what_is_it: "MDF (Medium Density Fibreboard) — mayda yog'och tolalarini tabiiy lignin va parafin bilan yuqori bosimda qizdirib tayyorlanadigan monolit material. Qirindi o'rniga nozik changsimon tolalardan iborat bo'lgani sababli g'ovaksiz va o'ta silliq yuzaga ega.",
     dimensions: "Plita o'lchami: 2800 x 2070 mm, 2440 x 1220 mm. Qalinliklari: 6, 8, 10, 16, 18, 19, 22, 25, 30 mm.",
@@ -1279,7 +1279,7 @@ const DEFAULT_MATERIALS = [
     title: "Gazoblok (Avtoklav gazobeton D500)",
     category: "Devor",
     sub_category: "Gazoblok",
-    image_url: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=800&auto=format&fit=crop&q=80",
+    image_url: "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=800&auto=format&fit=crop&q=80",
     short_desc: "Tashqi devorlar va xonalararo to'siqlar uchun engil, issiq va aniq qurilish bloki.",
     what_is_it: "Gazoblok — kvars qumi, sement, ohak, suv va alyuminiy kukuni aralashmasidan tayyorlanib, avtoklavda 12 atmosfera bosimi va 190°C bug' ostida pishiriladigan g'ovakli sun'iy tosh.",
     dimensions: "Uzunligi: 600 mm, Balandligi: 200, 250, 300 mm. Qalinligi: 100, 120, 150 mm (pardevor), 200, 250, 300, 400 mm (tashqi devor).",
@@ -1296,7 +1296,7 @@ const DEFAULT_MATERIALS = [
     title: "Penoblok (Ko'pikli beton blok)",
     category: "Devor",
     sub_category: "Penoblok",
-    image_url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80",
+    image_url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
     short_desc: "Sement va ko'pik aralashmasidan tabiiy sharoitda quriydigan issiqlik saqlovchi blok.",
     what_is_it: "Penoblok — sement-qum qorishmasiga organik yoki sintetik ko'pikturgich qo'shib, avtoklavsiz tabiiy qotish orqali ishlab chiqariladigan engil beton bloki.",
     dimensions: "600 x 300 x 200 mm, 600 x 300 x 100 mm.",
@@ -1330,7 +1330,7 @@ const DEFAULT_MATERIALS = [
     title: "Gipsokarton GKLV (Namlikka chidamli)",
     category: "Shift",
     sub_category: "Gipsokarton",
-    image_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+    image_url: "https://media.knauf.com/a/XgtGrzJJqhxmeDRwrMsXDA?fit=wrap&fmt=webp&hei=400",
     short_desc: "Shiftlar, figuriy pataloklar va pardevorlar uchun yashil rangli namlikka chidamli list.",
     what_is_it: "GKLV — ikki qavat maxsus ishlov berilgan karton orasiga gidrofob qo'shimchalar qo'shilgan gips yadrosi joylashtirilgan list. Rangi doimo och yashil bo'ladi.",
     dimensions: "Standart o'lcham: 2500 x 1200 mm (maydoni 3 m²), Qalinliklari: 9.5 mm (shift), 12.5 mm (devor).",
@@ -1661,9 +1661,10 @@ async function renderPdfSlide(canvasId, driveId, rawPdfUrl, pageNum) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || canvas.dataset.rendered === "true") return;
 
+  const authParam = initData ? `&auth=${encodeURIComponent(initData)}` : '';
   const proxyUrl = driveId
-    ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}`
-    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
+    ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}${authParam}`
+    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}${authParam}`;
 
   // Agar avvalgi chizish davom etayotgan bo'lsa, bekor qilamiz
   if (canvas._renderTask) {
@@ -2064,9 +2065,10 @@ async function renderFullscreenHighResCanvas(slide, force = false) {
   if (!canvas || !slide) return;
 
   const rawPdfUrl = slide.pdfUrl || "";
+  const authParam = initData ? `&auth=${encodeURIComponent(initData)}` : '';
   const proxyUrl = slide.driveId
-    ? `/api/pdf-proxy?id=${slide.driveId}`
-    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}`;
+    ? `/api/pdf-proxy?id=${encodeURIComponent(slide.driveId)}${authParam}`
+    : `/api/pdf-proxy?url=${encodeURIComponent(rawPdfUrl)}${authParam}`;
 
   if (force) {
     pdfDocPromiseCache.delete(proxyUrl);
@@ -2267,7 +2269,8 @@ async function inspectShowcasePdf() {
     try {
       const driveId = extractGoogleDriveId(url);
       if (window.pdfjsLib && driveId) {
-        const doc = await window.pdfjsLib.getDocument(`/api/pdf-proxy?id=${driveId}`).promise;
+        const authParam = initData ? `&auth=${encodeURIComponent(initData)}` : '';
+        const doc = await window.pdfjsLib.getDocument(`/api/pdf-proxy?id=${encodeURIComponent(driveId)}${authParam}`).promise;
         currentShowcaseTotalSheets = doc.numPages;
         initSheetSelector("", doc.numPages);
         if (statusEl) {
@@ -8184,9 +8187,10 @@ async function openBookReader(bookIdOrObj, initialPage) {
   if (!pdfUrl) return showAlert("Kitob fayli mavjud emas.");
 
   const driveId = extractGoogleDriveId(pdfUrl);
+  const authParam = initData ? `&auth=${encodeURIComponent(initData)}` : '';
   libReaderProxyUrl = driveId
-    ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}`
-    : `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`;
+    ? `/api/pdf-proxy?id=${encodeURIComponent(driveId)}${authParam}`
+    : `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}${authParam}`;
 
   libReaderTitle = book.title || "Kitob Mutolaasi";
 

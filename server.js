@@ -219,6 +219,25 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_started_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_revoked_at TIMESTAMPTZ');
+    try {
+      await pool.query(`
+        UPDATE construction_materials 
+        SET image_url = 'https://media.knauf.com/a/XgtGrzJJqhxmeDRwrMsXDA?fit=wrap&fmt=webp&hei=400' 
+        WHERE sub_category = 'Gipsokarton' OR title ILIKE '%gipsokarton%';
+
+        UPDATE construction_materials 
+        SET image_url = 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=800&auto=format&fit=crop&q=80' 
+        WHERE sub_category = 'Gazoblok' OR title ILIKE '%gazoblok%';
+
+        UPDATE construction_materials 
+        SET image_url = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80' 
+        WHERE sub_category = 'Penoblok' OR title ILIKE '%penoblok%';
+
+        UPDATE construction_materials 
+        SET image_url = 'https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=800&auto=format&fit=crop&q=80' 
+        WHERE sub_category = 'MDF' OR title ILIKE '%mdf%';
+      `);
+    } catch (matUpErr) {}
     await pool.query(`
       UPDATE users 
       SET access_expires_at = access_until,
@@ -608,7 +627,7 @@ async function initExtendedTables() {
           title: "MDF (O'rta zichlikdagi yog'och tolali plita)",
           category: "Mebel",
           sub_category: "MDF",
-          image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80",
+          image_url: "https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=800&auto=format&fit=crop&q=80",
           short_desc: "Frezalash, bo'yash va profilli fasadlar tayyorlash uchun ideal zich va ekologik toza mebel plitasi.",
           what_is_it: "MDF (Medium Density Fibreboard) — mayda yog'och tolalarini tabiiy lignin va parafin bilan yuqori bosimda qizdirib tayyorlanadigan monolit material. Qirindi o'rniga nozik changsimon tolalardan iborat bo'lgani sababli g'ovaksiz va o'ta silliq yuzaga ega.",
           dimensions: "Plita o'lchami: 2800 x 2070 mm, 2440 x 1220 mm. Qalinliklari: 6, 8, 10, 16, 18, 19, 22, 25, 30 mm.",
@@ -624,7 +643,7 @@ async function initExtendedTables() {
           title: "Gazoblok (Avtoklav gazobeton D500)",
           category: "Devor",
           sub_category: "Gazoblok",
-          image_url: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=800&auto=format&fit=crop&q=80",
+          image_url: "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=800&auto=format&fit=crop&q=80",
           short_desc: "Tashqi devorlar va xonalararo to'siqlar uchun engil, issiq va geometrik aniq qurilish bloki.",
           what_is_it: "Gazoblok — kvars qumi, sement, ohak, suv va alyuminiy kukuni aralashmasidan tayyorlanib, avtoklavda 12 atmosfera bosimi va 190°C bug' ostida pishiriladigan g'ovakli sun'iy tosh.",
           dimensions: "Uzunligi: 600 mm, Balandligi: 200, 250, 300 mm. Qalinligi: 100, 120, 150 mm (pardevor), 200, 250, 300, 400 mm (tashqi devor).",
@@ -640,7 +659,7 @@ async function initExtendedTables() {
           title: "Penoblok (Ko'pikli beton blok)",
           category: "Devor",
           sub_category: "Penoblok",
-          image_url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=800&auto=format&fit=crop&q=80",
+          image_url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
           short_desc: "Sement va ko'pik aralashmasidan tabiiy sharoitda quriydigan issiqlik saqlovchi blok.",
           what_is_it: "Penoblok — sement-qum qorishmasiga organik yoki sintetik ko'pikturgich qo'shib, avtoklavsiz tabiiy qotish orqali ishlab chiqariladigan engil beton bloki.",
           dimensions: "600 x 300 x 200 mm, 600 x 300 x 100 mm.",
@@ -672,7 +691,7 @@ async function initExtendedTables() {
           title: "Gipsokarton GKLV (Namlikka chidamli)",
           category: "Shift",
           sub_category: "Gipsokarton",
-          image_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+          image_url: "https://media.knauf.com/a/XgtGrzJJqhxmeDRwrMsXDA?fit=wrap&fmt=webp&hei=400",
           short_desc: "Shiftlar, figuriy pataloklar va pardevorlar uchun yashil rangli namlikka chidamli list.",
           what_is_it: "GKLV — ikki qavat maxsus ishlov berilgan karton orasiga gidrofob qo'shimchalar qo'shilgan gips yadrosi joylashtirilgan list. Rangi doimo och yashil bo'ladi.",
           dimensions: "Standart o'lcham: 2500 x 1200 mm (maydoni 3 m²), Qalinliklari: 9.5 mm (shift uchun yengil), 12.5 mm (devor va pardevor uchun).",
@@ -2030,6 +2049,24 @@ async function checkUserRestriction(userIdOrTelegramId) {
   }
 }
 
+async function enforceNotRestricted(user, res) {
+  if (!user) return false;
+  try {
+    var restrictionCheck = await checkUserRestriction(user.id);
+    if (restrictionCheck && restrictionCheck.isRestricted) {
+      res.status(403).json({
+        error: 'Platformadan foydalanish cheklangan',
+        restricted: true,
+        restriction: restrictionCheck.restriction
+      });
+      return true;
+    }
+  } catch (err) {
+    console.error('enforceNotRestricted error:', err.message);
+  }
+  return false;
+}
+
 // ======================================================
 // ADMIN AUTH MIDDLEWARE
 // ======================================================
@@ -2486,6 +2523,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var courseId = Number(req.params.id);
     var courseResult = await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [courseId]);
@@ -2665,6 +2703,7 @@ app.post('/api/lesson/:id', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var lessonResult = await pool.query(
       'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text FROM lessons WHERE id = $1 LIMIT 1',
@@ -2975,6 +3014,7 @@ app.post('/api/practice/:lessonId/submit', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var lessonId = Number(req.params.lessonId);
     var submissionUrl = String(req.body.submission_url || '').trim();
@@ -3081,6 +3121,7 @@ app.post('/api/lesson/:id/question', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var userHasAccess = hasAccess(user);
     var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
@@ -3160,6 +3201,7 @@ app.post('/api/chat/my-questions', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var result = await pool.query(
       `SELECT lq.id, lq.lesson_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
@@ -3304,6 +3346,7 @@ app.post('/api/progress/mark', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var lessonId = req.body.lesson_id;
     if (!lessonId) return res.status(400).json({ error: 'lesson_id majburiy' });
@@ -3328,6 +3371,7 @@ app.post('/api/module/:id/test', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var isMainAdminForTest = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
     if (!hasAccess(user) && !isMainAdminForTest) {
@@ -3373,6 +3417,7 @@ app.post('/api/module/:id/submit', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var isMainAdminForSubmit = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
     if (!hasAccess(user) && !isMainAdminForSubmit) {
@@ -3576,6 +3621,7 @@ app.post('/api/chat/send', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ ok: false, error: 'Foydalanuvchi aniqlanmadi' });
+    if (await enforceNotRestricted(user, res)) return;
 
     var text = String(req.body.text || '').trim();
     if (!text) return res.status(400).json({ ok: false, error: 'Xabar matnini kiriting' });
@@ -5505,11 +5551,52 @@ function streamPdfFromLocalFile(filePath, req, res) {
 
 app.get('/api/pdf-proxy', async function (req, res) {
   try {
+    // 1. Telegram autentifikatsiya va cheklov (ban) nazorati
+    var initData = req.query.auth || req.query.initData || req.headers['x-telegram-init-data'];
+    if (initData) {
+      try {
+        var tgUser = verifyInitData(initData, process.env.BOT_TOKEN);
+        if (tgUser && tgUser.id) {
+          var restrictionCheck = await checkUserRestriction(tgUser.id);
+          if (restrictionCheck && restrictionCheck.isRestricted) {
+            return res.status(403).json({
+              error: 'Platformadan foydalanish cheklangan',
+              restricted: true,
+              restriction: restrictionCheck.restriction
+            });
+          }
+        }
+      } catch (authErr) {}
+    }
+
     var rawUrl = req.query.url ? String(req.query.url).trim() : '';
     var fileId = req.query.id ? String(req.query.id).trim() : extractGoogleDriveId(rawUrl);
 
     if (!fileId && (!rawUrl || !/^https?:\/\//i.test(rawUrl))) {
       return res.status(400).json({ error: 'Fayl manzili ko‘rsatilmadi' });
+    }
+
+    // 2. SSRF himoyasi: Faqat xavfsiz Google Drive domenlari va Drive fileId ga ruxsat
+    if (fileId) {
+      if (!/^[a-zA-Z0-9_-]{15,100}$/.test(fileId)) {
+        return res.status(400).json({ error: 'Noto‘g‘ri Drive fayl identifikatori' });
+      }
+    } else if (rawUrl) {
+      try {
+        var parsedPdfUrl = new URL(rawUrl);
+        var allowedPdfHosts = ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com', 'lh3.googleusercontent.com'];
+        var isHostAllowed = allowedPdfHosts.some(function (h) {
+          return parsedPdfUrl.hostname === h || parsedPdfUrl.hostname.endsWith('.' + h);
+        });
+        if (!isHostAllowed) {
+          return res.status(400).json({ error: 'Xavfsizlik: Faqat Google Drive manzillariga ruxsat berilgan' });
+        }
+        if (parsedPdfUrl.protocol !== 'https:') {
+          return res.status(400).json({ error: 'Faqat xavfsiz HTTPS manzillarga ruxsat berilgan' });
+        }
+      } catch (urlErr) {
+        return res.status(400).json({ error: 'Noto‘g‘ri fayl manzili formati' });
+      }
     }
 
     var cacheKey = crypto.createHash('md5').update(fileId || rawUrl).digest('hex');
