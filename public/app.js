@@ -12631,7 +12631,7 @@ function renderAdminLibraryDrive() {
         <div class="apple-field" style="margin-bottom:14px;">
           <label style="font-weight:700; font-size:13px; display:flex; justify-content:space-between;">
             <span>Google Drive Papka Havolasi yoki ID *</span>
-            <span style="font-weight:400; font-size:11.5px; color:var(--text-muted);">PDF fayllar</span>
+            <span style="font-weight:400; font-size:11.5px; color:var(--text-muted);">Havola yoki ID</span>
           </label>
           <input id="admin-drive-folder-url"
                  class="apple-input"
@@ -12639,25 +12639,26 @@ function renderAdminLibraryDrive() {
                  placeholder="https://drive.google.com/drive/folders/1aBcDeFg... yoki 1aBcDeFg..."
                  value="${escapeHtml(activeSource ? (activeSource.root_folder_id || '') : '')}">
           <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px; line-height:1.45;">
-            💡 <b>Ko'rsatma:</b> Google Drive-da papkaga sichqonchaning o'ng tugmasini bosing ➔ <b>Share (Поделиться)</b> ➔ General access bo'limida <b>"Anyone with the link" (Все, у кого есть ссылка)</b> qiling va havolani bu yerga joylang.
+            💡 <b>Ko'rsatma:</b> Google Drive-da papkaga sichqonchaning o'ng tugmasini bosing ➔ <b>Share (Поделиться)</b> ➔ General access bo'limida <b>"Anyone with the link" (Все, у кого есть ссылка)</b> qiling va havolani yoki ID sini kiriting.
           </div>
         </div>
 
-        <details style="margin-bottom:16px; background:var(--bg-secondary); border-radius:10px; padding:8px 12px; font-size:12.5px;">
-          <summary style="cursor:pointer; font-weight:600; color:var(--text-secondary);">
-            🔑 Google Drive API Kaliti (Ixtiyoriy - yuqori tezlik va barqarorlik uchun)
-          </summary>
-          <div style="margin-top:10px;">
-            <input id="admin-drive-api-key"
-                   class="apple-input"
-                   type="password"
-                   placeholder="AIzaSy... (Google Cloud Console kaliti)"
-                   value="${escapeHtml(adminData.driveApiKey || '')}">
-            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-              ${adminData.driveEnvKeyConfigured ? '🟢 Serverda API kaliti sozlangan.' : 'Google Cloud-da Drive API kalitingiz bo\'lsa, shu yerga kiritishingiz mumkin.'}
+        <div style="margin-bottom:16px; padding:10px 14px; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border); font-size:12px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>${adminData.driveEnvKeyConfigured ? '🟢' : '⚠️'}</span>
+            <div>
+              <div style="font-weight:700; color:var(--text-primary);">
+                ${adminData.driveEnvKeyConfigured ? 'Serverda Google Drive API kaliti sozlangan' : 'Serverda GOOGLE_DRIVE_API_KEY kutilmoqda'}
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                ${adminData.driveEnvKeyConfigured ? 'Railway Variables orqali xavfsiz ulanish faol' : 'Railway boshqaruv panelida (Variables) GOOGLE_DRIVE_API_KEY o\'zgaruvchisini kiriting'}
+              </div>
             </div>
           </div>
-        </details>
+          <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; background:${adminData.driveEnvKeyConfigured ? 'rgba(52,199,89,0.15); color:#34c759' : 'rgba(255,149,0,0.15); color:#ff9500'};">
+            ${adminData.driveEnvKeyConfigured ? 'FAOL' : 'TALAB ETILADI'}
+          </span>
+        </div>
 
         <div style="display:flex; gap:10px;">
           <button id="btn-test-drive"
@@ -12690,13 +12691,10 @@ function renderAdminLibraryDrive() {
 
 async function testAdminDriveFolder() {
   const urlInput = document.getElementById("admin-drive-folder-url");
-  const keyInput = document.getElementById("admin-drive-api-key");
   const resultBox = document.getElementById("admin-drive-test-result");
   const btn = document.getElementById("btn-test-drive");
 
   const folderUrl = urlInput ? urlInput.value.trim() : "";
-  const apiKey = keyInput ? keyInput.value.trim() : "";
-  if (apiKey) adminData.driveApiKey = apiKey;
 
   if (!folderUrl) {
     return showAlert("Iltimos, Google Drive papka havolasini yoki ID sini kiriting!");
@@ -12714,8 +12712,7 @@ async function testAdminDriveFolder() {
 
   try {
     const res = await adminApi("/api/admin/drive/test-folder", {
-      folder_url: folderUrl,
-      api_key: apiKey
+      folder_url: folderUrl
     });
 
     if (btn) { btn.disabled = false; btn.textContent = "🔍 1. Papkani tekshirish"; }
@@ -12725,8 +12722,8 @@ async function testAdminDriveFolder() {
       const sampleFiles = res.sample_files || [];
       const sampleListHtml = sampleFiles.length > 0 ? `
         <div style="margin-top:10px; max-height:160px; overflow-y:auto; border-radius:8px; background:rgba(0,0,0,0.1); padding:8px 12px; font-size:12px;">
-          <div style="font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Papkadagi ayrim kitoblar:</div>
-          ${sampleFiles.map((f, i) => `<div style="padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📄 ${i+1}. ${escapeHtml(f.name || f.title || 'PDF Fayl')}</div>`).join("")}
+          <div style="font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Papkadagi PDF kitoblar namunalari:</div>
+          ${sampleFiles.map((f, i) => `<div style="padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📄 ${i+1}. ${escapeHtml(f.fileName || f.name || f.title || 'PDF Fayl')}</div>`).join("")}
         </div>
       ` : "";
 
@@ -12736,16 +12733,17 @@ async function testAdminDriveFolder() {
             <span>✓</span> Papka muvaffaqiyatli tekshirildi!
           </div>
           <div style="margin-top:8px; color:var(--text-primary); line-height:1.5;">
-            <div>📁 Papka ID: <code>${escapeHtml(res.folder_id)}</code></div>
-            <div>📚 Topilgan PDF kitoblar: <b style="font-size:15px; color:#34c759;">${res.pdf_count || res.total_found || 0} ta</b></div>
+            <div>📁 Papka: <b>${escapeHtml(res.folder_name || 'Google Drive Papkasi')}</b></div>
+            <div>🔑 Papka ID: <code>${escapeHtml(res.folder_id)}</code></div>
+            <div>📚 Topilgan PDF kitoblar: <b style="font-size:15px; color:#34c759;">${res.pdf_count || 0} ta</b></div>
           </div>
           ${sampleListHtml}
           <div style="margin-top:14px;">
             <button id="btn-import-drive"
                     class="btn"
                     style="width:100%; background:#34c759; color:#fff; font-weight:800; font-size:14px; padding:12px; border-radius:10px; margin:0;"
-                    onclick="startAdminDriveSyncFromTest('${escapeJsString(res.folder_id)}', '${escapeJsString(apiKey)}')">
-              🚀 2. Kitoblarni Bazaga Import Qilish (${res.pdf_count || res.total_found || 0} ta PDF)
+                    onclick="startAdminDriveSyncFromTest('${escapeJsString(res.folder_id)}')">
+              🚀 2. Kitoblarni Bazaga Import Qilish (${res.pdf_count || 0} ta PDF)
             </button>
           </div>
         </div>
@@ -12758,26 +12756,32 @@ async function testAdminDriveFolder() {
     if (btn) { btn.disabled = false; btn.textContent = "🔍 1. Papkani tekshirish"; }
     haptic("error");
     renderDriveErrorBox(resultBox, {
-      error: err.message || "Ulanishda xatolik yuz berdi",
-      reason_code: "CONNECTION_ERROR",
-      suggestion: "Internet aloqasini yoki server holatini tekshiring."
+      code: "NETWORK_ERROR",
+      error: err.message || "Ulanishda tarmoq xatoligi yuz berdi",
+      suggestion: "Server internet aloqasini yoki so'rovlar holatini tekshiring."
     });
   }
 }
 
 function renderDriveErrorBox(resultBox, res) {
+  const code = res.code || (res.case ? 'CASE_' + res.case : 'UNKNOWN_ERROR');
   const errorMsg = res.error || "Papkaga kirib bo'lmadi";
   const suggestion = res.suggestion || "Google Drive havolasini tekshiring.";
 
   resultBox.innerHTML = `
     <div style="padding:16px; border-radius:14px; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.3); font-size:13px;">
-      <div style="font-size:15px; font-weight:800; color:#ff3b30; display:flex; align-items:center; gap:8px;">
-        <span>❌</span> Papkaga ulanishda muammo aniqlandi
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:15px; font-weight:800; color:#ff3b30; display:flex; align-items:center; gap:8px;">
+          <span>❌</span> Papkaga ulanishda muammo aniqlandi
+        </div>
+        <span style="font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(255,59,48,0.2); color:#ff3b30; font-family:monospace;">
+          ${escapeHtml(code)}
+        </span>
       </div>
-      <div style="margin-top:8px; color:var(--text-primary); font-weight:600;">
+      <div style="margin-top:8px; color:var(--text-primary); font-weight:600; line-height:1.45;">
         ${escapeHtml(errorMsg)}
       </div>
-      <div style="margin-top:10px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.15); font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
+      <div style="margin-top:10px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.15); font-size:12px; color:var(--text-secondary); line-height:1.5;">
         <b>💡 Qanday to'g'irlash kerak:</b><br>
         ${escapeHtml(suggestion)}
       </div>
@@ -12790,15 +12794,14 @@ function renderDriveErrorBox(resultBox, res) {
   `;
 }
 
-async function startAdminDriveSyncFromTest(folderId, apiKey) {
+async function startAdminDriveSyncFromTest(folderId) {
   const btn = document.getElementById("btn-import-drive");
   if (btn) { btn.disabled = true; btn.textContent = "⏳ Import qilinmoqda (bu bir necha daqiqa olishi mumkin)..."; }
 
   try {
     showToast("🚀 Google Drive kitoblari import qilinmoqda... Kuting...");
     const res = await adminApi("/api/admin/books/sync-drive", {
-      folder_id: folderId,
-      api_key: apiKey || null
+      folder_id: folderId
     });
 
     if (res && res.ok) {
@@ -12806,6 +12809,9 @@ async function startAdminDriveSyncFromTest(folderId, apiKey) {
       showToast(res.message || "Kitoblar muvaffaqiyatli import qilindi! 📚");
       await refreshAdminBooks();
       setAdminLibraryTab("books");
+    } else {
+      showAlert((res && res.error) || "Import qilishda xatolik yuz berdi");
+      if (btn) { btn.disabled = false; btn.textContent = "🔄 Qayta urinish"; }
     }
   } catch (err) {
     showAlert(err.message || "Import qilishda xatolik yuz berdi");

@@ -1361,7 +1361,7 @@ async function ensureLibraryV2Tables() {
           'Parametrli oshxona shkaflari, jihozlari va fasadlari',
           'To''liq parametrli Revit oilalari: o''lchamlari erkin o''zgaradi, fasad turlari va materiallari almashtiriladi.',
           'Families', '24.5 MB', 'Revit 2024 / 2025 / 2026',
-          'https://drive.google.com/uc?export=download&id=1_Kitchen_Family_Pack', 'file',
+          'https://drive.google.com/uc?export=download[?&]id=([a-zA-Z0-9_-]{15,})', 'file',
           $1, true, 1, 'published'
         ),
         (
@@ -7959,147 +7959,163 @@ app.post('/api/admin/library/inspect-pdf', requireAdmin, async function (req, re
 
 function extractGoogleDriveFolderId(raw) {
   if (!raw || typeof raw !== 'string') return null;
-  var str = raw.trim();
-  // 1. To'g'ridan-to'g'ri folder ID (15+ harf/raqam/tire)
-  if (/^[a-zA-Z0-9_-]{15,}$/.test(str) && !str.includes('/') && !str.includes('.')) {
+  var str = raw.trim().replace(/^[\"\'<(\s]+|[\"\'>)\s]+$/g, '');
+  if (!str) return null;
+
+  // 1. Agar to'liq URL bo'lsa:
+  // Masalan: https://drive.google.com/drive/folders/1aBcDeFg... yoki /drive/u/0/folders/... yoki /drive/mobile/folders/...
+  var m = str.match(/\/folders\/([a-zA-Z0-9_-]{10,})/i);
+  if (m && m[1]) return m[1];
+
+  // Masalan: drive.google.com/open?id=1aBcDeFg... yoki ?id=...
+  m = str.match(/[?&]id=([a-zA-Z0-9_-]{10,})/i);
+  if (m && m[1]) return m[1];
+
+  // 2. Agar to'g'ridan-to'g'ri folder ID kiritilgan bo'lsa (kamida 10 ta belgi)
+  if (/^[a-zA-Z0-9_-]{10,}$/.test(str) && !str.includes('/') && !str.includes('.') && !str.includes('?') && !str.includes('&')) {
     return str;
   }
-  // 2. drive.google.com/drive/folders/ID yoki drive.google.com/drive/u/0/folders/ID
-  var m = str.match(/\/folders\/([a-zA-Z0-9_-]+)/i);
-  if (m && m[1]) return m[1];
-  // 3. drive.google.com/open?id=ID yoki ?id=ID
-  m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
-  if (m && m[1]) return m[1];
+
   return null;
 }
 
-// Google Drive papkasini tekshirish (CASE 1 - CASE 9 diagnostikasi)
+// Google Drive papkasini tekshirish (Standartlashtirilgan xatolik kodlari va diagnostika)
 async function testGoogleDriveFolderAccess(folderId, apiKey) {
-  if (!folderId) {
+  if (!folderId || typeof folderId !== 'string' || folderId.length < 15) {
     return {
       ok: false,
+      code: "INVALID_FOLDER_ID",
       case: 6,
-      error: "Google Drive papka manzili noto'g'ri. Iltimos, havola 'https://drive.google.com/drive/folders/...' ko'rinishida ekanini tekshiring."
+      error: "Google Drive papka manzili yoki ID formati noto'g'ri. Iltimos, havola 'https://drive.google.com/drive/folders/...' ko'rinishida ekanini tekshiring.",
+      suggestion: "Google Drive-da papkaga kiring va brauzer manzil qatoridagi havolani to'liq nusxalab oling."
     };
   }
 
   var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
   if (!key) {
-    // API kalitsiz tekshirib ko'rish (ochiq papka orqali)
-    try {
-      var pubUrl = `https://drive.google.com/drive/folders/${encodeURIComponent(folderId)}`;
-      var pubRes = await fetch(pubUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } });
-      if (!pubRes.ok) {
-        return {
-          ok: false,
-          case: 2,
-          error: "Google Drive papkasi topilmadi yoki papka yopiq (Private). Iltimos, Google Drive'da ushbu papka havolasini 'Havolaga ega bo'lgan har kim (Anyone with the link)' ko'rishi mumkin qilib sozlang."
-        };
-      }
-      var pubHtml = await pubRes.text();
-      var idMatches = Array.from(pubHtml.matchAll(/\/file\/d\/([a-zA-Z0-9_-]{20,})/g)).map(m => m[1]);
-      var uniqueIds = Array.from(new Set(idMatches));
-      if (uniqueIds.length > 0) {
-        return {
-          ok: true,
-          folder_id: folderId,
-          folder_name: "Google Drive Papkasi (Ochiq)",
-          pdf_count: uniqueIds.length,
-          sample_files: uniqueIds.slice(0, 5).map((id, idx) => `PDF Fayl ${idx + 1} (${id.substring(0, 8)}...)`),
-          message: `✓ Google Drive papkasi ulandi! ${uniqueIds.length} ta fayl topildi.`
-        };
-      }
-    } catch (pubErr) {
-      console.warn("Public folder test error:", pubErr.message);
-    }
-
     return {
       ok: false,
+      code: "API_KEY_MISSING",
       case: 4,
       needs_api_key: true,
-      error: "Google Drive API kaliti (API Key) kiritilmagan. Google Drive papkalari to'liq va tez skanerlanishi uchun Google Cloud Console'dan bepul Google Drive API kalitini kiriting yoki papka havolasini 'Havolaga ega bo'lgan har kim' qiling."
+      error: "Serverda Google Drive API kaliti (GOOGLE_DRIVE_API_KEY) belgilanmagan.",
+      suggestion: "Railway boshqaruv panelida (Variables bo'limida) GOOGLE_DRIVE_API_KEY o'zgaruvchisini qo'shing. Google Drive REST API hatto ochiq ('Anyone with the link') papkalardagi fayllarni dasturiy o'qish uchun ham Google Cloud API kalitini talab qiladi."
     };
   }
 
   try {
     // 1. Papka mavjudligi va ruxsatlarini tekshirish
     var metaUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=id,name,mimeType,trashed&key=${encodeURIComponent(key)}`;
-    var metaRes = await fetch(metaUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    var metaRes = await fetch(metaUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
     var metaData = await metaRes.json().catch(() => ({}));
 
     if (!metaRes.ok) {
       var errObj = metaData.error || {};
       var code = metaRes.status;
       var reason = (errObj.errors && errObj.errors[0] && errObj.errors[0].reason) || '';
-      var msg = errObj.message || '';
+      var msg = (errObj.message || '').toLowerCase();
 
       if (code === 404) {
         return {
           ok: false,
+          code: "FOLDER_NOT_FOUND",
           case: 2,
-          error: "Google Drive papkasi topilmadi yoki papka yopiq (Private). Iltimos, Google Drive'da ushbu papka havolasini 'Havolaga ega bo'lgan har kim (Anyone with the link)' ko'rishi mumkin qilib sozlang."
+          error: "Google Drive papkasi topilmadi yoki papka yopiq (Private).",
+          suggestion: "Google Drive'da ushbu papka havolasini 'Anyone with the link' (Havolaga ega bo'lgan har kim) ko'rishi mumkin (Viewer) qilib sozlang."
         };
       }
       if (reason === 'accessNotConfigured' || msg.includes('has not been used') || msg.includes('disabled')) {
         return {
           ok: false,
+          code: "DRIVE_API_DISABLED",
           case: 5,
-          error: "Google Cloud loyihangizda Google Drive API yoqilmagan (Disabled). Google Cloud Console'da Google Drive API'ni 'Enable' qiling."
+          error: "Google Cloud loyihangizda Google Drive API yoqilmagan (Disabled).",
+          suggestion: "Google Cloud Console -> APIs & Services -> Library bo'limiga kiring, 'Google Drive API' ni qidiring va 'Enable' tugmasini bosing."
         };
       }
-      if (reason === 'keyInvalid' || code === 400 || msg.includes('API key not valid')) {
+      if (reason === 'keyInvalid' || code === 400 || msg.includes('api key not valid') || msg.includes('bad request')) {
         return {
           ok: false,
+          code: "API_KEY_INVALID",
           case: 4,
           needs_api_key: true,
-          error: "Google Drive API kaliti noto'g'ri kiritilgan. Iltimos, API kalit to'g'riligini tekshiring."
+          error: "Google Drive API kaliti yaroqsiz (Invalid API Key).",
+          suggestion: "Railway Variables'dagi GOOGLE_DRIVE_API_KEY qiymatini Google Cloud Console'dagi haqiqiy kalit bilan yangilang."
+        };
+      }
+      if (reason === 'rateLimitExceeded' || reason === 'userRateLimitExceeded' || reason === 'dailyLimitExceeded' || code === 429 || msg.includes('quota')) {
+        return {
+          ok: false,
+          code: "QUOTA_EXCEEDED",
+          case: 8,
+          error: "Google Drive API so'rovlar chegarasi (Quota) to'ldi.",
+          suggestion: "Biroz kuting yoki Google Cloud loyihangizning kvotalarini tekshiring."
         };
       }
       return {
         ok: false,
+        code: "PERMISSION_DENIED",
         case: 3,
-        error: "Google Drive papkasiga kirish huquqi yo'q. Papkani Google Drive'da 'Havolaga ega bo'lgan har kim ko'rishi mumkin' qilib sozlang."
+        error: "Google Drive papkasiga kirish huquqi berilmagan.",
+        suggestion: "Papkani Google Drive'da 'Anyone with the link' (Viewer) qilib sozlang."
       };
     }
 
     if (metaData.trashed) {
       return {
         ok: false,
+        code: "FOLDER_NOT_FOUND",
         case: 1,
-        error: "Ushbu Google Drive papkasi savatchaga (Trash) tashlangan."
+        error: "Ushbu Google Drive papkasi savatchaga (Trash) tashlangan.",
+        suggestion: "Google Drive savatchasidan papkani qayta tiklang."
       };
     }
 
     var folderName = metaData.name || 'Google Drive Papkasi';
 
-    // 2. Ichidagi PDF fayllar ro'yxatini tekshirish
-    var query = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
-    var listUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink)&pageSize=1000&key=${encodeURIComponent(key)}`;
-    var listRes = await fetch(listUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    var listData = await listRes.json().catch(() => ({}));
+    // 2. Ichidagi PDF fayllarni (ichki papkalarni ham hisobga olib) qidirish
+    var foundPdfs = [];
+    var visitedFolders = new Set();
 
-    if (!listRes.ok) {
-      return {
-        ok: false,
-        case: 8,
-        error: "Papka topildi, lekin ichidagi fayllarni o'qishda xatolik yuz berdi: " + ((listData.error && listData.error.message) || 'Noma\'lum xatolik')
-      };
+    async function collectPdfs(fId, depth) {
+      if (depth > 4 || visitedFolders.has(fId) || foundPdfs.length >= 1000) return;
+      visitedFolders.add(fId);
+
+      var q = encodeURIComponent(`'${fId}' in parents and trashed = false`);
+      var listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,size,webViewLink)&pageSize=1000&key=${encodeURIComponent(key)}`;
+      var listRes = await fetch(listUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!listRes.ok) return;
+
+      var listData = await listRes.json().catch(() => ({}));
+      var items = listData.files || [];
+
+      for (var it of items) {
+        if (it.mimeType === 'application/vnd.google-apps.folder') {
+          await collectPdfs(it.id, depth + 1);
+        } else if (it.mimeType === 'application/pdf' || (it.name && it.name.toLowerCase().endsWith('.pdf'))) {
+          foundPdfs.push({
+            fileId: it.id,
+            fileName: it.name,
+            mimeType: it.mimeType || 'application/pdf',
+            webViewLink: it.webViewLink || `https://drive.google.com/file/d/${it.id}/view`,
+            size: parseInt(it.size) || 0
+          });
+        }
+      }
     }
 
-    var allFiles = listData.files || [];
-    var pdfFiles = allFiles.filter(item =>
-      item.mimeType === 'application/pdf' ||
-      (item.name && item.name.toLowerCase().endsWith('.pdf'))
-    );
+    await collectPdfs(folderId, 0);
 
-    if (pdfFiles.length === 0) {
+    if (foundPdfs.length === 0) {
       return {
         ok: false,
+        code: "NO_PDFS_FOUND",
         case: 7,
         folder_id: folderId,
         folder_name: folderName,
-        total_items: allFiles.length,
-        error: `Ushbu papkada PDF kitoblar topilmadi (jami ${allFiles.length} ta boshqa turdagi fayllar mavjud). Papka ichida .pdf kengaytmali fayllar borligini tekshiring.`
+        total_items: 0,
+        error: `Ushbu papkada yoki uning ichki papkalarida PDF fayllar topilmadi.`,
+        suggestion: "Papka ichida .pdf kengaytmali kitoblar mavjudligini tekshiring."
       };
     }
 
@@ -8107,16 +8123,27 @@ async function testGoogleDriveFolderAccess(folderId, apiKey) {
       ok: true,
       folder_id: folderId,
       folder_name: folderName,
-      pdf_count: pdfFiles.length,
-      sample_files: pdfFiles.slice(0, 5).map(f => f.name),
-      message: `✓ Google Drive papkasi muvaffaqiyatli ulandi! ${pdfFiles.length} ta PDF kitob topildi.`
+      pdf_count: foundPdfs.length,
+      sample_files: foundPdfs.slice(0, 10).map(f => ({
+        fileId: f.fileId,
+        fileName: f.fileName,
+        mimeType: f.mimeType,
+        webViewLink: f.webViewLink,
+        size: f.size,
+        id: f.fileId,
+        name: f.fileName
+      })),
+      pdf_files: foundPdfs.slice(0, 50),
+      message: `✓ Google Drive papkasi muvaffaqiyatli ulandi! ${foundPdfs.length} ta PDF kitob topildi.`
     };
   } catch (netErr) {
     console.warn("testGoogleDriveFolderAccess error:", netErr);
     return {
       ok: false,
+      code: "NETWORK_ERROR",
       case: 8,
-      error: "Google Drive serveriga ulanishda tarmoq xatoligi yuz berdi: " + netErr.message
+      error: "Google Drive serveriga ulanishda tarmoq xatoligi yuz berdi: " + netErr.message,
+      suggestion: "Server internet aloqasini tekshiring."
     };
   }
 }
@@ -8125,73 +8152,46 @@ async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
   var results = [];
   var visited = new Set();
   var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+  if (!key) {
+    console.warn('[scanGoogleDriveFolder] GOOGLE_DRIVE_API_KEY is missing');
+    return [];
+  }
 
   async function traverse(fId, currentCategory, depth) {
-    if (depth > 4 || visited.has(fId)) return;
+    if (depth > 5 || visited.has(fId)) return;
     visited.add(fId);
 
-    if (key) {
-      try {
-        var query = encodeURIComponent(`'${fId}' in parents and trashed = false`);
-        var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(key)}`;
-        var res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (res.ok) {
-          var data = await res.json();
-          var files = data.files || [];
-          for (var item of files) {
-            if (item.mimeType === 'application/vnd.google-apps.folder') {
-              var catName = item.name.trim();
-              await traverse(item.id, catName, depth + 1);
-            } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
-              results.push({
-                id: item.id,
-                name: item.name,
-                size: parseInt(item.size) || 0,
-                mimeType: item.mimeType || 'application/pdf',
-                webViewLink: item.webViewLink || `https://drive.google.com/file/d/${item.id}/view`,
-                category: currentCategory || 'Boshqa'
-              });
-            }
-          }
-          return;
-        }
-      } catch (apiErr) {
-        console.warn('Drive API v3 fetch warning:', apiErr.message);
-      }
-    }
-
-    // Key bo'lmagan yoki API ishlamagan taqdirda ochiq papka HTML sahifasidan skanerlash
-    if (!results.length) {
-      try {
-        var scrapeUrl = `https://drive.google.com/drive/folders/${encodeURIComponent(fId)}`;
-        var scrapeRes = await fetch(scrapeUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-        });
-        if (scrapeRes.ok) {
-          var html = await scrapeRes.text();
-          var fileMatches = Array.from(html.matchAll(/\/file\/d\/([a-zA-Z0-9_-]{20,})/g)).map(m => m[1]);
-          var seenIds = new Set();
-          for (var fileId of fileMatches) {
-            if (!seenIds.has(fileId)) {
-              seenIds.add(fileId);
-              results.push({
-                id: fileId,
-                name: 'PDF Kitob ' + fileId.substring(0, 6),
-                size: 0,
-                mimeType: 'application/pdf',
-                webViewLink: `https://drive.google.com/file/d/${fileId}/view`,
-                category: currentCategory || 'Arxitektura'
-              });
-            }
+    try {
+      var query = encodeURIComponent(`'${fId}' in parents and trashed = false`);
+      var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(key)}`;
+      var res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (res.ok) {
+        var data = await res.json();
+        var files = data.files || [];
+        for (var item of files) {
+          if (item.mimeType === 'application/vnd.google-apps.folder') {
+            var catName = item.name.trim();
+            await traverse(item.id, catName, depth + 1);
+          } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
+            results.push({
+              id: item.id,
+              fileId: item.id,
+              name: item.name,
+              fileName: item.name,
+              size: parseInt(item.size) || 0,
+              mimeType: item.mimeType || 'application/pdf',
+              webViewLink: item.webViewLink || `https://drive.google.com/file/d/${item.id}/view`,
+              category: currentCategory || 'Arxitektura'
+            });
           }
         }
-      } catch (sErr) {
-        console.warn('Drive folder scrape warning:', sErr.message);
       }
+    } catch (apiErr) {
+      console.warn('Drive API v3 fetch warning:', apiErr.message);
     }
   }
 
-  await traverse(folderId, sourceName || '', 0);
+  await traverse(folderId, sourceName || 'Arxitektura', 0);
   return results;
 }
 
