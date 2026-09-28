@@ -6464,6 +6464,7 @@ app.all('/api/materials/list', async function (req, res) {
     var categorySlug = (b.category_slug || '').trim();
     var manufacturerSlug = (b.manufacturer_slug || '').trim();
     var scope = (b.scope || '').trim().toLowerCase();
+    var purposeTag = (b.purpose_tag || b.purpose || '').trim().toLowerCase();
     var filterVerified = Boolean(b.filter_verified === true || b.filter_verified === 'true');
     var filterInterior = Boolean(b.filter_interior === true || b.filter_interior === 'true');
     var filterMoisture = Boolean(b.filter_moisture === true || b.filter_moisture === 'true');
@@ -6490,6 +6491,12 @@ app.all('/api/materials/list', async function (req, res) {
       } else if (scope === 'interior' || scope === 'interyer' || scope === 'dizayn') {
         whereClauses.push("(COALESCE(m.scope, 'both') IN ('interior', 'both') OR COALESCE(c.scope, 'both') IN ('interior', 'both'))");
       }
+    }
+
+    // Purpose / Area filter (Qurilish va Interyer maxsus yo'nalishlari)
+    if (purposeTag && purposeTag !== 'all' && purposeTag !== 'barchasi') {
+      whereClauses.push('m.purpose_tag = $' + paramIdx++);
+      params.push(purposeTag);
     }
 
     // Category filter
@@ -6575,7 +6582,7 @@ app.all('/api/materials/list', async function (req, res) {
         m.subcategory_name, m.product_code, m.material_type, m.cover_image, m.cover_image AS featured_image,
         m.description, m.dimensions_info, m.thicknesses, m.composition, m.usage_area, m.pros, m.cons,
         m.approx_price, m.uzb_market_availability, m.architect_notes, m.standards_info, m.lifespan,
-        m.moisture_resistance, m.fire_rating, m.standard_sizes, m.scope,
+        m.moisture_resistance, m.fire_rating, m.standard_sizes, m.scope, m.purpose_tag,
         m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
@@ -6606,6 +6613,10 @@ app.all('/api/materials/list', async function (req, res) {
         }
       }
 
+      if (purposeTag && purposeTag !== 'all' && purposeTag !== 'barchasi') {
+        returnedMaterials = returnedMaterials.filter(function(m) { return m.purpose_tag === purposeTag; });
+      }
+
       if (categorySlug && categorySlug !== 'all' && categorySlug !== 'barchasi') {
         returnedMaterials = returnedMaterials.filter(function(m) { return m.category_slug === categorySlug; });
       }
@@ -6618,6 +6629,16 @@ app.all('/api/materials/list', async function (req, res) {
       }
 
       total = returnedMaterials.length;
+    }
+
+    // Sanitize any legacy developer placeholder photos
+    var VERIFIED_TILE_FALLBACK = 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80';
+    for (var rmi = 0; rmi < returnedMaterials.length; rmi++) {
+      var rmat = returnedMaterials[rmi];
+      if (rmat.cover_image && (rmat.cover_image.includes('1581094794329') || rmat.cover_image.includes('1534528741775') || rmat.cover_image.includes('1507003211169'))) {
+        rmat.cover_image = VERIFIED_TILE_FALLBACK;
+        rmat.featured_image = VERIFIED_TILE_FALLBACK;
+      }
     }
 
     return res.json({
@@ -6739,6 +6760,10 @@ app.all('/api/materials/detail', async function (req, res) {
     `, [materialId]);
 
     mat.title = mat.name;
+    var VERIFIED_TILE_FALLBACK = 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80';
+    if (mat.cover_image && (mat.cover_image.includes('1581094794329') || mat.cover_image.includes('1534528741775') || mat.cover_image.includes('1507003211169'))) {
+      mat.cover_image = VERIFIED_TILE_FALLBACK;
+    }
     mat.featured_image = mat.cover_image;
 
     return res.json({

@@ -94,6 +94,11 @@ function formatImageUrl(url) {
     cleanUrl = "https://" + cleanUrl;
   }
 
+  // Sanitize legacy placeholder developer photos
+  if (cleanUrl.includes("1581094794329") || cleanUrl.includes("1534528741775") || cleanUrl.includes("1507003211169")) {
+    return "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&auto=format&fit=crop&q=80";
+  }
+
   return cleanUrl;
 }
 
@@ -6155,10 +6160,21 @@ function openLibrarySection(slug) {
 
 function closeLibrarySection() {
   haptic("light");
+  currentView = null;
+  activeMaterialDetail = null;
   libraryActiveSection = null;
   librarySectionSearchQuery = "";
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function closeMaterialDetail() {
+  haptic("light");
+  currentView = null;
+  activeMaterialDetail = null;
+  libraryActiveSection = "materials";
+  render();
+  window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
 }
 
 function setLibrarySectionCategory(cat) {
@@ -7016,6 +7032,7 @@ let materialsState = {
   total: 0,
   searchQuery: "",
   selectedScope: "all", // 'all' | 'architecture' | 'interior'
+  selectedPurpose: "all", // 'all' | purpose_tag
   selectedCategory: "all",
   selectedManufacturer: "all",
   filterVerified: false,
@@ -7027,6 +7044,37 @@ let materialsState = {
   offset: 0
 };
 
+const MATERIAL_PURPOSES = {
+  architecture: [
+    { id: "all", name: "Barchasi", icon: "🌐" },
+    { id: "poydevor_karkas", name: "Poydevor & Karkas", icon: "🏗️" },
+    { id: "devor", name: "Devor & G'isht", icon: "🧱" },
+    { id: "tom", name: "Tom & Yopmalar", icon: "🏠" },
+    { id: "fasad", name: "Fasad bezak", icon: "🏢" },
+    { id: "izolyatsiya", name: "Gidro & Issiqlik", icon: "💧" }
+  ],
+  interior: [
+    { id: "all", name: "Barchasi", icon: "🌐" },
+    { id: "pol", name: "Pol qoplamalari", icon: "🪵" },
+    { id: "patalok", name: "Patalok turlari", icon: "☁️" },
+    { id: "gipsokarton", name: "Gipsokarton (KNAUF)", icon: "🧩" },
+    { id: "santexnika_vanna", name: "Santexnika & Vannalar", icon: "🚿" },
+    { id: "eshik_deraza", name: "Eshik & Derazalar", icon: "🚪" },
+    { id: "mebel", name: "Mebel materiallari", icon: "🛋️" },
+    { id: "elektr", name: "Elektr & Yoritish", icon: "💡" }
+  ],
+  all: [
+    { id: "all", name: "Barchasi", icon: "🌐" },
+    { id: "gipsokarton", name: "Knauf tizimlari", icon: "🧩" },
+    { id: "santexnika_vanna", name: "Vannalar & Santexnika", icon: "🚿" },
+    { id: "devor", name: "Devor & Bloklar", icon: "🧱" },
+    { id: "pol", name: "Pol qoplamalari", icon: "🪵" },
+    { id: "tom", name: "Tom qoplamalari", icon: "🏠" },
+    { id: "fasad", name: "Fasad bezak", icon: "🏢" },
+    { id: "izolyatsiya", name: "Izolyatsiya", icon: "💧" }
+  ]
+};
+
 let activeMaterialDetail = null;
 let activeSpecSourceInfo = null;
 
@@ -7034,6 +7082,7 @@ function filterMaterialsLocally() {
   let list = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
              materialsState.allMaterials : (materialsState.materials || []);
   const scope = materialsState.selectedScope || "all";
+  const purpose = materialsState.selectedPurpose || "all";
   const cat = materialsState.selectedCategory || "all";
   const search = (materialsState.searchQuery || "").trim().toLowerCase();
 
@@ -7046,12 +7095,17 @@ function filterMaterialsLocally() {
     }
   }
 
-  // 2. Category filter
+  // 2. Purpose / Zona filter (Qurilish: poydevor, devor, tom... | Interyer: pol, patalok, gipsokarton, vanna...)
+  if (purpose && purpose !== "all") {
+    list = list.filter(m => m.purpose_tag === purpose);
+  }
+
+  // 3. Category filter
   if (cat && cat !== "all") {
     list = list.filter(m => m.category_slug === cat);
   }
 
-  // 3. Search query
+  // 4. Search query
   if (search) {
     list = list.filter(m => {
       const text = ((m.name || m.title || '') + ' ' + (m.original_name || '') + ' ' + (m.description || '') + ' ' + (m.material_type || '') + ' ' + (m.category_name || '') + ' ' + (m.brand_name || '') + ' ' + (m.usage_area || '')).toLowerCase();
@@ -7059,7 +7113,7 @@ function filterMaterialsLocally() {
     });
   }
 
-  // 4. Quick filter chips
+  // 5. Quick filter chips
   if (materialsState.filterVerified) {
     list = list.filter(m => m.verification_status === "verified" || m.is_verified);
   }
@@ -7078,7 +7132,8 @@ function filterMaterialsLocally() {
   // Dynamically update category item counts
   (materialsState.categories || []).forEach(c => {
     c.materials_count = (materialsState.allMaterials || []).filter(m => 
-      m.category_slug === c.slug && (scope === "all" || m.scope === scope || m.scope === "both")
+      m.category_slug === c.slug && (scope === "all" || m.scope === scope || m.scope === "both") &&
+      (purpose === "all" || m.purpose_tag === purpose)
     ).length;
   });
 }
@@ -7103,7 +7158,7 @@ async function loadMaterialsData(forceReload) {
       scope: "all",
       category_slug: "all",
       manufacturer_slug: "all",
-      limit: 100,
+      limit: 150,
       offset: 0
     };
 
@@ -7124,15 +7179,78 @@ async function loadMaterialsData(forceReload) {
   }
 }
 
+function updateMaterialsUiInPlace() {
+  const container = document.querySelector(".lib-materials-v2-container");
+  if (!container || libraryActiveSection !== "materials") {
+    if (libraryActiveSection === "materials") render();
+    return;
+  }
+
+  // 1. Update Scope Switcher active classes
+  const currentScope = materialsState.selectedScope || "all";
+  container.querySelectorAll(".lib-mat-scope-btn").forEach(btn => {
+    const s = btn.getAttribute("data-scope");
+    if (s === currentScope) btn.classList.add("active");
+    else btn.classList.remove("active");
+  });
+
+  // 2. Update Purpose Chips Bar
+  const purpBar = container.querySelector(".lib-mat-purpose-bar");
+  if (purpBar) {
+    purpBar.innerHTML = renderMaterialPurposeChipsHtml();
+  }
+
+  // 3. Update Category Pills
+  const catScroll = container.querySelector(".lib-mat-cat-scroll");
+  if (catScroll) {
+    catScroll.innerHTML = renderMaterialCategoryPillsHtml();
+  }
+
+  // 4. Update Quick Filter Chips
+  const chips = container.querySelectorAll(".lib-chips-row .chip");
+  chips.forEach(ch => {
+    const key = ch.getAttribute("data-filter-key");
+    if (key && materialsState[key]) ch.classList.add("active");
+    else if (key) ch.classList.remove("active");
+  });
+
+  // 5. Update Grid
+  const grid = container.querySelector(".lib-materials-grid-v2");
+  if (grid) {
+    const mats = materialsState.materials || [];
+    if (mats.length) {
+      grid.innerHTML = mats.map(renderMaterialCardHtml).join("");
+    } else {
+      grid.innerHTML = `
+        <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
+          <div style="font-size: 12.5px; color: var(--text-secondary);">
+            Tanlangan bo‘lim, yo‘nalish yoki qidiruv so‘zini o‘zgartirib ko‘ring.
+          </div>
+        </div>
+      `;
+    }
+  }
+}
+
 function setMaterialScope(scope) {
   haptic("light");
   materialsState.selectedScope = scope;
+  materialsState.selectedPurpose = "all";
   materialsState.selectedCategory = "all";
   materialsState.offset = 0;
   filterMaterialsLocally();
-  if (libraryActiveSection === "materials") {
-    render();
-  }
+  updateMaterialsUiInPlace();
+}
+
+function setMaterialPurpose(purposeTag) {
+  haptic("light");
+  materialsState.selectedPurpose = purposeTag;
+  materialsState.selectedCategory = "all";
+  materialsState.offset = 0;
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
 }
 
 function setMaterialCategory(catSlug) {
@@ -7140,9 +7258,7 @@ function setMaterialCategory(catSlug) {
   materialsState.selectedCategory = catSlug;
   materialsState.offset = 0;
   filterMaterialsLocally();
-  if (libraryActiveSection === "materials") {
-    render();
-  }
+  updateMaterialsUiInPlace();
 }
 
 function setMaterialManufacturer(mfgSlug) {
@@ -7150,31 +7266,85 @@ function setMaterialManufacturer(mfgSlug) {
   materialsState.selectedManufacturer = mfgSlug;
   materialsState.offset = 0;
   filterMaterialsLocally();
-  if (libraryActiveSection === "materials") {
-    render();
-  }
+  updateMaterialsUiInPlace();
 }
 
 function setMaterialSearch(query) {
   materialsState.searchQuery = query;
   filterMaterialsLocally();
-  if (libraryActiveSection === "materials") {
-    render();
-    const inp = document.getElementById("lib-materials-search-input");
-    if (inp) {
-      inp.focus();
-      inp.setSelectionRange(query.length, query.length);
+  const grid = document.querySelector(".lib-materials-v2-container .lib-materials-grid-v2");
+  if (grid) {
+    const mats = materialsState.materials || [];
+    if (mats.length) {
+      grid.innerHTML = mats.map(renderMaterialCardHtml).join("");
+    } else {
+      grid.innerHTML = `
+        <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
+          <div style="font-size: 12.5px; color: var(--text-secondary);">
+            "${escapeHtml(query)}" bo‘yicha material topilmadi.
+          </div>
+        </div>
+      `;
     }
+    const clearWrap = document.getElementById("lib-search-clear-wrap");
+    if (clearWrap) {
+      clearWrap.innerHTML = query ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : '';
+    }
+  } else if (libraryActiveSection === "materials") {
+    render();
   }
+}
+
+function clearMaterialSearch() {
+  materialsState.searchQuery = "";
+  const inp = document.getElementById("lib-materials-search-input");
+  if (inp) inp.value = "";
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
 }
 
 function toggleMaterialFilter(filterKey) {
   haptic("light");
   materialsState[filterKey] = !materialsState[filterKey];
   filterMaterialsLocally();
-  if (libraryActiveSection === "materials") {
-    render();
-  }
+  updateMaterialsUiInPlace();
+}
+
+function renderMaterialPurposeChipsHtml() {
+  const scope = materialsState.selectedScope || "all";
+  const items = MATERIAL_PURPOSES[scope] || MATERIAL_PURPOSES.all;
+  const activePurp = materialsState.selectedPurpose || "all";
+
+  return items.map(p => `
+    <button type="button" class="lib-mat-purpose-chip ${activePurp === p.id ? 'active' : ''}" onclick="setMaterialPurpose('${escapeJsString(p.id)}')">
+      <span>${p.icon}</span>
+      <span>${escapeHtml(p.name)}</span>
+    </button>
+  `).join("");
+}
+
+function renderMaterialCategoryPillsHtml() {
+  const allCats = materialsState.categories || [];
+  const currentScope = materialsState.selectedScope || "all";
+  const cats = currentScope === "all" ? allCats : allCats.filter(c => c.scope === currentScope || c.scope === "both");
+  const mats = materialsState.materials || [];
+  const activeCat = materialsState.selectedCategory || "all";
+
+  return `
+    <div class="lib-mat-cat-pill ${activeCat === 'all' ? 'active' : ''}" onclick="setMaterialCategory('all')">
+      🌐 Barchasi
+      <span class="lib-mat-cat-count">${materialsState.total || mats.length}</span>
+    </div>
+    ${cats.map(c => `
+      <div class="lib-mat-cat-pill ${activeCat === c.slug ? 'active' : ''}" onclick="setMaterialCategory('${escapeJsString(c.slug)}')">
+        <span>${escapeHtml(c.icon || '🧱')}</span>
+        <span>${escapeHtml(c.name)}</span>
+        <span class="lib-mat-cat-count">${c.materials_count || 0}</span>
+      </div>
+    `).join("")}
+  `;
 }
 
 function renderMaterialsSectionHtml() {
@@ -7199,11 +7369,8 @@ function renderMaterialsSectionHtml() {
     `;
   }
 
-  const allCats = materialsState.categories || [];
   const currentScope = materialsState.selectedScope || "all";
-  const cats = currentScope === "all" ? allCats : allCats.filter(c => c.scope === currentScope || c.scope === "both");
   const mats = materialsState.materials || [];
-  const activeCat = materialsState.selectedCategory || "all";
   const search = materialsState.searchQuery || "";
 
   return `
@@ -7223,15 +7390,20 @@ function renderMaterialsSectionHtml() {
 
       <!-- 1. ASOSIY BO'LIM TANLASH: QURILISH / INTERYER / BARCHASI -->
       <div class="lib-mat-scope-bar">
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" onclick="setMaterialScope('all')">
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" data-scope="all" onclick="setMaterialScope('all')">
           🌐 Barchasi
         </button>
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" onclick="setMaterialScope('architecture')">
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" data-scope="architecture" onclick="setMaterialScope('architecture')">
           🏛️ Qurilish
         </button>
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" onclick="setMaterialScope('interior')">
+        <button type="button" class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" data-scope="interior" onclick="setMaterialScope('interior')">
           🛋️ Interyer
         </button>
+      </div>
+
+      <!-- 2. MAXSUS YO'NALISHLAR (PURPOSE / ZONA CHIPS) -->
+      <div class="lib-mat-purpose-bar">
+        ${renderMaterialPurposeChipsHtml()}
       </div>
 
       <!-- SEARCH BAR (Multilingual: MDF, Knauf, Travertin, Gazoblok...) -->
@@ -7246,39 +7418,31 @@ function renderMaterialsSectionHtml() {
             value="${escapeHtml(search)}"
             oninput="setMaterialSearch(this.value)"
           />
-          ${search ? `
-            <button class="lib-search-clear-btn" onclick="setMaterialSearch(''); document.getElementById('lib-materials-search-input').value='';">✕</button>
-          ` : ""}
+          <span id="lib-search-clear-wrap">
+            ${search ? `
+              <button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>
+            ` : ""}
+          </span>
         </div>
       </div>
 
       <!-- 24 TA KATEGORIYA (Horizontal Scroll with Icons and Counts) -->
       <div class="lib-mat-cat-scroll">
-        <div class="lib-mat-cat-pill ${activeCat === 'all' ? 'active' : ''}" onclick="setMaterialCategory('all')">
-          🌐 Barchasi
-          <span class="lib-mat-cat-count">${materialsState.total || mats.length}</span>
-        </div>
-        ${cats.map(c => `
-          <div class="lib-mat-cat-pill ${activeCat === c.slug ? 'active' : ''}" onclick="setMaterialCategory('${escapeJsString(c.slug)}')">
-            <span>${escapeHtml(c.icon || '🧱')}</span>
-            <span>${escapeHtml(c.name)}</span>
-            <span class="lib-mat-cat-count">${c.materials_count || 0}</span>
-          </div>
-        `).join("")}
+        ${renderMaterialCategoryPillsHtml()}
       </div>
 
       <!-- QUICK FILTER CHIPS -->
       <div class="category-chips lib-chips-row" style="margin-top: -4px;">
-        <div class="chip ${materialsState.filterVerified ? 'active' : ''}" onclick="toggleMaterialFilter('filterVerified')">
+        <div class="chip ${materialsState.filterVerified ? 'active' : ''}" data-filter-key="filterVerified" onclick="toggleMaterialFilter('filterVerified')">
           ✓ Faqat tekshirilgan
         </div>
-        <div class="chip ${materialsState.filterMoisture ? 'active' : ''}" onclick="toggleMaterialFilter('filterMoisture')">
+        <div class="chip ${materialsState.filterMoisture ? 'active' : ''}" data-filter-key="filterMoisture" onclick="toggleMaterialFilter('filterMoisture')">
           💧 Namlikka chidamli
         </div>
-        <div class="chip ${materialsState.filterFire ? 'active' : ''}" onclick="toggleMaterialFilter('filterFire')">
+        <div class="chip ${materialsState.filterFire ? 'active' : ''}" data-filter-key="filterFire" onclick="toggleMaterialFilter('filterFire')">
           🔥 Yong'in klassi A1/KM0
         </div>
-        <div class="chip ${materialsState.filterInterior ? 'active' : ''}" onclick="toggleMaterialFilter('filterInterior')">
+        <div class="chip ${materialsState.filterInterior ? 'active' : ''}" data-filter-key="filterInterior" onclick="toggleMaterialFilter('filterInterior')">
           🏠 Ichki ishlar
         </div>
       </div>
@@ -8273,7 +8437,7 @@ function renderMaterialDetailPage(detailData) {
     <div class="page lib-container lib-mat-detail-page">
       <!-- TOP NAVIGATION BAR -->
       <div class="lib-detail-top-bar" style="margin-bottom: 14px;">
-        <div class="lib-back-nav" style="margin:0;" onclick="closeLibrarySection()">
+        <div class="lib-back-nav" style="margin:0;" onclick="closeMaterialDetail()">
           ${libIcons.back('lib-back-svg', 16)} Materiallar
         </div>
       </div>
@@ -13182,7 +13346,7 @@ function renderAdminMaterialsCMSInner() {
 function renderAdminMaterialRowHtml(m) {
   const isVerified = m.verification_status === 'verified' || m.is_verified;
   const isPending = m.verification_status === 'pending' || (!m.is_verified && m.verification_status !== 'draft');
-  const imgUrl = m.featured_image || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=160&auto=format&fit=crop&q=80';
+  const imgUrl = m.featured_image || 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=160&auto=format&fit=crop&q=80';
 
   return `
     <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
@@ -15609,6 +15773,7 @@ function closeDetail() {
     window._quizState = null;
   }
   currentView = null;
+  activeMaterialDetail = null;
   const targetY = lastDetailReturnScroll || savedTabScrolls[activeTab] || 0;
   render();
   requestAnimationFrame(() => {
@@ -15648,7 +15813,11 @@ function updateTelegramBackButton() {
 
 function handleTelegramBackClick() {
   if (currentView) {
-    closeDetail();
+    if (currentView.type === "material_detail") {
+      closeMaterialDetail();
+    } else {
+      closeDetail();
+    }
   } else if (activeTab === "tasks" && typeof libraryActiveSection !== "undefined" && libraryActiveSection) {
     closeLibrarySection();
   }
