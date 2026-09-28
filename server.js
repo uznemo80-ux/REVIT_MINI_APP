@@ -226,14 +226,17 @@ async function initExtendedTables() {
         question TEXT NOT NULL,
         answer TEXT,
         status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        is_public BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         answered_at TIMESTAMPTZ,
         answered_by BIGINT
       )
     `);
+    await pool.query('ALTER TABLE lesson_questions ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_questions_is_public ON lesson_questions(is_public)');
 
     // Default kurs mavjudligini tekshiramiz
     var cCount = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
@@ -2674,15 +2677,17 @@ app.post('/api/lesson/:id', async function (req, res) {
 
     var questions = [];
     try {
+      var isAdmin = Boolean(user && user.is_admin);
       var qRes = await pool.query(
-        `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+        `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
                 u.first_name, u.last_name, u.username,
                 (lq.user_id = $2) AS is_mine
          FROM lesson_questions lq
          JOIN users u ON u.id = lq.user_id
          WHERE lq.lesson_id = $1
-         ORDER BY lq.created_at DESC`,
-        [lesson.id, user.id]
+           AND ($3 = true OR lq.is_public = true OR lq.user_id = $2)
+         ORDER BY (CASE WHEN lq.is_public = true THEN 0 ELSE 1 END) ASC, lq.created_at DESC`,
+        [lesson.id, user.id, isAdmin]
       );
       questions = qRes.rows;
     } catch (qErr) {
@@ -2898,8 +2903,8 @@ app.post('/api/lesson/:id/question', async function (req, res) {
     if (!lessonInfo) return res.status(404).json({ error: 'Dars topilmadi' });
 
     var result = await pool.query(
-      `INSERT INTO lesson_questions (lesson_id, user_id, question, status, created_at)
-       VALUES ($1, $2, $3, 'pending', NOW())
+      `INSERT INTO lesson_questions (lesson_id, user_id, question, status, is_public, created_at)
+       VALUES ($1, $2, $3, 'pending', false, NOW())
        RETURNING *`,
       [lessonId, user.id, questionText]
     );
@@ -2918,7 +2923,7 @@ app.post('/api/lesson/:id/question', async function (req, res) {
         `📑 <b>Modul:</b> ${lessonInfo.module_title || ''}\n` +
         `🎬 <b>Dars:</b> ${lessonInfo.lesson_title}\n\n` +
         `💬 <b>Savol:</b>\n<i>"${questionText}"</i>\n\n` +
-        `<i>Mini App ichidagi "Chat" bo‘limidan javob qaytarishingiz mumkin.</i>`;
+        `<i>Mini App ichidagi "Chat" bo‘limidan javob qaytarishingiz yoki barcha o‘quvchilarga ommaviy qilishingiz mumkin.</i>`;
       await notifyAdmin(adminNotice);
     } catch (notifErr) {
       console.warn('ADMIN Q NOTIFY WARNING:', notifErr.message);
@@ -2926,12 +2931,13 @@ app.post('/api/lesson/:id/question', async function (req, res) {
 
     return res.json({
       ok: true,
-      message: 'Savolingiz adminga yuborildi. Ustoz javob bergach xabar beramiz!',
+      message: 'Savolingiz ustozga yuborildi. Ustoz javob bergach xabar beramiz!',
       question: Object.assign({}, newQuestion, {
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
-        is_mine: true
+        is_mine: true,
+        is_public: false
       })
     });
   } catch (error) {
@@ -2947,7 +2953,7 @@ app.post('/api/chat/my-questions', async function (req, res) {
     if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
 
     var result = await pool.query(
-      `SELECT lq.id, lq.lesson_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+      `SELECT lq.id, lq.lesson_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
               l.title AS lesson_title, m.title AS module_title, c.title AS course_title, c.id AS course_id
        FROM lesson_questions lq
        JOIN lessons l ON l.id = lq.lesson_id
@@ -2969,7 +2975,7 @@ app.post('/api/chat/my-questions', async function (req, res) {
 app.post('/api/admin/questions', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query(
-      `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.created_at, lq.answered_at,
+      `SELECT lq.id, lq.lesson_id, lq.user_id, lq.question, lq.answer, lq.status, lq.is_public, lq.created_at, lq.answered_at,
               u.first_name, u.last_name, u.username, u.phone, u.telegram_id,
               l.title AS lesson_title, m.title AS module_title, c.title AS course_title, c.id AS course_id
        FROM lesson_questions lq
@@ -2996,13 +3002,17 @@ app.post('/api/admin/questions/:id/reply', requireAdmin, async function (req, re
       return res.status(400).json({ error: 'Javob matni bo‘sh bo‘lishi mumkin emas' });
     }
 
-    var result = await pool.query(
-      `UPDATE lesson_questions
-       SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2
-       WHERE id = $3
-       RETURNING *`,
-      [answerText, req.user.telegram_id, questionId]
-    );
+    var hasIsPublic = typeof req.body.is_public !== 'undefined';
+    var isPublicVal = Boolean(req.body.is_public);
+
+    var querySql = hasIsPublic
+      ? `UPDATE lesson_questions SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2, is_public = $4 WHERE id = $3 RETURNING *`
+      : `UPDATE lesson_questions SET answer = $1, status = 'answered', answered_at = NOW(), answered_by = $2 WHERE id = $3 RETURNING *`;
+    var queryArgs = hasIsPublic
+      ? [answerText, req.user.telegram_id, questionId, isPublicVal]
+      : [answerText, req.user.telegram_id, questionId];
+
+    var result = await pool.query(querySql, queryArgs);
     var updated = result.rows[0];
     if (!updated) return res.status(404).json({ error: 'Savol topilmadi' });
 
@@ -3036,6 +3046,44 @@ app.post('/api/admin/questions/:id/reply', requireAdmin, async function (req, re
   } catch (error) {
     console.error('REPLY QUESTION ERROR:', error);
     return res.status(500).json({ error: 'Javobni yuborishda xatolik yuz berdi' });
+  }
+});
+
+// Admin savolni ommaviy / shaxsiy qilish (Variant 1 & 3: Shaxsiy qoldirish yoki Hammaga ulashish)
+app.post('/api/admin/questions/:id/toggle-public', requireAdmin, async function (req, res) {
+  try {
+    var questionId = Number(req.params.id);
+    var targetPublic = typeof req.body.is_public === 'boolean' ? req.body.is_public : null;
+    var result = await pool.query(
+      `UPDATE lesson_questions
+       SET is_public = (CASE WHEN $1::boolean IS NOT NULL THEN $1::boolean ELSE NOT is_public END)
+       WHERE id = $2
+       RETURNING *`,
+      [targetPublic, questionId]
+    );
+    var updated = result.rows[0];
+    if (!updated) return res.status(404).json({ error: 'Savol topilmadi' });
+
+    var msg = updated.is_public
+      ? 'Savol barcha o‘quvchilarga ommaviy qilindi (dars ichida ko‘rinadi)!'
+      : 'Savol shaxsiy holatga o‘tkazildi (faqat o‘quvchi va adminga ko‘rinadi)!';
+    return res.json({ ok: true, is_public: updated.is_public, message: msg, question: updated });
+  } catch (error) {
+    console.error('TOGGLE QUESTION PUBLIC ERROR:', error);
+    return res.status(500).json({ error: 'Savol ko‘rinishini o‘zgartirishda xatolik yuz berdi' });
+  }
+});
+
+// Admin savolni butunlay o'chirib tashlash (Variant 2: O'chirib tashlash)
+app.post('/api/admin/questions/:id/delete', requireAdmin, async function (req, res) {
+  try {
+    var questionId = Number(req.params.id);
+    var result = await pool.query('DELETE FROM lesson_questions WHERE id = $1 RETURNING id', [questionId]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Savol topilmadi' });
+    return res.json({ ok: true, message: 'Savol muvaffaqiyatli o‘chirildi' });
+  } catch (error) {
+    console.error('DELETE QUESTION ERROR:', error);
+    return res.status(500).json({ error: 'Savolni o‘chirishda xatolik yuz berdi' });
   }
 });
 

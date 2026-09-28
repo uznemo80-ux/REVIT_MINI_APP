@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS lesson_questions (
   question      TEXT NOT NULL,
   answer        TEXT,
   status        VARCHAR(30) NOT NULL DEFAULT 'pending',
+  is_public     BOOLEAN NOT NULL DEFAULT false,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   answered_at   TIMESTAMPTZ,
   answered_by   BIGINT
@@ -121,6 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_payment_requests_user_id ON payment_requests(user
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_lesson_id ON lesson_questions(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_user_id ON lesson_questions(user_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_questions_status ON lesson_questions(status);
+CREATE INDEX IF NOT EXISTS idx_lesson_questions_is_public ON lesson_questions(is_public);
 
 -- COURSE SHOWCASES / PORTFOLIO (PDF & RESULT SLIDER)
 CREATE TABLE IF NOT EXISTS course_showcases (

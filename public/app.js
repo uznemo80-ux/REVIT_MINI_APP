@@ -6083,35 +6083,131 @@ function renderLessonQABox(lessonId, questions) {
       </div>
 
       <div class="qa-list" id="qa-list-${lessonId}">
-        ${qList.length ? qList.map(q => `
-          <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
-            <div class="qa-card-head">
-              <span class="qa-author">
-                👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
-                ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
-              </span>
-              <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
-            </div>
-            <div class="qa-question-text">${escapeHtml(q.question)}</div>
-
-            ${q.status === 'answered' && q.answer ? `
-              <div class="qa-answer-block">
-                <div class="qa-answer-title">
-                  <span>👑 Ustoz javobi:</span>
-                  <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
-                </div>
-                <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
-              </div>
-            ` : `
-              <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
-                ⏳ Ustoz ko‘rib chiqmoqda...
-              </div>
-            `}
-          </div>
-        `).join("") : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`}
+        ${qList.length ? qList.map(q => renderSingleLessonQaCard(q, lessonId)).join("") : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`}
       </div>
     </div>
   `;
+}
+
+function renderSingleLessonQaCard(q, lessonId) {
+  const isMine = Boolean(q.is_mine);
+  const isPublic = Boolean(q.is_public);
+  const isAdmin = Boolean(state.is_admin);
+
+  return `
+    <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}" id="qa-card-${q.id}">
+      <div class="qa-card-head" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <span class="qa-author">
+            👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+            ${isMine ? '<span style="font-size:10px; opacity:0.8; color:var(--accent); font-weight:700;">(Siz)</span>' : ''}
+          </span>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+            ${isPublic ? `
+              <span class="tag passed" style="font-size:10px; padding:2px 7px; border-radius:10px;">🌐 Ommaviy</span>
+            ` : `
+              <span class="tag" style="font-size:10px; padding:2px 7px; border-radius:10px; background:rgba(255,170,0,0.15); color:#ffa000;">🔒 Shaxsiy</span>
+            `}
+            <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+          </div>
+        </div>
+
+        ${isAdmin ? `
+          <div style="display:flex; align-items:center; gap:4px;">
+            <button class="admin-small-btn" onclick="toggleLessonQuestionVisibility(${Number(q.id)}, ${Number(lessonId)})" title="${isPublic ? 'Shaxsiy qilish' : 'Ommaga ulashish'}" style="font-size:10.5px; padding:3px 7px; ${isPublic ? 'color:#2979ff; border:1px solid rgba(41,121,255,0.3);' : ''}">
+              ${isPublic ? '🔒 Shaxsiy' : '🌐 Ommaviy'}
+            </button>
+            <button class="admin-small-btn" onclick="deleteLessonQuestion(${Number(q.id)}, ${Number(lessonId)})" title="O‘chirish" style="font-size:10.5px; padding:3px 6px; color:#eb3b3b; background:rgba(235,59,59,0.15);">
+              🗑️
+            </button>
+          </div>
+        ` : ""}
+      </div>
+
+      <div class="qa-question-text" style="margin-top:6px;">${escapeHtml(q.question)}</div>
+
+      ${q.status === 'answered' && q.answer ? `
+        <div class="qa-answer-block" style="margin-top:8px;">
+          <div class="qa-answer-title">
+            <span>👑 Ustoz javobi:</span>
+            <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
+          </div>
+          <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
+        </div>
+      ` : `
+        <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px; margin-top:6px;">
+          ⏳ Ustoz ko‘rib chiqmoqda...
+        </div>
+      `}
+
+      ${isAdmin ? `
+        <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:8px;">
+          <textarea id="lesson-admin-reply-${q.id}" class="qa-textarea" style="min-height:50px; font-size:12px; margin-bottom:6px;" placeholder="${q.status === 'answered' ? 'Javobni tahrirlash...' : 'Ushbu savolga javob yozish...'}">${escapeHtml(q.answer || '')}</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="font-size:11.5px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="lesson-reply-public-${q.id}" ${isPublic ? 'checked' : ''} style="width:14px; height:14px; accent-color:var(--accent);">
+              Ommaga ulashish
+            </label>
+            <button class="btn" style="width:auto; margin:0; padding:6px 12px; font-size:11.5px;" onclick="submitLessonAdminReply(${Number(q.id)}, ${Number(lessonId)})">
+              ${q.status === 'answered' ? 'Javobni yangilash' : 'Javob yuborish'}
+            </button>
+          </div>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+async function toggleLessonQuestionVisibility(questionId, lessonId) {
+  try {
+    haptic("light");
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/toggle-public`, {});
+    showToast(res.message || "Ko‘rinish o‘zgartirildi!");
+    await reloadLessonQuestions(lessonId);
+  } catch (err) {
+    showAlert(err.message || "Xatolik yuz berdi.");
+  }
+}
+
+async function deleteLessonQuestion(questionId, lessonId) {
+  if (!confirm("Haqiqatan ham ushbu savolni o‘chirmoqchimisiz?")) return;
+  try {
+    haptic("medium");
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/delete`, {});
+    showToast(res.message || "Savol o‘chirildi!");
+    await reloadLessonQuestions(lessonId);
+  } catch (err) {
+    showAlert(err.message || "O‘chirishda xatolik yuz berdi.");
+  }
+}
+
+async function submitLessonAdminReply(questionId, lessonId) {
+  const input = document.getElementById(`lesson-admin-reply-${questionId}`);
+  const isPubCheckbox = document.getElementById(`lesson-reply-public-${questionId}`);
+  const answer = input ? input.value.trim() : "";
+  if (!answer) return showAlert("Iltimos, javob matnini yozing!");
+
+  try {
+    haptic("medium");
+    const isPublic = isPubCheckbox ? isPubCheckbox.checked : false;
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, { answer, is_public: isPublic });
+    showToast(res.message || "Javob yuborildi!");
+    await reloadLessonQuestions(lessonId);
+  } catch (err) {
+    showAlert(err.message || "Xatolik yuz berdi.");
+  }
+}
+
+async function reloadLessonQuestions(lessonId) {
+  try {
+    const updatedLesson = await api(`/api/lesson/${Number(lessonId)}`);
+    const qaListEl = document.getElementById(`qa-list-${lessonId}`);
+    if (qaListEl && updatedLesson && Array.isArray(updatedLesson.questions)) {
+      qaListEl.innerHTML = updatedLesson.questions.length
+        ? updatedLesson.questions.map(q => renderSingleLessonQaCard(q, lessonId)).join("")
+        : `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">Hozircha savollar yo‘q. Birinchi bo‘lib savol bering!</div>`;
+    }
+  } catch (e) {}
 }
 
 async function submitLessonQuestion(lessonId) {
@@ -6125,38 +6221,8 @@ async function submitLessonQuestion(lessonId) {
     haptic("medium");
     const res = await api(`/api/lesson/${Number(lessonId)}/question`, { question: text });
     input.value = "";
-    showToast(res.message || "Savolingiz adminga yuborildi!");
-
-    // Refresh questions in view
-    const updatedLesson = await api(`/api/lesson/${Number(lessonId)}`);
-    const qaListEl = document.getElementById(`qa-list-${lessonId}`);
-    if (qaListEl && updatedLesson && Array.isArray(updatedLesson.questions)) {
-      qaListEl.innerHTML = updatedLesson.questions.map(q => `
-        <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
-          <div class="qa-card-head">
-            <span class="qa-author">
-              👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
-              ${q.is_mine ? '<span style="font-size:10px; opacity:0.75; color:var(--accent); font-weight:600;">(Siz)</span>' : ''}
-            </span>
-            <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
-          </div>
-          <div class="qa-question-text">${escapeHtml(q.question)}</div>
-          ${q.status === 'answered' && q.answer ? `
-            <div class="qa-answer-block">
-              <div class="qa-answer-title">
-                <span>👑 Ustoz javobi:</span>
-                <span style="font-size:10px; opacity:0.75; font-weight:normal; margin-left:auto;">${fmtTimeAgo(q.answered_at)}</span>
-              </div>
-              <div class="qa-answer-text">${escapeHtml(q.answer).replace(/\n/g, "<br>")}</div>
-            </div>
-          ` : `
-            <div style="font-size:11.5px; color:var(--warning); display:flex; align-items:center; gap:4px;">
-              ⏳ Ustoz ko‘rib chiqmoqda...
-            </div>
-          `}
-        </div>
-      `).join("");
-    }
+    showToast(res.message || "Savolingiz ustozga yuborildi!");
+    await reloadLessonQuestions(lessonId);
   } catch (err) {
     showAlert(err.message || "Savol yuborishda xatolik yuz berdi.");
   }
@@ -9720,9 +9786,17 @@ function renderChat() {
     // ADMIN Q&A CENTER
     const allQuestions = adminQuestionsList || [];
     const pendingCount = allQuestions.filter(q => q.status === "pending").length;
-    const filteredQuestions = adminQuestionsFilter === "pending"
-      ? allQuestions.filter(q => q.status === "pending")
-      : allQuestions;
+    const publicCount = allQuestions.filter(q => q.is_public).length;
+    const privateCount = allQuestions.filter(q => !q.is_public).length;
+
+    let filteredQuestions = allQuestions;
+    if (adminQuestionsFilter === "pending") {
+      filteredQuestions = allQuestions.filter(q => q.status === "pending");
+    } else if (adminQuestionsFilter === "public") {
+      filteredQuestions = allQuestions.filter(q => q.is_public);
+    } else if (adminQuestionsFilter === "private") {
+      filteredQuestions = allQuestions.filter(q => !q.is_public);
+    }
 
     contentHtml = `
       <div class="admin-qa-center">
@@ -9731,15 +9805,21 @@ function renderChat() {
           ${pendingCount > 0 ? `<span class="tag warning">⚡ ${pendingCount} ta kutilmoqda</span>` : '<span class="tag passed">Barchasi javoblangan</span>'}
         </div>
         <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
-          O‘quvchilar darslar ostida qoldirgan savollari. Savolga javob yozsangiz, o‘quvchiga darhol xabar boradi.
+          O‘quvchilar darslar ostida qoldirgan savollari. Siz javob qaytarishingiz, shaxsiy qoldirishingiz yoki barcha o‘quvchilarga ommaviy qilishingiz mumkin.
         </p>
 
-        <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
           <button class="chip ${adminQuestionsFilter === 'pending' ? 'active' : ''}" onclick="setAdminQuestionsFilter('pending')">
             ⏳ Kutilmoqda (${pendingCount})
           </button>
-          <button class="chip ${adminQuestionsFilter === 'all' ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
-            📋 Barcha savollar (${allQuestions.length})
+          <button class="chip ${adminQuestionsFilter === 'all' || !adminQuestionsFilter ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
+            📋 Barchasi (${allQuestions.length})
+          </button>
+          <button class="chip ${adminQuestionsFilter === 'public' ? 'active' : ''}" onclick="setAdminQuestionsFilter('public')">
+            🌐 Ommaviy (${publicCount})
+          </button>
+          <button class="chip ${adminQuestionsFilter === 'private' ? 'active' : ''}" onclick="setAdminQuestionsFilter('private')">
+            🔒 Shaxsiy (${privateCount})
           </button>
         </div>
 
@@ -9755,8 +9835,15 @@ function renderChat() {
                   📞 ${escapeHtml(q.phone || "Telefon yo‘q")} · 🕒 ${fmtTimeAgo(q.created_at)}
                 </span>
               </div>
-              <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
-                ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
+                  ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
+                </div>
+                ${q.is_public ? `
+                  <span class="tag passed" style="font-size:10px; padding:2px 7px;">🌐 Ommaviy</span>
+                ` : `
+                  <span class="tag" style="font-size:10px; padding:2px 7px; background:rgba(255,170,0,0.15); color:#ffa000;">🔒 Shaxsiy</span>
+                `}
               </div>
             </div>
 
@@ -9778,9 +9865,31 @@ function renderChat() {
               </div>
             ` : ""}
 
+            <!-- 3 TA ASOSIY VARIANT BOSHQARUVI -->
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; margin-bottom:12px;">
+              <!-- 1-va 3-VARIANT: Shaxsiy qoldirish yoki Ommaga ulashish -->
+              <button class="btn secondary" style="flex:1; min-width:180px; margin:0; padding:8px 12px; font-size:12px; font-weight:700; ${q.is_public ? 'color:#2979ff; border-color:rgba(41,121,255,0.4);' : ''}" onclick="toggleChatQuestionVisibility(${Number(q.id)})">
+                ${q.is_public ? '🔒 Shaxsiy qilish (faqat ikkalamizga)' : '🌐 Ommaga ulashish (barchaga ochiq)'}
+              </button>
+
+              <!-- 2-VARIANT: O'chirib tashlash -->
+              <button class="btn secondary" style="flex:0 0 auto; margin:0; padding:8px 14px; font-size:12px; font-weight:700; color:#eb3b3b; border-color:rgba(235,59,59,0.3);" onclick="deleteChatQuestion(${Number(q.id)})">
+                🗑️ O‘chirish
+              </button>
+            </div>
+
+            <!-- JAVOB YOZISH BLOKI -->
             <div class="admin-reply-box">
               <textarea id="admin-reply-input-${q.id}" class="qa-textarea" placeholder="${q.status === 'answered' ? 'Javobni qayta tahrirlash...' : 'Ushbu o‘quvchiga javob yozing...'}">${escapeHtml(q.answer || '')}</textarea>
-              <div class="admin-reply-actions">
+              
+              <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+                <label style="font-size:12px; color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  <input type="checkbox" id="admin-reply-public-${q.id}" ${q.is_public ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--accent);">
+                  🌐 Barcha o‘quvchilarga ommaviy qilish (Ommaga ulashish)
+                </label>
+              </div>
+
+              <div class="admin-reply-actions" style="margin-top:10px;">
                 <button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="submitAdminReply(${Number(q.id)})">
                   💬 ${q.status === 'answered' ? 'Javobni yangilash' : 'Javobni yuborish'}
                 </button>
@@ -9789,7 +9898,7 @@ function renderChat() {
           </div>
         `).join("") : `
           <div class="empty-box">
-            ${adminQuestionsFilter === 'pending' ? 'Hozircha javob kutayotgan savollar yo‘q! Barcha savollarga javob berilgan.' : 'Hozircha hech qanday savollar kelib tushmagan.'}
+            ${adminQuestionsFilter === 'pending' ? 'Hozircha javob kutayotgan savollar yo‘q! Barcha savollarga javob berilgan.' : 'Hozircha savollar mavjud emas.'}
           </div>
         `}
       </div>
@@ -9831,11 +9940,18 @@ function renderChat() {
         <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
           ${myQuestions.map(q => `
             <div class="qa-card ${q.status === 'answered' ? 'answered' : ''}">
-              <div class="qa-card-head">
+              <div class="qa-card-head" style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <span class="admin-qa-lesson-tag" style="margin-bottom:0; font-size:11px; cursor:pointer;" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})">
                   🎬 ${escapeHtml(q.lesson_title || 'Dars')} ↗
                 </span>
-                <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  ${q.is_public ? `
+                    <span class="tag passed" style="font-size:10px; padding:2px 7px;">🌐 Ommaviy</span>
+                  ` : `
+                    <span class="tag" style="font-size:10px; padding:2px 7px; background:rgba(255,170,0,0.15); color:#ffa000;">🔒 Shaxsiy</span>
+                  `}
+                  <span class="qa-time">${fmtTimeAgo(q.created_at)}</span>
+                </div>
               </div>
               <div class="qa-question-text" style="margin-top:6px;">
                 <b>Savol:</b> ${escapeHtml(q.question)}
@@ -9917,6 +10033,7 @@ async function loadChatQuestions() {
 
 async function submitAdminReply(questionId) {
   const input = document.getElementById(`admin-reply-input-${questionId}`);
+  const isPubCheckbox = document.getElementById(`admin-reply-public-${questionId}`);
   const answer = input ? input.value.trim() : "";
   if (!answer) {
     return showAlert("Iltimos, o‘quvchiga javob matnini yozing!");
@@ -9924,11 +10041,35 @@ async function submitAdminReply(questionId) {
 
   try {
     haptic("medium");
-    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, { answer: answer });
+    const isPublic = isPubCheckbox ? isPubCheckbox.checked : false;
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/reply`, { answer: answer, is_public: isPublic });
     showToast(res.message || "Javob yuborildi!");
     await loadChatQuestions();
   } catch (err) {
     showAlert(err.message || "Javob yuborishda xato yuz berdi.");
+  }
+}
+
+async function toggleChatQuestionVisibility(questionId) {
+  try {
+    haptic("light");
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/toggle-public`, {});
+    showToast(res.message || "Ko‘rinish o‘zgartirildi!");
+    await loadChatQuestions();
+  } catch (err) {
+    showAlert(err.message || "Xatolik yuz berdi.");
+  }
+}
+
+async function deleteChatQuestion(questionId) {
+  if (!confirm("Haqiqatan ham ushbu savolni butunlay o‘chirmoqchimisiz?")) return;
+  try {
+    haptic("medium");
+    const res = await adminApi(`/api/admin/questions/${Number(questionId)}/delete`, {});
+    showToast(res.message || "Savol o‘chirildi!");
+    await loadChatQuestions();
+  } catch (err) {
+    showAlert(err.message || "O‘chirishda xatolik yuz berdi.");
   }
 }
 
