@@ -2973,11 +2973,18 @@ html.light .nav {
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(41, 121, 255, 0.08);
   position: relative;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
 .free-minicourse-card:hover {
-  border-color: rgba(41, 121, 255, 0.45);
+  border-color: rgba(41, 121, 255, 0.55);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), 0 0 30px rgba(41, 121, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.free-minicourse-card:active {
+  transform: scale(0.995);
 }
 
 .fmc-top {
@@ -3005,6 +3012,11 @@ html.light .nav {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  transition: background 0.2s ease;
+}
+
+.fmc-tag:hover {
+  background: rgba(41, 121, 255, 0.25);
 }
 
 .fmc-title {
@@ -3041,12 +3053,12 @@ html.light .nav {
 
 .fmc-start-btn {
   width: 100%;
-  max-width: 280px;
+  max-width: 320px;
   margin: 0 auto;
-  padding: 13px 20px;
-  font-size: 15px;
+  padding: 13px 22px;
+  font-size: 14.5px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   background: linear-gradient(135deg, #2979ff, #1565c0);
   border: none;
   border-radius: 12px;
@@ -3058,6 +3070,11 @@ html.light .nav {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.fmc-start-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 22px rgba(41, 121, 255, 0.55);
 }
 
 .fmc-start-btn:active {

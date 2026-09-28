@@ -4187,12 +4187,12 @@ function renderFreeMiniCourseCard() {
   const countText = fmcLessons.length > 0 ? `${fmcLessons.length} ta bepul dars` : "6 ta bepul dars";
 
   return `
-    <div class="free-minicourse-card">
+    <div class="free-minicourse-card" onclick="openFreeMiniCourseLessonsModal()" style="cursor:pointer;" title="Bepul mini-kurs darslarini ko'rish">
       <div class="fmc-top">
         <div class="fmc-top-bar">
-          <div class="fmc-tag">✨ Bepul Mini-Kurs</div>
+          <div class="fmc-tag" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal();" style="cursor:pointer;">✨ Bepul Mini-Kurs</div>
           ${state.is_admin ? `
-            <button class="admin-small-btn" onclick="openEditFreeMiniCourseModal()" style="font-size:11px; padding:4px 9px;">
+            <button class="admin-small-btn" onclick="event.stopPropagation(); openEditFreeMiniCourseModal()" style="font-size:11px; padding:4px 9px;">
               ✏️ Tahrirlash
             </button>
           ` : ""}
@@ -4206,8 +4206,8 @@ function renderFreeMiniCourseCard() {
         </div>
 
         <div>
-          <button type="button" class="fmc-start-btn" onclick="openFreeMiniCourseLessonsModal()">
-            🚀 BOSHLASH
+          <button type="button" class="fmc-start-btn" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal()">
+            ✨ Bepul mini-kursni boshlash
           </button>
         </div>
       </div>
