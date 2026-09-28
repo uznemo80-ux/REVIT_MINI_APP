@@ -2470,21 +2470,41 @@ app.post('/api/course/:id/modules', async function (req, res) {
 
     var hasCourseAccess = isFreeCourse || userHasAccess || isAdmin;
     var sequentialUnlockedSet = new Set();
+    var unlockedModuleIds = new Set();
+
     if (hasCourseAccess) {
-      var chainOpen = true;
-      var prevModuleId = null;
-      flatLessons.forEach(function (l) {
-        if (chainOpen && prevModuleId !== null && l.module_id !== prevModuleId) {
-          if (modulesWithTestsSet.has(prevModuleId) && !passedModulesSet.has(prevModuleId)) {
-            chainOpen = false;
+      var canAccessNextModule = true;
+      for (var mIdx = 0; mIdx < modules.length; mIdx++) {
+        var modItem = modules[mIdx];
+        var isMod1 = (mIdx === 0);
+        var modLessons = lessons.filter(function (l) { return l.module_id === modItem.id; });
+
+        if (!canAccessNextModule) break;
+        unlockedModuleIds.add(modItem.id);
+
+        if (isMod1) {
+          // 1-modul to'liq ochiladi
+          modLessons.forEach(function (l) { sequentialUnlockedSet.add(l.id); });
+          if (modulesWithTestsSet.has(modItem.id) && !passedModulesSet.has(modItem.id)) {
+            canAccessNextModule = false;
+          }
+        } else {
+          // 2-modul va keyingi modullar ketma-ketlikda bittalab ochiladi
+          var chainInMod = true;
+          for (var lIdx = 0; lIdx < modLessons.length; lIdx++) {
+            var lItem = modLessons[lIdx];
+            if (chainInMod) {
+              sequentialUnlockedSet.add(lItem.id);
+              if (!watchedSet.has(lItem.id)) { chainInMod = false; }
+            }
+          }
+          var allModLessonsWatched = modLessons.length > 0 && modLessons.every(function (l) { return watchedSet.has(l.id); });
+          var modTestPassed = !modulesWithTestsSet.has(modItem.id) || passedModulesSet.has(modItem.id);
+          if (!allModLessonsWatched || !modTestPassed) {
+            canAccessNextModule = false;
           }
         }
-        if (chainOpen) {
-          sequentialUnlockedSet.add(l.id);
-          if (!watchedSet.has(l.id)) chainOpen = false;
-        }
-        prevModuleId = l.module_id;
-      });
+      }
     }
 
     var data = modules.map(function (mod) {
@@ -2492,7 +2512,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
       var isStreamCourseOrModule = isFreeCourse ||
         /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
         (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
-      var moduleUnlocked = isStreamCourseOrModule || userHasAccess || isGranted || isAdmin;
+      var moduleUnlocked = isStreamCourseOrModule || isGranted || isAdmin || (userHasAccess && unlockedModuleIds.has(mod.id));
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
@@ -2593,26 +2613,21 @@ app.post('/api/lesson/:id', async function (req, res) {
       (courseData && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title || '')) ||
       /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '');
 
-    var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted || (isFreeCourse && isFirstModule);
+    var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted;
 
     if (!lessonAvailable && userHasAccess) {
-      // Ketma-ket ochilish tekshiruvi: shu kursdagi barcha darslarni tartib bilan tekshiramiz
       var courseModulesResult = await pool.query(
         'SELECT id FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
         [mod.course_id]
       );
-      var courseModuleIds = courseModulesResult.rows.map(function (r) { return r.id; });
+      var courseModules = courseModulesResult.rows;
+      var courseModuleIds = courseModules.map(function (r) { return r.id; });
 
       var courseLessonsResult = await pool.query(
         'SELECT id, module_id FROM lessons WHERE module_id = ANY($1) ORDER BY order_index ASC, id ASC',
         [courseModuleIds]
       );
-      var flatLessonsForCheck = [];
-      courseModuleIds.forEach(function (mid) {
-        courseLessonsResult.rows.filter(function (l) { return l.module_id === mid; }).forEach(function (l) {
-          flatLessonsForCheck.push(l);
-        });
-      });
+      var courseLessons = courseLessonsResult.rows;
 
       var watchedForCheckResult = await pool.query(
         'SELECT lesson_id FROM progress WHERE user_id = $1 AND watched = true',
@@ -2633,32 +2648,54 @@ app.post('/api/lesson/:id', async function (req, res) {
           'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
           [courseModuleIds]
         );
-        modulesWithTestsForCheckResult.rows.forEach(function (r) { modulesWithTestsForCheckSet.add(r.module_id); });
+        modulesWithTestsForCheckResult.rows.forEach(function (r) { modulesWithTestsSet.add(r.module_id); });
       }
 
-      var chainOpenForCheck = true;
-      var prevModuleIdForCheck = null;
-      for (var i = 0; i < flatLessonsForCheck.length; i++) {
-        var l = flatLessonsForCheck[i];
-        if (!chainOpenForCheck) break;
-        if (prevModuleIdForCheck !== null && l.module_id !== prevModuleIdForCheck) {
-          if (modulesWithTestsForCheckSet.has(prevModuleIdForCheck) && !passedModulesForCheckSet.has(prevModuleIdForCheck)) {
-            chainOpenForCheck = false;
+      var canAccessNext = true;
+      for (var mIdx = 0; mIdx < courseModules.length; mIdx++) {
+        var cMod = courseModules[mIdx];
+        if (!canAccessNext) break;
+        var cModLessons = courseLessons.filter(function (l) { return l.module_id === cMod.id; });
+        var isMod1 = (mIdx === 0);
+
+        if (isMod1) {
+          if (cModLessons.some(function (l) { return Number(l.id) === Number(lesson.id); })) {
+            lessonAvailable = true;
             break;
           }
+          if (modulesWithTestsForCheckSet.has(cMod.id) && !passedModulesForCheckSet.has(cMod.id)) {
+            canAccessNext = false;
+          }
+        } else {
+          var chain = true;
+          for (var lIdx = 0; lIdx < cModLessons.length; lIdx++) {
+            var cl = cModLessons[lIdx];
+            if (chain) {
+              if (Number(cl.id) === Number(lesson.id)) {
+                lessonAvailable = true;
+                break;
+              }
+              if (!watchedForCheckSet.has(cl.id)) { chain = false; }
+            }
+          }
+          if (lessonAvailable) break;
+
+          var allWatched = cModLessons.length > 0 && cModLessons.every(function (l) { return watchedForCheckSet.has(l.id); });
+          var testPassed = !modulesWithTestsForCheckSet.has(cMod.id) || passedModulesForCheckSet.has(cMod.id);
+          if (!allWatched || !testPassed) {
+            canAccessNext = false;
+          }
         }
-        if (Number(l.id) === Number(lesson.id)) { lessonAvailable = true; break; }
-        if (!watchedForCheckSet.has(l.id)) { chainOpenForCheck = false; }
-        prevModuleIdForCheck = l.module_id;
       }
     }
 
     if (!lessonAvailable) {
       return res.status(403).json({
         error: 'locked',
-        message: isFreeCourse
-          ? 'Bu dars hali yopiq. Avvalgi darslarni ketma-ket tugatishingiz kerak.'
-          : "Bu dars faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun ochiq. Kursga a'zo bo'lish uchun adminga murojaat qiling."
+        reason: userHasAccess ? 'sequential' : 'unpaid',
+        message: userHasAccess
+          ? "Ushbu dars hali ochilmagan. Qachonki siz bundan oldingi darslikni to'liq ko'rib bo'lganingizdan keyin ('To'liq ko'rib bo'ldim' tugmasini bosgach), keyingi darslik ochiladi."
+          : "Ushbu dars faqat kursga a'zo bo'lgan (to'lov qilgan) o'quvchilar uchun ochiq. Kursga a'zo bo'lish uchun to'lov qiling va adminga murojaat qiling."
       });
     }
 

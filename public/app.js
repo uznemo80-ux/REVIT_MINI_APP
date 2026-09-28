@@ -5567,15 +5567,17 @@ function renderCourseModules() {
                   </div>
                 ` : ""}
               ` : ""}
-              ${state.has_access || state.is_admin ? `
-                <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
-                  📝 Modul bo'yicha test topshirish
-                </button>
-              ` : `
-                <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:6px 0;">
-                  🔒 Testlar faqat kursga kirish huquqi bor o'quvchilar uchun
-                </div>
-              `}
+              ${mod.has_test ? `
+                ${(state.has_access || state.is_admin || courseModulesData.has_access) ? `
+                  <button class="btn secondary" style="margin-bottom: 0; padding: 10px;" onclick="event.stopPropagation(); openTest(${Number(mod.id)})">
+                    📝 Modul bo'yicha test topshirish
+                  </button>
+                ` : `
+                  <div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:6px 0;">
+                    🔒 Testlar faqat kursga kirish huquqi bor o'quvchilar uchun
+                  </div>
+                `}
+              ` : ""}
             </div>
           </div>
         </div>
@@ -5583,11 +5585,11 @@ function renderCourseModules() {
     });
   }
 
-  if (!state.has_access) {
+  if (!courseModulesData.has_access && !state.has_access && !state.is_admin) {
     html += `
       <div style="margin-top: 18px;">
-        <button class="btn" onclick="setTab('chat')">
-          🔓 Kursga to'liq kirish huquqini olish
+        <button class="btn" style="background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+          💳 Kursga a'zo bo'lish (To'lov va murojaat)
         </button>
       </div>
     `;
@@ -5745,14 +5747,17 @@ function toggleModule(id) {
   if (el) el.classList.toggle("open");
 }
 
-function showLockedInfo(courseId) {
+function showLockedInfo(courseId, isSequentialOnly) {
   haptic("medium");
   const cid = Number(courseId) || Number(selectedCourseId);
   const course = (state.courses || []).find(c => Number(c.id) === cid) || (courseModulesData?.course);
   const isFree = isCourseFreeCheck(course);
-  if (isFree) {
-    showAlert("Ushbu dars ketma-ketlik bo'yicha yopiq. Avvalgi darslarni ketma-ket tomosha qilishingiz kerak.");
+  const userHasAccess = Boolean(courseModulesData?.has_access || state.has_access || state.is_admin || isFree);
+
+  if (userHasAccess || isSequentialOnly) {
+    showAlert("Ushbu dars hali ochilmagan. Qachonki siz bundan oldingi darslikni to'liq ko'rib bo'lganingizdan keyin ('To'liq ko'rib bo'ldim' tugmasini bosgach), keyingi darslik ochiladi.");
   } else if (cid) {
+    showAlert("Ushbu kurs pullik (PRO) hisoblanadi. Darslarni ko'rish uchun avval to'lov qilishingiz va kursga a'zo bo'lishingiz kerak.");
     openCourseAccessModal(cid);
   } else {
     showAlert("Ushbu dars qulflangan. Kursga to'liq kirish uchun adminga murojaat qiling.");
@@ -5797,7 +5802,7 @@ async function openLesson(id) {
     if (lesson.error === "locked") {
       currentView = null;
       render();
-      return showLockedInfo();
+      if (lesson.reason === 'unpaid') { return showLockedInfo(selectedCourseId, false); } else { return showLockedInfo(selectedCourseId, true); }
     }
 
     const currentCourse = (state.courses || []).find(c => Number(c.id) === Number(selectedCourseId));
@@ -5923,7 +5928,7 @@ async function openLesson(id) {
             ${renderLessonQABox(lesson.id, lesson.questions)}
 
             <button class="btn" style="margin-top: 18px; ${lesson.watched ? 'opacity:0.6;' : ''}" onclick="${lesson.watched ? '' : `markLessonWatched(${Number(lesson.id)})`}">
-              ${lesson.watched ? "✅ Tugallangan" : "✅ Darsni tugatdim, keyingisiga o'tish"}
+              ${lesson.watched ? "✅ To'liq ko'rib bo'ldim (Tugallangan)" : "✅ To'liq ko'rib bo'ldim (Keyingi darsni ochish)"}
             </button>
 
             ${renderLessonNavButtons(lesson.id)}
@@ -10261,7 +10266,7 @@ function renderLessonNavButtons(lessonId) {
         </button>
       ` : `<div style="flex:1;"></div>`}
       ${next ? `
-        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="${next.available ? `openLesson(${Number(next.id)})` : "showLockedInfo()"}">
+        <button class="btn secondary" style="margin-bottom:0; flex:1;" onclick="${next.available ? `openLesson(${Number(next.id)})` : `showLockedInfo(${Number(selectedCourseId)}, true)`}">
           Keyingi dars →
         </button>
       ` : `<div style="flex:1;"></div>`}
@@ -10681,10 +10686,14 @@ function renderQuizResults(moduleId, result) {
             ${result.score}%
           </div>
           <div style="font-size:14px; font-weight:700; margin-top:4px;">
-            ${result.passed ? "🎉 Tabriklaymiz, o'tdingiz!" : "😔 O'tish chegarasiga yetmadingiz (kerak: 65%)"}
+            ${result.passed ? "🎉 Tabriklaymiz! Testdan muvaffaqiyatli o'tdingiz!" : "😔 O'tish chegarasiga yetmadingiz (O'tish bali: 65%)"}
           </div>
           <div style="font-size:12.5px; color:var(--text-secondary); margin-top:4px;">
-            ${correctCount} / ${breakdown.length} savolga to'g'ri javob berdingiz
+            ${correctCount} / ${breakdown.length} savolga to'g'ri javob berdingiz</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:6px; line-height:1.5;">
+            ${result.passed
+              ? "✅ Keyingi modul va darslar siz uchun muvaffaqiyatli ochildi! Bemalol keyingi modul darslariga o'tishingiz mumkin.<br><span style='font-size:11px; opacity:0.85;'>ℹ️ Natijangizni yangilash uchun qayta test topshirish imkoniyati 15 kundan keyin ochiladi.</span>"
+              : "⚠️ Keyingi modul ochilishi uchun testdan kamida 65% ball to'plashingiz zarur.<br>Iltimos, darslarni qayta takrorlab, testni qayta topshiring."}
           </div>
         </div>
 
