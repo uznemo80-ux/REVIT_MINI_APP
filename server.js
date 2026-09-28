@@ -1889,6 +1889,17 @@ function getUserAccessState(user) {
   };
 }
 
+
+// Bepul kursni ANIQ aniqlash: faqat narx haqiqatan 0/bo'sh bo'lsa yoki sarlavhada marafon/stream so'zlari bo'lsa.
+// (Eski "includes('0 so')" va "7" regex "1 500 000 so'm" kabi pullik narxlarni ham bepul deb hisoblardi.)
+function isFreeCourseRecord(c) {
+  if (!c) return false;
+  var digits = String(c.price == null ? '' : c.price).replace(/\D/g, '');
+  var priceIsZero = digits === '' || Number(digits) === 0;
+  var stream = /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(c.title || '');
+  return priceIsZero || stream;
+}
+
 function hasAccess(user) {
   var acc = getUserAccessState(user);
   return acc.is_active;
@@ -2286,7 +2297,7 @@ app.post('/api/content', async function (req, res) {
       var coursesRes = await pool.query(coursesQuery);
       courses = coursesRes.rows.map(function (c) {
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
-        var isFree = Boolean(!c.price || c.price === '0' || c.price.includes('0 so') || (c.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(c.title)));
+        var isFree = isFreeCourseRecord(c);
         return Object.assign({}, c, {
           cover_url: formatDirectImageUrl(c.cover_url),
           is_discount_active: isDiscountActive,
@@ -2330,8 +2341,8 @@ app.post('/api/content', async function (req, res) {
       var course = activeCourseMap.get(mod.course_id);
       var isFreeCourse = Boolean(course && course.is_free);
       var isStreamCourseOrModule = isFreeCourse ||
-        /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
-        (course && course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
+        /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '') ||
+        (course && course.title && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(course.title));
 
       var moduleUnlocked = isStreamCourseOrModule || userHasAccess || isAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
@@ -2490,10 +2501,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
       return res.status(403).json({ error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq (Qoralama holatida)." });
     }
 
-    var isFreeCourse = Boolean(
-      !course.price || course.price === '0' || course.price.includes('0 so') ||
-      (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title))
-    );
+    var isFreeCourse = isFreeCourseRecord(course);
 
     var modulesResult = await pool.query(
       'SELECT id, title, order_index FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC',
@@ -2602,8 +2610,8 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var data = modules.map(function (mod) {
       var isGranted = grantedModuleIds.has(mod.id);
       var isStreamCourseOrModule = isFreeCourse ||
-        /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '') ||
-        (course.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(course.title));
+        /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '') ||
+        (course.title && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(course.title));
       var moduleUnlocked = isStreamCourseOrModule || isGranted || isAdmin || (userHasAccess && unlockedModuleIds.has(mod.id));
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
@@ -2703,13 +2711,11 @@ app.post('/api/lesson/:id', async function (req, res) {
       return res.status(403).json({ error: 'draft', message: "Ushbu dars tegishli bo'lgan kurs hozircha qoralama holatida." });
     }
 
-    var isFreeCourse = Boolean(
-      courseData && (!courseData.price || courseData.price === '0' || courseData.price.includes('0 so') || (courseData.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title)))
-    );
+    var isFreeCourse = isFreeCourseRecord(courseData);
     var isStreamLesson = isFreeCourse ||
       /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '') ||
-      (courseData && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(courseData.title || '')) ||
-      /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(mod.title || '');
+      (courseData && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(courseData.title || '')) ||
+      /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '');
 
     var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted;
 

@@ -4867,7 +4867,7 @@ function renderCoursePriceBlock(course) {
 
 function isCourseFreeCheck(c) {
   if (!c) return false;
-  return Boolean(!c.price || c.price === '0' || String(c.price).includes('0 so') || (c.title && /marafon|марафон|stream|jonli|efir|vebinar|7/i.test(c.title)));
+  var d = String(c.price == null ? '' : c.price).replace(/\D/g, ''); return d === '' || Number(d) === 0 || /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(c.title || '');
 }
 
 function getFilteredCoursesList() {
@@ -4912,7 +4912,7 @@ function renderCourseCardsListHtml() {
       <div class="course-body">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
-            ${course.status === 'active' ? 'Faol Kurs' : (/marafon|stream|7/i.test(course.title || '') ? '🔥 Marafon' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Mavjud Kurs'))}
+            ${course.status === 'active' ? 'Faol Kurs' : (/marafon|stream|\b7\s*kun/i.test(course.title || '') ? '🔥 Marafon' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Mavjud Kurs'))}
           </div>
           <div style="font-weight:750; color:var(--accent); font-size:15px;">
             ${course.is_discount_active && course.discount_price ? `
