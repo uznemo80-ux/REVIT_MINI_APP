@@ -32,9 +32,15 @@ try {
 // ======================================================
 (function() {
   try {
-    document.documentElement.style.overscrollBehaviorY = 'none';
-    document.body.style.overscrollBehaviorY = 'none';
-    document.body.style.webkitOverflowScrolling = 'touch';
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isTouchDevice) {
+      document.documentElement.style.overscrollBehaviorY = 'none';
+      document.body.style.overscrollBehaviorY = 'none';
+      document.body.style.webkitOverflowScrolling = 'touch';
+    } else {
+      document.documentElement.style.overscrollBehaviorY = 'auto';
+      document.body.style.overscrollBehaviorY = 'auto';
+    }
   } catch (_) {}
 
   // iOS Telegram WebApp da tepadan pastga tortganda ilovadan chiqib ketmaslik uchun
@@ -57,6 +63,168 @@ try {
       }
     }
   }, { passive: false });
+})();
+
+// ======================================================
+// DESKTOP & PC SMOOTH SCROLL ENGINE
+// 1. Sichqoncha g'ildiragi bilan gorizontal ro'yxatlarni (Kategoriyalar, Toifalar, Chiplar) aylantirish
+// 2. Sichqoncha yaqinlashganda chap va o'ng ko'rsatkich (chevron) tugmachalari chiqishi
+// 3. Sichqonchani bosib turib chapga/o'ngga drag (tortish) qilish
+// 4. Umumiy sahifani g'ildirak bilan tepaga va pastga erkin aylantirish
+// ======================================================
+
+function scrollHRow(btn, delta) {
+  if (!btn) return;
+  const wrapper = btn.closest('.h-scroll-wrapper');
+  if (!wrapper) return;
+  const container = wrapper.querySelector(
+    '.lib-mat-cat-scroll, .lib-mat-quickpicks-scroll, .lib-mat-subcat-scroll, .category-chips, .lib-chips-row, .lib-horizontal-scroll'
+  );
+  if (container) {
+    container.scrollBy({ left: delta, behavior: 'smooth' });
+    setTimeout(() => updateHScrollArrows(container), 250);
+  }
+}
+window.scrollHRow = scrollHRow;
+
+function updateHScrollArrows(container) {
+  if (!container) return;
+  const wrapper = container.closest('.h-scroll-wrapper');
+  if (!wrapper) return;
+  const leftBtn = wrapper.querySelector('.h-scroll-arrow-left');
+  const rightBtn = wrapper.querySelector('.h-scroll-arrow-right');
+  const scrollLeft = container.scrollLeft;
+  const maxScroll = container.scrollWidth - container.clientWidth;
+
+  if (leftBtn) {
+    if (scrollLeft > 6) {
+      leftBtn.classList.add('is-available');
+    } else {
+      leftBtn.classList.remove('is-available', 'is-hover-edge');
+    }
+  }
+  if (rightBtn) {
+    if (scrollLeft < maxScroll - 6) {
+      rightBtn.classList.add('is-available');
+    } else {
+      rightBtn.classList.remove('is-available', 'is-hover-edge');
+    }
+  }
+}
+window.updateHScrollArrows = updateHScrollArrows;
+
+(function initDesktopScrollControls() {
+  // 1. Sichqoncha g'ildiragini (wheel) gorizontal ro'yxatlar ustida aylantirganda gorizontal scroll qilish
+  window.addEventListener('wheel', (e) => {
+    const hScroll = e.target.closest(
+      '.lib-mat-cat-scroll, .lib-mat-quickpicks-scroll, .lib-mat-subcat-scroll, .category-chips, .lib-chips-row, .lib-horizontal-scroll'
+    );
+    if (hScroll) {
+      // Agar asosan vertikal g'ildirak harakati bo'lsa
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        const canScrollRight = hScroll.scrollLeft < (hScroll.scrollWidth - hScroll.clientWidth - 2);
+        const canScrollLeft = hScroll.scrollLeft > 2;
+        // Agar ushbu yo'nalishda hali surish mumkin bo'lsa
+        if ((e.deltaY > 0 && canScrollRight) || (e.deltaY < 0 && canScrollLeft)) {
+          e.preventDefault();
+          hScroll.scrollLeft += e.deltaY * 1.15;
+          updateHScrollArrows(hScroll);
+          return;
+        }
+      }
+    }
+
+    // 2. Desktop kompyuterda #app tashqarisidagi fon bo'shlig'ida g'ildirak aylantirilsa ham sahifani pastga/tepaga siljitish
+    if (!e.target.closest('#app')) {
+      window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+    }
+  }, { passive: false });
+
+  // 3. Sichqoncha bilan bosib turib surish (Drag-to-scroll)
+  let isDraggingH = false;
+  let dragTargetH = null;
+  let startDragX = 0;
+  let startScrollLeft = 0;
+  let hasDraggedMoved = false;
+
+  document.addEventListener('mousedown', (e) => {
+    const hScroll = e.target.closest(
+      '.lib-mat-cat-scroll, .lib-mat-quickpicks-scroll, .lib-mat-subcat-scroll, .category-chips, .lib-chips-row, .lib-horizontal-scroll'
+    );
+    if (!hScroll) return;
+    if (e.button !== 0) return; // Faqat chap tugma
+
+    isDraggingH = true;
+    dragTargetH = hScroll;
+    startDragX = e.pageX;
+    startScrollLeft = hScroll.scrollLeft;
+    hasDraggedMoved = false;
+    hScroll.classList.add('is-h-dragging');
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    // A) Drag-to-scroll harakati
+    if (isDraggingH && dragTargetH) {
+      const dx = e.pageX - startDragX;
+      if (Math.abs(dx) > 5) {
+        hasDraggedMoved = true;
+      }
+      dragTargetH.scrollLeft = startScrollLeft - dx;
+      updateHScrollArrows(dragTargetH);
+    }
+
+    // B) Sichqoncha chetga yaqinlashganda (chap yoki o'ng taraf) ko'rsatkich belgilarini chiqarish
+    const wrapper = e.target.closest('.h-scroll-wrapper');
+    if (!wrapper) {
+      document.querySelectorAll('.h-scroll-arrow.is-hover-edge').forEach(b => b.classList.remove('is-hover-edge'));
+      return;
+    }
+    const container = wrapper.querySelector(
+      '.lib-mat-cat-scroll, .lib-mat-quickpicks-scroll, .lib-mat-subcat-scroll, .category-chips, .lib-chips-row, .lib-horizontal-scroll'
+    );
+    if (!container) return;
+
+    updateHScrollArrows(container);
+
+    const rect = wrapper.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    const ratio = relX / rect.width;
+    const leftBtn = wrapper.querySelector('.h-scroll-arrow-left');
+    const rightBtn = wrapper.querySelector('.h-scroll-arrow-right');
+
+    if (ratio < 0.42 && leftBtn && leftBtn.classList.contains('is-available')) {
+      leftBtn.classList.add('is-hover-edge');
+      if (rightBtn) rightBtn.classList.remove('is-hover-edge');
+    } else if (ratio > 0.58 && rightBtn && rightBtn.classList.contains('is-available')) {
+      rightBtn.classList.add('is-hover-edge');
+      if (leftBtn) leftBtn.classList.remove('is-hover-edge');
+    } else {
+      if (leftBtn) leftBtn.classList.remove('is-hover-edge');
+      if (rightBtn) rightBtn.classList.remove('is-hover-edge');
+    }
+  });
+
+  document.addEventListener('mouseup', (e) => {
+    if (isDraggingH && dragTargetH) {
+      dragTargetH.classList.remove('is-h-dragging');
+      if (hasDraggedMoved) {
+        // Agar drag harakati bo'lgan bo'lsa, tasodifan tugma bosilib ketishini oldini olamiz
+        const captureClick = (ev) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          window.removeEventListener('click', captureClick, true);
+        };
+        window.addEventListener('click', captureClick, true);
+      }
+    }
+    isDraggingH = false;
+    dragTargetH = null;
+  });
+
+  // Sichqoncha wrapperdan chiqib ketganda belgilarni yashirish
+  document.addEventListener('mouseleave', () => {
+    document.querySelectorAll('.h-scroll-arrow.is-hover-edge').forEach(b => b.classList.remove('is-hover-edge'));
+  });
 })();
 
 const initData = tg.initData || "";
@@ -6476,21 +6644,25 @@ function renderTasksHomeHtml() {
           <div class="lib-section-header-row">
             <div class="lib-section-heading">So‘nggi ko‘rilganlar</div>
           </div>
-          <div class="lib-horizontal-scroll">
-            ${recentList.map(item => {
-              const badge = getLibraryTypeBadge(item.type);
-              const cover = formatImageUrl(item.preview_image_url || "");
-              return `
-                <div class="lib-recent-card" onclick="openLibraryV2ResourceDetail(${Number(item.id)})">
-                  <div class="lib-recent-cover">
-                    ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div style="color:var(--text-muted);">${badge.iconSvg}</div>`}
-                    <span class="lib-type-badge ${badge.className}" style="position:absolute; bottom:6px; left:6px;">${badge.label}</span>
+          <div class="h-scroll-wrapper">
+            <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -260)" aria-label="Chapga">‹</button>
+            <div class="lib-horizontal-scroll">
+              ${recentList.map(item => {
+                const badge = getLibraryTypeBadge(item.type);
+                const cover = formatImageUrl(item.preview_image_url || "");
+                return `
+                  <div class="lib-recent-card" onclick="openLibraryV2ResourceDetail(${Number(item.id)})">
+                    <div class="lib-recent-cover">
+                      ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `<div style="color:var(--text-muted);">${badge.iconSvg}</div>`}
+                      <span class="lib-type-badge ${badge.className}" style="position:absolute; bottom:6px; left:6px;">${badge.label}</span>
+                    </div>
+                    <div class="lib-recent-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+                    <div class="lib-recent-cat">${escapeHtml(item.category || "Manba")}</div>
                   </div>
-                  <div class="lib-recent-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-                  <div class="lib-recent-cat">${escapeHtml(item.category || "Manba")}</div>
-                </div>
-              `;
-            }).join("")}
+                `;
+              }).join("")}
+            </div>
+            <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 260)" aria-label="O'ngga">›</button>
           </div>
         </div>
       ` : ""}
@@ -7535,12 +7707,16 @@ function renderMaterialSubcategoriesHtml() {
   return `
     <div class="lib-mat-subcat-wrapper">
       <div class="lib-mat-subcat-label">Toifalar:</div>
-      <div class="lib-mat-subcat-scroll">
-        ${subcats.map(sc => `
-          <button type="button" class="lib-mat-subcat-pill ${activeSubcat === sc.id ? 'active' : ''}" onclick="setMaterialSubcategory('${escapeJsString(sc.id)}')">
-            ${escapeHtml(sc.name)}
-          </button>
-        `).join("")}
+      <div class="h-scroll-wrapper">
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -240)" aria-label="Chapga">‹</button>
+        <div class="lib-mat-subcat-scroll">
+          ${subcats.map(sc => `
+            <button type="button" class="lib-mat-subcat-pill ${activeSubcat === sc.id ? 'active' : ''}" onclick="setMaterialSubcategory('${escapeJsString(sc.id)}')">
+              ${escapeHtml(sc.name)}
+            </button>
+          `).join("")}
+        </div>
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 240)" aria-label="O'ngga">›</button>
       </div>
     </div>
   `;
@@ -7623,14 +7799,22 @@ function renderMaterialsSectionHtml() {
       <!-- 3. KO'P ISHLATILADIGANLAR (QUICK PICKS) -->
       <div class="lib-mat-quickpicks-section">
         <div class="lib-mat-section-subtitle">⚡ Ko‘p ishlatiladiganlar:</div>
-        <div class="lib-mat-quickpicks-scroll">
-          ${renderMaterialQuickPicksHtml()}
+        <div class="h-scroll-wrapper">
+          <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -260)" aria-label="Chapga">‹</button>
+          <div class="lib-mat-quickpicks-scroll">
+            ${renderMaterialQuickPicksHtml()}
+          </div>
+          <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 260)" aria-label="O'ngga">›</button>
         </div>
       </div>
 
       <!-- 4. KATEGORIYALAR (Horizontal Scroll with Icons and Counts) -->
-      <div class="lib-mat-cat-scroll" style="margin-top: 12px;">
-        ${renderMaterialCategoryPillsHtml()}
+      <div class="h-scroll-wrapper" style="margin-top: 12px;">
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -280)" aria-label="Chapga">‹</button>
+        <div class="lib-mat-cat-scroll">
+          ${renderMaterialCategoryPillsHtml()}
+        </div>
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 280)" aria-label="O'ngga">›</button>
       </div>
 
       <!-- 5. SUBKATEGORIYALAR (e.g. Profillar: Tenevoy, Razdelitelniy, Plintus, Karniz...) -->
@@ -7639,19 +7823,23 @@ function renderMaterialsSectionHtml() {
       </div>
 
       <!-- 6. QUICK FILTER CHIPS -->
-      <div class="category-chips lib-chips-row" style="margin-top: 6px;">
-        <div class="chip ${materialsState.filterVerified ? 'active' : ''}" data-filter-key="filterVerified" onclick="toggleMaterialFilter('filterVerified')">
-          ✓ Faqat tekshirilgan
+      <div class="h-scroll-wrapper" style="margin-top: 6px;">
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -220)" aria-label="Chapga">‹</button>
+        <div class="category-chips lib-chips-row">
+          <div class="chip ${materialsState.filterVerified ? 'active' : ''}" data-filter-key="filterVerified" onclick="toggleMaterialFilter('filterVerified')">
+            ✓ Faqat tekshirilgan
+          </div>
+          <div class="chip ${materialsState.filterMoisture ? 'active' : ''}" data-filter-key="filterMoisture" onclick="toggleMaterialFilter('filterMoisture')">
+            💧 Namlikka chidamli
+          </div>
+          <div class="chip ${materialsState.filterFire ? 'active' : ''}" data-filter-key="filterFire" onclick="toggleMaterialFilter('filterFire')">
+            🔥 Yong'in klassi NG/KM0
+          </div>
+          <div class="chip ${materialsState.filterInterior ? 'active' : ''}" data-filter-key="filterInterior" onclick="toggleMaterialFilter('filterInterior')">
+            🏠 Ichki ishlar
+          </div>
         </div>
-        <div class="chip ${materialsState.filterMoisture ? 'active' : ''}" data-filter-key="filterMoisture" onclick="toggleMaterialFilter('filterMoisture')">
-          💧 Namlikka chidamli
-        </div>
-        <div class="chip ${materialsState.filterFire ? 'active' : ''}" data-filter-key="filterFire" onclick="toggleMaterialFilter('filterFire')">
-          🔥 Yong'in klassi NG/KM0
-        </div>
-        <div class="chip ${materialsState.filterInterior ? 'active' : ''}" data-filter-key="filterInterior" onclick="toggleMaterialFilter('filterInterior')">
-          🏠 Ichki ishlar
-        </div>
+        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 220)" aria-label="O'ngga">›</button>
       </div>
 
       <!-- 7. MATERIALLAR GRIDI (2-Column Mobile, 3-4 Column Tablet/Desktop) -->

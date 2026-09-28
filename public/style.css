@@ -8535,6 +8535,101 @@ html.light .reader-spinner-overlay {
   gap: 4px;
 }
 
+/* ------------------------------------------------------
+   Desktop & Mobile Horizontal Scroll Chevrons & Wrapper
+   ------------------------------------------------------ */
+.h-scroll-wrapper {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+.h-scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scale(0.85);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(20, 20, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html.light .h-scroll-arrow {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #11141a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+
+.h-scroll-arrow:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-50%) scale(1.15) !important;
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.h-scroll-arrow:active {
+  transform: translateY(-50%) scale(0.95) !important;
+}
+
+.h-scroll-arrow-left {
+  left: 2px;
+}
+
+.h-scroll-arrow-right {
+  right: 2px;
+}
+
+.h-scroll-wrapper:hover .h-scroll-arrow.is-available {
+  opacity: 0.65;
+  pointer-events: auto;
+}
+
+.h-scroll-arrow.is-hover-edge {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(-50%) scale(1.08) !important;
+}
+
+/* Grab cursor for horizontal scroll on desktop */
+.lib-mat-cat-scroll,
+.lib-mat-quickpicks-scroll,
+.lib-mat-subcat-scroll,
+.category-chips,
+.lib-chips-row,
+.lib-horizontal-scroll {
+  cursor: grab;
+  cursor: -webkit-grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.is-h-dragging,
+.is-h-dragging * {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  scroll-behavior: auto !important;
+}
+
 .lib-mat-cat-scroll {
   display: flex;
   gap: 8px;
