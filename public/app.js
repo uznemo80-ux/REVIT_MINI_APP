@@ -7291,7 +7291,7 @@ function renderSourcesSectionHtml() {
 function renderSourceCardHtml(source) {
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "Revit 2024+";
-  const size = source.file_size || "";
+  const size = formatFileSizeUz(source.file_size);
   const ext = (source.content_url || "").split('.').pop().toUpperCase() || "RFA";
 
   return `
@@ -9105,7 +9105,7 @@ async function openSourceDetail(resId) {
 
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "Revit 2024 / 2025";
-  const size = source.file_size || "";
+  const size = formatFileSizeUz(source.file_size);
   const isBookmarked = libraryV2Bookmarks.has(Number(source.id));
 
   currentView = {
@@ -9134,7 +9134,7 @@ async function openSourceDetail(resId) {
 
           <h1 class="lib-detail-title" style="margin-top:0;">${escapeHtml(source.title)}</h1>
           <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:16px;">
-            Kategoriya: <strong>${escapeHtml(source.category || "Revit Family")}</strong> • Hajmi: <strong>${escapeHtml(size)}</strong>
+            Kategoriya: <strong>${escapeHtml(source.category || "Revit Family")}</strong> ${size ? `• Hajmi: <strong>${escapeHtml(size)}</strong>` : ""}
           </div>
 
           <div class="lib-detail-section">
@@ -9147,7 +9147,7 @@ async function openSourceDetail(resId) {
           <div class="lib-detail-actions" style="margin-top:24px;">
             ${source.content_url ? `
               <button id="lib-dl-btn-${Number(source.id)}" class="lib-download-btn" style="width:100%;" onclick="handleLibraryDownload(${Number(source.id)}, '${escapeJsString(source.content_url)}', '${escapeJsString(source.title)}', event)">
-                ${libIcons.download('lib-dl-svg', 18)} Yuklab olish (${escapeHtml(size)})
+                ${libIcons.download('lib-dl-svg', 18)} Yuklab olish${size ? ` (${escapeHtml(size)})` : ""}
               </button>
             ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Yuklash havolasi mavjud emas</button>`}
           </div>
@@ -16113,6 +16113,21 @@ function openAddLibraryV2ResourceModal(presetSection) {
     `
   };
   render();
+}
+
+function formatFileSizeUz(raw) {
+  if (raw === null || raw === undefined) return "";
+  const s = String(raw).trim();
+  if (!s) return "";
+  const m = s.replace(",", ".").match(/^([\d.]+)\s*(kb|mb|gb|tb)?/i);
+  if (!m) return s;
+  const n = parseFloat(m[1]);
+  if (!isFinite(n) || n <= 0) return "";
+  const u = (m[2] || "mb").toLowerCase();
+  const mb = u === "kb" ? n / 1024 : u === "gb" ? n * 1024 : u === "tb" ? n * 1024 * 1024 : n;
+  if (mb >= 1000) return (Math.round(mb / 1024 * 10) / 10) + " GB";
+  if (mb < 1) return Math.max(1, Math.round(mb * 1024)) + " KB";
+  return (Math.round(mb * 10) / 10) + " MB";
 }
 
 let _driveSizeTimer = null;

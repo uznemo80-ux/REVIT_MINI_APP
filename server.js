@@ -1302,6 +1302,8 @@ async function ensureLibraryV2Tables() {
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS storage_id TEXT",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_bytes BIGINT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_checked_at TIMESTAMPTZ",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'published'",
@@ -5519,10 +5521,10 @@ function extractGoogleDriveId(rawUrl) {
 function formatBytesUz(n) {
   n = Number(n) || 0;
   if (n <= 0) return '';
-  var gb = 1024 * 1024 * 1024, mb = 1024 * 1024, kb = 1024;
-  if (n >= gb) return (Math.round(n / gb * 100) / 100) + ' GB';
-  if (n >= mb) return (Math.round(n / mb * 10) / 10) + ' MB';
-  return Math.max(1, Math.round(n / kb)) + ' KB';
+  var mb = n / 1048576;
+  if (mb >= 1000) return (Math.round(n / 1073741824 * 10) / 10) + ' GB';
+  if (mb >= 1) return (Math.round(mb * 10) / 10) + ' MB';
+  return Math.max(1, Math.round(n / 1024)) + ' KB';
 }
 
 function isGoogleDriveUrl(u) {
@@ -5650,6 +5652,26 @@ async function resolveDriveSize(rawUrl) {
 async function resolveAnySize(url, adminChatId) {
   if (parseTelegramLink(url)) return resolveTelegramSize(url, adminChatId);
   return resolveDriveSize(url);
+}
+
+// Hajmi hali avtomatik aniqlanmagan (yoki qo'lda yozilgan) resurslarni tuzatadi
+async function refreshResourceSize(row) {
+  try {
+    if (!row || !row.content_url) return row;
+    var url = String(row.content_url);
+    if (!(isGoogleDriveUrl(url) || parseTelegramLink(url))) return row;
+    if (Number(row.size_bytes) > 0) return row;
+    if (row.size_checked_at && (Date.now() - new Date(row.size_checked_at).getTime()) < 3600 * 1000) return row;
+    var r = await resolveAnySize(url, ADMIN_TELEGRAM_ID);
+    if (r.ok) {
+      var fs2 = formatBytesUz(r.bytes);
+      await pool.query('UPDATE library_resources SET size_bytes = $1, file_size = $2, size_checked_at = NOW() WHERE id = $3', [r.bytes, fs2, row.id]);
+      row.size_bytes = r.bytes; row.file_size = fs2;
+    } else {
+      await pool.query('UPDATE library_resources SET size_checked_at = NOW() WHERE id = $1', [row.id]);
+    }
+  } catch (e) { console.warn('refreshResourceSize:', e.message); }
+  return row;
 }
 
 app.post('/api/admin/library-v2/resolve-size', requireAdmin, async function (req, res) {
@@ -6321,6 +6343,11 @@ app.post('/api/library/v2/resources', async function (req, res) {
     if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
 
     var section = req.body.section || req.body.section_slug || null;
+    if (section === 'sources') {
+      pool.query("SELECT * FROM library_resources WHERE section_slug = 'sources' AND status = 'published' AND COALESCE(size_bytes, 0) = 0 AND content_url IS NOT NULL AND content_url <> '' AND (size_checked_at IS NULL OR size_checked_at < NOW() - INTERVAL '1 hour') LIMIT 5")
+        .then(function (q) { return Promise.all(q.rows.map(refreshResourceSize)); })
+        .catch(function () {});
+    }
     var type = req.body.type || null;
     var category = req.body.category || null;
     var search = req.body.search || '';
@@ -6535,6 +6562,8 @@ app.post('/api/library/v2/resource/:id', async function (req, res) {
         return res.status(404).json({ error: 'Resurs topilmadi' });
       }
     }
+
+    if (!isFromBooksTable) await refreshResourceSize(result.rows[0]);
 
     // Bookmark holati
     var bmResult = await pool.query('SELECT id FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, resourceId]);
@@ -8173,7 +8202,7 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
 
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize.ok) b.file_size = formatBytesUz(autoSize.bytes);
+      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; }
       if (parseTelegramLink(b.content_url)) b.storage_provider = 'telegram';
     }
 
@@ -8205,6 +8234,7 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
       b.status || 'published', b.order_index || 0, b.is_featured || false
     ]);
 
+    if (b._size_bytes) { try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes, result.rows[0].id]); } catch (e) {} }
     return res.json({ ok: true, resource: result.rows[0], message: 'Resurs muvaffaqiyatli qo\'shildi' });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 ADD ERROR:', error);
@@ -8220,7 +8250,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
 
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize2 = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize2.ok) b.file_size = formatBytesUz(autoSize2.bytes);
+      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; }
     }
 
     var result = await pool.query(`
@@ -8269,6 +8299,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     ]);
 
     if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
+    try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes || null, resourceId]); } catch (e) {}
     return res.json({ ok: true, resource: result.rows[0], message: 'Resurs yangilandi' });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 UPDATE ERROR:', error);
