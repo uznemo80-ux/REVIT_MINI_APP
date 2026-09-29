@@ -879,7 +879,9 @@ async function ensureUserActivityTable() {
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS course_title VARCHAR(500)',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_progress INT DEFAULT 0',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_duration INT DEFAULT 0',
-      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_status VARCHAR(30) DEFAULT 'watching'",
+      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_status VARCHAR(30) DEFAULT 'idle'",
+      "ALTER TABLE user_activity ALTER COLUMN video_status SET DEFAULT 'idle'",
+      "UPDATE user_activity SET video_status = 'idle' WHERE lesson_id IS NULL AND video_status = 'watching'",
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS module_id INT',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_question_index INT DEFAULT 0',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_total_questions INT DEFAULT 0',
@@ -3695,15 +3697,22 @@ app.post('/api/activity/heartbeat', async function (req, res) {
     var courseTitle = b.course_title ? String(b.course_title).slice(0, 500) : null;
     var videoProgress = Math.max(0, parseInt(b.video_progress) || 0);
     var videoDuration = Math.max(0, parseInt(b.video_duration) || 0);
-    var videoStatus = (b.video_status || 'watching').slice(0, 30);
+    var videoStatus = (b.video_status || 'idle').slice(0, 30);
     var moduleId = b.module_id ? parseInt(b.module_id) : null;
     var testQuestionIndex = Math.max(0, parseInt(b.test_question_index) || 0);
     var testTotalQuestions = Math.max(0, parseInt(b.test_total_questions) || 0);
     var deviceInfo = (b.device_info || '').slice(0, 100);
 
-    if (lessonId && videoStatus === 'watching') {
+    if (!lessonId) {
+      // Dars ochiq emas: tomosha qilmayapti
+      videoStatus = 'idle';
+      if (status === 'watching') status = 'online';
+    } else if (status !== 'idle' && videoStatus === 'watching') {
       status = 'watching';
-    } else if (moduleId && status === 'testing') {
+    } else if (status === 'watching') {
+      status = 'online';
+    }
+    if (moduleId && status === 'testing') {
       status = 'testing';
     }
 
@@ -3778,7 +3787,7 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       var liveResult = await pool.query(`
         SELECT
           COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND lesson_id IS NOT NULL AND status = 'watching' AND video_status = 'watching' THEN 1 END)::int AS watching_now,
           COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
           COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
         FROM user_activity
@@ -3839,7 +3848,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
     var liveActivityPromise = pool.query(`
       SELECT
         COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND lesson_id IS NOT NULL AND status = 'watching' AND video_status = 'watching' THEN 1 END)::int AS watching_now,
         COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
         COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
       FROM user_activity

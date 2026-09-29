@@ -700,7 +700,7 @@ let liveActivityState = {
   course_title: null,
   video_progress: 0,
   video_duration: 0,
-  video_status: "watching",
+  video_status: "idle",
   module_id: null,
   test_question_index: 0,
   test_total_questions: 0,
@@ -891,7 +891,7 @@ function initHeartbeat() {
   // Mini App yashirilganda / qayta ochilganda nazorat
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      sendHeartbeat({ status: "idle" });
+      sendHeartbeat({ status: "idle", video_status: "paused" });
     } else {
       sendHeartbeat();
     }
@@ -991,7 +991,7 @@ function clearActivitySpecialState() {
   liveActivityState.module_title = null;
   liveActivityState.video_progress = 0;
   liveActivityState.video_duration = 0;
-  liveActivityState.video_status = "watching";
+  liveActivityState.video_status = "idle";
   liveActivityState.module_id = null;
   liveActivityState.test_question_index = 0;
   liveActivityState.test_total_questions = 0;
@@ -12072,7 +12072,7 @@ function renderAdminLiveUsersHtml(users) {
 
   return users.map(u => {
     const isRecent = u.last_seen_at && (Date.now() - new Date(u.last_seen_at).getTime()) < 75000;
-    const isWatching = u.status === "watching" || u.video_status === "watching";
+    const isWatching = isRecent && !!u.lesson_id && u.status === "watching" && u.video_status === "watching";
     const isTesting = u.status === "testing";
     const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
     const progressPercent = u.video_duration > 0 ? Math.min(100, Math.round((u.video_progress / u.video_duration) * 100)) : 0;
