@@ -6575,6 +6575,96 @@ function closeMaterialDetail() {
   window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
 }
 
+
+// ------------------------------------------------------
+// MANBALAR: dastur (Revit / 3ds Max / AutoCAD) va format (RVT / RFA / RTE ...) filtri
+// ------------------------------------------------------
+let librarySourceSoftware = "Barchasi";
+let librarySourceFormat = "Barchasi";
+const SOURCE_SOFTWARE_ORDER = ["Revit", "3ds Max", "AutoCAD", "Boshqa"];
+const SOURCE_FORMAT_OPTIONS = ["RVT", "RFA", "RTE", "RFT", "DWG", "DWT", "MAX", "SKP", "FBX", "INSTALLER", "KUTUBXONA", "ZIP", "BOSHQA"];
+
+function sourceFormatLabel(f) {
+  const k = String(f || "").toUpperCase();
+  if (k === "INSTALLER") return "O‘rnatuvchi";
+  if (k === "KUTUBXONA") return "Kutubxona";
+  if (k === "BOSHQA") return "Boshqa";
+  return k;
+}
+
+function getAllSources() {
+  return libraryV2Resources.filter(r =>
+    (r.section_slug === "sources" || r.type === "source" || r.type === "family" || r.type === "family_pack" || r.type === "template") &&
+    r.content_url && String(r.content_url).trim()
+  );
+}
+
+function getFilteredSources() {
+  const search = (librarySectionSearchQuery || "").toLowerCase().trim();
+  let list = getAllSources();
+  if (librarySourceSoftware !== "Barchasi") {
+    list = list.filter(s => (s.software || "Revit") === librarySourceSoftware);
+  }
+  if (librarySourceFormat !== "Barchasi") {
+    list = list.filter(s => String(s.file_format || "").toUpperCase() === librarySourceFormat);
+  }
+  if (search) {
+    list = list.filter(s =>
+      (s.title && s.title.toLowerCase().includes(search)) ||
+      (s.description && s.description.toLowerCase().includes(search)) ||
+      (s.category && s.category.toLowerCase().includes(search)) ||
+      (s.version && String(s.version).toLowerCase().includes(search)) ||
+      (s.file_format && String(s.file_format).toLowerCase().includes(search))
+    );
+  }
+  return list;
+}
+
+function renderSourcesFiltersHtml() {
+  const all = getAllSources();
+  const softwares = SOURCE_SOFTWARE_ORDER.filter(sw => all.some(s => (s.software || "Revit") === sw));
+  const inSw = librarySourceSoftware === "Barchasi" ? all : all.filter(s => (s.software || "Revit") === librarySourceSoftware);
+  const fmts = [...new Set(inSw.map(s => String(s.file_format || "").toUpperCase()).filter(Boolean))];
+  const chip = (label, active, fn, arg) =>
+    `<div class="chip ${active ? "active" : ""}" onclick="${fn}('${escapeJsString(arg)}')">${escapeHtml(label)}</div>`;
+  const row1 = ["Barchasi", ...softwares].map(sw => chip(sw, librarySourceSoftware === sw, "setLibrarySourceSoftware", sw)).join("");
+  const row2 = fmts.length ? ["Barchasi", ...fmts].map(f => chip(f === "Barchasi" ? "Barcha formatlar" : sourceFormatLabel(f), librarySourceFormat === f, "setLibrarySourceFormat", f)).join("") : "";
+  return `
+    <div class="category-chips lib-chips-row lib-src-chip-row">${row1}</div>
+    ${row2 ? `<div class="category-chips lib-chips-row lib-src-chip-row lib-src-chip-row-2">${row2}</div>` : ""}
+    <div class="lib-src-count">${getFilteredSources().length} ta manba</div>
+  `;
+}
+
+function renderSourcesGridInnerHtml() {
+  const list = getFilteredSources();
+  return list.length ? list.map(renderSourceCardHtml).join("") : `
+    <div class="empty-box" style="grid-column: 1 / -1;">
+      Bu filtr bo‘yicha manba topilmadi. Boshqa dastur yoki formatni tanlang.
+    </div>
+  `;
+}
+
+function updateSourcesUiInPlace() {
+  const f = document.getElementById("lib-src-filters");
+  if (f) f.innerHTML = renderSourcesFiltersHtml();
+  const g = document.getElementById("lib-section-list-container");
+  if (g) g.innerHTML = renderSourcesGridInnerHtml();
+}
+
+function setLibrarySourceSoftware(sw) {
+  haptic("light");
+  librarySourceSoftware = sw;
+  librarySourceFormat = "Barchasi";
+  updateSourcesUiInPlace();
+}
+
+function setLibrarySourceFormat(f) {
+  haptic("light");
+  librarySourceFormat = f;
+  updateSourcesUiInPlace();
+}
+
 function setLibrarySectionCategory(cat) {
   haptic("light");
   librarySectionSelectedCategory = cat;
@@ -6636,34 +6726,7 @@ function renderActiveSectionItemsHtml() {
   }
 
   if (libraryActiveSection === "sources") {
-    let sources = libraryV2Resources.filter(r =>
-      r.section_slug === "sources" ||
-      r.type === "source" ||
-      r.type === "family" ||
-      r.type === "template"
-    );
-
-    // Manbasi (havolasi) yo'q resurslar ko'rsatilmaydi
-    sources = sources.filter(r => r.content_url && String(r.content_url).trim());
-
-    if (cat !== "Barchasi") {
-      sources = sources.filter(s => s.category === cat);
-    }
-
-    if (search) {
-      sources = sources.filter(s =>
-        (s.title && s.title.toLowerCase().includes(search)) ||
-        (s.description && s.description.toLowerCase().includes(search)) ||
-        (s.category && s.category.toLowerCase().includes(search)) ||
-        (s.version && s.version.toLowerCase().includes(search))
-      );
-    }
-
-    return sources.length ? sources.map(renderSourceCardHtml).join("") : `
-      <div class="empty-box" style="grid-column: 1 / -1;">
-        Ushbu bo‘limda hozircha manbalar yo‘q. Tez orada yangi Revit oilalari qo‘shiladi!
-      </div>
-    `;
+    return renderSourcesGridInnerHtml();
   }
 
   if (libraryActiveSection === "materials") {
@@ -6720,6 +6783,8 @@ function setLibrarySectionSearch(q) {
       studentBooksPage = 1;
       loadStudentBooks();
     }, 350);
+  } else if (libraryActiveSection === "sources") {
+    updateSourcesUiInPlace();
   } else {
     const listEl = document.getElementById("lib-section-list-container");
     if (listEl) {
@@ -7220,30 +7285,6 @@ function renderBookCardHtml(book) {
 // 3. MANBALAR EKRANI (Sources Screen — File Types Focus)
 // ------------------------------------------------------
 function renderSourcesSectionHtml() {
-  const cats = SECTION_CATEGORIES.sources;
-  const search = (librarySectionSearchQuery || "").toLowerCase().trim();
-  const cat = librarySectionSelectedCategory;
-
-  let sources = libraryV2Resources.filter(r =>
-    r.section_slug === "sources" ||
-    r.type === "source" ||
-    r.type === "family_pack" ||
-    r.type === "family"
-  );
-
-  if (cat !== "Barchasi") {
-    sources = sources.filter(s => s.category === cat);
-  }
-
-  if (search) {
-    sources = sources.filter(s =>
-      (s.title && s.title.toLowerCase().includes(search)) ||
-      (s.description && s.description.toLowerCase().includes(search)) ||
-      (s.category && s.category.toLowerCase().includes(search)) ||
-      (s.version && s.version.toLowerCase().includes(search))
-    );
-  }
-
   return `
     <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
@@ -7252,7 +7293,7 @@ function renderSourcesSectionHtml() {
 
       <div class="lib-section-title-wrap">
         <h2 class="lib-page-title">Manbalar va Shablonlar</h2>
-        <p class="lib-page-desc">Revit parametrik oilalari (.rfa), loyiha shablonlari (.rte) va DWG bloklar</p>
+        <p class="lib-page-desc">Revit modellari (.rvt, .rfa), shablonlar (.rte), 3ds Max va AutoCAD fayllari</p>
       </div>
 
       <!-- SEARCH -->
@@ -7261,28 +7302,18 @@ function renderSourcesSectionHtml() {
           <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input type="text"
                  class="apple-input lib-search-field"
-                 placeholder="Oila, mebel, shablon yoki DWG qidirish..."
+                 placeholder="Masalan: divan, shablon, RFA..."
                  value="${escapeHtml(librarySectionSearchQuery)}"
                  oninput="setLibrarySectionSearch(this.value)">
         </div>
       </div>
 
-      <!-- KATEGORIYA CHIPLARI -->
-      <div class="category-chips lib-chips-row">
-        ${cats.map(c => `
-          <div class="chip ${cat === c ? "active" : ""}" onclick="setLibrarySectionCategory('${escapeJsString(c)}')">
-            ${escapeHtml(c)}
-          </div>
-        `).join("")}
-      </div>
+      <!-- DASTUR VA FORMAT FILTRI -->
+      <div id="lib-src-filters">${renderSourcesFiltersHtml()}</div>
 
       <!-- MANBALAR GRIDI -->
       <div id="lib-section-list-container" class="lib-sources-grid">
-        ${sources.length ? sources.map(renderSourceCardHtml).join("") : `
-          <div class="empty-box" style="grid-column: 1 / -1;">
-            Ushbu bo‘limda hozircha manbalar yo‘q. Tez orada yangi Revit oilalari qo‘shiladi!
-          </div>
-        `}
+        ${renderSourcesGridInnerHtml()}
       </div>
     </div>
   `;
@@ -7292,7 +7323,7 @@ function renderSourceCardHtml(source) {
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "";
   const size = formatFileSizeUz(source.file_size);
-  const ext = (source.content_url || "").split('.').pop().toUpperCase() || "RFA";
+  const ext = (source.file_format ? sourceFormatLabel(source.file_format) : "") || "FAYL";
 
   return `
     <div class="lib-source-card" onclick="openSourceDetail(${Number(source.id)})">
@@ -17004,6 +17035,22 @@ function openAddLibraryV2ResourceModal(presetSection) {
             <input id="v2-author" class="apple-input" type="text" placeholder="Masalan: Autodesk / ShNQ">
           </div>
 
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div class="apple-field">
+              <label>Dastur</label>
+              <select id="v2-software" class="apple-input">
+                ${["", ...SOURCE_SOFTWARE_ORDER].map(o => `<option value="${o}" ${({}).software === o ? "selected" : ""}>${o || "Avto"}</option>`).join("")}
+              </select>
+            </div>
+            <div class="apple-field">
+              <label>Fayl formati</label>
+              <select id="v2-format" class="apple-input">
+                ${["", ...SOURCE_FORMAT_OPTIONS].map(o => `<option value="${o}" ${String(({}).file_format || "").toUpperCase() === o ? "selected" : ""}>${o ? sourceFormatLabel(o) : "Avto (fayl nomidan)"}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <div class="apple-field">
               <label>Revit Versiyasi (Manbalar uchun)</label>
@@ -17104,6 +17151,8 @@ async function submitCreateLibraryV2Resource() {
   const category = document.getElementById("v2-cat")?.value;
   const author = document.getElementById("v2-author")?.value.trim();
   const version = document.getElementById("v2-version")?.value.trim();
+  const softwareVal = document.getElementById("v2-software")?.value || "";
+  const formatVal = document.getElementById("v2-format")?.value || "";
   const fileSize = document.getElementById("v2-filesize")?.value.trim();
   const courseId = document.getElementById("v2-course-id")?.value ? Number(document.getElementById("v2-course-id").value) : null;
   const contentUrl = document.getElementById("v2-url")?.value.trim();
@@ -17130,6 +17179,8 @@ async function submitCreateLibraryV2Resource() {
       category: category,
       author: author,
       version: version,
+      software: softwareVal || null,
+      file_format: formatVal || null,
       file_size: fileSize,
       course_id: courseId,
       is_featured: isFeatured,
@@ -17208,6 +17259,22 @@ function openEditLibraryV2ResourceModal(resId) {
             <input id="ev2-author" class="apple-input" type="text" value="${escapeHtml(item.author || "")}">
           </div>
 
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div class="apple-field">
+              <label>Dastur</label>
+              <select id="ev2-software" class="apple-input">
+                ${["", ...SOURCE_SOFTWARE_ORDER].map(o => `<option value="${o}" ${item.software === o ? "selected" : ""}>${o || "Avto"}</option>`).join("")}
+              </select>
+            </div>
+            <div class="apple-field">
+              <label>Fayl formati</label>
+              <select id="ev2-format" class="apple-input">
+                ${["", ...SOURCE_FORMAT_OPTIONS].map(o => `<option value="${o}" ${String(item.file_format || "").toUpperCase() === o ? "selected" : ""}>${o ? sourceFormatLabel(o) : "Avto (fayl nomidan)"}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <div class="apple-field">
               <label>Revit Versiyasi</label>
@@ -17274,6 +17341,8 @@ async function submitUpdateLibraryV2Resource(resId) {
   const category = document.getElementById("ev2-cat")?.value;
   const author = document.getElementById("ev2-author")?.value.trim();
   const version = document.getElementById("ev2-version")?.value.trim();
+  const softwareVal = document.getElementById("ev2-software")?.value || "";
+  const formatVal = document.getElementById("ev2-format")?.value || "";
   const fileSize = document.getElementById("ev2-filesize")?.value.trim();
   const courseId = document.getElementById("ev2-course-id")?.value ? Number(document.getElementById("ev2-course-id").value) : null;
   const contentUrl = document.getElementById("ev2-url")?.value.trim();
@@ -17300,6 +17369,8 @@ async function submitUpdateLibraryV2Resource(resId) {
       category: category,
       author: author,
       version: version,
+      software: softwareVal || null,
+      file_format: formatVal || null,
       file_size: fileSize,
       course_id: courseId,
       is_featured: isFeatured,

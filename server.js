@@ -1305,6 +1305,8 @@ async function ensureLibraryV2Tables() {
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_bytes BIGINT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS software VARCHAR(30)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_format VARCHAR(30)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_checked_at TIMESTAMPTZ",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
@@ -1491,6 +1493,10 @@ async function ensureLibraryV2Tables() {
         }
       ])]);
     }
+
+    try {
+      await pool.query("UPDATE library_resources SET software = 'Revit' WHERE section_slug = 'sources' AND software IS NULL");
+    } catch (swErr) { console.warn('software migratsiya:', swErr.message); }
 
     // Tavsiya: faqat admin belgilaganlar. Avto-yaratilgan demo test/materiallarni bir marta tozalash
     try {
@@ -5536,6 +5542,22 @@ function formatBytesUz(n) {
   return Math.max(1, Math.round(n / 1024)) + ' KB';
 }
 
+function extToFormat(name) {
+  var m = String(name || '').toLowerCase().match(/\.([a-z0-9]{2,5})$/);
+  if (!m) return null;
+  var e = m[1];
+  if (['rvt','rfa','rte','rft','dwg','dwt','dxf','max','skp','fbx','obj','3ds','zip','rar','7z'].indexOf(e) !== -1) return e.toUpperCase();
+  if (['exe','msi','iso','dmg'].indexOf(e) !== -1) return 'INSTALLER';
+  return null;
+}
+function softwareFromFormat(f) {
+  f = String(f || '').toUpperCase();
+  if (['RVT','RFA','RTE','RFT'].indexOf(f) !== -1) return 'Revit';
+  if (['DWG','DWT','DXF'].indexOf(f) !== -1) return 'AutoCAD';
+  if (['MAX','3DS','FBX','OBJ'].indexOf(f) !== -1) return '3ds Max';
+  return null;
+}
+
 function isGoogleDriveUrl(u) {
   return /drive\.google\.com|docs\.google\.com/i.test(String(u || ''));
 }
@@ -5733,7 +5755,8 @@ async function refreshResourceSize(row) {
     var r = await resolveAnySize(url, ADMIN_TELEGRAM_ID);
     if (r.ok) {
       var fs2 = formatBytesUz(r.bytes);
-      await pool.query('UPDATE library_resources SET size_bytes = $1, file_size = $2, size_checked_at = NOW() WHERE id = $3', [r.bytes, fs2, row.id]);
+      var ff = extToFormat(r.name);
+      await pool.query('UPDATE library_resources SET size_bytes = $1, file_size = $2, size_checked_at = NOW(), file_format = COALESCE(file_format, $4), software = COALESCE(software, $5) WHERE id = $3', [r.bytes, fs2, row.id, ff, softwareFromFormat(ff)]);
       row.size_bytes = r.bytes; row.file_size = fs2;
     } else {
       await pool.query('UPDATE library_resources SET size_checked_at = NOW() WHERE id = $1', [row.id]);
@@ -8271,7 +8294,7 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
     if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; } else { b._size_warning = autoSize.error || 'Hajm aniqlanmadi'; }
+      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; if (!b.file_format) b.file_format = extToFormat(autoSize.name); } else { b._size_warning = autoSize.error || 'Hajm aniqlanmadi'; }
       if (parseTelegramLink(b.content_url)) b.storage_provider = 'telegram';
     }
 
@@ -8280,12 +8303,12 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
         type, section_slug, title, subtitle, description, category, sub_category, tags,
         content_url, content_type, content_data, preview_image_url, storage_provider, storage_id,
         author, file_size, page_count, language, version, versions, course_id, source_label,
-        difficulty, time_limit_min, status, order_index, is_featured
+        difficulty, time_limit_min, status, order_index, is_featured, software, file_format
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,
         $9,$10,$11,$12,$13,$14,
         $15,$16,$17,$18,$19,$20,$21,$22,
-        $23,$24,$25,$26,$27
+        $23,$24,$25,$26,$27,$28,$29
       )
       RETURNING *
     `, [
@@ -8300,7 +8323,8 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
       b.versions ? (typeof b.versions === 'string' ? b.versions : JSON.stringify(b.versions)) : '[]',
       b.course_id || null, b.source_label || null,
       b.difficulty || 'medium', b.time_limit_min || 15,
-      b.status || 'published', b.order_index || 0, b.is_featured || false
+      b.status || 'published', b.order_index || 0, b.is_featured || false,
+      b.software || softwareFromFormat(b.file_format) || null, b.file_format ? String(b.file_format).toUpperCase() : null
     ]);
 
     if (b._size_bytes) { try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes, result.rows[0].id]); } catch (e) {} }
@@ -8320,7 +8344,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize2 = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; } else { b._size_warning = autoSize2.error || 'Hajm aniqlanmadi'; }
+      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; if (!b.file_format) b.file_format = extToFormat(autoSize2.name); } else { b._size_warning = autoSize2.error || 'Hajm aniqlanmadi'; }
     }
 
     var result = await pool.query(`
@@ -8350,6 +8374,8 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
         status = COALESCE($23, status),
         order_index = COALESCE($24, order_index),
         is_featured = COALESCE($25, is_featured),
+        software = COALESCE($27, software),
+        file_format = COALESCE($28, file_format),
         updated_at = NOW()
       WHERE id = $26
       RETURNING *
@@ -8366,6 +8392,8 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
       b.difficulty, b.time_limit_min,
       b.status, b.order_index, b.is_featured,
       resourceId
+    ,
+      b.software || softwareFromFormat(b.file_format) || null, b.file_format ? String(b.file_format).toUpperCase() : null
     ]);
 
     if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
