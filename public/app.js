@@ -10878,12 +10878,25 @@ function renderQuizResults(moduleId, result) {
 // ADMIN PANEL (Talab 6: Darslar va Fayllar, Talab 7: Modullar o'chirilgan)
 // ======================================================
 
+// ======================================================
+// ADMIN PANEL: IERARXIK NAVIGATSIYA VA QULAY BOSHQARUV TIZIMI
+// ======================================================
+
 let adminView = "dashboard";
+let adminNavPath = ["root"]; // ['root'], ['stats'], ['library'], ['library', 'books'], ['library', 'sources'], etc.
+let adminTasksActiveTab = "practice"; // "practice" or "tests"
 let adminData = {
   stats: null,
+  activeUsers: [],
+  analyticsHistory: null,
   students: [],
   modules: [],
-  admins: []
+  admins: [],
+  libraryFiles: [],
+  libraryV2Resources: [],
+  libraryBooks: [],
+  supportCards: [],
+  practice: []
 };
 
 async function adminApi(path, body = {}) {
@@ -10893,7 +10906,7 @@ async function adminApi(path, body = {}) {
 
 function openAdminLessons() {
   openAdminPanel().then(() => {
-    adminSetTab("lessons");
+    adminNavigate("courses");
   });
 }
 
@@ -10902,19 +10915,25 @@ async function openAdminPanel() {
   haptic("medium");
 
   currentView = {
+    isAdminPanel: true,
     html: `
       <div class="lesson-loading">
         <div class="spinner"></div>
-        <div>Admin panel yuklanmoqda...</div>
+        <div>Boshqaruv paneli yuklanmoqda...</div>
       </div>
     `
   };
   render();
 
   try {
-    const data = await adminApi("/api/admin/stats");
-    adminData.stats = data.stats || {};
-    adminView = "dashboard";
+    const [statsData, liveData] = await Promise.all([
+      adminApi("/api/admin/stats").catch(() => ({ stats: {} })),
+      adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] }))
+    ]);
+    adminData.stats = Object.assign({}, statsData.stats || {}, liveData.stats || {});
+    adminData.activeUsers = liveData.active_users || [];
+    adminView = "menu";
+    adminNavPath = ["root"];
     renderAdminPanel();
   } catch (error) {
     console.error("ADMIN OPEN ERROR:", error);
@@ -10923,62 +10942,1020 @@ async function openAdminPanel() {
   }
 }
 
-// 7-TALAB: "MODULLAR" QATORI BUTUNLAY OLIB TASHLANDI
+// HIERARCHICAL NAVIGATION DISPATCHER
+async function adminNavigate(to, subTo) {
+  haptic("light");
+  if (!to || to === "root") {
+    adminNavPath = ["root"];
+    stopAdminLivePolling();
+    renderAdminPanel();
+    return;
+  }
+
+  if (subTo) {
+    adminNavPath = [to, subTo];
+  } else {
+    adminNavPath = [to];
+  }
+
+  // Target view bo'yicha ma'lumotlarni fonda yuklash
+  try {
+    if (to === "stats") {
+      adminView = "dashboard";
+      const [liveData, historyData] = await Promise.all([
+        adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
+        adminApi("/api/admin/analytics/history", { period: adminData.analyticsPeriod || "7days" }).catch(() => ({ summary: {}, daily: [] }))
+      ]);
+      adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
+      adminData.activeUsers = liveData.active_users || [];
+      adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
+      startAdminLivePolling();
+    } else {
+      stopAdminLivePolling();
+    }
+
+    if (to === "library") {
+      adminView = "library";
+      if (subTo) adminData.librarySubTab = subTo;
+      try {
+        const [filesData, resData, booksData] = await Promise.all([
+          adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
+          adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] })),
+          adminApi("/api/admin/books/list").catch(() => ({ books: [] }))
+        ]);
+        adminData.libraryFiles = filesData.files || [];
+        adminData.libraryV2Resources = resData.resources || [];
+        adminData.libraryBooks = booksData.books || [];
+      } catch (fe) {}
+    } else if (to === "courses") {
+      adminView = "lessons";
+      const data = await adminApi("/api/admin/modules").catch(() => ({ modules: [] }));
+      adminData.modules = data.modules || [];
+    } else if (to === "students") {
+      adminView = "students";
+      const data = await adminApi("/api/admin/students").catch(() => ({ students: [] }));
+      adminData.students = data.students || [];
+    } else if (to === "tasks") {
+      adminView = "practice";
+      const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" }).catch(() => ({ submissions: [] }));
+      adminData.practice = data.submissions || [];
+    } else if (to === "chat") {
+      adminView = "chat";
+      const data = await adminApi("/api/admin/questions").catch(() => ({ questions: [] }));
+      adminQuestionsList = data.questions || [];
+    } else if (to === "settings") {
+      adminView = "support_cards";
+      try {
+        const scData = await adminApi("/api/admin/support-cards/list").catch(() => ({ cards: [] }));
+        adminData.supportCards = scData.cards || [];
+      } catch (e) {}
+    } else if (to === "admins") {
+      adminView = "admins";
+      const data = await adminApi("/api/admin/admins").catch(() => ({ admins: [] }));
+      adminData.admins = data.admins || [];
+    }
+  } catch (navErr) {
+    console.warn("adminNavigate yuklash xatosi:", navErr);
+  }
+
+  renderAdminPanel();
+}
+
+function adminGoBack() {
+  haptic("light");
+  if (!Array.isArray(adminNavPath) || adminNavPath.length <= 1) {
+    closeDetail();
+    return;
+  }
+  adminNavPath.pop();
+  if (adminNavPath.length === 1 && adminNavPath[0] === "root") {
+    stopAdminLivePolling();
+  }
+  renderAdminPanel();
+}
+
+function adminGoToPathIndex(idx) {
+  haptic("light");
+  if (idx < 0) {
+    adminNavPath = ["root"];
+  } else {
+    adminNavPath = adminNavPath.slice(0, idx + 1);
+  }
+  if (adminNavPath.length === 1 && adminNavPath[0] === "root") {
+    stopAdminLivePolling();
+  }
+  renderAdminPanel();
+}
+
+// TOP BREADCRUMB & BACK BUTTON BAR
+function renderAdminNavBar() {
+  const path = adminNavPath || ["root"];
+  const isRoot = path.length === 1 && path[0] === "root";
+
+  const titlesMap = {
+    root: { label: "Admin Panel", icon: "👑" },
+    stats: { label: "Statistika", icon: "📊" },
+    library: { label: "Kutubxona", icon: "📚" },
+    books: { label: "Kitoblar", icon: "📖" },
+    sources: { label: "Manbalar", icon: "📐" },
+    materials: { label: "Materiallar", icon: "🧱" },
+    drive: { label: "Google Drive", icon: "📁" },
+    showcases: { label: "Natijalar", icon: "🎓" },
+    files: { label: "Dars Fayllari", icon: "📄" },
+    errors: { label: "Xatolar", icon: "⚠️" },
+    courses: { label: "Kurslar", icon: "🎓" },
+    students: { label: "Foydalanuvchilar", icon: "👥" },
+    tasks: { label: "Vazifalar va Testlar", icon: "📝" },
+    chat: { label: "Chat va Murojaatlar", icon: "💬" },
+    settings: { label: "Sozlamalar", icon: "⚙️" },
+    admins: { label: "Adminlar", icon: "🔐" }
+  };
+
+  let backLabel = "← Ilovaga qaytish";
+  if (!isRoot) {
+    if (path.length === 1) {
+      backLabel = "← Admin Panel";
+    } else {
+      const parentSlug = path[path.length - 2];
+      const parentInfo = titlesMap[parentSlug] || { label: "Orqaga" };
+      backLabel = `← ${parentInfo.label}`;
+    }
+  }
+
+  const breadcrumbItems = [];
+  breadcrumbItems.push(`<span class="admin-breadcrumb-item ${isRoot ? 'active' : ''}" onclick="adminNavigate('root')">👑 Admin Panel</span>`);
+
+  if (!isRoot) {
+    path.forEach((segment, idx) => {
+      if (segment === "root") return;
+      const isLast = idx === path.length - 1;
+      const info = titlesMap[segment] || { label: segment };
+      breadcrumbItems.push(`<span class="admin-breadcrumb-sep">/</span>`);
+      if (isLast) {
+        breadcrumbItems.push(`<span class="admin-breadcrumb-item active">${info.icon ? info.icon + ' ' : ''}${escapeHtml(info.label)}</span>`);
+      } else {
+        breadcrumbItems.push(`<span class="admin-breadcrumb-item" onclick="adminGoToPathIndex(${idx})">${info.icon ? info.icon + ' ' : ''}${escapeHtml(info.label)}</span>`);
+      }
+    });
+  }
+
+  return `
+    <div class="admin-nav-bar">
+      <button class="admin-back-btn" onclick="adminGoBack()">
+        ${backLabel}
+      </button>
+      <div class="admin-breadcrumb-wrap">
+        ${breadcrumbItems.join(" ")}
+      </div>
+    </div>
+  `;
+}
+
+// 1. ADMIN PANEL BOSHLANG'ICH SAHIFASI (8 TA ASOSIY BO'LIM)
+function renderAdminRootMenu() {
+  const s = adminData.stats || {};
+  const activeCount = adminData.activeUsers ? adminData.activeUsers.length : (s.online_now || 0);
+
+  return `
+    <div class="admin-root-menu">
+      <div class="admin-header" style="margin-bottom:14px;">
+        <div>
+          <div class="admin-title">👑 Boshqaruv Paneli</div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">
+            YOSHUZBEKK Academy boshqaruv va nazorat markazi
+          </div>
+        </div>
+        <div class="admin-role">${state.admin_role === "super_admin" ? "Super Admin" : "Admin"}</div>
+      </div>
+
+      <!-- TEZKOR METRIKA KARTALARI -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:18px;">
+        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('stats')">
+          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;">
+            <span class="live-pulse-dot"></span> Online
+          </div>
+          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.online_now || activeCount || 0}</div>
+        </div>
+        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('students')">
+          <div style="font-size:11px; color:var(--text-secondary); font-weight:700;">O'quvchilar</div>
+          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.total_students || (adminData.students ? adminData.students.length : 0)}</div>
+        </div>
+        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('students')">
+          <div style="font-size:11px; color:var(--accent); font-weight:700;">Faol Obuna</div>
+          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.paid_students || 0}</div>
+        </div>
+      </div>
+
+      <!-- 8 TA ASOSIY BO'LIM (IERARXIK MENYU) -->
+      <div class="admin-hub-grid">
+        <!-- 1. STATISTIKA -->
+        <div class="admin-hub-card" onclick="adminNavigate('stats')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(0,122,255,0.12); color:#007aff;">
+            📊
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              1. Statistika
+              <span class="admin-hub-badge" style="background:rgba(16,185,129,0.12); color:#10b981;">Jonli</span>
+            </div>
+            <div class="admin-hub-desc">Foydalanuvchilar oqimi, dars ko'rilishlari, online monitoring va tahlil</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 2. KUTUBXONA -->
+        <div class="admin-hub-card" onclick="adminNavigate('library')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(255,149,0,0.12); color:#ff9500;">
+            📚
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              2. Kutubxona
+              <span class="admin-hub-badge">${(adminData.libraryBooks || []).length} kitob</span>
+            </div>
+            <div class="admin-hub-desc">Kitoblar, arxitektura manbalari, qurilish materiallari va dars fayllari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 3. KURSLAR / INTPRO -->
+        <div class="admin-hub-card" onclick="adminNavigate('courses')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(175,82,222,0.12); color:#af52de;">
+            🎓
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              3. Kurslar / INTPRO
+            </div>
+            <div class="admin-hub-desc">Modullar, darslar, video darsliklar tartibi va kontent boshqaruvi</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 4. FOYDALANUVCHILAR -->
+        <div class="admin-hub-card" onclick="adminNavigate('students')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(52,199,89,0.12); color:#34c759;">
+            👥
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              4. Foydalanuvchilar
+              <span class="admin-hub-badge">${s.total_students || 0}</span>
+            </div>
+            <div class="admin-hub-desc">O'quvchilar ro'yxati, obunalar, access berish, muddatlar va bloklash</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 5. VAZIFALAR / TESTLAR -->
+        <div class="admin-hub-card" onclick="adminNavigate('tasks')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(255,45,85,0.12); color:#ff2d55;">
+            📝
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              5. Vazifalar / Testlar
+            </div>
+            <div class="admin-hub-desc">Amaliy topshiriqlarni tekshirish, sharhlar va modul test savollari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 6. CHAT / MUROJAATLAR -->
+        <div class="admin-hub-card" onclick="adminNavigate('chat')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(88,86,214,0.12); color:#5856d6;">
+            💬
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              6. Chat / Murojaatlar
+            </div>
+            <div class="admin-hub-desc">O'quvchilar savollari, murojaatlar markazi va admin javoblari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 7. PLATFORMA SOZLAMALARI -->
+        <div class="admin-hub-card" onclick="adminNavigate('settings')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(90,200,250,0.12); color:#5ac8fa;">
+            ⚙️
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              7. Platforma sozlamalari
+            </div>
+            <div class="admin-hub-desc">Admin kontaktlari, ijtimoiy tarmoqlar va to'lov kartalari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 8. ADMINLAR / XAVFSIZLIK -->
+        <div class="admin-hub-card" onclick="adminNavigate('admins')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(255,204,0,0.12); color:#ffcc00;">
+            🔐
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              8. Adminlar / Xavfsizlik
+            </div>
+            <div class="admin-hub-desc">Adminlar tizimi, rollar, taqiqlar va tizim xavfsizligi</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 2. STATISTIKA SAHIFASI (2.1 - 2.4 TALABLAR)
+function renderAdminStatsView() {
+  const s = adminData.stats || {};
+  const activeUsers = adminData.activeUsers || [];
+  const allStudents = adminData.students || [];
+  const allBooks = adminData.libraryBooks || [];
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const allMats = (adminMaterialsState && adminMaterialsState.materials) || DEFAULT_MATERIALS || [];
+
+  const totalRegistered = s.total_students || allStudents.length || 0;
+  const activeToday = s.today_active || 0;
+  const onlineNow = s.online_now || activeUsers.length || 0;
+  const todayNewUsers = s.today_new_users || adminData.analyticsHistory?.summary?.new_users || 0;
+  const paidStudents = s.paid_students || allStudents.filter(st => st.has_access || st.access_state === "ACTIVE").length || 0;
+  const expiredStudents = s.expired_students || allStudents.filter(st => st.access_state === "EXPIRED" || (!st.has_access && st.access_until && new Date(st.access_until) <= new Date())).length || 0;
+  const bannedStudents = s.blocked_students || allStudents.filter(st => st.restriction_status === "permanent" || st.restriction_status === "temporary").length || 0;
+
+  const totalBooks = allBooks.length;
+  const totalSources = allRes.filter(r => r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative').length;
+  const totalMaterials = allMats.length;
+  const totalSavedBooks = allBooks.reduce((sum, b) => sum + Number(b.saved_count || 0), 0);
+  const totalBookViews = allBooks.reduce((sum, b) => sum + Number(b.view_count || 0), 0);
+
+  return `
+    <div class="admin-stats-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">📊 Platforma Statistikasi</div>
+          <div class="admin-hero-desc">Real-time faollik, foydalanuvchilar oqimi va tahliliy ko'rsatkichlar</div>
+        </div>
+        <div style="font-size:12px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:5px;">
+          <span class="live-pulse-dot"></span> Jonli Tizim
+        </div>
+      </div>
+
+      <!-- 2.1. UMUMIY STATISTIKA -->
+      <div style="margin-bottom:20px;">
+        <div class="admin-section-title" style="margin-bottom:10px;">2.1. Umumiy Statistika</div>
+        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">👥</div>
+            <div class="admin-stat-value">${totalRegistered}</div>
+            <div class="admin-stat-label">Jami O'quvchilar</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">📅</div>
+            <div class="admin-stat-value" style="color:#10b981;">${activeToday}</div>
+            <div class="admin-stat-label">Bugun Faol</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">⚡</div>
+            <div class="admin-stat-value" style="color:#007aff;">${onlineNow}</div>
+            <div class="admin-stat-label">Hozir Online</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">🆕</div>
+            <div class="admin-stat-value" style="color:#8b5cf6;">${todayNewUsers}</div>
+            <div class="admin-stat-label">Bugun Yangi A'zolar</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
+            <div class="admin-stat-icon">💳</div>
+            <div class="admin-stat-value" style="color:#10b981;">${paidStudents}</div>
+            <div class="admin-stat-label">Kursga Egasi (Faol) →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
+            <div class="admin-stat-icon">⏳</div>
+            <div class="admin-stat-value" style="color:#ff9500;">${expiredStudents}</div>
+            <div class="admin-stat-label">Access Tugaganlar →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
+            <div class="admin-stat-icon">🚫</div>
+            <div class="admin-stat-value" style="color:#ff3b30;">${bannedStudents}</div>
+            <div class="admin-stat-label">Bloklanganlar →</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">🎬</div>
+            <div class="admin-stat-value">${s.today_lesson_views || 0}</div>
+            <div class="admin-stat-label">Bugun Dars Ko'rish</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2.2. HOZIR ONLINE FOYDALANUVCHILAR -->
+      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-weight:750; font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>⚡</span> 2.2. Hozir Online Foydalanuvchilar
+              <span id="admin-live-users-count" class="admin-hub-badge" style="background:rgba(16,185,129,0.12); color:#10b981;">${activeUsers.length} ta faol</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Mini App ichida faol foydalanuvchilar ro'yxati</div>
+          </div>
+          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
+            <span class="live-pulse-dot"></span> Jonli
+          </div>
+        </div>
+
+        <div id="admin-live-users-rows">
+          ${renderAdminLiveUsersHtml(activeUsers)}
+        </div>
+      </div>
+
+      <!-- 2.3. KURS STATISTIKASI -->
+      <div style="margin-bottom:20px;">
+        <div class="admin-section-title" style="margin-bottom:10px;">2.3. Kurs Statistikasi (INTPRO)</div>
+        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin-bottom:14px;">
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
+            <div class="admin-stat-icon">🎓</div>
+            <div class="admin-stat-value">${paidStudents}</div>
+            <div class="admin-stat-label">Faol Kurs Accessi →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\'ragan')">
+            <div class="admin-stat-icon">🆕</div>
+            <div class="admin-stat-value" style="color:#007aff;">${s.pending_new || 0}</div>
+            <div class="admin-stat-label">Yangi So'rovlar →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\'ragan')">
+            <div class="admin-stat-icon">🔄</div>
+            <div class="admin-stat-value" style="color:#ff9500;">${s.pending_renewal || 0}</div>
+            <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">👁️</div>
+            <div class="admin-stat-value">${s.total_lesson_views || 0}</div>
+            <div class="admin-stat-label">Jami Dars Ko'rishlar</div>
+          </div>
+        </div>
+
+        <div id="admin-analytics-section">
+          ${renderAdminAnalyticsSectionHtml()}
+        </div>
+      </div>
+
+      <!-- 2.4. KUTUBXONA STATISTIKASI -->
+      <div style="margin-bottom:20px;">
+        <div class="admin-section-title" style="margin-bottom:10px;">2.4. Kutubxona Statistikasi</div>
+        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'books')">
+            <div class="admin-stat-icon">📚</div>
+            <div class="admin-stat-value">${totalBooks}</div>
+            <div class="admin-stat-label">Jami Kitoblar →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'sources')">
+            <div class="admin-stat-icon">📐</div>
+            <div class="admin-stat-value">${totalSources}</div>
+            <div class="admin-stat-label">Jami Manbalar →</div>
+          </div>
+          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'materials')">
+            <div class="admin-stat-icon">🧱</div>
+            <div class="admin-stat-value">${totalMaterials}</div>
+            <div class="admin-stat-label">Jami Materiallar →</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">♥</div>
+            <div class="admin-stat-value" style="color:#ff334b;">${totalSavedBooks}</div>
+            <div class="admin-stat-label">Saqlangan Kitoblar</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon">👁️</div>
+            <div class="admin-stat-value">${totalBookViews}</div>
+            <div class="admin-stat-label">Kitoblar Ko'rilishi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 3. KUTUBXONA BOSH HUB SAHIFASI
+function renderAdminLibraryHubView() {
+  const books = adminData.libraryBooks || [];
+  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
+  const sources = allRes.filter(r => r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative');
+  const mats = (adminMaterialsState && adminMaterialsState.materials) || DEFAULT_MATERIALS || [];
+  const files = adminData.libraryFiles || [];
+  const showcases = state.showcases || [];
+  const failedBooks = books.filter(b => b.status === 'FAILED' || b.status === 'failed' || b.sync_error);
+
+  return `
+    <div class="admin-library-hub">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">📚 Kutubxona Boshqaruvi</div>
+          <div class="admin-hero-desc">Kitoblar, arxitektura manbalari, qurilish materiallari va dars fayllari</div>
+        </div>
+      </div>
+
+      <!-- 3 TA ASOSIY BO'LIM (KITOBLAR, MANBALAR, MATERIALLAR) -->
+      <div class="admin-hub-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-bottom:20px;">
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'books')" style="border-left: 4px solid #ff9500;">
+          <div class="admin-hub-icon-wrap" style="background:rgba(255,149,0,0.12); color:#ff9500;">
+            📖
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              Kitoblar
+              <span class="admin-hub-badge">${books.length} ta</span>
+            </div>
+            <div class="admin-hub-desc">PDF kitoblar, elektron kutubxona, AI metadata va nashr nazorati</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'sources')" style="border-left: 4px solid #007aff;">
+          <div class="admin-hub-icon-wrap" style="background:rgba(0,122,255,0.12); color:#007aff;">
+            📐
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              Manbalar
+              <span class="admin-hub-badge">${sources.length} ta</span>
+            </div>
+            <div class="admin-hub-desc">Revit andozalari, BIM oilalar, normativ hujjatlar va andozalar</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'materials')" style="border-left: 4px solid #34c759;">
+          <div class="admin-hub-icon-wrap" style="background:rgba(52,199,89,0.12); color:#34c759;">
+            🧱
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              Materiallar
+              <span class="admin-hub-badge">${mats.length} ta</span>
+            </div>
+            <div class="admin-hub-desc">Qurilish va pardozlash materiallari bazasi, rasmlar va o'lchamlar</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+      </div>
+
+      <!-- QO'SHIMCHA VOSITALAR -->
+      <div class="admin-section-title" style="margin-bottom:12px; font-size:14px;">Qo'shimcha vositalar</div>
+      <div class="admin-hub-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'drive')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(66,133,244,0.12); color:#4285f4; font-size:20px;">📁</div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title" style="font-size:14px;">Google Drive</div>
+            <div class="admin-hub-desc">Papka sinxronizatsiyasi va sozlamalar</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'showcases')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(175,82,222,0.12); color:#af52de; font-size:20px;">🎓</div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title" style="font-size:14px;">Natijalar (${showcases.length})</div>
+            <div class="admin-hub-desc">O'quvchilar loyihalari va albomlari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'files')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(90,200,250,0.12); color:#5ac8fa; font-size:20px;">📄</div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title" style="font-size:14px;">Dars Fayllari (${files.length})</div>
+            <div class="admin-hub-desc">Darslarga biriktirilgan manbalar</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('library', 'errors')" style="${failedBooks.length ? 'border-color:#ff3b30;' : ''}">
+          <div class="admin-hub-icon-wrap" style="background:rgba(255,59,48,0.12); color:#ff3b30; font-size:20px;">⚠️</div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title" style="font-size:14px; ${failedBooks.length ? 'color:#ff3b30;' : ''}">Xatolar (${failedBooks.length})</div>
+            <div class="admin-hub-desc">Yuklanmagan yoki sinxron xatoliklar</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 4. KITOBLAR SAHIFASI
+function renderAdminLibraryBooksView() {
+  return `
+    <div class="admin-books-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">📖 Kitoblar Boshqaruvi</div>
+          <div class="admin-hero-desc">Elektron kutubxona kitoblari, PDF o'qish, metadata va nashr nazorati</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" style="background:#1a73e8; color:#fff; border:none; padding:8px 14px; font-weight:700; border-radius:10px; font-size:13px; margin:0;" onclick="openAdminBookModal()">
+            ➕ Yangi Kitob Qo'shish
+          </button>
+        </div>
+      </div>
+
+      ${renderAdminLibraryBooks()}
+    </div>
+  `;
+}
+
+// 5. MANBALAR SAHIFASI
+function renderAdminLibrarySourcesView() {
+  return `
+    <div class="admin-sources-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">📐 Manbalar Boshqaruvi</div>
+          <div class="admin-hero-desc">Revit shablonlari, BIM oilalar, normativ hujjatlar va andozalar</div>
+        </div>
+        <div>
+          <button class="btn" style="background:#1a73e8; color:#fff; border:none; padding:8px 14px; font-weight:700; border-radius:10px; font-size:13px; margin:0;" onclick="openAddLibraryV2ResourceModal('sources')">
+            ➕ Yangi Manba Qo'shish
+          </button>
+        </div>
+      </div>
+
+      ${renderAdminLibrarySectionResources('sources', 'Manbalar')}
+    </div>
+  `;
+}
+
+// 6. MATERIALLAR SAHIFASI
+function renderAdminLibraryMaterialsView() {
+  return `
+    <div class="admin-materials-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">🧱 Qurilish Materiallari Boshqaruvi</div>
+          <div class="admin-hero-desc">Materiallar bozori, texnik xususiyatlar, o'lchamlar va tasdiqlangan rasmlar</div>
+        </div>
+        <div>
+          <button class="btn" style="background:#1a73e8; color:#fff; border:none; padding:8px 14px; font-weight:700; border-radius:10px; font-size:13px; margin:0;" onclick="openAddMaterialModal()">
+            ➕ Yangi Material Qo'shish
+          </button>
+        </div>
+      </div>
+
+      ${renderAdminMaterialsCMS()}
+    </div>
+  `;
+}
+
+// KURSLAR SAHIFASI
+function renderAdminCoursesView() {
+  return `
+    <div class="admin-courses-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">🎓 INTPRO — Revit Kursi Boshqaruvi</div>
+          <div class="admin-hero-desc">Modullar tuzilishi, darsliklar tartibi, video havolalar va topshiriqlar</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="admin-small-btn" onclick="openAddLessonView()">➕ Yangi Dars Qo'shish</button>
+          <button class="admin-small-btn" onclick="goToCourseManagement()" style="background:var(--accent); color:#fff; border:none;">📚 O'quvchi Katalogi →</button>
+        </div>
+      </div>
+
+      ${renderAdminLessons()}
+    </div>
+  `;
+}
+
+// FOYDALANUVCHILAR SAHIFASI
+function renderAdminStudentsView() {
+  return `
+    <div class="admin-students-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">👥 O'quvchilar va Obunachilar Boshqaruvi</div>
+          <div class="admin-hero-desc">Platformadagi barcha foydalanuvchilar, access nazorati, muddatlar va bloklash</div>
+        </div>
+      </div>
+
+      ${renderAdminStudents()}
+    </div>
+  `;
+}
+
+// VAZIFALAR VA TESTLAR SAHIFASI
+function setAdminTasksTab(tab) {
+  haptic("light");
+  adminTasksActiveTab = tab;
+  renderAdminPanel();
+}
+
+function renderAdminTasksView() {
+  const submissions = adminData.practice || [];
+  const pendingSubmissions = submissions.filter(s => s.status === "submitted").length;
+
+  return `
+    <div class="admin-tasks-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">📝 Vazifalar va Testlar Nazorati</div>
+          <div class="admin-hero-desc">O'quvchilar amaliy topshiriqlari, sharhlar va modul test savollari</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="chip ${adminTasksActiveTab === 'practice' ? 'active' : ''}" onclick="setAdminTasksTab('practice')" style="cursor:pointer; font-weight:700;">
+            📤 Amaliy Vazifalar ${pendingSubmissions > 0 ? `(${pendingSubmissions})` : ''}
+          </button>
+          <button class="chip ${adminTasksActiveTab === 'tests' ? 'active' : ''}" onclick="setAdminTasksTab('tests')" style="cursor:pointer; font-weight:700;">
+            📋 Modul Testlari
+          </button>
+        </div>
+      </div>
+
+      ${adminTasksActiveTab === 'practice' ? `
+        <div>
+          ${renderAdminPractice()}
+        </div>
+      ` : `
+        <div>
+          <div class="admin-section-header" style="margin-bottom:14px;">
+            <div class="admin-section-title">Modul Test Savollari</div>
+            <button class="admin-small-btn" onclick="openCreateTestModal()">➕ Yangi Test Savoli Qo'shish</button>
+          </div>
+          <div class="card" style="padding:16px; margin-bottom:14px;">
+            <div style="font-weight:750; font-size:14.5px; margin-bottom:6px;">📋 Test Tizimi Haqida</div>
+            <p style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin:0 0 12px 0;">
+              Har bir modul oxirida o'quvchilar bilimi test savollari orqali tekshiriladi. Yangi savol qo'shish uchun quyidagi tugmani bosing va tegishli modulni tanlang.
+            </p>
+            <button class="btn" style="margin:0; width:auto; padding:10px 18px;" onclick="openCreateTestModal()">
+              ➕ Yangi Savol Kiritish
+            </button>
+          </div>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+// CHAT VA MUROJAATLAR SAHIFASI
+function renderAdminChatView() {
+  const allQuestions = adminQuestionsList || [];
+  const pendingCount = allQuestions.filter(q => q.status === "pending").length;
+  const publicCount = allQuestions.filter(q => q.is_public).length;
+  const privateCount = allQuestions.filter(q => !q.is_public).length;
+
+  let filteredQuestions = allQuestions;
+  if (adminQuestionsFilter === "pending") {
+    filteredQuestions = allQuestions.filter(q => q.status === "pending");
+  } else if (adminQuestionsFilter === "public") {
+    filteredQuestions = allQuestions.filter(q => q.is_public);
+  } else if (adminQuestionsFilter === "private") {
+    filteredQuestions = allQuestions.filter(q => !q.is_public);
+  }
+
+  return `
+    <div class="admin-chat-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">💬 Chat va O'quvchilar Murojaatlari</div>
+          <div class="admin-hero-desc">Darslar ostida qoldirilgan savollar, shaxsiy va ommaviy javoblar markazi</div>
+        </div>
+        ${pendingCount > 0 ? `<span class="tag warning" style="font-size:12px;">⚡ ${pendingCount} ta kutilmoqda</span>` : '<span class="tag passed">Barchasi javoblangan</span>'}
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+        <button class="chip ${adminQuestionsFilter === 'pending' ? 'active' : ''}" onclick="setAdminQuestionsFilter('pending')">
+          ⏳ Kutilmoqda (${pendingCount})
+        </button>
+        <button class="chip ${adminQuestionsFilter === 'all' || !adminQuestionsFilter ? 'active' : ''}" onclick="setAdminQuestionsFilter('all')">
+          📋 Barchasi (${allQuestions.length})
+        </button>
+        <button class="chip ${adminQuestionsFilter === 'public' ? 'active' : ''}" onclick="setAdminQuestionsFilter('public')">
+          🌐 Ommaviy (${publicCount})
+        </button>
+        <button class="chip ${adminQuestionsFilter === 'private' ? 'active' : ''}" onclick="setAdminQuestionsFilter('private')">
+          🔒 Shaxsiy (${privateCount})
+        </button>
+      </div>
+
+      ${filteredQuestions.length ? filteredQuestions.map(q => `
+        <div class="admin-qa-item ${q.status === 'pending' ? 'pending' : ''}">
+          <div class="admin-qa-item-head">
+            <div class="admin-qa-user-info">
+              <span class="admin-qa-user-name">
+                👤 ${escapeHtml([q.first_name, q.last_name].filter(Boolean).join(" ") || "O‘quvchi")}
+                ${q.username ? `<span style="font-weight:normal; color:var(--accent); font-size:12px;">@${escapeHtml(q.username)}</span>` : ""}
+              </span>
+              <span class="admin-qa-user-meta">
+                📞 ${escapeHtml(q.phone || "Telefon yo‘q")} · 🕒 ${fmtTimeAgo(q.created_at)}
+              </span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+              <div class="tag ${q.status === 'answered' ? 'passed' : 'warning'}">
+                ${q.status === 'answered' ? '✅ Javob berilgan' : '⏳ Kutilmoqda'}
+              </div>
+              ${q.is_public ? `
+                <span class="tag passed" style="font-size:10px; padding:2px 7px;">🌐 Ommaviy</span>
+              ` : `
+                <span class="tag" style="font-size:10px; padding:2px 7px; background:rgba(255,170,0,0.15); color:#ffa000;">🔒 Shaxsiy</span>
+              `}
+            </div>
+          </div>
+
+          <div class="admin-qa-lesson-tag" onclick="openLessonFromChat(${Number(q.course_id || 0)}, ${Number(q.lesson_id)})" style="cursor:pointer;">
+            🎬 Dars: ${escapeHtml(q.lesson_title || 'Noma‘lum dars')} (${escapeHtml(q.course_title || 'INTPRO')}) →
+          </div>
+
+          <div class="admin-qa-question-box">
+            <strong>Savol:</strong> ${escapeHtml(q.question)}
+          </div>
+
+          ${q.answer ? `
+            <div class="admin-qa-existing-answer">
+              <div class="admin-qa-answer-title">Sizning javobingiz:</div>
+              <div>${escapeHtml(q.answer)}</div>
+            </div>
+          ` : ""}
+
+          <div class="admin-reply-box">
+            <textarea id="admin-reply-input-${Number(q.id)}" class="apple-input apple-textarea" placeholder="${q.answer ? 'Javobni tahrirlash...' : 'O‘quvchiga javob yozing...'}" style="min-height:75px;">${escapeHtml(q.answer || '')}</textarea>
+            <div class="admin-reply-actions">
+              <label class="admin-reply-public-toggle" title="Belgilansa, ushbu savol-javob dars ostida hamma o‘quvchilarga ko‘rinadi">
+                <input type="checkbox" id="admin-reply-public-${Number(q.id)}" ${q.is_public ? 'checked' : ''}>
+                <span>🌐 Barchaga ko‘rinsin (Ommaviy)</span>
+              </label>
+              <div style="display:flex; gap:8px;">
+                <button class="btn danger" style="width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="deleteChatQuestion(${Number(q.id)})">
+                  🗑️ O‘chirish
+                </button>
+                <button class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12.5px; font-weight:700;" onclick="submitAdminReply(${Number(q.id)})">
+                  ✉️ ${q.answer ? 'Yangilash' : 'Javob yuborish'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("") : `<div class="empty-box">Ushbu filtr bo‘yicha savollar topilmadi.</div>`}
+    </div>
+  `;
+}
+
+// SOZLAMALAR SAHIFASI
+function renderAdminSettingsView() {
+  const s = state.settings || {};
+
+  return `
+    <div class="admin-settings-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">⚙️ Platforma va Aloqa Sozlamalari</div>
+          <div class="admin-hero-desc">Administrator shaxsiy kontaktlari, ijtimoiy tarmoqlar va to'lov kartalari</div>
+        </div>
+      </div>
+
+      <div class="admin-form" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; margin-bottom:20px;">
+        <div style="font-size:15px; font-weight:750; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px; color:var(--text-primary);">
+          1. Administrator Kontakt Ma'lumotlari
+        </div>
+
+        <div class="apple-field">
+          <label>Admin Fotosi (Havola)</label>
+          <input
+            id="set-photo"
+            class="apple-input"
+            value="${escapeHtml(s.admin_photo_url || '')}"
+            placeholder="https://..."
+            type="url"
+          >
+        </div>
+
+        <div class="apple-field">
+          <label>Admin Telegram Usernamesi (shaxsiy lichka)</label>
+          <input id="set-tg" class="apple-input" value="${escapeHtml(s.contact_telegram || '')}" placeholder="texnikuzb (boshida @ siz)" type="text">
+        </div>
+
+        <div class="apple-field">
+          <label>Admin Telefon Raqami (qo'ng'iroq uchun)</label>
+          <input id="set-phone" class="apple-input" value="${escapeHtml(s.contact_phone || '')}" placeholder="+998901234567" type="tel">
+        </div>
+
+        <div style="font-size:15px; font-weight:750; margin:20px 0 12px; border-bottom:1px solid var(--border); padding-bottom:6px; color:var(--text-primary);">
+          2. Ijtimoiy Tarmoq Havolalari ("Bizni kuzating")
+        </div>
+
+        <div class="apple-field">
+          <label>Telegram Kanal Havolasi</label>
+          <input id="set-social-tg" class="apple-input" value="${escapeHtml(s.social_telegram || 'https://t.me/yoshuzbekk')}" placeholder="https://t.me/yoshuzbekk" type="url">
+        </div>
+
+        <div class="apple-field">
+          <label>Instagram Sahifa Havolasi</label>
+          <input id="set-social-insta" class="apple-input" value="${escapeHtml(s.social_instagram || 'https://instagram.com/yoshuzbekk')}" placeholder="https://instagram.com/yoshuzbekk" type="url">
+        </div>
+
+        <div class="apple-field">
+          <label>YouTube Kanal Havolasi</label>
+          <input id="set-social-yt" class="apple-input" value="${escapeHtml(s.social_youtube || 'https://youtube.com/@yoshuzbekk')}" placeholder="https://youtube.com/@yoshuzbekk" type="url">
+        </div>
+
+        <div class="apple-field">
+          <label>Telegram Guruh / Forum Havolasi</label>
+          <input id="set-social-chat" class="apple-input" value="${escapeHtml(s.social_channel || 'https://t.me/yoshuzbekk_academy')}" placeholder="https://t.me/yoshuzbekk_academy" type="url">
+        </div>
+
+        <button class="btn" onclick="submitAdminSettings()" style="margin-top:12px; font-weight:750;">
+          💾 Sozlamalarni saqlash
+        </button>
+      </div>
+
+      <!-- TO'LOV VA QO'LLAB-QUVVATLASH KARTALARI -->
+      <div style="margin-top:20px;">
+        <div class="admin-section-header" style="margin-bottom:12px;">
+          <div class="admin-section-title">3. To'lov va Qo'llab-quvvatlash Kartalari</div>
+          <button class="admin-small-btn" onclick="openAddSupportCardModal()">➕ Karta Qo'shish</button>
+        </div>
+        ${renderAdminSupportCards()}
+      </div>
+    </div>
+  `;
+}
+
+// ADMINLAR SAHIFASI
+function renderAdminAdminsView() {
+  return `
+    <div class="admin-admins-page">
+      <div class="admin-section-hero">
+        <div>
+          <div class="admin-hero-title">🔐 Administratorlar va Xavfsizlik</div>
+          <div class="admin-hero-desc">Super admin va adminlar huquqlari, yangi admin biriktirish va xavfsizlik</div>
+        </div>
+      </div>
+
+      ${renderAdminAdmins()}
+    </div>
+  `;
+}
+
+// MAIN ADMIN PANEL RENDERER
 function renderAdminPanel() {
   const savedScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+  const path = adminNavPath || ["root"];
+  const currentLevel = path[0] || "root";
+  const subLevel = path[1] || null;
+
+  let bodyHtml = "";
+
+  if (currentLevel === "root") {
+    bodyHtml = renderAdminRootMenu();
+  } else if (currentLevel === "stats") {
+    bodyHtml = renderAdminStatsView();
+  } else if (currentLevel === "library") {
+    if (subLevel === "books") {
+      bodyHtml = renderAdminLibraryBooksView();
+    } else if (subLevel === "sources") {
+      bodyHtml = renderAdminLibrarySourcesView();
+    } else if (subLevel === "materials") {
+      bodyHtml = renderAdminLibraryMaterialsView();
+    } else if (subLevel === "drive") {
+      bodyHtml = renderAdminLibrarySubTabContent("drive");
+    } else if (subLevel === "showcases") {
+      bodyHtml = renderAdminLibraryShowcases(state.showcases || []);
+    } else if (subLevel === "files") {
+      bodyHtml = renderAdminLibraryFiles(adminData.libraryFiles || [], adminData.libraryFileSearch || "");
+    } else if (subLevel === "errors") {
+      bodyHtml = renderAdminLibrarySubTabContent("errors");
+    } else {
+      bodyHtml = renderAdminLibraryHubView();
+    }
+  } else if (currentLevel === "courses") {
+    bodyHtml = renderAdminCoursesView();
+  } else if (currentLevel === "students") {
+    bodyHtml = renderAdminStudentsView();
+  } else if (currentLevel === "tasks") {
+    bodyHtml = renderAdminTasksView();
+  } else if (currentLevel === "chat") {
+    bodyHtml = renderAdminChatView();
+  } else if (currentLevel === "settings") {
+    bodyHtml = renderAdminSettingsView();
+  } else if (currentLevel === "admins") {
+    bodyHtml = renderAdminAdminsView();
+  } else {
+    bodyHtml = renderAdminRootMenu();
+  }
+
   currentView = {
+    isAdminPanel: true,
     html: `
       <div class="admin-page">
-        <div class="back-btn" onclick="closeDetail()">← Ilovaga qaytish</div>
-
-        <div class="admin-header">
-          <div class="admin-title">👑 Boshqaruv Paneli</div>
-          <div class="admin-role">${state.admin_role === "super_admin" ? "Super Admin" : "Admin"}</div>
-        </div>
-
-        <div class="admin-tabs">
-          <button class="${adminView === "dashboard" ? "active" : ""}" onclick="adminSetTab('dashboard')">
-            📊 Statistika
-          </button>
-          <button class="${adminView === "students" ? "active" : ""}" onclick="adminSetTab('students')">
-            👨‍🎓 O'quvchilar
-          </button>
-          <button class="${adminView === "lessons" ? "active" : ""}" onclick="goToCourseManagement()">
-            🎬 Darslar
-          </button>
-          <button class="${adminView === "library" ? "active" : ""}" onclick="adminSetTab('library')">
-            📚 Kutubxona
-          </button>
-          <button class="${adminView === "support_cards" ? "active" : ""}" onclick="adminSetTab('support_cards')">
-            💳 Qo‘llab-quvvatlash
-          </button>
-          <button class="${adminView === "practice" ? "active" : ""}" onclick="adminSetTab('practice')">
-            📤 Vazifalar
-          </button>
-          <button class="${adminView === "learning" ? "active" : ""}" onclick="adminSetTab('learning')">
-            🏛️ O‘rganish Bazasi
-          </button>
-          ${state.admin_role === "super_admin" ? `
-            <button class="${adminView === "admins" ? "active" : ""}" onclick="adminSetTab('admins')">
-              👥 Adminlar
-            </button>
-          ` : ""}
-        </div>
-
+        ${renderAdminNavBar()}
         <div class="page" style="padding-top: 0;">
-          ${adminView === "dashboard" ? renderAdminDashboard() : ""}
-          ${adminView === "students" ? renderAdminStudents() : ""}
-          ${adminView === "lessons" ? renderAdminLessons() : ""}
-          ${adminView === "library" ? renderAdminLibrary() : ""}
-          ${adminView === "learning" ? renderAdminLearning() : ""}
-          ${adminView === "support_cards" ? renderAdminSupportCards() : ""}
-          ${adminView === "admins" ? renderAdminAdmins() : ""}
-          ${adminView === "practice" ? renderAdminPractice() : ""}
+          ${bodyHtml}
         </div>
       </div>
     `
   };
+
   render();
+  updateTelegramBackButton();
+
   if (savedScroll > 0) {
     window.scrollTo({ top: savedScroll, left: 0, behavior: "instant" });
   }
@@ -10987,14 +11964,14 @@ function renderAdminPanel() {
 function startAdminLivePolling() {
   stopAdminLivePolling();
   adminLivePollingTimer = setInterval(async () => {
-    if (!currentView || (adminView !== "dashboard" && adminView !== "live")) {
+    if (!currentView || !currentView.isAdminPanel || (adminNavPath && adminNavPath[0] !== "stats" && adminView !== "dashboard" && adminView !== "live")) {
       stopAdminLivePolling();
       return;
     }
     try {
       const liveData = await adminApi("/api/admin/live-activity");
       if (liveData && liveData.ok) {
-        adminData.stats = liveData.stats || adminData.stats;
+        adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
         adminData.activeUsers = liveData.active_users || [];
         updateAdminLiveDomElements();
       }
@@ -11029,7 +12006,7 @@ function updateAdminLiveDomElements() {
   }
   const countEl = document.getElementById("admin-live-users-count");
   if (countEl) {
-    countEl.textContent = `(${adminData.activeUsers ? adminData.activeUsers.length : 0})`;
+    countEl.textContent = `(${adminData.activeUsers ? adminData.activeUsers.length : 0} ta faol)`;
   }
 }
 
@@ -11048,64 +12025,32 @@ async function adminSetAnalyticsPeriod(period) {
   }
 }
 
+// BACKWARD COMPATIBILITY ADAPTER FOR EXISTING CALLERS
 async function adminSetTab(tab) {
   haptic("light");
-  adminView = tab;
-
-  try {
-    if (tab === "dashboard" || tab === "live") {
-      const [liveData, historyData] = await Promise.all([
-        adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
-        adminApi("/api/admin/analytics/history", { period: adminData.analyticsPeriod || "7days" }).catch(() => ({ summary: {}, daily: [] }))
-      ]);
-      adminData.stats = liveData.stats || {};
-      adminData.activeUsers = liveData.active_users || [];
-      adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
-      startAdminLivePolling();
+  if (tab === "dashboard" || tab === "live") {
+    await adminNavigate("stats");
+  } else if (tab === "students") {
+    await adminNavigate("students");
+  } else if (tab === "lessons") {
+    await adminNavigate("courses");
+  } else if (tab === "library") {
+    const sub = adminData.librarySubTab;
+    if (sub && sub !== "books") {
+      await adminNavigate("library", sub);
     } else {
-      stopAdminLivePolling();
-      if (tab === "students") {
-        const data = await adminApi("/api/admin/students");
-        adminData.students = data.students || [];
-      } else if (tab === "lessons") {
-        const data = await adminApi("/api/admin/modules");
-        adminData.modules = data.modules || [];
-      } else if (tab === "library") {
-        try {
-          const [filesData, resData, booksData] = await Promise.all([
-            adminApi("/api/admin/library/all-files").catch(() => ({ files: [] })),
-            adminApi("/api/admin/library-v2/resources").catch(() => ({ resources: [] })),
-            adminApi("/api/admin/books/list").catch(() => ({ books: [] }))
-          ]);
-          adminData.libraryFiles = filesData.files || [];
-          adminData.libraryV2Resources = resData.resources || [];
-          adminData.libraryBooks = booksData.books || [];
-          if (!adminData.librarySubTab) adminData.librarySubTab = "books";
-        } catch (fe) {
-          adminData.libraryFiles = [];
-          adminData.libraryV2Resources = [];
-          adminData.libraryBooks = [];
-        }
-      } else if (tab === "support_cards") {
-        try {
-          const scData = await adminApi("/api/admin/support-cards/list");
-          adminData.supportCards = scData.cards || [];
-        } catch (e) {
-          adminData.supportCards = [];
-        }
-      } else if (tab === "admins") {
-        const data = await adminApi("/api/admin/admins");
-        adminData.admins = data.admins || [];
-      } else if (tab === "practice") {
-        const data = await adminApi("/api/admin/practice/submissions", { status: adminData.practiceFilter || "" });
-        adminData.practice = data.submissions || [];
-      } else if (tab === "learning") {
-        await loadLearningContent();
-      }
+      await adminNavigate("library");
     }
-    renderAdminPanel();
-  } catch (error) {
-    showAlert(error.message || "Ma'lumotlarni yuklashda xatolik.");
+  } else if (tab === "support_cards") {
+    await adminNavigate("settings");
+  } else if (tab === "practice") {
+    await adminNavigate("tasks");
+  } else if (tab === "admins") {
+    await adminNavigate("admins");
+  } else if (tab === "learning") {
+    await adminNavigate("courses");
+  } else {
+    await adminNavigate(tab);
   }
 }
 
@@ -12691,6 +13636,7 @@ function setAdminLibraryTab(subTab, e) {
   }
   haptic("light");
   adminData.librarySubTab = subTab;
+  adminNavPath = ["library", subTab];
 
   const contentEl = document.getElementById("admin-library-subtab-content");
   const chipsEl = document.getElementById("admin-library-subtab-chips");
@@ -17041,6 +17987,12 @@ function handleTelegramBackClick() {
   if (document.getElementById("book-reader-view") || (currentView && (currentView.isReader || currentView.type === "book_reader"))) {
     closeBookReader();
     return;
+  }
+  if (currentView && currentView.isAdminPanel) {
+    if (typeof adminNavPath !== "undefined" && Array.isArray(adminNavPath) && adminNavPath.length > 1) {
+      adminGoBack();
+      return;
+    }
   }
   if (currentView) {
     if (currentView.type === "material_detail") {
