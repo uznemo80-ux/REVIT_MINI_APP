@@ -6637,14 +6637,8 @@ function renderActiveSectionItemsHtml() {
       r.type === "template"
     );
 
-    if (!sources.length) {
-      sources = (state.open_resources || []).filter(r => r.type === "source" || r.type === "rfa" || r.type === "family").map(r => ({
-        ...r,
-        section_slug: "sources",
-        version: "Revit 2024+",
-        file_size: "18 MB"
-      }));
-    }
+    // Manbasi (havolasi) yo'q resurslar ko'rsatilmaydi
+    sources = sources.filter(r => r.content_url && String(r.content_url).trim());
 
     if (cat !== "Barchasi") {
       sources = sources.filter(s => s.category === cat);
@@ -6771,7 +6765,7 @@ function renderTasksHomeHtml() {
   const sections = librarySections.filter(s => s.is_active !== false);
   const recentList = libraryV2RecentList || [];
   // Faqat admin "tavsiya" qilib belgilagan resurslar ko'rsatiladi (avtomatik to'ldirish yo'q)
-  const recommendedList = libraryV2RecommendedList || [];
+  const recommendedList = (libraryV2RecommendedList || []).filter(r => (r.content_url && String(r.content_url).trim()) || r.type === "test" || r.type === "quiz" || r.content_data);
 
   // SVG helper for default 4 sections
   function getSectionSvg(slug) {
@@ -7291,7 +7285,7 @@ function renderSourcesSectionHtml() {
 function renderSourceCardHtml(source) {
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "Revit 2024+";
-  const size = source.file_size || "15 MB";
+  const size = source.file_size || "";
   const ext = (source.content_url || "").split('.').pop().toUpperCase() || "RFA";
 
   return `
@@ -7309,7 +7303,7 @@ function renderSourceCardHtml(source) {
           <div class="lib-source-badges-row">
             <span class="lib-file-badge">${escapeHtml(ext)}</span>
             <span class="lib-version-badge">${escapeHtml(version)}</span>
-            <span class="lib-version-badge">• ${escapeHtml(size)}</span>
+            ${size ? `<span class="lib-version-badge">• ${escapeHtml(size)}</span>` : ""}
           </div>
           <div class="lib-source-cat">${escapeHtml(source.category || "Revit Family")}</div>
           <div class="lib-source-title">${escapeHtml(source.title)}</div>
@@ -9105,7 +9099,7 @@ async function openSourceDetail(resId) {
 
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "Revit 2024 / 2025";
-  const size = source.file_size || "15 MB";
+  const size = source.file_size || "";
   const isBookmarked = libraryV2Bookmarks.has(Number(source.id));
 
   currentView = {
@@ -16065,7 +16059,7 @@ function openAddLibraryV2ResourceModal(presetSection) {
             </div>
             <div class="apple-field">
               <label>Fayl hajmi</label>
-              <input id="v2-filesize" class="apple-input" type="text" placeholder="15 MB, 450 MB...">
+              <input id="v2-filesize" class="apple-input" type="text" readonly placeholder="Havoladan avtomatik aniqlanadi">
             </div>
           </div>
 
@@ -16079,7 +16073,7 @@ function openAddLibraryV2ResourceModal(presetSection) {
 
           <div class="apple-field">
             <label>Fayl / Havola URL (Google Drive, PDF, YouTube yoki link)</label>
-            <input id="v2-url" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view">
+            <input id="v2-url" class="apple-input" type="url" placeholder="https://drive.google.com/file/d/.../view" oninput="autoResolveDriveSize('v2')" onchange="autoResolveDriveSize('v2')">
           </div>
 
           <div class="apple-field">
@@ -16113,6 +16107,26 @@ function openAddLibraryV2ResourceModal(presetSection) {
     `
   };
   render();
+}
+
+let _driveSizeTimer = null;
+function autoResolveDriveSize(prefix) {
+  clearTimeout(_driveSizeTimer);
+  _driveSizeTimer = setTimeout(async () => {
+    const urlEl = document.getElementById(prefix + "-url");
+    const sizeEl = document.getElementById(prefix + "-filesize");
+    if (!urlEl || !sizeEl) return;
+    const url = urlEl.value.trim();
+    if (!/drive\.google\.com|docs\.google\.com/i.test(url)) return;
+    sizeEl.value = "Aniqlanmoqda...";
+    try {
+      const r = await adminApi("/api/admin/library-v2/resolve-size", { url });
+      sizeEl.value = r && r.ok ? r.file_size : "";
+      if (!(r && r.ok)) showToast("Hajm aniqlanmadi: havola ochiq ekanini tekshiring");
+    } catch (e) {
+      sizeEl.value = "";
+    }
+  }, 600);
 }
 
 async function submitCreateLibraryV2Resource() {
@@ -16233,7 +16247,7 @@ function openEditLibraryV2ResourceModal(resId) {
             </div>
             <div class="apple-field">
               <label>Fayl hajmi</label>
-              <input id="ev2-filesize" class="apple-input" type="text" value="${escapeHtml(item.file_size || "")}">
+              <input id="ev2-filesize" class="apple-input" type="text" readonly value="${escapeHtml(item.file_size || "")}" placeholder="Havoladan avtomatik aniqlanadi">
             </div>
           </div>
 
@@ -16247,7 +16261,7 @@ function openEditLibraryV2ResourceModal(resId) {
 
           <div class="apple-field">
             <label>Fayl / Havola URL</label>
-            <input id="ev2-url" class="apple-input" type="url" value="${escapeHtml(item.content_url || "")}">
+            <input id="ev2-url" class="apple-input" type="url" value="${escapeHtml(item.content_url || "")}" oninput="autoResolveDriveSize('ev2')" onchange="autoResolveDriveSize('ev2')">
           </div>
 
           <div class="apple-field">

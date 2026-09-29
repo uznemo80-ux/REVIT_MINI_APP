@@ -1378,7 +1378,10 @@ async function ensureLibraryV2Tables() {
 
     // 6. SEED SAMPLE MANBALAR (SOURCES)
     var sCount = await pool.query("SELECT COUNT(*)::int AS c FROM library_resources WHERE section_slug = 'sources'");
-    if (sCount.rows[0].c === 0) {
+    try {
+      await pool.query("DELETE FROM library_resources WHERE section_slug = 'sources' AND (content_url LIKE '%1_Building_Template%' OR content_url LIKE '%1_Genplan_DWG%' OR content_url LIKE '%export=download[?&]id=%' OR content_url LIKE '%1_Kitchen_%')");
+    } catch (dsErr) { console.warn('demo manbalar tozalash:', dsErr.message); }
+    if (false) { // demo manbalar endi qo'shilmaydi
       await pool.query(`
         INSERT INTO library_resources (
           type, section_slug, title, subtitle, description, category, file_size, version, versions,
@@ -5499,6 +5502,96 @@ function extractGoogleDriveId(rawUrl) {
   return null;
 }
 
+
+// ------------------------------------------------------
+// Google Drive fayl/papka hajmini avtomatik aniqlash
+// ------------------------------------------------------
+function formatBytesUz(n) {
+  n = Number(n) || 0;
+  if (n <= 0) return '';
+  var gb = 1024 * 1024 * 1024, mb = 1024 * 1024, kb = 1024;
+  if (n >= gb) return (Math.round(n / gb * 100) / 100) + ' GB';
+  if (n >= mb) return (Math.round(n / mb * 10) / 10) + ' MB';
+  return Math.max(1, Math.round(n / kb)) + ' KB';
+}
+
+function isGoogleDriveUrl(u) {
+  return /drive\.google\.com|docs\.google\.com/i.test(String(u || ''));
+}
+
+async function driveSumFolder(folderId, key, depth, budget) {
+  var total = 0, pageToken = '';
+  do {
+    var q = encodeURIComponent("'" + folderId + "' in parents and trashed = false");
+    var url = 'https://www.googleapis.com/drive/v3/files?q=' + q +
+      '&fields=nextPageToken,files(id,mimeType,size)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&key=' + encodeURIComponent(key) +
+      (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
+    var r = await fetch(url);
+    if (!r.ok) break;
+    var d = await r.json();
+    for (var f of (d.files || [])) {
+      if (budget.left-- <= 0) return total;
+      if (f.mimeType === 'application/vnd.google-apps.folder') {
+        if (depth < 6) total += await driveSumFolder(f.id, key, depth + 1, budget);
+      } else if (f.size) {
+        total += Number(f.size) || 0;
+      }
+    }
+    pageToken = d.nextPageToken || '';
+  } while (pageToken && budget.left > 0);
+  return total;
+}
+
+// Havoladan fayl (yoki papka) hajmini bayt hisobida qaytaradi
+async function resolveDriveSize(rawUrl) {
+  var out = { ok: false, bytes: 0, name: '', is_folder: false };
+  try {
+    var url = String(rawUrl || '').trim();
+    if (!isGoogleDriveUrl(url)) return out;
+    var id = null;
+    var fm = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    if (fm) { id = fm[1]; out.is_folder = true; }
+    if (!id) id = extractGoogleDriveId(url);
+    if (!id) return out;
+
+    var key = (process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+    if (key) {
+      var mUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) +
+        '?fields=id,name,mimeType,size&supportsAllDrives=true&key=' + encodeURIComponent(key);
+      var mr = await fetch(mUrl);
+      if (mr.ok) {
+        var m = await mr.json();
+        out.name = m.name || '';
+        if (m.mimeType === 'application/vnd.google-apps.folder') {
+          out.is_folder = true;
+          out.bytes = await driveSumFolder(id, key, 0, { left: 3000 });
+        } else {
+          out.bytes = Number(m.size) || 0;
+        }
+        if (out.bytes > 0) { out.ok = true; return out; }
+      }
+    }
+
+    // Zaxira: ochiq fayl uchun Content-Length
+    if (!out.is_folder) {
+      var hr = await fetch('https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id), { method: 'HEAD', redirect: 'follow' });
+      var cl = Number(hr.headers.get('content-length')) || 0;
+      if (cl > 0) { out.bytes = cl; out.ok = true; }
+    }
+  } catch (e) {
+    console.warn('resolveDriveSize error:', e.message);
+  }
+  return out;
+}
+
+app.post('/api/admin/library-v2/resolve-size', requireAdmin, async function (req, res) {
+  var r = await resolveDriveSize(req.body.url);
+  if (!r.ok) {
+    return res.json({ ok: false, error: "Hajmni aniqlab bo'lmadi. Havola ochiq ('Anyone with the link') ekanini va GOOGLE_DRIVE_API_KEY borligini tekshiring." });
+  }
+  return res.json({ ok: true, size_bytes: r.bytes, file_size: formatBytesUz(r.bytes), name: r.name, is_folder: r.is_folder });
+});
+
 // PDF fayllarni frontend uchun CORS, Range streaming (206) va disk kesh bilan proxy qilish
 var pdfCacheDir = path.join(__dirname, '.cache', 'pdf');
 try {
@@ -6074,7 +6167,7 @@ app.post('/api/library/v2/recommended', async function (req, res) {
     if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
 
     var section = req.body.section || req.body.section_slug || null;
-    var conds = ["status = 'published'", "is_featured = true"];
+    var conds = ["status = 'published'", "is_featured = true", "(COALESCE(content_url, '') <> '' OR type IN ('test','quiz') OR content_data IS NOT NULL)"];
     var params = [];
     if (section && section !== 'all') {
       conds.push('section_slug = $1');
@@ -6146,7 +6239,7 @@ app.post('/api/library/v2/resources', async function (req, res) {
     var offset = (page - 1) * limit;
     var sort = req.body.sort || 'newest';
 
-    var conditions = ["status = 'published'"];
+    var conditions = ["status = 'published'", "(COALESCE(content_url, '') <> '' OR type IN ('test','quiz') OR content_data IS NOT NULL)"];
     var params = [];
     var paramIdx = 1;
 
@@ -7987,6 +8080,11 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
 
     var section_slug = b.section_slug || (b.type === 'book' ? 'books' : b.type === 'test' ? 'tests' : b.type === 'material' ? 'materials' : 'sources');
 
+    if (b.content_url && isGoogleDriveUrl(b.content_url)) {
+      var autoSize = await resolveDriveSize(b.content_url);
+      if (autoSize.ok) b.file_size = formatBytesUz(autoSize.bytes);
+    }
+
     var result = await pool.query(`
       INSERT INTO library_resources (
         type, section_slug, title, subtitle, description, category, sub_category, tags,
@@ -8027,6 +8125,11 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
   try {
     var resourceId = parseInt(req.params.id);
     var b = req.body;
+
+    if (b.content_url && isGoogleDriveUrl(b.content_url)) {
+      var autoSize2 = await resolveDriveSize(b.content_url);
+      if (autoSize2.ok) b.file_size = formatBytesUz(autoSize2.bytes);
+    }
 
     var result = await pool.query(`
       UPDATE library_resources SET
