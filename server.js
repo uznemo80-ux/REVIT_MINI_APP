@@ -5554,6 +5554,10 @@ async function driveSumFolder(folderId, key, depth, budget) {
   return total;
 }
 
+pool.query(`CREATE TABLE IF NOT EXISTS tg_file_index (
+  chat_id TEXT NOT NULL, message_id BIGINT NOT NULL, chat_username TEXT, file_name TEXT, file_size BIGINT,
+  created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (chat_id, message_id))`).catch(function () {});
+
 // ------------------------------------------------------
 // Telegram havolasi (yopiq/ochiq kanal posti) -> fayl hajmi
 // ------------------------------------------------------
@@ -5590,9 +5594,30 @@ async function resolveTelegramSize(rawUrl, adminChatId) {
   var p = parseTelegramLink(rawUrl);
   if (!p) return out;
   try {
+    // 1) Bot kanal/guruhda ko'rgan postlar indeksi (himoyalangan kanallar uchun ham ishlaydi)
+    try {
+      var idx = await pool.query(
+        'SELECT file_size, file_name FROM tg_file_index WHERE (chat_id = $1 OR ($3::text IS NOT NULL AND chat_username = $3)) AND message_id = $2 LIMIT 1',
+        [p.chat_id, p.message_id, p.chat_id.charAt(0) === '@' ? p.chat_id.slice(1).toLowerCase() : null]
+      );
+      if (idx.rows.length && Number(idx.rows[0].file_size) > 0) {
+        out.ok = true; out.bytes = Number(idx.rows[0].file_size); out.name = idx.rows[0].file_name || '';
+        return out;
+      }
+    } catch (ie) {}
+
+    // 2) Postni adminga forward qilib fayl hajmini o'qish
     var r = await tgApi('forwardMessage', { chat_id: adminChatId, from_chat_id: p.chat_id, message_id: p.message_id });
     if (!r.ok) {
-      out.error = "Telegram: " + (r.description || 'xatolik') + ". Botni kanalga admin qilib qo'shing.";
+      var d = r.description || 'xatolik';
+      var hint = /restrict|protected|forward/i.test(d)
+        ? " Kanal/guruhda 'Saqlash va uzatishni cheklash' yoqilgan. Botni admin qiling va faylni qayta yuboring (bot yangi postlarni o'zi eslab qoladi)."
+        : /chat not found|bot is not a member|kicked/i.test(d)
+          ? " Botni shu kanal/guruhga admin qilib qo'shing."
+          : /message to forward not found|not found/i.test(d)
+            ? " Havola noto'g'ri yoki post o'chirilgan."
+            : /blocked|initiate|chat not found/i.test(d) ? " Adminning botga /start bosgani tekshirilsin." : '';
+      out.error = "Telegram: " + d + "." + hint;
       return out;
     }
     var f = tgExtractFile(r.result);
@@ -5651,7 +5676,9 @@ async function resolveDriveSize(rawUrl) {
 // Drive yoki Telegram havolasidan hajmni aniqlaydi
 async function resolveAnySize(url, adminChatId) {
   if (parseTelegramLink(url)) return resolveTelegramSize(url, adminChatId);
-  return resolveDriveSize(url);
+  var d = await resolveDriveSize(url);
+  if (!d.ok && !d.error) d.error = "Drive hajmi aniqlanmadi. Havola 'Anyone with the link' ekanini va GOOGLE_DRIVE_API_KEY borligini tekshiring.";
+  return d;
 }
 
 // Hajmi hali avtomatik aniqlanmagan (yoki qo'lda yozilgan) resurslarni tuzatadi
@@ -5661,7 +5688,7 @@ async function refreshResourceSize(row) {
     var url = String(row.content_url);
     if (!(isGoogleDriveUrl(url) || parseTelegramLink(url))) return row;
     if (Number(row.size_bytes) > 0) return row;
-    if (row.size_checked_at && (Date.now() - new Date(row.size_checked_at).getTime()) < 3600 * 1000) return row;
+    if (row.size_checked_at && (Date.now() - new Date(row.size_checked_at).getTime()) < 600 * 1000) return row;
     var r = await resolveAnySize(url, ADMIN_TELEGRAM_ID);
     if (r.ok) {
       var fs2 = formatBytesUz(r.bytes);
@@ -6344,7 +6371,7 @@ app.post('/api/library/v2/resources', async function (req, res) {
 
     var section = req.body.section || req.body.section_slug || null;
     if (section === 'sources') {
-      pool.query("SELECT * FROM library_resources WHERE section_slug = 'sources' AND status = 'published' AND COALESCE(size_bytes, 0) = 0 AND content_url IS NOT NULL AND content_url <> '' AND (size_checked_at IS NULL OR size_checked_at < NOW() - INTERVAL '1 hour') LIMIT 5")
+      pool.query("SELECT * FROM library_resources WHERE section_slug = 'sources' AND status = 'published' AND COALESCE(size_bytes, 0) = 0 AND content_url IS NOT NULL AND content_url <> '' AND (size_checked_at IS NULL OR size_checked_at < NOW() - INTERVAL '10 minutes') LIMIT 5")
         .then(function (q) { return Promise.all(q.rows.map(refreshResourceSize)); })
         .catch(function () {});
     }
@@ -8200,9 +8227,10 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
 
     var section_slug = b.section_slug || (b.type === 'book' ? 'books' : b.type === 'test' ? 'tests' : b.type === 'material' ? 'materials' : 'sources');
 
+    if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; }
+      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; } else { b._size_warning = autoSize.error || 'Hajm aniqlanmadi'; }
       if (parseTelegramLink(b.content_url)) b.storage_provider = 'telegram';
     }
 
@@ -8235,7 +8263,7 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
     ]);
 
     if (b._size_bytes) { try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes, result.rows[0].id]); } catch (e) {} }
-    return res.json({ ok: true, resource: result.rows[0], message: 'Resurs muvaffaqiyatli qo\'shildi' });
+    return res.json({ ok: true, resource: result.rows[0], size_warning: b._size_warning || null, message: 'Resurs muvaffaqiyatli qo\'shildi' });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 ADD ERROR:', error);
     return res.status(500).json({ error: 'Resurs qo\'shishda xatolik: ' + error.message });
@@ -8248,9 +8276,10 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     var resourceId = parseInt(req.params.id);
     var b = req.body;
 
+    if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize2 = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; }
+      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; } else { b._size_warning = autoSize2.error || 'Hajm aniqlanmadi'; }
     }
 
     var result = await pool.query(`
@@ -8300,7 +8329,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
 
     if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
     try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes || null, resourceId]); } catch (e) {}
-    return res.json({ ok: true, resource: result.rows[0], message: 'Resurs yangilandi' });
+    return res.json({ ok: true, resource: result.rows[0], size_warning: b._size_warning || null, message: 'Resurs yangilandi' });
   } catch (error) {
     console.error('ADMIN LIBRARY V2 UPDATE ERROR:', error);
     return res.status(500).json({ error: 'Resursni yangilashda xatolik: ' + error.message });

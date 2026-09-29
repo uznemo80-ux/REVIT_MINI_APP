@@ -47,6 +47,40 @@ if (process.env.DATABASE_URL) {
 }
 
 // ======================================================
+// TELEGRAM FAYL INDEKSI (kanal/guruh postlaridagi fayl hajmini eslab qolish)
+// ======================================================
+if (pool) {
+  pool.query(`CREATE TABLE IF NOT EXISTS tg_file_index (
+    chat_id TEXT NOT NULL,
+    message_id BIGINT NOT NULL,
+    chat_username TEXT,
+    file_name TEXT,
+    file_size BIGINT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (chat_id, message_id)
+  )`).catch(function (e) { console.warn('tg_file_index:', e.message); });
+}
+
+bot.on(['channel_post', 'edited_channel_post', 'message'], async function (ctx, next) {
+  try {
+    var msg = ctx.channelPost || ctx.editedChannelPost || ctx.message;
+    if (pool && msg && msg.chat && msg.chat.type !== 'private') {
+      var f = msg.document || msg.video || msg.audio || msg.animation ||
+        (msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1] : null);
+      if (f && f.file_size) {
+        await pool.query(
+          `INSERT INTO tg_file_index (chat_id, message_id, chat_username, file_name, file_size)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (chat_id, message_id) DO UPDATE SET file_name = EXCLUDED.file_name, file_size = EXCLUDED.file_size`,
+          [String(msg.chat.id), msg.message_id, msg.chat.username ? msg.chat.username.toLowerCase() : null, f.file_name || f.title || null, f.file_size]
+        );
+      }
+    }
+  } catch (e) { console.warn('tg index:', e.message); }
+  return next();
+});
+
+// ======================================================
 // CONSTANTS & HELPERS
 // ======================================================
 

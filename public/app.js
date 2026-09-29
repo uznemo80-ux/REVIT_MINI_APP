@@ -7290,7 +7290,7 @@ function renderSourcesSectionHtml() {
 
 function renderSourceCardHtml(source) {
   const cover = formatImageUrl(source.preview_image_url || "");
-  const version = source.version || "Revit 2024+";
+  const version = source.version || "";
   const size = formatFileSizeUz(source.file_size);
   const ext = (source.content_url || "").split('.').pop().toUpperCase() || "RFA";
 
@@ -7308,7 +7308,7 @@ function renderSourceCardHtml(source) {
         <div>
           <div class="lib-source-badges-row">
             <span class="lib-file-badge">${escapeHtml(ext)}</span>
-            <span class="lib-version-badge">${escapeHtml(version)}</span>
+            ${version ? `<span class="lib-version-badge">${escapeHtml(version)}</span>` : ""}
             ${size ? `<span class="lib-version-badge">• ${escapeHtml(size)}</span>` : ""}
           </div>
           <div class="lib-source-cat">${escapeHtml(source.category || "Revit Family")}</div>
@@ -9104,7 +9104,7 @@ async function openSourceDetail(resId) {
   if (!source) return showAlert("Manba topilmadi.");
 
   const cover = formatImageUrl(source.preview_image_url || "");
-  const version = source.version || "Revit 2024 / 2025";
+  const version = source.version || "";
   const size = formatFileSizeUz(source.file_size);
   const isBookmarked = libraryV2Bookmarks.has(Number(source.id));
 
@@ -9129,7 +9129,7 @@ async function openSourceDetail(resId) {
 
           <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
             <span class="lib-type-badge badge-source">REVIT MANBASI</span>
-            <span class="lib-version-badge">${escapeHtml(version)}</span>
+            ${version ? `<span class="lib-version-badge">${escapeHtml(version)}</span>` : ""}
           </div>
 
           <h1 class="lib-detail-title" style="margin-top:0;">${escapeHtml(source.title)}</h1>
@@ -16131,7 +16131,7 @@ function formatFileSizeUz(raw) {
 }
 
 let _driveSizeTimer = null;
-function autoResolveDriveSize(prefix) {
+function autoResolveDriveSize(prefix, now) {
   clearTimeout(_driveSizeTimer);
   _driveSizeTimer = setTimeout(async () => {
     const urlEl = document.getElementById(prefix + "-url");
@@ -16147,7 +16147,7 @@ function autoResolveDriveSize(prefix) {
     } catch (e) {
       sizeEl.value = "";
     }
-  }, 600);
+  }, now ? 0 : 600);
 }
 
 async function submitCreateLibraryV2Resource() {
@@ -16176,7 +16176,7 @@ async function submitCreateLibraryV2Resource() {
 
   try {
     haptic("medium");
-    await adminApi("/api/admin/library-v2/resource/add", {
+    const addRes = await adminApi("/api/admin/library-v2/resource/add", {
       section_slug: sectionSlug,
       type: type,
       title: title,
@@ -16194,7 +16194,8 @@ async function submitCreateLibraryV2Resource() {
       status: status
     });
 
-    showToast("Resurs muvaffaqiyatli qo'shildi!");
+    if (addRes && addRes.size_warning) showAlert("Resurs saqlandi, lekin hajmi aniqlanmadi: " + addRes.size_warning);
+    else showToast("Resurs muvaffaqiyatli qo'shildi!");
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
@@ -16268,6 +16269,7 @@ function openEditLibraryV2ResourceModal(resId) {
             </div>
             <div class="apple-field">
               <label>Fayl hajmi</label>
+              <button type="button" class="btn" style="margin-bottom:6px; padding:6px 10px; font-size:12px;" onclick="autoResolveDriveSize('ev2', true)">🔄 Hajmni qayta aniqlash</button>
               <input id="ev2-filesize" class="apple-input" type="text" readonly value="${escapeHtml(item.file_size || "")}" placeholder="Havoladan avtomatik aniqlanadi">
             </div>
           </div>
@@ -16344,7 +16346,7 @@ async function submitUpdateLibraryV2Resource(resId) {
 
   try {
     haptic("medium");
-    await adminApi(`/api/admin/library-v2/resource/${Number(resId)}/update`, {
+    const updRes = await adminApi(`/api/admin/library-v2/resource/${Number(resId)}/update`, {
       section_slug: sectionSlug,
       type: type,
       title: title,
@@ -16362,7 +16364,8 @@ async function submitUpdateLibraryV2Resource(resId) {
       status: status
     });
 
-    showToast("Resurs muvaffaqiyatli yangilandi!");
+    if (updRes && updRes.size_warning) showAlert("Saqlandi, lekin hajmi aniqlanmadi: " + updRes.size_warning);
+    else showToast("Resurs muvaffaqiyatli yangilandi!");
     await loadLibraryV2Data(true);
     adminSetTab("library");
   } catch (err) {
