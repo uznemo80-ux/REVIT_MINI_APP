@@ -1438,7 +1438,7 @@ async function ensureLibraryV2Tables() {
           '10 ta saralangan interaktiv savol',
           'Revit dasturining asosiy interfeysi, element turlari, vidlar va chizmalar tayyorlash bo''yicha bilimingizni sinab ko''ring.',
           'Revit Asoslari', 'INTPRO Kursi / 1-Modul', 'medium', 15,
-          'quiz_json', $1, true, 1, 'published'
+          'quiz_json', $1, false, 1, 'published'
         )
       `, [JSON.stringify([
         {
@@ -1487,6 +1487,16 @@ async function ensureLibraryV2Tables() {
         }
       ])]);
     }
+
+    // Tavsiya: faqat admin belgilaganlar. Avto-yaratilgan demo test/materiallarni bir marta tozalash
+    try {
+      await pool.query("CREATE TABLE IF NOT EXISTS app_migrations (key TEXT PRIMARY KEY, done_at TIMESTAMPTZ DEFAULT NOW())");
+      var mg = await pool.query("SELECT 1 FROM app_migrations WHERE key = 'unfeature_demo_v1'");
+      if (!mg.rows.length) {
+        await pool.query("UPDATE library_resources SET is_featured = false WHERE is_featured = true AND (type IN ('test','material') OR section_slug IN ('tests','materials')) AND (content_url IS NULL OR content_url = '')");
+        await pool.query("INSERT INTO app_migrations (key) VALUES ('unfeature_demo_v1')");
+      }
+    } catch (mgErr) { console.warn('unfeature demo:', mgErr.message); }
 
     // 8. SEED KNOWLEDGE MATERIALS (MATERIALLAR)
     var mCount = await pool.query("SELECT COUNT(*)::int AS c FROM library_resources WHERE section_slug = 'materials'");
@@ -1623,7 +1633,7 @@ async function ensureLibraryV2Tables() {
               content_type, content_data, course_id, status, is_featured, order_index
             ) VALUES (
               'tests', 'test', $1, $2, $3, 'Kurs Testi',
-              'quiz_json', $4, $5, 'published', true, 10
+              'quiz_json', $4, $5, 'published', false, 10
             )
           `, [
             testTitle,
@@ -5542,6 +5552,58 @@ async function driveSumFolder(folderId, key, depth, budget) {
   return total;
 }
 
+// ------------------------------------------------------
+// Telegram havolasi (yopiq/ochiq kanal posti) -> fayl hajmi
+// ------------------------------------------------------
+function parseTelegramLink(rawUrl) {
+  var u = String(rawUrl || '').trim();
+  var m = u.match(/^(?:https?:\/\/)?(?:t\.me|telegram\.me)\/c\/(\d+)\/(?:\d+\/)?(\d+)/i);
+  if (m) return { chat_id: '-100' + m[1], message_id: parseInt(m[2], 10) };
+  m = u.match(/^(?:https?:\/\/)?(?:t\.me|telegram\.me)\/([A-Za-z][A-Za-z0-9_]{3,})\/(?:\d+\/)?(\d+)/i);
+  if (m) return { chat_id: '@' + m[1], message_id: parseInt(m[2], 10) };
+  return null;
+}
+
+async function tgApi(method, payload) {
+  var token = process.env.BOT_TOKEN;
+  if (!token) throw new Error('BOT_TOKEN yo\'q');
+  var r = await fetch('https://api.telegram.org/bot' + token + '/' + method, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return r.json();
+}
+
+function tgExtractFile(msg) {
+  if (!msg) return null;
+  var f = msg.document || msg.video || msg.audio || msg.animation || msg.voice || msg.video_note ||
+    (msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1] : null);
+  if (!f) return null;
+  return { size: Number(f.file_size) || 0, name: f.file_name || f.title || '' };
+}
+
+async function resolveTelegramSize(rawUrl, adminChatId) {
+  var out = { ok: false, bytes: 0, name: '', is_folder: false, provider: 'telegram', error: '' };
+  var p = parseTelegramLink(rawUrl);
+  if (!p) return out;
+  try {
+    var r = await tgApi('forwardMessage', { chat_id: adminChatId, from_chat_id: p.chat_id, message_id: p.message_id });
+    if (!r.ok) {
+      out.error = "Telegram: " + (r.description || 'xatolik') + ". Botni kanalga admin qilib qo'shing.";
+      return out;
+    }
+    var f = tgExtractFile(r.result);
+    try { await tgApi('deleteMessage', { chat_id: adminChatId, message_id: r.result.message_id }); } catch (e) {}
+    if (!f || !f.size) { out.error = "Bu postda fayl topilmadi."; return out; }
+    out.ok = true; out.bytes = f.size; out.name = f.name;
+    return out;
+  } catch (e) {
+    out.error = e.message;
+    return out;
+  }
+}
+
 // Havoladan fayl (yoki papka) hajmini bayt hisobida qaytaradi
 async function resolveDriveSize(rawUrl) {
   var out = { ok: false, bytes: 0, name: '', is_folder: false };
@@ -5584,8 +5646,15 @@ async function resolveDriveSize(rawUrl) {
   return out;
 }
 
+// Drive yoki Telegram havolasidan hajmni aniqlaydi
+async function resolveAnySize(url, adminChatId) {
+  if (parseTelegramLink(url)) return resolveTelegramSize(url, adminChatId);
+  return resolveDriveSize(url);
+}
+
 app.post('/api/admin/library-v2/resolve-size', requireAdmin, async function (req, res) {
-  var r = await resolveDriveSize(req.body.url);
+  var r = await resolveAnySize(req.body.url, req.user.telegram_id);
+  if (!r.ok && r.error) return res.json({ ok: false, error: r.error });
   if (!r.ok) {
     return res.json({ ok: false, error: "Hajmni aniqlab bo'lmadi. Havola ochiq ('Anyone with the link') ekanini va GOOGLE_DRIVE_API_KEY borligini tekshiring." });
   }
@@ -6157,6 +6226,28 @@ app.all(['/api/library/v2/sections'], async function (req, res) {
   } catch (err) {
     console.error('LIBRARY SECTIONS ERROR:', err.message);
     return res.status(500).json({ error: 'Bo\'limlarni yuklashda xatolik' });
+  }
+});
+
+// Telegram manbani talabaning bot chatiga yuborish (yopiq kanal, katta fayllar ham)
+app.post('/api/library/v2/telegram-send', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+    var rid = parseInt(req.body.id);
+    var rr = await pool.query("SELECT content_url, title FROM library_resources WHERE id = $1 AND status = 'published'", [rid]);
+    if (!rr.rows.length) return res.status(404).json({ error: 'Manba topilmadi' });
+    var p = parseTelegramLink(rr.rows[0].content_url);
+    if (!p) return res.status(400).json({ error: 'Bu Telegram manbasi emas' });
+    var r = await tgApi('copyMessage', { chat_id: user.telegram_id, from_chat_id: p.chat_id, message_id: p.message_id, protect_content: true });
+    if (!r.ok) {
+      console.warn('TG SEND ERROR:', r.description);
+      return res.status(502).json({ error: "Faylni yuborib bo'lmadi. Avval botga /start bosing." });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('TG SEND ERROR:', err.message);
+    return res.status(500).json({ error: 'Yuborishda xatolik' });
   }
 });
 
@@ -8080,9 +8171,10 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
 
     var section_slug = b.section_slug || (b.type === 'book' ? 'books' : b.type === 'test' ? 'tests' : b.type === 'material' ? 'materials' : 'sources');
 
-    if (b.content_url && isGoogleDriveUrl(b.content_url)) {
-      var autoSize = await resolveDriveSize(b.content_url);
+    if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
+      var autoSize = await resolveAnySize(b.content_url, req.user.telegram_id);
       if (autoSize.ok) b.file_size = formatBytesUz(autoSize.bytes);
+      if (parseTelegramLink(b.content_url)) b.storage_provider = 'telegram';
     }
 
     var result = await pool.query(`
@@ -8126,8 +8218,8 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     var resourceId = parseInt(req.params.id);
     var b = req.body;
 
-    if (b.content_url && isGoogleDriveUrl(b.content_url)) {
-      var autoSize2 = await resolveDriveSize(b.content_url);
+    if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
+      var autoSize2 = await resolveAnySize(b.content_url, req.user.telegram_id);
       if (autoSize2.ok) b.file_size = formatBytesUz(autoSize2.bytes);
     }
 

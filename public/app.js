@@ -6448,6 +6448,12 @@ async function toggleLibraryBookmark(resId, e) {
 function handleLibraryDownload(resId, url, filename, e) {
   if (e) e.stopPropagation();
   haptic("medium");
+  if (/^(https?:\/\/)?(t\.me|telegram\.me)\//i.test(String(url || ""))) {
+    api("/api/library/v2/telegram-send", { id: Number(resId) })
+      .then(() => showToast("Fayl bot chatiga yuborildi ✅"))
+      .catch(err => showAlert((err && err.message) || "Faylni yuborib bo'lmadi. Botga /start bosing."));
+    return;
+  }
   const btn = document.getElementById(`lib-dl-btn-${resId}`) || (e && e.currentTarget);
   if (btn) {
     btn.classList.add("loading");
@@ -16117,12 +16123,12 @@ function autoResolveDriveSize(prefix) {
     const sizeEl = document.getElementById(prefix + "-filesize");
     if (!urlEl || !sizeEl) return;
     const url = urlEl.value.trim();
-    if (!/drive\.google\.com|docs\.google\.com/i.test(url)) return;
+    if (!/drive\.google\.com|docs\.google\.com|t\.me\/|telegram\.me\//i.test(url)) return;
     sizeEl.value = "Aniqlanmoqda...";
     try {
       const r = await adminApi("/api/admin/library-v2/resolve-size", { url });
       sizeEl.value = r && r.ok ? r.file_size : "";
-      if (!(r && r.ok)) showToast("Hajm aniqlanmadi: havola ochiq ekanini tekshiring");
+      if (!(r && r.ok)) showToast((r && r.error) || "Hajm aniqlanmadi: havolani tekshiring");
     } catch (e) {
       sizeEl.value = "";
     }
