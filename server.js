@@ -8803,48 +8803,130 @@ async function testGoogleDriveFolderAccess(folderId, apiKey) {
 async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
   var results = [];
   var visited = new Set();
-  var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+  var key = (apiKey || '').trim() || (await getDriveApiKey());
   if (!key) {
-    console.warn('[scanGoogleDriveFolder] GOOGLE_DRIVE_API_KEY is missing');
-    return [];
+    throw new Error("Google Drive API kaliti topilmadi. Railway Variables'ga GOOGLE_DRIVE_API_KEY qo'shing yoki Drive manbasida kalitni kiriting.");
   }
 
   async function traverse(fId, currentCategory, depth) {
-    if (depth > 5 || visited.has(fId)) return;
+    if (depth > 6 || visited.has(fId)) return;
     visited.add(fId);
-
-    try {
-      var query = encodeURIComponent(`'${fId}' in parents and trashed = false`);
-      var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(key)}`;
+    var pageToken = '';
+    do {
+      var query = encodeURIComponent("'" + fId + "' in parents and trashed = false");
+      var apiUrl = 'https://www.googleapis.com/drive/v3/files?q=' + query +
+        '&fields=nextPageToken,files(id,name,mimeType,size,webViewLink,modifiedTime)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&key=' + encodeURIComponent(key) +
+        (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
       var res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) {
-        var data = await res.json();
-        var files = data.files || [];
-        for (var item of files) {
-          if (item.mimeType === 'application/vnd.google-apps.folder') {
-            var catName = item.name.trim();
-            await traverse(item.id, catName, depth + 1);
-          } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
-            results.push({
-              id: item.id,
-              fileId: item.id,
-              name: item.name,
-              fileName: item.name,
-              size: parseInt(item.size) || 0,
-              mimeType: item.mimeType || 'application/pdf',
-              webViewLink: item.webViewLink || `https://drive.google.com/file/d/${item.id}/view`,
-              category: currentCategory || 'Arxitektura'
-            });
-          }
+      if (!res.ok) {
+        var ej = {};
+        try { ej = await res.json(); } catch (e) {}
+        var em = (ej.error && ej.error.message) || 'xatolik';
+        var hint = res.status === 404 ? " Papka topilmadi yoki ochiq emas ('Anyone with the link')."
+          : (res.status === 400 || res.status === 403) ? " API kalit noto'g'ri, Google Cloud'da 'Google Drive API' yoqilmagan yoki papka ochiq emas."
+          : '';
+        throw new Error('Google Drive (' + res.status + '): ' + em + '.' + hint);
+      }
+      var data = await res.json();
+      for (var item of (data.files || [])) {
+        if (item.mimeType === 'application/vnd.google-apps.folder') {
+          await traverse(item.id, item.name.trim(), depth + 1);
+        } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
+          results.push({
+            id: item.id,
+            fileId: item.id,
+            name: item.name,
+            fileName: item.name,
+            size: parseInt(item.size) || 0,
+            mimeType: item.mimeType || 'application/pdf',
+            webViewLink: item.webViewLink || ('https://drive.google.com/file/d/' + item.id + '/view'),
+            category: currentCategory || 'Arxitektura'
+          });
         }
       }
-    } catch (apiErr) {
-      console.warn('Drive API v3 fetch warning:', apiErr.message);
-    }
+      pageToken = data.nextPageToken || '';
+    } while (pageToken && results.length < 5000);
   }
 
   await traverse(folderId, sourceName || 'Arxitektura', 0);
   return results;
+}
+
+// Fayl nomidan sarlavha, muallif va yilni ajratish
+function parseBookFileName(name) {
+  var base = String(name || '').replace(/\.pdf$/i, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  var year = null;
+  var ym = base.match(/\b(19[5-9]\d|20[0-3]\d)\b/);
+  if (ym) year = ym[1];
+  var title = base, author = '';
+  var m = base.match(/^(.{3,60}?)\s+[-–—]\s+(.{3,})$/);
+  if (m) {
+    var left = m[1].trim(), right = m[2].trim();
+    var looksName = function (t) { var w = t.split(/\s+/); return w.length >= 1 && w.length <= 4 && w.every(function (x) { return /^[A-ZА-ЯЁ][\p{L}.'’-]+$/u.test(x); }); };
+    var topicWord = /revit|autodesk|guide|manual|bim|design|architect|handbook|course|standard|shnq|kmk|gost|snip|autocad|max|data|construction/i;
+    var isPerson = function (t) { return looksName(t) && t.split(/\s+/).length >= 2 && !topicWord.test(t); };
+    if (isPerson(left)) { author = left; title = right; }
+    else if (isPerson(right)) { author = right; title = left; }
+  }
+  var pm = title.match(/^(.*?)\s*\(([^()]{3,60})\)\s*$/);
+  if (pm && !/^\d{4}$/.test(pm[2].trim()) && !author && /^[\p{L}.,'’ -]+(\d{4})?$/u.test(pm[2])) {
+    author = pm[2].replace(/[,\s]*\d{4}\s*$/, '').trim();
+    title = pm[1].trim();
+  }
+  title = title.replace(/\[[^\]]*\]/g, '').replace(/\((?:19|20)\d\d\)/g, '').replace(/\s+/g, ' ').replace(/^\d+[\s.)-]+/, '').trim();
+  return { title: title || base, author: author, year: year };
+}
+
+// PDF ichidan sahifalar soni va muallifni o'qish (boshi va oxiridan qisman)
+async function probePdfInfo(fileId, key, size) {
+  var info = { pages: 0, title: '', author: '' };
+  async function range(a, b) {
+    var r = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId) + '?alt=media&supportsAllDrives=true&key=' + encodeURIComponent(key), { headers: { Range: 'bytes=' + a + '-' + b } });
+    if (r.status !== 206) { try { if (r.body && r.body.cancel) r.body.cancel(); } catch (e) {} return ''; }
+    return Buffer.from(await r.arrayBuffer()).toString('latin1');
+  }
+  try {
+    var head = await range(0, 1048575);
+    var tail = (size && size > 2097152) ? await range(size - 1048576, size - 1) : '';
+    var txt = head + '\n' + tail;
+    var best = 0, mm, re = /\/Type\s*\/Pages\b[\s\S]{0,300}?\/Count\s+(\d+)|\/Count\s+(\d+)[\s\S]{0,300}?\/Type\s*\/Pages\b/g;
+    while ((mm = re.exec(txt)) !== null) { var n = parseInt(mm[1] || mm[2], 10); if (n > best && n < 20000) best = n; }
+    info.pages = best;
+    var clean = function (v) { v = String(v || '').replace(/\\([()\\])/g, '$1').trim(); return /^[\x20-\x7E]{2,150}$/.test(v) ? v : ''; };
+    var am = txt.match(/\/Author\s*\(([^)]{2,150})\)/); if (am) info.author = clean(am[1]);
+    var tm = txt.match(/\/Title\s*\(([^)]{3,200})\)/); if (tm) info.title = clean(tm[1]);
+  } catch (e) { console.warn('probePdfInfo:', e.message); }
+  return info;
+}
+
+var bookEnrichRunning = false;
+async function enrichBooksInBackground(bookIds, key) {
+  if (bookEnrichRunning || !bookIds.length) return;
+  bookEnrichRunning = true;
+  try {
+    for (var id of bookIds) {
+      try {
+        var br = await pool.query('SELECT * FROM library_books WHERE id = $1', [id]);
+        if (!br.rows.length) continue;
+        var book = br.rows[0];
+        var meta = await generateBookAiMetadata(book);
+        var parsed = parseBookFileName(book.drive_file_name || book.title);
+        var pdf = key ? await probePdfInfo(book.drive_file_id, key, Number(book.drive_file_size) || 0) : { pages: 0, title: '', author: '' };
+        var author = pdf.author || parsed.author || meta.author;
+        var pages = pdf.pages || book.page_count || 0;
+        await pool.query(
+          `UPDATE library_books SET title = $1, author = $2, short_description = $3, what_you_learn = $4, categories = $5, tags = $6,
+             language = $7, publication_year = COALESCE($8, publication_year), page_count = $9, reading_time_minutes = $10,
+             ai_generated = true, updated_at = NOW() WHERE id = $11`,
+          [meta.title || parsed.title, author, meta.short_description, Array.isArray(meta.what_you_learn) ? meta.what_you_learn.join('\n') : String(meta.what_you_learn || ''),
+           [meta.category], meta.tags, meta.language, parsed.year || meta.publication_year || null, pages, pages ? Math.max(5, pages * 2) : (book.reading_time_minutes || 30), id]
+        );
+      } catch (e) {
+        console.warn('[BOOK ENRICH]', id, e.message);
+        try { await pool.query('UPDATE library_books SET sync_error = $1 WHERE id = $2', [e.message, id]); } catch (e2) {}
+      }
+    }
+  } finally { bookEnrichRunning = false; }
 }
 
 async function generateBookAiMetadata(book) {
@@ -8954,7 +9036,7 @@ Qat'iy faqat quyidagi JSON formatida javob bering, ortiqcha belgisiz:
     category: detectedCat,
     tags: [detectedCat.toLowerCase(), 'arxitektura', 'kutubxona', lang],
     language: lang,
-    publication_year: new Date().getFullYear().toString(),
+    publication_year: (parseBookFileName(fileName).year) || null,
     ai_generated: true
   };
 }
@@ -9111,17 +9193,14 @@ app.get('/api/admin/drive/status', requireAdmin, async function (req, res) {
 // Admin: Google Drive papkasini skanerlash va yangi kitoblarni import qilish (Incremental Sync)
 app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) {
   try {
-    if (!libraryBooksTableReady) {
-      await ensureLibraryBooksTable();
-    }
+    if (!libraryBooksTableReady) await ensureLibraryBooksTable();
 
     var folderIdInput = (req.body.folder_id || req.body.root_folder_id || '').trim();
     var sourceId = req.body.source_id ? parseInt(req.body.source_id) : null;
-    var apiKey = (req.body.api_key || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+    var apiKey = (req.body.api_key || '').trim();
     var sourceName = 'Google Drive';
 
-    // Agar ma'lumotlar berilmagan bo'lsa, oxirgi saqlangan manbadan olish
-    if (!folderIdInput || !apiKey) {
+    if (!folderIdInput || !apiKey || sourceId) {
       var sRes = sourceId
         ? await pool.query('SELECT * FROM drive_sources WHERE id = $1', [sourceId])
         : await pool.query('SELECT * FROM drive_sources WHERE is_active = true ORDER BY id DESC LIMIT 1');
@@ -9129,107 +9208,93 @@ app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) 
         var src = sRes.rows[0];
         sourceId = src.id;
         if (!folderIdInput) folderIdInput = src.root_folder_id;
-        if (!apiKey) apiKey = src.api_key || process.env.GOOGLE_DRIVE_API_KEY || '';
+        if (!apiKey) apiKey = src.api_key || '';
         sourceName = src.name || 'Google Drive';
       }
     }
+    if (!apiKey) apiKey = await getDriveApiKey();
 
     var targetFolderId = extractGoogleDriveFolderId(folderIdInput);
     if (!targetFolderId) {
-      return res.status(400).json({ error: 'Google Drive papka ID si yoki havolasi kiritilmadi' });
+      return res.status(400).json({ error: "Google Drive papka havolasi noto'g'ri. Havola https://drive.google.com/drive/folders/... ko'rinishida bo'lsin." });
     }
 
-    console.log(`[DRIVE SYNC START] Folder: ${targetFolderId} (Source: ${sourceName})`);
-    var scannedFiles = await scanGoogleDriveFolder(targetFolderId, apiKey, sourceName);
-    console.log(`[DRIVE SYNC FILES FOUND] Total: ${scannedFiles.length}`);
+    var scannedFiles;
+    try {
+      scannedFiles = await scanGoogleDriveFolder(targetFolderId, apiKey, sourceName);
+    } catch (scanErr) {
+      return res.status(400).json({ error: scanErr.message });
+    }
+    if (!scannedFiles.length) {
+      return res.status(400).json({ error: "Papka ochildi, lekin ichidan PDF kitob topilmadi (ichki papkalar ham tekshirildi). Papkada .pdf fayllar borligini va papka 'Anyone with the link' ekanini tekshiring." });
+    }
 
-    var stats = {
-      found: scannedFiles.length,
-      new: 0,
-      existing: 0,
-      failed: 0
-    };
+    var stats = { found: scannedFiles.length, new: 0, existing: 0, failed: 0 };
+    var toEnrich = [];
 
     for (var file of scannedFiles) {
       try {
         var existing = await pool.query(
-          'SELECT id, title, drive_file_id FROM library_books WHERE drive_file_id = $1 OR pdf_url LIKE $2 LIMIT 1',
+          'SELECT id, drive_file_id, status FROM library_books WHERE drive_file_id = $1 OR pdf_url LIKE $2 LIMIT 1',
           [file.id, '%' + file.id + '%']
         );
-
         if (existing.rows.length) {
           stats.existing++;
-          // Agar drive_file_id bo'lmasa biriktirib qo'yish
-          if (!existing.rows[0].drive_file_id) {
-            await pool.query(
-              'UPDATE library_books SET drive_file_id = $1, drive_source_id = $2, drive_file_name = $3, drive_file_size = $4 WHERE id = $5',
-              [file.id, sourceId, file.name, file.size, existing.rows[0].id]
-            );
+          var ex = existing.rows[0];
+          if (!ex.drive_file_id) {
+            await pool.query('UPDATE library_books SET drive_file_id = $1, drive_source_id = $2, drive_file_name = $3, drive_file_size = $4 WHERE id = $5', [file.id, sourceId, file.name, file.size, ex.id]);
+          }
+          if (/^(needs_review|discovered)$/i.test(ex.status || '')) {
+            await pool.query("UPDATE library_books SET status = 'published', admin_approved = true, published_at = NOW(), drive_file_size = COALESCE(NULLIF(drive_file_size, 0), $2) WHERE id = $1", [ex.id, file.size]);
+            toEnrich.push(ex.id);
           }
         } else {
-          // Yangi kitobni yaratish (DISCOVERED / NEEDS_REVIEW holatida)
-          var cleanName = (file.name || 'Yangi Kitob')
-            .replace(/\.pdf$/i, '')
-            .replace(/[_-]+/g, ' ')
-            .trim();
-          var coverThumb = `https://drive.google.com/thumbnail?id=${file.id}&sz=w800`;
-          var viewUrl = `https://drive.google.com/file/d/${file.id}/view`;
+          var parsed = parseBookFileName(file.name);
+          var coverThumb = 'https://drive.google.com/thumbnail?id=' + file.id + '&sz=w800';
+          var viewUrl = 'https://drive.google.com/file/d/' + file.id + '/view';
           var category = file.category && file.category !== 'Boshqa' ? file.category : 'Arxitektura';
-
-          await pool.query(`
+          var ins = await pool.query(`
             INSERT INTO library_books (
               title, author, short_description, what_you_learn, categories,
               pdf_url, cover_url, generated_cover_url, page_count, reading_time_minutes,
               access_type, is_recommended, status, drive_source_id, drive_file_id,
-              drive_file_name, drive_web_view_url, drive_file_size, language,
-              ai_generated, admin_approved, created_at
+              drive_file_name, drive_web_view_url, drive_file_size, language, publication_year,
+              ai_generated, admin_approved, published_at, created_at
             ) VALUES (
-              $1, 'Autodesk BIM & Architecture', $2, $3, $4,
-              $5, $6, $6, 0, 30,
-              'free', false, 'NEEDS_REVIEW', $7, $8,
-              $9, $10, $11, 'uz',
-              false, false, NOW()
-            )
+              $1, $2, $3, $4, $5,
+              $6, $7, $7, 0, 30,
+              'free', false, 'published', $8, $9,
+              $10, $11, $12, 'uz', $13,
+              false, true, NOW(), NOW()
+            ) RETURNING id
           `, [
-            cleanName,
-            cleanName + " bo'yicha batafsil qo'llanma va o'quv materiali.",
-            JSON.stringify([
-              "Loyiha chizmalarini professional rasmiylashtirish",
-              "Arxitektura va BIM standartlariga mos ishlash",
-              "Amaliy tajriba va ilg'or usullar"
-            ]),
+            parsed.title,
+            parsed.author || 'Muallif ko\'rsatilmagan',
+            parsed.title + " bo'yicha o'quv materiali.",
+            '',
             [category],
-            viewUrl,
-            coverThumb,
-            sourceId,
-            file.id,
-            file.name,
-            viewUrl,
-            file.size
+            viewUrl, coverThumb, sourceId, file.id, file.name, viewUrl, file.size, parsed.year
           ]);
-
+          toEnrich.push(ins.rows[0].id);
           stats.new++;
         }
       } catch (itemErr) {
-        console.warn(`[DRIVE SYNC ITEM ERROR] ${file.name}:`, itemErr.message);
+        console.warn('[DRIVE SYNC ITEM ERROR] ' + file.name + ':', itemErr.message);
         stats.failed++;
       }
     }
 
-    // Source ning last_sync parametrlarini yangilash
     if (sourceId) {
-      await pool.query(
-        'UPDATE drive_sources SET last_sync_at = NOW(), last_sync_stats = $1, root_folder_id = $2 WHERE id = $3',
-        [JSON.stringify(stats), targetFolderId, sourceId]
-      );
+      await pool.query('UPDATE drive_sources SET last_sync_at = NOW(), last_sync_stats = $1, root_folder_id = $2 WHERE id = $3', [JSON.stringify(stats), targetFolderId, sourceId]);
     }
 
-    console.log(`[DRIVE SYNC FINISHED] New: ${stats.new}, Existing: ${stats.existing}, Failed: ${stats.failed}`);
+    // Metadata (muallif, sahifalar, tavsif) fonda to'ldiriladi
+    enrichBooksInBackground(toEnrich, apiKey).catch(function (e) { console.warn('enrich:', e.message); });
 
     return res.json({
       ok: true,
       stats: stats,
-      message: `Sinxronizatsiya yakunlandi: ${stats.new} ta yangi kitob topildi, ${stats.existing} ta avvaldan mavjud.`
+      message: 'Papkadan ' + stats.found + ' ta PDF topildi: ' + stats.new + ' ta yangi kitob qo\'shildi va nashr qilindi, ' + stats.existing + ' tasi avvaldan bor. Muallif, sahifalar soni va tavsif birozdan keyin avtomatik to\'ladi.'
     });
   } catch (err) {
     console.error('DRIVE SYNC ERROR:', err);
