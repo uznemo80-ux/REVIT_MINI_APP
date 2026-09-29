@@ -16143,7 +16143,7 @@ function autoResolveDriveSize(prefix, now) {
     try {
       const r = await adminApi("/api/admin/library-v2/resolve-size", { url });
       sizeEl.value = r && r.ok ? r.file_size : "";
-      if (!(r && r.ok)) showToast((r && r.error) || "Hajm aniqlanmadi: havolani tekshiring");
+      if (!(r && r.ok)) showAlert((r && r.error) || "Hajm aniqlanmadi: havolani tekshiring");
     } catch (e) {
       sizeEl.value = "";
     }

@@ -5632,8 +5632,18 @@ async function resolveTelegramSize(rawUrl, adminChatId) {
 }
 
 // Havoladan fayl (yoki papka) hajmini bayt hisobida qaytaradi
+async function getDriveApiKey() {
+  var k = (process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+  if (k) return k;
+  try {
+    var r = await pool.query("SELECT api_key FROM drive_sources WHERE api_key IS NOT NULL AND api_key <> '' ORDER BY is_active DESC, id DESC LIMIT 1");
+    if (r.rows.length) return String(r.rows[0].api_key).trim();
+  } catch (e) {}
+  return '';
+}
+
 async function resolveDriveSize(rawUrl) {
-  var out = { ok: false, bytes: 0, name: '', is_folder: false };
+  var out = { ok: false, bytes: 0, name: '', is_folder: false, error: '' };
   try {
     var url = String(rawUrl || '').trim();
     if (!isGoogleDriveUrl(url)) return out;
@@ -5641,9 +5651,9 @@ async function resolveDriveSize(rawUrl) {
     var fm = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
     if (fm) { id = fm[1]; out.is_folder = true; }
     if (!id) id = extractGoogleDriveId(url);
-    if (!id) return out;
+    if (!id) { out.error = "Havoladan Drive ID topilmadi. Havola https://drive.google.com/file/d/... ko'rinishida bo'lsin."; return out; }
 
-    var key = (process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+    var key = await getDriveApiKey();
     if (key) {
       var mUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) +
         '?fields=id,name,mimeType,size&supportsAllDrives=true&key=' + encodeURIComponent(key);
@@ -5658,17 +5668,39 @@ async function resolveDriveSize(rawUrl) {
           out.bytes = Number(m.size) || 0;
         }
         if (out.bytes > 0) { out.ok = true; return out; }
+        out.error = "Drive fayl hajmini qaytarmadi (Google hujjati yoki bo'sh papka bo'lishi mumkin).";
+      } else {
+        var ej = {};
+        try { ej = await mr.json(); } catch (e) {}
+        var em = (ej.error && ej.error.message) || 'xatolik';
+        var hint = mr.status === 404
+          ? " Fayl topilmadi yoki havola 'Anyone with the link' (ochiq) emas."
+          : (mr.status === 400 || mr.status === 403)
+            ? " API kalit noto'g'ri yoki Google Cloud'da 'Google Drive API' yoqilmagan, yoki fayl ochiq emas."
+            : '';
+        out.error = 'Google Drive (' + mr.status + '): ' + em + '.' + hint;
       }
+    } else {
+      out.error = "Google Drive API kaliti topilmadi (Railway Variables'da GOOGLE_DRIVE_API_KEY yoki admin paneldagi Drive manbasida).";
     }
 
-    // Zaxira: ochiq fayl uchun Content-Length
+    // Zaxira: ochiq fayl uchun Range so'rovi orqali umumiy hajm
     if (!out.is_folder) {
-      var hr = await fetch('https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id), { method: 'HEAD', redirect: 'follow' });
-      var cl = Number(hr.headers.get('content-length')) || 0;
-      if (cl > 0) { out.bytes = cl; out.ok = true; }
+      try {
+        var gr = await fetch('https://drive.usercontent.google.com/download?id=' + encodeURIComponent(id) + '&export=download&confirm=t', {
+          headers: { Range: 'bytes=0-0' }, redirect: 'follow'
+        });
+        var ct = String(gr.headers.get('content-type') || '');
+        var cr = gr.headers.get('content-range') || '';
+        var mm = cr.match(/\/(\d+)$/);
+        var total = mm ? Number(mm[1]) : (/text\/html/i.test(ct) ? 0 : Number(gr.headers.get('content-length')) || 0);
+        try { if (gr.body && gr.body.cancel) gr.body.cancel(); } catch (e) {}
+        if (total > 1) { out.bytes = total; out.ok = true; out.error = ''; return out; }
+      } catch (fe) {}
     }
   } catch (e) {
     console.warn('resolveDriveSize error:', e.message);
+    out.error = out.error || ('Server xatosi: ' + e.message);
   }
   return out;
 }
@@ -8297,7 +8329,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
         content_data = $11,
         preview_image_url = $12,
         author = $13,
-        file_size = $14,
+        file_size = COALESCE($14, file_size),
         page_count = $15,
         language = COALESCE($16, language),
         version = $17,
