@@ -7639,6 +7639,8 @@ app.all('/api/materials/detail', async function (req, res) {
     var matQuery = `
       SELECT
         m.*,
+        -- review_notes FAQAT admin uchun: user API orqali chiqarilmaydi
+        CASE WHEN m.status = 'published' THEN NULL ELSE m.review_notes END AS review_notes,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug,
         mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country, mfg.website AS manufacturer_website,
@@ -7868,7 +7870,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
     var dimUz = (b.dimensions_info_uz || b.dimensions_info || '').trim();
     var dimRu = (b.dimensions_info_ru || b.dimensions_info || '').trim();
     var isFrequent = Boolean(b.is_frequent === true || b.is_frequent === 'true');
-    var status = b.status || 'published';
+    var status = b.status || 'draft';   // yangi materiallar tasdiqlashdan o'tmasdan draft bo'ladi
     var verificationStatus = b.verification_status || 'verified';
     var accessType = b.access_type || 'free';
     var adminUser = req.user || {};
@@ -8029,9 +8031,25 @@ app.post('/api/admin/materials/status', requireAdmin, async function (req, res) 
     var id = parseInt(req.body.id, 10);
     var status = (req.body.status || '').trim();
     var verificationStatus = (req.body.verification_status || '').trim();
+    var reviewNotes = (req.body.review_notes !== undefined && req.body.review_notes !== null)
+      ? String(req.body.review_notes).trim()
+      : null;
     var adminUser = req.user || {};
 
-    if (!id) return res.status(400).json({ error: 'ID topilmadi' });
+    if (!id) return res.status(400).json({ ok: false, error: 'ID topilmadi' });
+
+    // Ruxsat etilgan statuslar (materials jadvalidagi qiymatlar bilan mos)
+    var ALLOWED_STATUS = ['draft', 'published', 'pending_review', 'archived'];
+    if (status && ALLOWED_STATUS.indexOf(status) === -1) {
+      return res.status(400).json({ ok: false, error: 'Noma’lum status: ' + status });
+    }
+
+    // Eski holat — audit log uchun (validation'dan OLDIN)
+    var prevRes = await pool.query('SELECT status, verification_status FROM materials WHERE id = $1', [id]);
+    if (prevRes.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Material topilmadi' });
+    }
+    var prevStatus = prevRes.rows[0].status;
 
     // Pre-publish validation check
     if (status === 'published') {
@@ -8058,10 +8076,19 @@ app.post('/api/admin/materials/status', requireAdmin, async function (req, res) 
     if (status) {
       updates.push('status = $' + pIdx++);
       params.push(status);
+      // published ga o'tganda nashr sanasini belgilaymiz
+      if (status === 'published') {
+        updates.push('published_at = NOW()');
+      }
+      // draft ga qaytarilganda review_notes tozalanmaydi — iz tarixiy bo'lib qoladi
     }
     if (verificationStatus) {
       updates.push('verification_status = $' + pIdx++);
       params.push(verificationStatus);
+    }
+    if (reviewNotes !== null) {
+      updates.push('review_notes = $' + pIdx++);
+      params.push(reviewNotes || null);
     }
     updates.push('updated_at = NOW()');
     params.push(id);
@@ -8075,7 +8102,12 @@ app.post('/api/admin/materials/status', requireAdmin, async function (req, res) 
     await pool.query(`
       INSERT INTO material_audit_logs (material_id, admin_id, admin_name, action, details)
       VALUES ($1, $2, $3, 'change_status', $4)
-    `, [id, adminUser.id || null, adminUser.first_name || 'Admin', JSON.stringify({ status, verificationStatus })]);
+    `, [id, adminUser.id || null, adminUser.first_name || 'Admin', JSON.stringify({
+      old_status: prevStatus,
+      status: status,
+      verificationStatus: verificationStatus,
+      review_notes: reviewNotes
+    })]);
 
     return res.json({ ok: true, message: 'Material holati yangilandi' });
   } catch (error) {

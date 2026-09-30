@@ -15281,7 +15281,7 @@ async function loadAdminMaterialsData(forceReload) {
   try {
     const [statsRes, listRes, catRes] = await Promise.all([
       adminApi('/api/admin/materials/stats').catch(() => ({ stats: {} })),
-      api('/api/materials/list', { limit: 150, offset: 0, sort: 'newest' }).catch(() => ({ materials: [], total: 0 })),
+      api('/api/materials/list', { status: 'all', limit: 150, offset: 0, sort: 'newest' }).catch(() => ({ materials: [], total: 0 })),
       api('/api/materials/categories').catch(() => ({ categories: [], manufacturers: [] }))
     ]);
 
@@ -15618,13 +15618,8 @@ function renderAdminMaterialRowHtml(m) {
         <div style="flex:1; min-width:0;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
             <span style="font-weight:800; font-size:14px; color:var(--text-primary);">${escapeHtml(m.title)}</span>
-            ${isVerified ? `
-              <span class="lib-mat-badge verified" style="font-size:10px; padding:2px 7px;">✓ Verified</span>
-            ` : isPending ? `
-              <span class="lib-mat-badge pending" style="font-size:10px; padding:2px 7px;">🟡 Tekshiruvda</span>
-            ` : `
-              <span class="lib-mat-badge pending" style="background:rgba(156,163,175,0.15); color:#9ca3af; font-size:10px; padding:2px 7px;">⚪ Qoralama</span>
-            `}
+            ${renderMaterialStatusBadge(m.status)}
+            ${renderMaterialVerificationBadge(m)}
           </div>
           <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">${escapeHtml(m.generic_name || m.category_name || '')}</div>
           <div style="display:flex; gap:10px; font-size:11px; color:var(--text-muted); flex-wrap:wrap;">
@@ -15635,6 +15630,15 @@ function renderAdminMaterialRowHtml(m) {
           </div>
         </div>
       </div>
+
+      ${m.review_notes ? `
+        <div style="font-size:11px; color:#ef4444; background:rgba(239,68,68,0.08); border-left:2px solid #ef4444; padding:6px 9px; border-radius:4px;">
+          📝 Rad etish sababi: ${escapeHtml(m.review_notes)}
+        </div>
+      ` : ""}
+
+      <!-- APPROVAL WORKFLOW (status bo'yicha) -->
+      ${renderAdminMaterialWorkflowActions(m)}
 
       <!-- ROW ACTIONS -->
       <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; flex-wrap:wrap; gap:8px;">
@@ -15678,27 +15682,221 @@ function setAdminMaterialsStatusFilter(st) {
   if (el) el.innerHTML = renderAdminMaterialsCMSInner();
 }
 
-async function quickSetMaterialStatus(matId, newStatus) {
+async function quickSetMaterialStatus(matId, newStatus, options) {
   haptic("medium");
   try {
-    const isVer = newStatus === 'verified';
-    await adminApi('/api/admin/materials/status', {
-      id: Number(matId),
-      verification_status: newStatus,
-      is_verified: isVer
-    });
-    showToast(isVer ? "Material Verified qilindi!" : "Material Tekshiruv holatiga o‘tkazildi");
-    const mat = adminMaterialsState.materials.find(m => Number(m.id) === Number(matId));
+    var opts = options || {};
+    var isVer = newStatus === 'verified';
+    // status (draft/published/...) va verification_status (verified/pending)
+    // BIR-BIRIDAN AJRATILGAN. opts.status berilmasa — faqat verification o'zgaradi.
+    var payload = { id: Number(matId), verification_status: newStatus, is_verified: isVer };
+    if (opts.status) payload.status = opts.status;
+    if (opts.review_notes !== undefined && opts.review_notes !== null) {
+      payload.review_notes = String(opts.review_notes);
+    }
+
+    var res = await adminApi('/api/admin/materials/status', payload);
+
+    // Validatsiya bloklagan bo'lsa (kamida 1 ta manba, rasm, tarjima yo'q)
+    if (res && res.ok === false) {
+      showAlert(res.error || "Nashr qilish bloklandi");
+      await loadAdminMaterialsData(true);
+      var el0 = document.getElementById("admin-materials-cms-container");
+      if (el0) el0.innerHTML = renderAdminMaterialsCMSInner();
+      return;
+    }
+
+    var msg = isVer
+      ? "Material Verified qilindi!"
+      : (opts.status ? ((res && res.message) || "Holat yangilandi") : "Material Tekshiruv holatiga o‘tkazildi");
+    showToast(msg);
+
+    // UI darhol yangilanadi
+    var mat = adminMaterialsState.materials.find(m => Number(m.id) === Number(matId));
     if (mat) {
       mat.verification_status = newStatus;
       mat.is_verified = isVer;
+      if (opts.status) mat.status = opts.status;
+      if (opts.review_notes !== undefined && opts.review_notes !== null) {
+        mat.review_notes = String(opts.review_notes);
+      }
     }
     await loadAdminMaterialsData(true);
-    const el = document.getElementById("admin-materials-cms-container");
+    var el = document.getElementById("admin-materials-cms-container");
     if (el) el.innerHTML = renderAdminMaterialsCMSInner();
   } catch (err) {
     showAlert(err.message || "Holatni o‘zgartirishda xatolik");
   }
+}
+
+// ===== APPROVAL WORKFLOW (status — verification_status dan alohida) =====
+
+// Tasdiqlash: status -> published. Validatsiya serverda bajariladi.
+async function approveAdminMaterial(matId, matTitle) {
+  showConfirm(
+    "Materialni tasdiqlash",
+    '"' + (matTitle || "Material") + '" nashr qilinadi va foydalanuvchilar katalogida ko‘rinadi. ' +
+    "Kamida 1 ta rasmiy havola, rasm va ikkala tildagi nom/tavsif talab qilinadi.",
+    "Tasdiqlash",
+    async () => {
+      try {
+        haptic("medium");
+        var res = await adminApi('/api/admin/materials/status', {
+          id: Number(matId),
+          status: 'published'
+        });
+        if (res && res.ok === false) {
+          showAlert(res.error || "Nashr qilish bloklandi");
+          await loadAdminMaterialsData(true);
+          var elA = document.getElementById("admin-materials-cms-container");
+          if (elA) elA.innerHTML = renderAdminMaterialsCMSInner();
+          return;
+        }
+        showToast((res && res.message) || "Material tasdiqlandi va nashr qilindi");
+        await loadAdminMaterialsData(true);
+        var el = document.getElementById("admin-materials-cms-container");
+        if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+      } catch (err) {
+        showAlert(err.message || "Tasdiqlashda xatolik");
+      }
+    }
+  );
+}
+
+// Rad etish: status -> draft + review_notes
+function rejectAdminMaterial(matId, matTitle) {
+  var presets = [
+    "Manba yetarli emas",
+    "Cover image noto‘g‘ri",
+    "Ma‘lumot yetarli emas",
+    "Texnik ma‘lumotlar tekshirilmagan",
+    "Takroriy material",
+    "Boshqa"
+  ];
+
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-title">Materialni rad etish</div>
+      <div class="modal-msg">${escapeHtml(matTitle || "Material")} — rad etish sababini yozing. Sabab keyinroq ko‘rib chiqishda eslatma bo‘lib qoladi.</div>
+
+      <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;">
+        ${presets.map(function(p) {
+          return '<div class="spec-level-chip" data-preset="' + escapeHtml(p) + '" style="cursor:pointer;">' + escapeHtml(p) + '</div>';
+        }).join("")}
+      </div>
+
+      <textarea id="mat-review-note" class="apple-input apple-textarea" style="min-height:74px; width:100%; resize:vertical;" placeholder="Rad etish sababini yozing..."></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="mat-note-cancel">Bekor qilish</button>
+        <button type="button" class="modal-btn confirm" id="mat-note-ok">Rad etish</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  var ta = overlay.querySelector("#mat-review-note");
+  overlay.querySelectorAll("[data-preset]").forEach(function(chip) {
+    chip.addEventListener("click", function() {
+      if (ta) ta.value = chip.getAttribute("data-preset");
+    });
+  });
+  setTimeout(function() { if (ta) ta.focus(); }, 120);
+
+  overlay.querySelector("#mat-note-cancel").addEventListener("click", function() { overlay.remove(); });
+
+  overlay.querySelector("#mat-note-ok").addEventListener("click", async function() {
+    var note = ta ? ta.value.trim() : "";
+    overlay.remove();
+    try {
+      haptic("medium");
+      await adminApi('/api/admin/materials/status', {
+        id: Number(matId),
+        status: 'draft',
+        review_notes: note || null
+      });
+      showToast("Material rad etildi");
+      await loadAdminMaterialsData(true);
+      var el = document.getElementById("admin-materials-cms-container");
+      if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+    } catch (err) {
+      showAlert(err.message || "Rad etishda xatolik");
+    }
+  });
+}
+
+// Nashrdan qaytarish: published -> draft
+function unpublishAdminMaterial(matId, matTitle) {
+  showConfirm(
+    "Materialni yashirish",
+    '"' + (matTitle || "Material") + '" foydalanuvchilar katalogidan chiqariladi va qoralamaga qaytadi.',
+    "Yashirish",
+    async () => {
+      try {
+        haptic("medium");
+        var res = await adminApi('/api/admin/materials/status', { id: Number(matId), status: 'draft' });
+        showToast((res && res.message) || "Material qoralamaga qaytarildi");
+        await loadAdminMaterialsData(true);
+        var el = document.getElementById("admin-materials-cms-container");
+        if (el) el.innerHTML = renderAdminMaterialsCMSInner();
+      } catch (err) {
+        showAlert(err.message || "Xatolik");
+      }
+    }
+  );
+}
+
+// Status badge — verification_status DAN AJRATILGAN
+function renderMaterialStatusBadge(st) {
+  var s = st || 'draft';
+  if (s === 'published') {
+    return '<span class="lib-mat-badge verified" style="font-size:10px; padding:2px 7px;">🟢 Published</span>';
+  }
+  if (s === 'pending_review') {
+    return '<span class="lib-mat-badge pending" style="font-size:10px; padding:2px 7px;">🟡 Pending Review</span>';
+  }
+  if (s === 'archived') {
+    return '<span class="lib-mat-badge pending" style="background:rgba(156,163,175,0.15); color:#9ca3af; font-size:10px; padding:2px 7px;">📦 Archived</span>';
+  }
+  return '<span class="lib-mat-badge pending" style="background:rgba(156,163,175,0.15); color:#9ca3af; font-size:10px; padding:2px 7px;">🔒 Draft</span>';
+}
+
+// Verification badge — alohida, status bilan aralashmaydi
+function renderMaterialVerificationBadge(mat) {
+  var v = mat.verification_status;
+  if (v === 'verified' || mat.is_verified) {
+    return '<span class="lib-mat-badge verified" style="font-size:10px; padding:2px 7px;">✓ Verified</span>';
+  }
+  return '<span class="lib-mat-badge pending" style="font-size:10px; padding:2px 7px;">⏳ Tekshiruvda</span>';
+}
+
+// Statusga qarab action tugmalari
+function renderAdminMaterialWorkflowActions(mat) {
+  var id = Number(mat.id);
+  var title = mat.name_uz || mat.name || mat.title || "Material";
+  var st = mat.status || 'draft';
+
+  var editBtn = '<button class="admin-small-btn" onclick="openAdminMaterialForm(' + id + ')" style="font-weight:700;">✏️ Tahrirlash</button>';
+
+  if (st === 'published') {
+    return '<div style="display:flex; gap:6px; flex-wrap:wrap;">'
+      + editBtn
+      + '<button class="admin-small-btn" style="background:rgba(245,158,11,0.14); color:#f59e0b;" onclick="unpublishAdminMaterial(' + id + ',' + escapeJsString(title) + ')">🙈 Yashirish</button>'
+      + '</div>';
+  }
+
+  if (st === 'archived') {
+    return '<div style="display:flex; gap:6px; flex-wrap:wrap;">' + editBtn + '</div>';
+  }
+
+  // draft / pending_review
+  return '<div style="display:flex; gap:6px; flex-wrap:wrap;">'
+    + '<button class="admin-small-btn" style="background:#10b981; color:#fff; border:none; font-weight:700;" onclick="approveAdminMaterial(' + id + ',' + escapeJsString(title) + ')">✅ Tasdiqlash</button>'
+    + '<button class="admin-small-btn" style="background:rgba(239,68,68,0.14); color:#ef4444;" onclick="rejectAdminMaterial(' + id + ',' + escapeJsString(title) + ')">✖️ Rad etish</button>'
+    + editBtn
+    + '</div>';
 }
 
 async function deleteAdminMaterial(matId, matTitle) {
