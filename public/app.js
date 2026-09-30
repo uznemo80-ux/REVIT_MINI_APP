@@ -7972,83 +7972,50 @@ function matReactionButtonHtml(id, kind, small) {
   return `<button type="button" class="mcat-icon-btn ${on ? "on" : ""}" ${isLike ? "data-mat-like" : "data-mat-save"}="${Number(id)}" aria-label="${isLike ? "Yoqdi" : "Saqlash"}" onclick="event.stopPropagation(); toggleMaterialReaction(${Number(id)}, '${kind}')">${icon}<span class="mcat-count">${cnt > 0 ? cnt : ""}</span></button>`;
 }
 
-// ---- Animatsiyali placeholder ----
+// ---- Animatsiyali placeholder: harflab yozilib, keyin o‘chib, keyingi so‘zga o‘tadi ----
 const MAT_PH_WORDS = ["Gipsokarton", "Profil", "Keramogranit", "Laminat", "Bo‘yoq", "Plitka", "Eshik", "Oyna"];
 let _matPhIdx = 0;
+let _matPhText = "";
+let _matPhPhase = "typing"; // typing -> hold -> deleting
 let _matPhTimer = null;
+
 function ensureMaterialPlaceholderTicker() {
   if (_matPhTimer) return;
-  _matPhTimer = setInterval(() => {
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
     const el = document.getElementById("mat-ph-word");
-    if (!el || document.hidden) return;
     const inp = document.getElementById("lib-materials-search-input");
-    if (inp && inp.value) return;
-    el.classList.add("out");
-    setTimeout(() => {
+    // Sahifa yopilgan bo'lsa, tekshiruvni sekinlashtirib kutamiz
+    if (!el || document.hidden || (inp && inp.value)) { _matPhTimer = setTimeout(step, 400); return; }
+    const word = MAT_PH_WORDS[_matPhIdx % MAT_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) {
+      _matPhText = word;
+      el.textContent = word;
       _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
-      el.textContent = MAT_PH_WORDS[_matPhIdx];
-      el.classList.remove("out");
-    }, 220);
-  }, 2400);
-}
-
-function renderMaterialQuickPicksHtml() {
-  const currentQuery = (materialsState.searchQuery || "").toLowerCase();
-  return MATERIAL_QUICK_PICKS.map(p => {
-    const isActive = currentQuery === p.query;
-    return `
-      <button type="button" class="lib-mat-quickpick-chip ${isActive ? 'active' : ''}" onclick="setMaterialQuickPick('${escapeJsString(p.query)}')">
-        <span>${p.icon}</span>
-        <span>${escapeHtml(p.name)}</span>
-      </button>
-    `;
-  }).join("");
-}
-
-function renderMaterialCategoryPillsHtml() {
-  const allCats = materialsState.categories || [];
-  const currentScope = materialsState.selectedScope || "all";
-  const cats = currentScope === "all" ? allCats : allCats.filter(c => c.scope === currentScope || c.scope === "both");
-  const mats = materialsState.materials || [];
-  const activeCat = materialsState.selectedCategory || "all";
-
-  return `
-    <div class="lib-mat-cat-pill ${activeCat === 'all' ? 'active' : ''}" onclick="setMaterialCategory('all')">
-      🌐 Barchasi
-      <span class="lib-mat-cat-count">${materialsState.total || mats.length}</span>
-    </div>
-    ${cats.map(c => `
-      <div class="lib-mat-cat-pill ${activeCat === c.slug ? 'active' : ''}" onclick="setMaterialCategory('${escapeJsString(c.slug)}')">
-        <span>${escapeHtml(c.icon || '🧱')}</span>
-        <span>${escapeHtml(c.name)}</span>
-        <span class="lib-mat-cat-count">${c.materials_count || 0}</span>
-      </div>
-    `).join("")}
-  `;
-}
-
-function renderMaterialSubcategoriesHtml() {
-  const activeCat = materialsState.selectedCategory;
-  const subcats = CATEGORY_SUBCATEGORIES_MAP[activeCat];
-  if (!subcats || !subcats.length) return "";
-
-  const activeSubcat = materialsState.selectedSubcategory || "all";
-  return `
-    <div class="lib-mat-subcat-wrapper">
-      <div class="lib-mat-subcat-label">Toifalar:</div>
-      <div class="h-scroll-wrapper">
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -240)" aria-label="Chapga">‹</button>
-        <div class="lib-mat-subcat-scroll">
-          ${subcats.map(sc => `
-            <button type="button" class="lib-mat-subcat-pill ${activeSubcat === sc.id ? 'active' : ''}" onclick="setMaterialSubcategory('${escapeJsString(sc.id)}')">
-              ${escapeHtml(sc.name)}
-            </button>
-          `).join("")}
-        </div>
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 240)" aria-label="O'ngga">›</button>
-      </div>
-    </div>
-  `;
+      _matPhTimer = setTimeout(step, 2400);
+      return;
+    }
+    if (_matPhPhase === "typing") {
+      _matPhText = word.slice(0, _matPhText.length + 1);
+      delay = 85 + Math.random() * 60;
+      if (_matPhText.length >= word.length) { _matPhPhase = "hold"; delay = 1500; }
+    } else if (_matPhPhase === "hold") {
+      _matPhPhase = "deleting";
+      delay = 60;
+    } else {
+      _matPhText = _matPhText.slice(0, -1);
+      delay = 38;
+      if (!_matPhText.length) {
+        _matPhPhase = "typing";
+        _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
+        delay = 320;
+      }
+    }
+    el.textContent = _matPhText;
+    _matPhTimer = setTimeout(step, delay);
+  };
+  _matPhTimer = setTimeout(step, 250);
 }
 
 // ---- Bo'lim UI ----
@@ -8271,7 +8238,7 @@ function renderMaterialsSectionHtml() {
         <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
         <input id="lib-materials-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
                value="${escapeHtml(search)}" oninput="setMaterialSearch(this.value)" />
-        <div class="mcat-ph" aria-hidden="true"><span>Material qidiring...</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(MAT_PH_WORDS[_matPhIdx % MAT_PH_WORDS.length])}</span></div>
+        <div class="mcat-ph" aria-hidden="true"><span>Material qidiring...</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
         <span id="lib-search-clear-wrap">${search ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : ""}</span>
       </div>
 
