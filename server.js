@@ -7104,6 +7104,65 @@ app.post('/api/admin/learning/resource/delete', requireAdmin, async function (re
 // MATERIALLAR KUTUBXONASI (MATERIALS KNOWLEDGE BASE) API
 // ======================================================
 
+// ------------------------------------------------------
+// MATERIALLAR STATISTIKASI: ko'rishlar, like va saqlashlar (orqaga mos, buzmaydi)
+// ------------------------------------------------------
+var matStatsReady = null;
+function ensureMatStats() {
+  if (!matStatsReady) {
+    matStatsReady = (async function () {
+      try {
+        await pool.query("ALTER TABLE materials ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_likes (user_id INT NOT NULL, material_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, material_id))");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_saves (user_id INT NOT NULL, material_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, material_id))");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_view_log (user_id INT NOT NULL, material_id INT NOT NULL, viewed_on DATE NOT NULL DEFAULT CURRENT_DATE, PRIMARY KEY (user_id, material_id, viewed_on))");
+      } catch (e) {
+        console.warn('ensureMatStats:', e.message);
+        matStatsReady = null;
+      }
+    })();
+  }
+  return matStatsReady;
+}
+
+async function matUserFromReq(req) {
+  try { return await getOrCreateUser(req.body && req.body.initData); } catch (e) { return null; }
+}
+
+app.post('/api/materials/my-state', async function (req, res) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.json({ ok: true, liked_ids: [], saved_ids: [] });
+    var l = await pool.query('SELECT material_id FROM material_likes WHERE user_id = $1', [user.id]);
+    var sv = await pool.query('SELECT material_id FROM material_saves WHERE user_id = $1', [user.id]);
+    return res.json({ ok: true, liked_ids: l.rows.map(function (r) { return r.material_id; }), saved_ids: sv.rows.map(function (r) { return r.material_id; }) });
+  } catch (e) {
+    return res.json({ ok: true, liked_ids: [], saved_ids: [] });
+  }
+});
+
+async function toggleMatFlag(req, res, table) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.status(401).json({ error: 'Avtorizatsiya kerak' });
+    var mid = parseInt(req.body.id, 10);
+    if (!mid) return res.status(400).json({ error: 'Material ID kerak' });
+    var ex = await pool.query('SELECT 1 FROM ' + table + ' WHERE user_id = $1 AND material_id = $2', [user.id, mid]);
+    var on;
+    if (ex.rows.length) { await pool.query('DELETE FROM ' + table + ' WHERE user_id = $1 AND material_id = $2', [user.id, mid]); on = false; }
+    else { await pool.query('INSERT INTO ' + table + ' (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, mid]); on = true; }
+    var c = await pool.query('SELECT COUNT(*)::int AS c FROM ' + table + ' WHERE material_id = $1', [mid]);
+    return res.json({ ok: true, active: on, count: c.rows[0].c });
+  } catch (e) {
+    console.error('TOGGLE MATERIAL FLAG ERROR:', e.message);
+    return res.status(500).json({ error: 'Saqlashda xatolik' });
+  }
+}
+app.post('/api/materials/toggle-like', function (req, res) { return toggleMatFlag(req, res, 'material_likes'); });
+app.post('/api/materials/toggle-save', function (req, res) { return toggleMatFlag(req, res, 'material_saves'); });
+
 // 1. Kategoriyalar va ishlab chiqaruvchilar ro'yxati (GET & POST)
 app.all('/api/materials/categories', async function (req, res) {
   try {
@@ -7262,6 +7321,7 @@ app.all('/api/materials/list', async function (req, res) {
     }
 
     var whereSql = whereClauses.length ? 'WHERE ' + whereClauses.join(' AND ') : '';
+    await ensureMatStats();
 
     // Sorting
     var orderSql = 'ORDER BY m.id DESC';
@@ -7269,6 +7329,7 @@ app.all('/api/materials/list', async function (req, res) {
     else if (sort === 'verified') orderSql = 'ORDER BY m.verification_status ASC, m.last_verified_at DESC';
     else if (sort === 'frequent') orderSql = 'ORDER BY m.is_frequent DESC, m.id DESC';
     else if (sort === 'newest') orderSql = 'ORDER BY m.created_at DESC, m.id DESC';
+    else if (sort === 'views') orderSql = 'ORDER BY COALESCE(m.view_count, 0) DESC, m.id DESC';
 
     // Total count
     var countQuery = `
@@ -7307,6 +7368,9 @@ app.all('/api/materials/list', async function (req, res) {
         m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
+        COALESCE(m.view_count, 0) AS view_count,
+        (SELECT COUNT(*)::int FROM material_likes ml WHERE ml.material_id = m.id) AS like_count,
+        (SELECT COUNT(*)::int FROM material_saves msv WHERE msv.material_id = m.id) AS save_count,
         0 AS specs_count,
         0 AS docs_count,
         (SELECT COUNT(msrc.id)::int FROM material_sources msrc WHERE msrc.material_id = m.id) AS sources_count,
@@ -7503,8 +7567,24 @@ app.all('/api/materials/detail', async function (req, res) {
     mat.cover_image = mat.image_url || mat.cover_image;
     mat.featured_image = mat.cover_image;
 
+    // Statistika: bir foydalanuvchi bir kunda bir marta hisoblanadi
+    var matStats = { view_count: Number(mat.view_count) || 0, like_count: 0, save_count: 0, liked: false, saved: false };
+    try {
+      await ensureMatStats();
+      var detUser = await matUserFromReq(req);
+      if (detUser) {
+        var ins = await pool.query('INSERT INTO material_view_log (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING 1', [detUser.id, materialId]);
+        if (ins.rows.length) { await pool.query('UPDATE materials SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1', [materialId]); matStats.view_count += 1; }
+        matStats.liked = (await pool.query('SELECT 1 FROM material_likes WHERE user_id = $1 AND material_id = $2', [detUser.id, materialId])).rows.length > 0;
+        matStats.saved = (await pool.query('SELECT 1 FROM material_saves WHERE user_id = $1 AND material_id = $2', [detUser.id, materialId])).rows.length > 0;
+      }
+      matStats.like_count = (await pool.query('SELECT COUNT(*)::int AS c FROM material_likes WHERE material_id = $1', [materialId])).rows[0].c;
+      matStats.save_count = (await pool.query('SELECT COUNT(*)::int AS c FROM material_saves WHERE material_id = $1', [materialId])).rows[0].c;
+    } catch (stErr) { console.warn('material stats:', stErr.message); }
+
     return res.json({
       ok: true,
+      stats: matStats,
       material: mat,
       types: typesRes.rows || [],
       sources: sourcesRes.rows || [],
