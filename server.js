@@ -7391,6 +7391,12 @@ app.all('/api/materials/list', async function (req, res) {
       params.push(status);
     }
 
+    // PRIVACY: review_notes (admin rad-etish izohi) faqat status='all'
+    // so'raganda (faqat admin CMS shunday chaqiradi) SELECT qilinadi.
+    // Oddiy user so'rovi status='published' bo'lgani uchun ustun
+    // query ga umuman qo'shilmaydi — DB dan chiqmaydi.
+    var reviewNotesCol = (status === 'all') ? 'm.review_notes,' : '';
+
     // Scope filtering (Arxitektura vs Interyer vs Barchasi)
     if (scope && scope !== 'all' && scope !== 'barchasi') {
       if (scope === 'architecture' || scope === 'arxitektura' || scope === 'qurilish') {
@@ -7520,6 +7526,7 @@ app.all('/api/materials/list', async function (req, res) {
         m.approx_price, m.uzb_market_availability, m.architect_notes, m.standards_info, m.lifespan,
         m.moisture_resistance, m.fire_rating, m.standard_sizes, m.scope, m.purpose_tag,
         m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
+        ${reviewNotesCol}
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
         COALESCE(m.view_count, 0) AS view_count,
@@ -7639,8 +7646,6 @@ app.all('/api/materials/detail', async function (req, res) {
     var matQuery = `
       SELECT
         m.*,
-        -- review_notes FAQAT admin uchun: user API orqali chiqarilmaydi
-        CASE WHEN m.status = 'published' THEN NULL ELSE m.review_notes END AS review_notes,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug,
         mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country, mfg.website AS manufacturer_website,
@@ -7657,6 +7662,10 @@ app.all('/api/materials/detail', async function (req, res) {
     }
 
     var mat = matRes.rows[0];
+    // PRIVACY: review_notes FAQAT admin uchun. Bu endpoint user-facing
+    // bo'lgani uchun ustun butunlay olib tashlanadi (m.* orqali kelishi
+    // mumkin bo'lgani uchun). Admin uchun alohida endpoint bor.
+    delete mat.review_notes;
     var materialId = mat.id;
 
     // Types / Variants
