@@ -159,6 +159,93 @@ app.use(cors());
 
 app.use(express.json({ limit: '10mb' }));
 
+// ======================================================
+// I18N: 5 tilli tizim (uz, ru, en, tr, ar) — orqaga mos qatlam
+// ======================================================
+var fs = require('fs');
+var path = require('path');
+var I18N_LANGS = ['uz', 'ru', 'en', 'tr', 'ar'];
+var I18N_NAMESPACES = ['common', 'navigation', 'lessons', 'library', 'profile', 'settings', 'errors'];
+var I18N_LOCALES_DIR = path.join(__dirname, 'public', 'locales');
+var i18nCache = {};
+
+function normLang(l) {
+  l = String(l || '').toLowerCase().slice(0, 2);
+  return I18N_LANGS.indexOf(l) !== -1 ? l : 'uz';
+}
+
+function readLocale(lang) {
+  var out = {};
+  I18N_NAMESPACES.forEach(function (ns) {
+    try {
+      var raw = fs.readFileSync(path.join(I18N_LOCALES_DIR, lang, ns + '.json'), 'utf8');
+      var obj = JSON.parse(raw);
+      Object.keys(obj).forEach(function (k) { out[ns + '.' + k] = obj[k]; });
+    } catch (e) {}
+  });
+  return out;
+}
+
+// Tanlangan til -> en -> ru zanjiri bilan yig'ilgan lug'at (uz manba matni o'zgarmaydi)
+function buildI18nPayload(lang) {
+  if (i18nCache[lang]) return i18nCache[lang];
+  var uz = readLocale('uz');
+  var chain = lang === 'uz' ? [] : [lang].concat(['en', 'ru'].filter(function (x) { return x !== lang; }));
+  var locs = chain.map(readLocale);
+  var dict = {}, pairs = [];
+  Object.keys(uz).forEach(function (k) {
+    var val = null;
+    for (var i = 0; i < locs.length; i++) { if (locs[i][k]) { val = locs[i][k]; break; } }
+    if (val) { dict[k] = val; pairs.push([uz[k], val]); }
+  });
+  var payload = { ok: true, lang: lang, dir: lang === 'ar' ? 'rtl' : 'ltr', dict: dict, pairs: pairs, uz: uz, version: 1 };
+  i18nCache[lang] = payload;
+  return payload;
+}
+
+app.get('/api/i18n/:lang', function (req, res) {
+  var lang = normLang(req.params.lang);
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.json(buildI18nPayload(lang));
+});
+
+// Kontent (dars, modul, kitob, material...) tarjimasi: qatorlardagi `i18n` JSONB maydonini tilga qarab qo'llaydi
+function localizeBody(body, lang, depth) {
+  if (!body || typeof body !== 'object' || depth > 9) return body;
+  if (Array.isArray(body)) { for (var i = 0; i < body.length; i++) body[i] = localizeBody(body[i], lang, depth + 1); return body; }
+  if (Object.prototype.hasOwnProperty.call(body, 'i18n') && body.i18n && typeof body.i18n === 'object' && !Array.isArray(body.i18n)) {
+    var tr = body.i18n;
+    if (lang !== 'uz') {
+      var order = [lang].concat(['en', 'ru'].filter(function (x) { return x !== lang; }));
+      var fields = {};
+      order.slice().reverse().forEach(function (lg) {
+        var o = tr[lg];
+        if (o && typeof o === 'object') Object.keys(o).forEach(function (f) { if (typeof o[f] === 'string' && o[f].trim()) fields[f] = o[f]; });
+      });
+      Object.keys(fields).forEach(function (f) { body[f] = fields[f]; });
+    }
+    delete body.i18n;
+  }
+  var keys = Object.keys(body);
+  for (var j = 0; j < keys.length; j++) {
+    var v = body[keys[j]];
+    if (v && typeof v === 'object') body[keys[j]] = localizeBody(v, lang, depth + 1);
+  }
+  return body;
+}
+
+app.use('/api', function (req, res, next) {
+  if (req.path.indexOf('/admin') === 0 || req.path.indexOf('/i18n') === 0) return next();
+  var lang = normLang(req.headers['x-app-lang'] || (req.body && req.body.lang));
+  var orig = res.json.bind(res);
+  res.json = function (body) {
+    try { body = localizeBody(body, lang, 0); } catch (e) { console.warn('i18n localize:', e.message); }
+    return orig(body);
+  };
+  return next();
+});
+
+
 app.use(express.static('public', {
   etag: false,
   lastModified: false,
@@ -247,6 +334,8 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(5) DEFAULT 'uz'");
+    await pool.query("UPDATE users SET preferred_language = 'uz' WHERE preferred_language IS NULL");
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted BOOLEAN DEFAULT false');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
@@ -2232,7 +2321,8 @@ app.post('/api/auth', async function (req, res) {
       is_admin: Boolean(admin || isMainAdmin),
       admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null),
       terms_accepted: Boolean(user.terms_accepted),
-      terms_accepted_at: user.terms_accepted_at || null
+      terms_accepted_at: user.terms_accepted_at || null,
+      language: normLang(user.preferred_language)
     });
   } catch (error) {
     console.error('AUTH ERROR:', error);
@@ -2269,6 +2359,70 @@ app.post('/api/user/accept-terms', async function (req, res) {
 // ======================================================
 // PROFILE UPDATE
 // ======================================================
+
+app.post('/api/user/language', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    var lang = normLang(req.body.language);
+    await pool.query('UPDATE users SET preferred_language = $1 WHERE id = $2', [lang, user.id]);
+    return res.json({ ok: true, language: lang });
+  } catch (e) {
+    console.error('LANGUAGE SAVE ERROR:', e.message);
+    return res.status(500).json({ error: 'Tilni saqlashda xatolik' });
+  }
+});
+
+// Admin: kontent tarjimalarini o'qish/yozish (5 til). Original (uz) maydonlarga tegilmaydi.
+// Kontent tarjimalari uchun i18n JSONB ustunlari (idempotent; jadvallar keyinroq yaratilishi mumkin, shuning uchun qayta uriniladi)
+var I18N_CONTENT_TABLES = ['courses', 'modules', 'lessons', 'library_books', 'library_resources', 'library_sections', 'materials', 'material_categories', 'faqs'];
+async function ensureI18nColumns() {
+  for (var i = 0; i < I18N_CONTENT_TABLES.length; i++) {
+    try { await pool.query("ALTER TABLE IF EXISTS " + I18N_CONTENT_TABLES[i] + " ADD COLUMN IF NOT EXISTS i18n JSONB DEFAULT '{}'::jsonb"); }
+    catch (e) { console.warn('i18n column ' + I18N_CONTENT_TABLES[i] + ':', e.message); }
+  }
+}
+[15000, 60000, 240000].forEach(function (ms) { setTimeout(function () { ensureI18nColumns().catch(function () {}); }, ms); });
+
+var I18N_ENTITIES = {
+  lessons: { table: 'lessons', fields: ['title', 'task_text', 'warning_text'] },
+  modules: { table: 'modules', fields: ['title', 'description'] },
+  courses: { table: 'courses', fields: ['title', 'subtitle'] },
+  books: { table: 'library_books', fields: ['title', 'author', 'short_description', 'what_you_learn'] },
+  resources: { table: 'library_resources', fields: ['title', 'subtitle', 'description', 'category'] },
+  sections: { table: 'library_sections', fields: ['name', 'subtitle', 'description'] },
+  materials: { table: 'materials', fields: ['name_uz', 'short_description_uz', 'description_uz'] },
+  faqs: { table: 'faqs', fields: ['question', 'answer'] }
+};
+
+app.post('/api/admin/i18n/get', requireAdmin, async function (req, res) {
+  try {
+    var ent = I18N_ENTITIES[req.body.entity];
+    if (!ent) return res.status(400).json({ error: "Noma'lum obyekt turi" });
+    var r = await pool.query('SELECT i18n FROM ' + ent.table + ' WHERE id = $1', [parseInt(req.body.id, 10)]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Topilmadi' });
+    return res.json({ ok: true, fields: ent.fields, langs: I18N_LANGS, i18n: r.rows[0].i18n || {} });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/i18n/set', requireAdmin, async function (req, res) {
+  try {
+    var ent = I18N_ENTITIES[req.body.entity];
+    if (!ent) return res.status(400).json({ error: "Noma'lum obyekt turi" });
+    var lang = String(req.body.lang || '').toLowerCase();
+    if (lang === 'uz' || I18N_LANGS.indexOf(lang) === -1) return res.status(400).json({ error: "Til noto'g'ri (uz asl matn — asosiy maydonda saqlanadi)" });
+    var id = parseInt(req.body.id, 10);
+    var incoming = req.body.fields || {};
+    var clean = {};
+    ent.fields.forEach(function (f) { if (typeof incoming[f] === 'string') clean[f] = incoming[f].slice(0, 20000); });
+    var cur = await pool.query('SELECT i18n FROM ' + ent.table + ' WHERE id = $1', [id]);
+    if (!cur.rows.length) return res.status(404).json({ error: 'Topilmadi' });
+    var all = cur.rows[0].i18n || {};
+    all[lang] = Object.assign({}, all[lang] || {}, clean);
+    await pool.query('UPDATE ' + ent.table + ' SET i18n = $1::jsonb WHERE id = $2', [JSON.stringify(all), id]);
+    return res.json({ ok: true, i18n: all });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
 
 app.post('/api/profile/update', async function (req, res) {
   try {

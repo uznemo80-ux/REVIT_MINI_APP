@@ -718,7 +718,8 @@ async function api(path, body = {}) {
   const res = await fetch(path, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...(window.I18N ? window.I18N.headers() : {})
     },
     body: JSON.stringify({
       initData,
@@ -1020,6 +1021,7 @@ async function loadAuth() {
       terms_accepted: Boolean(data.terms_accepted),
       terms_accepted_at: data.terms_accepted_at || null
     };
+    try { if (window.I18N && data.language) window.I18N.reconcile(data.language); } catch (e) { console.warn("i18n reconcile:", e); }
     return data;
   } catch (error) {
     console.error("AUTH ERROR:", error);
@@ -3834,7 +3836,8 @@ function fmtDate(d) {
   if (!d) return null;
   const date = new Date(d);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("uz-UZ", {
+  const _loc = { uz: "uz-UZ", ru: "ru-RU", en: "en-GB", tr: "tr-TR", ar: "ar" }[(window.I18N && window.I18N.lang) || "uz"] || "uz-UZ";
+  return date.toLocaleDateString(_loc, {
     day: "2-digit",
     month: "long",
     year: "numeric"
@@ -10771,6 +10774,10 @@ function renderProfile() {
       <button class="btn secondary" onclick="openEditProfile()">
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
+
+      <!-- SOZLAMALAR: TIL / LANGUAGE -->
+      <div class="profile-section-title">Sozlamalar</div>
+      ${window.I18N ? window.I18N.renderLanguageRow() : ""}
 
       <!-- 1-TALAB: PLATFORMANI QO'LLAB-QUVVATLASH (FAQAT BITTA TUGMA) -->
       <div class="profile-action-row" onclick="openSupportCardsModal()" role="button" tabindex="0">
@@ -19015,3 +19022,25 @@ async function submitCourseAccessRequest(courseId) {
     showAlert(err.message || "So'rov yuborishda xatolik yuz berdi.");
   }
 }
+
+// ======================================================
+// I18N: til o'zgarganda kontent qayta yuklanadi (server dars/kitob/material tarjimalarini qaytaradi)
+// ======================================================
+window.onI18nChanged = function () {
+  try {
+    if (typeof materialsState !== "undefined") {
+      materialsState.loaded = false;
+      materialsState.categories = [];
+      materialsState.allMaterials = [];
+    }
+    if (state && state.telegram_id) {
+      loadContent();
+    } else if (typeof render === "function") {
+      render();
+    }
+  } catch (e) {
+    console.warn("onI18nChanged:", e);
+  }
+};
+
+try { if (window.I18N) window.I18N.wrapGlobals(); } catch (e) {}

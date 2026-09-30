@@ -1,0 +1,63 @@
+/* ===== I18N: til tanlash oynasi, Sozlamalar sarlavhasi va qo'lda RTL tuzatishlar ===== */
+.profile-section-title { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin: 20px 4px 8px; }
+.lang-row-value { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13.5px; font-weight: 600; min-width: 0; }
+.lang-row-value span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.lang-chevron { flex: 0 0 auto; opacity: .7; }
+
+.lang-sheet-overlay { position: fixed; inset: 0; z-index: 10050; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0); transition: background .22s ease; -webkit-tap-highlight-color: transparent; }
+.lang-sheet-overlay.open { background: rgba(0,0,0,.55); }
+.lang-sheet { width: 100%; max-width: 520px; background: var(--bg-surface); border-radius: 22px 22px 0 0; padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateY(100%); transition: transform .28s cubic-bezier(.2,.9,.3,1); border: 1px solid var(--border); border-bottom: 0; }
+.lang-sheet-overlay.open .lang-sheet { transform: translateY(0); }
+.lang-sheet-grip { width: 38px; height: 4px; border-radius: 4px; background: var(--border); margin: 2px auto 12px; }
+.lang-sheet-title { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 12px; color: var(--text-primary); }
+.lang-list { display: flex; flex-direction: column; gap: 8px; }
+.lang-option { display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-surface-elevated); color: var(--text-primary); font-family: inherit; font-size: 15.5px; font-weight: 650; cursor: pointer; text-align: start; -webkit-tap-highlight-color: transparent; transition: background .18s, border-color .18s, transform .12s; }
+.lang-option:active { transform: scale(.985); }
+.lang-option.active { border-color: var(--accent); background: var(--accent-soft); }
+.lang-flag { font-size: 24px; line-height: 1; flex: 0 0 auto; }
+.lang-name { flex: 1; min-width: 0; }
+.lang-radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: border-color .18s; }
+.lang-option.active .lang-radio { border-color: var(--accent); }
+.lang-radio-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform .18s ease; }
+.lang-option.active .lang-radio-dot { transform: scale(1); }
+
+/* ---------- Arab tili (RTL) ---------- */
+html[lang="ar"] body, html[lang="ar"] button, html[lang="ar"] input, html[lang="ar"] textarea, html[lang="ar"] select {
+  font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, "Geeza Pro", "Helvetica Neue", Arial, sans-serif;
+}
+html[dir="rtl"] { --i18n-flip: -1; }
+html[dir="rtl"] body { text-align: start; }
+
+/* Yo'nalishli ikonlar (orqaga strelkasi, chevron) */
+html[dir="rtl"] .lib-back-svg,
+html[dir="rtl"] .profile-action-chevron svg,
+html[dir="rtl"] .lang-chevron,
+html[dir="rtl"] .module-chevron svg,
+html[dir="rtl"] .library-tile-chevron svg,
+html[dir="rtl"] .learning-stage-chevron svg,
+html[dir="rtl"] .learning-entry-arrow svg,
+html[dir="rtl"] .lib-mat-card-arrow svg,
+html[dir="rtl"] .h-scroll-arrow svg,
+html[dir="rtl"] .carousel-arrow-btn svg,
+html[dir="rtl"] .sf-back-btn svg { transform: scaleX(-1); }
+
+/* Inline style="text-align:left" bilan yozilgan bloklar */
+html[dir="rtl"] [style*="text-align:left"], html[dir="rtl"] [style*="text-align: left"] { text-align: right !important; }
+html[dir="rtl"] [style*="text-align:right"], html[dir="rtl"] [style*="text-align: right"] { text-align: left !important; }
+
+/* Qidiruv maydoni va tanlovlar */
+html[dir="rtl"] .mcat-ph { justify-content: flex-start; }
+html[dir="rtl"] .mcat-sort { background-position: left 10px center; padding: 0 12px 0 30px; }
+html[dir="rtl"] .mcat-search-input { text-align: right; }
+html[dir="rtl"] .mcat-ph-word::after { margin-left: 0; margin-right: 2px; }
+html[dir="rtl"] .mcat-card-body, html[dir="rtl"] .mcat-pop-name, html[dir="rtl"] .mcat-pop-cat { text-align: right; }
+html[dir="rtl"] .lang-row-value { flex-direction: row-reverse; }
+
+/* Raqamlar, havolalar, kod va URL'lar chapdan-o'ngga qoladi */
+html[dir="rtl"] code, html[dir="rtl"] pre, html[dir="rtl"] input[type="url"], html[dir="rtl"] input[type="email"], html[dir="rtl"] input[type="tel"] { direction: ltr; text-align: left; }
+
+/* Uzun matnlar (ru/tr/en/ar) tugma va kartani buzmasin */
+.nav-label, .btn, .chip, .mcat-chip, .lib-back-nav { overflow-wrap: anywhere; }
+.nav-label { max-width: 100%; line-height: 1.15; text-align: center; }
+.btn { hyphens: auto; }
+.card-title, .lesson-title, .module-title, .lib-page-title { overflow-wrap: anywhere; }
