@@ -6712,7 +6712,14 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
       savedCount = countRes.rows[0].count || 0;
       var rpRes = await pool.query('SELECT page_number FROM reading_progress WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
       if (rpRes.rows.length) lastPage = rpRes.rows[0].page_number || 1;
-    } catch (bmErr) {}
+    } catch (bmErr) {}
+    var isLiked = false, likeCount = 0, readCount = 0;
+    try {
+      await ensureBookLikes();
+      isLiked = (await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId])).rows.length > 0;
+      likeCount = (await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId])).rows[0].c;
+      readCount = (await pool.query('SELECT COUNT(*)::int AS c FROM reading_progress WHERE book_id = $1', [bookId])).rows[0].c;
+    } catch (lkErr) {}
 
     var whatLearn = [];
     if (bRow.what_you_learn) {
@@ -6755,6 +6762,10 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
         is_saved: isSaved,
         saved_count: savedCount,
         last_page: lastPage,
+        is_liked: isLiked,
+        like_count: likeCount,
+        read_count: readCount,
+        i18n: bRow.i18n || null,
         view_count: (bRow.view_count || 0) + 1
       }
     });
@@ -6845,6 +6856,82 @@ app.post('/api/library/v2/resource/:id', async function (req, res) {
 // ======================================================
 // KUTUBXONA V2: SAQLANGAN KITOBLAR (SAVED BOOKS) & READING PROGRESS
 // ======================================================
+
+// ------------------------------------------------------
+// KITOBLAR KATALOGI: like (yoqtirish), o'qilganlar va mashhurlik (orqaga mos)
+// ------------------------------------------------------
+var bookLikesReady = null;
+function ensureBookLikes() {
+  if (!bookLikesReady) {
+    bookLikesReady = pool.query("CREATE TABLE IF NOT EXISTS book_likes (user_id INT NOT NULL, book_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, book_id))")
+      .catch(function (e) { console.warn('ensureBookLikes:', e.message); bookLikesReady = null; });
+  }
+  return bookLikesReady;
+}
+
+var libBooksHasI18n = null;
+async function booksI18nColumnSql() {
+  if (libBooksHasI18n === null) {
+    try {
+      var c = await pool.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'library_books' AND column_name = 'i18n'");
+      libBooksHasI18n = c.rows.length > 0;
+    } catch (e) { libBooksHasI18n = false; }
+  }
+  return libBooksHasI18n ? ', lb.i18n' : '';
+}
+
+app.post('/api/library/v2/books/toggle-like', async function (req, res) {
+  try {
+    await ensureBookLikes();
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+    var bookId = parseInt(req.body.book_id, 10);
+    if (!bookId) return res.status(400).json({ error: 'book_id majburiy' });
+    var ex = await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+    var liked;
+    if (ex.rows.length) { await pool.query('DELETE FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId]); liked = false; }
+    else { await pool.query('INSERT INTO book_likes (user_id, book_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, bookId]); liked = true; }
+    var c = await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId]);
+    return res.json({ ok: true, liked: liked, like_count: c.rows[0].c });
+  } catch (e) {
+    console.error('BOOK LIKE ERROR:', e.message);
+    return res.status(500).json({ error: 'Saqlashda xatolik' });
+  }
+});
+
+// Katalog: barcha nashr etilgan kitoblar (yengil maydonlar) + real faollik statistikasi
+app.post('/api/library/v2/books/catalog', async function (req, res) {
+  try {
+    await ensureBookLikes();
+    var user = req.body.initData ? await getOrCreateUser(req.body.initData).catch(function () { return null; }) : null;
+    var uid = user ? user.id : 0;
+    var i18nCol = await booksI18nColumnSql();
+    var q = `
+      SELECT lb.id, lb.title, lb.author, LEFT(COALESCE(lb.short_description, ''), 260) AS short_description,
+             lb.categories, lb.tags, lb.cover_url, lb.generated_cover_url, lb.page_count, lb.reading_time_minutes,
+             lb.access_type, lb.is_recommended, lb.language, lb.publication_year, lb.drive_file_id,
+             COALESCE(lb.view_count, 0) AS view_count, lb.created_at${i18nCol},
+             COALESCE((SELECT COUNT(*)::int FROM saved_books sb WHERE sb.book_id = lb.id), 0) AS saved_count,
+             COALESCE((SELECT COUNT(*)::int FROM book_likes bl WHERE bl.book_id = lb.id), 0) AS like_count,
+             COALESCE((SELECT COUNT(*)::int FROM reading_progress rp WHERE rp.book_id = lb.id), 0) AS read_count,
+             EXISTS(SELECT 1 FROM saved_books usb WHERE usb.book_id = lb.id AND usb.user_id = $1) AS is_saved,
+             EXISTS(SELECT 1 FROM book_likes ubl WHERE ubl.book_id = lb.id AND ubl.user_id = $1) AS is_liked,
+             COALESCE((SELECT rp2.page_number FROM reading_progress rp2 WHERE rp2.book_id = lb.id AND rp2.user_id = $1), 1) AS last_page
+      FROM library_books lb
+      WHERE lb.status = 'published'
+      ORDER BY lb.id DESC
+      LIMIT 2000`;
+    var r = await pool.query(q, [uid]);
+    var books = r.rows.map(function (b) {
+      b.pop_score = (Number(b.view_count) || 0) + (Number(b.read_count) || 0) * 2 + (Number(b.like_count) || 0) * 3 + (Number(b.saved_count) || 0) * 5;
+      return b;
+    });
+    return res.json({ ok: true, books: books, total: books.length });
+  } catch (err) {
+    console.error('BOOKS CATALOG ERROR:', err);
+    return res.status(500).json({ error: 'Kitoblar katalogini yuklashda xatolik' });
+  }
+});
 
 // Kitobni saqlash (Saved books / bookmark toggle)
 app.post('/api/library/v2/saved-books/toggle', async function (req, res) {

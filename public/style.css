@@ -10082,3 +10082,24 @@ html.light .h-scroll-arrow {
   .mcat-panel, .mcat-chevron, .mcat-card, .mcat-active-chip { transition: none !important; animation: none !important; }
   .mcat-ph-word::after { animation: none; }
 }
+
+/* ===== KITOBLAR KATALOGI (bk) — mcat bilan bir xil dizayn tili, muqova markazda ===== */
+.bk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .bk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .bk-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.bk-card { min-width: 0; display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s ease, border-color .2s; animation: mcatIn .35s ease both; }
+.bk-card:active { transform: scale(.98); }
+.bk-cover { position: relative; aspect-ratio: 3 / 4; background: var(--bg-surface-elevated); overflow: hidden; }
+.bk-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.bk-cover-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 38px; opacity: .45; }
+.bk-badge { position: absolute; top: 8px; left: 8px; z-index: 2; padding: 3px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.bk-badge-free { background: rgba(40,180,99,.88); color: #fff; }
+.bk-badge-pro { background: rgba(10,10,15,.72); color: #ffd36a; }
+.bk-card .mcat-card-actions { top: 8px; right: 8px; }
+.bk-author { -webkit-line-clamp: 1; }
+.bk-pop-card { flex: 0 0 118px; scroll-snap-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+.bk-pop-card:active { transform: scale(.97); }
+.bk-pop-cover { width: 118px; border-radius: 14px; border: 1px solid var(--border); }
+.bk-more { display: flex; justify-content: center; margin: 14px 0 4px; }
+.bk-detail-actions { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 359px) { .bk-pop-card, .bk-pop-cover { flex-basis: 108px; width: 108px; } .bk-grid { gap: 10px; } }

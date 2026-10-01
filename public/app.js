@@ -6545,6 +6545,7 @@ function openLibrarySection(slug) {
   if (slug === "books") {
     studentBooksPage = 1;
     studentBooksList = null;
+    resetBooksUi();
     loadStudentBooks();
   }
   if (slug === "materials") {
@@ -6957,61 +6958,567 @@ function renderTasksHomeHtml() {
 // ------------------------------------------------------
 // 2. KITOBLAR EKRANI (Books Screen — 500+ Books & Pagination)
 // ------------------------------------------------------
-async function loadStudentBooks() {
-  if (studentBooksLoading) return;
-  studentBooksLoading = true;
-  const listEl = document.getElementById("lib-section-list-container");
-  if (listEl) {
-    listEl.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 40px 0;">
-        <div class="spinner" style="margin: 0 auto 12px;"></div>
-        <div style="font-size: 13px; color: var(--text-secondary);">Kitoblar yuklanmoqda...</div>
-      </div>
-    `;
+// ======================================================
+// KITOBLAR KATALOGI: qidiruv → kategoriyalar → ko'p o'qilgan → barcha kitoblar
+// (Materiallar bo'limidagi UX arxitekturasi; o'quvchi/detail/saqlash mantiqi o'zgarmaydi)
+// ======================================================
+const BOOK_GROUPS = [
+  { id: "arxitektura", name: "Arxitektura", icon: "🏛️", re: /arxitektur|architect|bino|turar joy|jamoat|sanoat bino|zamonaviy|loyihalash/ },
+  { id: "interyer", name: "Interyer", icon: "🛋️", re: /interyer|interior|dizayn|design|mebel|furniture|yoritish|lighting|ergonomik|dekor/ },
+  { id: "revit", name: "Revit", icon: "🧩", re: /revit/ },
+  { id: "bim", name: "BIM", icon: "🗂️", re: /\bbim\b/ },
+  { id: "qurilish", name: "Qurilish", icon: "🏗️", re: /qurilish|construction|montaj|material|building/ },
+  { id: "konstruksiya", name: "Konstruktsiyalar", icon: "🔩", re: /konstruk|konstrukt|temir.?beton|beton|poydevor|karkas|metall|yog.och|tom konstruk|structur/ },
+  { id: "chizma", name: "Chizma va loyiha hujjatlari", icon: "📐", re: /chizma|drawing|rabochka|ishchi|detail|spetsifik|specification|loyiha hujjat|documentation/ },
+  { id: "shaharsozlik", name: "Shaharsozlik", icon: "🏙️", re: /shaharsoz|urban|landscape|peyzaj|planning|reja/ },
+  { id: "normativ", name: "Normativ va standartlar", icon: "📜", re: /normativ|shnq|qmq|kmk|gost|snip|standart|norma|terminlar/ },
+  { id: "tarix", name: "Tarix / Nazariya", icon: "🎨", re: /tarix|history|nazariya|theory|san.at|\bart\b|falsafa|philosoph/ },
+  { id: "kasb", name: "Professional rivojlanish", icon: "💼", re: /portfolio|professional|career|karyera|business|practice|biznes/ }
+];
+// Bir kitob bir nechta guruhga tegishli bo'lishi mumkin; "Barcha kitoblar"da birinchi (ustuvor) guruhida chiqadi
+const BOOK_GROUP_PRIORITY = ["normativ", "revit", "bim", "chizma", "konstruksiya", "shaharsozlik", "interyer", "qurilish", "arxitektura", "tarix", "kasb"];
+const BOOK_PH_WORDS = ["Arxitektura", "Interyer dizayn", "Revit", "BIM", "Qurilish", "Loyiha", "Konstruktsiya", "Chizma", "Arxitektura tarixi"];
+const BOOKS_PAGE_STEP = 24;
+
+const booksState = {
+  loaded: false, loading: false, failed: false,
+  books: [], list: [],
+  searchQuery: "", group: "all", sub: "all", sort: "popular",
+  panelOpen: false, visible: BOOKS_PAGE_STEP,
+  likedIds: new Set()
+};
+
+let _bkPhIdx = 0, _bkPhText = "", _bkPhPhase = "typing", _bkPhTimer = null, _bkSearchTimer = null;
+const _bkGroupCache = new Map();
+
+function bkNorm(s) {
+  return String(s == null ? "" : s).toLowerCase().replace(/[\u2018\u2019\u02bb\u02bc`\u00b4]/g, "'").replace(/\s+/g, " ").trim();
+}
+
+function bookCategoriesOf(b) {
+  if (Array.isArray(b.categories) && b.categories.length) return b.categories.filter(Boolean);
+  if (b.category) return [b.category];
+  return [];
+}
+
+function getBookGroupIds(b) {
+  const key = b.id + "|" + bookCategoriesOf(b).join(",") + "|" + (b.title || "");
+  if (_bkGroupCache.has(key)) return _bkGroupCache.get(key);
+  const cats = bkNorm(bookCategoriesOf(b).join(" "));
+  const tags = bkNorm((Array.isArray(b.tags) ? b.tags : []).join(" "));
+  const title = bkNorm(b.title);
+  // Administrator belgilagan kategoriya ustuvor; faqat u mos kelmasa sarlavha/teglardan aniqlanadi
+  let ids = BOOK_GROUPS.filter(g => g.re.test(cats)).map(g => g.id);
+  if (!ids.length) ids = BOOK_GROUPS.filter(g => g.re.test(tags + " " + title)).map(g => g.id);
+  ids.sort((a, z) => BOOK_GROUP_PRIORITY.indexOf(a) - BOOK_GROUP_PRIORITY.indexOf(z));
+  if (!ids.length) {
+    const own = bookCategoriesOf(b)[0];
+    ids = [own ? "cat:" + own : "boshqa"];
   }
+  _bkGroupCache.set(key, ids);
+  return ids;
+}
 
+function bookGroupMeta(id) {
+  const g = BOOK_GROUPS.find(x => x.id === id);
+  if (g) return g;
+  if (String(id).startsWith("cat:")) return { id, name: String(id).slice(4), icon: "📚" };
+  return { id: "boshqa", name: "Boshqa kitoblar", icon: "📚" };
+}
+
+function bookPopScore(b) {
+  if (b.pop_score != null) return Number(b.pop_score) || 0;
+  return (Number(b.view_count) || 0) + (Number(b.read_count) || 0) * 2 + (Number(b.like_count) || 0) * 3 + (Number(b.saved_count) || 0) * 5;
+}
+
+function bookCoverUrl(b) {
+  let u = b.preview_image_url || b.cover_url || b.generated_cover_url || "";
+  if (!u && b.drive_file_id) u = "https://drive.google.com/thumbnail?id=" + b.drive_file_id + "&sz=w800";
+  return u ? formatImageUrl(u) : "";
+}
+
+function isBookSaved(id) { return libraryV2SavedBookIds.has(Number(id)); }
+function isBookLiked(id) { return booksState.likedIds.has(Number(id)); }
+
+function sortBooksList(list, sortBy) {
+  const arr = list.slice();
+  const t = b => bkNorm(b.title);
+  if (sortBy === "reads") arr.sort((a, b) => (b.read_count || 0) - (a.read_count || 0) || bookPopScore(b) - bookPopScore(a) || b.id - a.id);
+  else if (sortBy === "saves") arr.sort((a, b) => (b.saved_count || 0) - (a.saved_count || 0) || b.id - a.id);
+  else if (sortBy === "likes") arr.sort((a, b) => (b.like_count || 0) - (a.like_count || 0) || b.id - a.id);
+  else if (sortBy === "newest") arr.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0) || b.id - a.id);
+  else if (sortBy === "name") arr.sort((a, b) => t(a).localeCompare(t(b), "uz"));
+  else arr.sort((a, b) => bookPopScore(b) - bookPopScore(a) || (b.is_recommended ? 1 : 0) - (a.is_recommended ? 1 : 0) || b.id - a.id);
+  return arr;
+}
+
+function matchBookSearch(b, q) {
+  const hay = bkNorm([b.title, b.author, bookCategoriesOf(b).join(" "), b.short_description, (Array.isArray(b.tags) ? b.tags.join(" ") : "")].join(" "));
+  return q.split(" ").filter(Boolean).every(tok => hay.includes(tok));
+}
+
+function filterBooksLocally() {
+  let list = booksState.books;
+  const g = booksState.group, sub = booksState.sub, q = bkNorm(booksState.searchQuery);
+  if (g !== "all") list = list.filter(b => getBookGroupIds(b).includes(g));
+  if (sub !== "all") list = list.filter(b => bookCategoriesOf(b).some(c => bkNorm(c) === bkNorm(sub)));
+  if (q) list = list.filter(b => matchBookSearch(b, q));
+  let sorted = sortBooksList(list, booksState.sort);
+  if (q && booksState.sort === "popular") {
+    const th = b => { const h = bkNorm(b.title + " " + (b.author || "")); return q.split(" ").filter(Boolean).every(tok => h.includes(tok)) ? 1 : 0; };
+    sorted = sorted.map((b, i) => ({ b, i, h: th(b) })).sort((x, y) => y.h - x.h || x.i - y.i).map(x => x.b);
+  }
+  booksState.list = sorted;
+}
+
+async function loadStudentBooks() {
+  if (booksState.loading) return;
+  booksState.loading = true;
+  booksState.failed = false;
   try {
-    const cat = librarySectionSelectedCategory;
-    const search = (librarySectionSearchQuery || "").trim();
-    const res = await api("/api/library/v2/books/search", {
-      page: studentBooksPage,
-      limit: 18,
-      category: cat === "Barchasi" ? "all" : cat,
-      search: search
-    });
-
+    const res = await api("/api/library/v2/books/catalog", {});
     if (res && res.ok && Array.isArray(res.books)) {
-      studentBooksList = res.books;
-      studentBooksTotal = res.total || res.books.length;
-      studentBooksTotalPages = res.total_pages || Math.ceil(studentBooksTotal / 18) || 1;
+      booksState.books = res.books;
+      studentBooksList = res.books;                 // detail sahifasi uchun tezkor ma'lumot
+      studentBooksTotal = res.books.length;
+      booksState.likedIds = new Set(res.books.filter(b => b.is_liked).map(b => Number(b.id)));
+      res.books.forEach(b => { if (b.is_saved) libraryV2SavedBookIds.add(Number(b.id)); });
     } else {
-      studentBooksList = (libraryV2Resources || []).filter(r => r.section_slug === "books" || r.type === "book");
-      studentBooksTotal = studentBooksList.length;
-      studentBooksTotalPages = 1;
-    }
-
-    if (!studentShelvesLoaded) {
-      loadStudentShelves();
+      throw new Error("catalog");
     }
   } catch (err) {
-    console.warn("loadStudentBooks error:", err);
-    studentBooksList = (libraryV2Resources || []).filter(r => r.section_slug === "books" || r.type === "book");
-    studentBooksTotal = studentBooksList.length;
-    studentBooksTotalPages = 1;
+    console.warn("loadStudentBooks (catalog) error:", err);
+    // Zaxira: eski qidiruv endpointi (cheklangan sahifa)
+    try {
+      const old = await api("/api/library/v2/books/search", { page: 1, limit: 60, category: "all", search: "" });
+      if (old && old.ok && Array.isArray(old.books)) {
+        booksState.books = old.books;
+        studentBooksList = old.books;
+        studentBooksTotal = old.total || old.books.length;
+      } else booksState.failed = true;
+    } catch (e2) { booksState.failed = true; }
   } finally {
-    studentBooksLoading = false;
-    if (libraryActiveSection === "books") {
-      const listEl = document.getElementById("lib-section-list-container");
-      const searchField = document.querySelector(".lib-search-field");
-      if (listEl && searchField && document.activeElement === searchField) {
-        listEl.innerHTML = studentBooksList.length
-          ? studentBooksList.map(renderBookCardHtml).join("")
-          : `<div class="empty-box" style="grid-column: 1 / -1;">Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.</div>`;
-      } else {
-        render();
-      }
-    }
+    booksState.loaded = true;
+    booksState.loading = false;
+    filterBooksLocally();
+    loadBooksShelvesOnce();
+    if (libraryActiveSection === "books") render();
   }
+}
+
+let _bkShelvesInFlight = false;
+function loadBooksShelvesOnce() {
+  if (_bkShelvesInFlight || studentShelvesLoaded) return;
+  _bkShelvesInFlight = true;
+  Promise.resolve(loadStudentShelves()).finally(() => { _bkShelvesInFlight = false; });
+}
+
+function resetBooksUi() {
+  booksState.searchQuery = "";
+  booksState.group = "all";
+  booksState.sub = "all";
+  booksState.sort = "popular";
+  booksState.panelOpen = false;
+  booksState.visible = BOOKS_PAGE_STEP;
+  booksState.loaded = false;
+}
+
+// ---- yangilash (sahifani qayta chizmasdan) ----
+function updateBooksUiInPlace() {
+  const root = document.querySelector(".bk-container");
+  if (!root || libraryActiveSection !== "books") { if (libraryActiveSection === "books") render(); return; }
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set("bk-panel-inner", renderBooksPanelInnerHtml());
+  set("bk-active-filter", renderBooksActiveFilterHtml());
+  set("bk-saved-wrap", renderBooksSavedShelfHtml());
+  set("bk-popular-wrap", renderBooksPopularHtml());
+  set("bk-catalog-wrap", renderBooksCatalogHtml());
+  const cw = document.getElementById("bk-search-clear");
+  if (cw) cw.innerHTML = booksState.searchQuery ? `<button class="lib-search-clear-btn" onclick="clearBookSearch()">✕</button>` : "";
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.toggle("has-filter", booksState.group !== "all");
+}
+
+function setBookSearch(q) {
+  booksState.searchQuery = q;
+  clearTimeout(_bkSearchTimer);
+  _bkSearchTimer = setTimeout(() => { booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }, 120);
+}
+function clearBookSearch() {
+  booksState.searchQuery = "";
+  const inp = document.getElementById("lib-books-search-input");
+  if (inp) inp.value = "";
+  booksState.visible = BOOKS_PAGE_STEP;
+  filterBooksLocally(); updateBooksUiInPlace();
+}
+function setBookGroup(id) {
+  haptic("light");
+  booksState.group = id; booksState.sub = "all"; booksState.panelOpen = false; booksState.visible = BOOKS_PAGE_STEP;
+  const panel = document.getElementById("bk-panel");
+  if (panel) panel.classList.remove("open");
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.remove("open");
+  filterBooksLocally(); updateBooksUiInPlace();
+  const anchor = document.getElementById("bk-active-filter");
+  if (anchor && id !== "all") {
+    const top = anchor.getBoundingClientRect().top + (window.scrollY || 0) - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
+}
+function setBookSub(name) { haptic("light"); booksState.sub = name; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function clearBookGroupFilter() { haptic("light"); booksState.group = "all"; booksState.sub = "all"; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function setBookSort(v) { booksState.sort = v; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function showMoreBooks() { haptic("light"); booksState.visible += BOOKS_PAGE_STEP; updateBooksUiInPlace(); }
+function toggleBooksPanel() {
+  haptic("light");
+  booksState.panelOpen = !booksState.panelOpen;
+  const panel = document.getElementById("bk-panel");
+  if (panel) panel.classList.toggle("open", booksState.panelOpen);
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.toggle("open", booksState.panelOpen);
+}
+
+// ---- save / like (optimistik) ----
+function _bkPatchBtn(attr, id, on, count) {
+  document.querySelectorAll(`[${attr}="${Number(id)}"]`).forEach(el => {
+    el.classList.toggle("on", on);
+    const c = el.querySelector(".mcat-count");
+    if (c) c.textContent = count > 0 ? count : "";
+  });
+}
+
+async function toggleBookReaction(id, kind, e) {
+  if (e) e.stopPropagation();
+  id = Number(id);
+  const b = booksState.books.find(x => Number(x.id) === id);
+  const isSave = kind === "save";
+  const was = isSave ? isBookSaved(id) : isBookLiked(id);
+  haptic(was ? "light" : "medium");
+  const key = isSave ? "saved_count" : "like_count";
+  const apply = on => {
+    const set = isSave ? libraryV2SavedBookIds : booksState.likedIds;
+    if (on) set.add(id); else set.delete(id);
+    if (b) b[key] = Math.max(0, (Number(b[key]) || 0) + (on === was ? 0 : (on ? 1 : -1)));
+    _bkPatchBtn(isSave ? "data-bk-save" : "data-bk-like", id, on, b ? b[key] : 0);
+    const dl = document.getElementById(isSave ? `lib-bm-btn-${id}` : `bk-like-btn-${id}`);
+    if (dl) dl.classList.toggle("bookmarked", on);
+  };
+  apply(!was);
+  try {
+    const res = await api(isSave ? "/api/library/v2/saved-books/toggle" : "/api/library/v2/books/toggle-like", { book_id: id });
+    if (!res || !res.ok) throw new Error("fail");
+    if (isSave) { studentShelvesLoaded = false; refreshBooksSavedShelf(); }
+    if (b) {
+      b[key] = isSave ? (res.saved_count != null ? res.saved_count : b[key]) : (res.like_count != null ? res.like_count : b[key]);
+      _bkPatchBtn(isSave ? "data-bk-save" : "data-bk-like", id, isSave ? !!res.saved : !!res.liked, b[key]);
+    }
+  } catch (err) {
+    apply(was);
+    showToast("Saqlab bo‘lmadi, qayta urinib ko‘ring");
+  }
+}
+
+async function refreshBooksSavedShelf() {
+  try {
+    const savedRes = await api("/api/library/v2/saved-books/list", {}, "POST");
+    if (savedRes && savedRes.ok && Array.isArray(savedRes.books)) {
+      studentSavedBooksList = savedRes.books;
+      studentShelvesLoaded = true;
+      const el = document.getElementById("bk-saved-wrap");
+      if (el && libraryActiveSection === "books") el.innerHTML = renderBooksSavedShelfHtml();
+    }
+  } catch (e) {}
+}
+
+function bookReactionBtnHtml(id, kind, count) {
+  const isLike = kind === "like";
+  const on = isLike ? isBookLiked(id) : isBookSaved(id);
+  const icon = isLike
+    ? `<svg viewBox="0 0 24 24" width="15" height="15" class="mcat-ico"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.5 2.8 5 6.2 5c2 0 3.3 1 3.8 2.1C10.5 6 11.8 5 13.8 5c3.4 0 5.2 3.5 3.8 6.8C19.5 16.4 12 21 12 21z" transform="translate(1 0)"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="15" height="15" class="mcat-ico"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>`;
+  return `<button type="button" class="mcat-icon-btn ${on ? "on" : ""}" ${isLike ? "data-bk-like" : "data-bk-save"}="${Number(id)}" aria-label="${isLike ? "Yoqdi" : "Saqlash"}" onclick="toggleBookReaction(${Number(id)}, '${kind}', event)">${icon}<span class="mcat-count">${count > 0 ? count : ""}</span></button>`;
+}
+
+// ---- animatsiyali placeholder (yozuv effekti) ----
+function ensureBooksPlaceholderTicker() {
+  if (_bkPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("bk-ph-word");
+    const inp = document.getElementById("lib-books-search-input");
+    if (!el || document.hidden || (inp && inp.value)) { _bkPhTimer = setTimeout(step, 400); return; }
+    const word = BOOK_PH_WORDS[_bkPhIdx % BOOK_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) { _bkPhText = word; el.textContent = word; _bkPhIdx++; _bkPhTimer = setTimeout(step, 2400); return; }
+    if (_bkPhPhase === "typing") {
+      _bkPhText = word.slice(0, _bkPhText.length + 1); delay = 85 + Math.random() * 60;
+      if (_bkPhText.length >= word.length) { _bkPhPhase = "hold"; delay = 1500; }
+    } else if (_bkPhPhase === "hold") { _bkPhPhase = "deleting"; delay = 60; }
+    else {
+      _bkPhText = _bkPhText.slice(0, -1); delay = 38;
+      if (!_bkPhText.length) { _bkPhPhase = "typing"; _bkPhIdx++; delay = 320; }
+    }
+    el.textContent = _bkPhText;
+    _bkPhTimer = setTimeout(step, delay);
+  };
+  _bkPhTimer = setTimeout(step, 250);
+}
+
+// ---- UI bo'laklari ----
+function getBookGroupsWithCounts() {
+  const map = new Map();
+  booksState.books.forEach(b => getBookGroupIds(b).forEach(id => {
+    if (!map.has(id)) map.set(id, { ...bookGroupMeta(id), count: 0 });
+    map.get(id).count++;
+  }));
+  const ordered = [];
+  BOOK_GROUPS.forEach(g => { if (map.has(g.id)) ordered.push(map.get(g.id)); });
+  map.forEach((g, id) => { if (!BOOK_GROUPS.some(x => x.id === id)) ordered.push(g); });
+  return ordered;
+}
+
+function getBookSubcategories(groupId) {
+  const inGroup = booksState.books.filter(b => getBookGroupIds(b).includes(groupId));
+  const counts = new Map();
+  inGroup.forEach(b => bookCategoriesOf(b).forEach(c => counts.set(c, (counts.get(c) || 0) + 1)));
+  if (counts.size < 2 || inGroup.length < 6) return [];
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n }));
+}
+
+function renderBooksPanelInnerHtml() {
+  const groups = getBookGroupsWithCounts();
+  const active = booksState.group;
+  return `
+    <div class="mcat-panel-title">Kategoriyalar</div>
+    <div class="mcat-group-grid">
+      <button type="button" class="mcat-group-tile ${active === "all" ? "active" : ""}" onclick="setBookGroup('all')">
+        <span class="mcat-group-ico">📚</span>
+        <span class="mcat-group-name">Barcha kitoblar</span>
+        <span class="mcat-group-count">${booksState.books.length}</span>
+      </button>
+      ${groups.map(g => `
+        <button type="button" class="mcat-group-tile ${active === g.id ? "active" : ""}" onclick="setBookGroup('${escapeJsString(g.id)}')">
+          <span class="mcat-group-ico">${escapeHtml(g.icon || "📚")}</span>
+          <span class="mcat-group-name">${escapeHtml(g.name)}</span>
+          <span class="mcat-group-count">${g.count}</span>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderBooksActiveFilterHtml() {
+  const id = booksState.group;
+  if (id === "all") return "";
+  const g = bookGroupMeta(id);
+  const subs = getBookSubcategories(id);
+  return `
+    <div class="mcat-active">
+      <div class="mcat-active-chip">
+        <span class="mcat-active-label">Kategoriya:</span>
+        <span class="mcat-active-name">${escapeHtml(g.name)}</span>
+        <button type="button" class="mcat-active-x" aria-label="Filtrni olib tashlash" onclick="clearBookGroupFilter()">×</button>
+      </div>
+    </div>
+    ${subs.length ? `
+      <div class="mcat-sub-row">
+        <button type="button" class="mcat-chip ${booksState.sub === "all" ? "active" : ""}" onclick="setBookSub('all')">Hammasi</button>
+        ${subs.map(s => `<button type="button" class="mcat-chip ${bkNorm(booksState.sub) === bkNorm(s.name) ? "active" : ""}" onclick="setBookSub('${escapeJsString(s.name)}')">${escapeHtml(s.name)} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
+      </div>` : ""}`;
+}
+
+function renderBooksSavedShelfHtml() {
+  const filtering = booksState.group !== "all" || bkNorm(booksState.searchQuery);
+  if (filtering || !studentSavedBooksList.length) return "";
+  return `
+    <div class="mcat-section-head"><h2 class="mcat-h2">Saqlangan kitoblarim <span class="mcat-h2-n">${studentSavedBooksList.length}</span></h2></div>
+    <div class="lib-shelf-scroll">${studentSavedBooksList.map(renderSavedBookShelfCard).join("")}</div>`;
+}
+
+function renderBooksPopularHtml() {
+  if (booksState.group !== "all" || bkNorm(booksState.searchQuery)) return "";
+  let pop = booksState.books.filter(b => bookPopScore(b) > 0).sort((a, b) => bookPopScore(b) - bookPopScore(a) || b.id - a.id).slice(0, 10);
+  if (pop.length < 5) {
+    const ids = new Set(pop.map(b => b.id));
+    booksState.books.filter(b => b.is_recommended && !ids.has(b.id)).forEach(b => { if (pop.length < 8) pop.push(b); });
+  }
+  if (!pop.length) return "";
+  return `
+    <div class="mcat-section-head"><h2 class="mcat-h2">Ko‘p o‘qilgan</h2></div>
+    <div class="mcat-hscroll">
+      ${pop.map(b => {
+        const cover = bookCoverUrl(b);
+        const cat = bookCategoriesOf(b)[0] || "";
+        return `
+          <div class="bk-pop-card" onclick="openBookDetail(${Number(b.id)})">
+            <div class="bk-cover bk-pop-cover">
+              <span class="bk-cover-ph">📖</span>
+              ${cover ? `<img src="${escapeHtml(cover)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';" />` : ""}
+              ${b.access_type === "pro" ? `<span class="bk-badge bk-badge-pro">PRO 🔒</span>` : ""}
+            </div>
+            <div class="mcat-pop-name">${escapeHtml(b.title)}</div>
+            <div class="mcat-pop-cat">${escapeHtml(b.author || cat)}</div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderBookCatalogCardHtml(b) {
+  const cover = bookCoverUrl(b);
+  const cat = bookCategoriesOf(b)[0] || "Kitob";
+  const pro = b.access_type === "pro";
+  const pages = Number(b.page_count) > 0 ? `<span>${Number(b.page_count)} bet</span>` : "";
+  const time = Number(b.reading_time_minutes) > 0 ? `<span>${escapeHtml(formatReadingTimeMinutes(b.reading_time_minutes))}</span>` : "";
+  const meta = [pages, time].filter(Boolean).join(" • ");
+  return `
+    <div class="bk-card" onclick="openBookDetail(${Number(b.id)})">
+      <div class="bk-cover">
+        <span class="bk-cover-ph">📖</span>
+        ${cover ? `<img src="${escapeHtml(cover)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';" />` : ""}
+        <span class="bk-badge ${pro ? "bk-badge-pro" : "bk-badge-free"}">${pro ? "PRO 🔒" : "FREE"}</span>
+        <div class="mcat-card-actions">
+          ${bookReactionBtnHtml(b.id, "like", Number(b.like_count) || 0)}
+          ${bookReactionBtnHtml(b.id, "save", Number(b.saved_count) || 0)}
+        </div>
+      </div>
+      <div class="mcat-card-body">
+        <div class="mcat-card-cat">${escapeHtml(cat)}</div>
+        <h3 class="mcat-card-title">${escapeHtml(b.title)}</h3>
+        ${b.author ? `<p class="mcat-card-desc bk-author">${escapeHtml(b.author)}</p>` : ""}
+        ${meta ? `<div class="mcat-card-meta">${meta}</div>` : ""}
+      </div>
+    </div>`;
+}
+
+function renderBooksCatalogHtml() {
+  const list = booksState.list;
+  const flat = booksState.group !== "all" || bkNorm(booksState.searchQuery);
+  const sort = booksState.sort;
+  const head = `
+    <div class="mcat-section-head">
+      <h2 class="mcat-h2">${flat ? "Kitoblar" : "Barcha kitoblar"} <span class="mcat-h2-n">${list.length}</span></h2>
+      <label class="mcat-sort-wrap">
+        <span class="mcat-sr">Saralash</span>
+        <select class="mcat-sort" onchange="setBookSort(this.value)" aria-label="Saralash">
+          <option value="popular" ${sort === "popular" ? "selected" : ""}>Mashhurligi</option>
+          <option value="reads" ${sort === "reads" ? "selected" : ""}>Ko‘p o‘qilgan</option>
+          <option value="saves" ${sort === "saves" ? "selected" : ""}>Ko‘p saqlangan</option>
+          <option value="likes" ${sort === "likes" ? "selected" : ""}>Ko‘p yoqtirilgan</option>
+          <option value="newest" ${sort === "newest" ? "selected" : ""}>Yangi qo‘shilgan</option>
+          <option value="name" ${sort === "name" ? "selected" : ""}>A–Z</option>
+        </select>
+      </label>
+    </div>`;
+
+  if (!list.length) {
+    return head + `
+      <div class="mcat-empty">
+        <div class="mcat-empty-ico">🔍</div>
+        <div class="mcat-empty-title">Kitob topilmadi</div>
+        <div class="mcat-empty-sub">Boshqa nom, muallif yoki kategoriya bilan qidirib ko‘ring.</div>
+      </div>`;
+  }
+
+  if (flat) {
+    const shown = list.slice(0, booksState.visible);
+    return head + `<div class="bk-grid">${shown.map(renderBookCatalogCardHtml).join("")}</div>` +
+      (list.length > shown.length ? `<div class="bk-more"><button type="button" class="mcat-chip" onclick="showMoreBooks()">Yana ko‘rsatish (${list.length - shown.length})</button></div>` : "");
+  }
+
+  // Guruhlar bo'yicha: har bir kitob o'zining ustuvor guruhida bir marta chiqadi
+  const byGroup = new Map();
+  list.forEach(b => {
+    const id = getBookGroupIds(b)[0];
+    if (!byGroup.has(id)) byGroup.set(id, []);
+    byGroup.get(id).push(b);
+  });
+  const ordered = [];
+  BOOK_GROUPS.forEach(g => { if (byGroup.has(g.id)) ordered.push([g.id, byGroup.get(g.id)]); });
+  byGroup.forEach((items, id) => { if (!BOOK_GROUPS.some(x => x.id === id)) ordered.push([id, items]); });
+
+  return head + ordered.map(([id, items]) => {
+    const g = bookGroupMeta(id);
+    const shown = items.slice(0, 6);
+    return `
+      <section class="mcat-group-section">
+        <div class="mcat-group-head">
+          <div class="mcat-group-title"><span>${escapeHtml(g.icon || "📚")}</span> ${escapeHtml(g.name)} <span class="mcat-h2-n">${items.length}</span></div>
+          <button type="button" class="mcat-link" onclick="setBookGroup('${escapeJsString(id)}')">Hammasi ›</button>
+        </div>
+        <div class="bk-grid">${shown.map(renderBookCatalogCardHtml).join("")}</div>
+      </section>`;
+  }).join("");
+}
+
+function renderBooksSectionHtml() {
+  if (!booksState.loaded && !booksState.loading) setTimeout(loadStudentBooks, 30);
+  if (!studentShelvesLoaded) setTimeout(loadBooksShelvesOnce, 60);
+  ensureBooksPlaceholderTicker();
+
+  const head = `
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>`;
+
+  if (!booksState.loaded) {
+    return `
+      <div class="page lib-container lib-page-enter bk-container">
+        ${head}
+        <div style="padding: 80px 20px; text-align: center;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Kitoblar yuklanmoqda...</div>
+        </div>
+      </div>`;
+  }
+
+  const search = booksState.searchQuery || "";
+  const open = !!booksState.panelOpen;
+  return `
+    <div class="page lib-container lib-page-enter bk-container mcat">
+      ${head}
+
+      <div class="mcat-head">
+        <h1 class="mcat-title">Kitoblar</h1>
+        <p class="mcat-sub">Arxitektura, interyer, qurilish, Revit, BIM va loyihalash bo‘yicha foydali kitoblar va professional manbalar.</p>
+      </div>
+
+      <div class="learning-entry-banner" onclick="openLearningCenter()" style="margin-bottom:12px;">
+        <div class="learning-entry-left">
+          <div class="learning-entry-icon">🏛️</div>
+          <div>
+            <div class="learning-entry-title">Arxitektura va RD O‘rganish Markazi</div>
+            <div class="learning-entry-sub">9 bosqichli bilimlar bazasi, ShNQ/QMQ, GOST, spetsifikatsiyalar</div>
+          </div>
+        </div>
+        <div class="learning-entry-arrow">O‘rganish →</div>
+      </div>
+
+      <div class="mcat-search">
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+        <input id="lib-books-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
+               value="${escapeHtml(search)}" oninput="setBookSearch(this.value)" />
+        <div class="mcat-ph" aria-hidden="true"><span>Kitob qidiring...</span> <span class="mcat-ph-word" id="bk-ph-word">${escapeHtml(_bkPhText)}</span></div>
+        <span id="bk-search-clear">${search ? `<button class="lib-search-clear-btn" onclick="clearBookSearch()">✕</button>` : ""}</span>
+      </div>
+
+      <button type="button" id="bk-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${booksState.group !== "all" ? "has-filter" : ""}" onclick="toggleBooksPanel()">
+        <span class="mcat-filter-left">
+          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          Kategoriyalar bo‘yicha saralash
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div id="bk-panel" class="mcat-panel ${open ? "open" : ""}">
+        <div class="mcat-panel-clip"><div class="mcat-panel-inner" id="bk-panel-inner">${renderBooksPanelInnerHtml()}</div></div>
+      </div>
+
+      <div id="bk-active-filter">${renderBooksActiveFilterHtml()}</div>
+      <div id="bk-saved-wrap">${renderBooksSavedShelfHtml()}</div>
+      <div id="bk-popular-wrap">${renderBooksPopularHtml()}</div>
+      <div id="bk-catalog-wrap">${booksState.failed && !booksState.books.length ? `
+        <div class="mcat-empty"><div class="mcat-empty-ico">⚠️</div><div class="mcat-empty-title">Xatolik yuz berdi</div>
+        <div class="mcat-empty-sub">Internet aloqasini tekshiring yoki qayta urinib ko‘ring</div>
+        <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="booksState.loaded=false; loadStudentBooks();">🔄 Qayta yuklash</button></div>` : renderBooksCatalogHtml()}</div>
+    </div>`;
 }
 
 async function loadStudentShelves() {
@@ -7088,162 +7595,6 @@ function renderTopSavedBookShelfCard(book) {
         <div class="lib-shelf-name" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</div>
         <div class="lib-shelf-author">${escapeHtml(author)}</div>
       </div>
-    </div>
-  `;
-}
-
-function renderBooksSectionHtml() {
-  const cats = SECTION_CATEGORIES.books;
-  const cat = librarySectionSelectedCategory;
-  const isSearching = Boolean((librarySectionSearchQuery || "").trim());
-
-  let books = Array.isArray(studentBooksList) ? studentBooksList : libraryV2Resources.filter(r =>
-    r.section_slug === "books" ||
-    r.type === "book" ||
-    r.type === "normative" ||
-    r.type === "guide"
-  );
-
-  // Standart 3 ta asosiy kitob zaxirasi
-  if (!books.length && !studentBooksLoading) {
-    books = (state.open_resources || []).filter(r => r.type === "book").map(r => ({
-      ...r,
-      section_slug: "books",
-      author: "Autodesk / O'zbekiston",
-      language: "UZ",
-      page_count: 240,
-      what_you_learn: ["Revit dasturi interfeysi va asosiy tushunchalari", "BIM modellashtirish va listlarni sozlash", "ShNQ va KMK me'yoriy talablari"]
-    }));
-  }
-
-  // Agar birinchi marta kirilayotgan bo'lsa va hali yuklanmagan bo'lsa
-  if (studentBooksList === null && !studentBooksLoading) {
-    setTimeout(loadStudentBooks, 50);
-  }
-  if (!studentShelvesLoaded) {
-    setTimeout(loadStudentShelves, 60);
-  }
-
-  const paginationHtml = studentBooksTotalPages > 1 ? `
-    <div class="lib-books-pagination">
-      <button class="lib-page-btn" ${studentBooksPage <= 1 ? "disabled" : ""} onclick="changeStudentBooksPage(-1)">
-        ◀ Oldingi
-      </button>
-      <span class="lib-page-indicator">${studentBooksPage} / ${studentBooksTotalPages}</span>
-      <button class="lib-page-btn" ${studentBooksPage >= studentBooksTotalPages ? "disabled" : ""} onclick="changeStudentBooksPage(1)">
-        Keyingi ▶
-      </button>
-    </div>
-  ` : "";
-
-  const totalDesc = studentBooksTotal > 0 ? `${studentBooksTotal} ta kitob mavjud` : "500+ elektron kitoblar va qo'llanmalar";
-
-  return `
-    <div class="page lib-container lib-page-enter">
-      <!-- 1. HEADER -->
-      <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ${libIcons.back('lib-back-svg', 16)} Kutubxona
-      </div>
-
-      <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">Kitoblar</h2>
-        <p class="lib-page-desc">Revit, BIM standartlari, arxitektura va ShNQ rasmiy qo'llanmalari (${totalDesc})</p>
-      </div>
-
-      <!-- O'RGANISH KNOWLEDGE CENTER BANNER -->
-      <div class="learning-entry-banner" onclick="openLearningCenter()" style="margin-bottom:14px;">
-        <div class="learning-entry-left">
-          <div class="learning-entry-icon">🏛️</div>
-          <div>
-            <div class="learning-entry-title">Arxitektura va RD O‘rganish Markazi</div>
-            <div class="learning-entry-sub">9 bosqichli bilimlar bazasi, ShNQ/QMQ, GOST, spetsifikatsiyalar</div>
-          </div>
-        </div>
-        <div class="learning-entry-arrow">O‘rganish →</div>
-      </div>
-
-      <!-- 2. SEARCH & SORT -->
-      <div class="lib-filter-bar">
-        <div class="lib-search-input-wrap">
-          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
-          <input type="text"
-                 class="apple-input lib-search-field"
-                 placeholder="Kitob, muallif yoki mavzu qidiring..."
-                 value="${escapeHtml(librarySectionSearchQuery)}"
-                 oninput="setLibrarySectionSearch(this.value)">
-        </div>
-        <select class="apple-input lib-sort-select" onchange="setLibrarySectionSort(this.value)">
-          <option value="latest" ${librarySectionSort === "latest" ? "selected" : ""}>Eng yangi</option>
-          <option value="popular" ${librarySectionSort === "popular" ? "selected" : ""}>Ko‘p o‘qilgan</option>
-        </select>
-      </div>
-
-      <!-- 3. KATEGORIYA CHIPLARI -->
-      <div class="category-chips lib-chips-row">
-        ${cats.map(c => `
-          <div class="chip ${cat === c ? "active" : ""}" onclick="setLibrarySectionCategory('${escapeJsString(c)}')">
-            ${escapeHtml(c)}
-          </div>
-        `).join("")}
-      </div>
-
-      <!-- QIDIRUV BO'LMAGANDA: 4. SAQLANGANLAR VA 5. ENG KO'P SAQLANGAN -->
-      ${!isSearching && cat === "Barchasi" ? `
-        <!-- 4. SAQLANGAN KITOBLARIM -->
-        <div class="lib-shelf-section">
-          <div class="lib-shelf-header">
-            <div class="lib-shelf-title">
-              <span>Saqlangan kitoblarim</span>
-              ${studentSavedBooksList.length ? `<span style="font-size:12px; color:var(--text-secondary); font-weight:500;">(${studentSavedBooksList.length})</span>` : ""}
-            </div>
-          </div>
-          ${studentSavedBooksList.length ? `
-            <div class="lib-shelf-scroll">
-              ${studentSavedBooksList.map(renderSavedBookShelfCard).join("")}
-            </div>
-          ` : `
-            <div class="lib-shelf-empty">
-              Saqlangan kitoblaringiz shu yerda ko‘rinadi
-            </div>
-          `}
-        </div>
-
-        <!-- 5. ENG KO'P SAQLANGAN -->
-        ${studentTopSavedBooksList.length ? `
-          <div class="lib-shelf-section">
-            <div class="lib-shelf-header">
-              <div class="lib-shelf-title">
-                <span>Eng ko‘p saqlangan</span>
-              </div>
-            </div>
-            <div class="lib-shelf-scroll">
-              ${studentTopSavedBooksList.map(renderTopSavedBookShelfCard).join("")}
-            </div>
-          </div>
-        ` : ""}
-      ` : ""}
-
-      <!-- 6. BARCHA KITOBLAR -->
-      <div class="lib-shelf-header" style="margin-top: ${isSearching || cat !== 'Barchasi' ? '8px' : '16px'};">
-        <div class="lib-shelf-title">
-          <span>${isSearching ? "Qidiruv natijalari" : (cat !== "Barchasi" ? cat : "Barcha kitoblar")}</span>
-        </div>
-      </div>
-
-      <div id="lib-section-list-container" class="lib-books-grid">
-        ${studentBooksLoading ? `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 0;">
-            <div class="spinner" style="margin: 0 auto 12px;"></div>
-            <div style="font-size: 13px; color: var(--text-secondary);">Kitoblar yuklanmoqda...</div>
-          </div>
-        ` : (books.length ? books.map(renderBookCardHtml).join("") : `
-          <div class="empty-box" style="grid-column: 1 / -1;">
-            Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.
-          </div>
-        `)}
-      </div>
-
-      ${paginationHtml}
     </div>
   `;
 }
@@ -9179,6 +9530,8 @@ async function openBookDetail(resId) {
   const pages = book.page_count ? `${book.page_count} bet` : (book.drive_file_size || "PDF Kitob");
   const lang = (book.language || "UZ").toUpperCase();
   const isBookmarked = libraryV2Bookmarks.has(Number(book.id));
+  if (typeof book.is_liked === "boolean") { if (book.is_liked) booksState.likedIds.add(Number(book.id)); else booksState.likedIds.delete(Number(book.id)); }
+  const isLikedBook = booksState.likedIds.has(Number(book.id));
 
   let whatLearn = [];
   if (book.content_data) {
@@ -9206,9 +9559,14 @@ async function openBookDetail(resId) {
           <div class="lib-back-nav" style="margin:0;" onclick="closeDetail()">
             ${libIcons.back('lib-back-svg', 16)} Orqaga
           </div>
+          <div class="bk-detail-actions">
+            <button id="bk-like-btn-${Number(book.id)}" class="lib-bookmark-toggle-btn ${isLikedBook ? "bookmarked" : ""}" aria-label="Yoqdi" onclick="toggleBookReaction(${Number(book.id)}, 'like', event)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="${isLikedBook ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.5 2.8 5 6.2 5c2 0 3.3 1 3.8 2.1C10.5 6 11.8 5 13.8 5c3.4 0 5.2 3.5 3.8 6.8C19.5 16.4 12 21 12 21z" transform="translate(1 0)"/></svg>
+            </button>
           <button id="lib-bm-btn-${Number(book.id)}" class="lib-bookmark-toggle-btn ${isBookmarked ? "bookmarked" : ""}" onclick="toggleLibraryBookmark(${Number(book.id)}, event)" title="Saqlash">
             ${libIcons.bookmark('lib-bm-svg', 20, isBookmarked)}
           </button>
+          </div>
         </div>
 
         <div class="lib-detail-hero-card">

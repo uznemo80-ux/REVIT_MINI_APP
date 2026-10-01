@@ -55,3 +55,5 @@ html[dir="rtl"] .mcat-active-chip { padding: 0 14px 0 6px }
 html[dir="rtl"] .mcat-h2-n { margin-right: 4px; margin-left: 0 }
 html[dir="rtl"] .mcat-sort { padding: 0 12px 0 30px }
 html[dir="rtl"] .mcat-card-actions { left: 8px; right: auto }
+html[dir="rtl"] .bk-badge { right: 8px; left: auto }
+html[dir="rtl"] .bk-card .mcat-card-actions { left: 8px; right: auto }
