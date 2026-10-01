@@ -8123,24 +8123,407 @@ function matchMaterialSearch(m, search) {
 // ======================================================
 // MATERIALLAR KATALOGI: guruhlar, saralash, mashhurlik (mavjud ma'lumotlarga tegmaydi)
 // ======================================================
+
+// ======================================================
+// MATERIALLAR KATALOGI MULTILINGUAL (UZ / RU / EN)
+// ======================================================
+
+function getMaterialsLang() {
+  try {
+    const l = localStorage.getItem("materials_lang") || localStorage.getItem("yosh_lang");
+    if (l === "ru" || l === "uz" || l === "en") return l;
+  } catch (e) {}
+  return "ru"; // Russian default as requested
+}
+
+function setMaterialsLang(lang) {
+  if (lang !== "ru" && lang !== "uz" && lang !== "en") lang = "ru";
+  try {
+    localStorage.setItem("materials_lang", lang);
+    localStorage.setItem("yosh_lang", lang);
+  } catch (e) {}
+  materialsState.currentLang = lang;
+  if (window.I18N && typeof window.I18N.setLanguage === "function") {
+    try { window.I18N.setLanguage(lang); } catch (e) {}
+  }
+  if (currentView && currentView.type === "material_detail" && activeMaterialDetail) {
+    currentView.html = renderMaterialDetailPage(activeMaterialDetail);
+    render();
+  } else if (libraryActiveSection === "materials") {
+    render();
+  }
+}
+
+const MAT_I18N = {
+  ru: {
+    lang_name: "Русский",
+    flag: "🇷🇺",
+    search_ph: "Поиск материалов (название, бренд, артикул)...",
+    search_short: "Поиск материалов...",
+    all: "Все",
+    architecture: "Архитектура",
+    interior: "Интерьер",
+    frequent: "Популярные",
+    newest: "Сначала новые",
+    name_asc: "По алфавиту (А–Я)",
+    views: "По популярности",
+    saves: "Часто сохраняемые",
+    popular_score: "По популярности",
+    details: "Подробнее",
+    market_price: "Рыночная цена",
+    manufacturer: "Производитель",
+    product_code: "Артикул / Код",
+    category_label: "Категория",
+    scope_label: "Направление",
+    categories_title: "Категории материалов",
+    all_materials: "Все материалы",
+    extra_filters: "Дополнительные фильтры",
+    filter_verified: "✓ Проверено",
+    filter_moisture: "💧 Влагостойкий",
+    filter_fire: "🔥 НГ / КМ0",
+    filter_interior: "🛋️ Интерьер",
+    filter_arch: "🏛️ Архитектура",
+    all_chip: "Все",
+    back_catalog: "Каталог материалов",
+    tools_needed: "🧰 Необходимые инструменты:",
+    materials_needed: "📦 Сопутствующие материалы:",
+    sec_about: "📝 Описание материала",
+    sec_types: "📐 Виды и варианты",
+    sec_specs: "📊 Технические характеристики",
+    sec_pros_cons: "⚖️ Преимущества и ограничения",
+    sec_arch_note: "📐 ЗАМЕТКА АРХИТЕКТОРУ И ДИЗАЙНЕРУ (BIM / Revit / Чертежи)",
+    sec_install: "🛠️ Инструкция по монтажу и установке",
+    sec_sources: "🔗 Официальные источники и каталоги",
+    sec_related: "🔄 Похожие материалы",
+    popular_section: "Популярные материалы",
+    materials_catalog_title: "Строительные материалы",
+    materials_catalog_sub: "Материалы для архитектурных, строительных, интерьерных и отделочных проектов: характеристики, размеры и применение.",
+    loading_catalog: "Загрузка каталога материалов...",
+    filter_by_cats: "Фильтр по категориям",
+    not_found_title: "Материал не найден",
+    not_found_sub: "Попробуйте изменить поисковый запрос или выбрать другую категорию.",
+    back_lib_text: "Библиотека",
+    back_lib: "Каталог материалов",
+    overview_title: "📝 Что это такое? (Описание)",
+    types_title: "📐 Виды и варианты",
+    specs_title: "📏 Стандартные размеры и характеристики",
+    pros_cons_title: "⚖️ Преимущества и недостатки",
+    pros_title: "✓ Преимущества",
+    cons_title: "⚠️ Ограничения и меры предосторожности",
+    arch_note_title: "📐 ЗАМЕТКА АРХИТЕКТОРУ И ДИЗАЙНЕРУ (BIM / Revit / Чертежи)",
+    install_title: "🛠️ Инструкция по монтажу",
+    sources_title: "🔗 Официальные источники и каталоги",
+    open_link: "Открыть ↗",
+    verified: "✓ Проверено",
+    pending: "🟡 На проверке",
+    source_label: "Источник",
+    spec_dimensions: "Стандартные размеры",
+    spec_thickness: "Толщина",
+    spec_composition: "Состав / Сырьё",
+    spec_density: "Плотность (Zichlik)",
+    spec_weight: "Вес (Og‘irlik)",
+    spec_strength: "Прочность (Mustahkamlik)",
+    spec_thermal: "Теплопроводность",
+    spec_water_abs: "Водопоглощение (Suv shimuvchanlik)",
+    spec_moisture: "Влагостойкость",
+    spec_frost: "Морозостойкость",
+    spec_wear: "Износостойкость (Класс)",
+    spec_usage_class: "Класс применения",
+    spec_floor_heating: "Тёплый пол",
+    spec_slip: "Сопротивление скольжению",
+    spec_lock: "Тип замка / Соединение",
+    spec_collection: "Коллекция",
+    spec_article: "Артикул",
+    spec_subfloor: "Требования к основанию",
+    spec_underlay: "Рекомендуемая подложка",
+    spec_fire: "Огнестойкость (Пожаробезопасность)",
+    spec_sound: "Звукоизоляция",
+    spec_service_life: "Срок службы",
+    spec_brand: "Бренд",
+    spec_country: "Страна производства",
+    spec_rooms: "Область применения",
+    spec_surfaces: "Поверхности",
+    spec_cert: "Сертификат / Стандарт",
+    spec_price: "Рыночная цена",
+    tools_label: "Инструменты для монтажа",
+    materials_label: "Сопутствующие материалы"
+  },
+  uz: {
+    lang_name: "O‘zbek",
+    flag: "🇺🇿",
+    search_ph: "Materiallarni qidirish (nomi, brend, artikul)...",
+    search_short: "Material qidiring...",
+    all: "Hammasi",
+    architecture: "Arxitektura",
+    interior: "Interyer",
+    frequent: "Ko‘p ishlatiladigan",
+    newest: "Eng yangi",
+    name_asc: "Alifbo bo‘yicha (A–Z)",
+    views: "Ko‘rishlar bo‘yicha",
+    saves: "Ko‘p saqlangan",
+    popular_score: "Mashhurligi",
+    details: "Batafsil",
+    market_price: "Bozor narxi",
+    manufacturer: "Ishlab chiqaruvchi",
+    product_code: "Mahsulot kodi",
+    category_label: "Kategoriya",
+    scope_label: "Yo‘nalish",
+    categories_title: "Kategoriyalar",
+    all_materials: "Barcha materiallar",
+    extra_filters: "Qo‘shimcha filtrlar",
+    filter_verified: "✓ Tekshirilgan",
+    filter_moisture: "💧 Namlikka chidamli",
+    filter_fire: "🔥 NG / KM0",
+    filter_interior: "🛋️ Interyer",
+    filter_arch: "🏛️ Qurilish",
+    all_chip: "Barchasi",
+    back_catalog: "Materiallar katalogi",
+    tools_needed: "🧰 Kerakli asbob-uskunalar:",
+    materials_needed: "📦 Kerakli qo‘shimcha materiallar:",
+    sec_about: "📝 Bu nima? (Tushunarli tavsif)",
+    sec_types: "📐 Turlari va variantlari",
+    sec_specs: "📊 Texnik ko‘rsatkichlari (Xarakteristikalari)",
+    sec_pros_cons: "⚖️ Afzalliklari va cheklovlari",
+    sec_arch_note: "📐 ARXITEKTOR VA DIZAYNERGA ESLATMA (BIM / Revit / Chizmalar)",
+    sec_install: "🛠️ Montaj va o‘rnatish yo‘riqnomasi",
+    sec_sources: "🔗 Rasmiy ishlab chiqaruvchi va kataloglar",
+    sec_related: "🔄 Shunga o‘xshash materiallar",
+    popular_section: "Ko‘p ishlatilgan",
+    materials_catalog_title: "Qurilish materiallari",
+    materials_catalog_sub: "Arxitektura, qurilish, interyer va remont loyihalarida ishlatiladigan materiallar, ularning xususiyatlari, o‘lchamlari va qo‘llanilish sohasi.",
+    loading_catalog: "Materiallar katalogi yuklanmoqda...",
+    filter_by_cats: "Kategoriyalar bo‘yicha saralash",
+    not_found_title: "Material topilmadi",
+    not_found_sub: "Boshqa nom yoki kategoriya bilan qidirib ko‘ring.",
+    back_lib_text: "Kutubxona",
+    back_lib: "Materiallar katalogi",
+    overview_title: "📝 Bu nima? (Tushunarli tavsif)",
+    types_title: "📐 Turlari va Variantlari",
+    specs_title: "📏 Standart o‘lchamlari va ko‘rsatkichlari",
+    pros_cons_title: "⚖️ Afzalliklari va Cheklovlari",
+    pros_title: "✓ Afzalliklari",
+    cons_title: "⚠️ Cheklovlari va Ehtiyot choralari",
+    arch_note_title: "📐 ARXITEKTOR VA DIZAYNERGA ESLATMA (BIM / Revit / Chizmalar)",
+    install_title: "🛠️ Montaj va o‘rnatish yo‘riqnomasi",
+    sources_title: "🔗 Rasmiy Ishlab Chiqaruvchi va Kataloglar",
+    open_link: "Ochish ↗",
+    verified: "✓ Verified",
+    pending: "🟡 Tekshiruvda",
+    source_label: "Manba",
+    spec_dimensions: "Standart o‘lchamlari",
+    spec_thickness: "Mavjud qalinliklar",
+    spec_composition: "Tarkibi / Xomashyo",
+    spec_density: "Zichligi (Плотность)",
+    spec_weight: "Og‘irligi (Вес)",
+    spec_strength: "Mustahkamligi (Прочность)",
+    spec_thermal: "Issiqlik o‘tkazuvchanligi",
+    spec_water_abs: "Suv yutuvchanligi",
+    spec_moisture: "Namlikka chidamliligi",
+    spec_frost: "Sovuqqa chidamlilik",
+    spec_wear: "Yeyilishga chidamlilik (Klass)",
+    spec_usage_class: "Ekspluatatsiya toifasi",
+    spec_floor_heating: "Issiq pol (Тёплый пол)",
+    spec_slip: "Sirpanishga qarshilik (Slip)",
+    spec_lock: "Qulflanish / Zamok turi",
+    spec_collection: "Kolleksiya",
+    spec_article: "Artikul",
+    spec_subfloor: "Asosga (styajkaga) talablar",
+    spec_underlay: "Tavsiya etilgan podlojka",
+    spec_fire: "Yong'in xavfsizlik sinfi",
+    spec_sound: "Tovush izolyatsiyasi",
+    spec_service_life: "Xizmat muddati",
+    spec_brand: "Brend",
+    spec_country: "Ishlab chiqarilgan davlat",
+    spec_rooms: "Mos xonalar",
+    spec_surfaces: "Mos yuzalar",
+    spec_cert: "Sertifikat / Standart",
+    spec_price: "Bozor narxi",
+    tools_label: "Kerakli asbob-uskunalar",
+    materials_label: "Kerakli qo‘shimcha materiallar"
+  },
+  en: {
+    lang_name: "English",
+    flag: "🇬🇧",
+    search_ph: "Search materials (name, brand, article)...",
+    search_short: "Search materials...",
+    all: "All",
+    architecture: "Architecture",
+    interior: "Interior",
+    frequent: "Popular",
+    newest: "Newest first",
+    name_asc: "Alphabetical (A–Z)",
+    views: "Most viewed",
+    saves: "Most saved",
+    popular_score: "By popularity",
+    details: "Details",
+    market_price: "Market price",
+    manufacturer: "Manufacturer",
+    product_code: "Product code",
+    category_label: "Category",
+    scope_label: "Scope",
+    categories_title: "Categories",
+    all_materials: "All materials",
+    extra_filters: "Additional filters",
+    filter_verified: "✓ Verified",
+    filter_moisture: "💧 Moisture resistant",
+    filter_fire: "🔥 Fire rated (NG / KM0)",
+    filter_interior: "🛋️ Interior",
+    filter_arch: "🏛️ Construction",
+    all_chip: "All",
+    back_catalog: "Materials catalog",
+    tools_needed: "🧰 Required tools:",
+    materials_needed: "📦 Required accessories:",
+    sec_about: "📝 Material Description",
+    sec_types: "📐 Types & Variants",
+    sec_specs: "📊 Technical Specifications",
+    sec_pros_cons: "⚖️ Advantages & Limitations",
+    sec_arch_note: "📐 ARCHITECT & DESIGNER NOTE (BIM / Revit / Drawings)",
+    sec_install: "🛠️ Mounting & Installation Guide",
+    sec_sources: "🔗 Official Sources & Catalogs",
+    sec_related: "🔄 Related Materials",
+    popular_section: "Popular materials",
+    materials_catalog_title: "Construction Materials",
+    materials_catalog_sub: "Materials for architectural, structural, interior and renovation projects: specifications, dimensions, and applications.",
+    loading_catalog: "Loading materials catalog...",
+    filter_by_cats: "Filter by categories",
+    not_found_title: "Material not found",
+    not_found_sub: "Try a different search query or select another category.",
+    back_lib_text: "Library",
+    back_lib: "Materials catalog",
+    overview_title: "📝 Overview & Description",
+    types_title: "📐 Types & Variants",
+    specs_title: "📏 Standard Dimensions & Specifications",
+    pros_cons_title: "⚖️ Advantages & Limitations",
+    pros_title: "✓ Advantages",
+    cons_title: "⚠️ Limitations & Precautions",
+    arch_note_title: "📐 ARCHITECT & DESIGNER NOTES (BIM / Revit / Drawings)",
+    install_title: "🛠️ Installation Guide",
+    sources_title: "🔗 Official Sources & Catalogs",
+    open_link: "Open ↗",
+    verified: "✓ Verified",
+    pending: "🟡 In Review",
+    source_label: "Source",
+    spec_dimensions: "Dimensions",
+    spec_thickness: "Thickness",
+    spec_composition: "Composition",
+    spec_density: "Density",
+    spec_weight: "Weight",
+    spec_strength: "Strength",
+    spec_thermal: "Thermal conductivity",
+    spec_water_abs: "Water absorption",
+    spec_moisture: "Moisture resistance",
+    spec_frost: "Frost resistance",
+    spec_wear: "Wear resistance",
+    spec_usage_class: "Usage class",
+    spec_floor_heating: "Underfloor heating",
+    spec_slip: "Slip resistance",
+    spec_lock: "Locking system",
+    spec_collection: "Collection",
+    spec_article: "Article",
+    spec_subfloor: "Subfloor requirements",
+    spec_underlay: "Recommended underlayment",
+    spec_fire: "Fire resistance rating",
+    spec_sound: "Sound insulation",
+    spec_service_life: "Service life",
+    spec_brand: "Brand",
+    spec_country: "Country of origin",
+    spec_rooms: "Application area",
+    spec_surfaces: "Suitable substrates",
+    spec_cert: "Certificate / Standard",
+    spec_price: "Market price",
+    tools_label: "Installation tools",
+    materials_label: "Additional materials"
+  }
+};
+
+function matT(key) {
+  const lang = getMaterialsLang();
+  const d = MAT_I18N[lang] || MAT_I18N.ru;
+  return d[key] || MAT_I18N.ru[key] || MAT_I18N.uz[key] || key;
+}
+
+function renderMaterialsLangSelectorHtml() {
+  const cur = getMaterialsLang();
+  const flagMap = { ru: "🇷🇺 RU", uz: "🇺🇿 UZ", en: "🇬🇧 EN" };
+  return `
+    <div class="mcat-lang-picker" style="position:relative; display:inline-block;">
+      <button type="button" class="mcat-lang-btn" onclick="toggleMaterialsLangDropdown(event)" style="display:inline-flex; align-items:center; gap:5px; padding:4px 9px; font-size:12px; font-weight:750; border-radius:16px; border:1px solid var(--border, rgba(0,0,0,0.12)); background:var(--bg-surface-elevated, #fff); color:var(--text-primary, #111); cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05); user-select:none;">
+        <span>${flagMap[cur] || "🇷🇺 RU"}</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div id="mcat-lang-menu" class="mcat-lang-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:1000; background:var(--bg-surface-elevated, #fff); border:1px solid var(--border, rgba(0,0,0,0.12)); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); min-width:132px; overflow:hidden; padding:4px;">
+        <button type="button" class="mcat-lang-opt ${cur === 'ru' ? 'active' : ''}" onclick="selectMaterialsLang('ru')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'ru' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'ru' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
+          <span>🇷🇺</span> Русский ${cur === 'ru' ? '✓' : ''}
+        </button>
+        <button type="button" class="mcat-lang-opt ${cur === 'uz' ? 'active' : ''}" onclick="selectMaterialsLang('uz')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'uz' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'uz' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
+          <span>🇺🇿</span> O‘zbek ${cur === 'uz' ? '✓' : ''}
+        </button>
+        <button type="button" class="mcat-lang-opt ${cur === 'en' ? 'active' : ''}" onclick="selectMaterialsLang('en')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'en' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'en' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
+          <span>🇬🇧</span> English ${cur === 'en' ? '✓' : ''}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleMaterialsLangDropdown(e) {
+  if (e) e.stopPropagation();
+  const m = document.getElementById("mcat-lang-menu");
+  if (!m) return;
+  m.style.display = m.style.display === "block" ? "none" : "block";
+}
+
+function selectMaterialsLang(lang) {
+  const m = document.getElementById("mcat-lang-menu");
+  if (m) m.style.display = "none";
+  setMaterialsLang(lang);
+}
+
+document.addEventListener("click", () => {
+  const m = document.getElementById("mcat-lang-menu");
+  if (m) m.style.display = "none";
+});
+
+function getMaterialTitle(m, lang) {
+  lang = lang || getMaterialsLang();
+  if (lang === "ru") return m.name_ru || m.name || m.title || "Материал";
+  if (lang === "en") return m.name_en || m.english_name || m.name_ru || m.name || "Material";
+  return m.name_uz || m.name || m.title || "Material";
+}
+
+function getMaterialDesc(m, lang) {
+  lang = lang || getMaterialsLang();
+  if (lang === "ru") return m.short_description_ru || m.description_ru || m.description || "";
+  if (lang === "en") return m.short_description_en || m.description_en || m.description_ru || m.description || "";
+  return m.short_description_uz || m.description_uz || m.description || "";
+}
+
+function getLocalizedGroupName(g, lang) {
+  if (!g) return "";
+  lang = lang || getMaterialsLang();
+  if (lang === "ru") return g.name_ru || g.name;
+  if (lang === "en") return g.name_en || g.name_ru || g.name;
+  return g.name_uz || g.name;
+}
+
 const MATERIAL_GROUPS = [
-  { id: "devor", name: "Devor materiallari", icon: "🧱", slugs: ["devor-konstruksiya", "gipsokarton-quruq"] },
-  { id: "profil", name: "Profil va karkas", icon: "📐", slugs: ["profillar"] },
-  { id: "shift", name: "Shift materiallari", icon: "☁️", slugs: ["shift", "akustik-materiallar"] },
-  { id: "pol", name: "Pol materiallari", icon: "🟫", slugs: ["pol-materiallari"] },
-  { id: "pardoz", name: "Devor pardoz materiallari", icon: "🎨", slugs: ["boyoq-dekor", "dekorativ-materiallar"] },
-  { id: "tosh", name: "Tosh materiallari", icon: "🪨", slugs: ["tosh-materiallari"] },
-  { id: "eshik", name: "Eshiklar", icon: "🚪", slugs: ["eshik-deraza"] },
-  { id: "oyna", name: "Oyna / vitraj", icon: "🪟", slugs: ["oyna-shisha"] },
-  { id: "sanitariya", name: "Sanitariya priborlari", icon: "🚿", slugs: ["santexnika-sanuzel"] },
-  { id: "izolyatsiya", name: "Issiqlik / izolyatsiya", icon: "🧊", slugs: ["issiqlik-izolyatsiyasi"] },
-  { id: "gidro", name: "Gidroizolyatsiya", icon: "💧", slugs: ["gidroizolyatsiya"] },
-  { id: "fasad", name: "Fasad", icon: "🏢", slugs: ["fasad-materiallari"] },
-  { id: "tom", name: "Tom materiallari", icon: "🏠", slugs: ["tom-materiallari"] },
-  { id: "yelim", name: "Yelim / qorishma", icon: "🧴", slugs: ["yelim-germetik"] },
-  { id: "yogoch", name: "Yog‘och materiallari", icon: "🪵", slugs: ["yogoch-plitalar"] },
-  { id: "metall", name: "Metall", icon: "🔩", slugs: ["metall-materiallar"] },
-  { id: "elektr", name: "Elektr / muhandislik", icon: "💡", slugs: ["yoritish-elektr"] }
+  { id: "devor", name: "Devor materiallari", name_uz: "Devor materiallari", name_ru: "Стеновые материалы", name_en: "Wall Materials", icon: "🧱", slugs: ["devor-konstruksiya", "gipsokarton-quruq"] },
+  { id: "profil", name: "Profillar va plintuslar", name_uz: "Profillar va plintuslar", name_ru: "Профили и плинтусы", name_en: "Profiles & Baseboards", icon: "📐", slugs: ["profillar"] },
+  { id: "shift", name: "Shift materiallari", name_uz: "Shift materiallari", name_ru: "Потолочные системы", name_en: "Ceiling Systems", icon: "☁️", slugs: ["shift", "akustik-materiallar"] },
+  { id: "pol", name: "Pol qoplamalari", name_uz: "Pol qoplamalari", name_ru: "Напольные покрытия", name_en: "Floor Coverings", icon: "🪜", slugs: ["pol-materiallari"] },
+  { id: "pardoz", name: "Devor pardoz materiallari", name_uz: "Devor pardoz materiallari", name_ru: "Отделочные материалы", name_en: "Finishing Materials", icon: "🎨", slugs: ["boyoq-dekor", "dekorativ-materiallar"] },
+  { id: "tosh", name: "Tosh materiallari", name_uz: "Tosh materiallari", name_ru: "Каменные материалы", name_en: "Stone Materials", icon: "🪨", slugs: ["tosh-materiallari"] },
+  { id: "eshik", name: "Eshiklar", name_uz: "Eshiklar", name_ru: "Двери", name_en: "Doors", icon: "🚪", slugs: ["eshik-deraza"] },
+  { id: "oyna", name: "Oyna / vitraj", name_uz: "Oyna / vitraj", name_ru: "Стекло и витражи", name_en: "Glass & Glazing", icon: "🪟", slugs: ["oyna-shisha"] },
+  { id: "sanitariya", name: "Sanitariya priborlari", name_uz: "Sanitariya priborlari", name_ru: "Сантехника", name_en: "Sanitary Ware", icon: "🚿", slugs: ["santexnika-sanuzel"] },
+  { id: "izolyatsiya", name: "Issiqlik / izolyatsiya", name_uz: "Issiqlik / izolyatsiya", name_ru: "Изоляция", name_en: "Insulation", icon: "🧊", slugs: ["issiqlik-izolyatsiyasi"] },
+  { id: "gidro", name: "Gidroizolyatsiya", name_uz: "Gidroizolyatsiya", name_ru: "Гидроизоляция", name_en: "Waterproofing", icon: "💧", slugs: ["gidroizolyatsiya"] },
+  { id: "fasad", name: "Fasad", name_uz: "Fasad", name_ru: "Фасадные материалы", name_en: "Facade Materials", icon: "🏢", slugs: ["fasad-materiallari"] },
+  { id: "tom", name: "Tom materiallari", name_uz: "Tom materiallari", name_ru: "Кровельные материалы", name_en: "Roofing Materials", icon: "🏠", slugs: ["tom-materiallari"] },
+  { id: "yelim", name: "Yelim / qorishma", name_uz: "Yelim / qorishma", name_ru: "Клеи и смеси", name_en: "Adhesives & Mortars", icon: "🧴", slugs: ["yelim-germetik"] },
+  { id: "yogoch", name: "Yog‘och materiallari", name_uz: "Yog‘och materiallari", name_ru: "Древесные материалы", name_en: "Wood Materials", icon: "🪵", slugs: ["yogoch-plitalar"] },
+  { id: "metall", name: "Metall", name_uz: "Metall", name_ru: "Металл", name_en: "Metal", icon: "🔩", slugs: ["metall-materiallar"] },
+  { id: "elektr", name: "Elektr / muhandislik", name_uz: "Elektr / muhandislik", name_ru: "Электрика и освещение", name_en: "Electrical & Lighting", icon: "💡", slugs: ["yoritish-elektr"] }
 ];
 
 const MATERIAL_GROUP_KEYWORDS = [
@@ -8167,7 +8550,17 @@ function getMaterialGroup(m) {
   const key = String(m.id) + "|" + (m.category_slug || "") + "|" + (m.name || "");
   if (_matGroupCache.has(key)) return _matGroupCache.get(key);
   const slug = String(m.category_slug || "").toLowerCase();
-  const text = ((m.name_uz || m.name || "") + " " + (m.subcategory_name || "") + " " + (m.category_name || "")).toLowerCase();
+  const text = ((m.name_uz || m.name || "") + " " + (m.name_ru || "") + " " + (m.subcategory_name || "") + " " + (m.category_name || "")).toLowerCase();
+
+  // Plintus, shadow profiles, and thresholds strictly belong to profil group
+  if (slug === "profillar" || /plintus|плинтус|порог/.test(text)) {
+    const profGrp = MATERIAL_GROUPS.find(g => g.id === "profil");
+    if (profGrp) {
+      _matGroupCache.set(key, profGrp);
+      return profGrp;
+    }
+  }
+
   let group = MATERIAL_GROUPS.find(g => g.slugs.includes(slug));
 
   // "Eshik va fasad" kabi aralash kategoriyalarni aniqlashtirish
@@ -8549,29 +8942,29 @@ function renderMaterialPanelInnerHtml() {
   const scope = materialsState.selectedScope || "all";
   const total = getScopedMaterials().length;
   return `
-    <div class="mcat-panel-title">Kategoriyalar</div>
+    <div class="mcat-panel-title">${escapeHtml(matT('categories_title'))}</div>
     <div class="mcat-group-grid">
       <button type="button" class="mcat-group-tile ${active === "all" ? "active" : ""}" onclick="setMaterialGroup('all')">
         <span class="mcat-group-ico">🌐</span>
-        <span class="mcat-group-name">Barcha materiallar</span>
+        <span class="mcat-group-name">${escapeHtml(matT('all_materials'))}</span>
         <span class="mcat-group-count">${total}</span>
       </button>
       ${groups.map(g => `
         <button type="button" class="mcat-group-tile ${active === g.id ? "active" : ""}" onclick="setMaterialGroup('${escapeJsString(g.id)}')">
           <span class="mcat-group-ico">${escapeHtml(g.icon || "🧱")}</span>
-          <span class="mcat-group-name">${escapeHtml(g.name)}</span>
+          <span class="mcat-group-name">${escapeHtml(getLocalizedGroupName(g))}</span>
           <span class="mcat-group-count">${g.count}</span>
         </button>
       `).join("")}
     </div>
-    <div class="mcat-panel-title" style="margin-top:14px;">Qo‘shimcha filtrlar</div>
+    <div class="mcat-panel-title" style="margin-top:14px;">${escapeHtml(matT('extra_filters'))}</div>
     <div class="mcat-chip-row">
-      <button type="button" class="mcat-chip ${scope === "all" ? "active" : ""}" onclick="setMaterialScope('all')">Barchasi</button>
-      <button type="button" class="mcat-chip ${scope === "architecture" ? "active" : ""}" onclick="setMaterialScope('architecture')">🏛️ Qurilish</button>
-      <button type="button" class="mcat-chip ${scope === "interior" ? "active" : ""}" onclick="setMaterialScope('interior')">🛋️ Interyer</button>
-      <button type="button" class="mcat-chip ${materialsState.filterVerified ? "active" : ""}" onclick="toggleMaterialFilter('filterVerified')">✓ Tekshirilgan</button>
-      <button type="button" class="mcat-chip ${materialsState.filterMoisture ? "active" : ""}" onclick="toggleMaterialFilter('filterMoisture')">💧 Namlikka chidamli</button>
-      <button type="button" class="mcat-chip ${materialsState.filterFire ? "active" : ""}" onclick="toggleMaterialFilter('filterFire')">🔥 NG / KM0</button>
+      <button type="button" class="mcat-chip ${scope === "all" ? "active" : ""}" onclick="setMaterialScope('all')">${escapeHtml(matT('all_chip'))}</button>
+      <button type="button" class="mcat-chip ${scope === "architecture" ? "active" : ""}" onclick="setMaterialScope('architecture')">${escapeHtml(matT('filter_arch'))}</button>
+      <button type="button" class="mcat-chip ${scope === "interior" ? "active" : ""}" onclick="setMaterialScope('interior')">${escapeHtml(matT('filter_interior'))}</button>
+      <button type="button" class="mcat-chip ${materialsState.filterVerified ? "active" : ""}" onclick="toggleMaterialFilter('filterVerified')">${escapeHtml(matT('filter_verified'))}</button>
+      <button type="button" class="mcat-chip ${materialsState.filterMoisture ? "active" : ""}" onclick="toggleMaterialFilter('filterMoisture')">${escapeHtml(matT('filter_moisture'))}</button>
+      <button type="button" class="mcat-chip ${materialsState.filterFire ? "active" : ""}" onclick="toggleMaterialFilter('filterFire')">${escapeHtml(matT('filter_fire'))}</button>
     </div>
   `;
 }
@@ -8585,14 +8978,14 @@ function renderMaterialActiveFilterHtml() {
   return `
     <div class="mcat-active">
       <div class="mcat-active-chip">
-        <span class="mcat-active-label">Kategoriya:</span>
-        <span class="mcat-active-name">${escapeHtml(g ? g.name : "")}</span>
-        <button type="button" class="mcat-active-x" aria-label="Filtrni olib tashlash" onclick="clearMaterialCategoryFilter()">×</button>
+        <span class="mcat-active-label">${escapeHtml(matT('category_label'))}:</span>
+        <span class="mcat-active-name">${escapeHtml(g ? getLocalizedGroupName(g) : "")}</span>
+        <button type="button" class="mcat-active-x" aria-label="Clear filter" onclick="clearMaterialCategoryFilter()">×</button>
       </div>
     </div>
     ${subs.length ? `
       <div class="mcat-sub-row">
-        <button type="button" class="mcat-chip ${activeSub === "all" ? "active" : ""}" onclick="setMaterialSubcategory('all')">Hammasi</button>
+        <button type="button" class="mcat-chip ${activeSub === "all" ? "active" : ""}" onclick="setMaterialSubcategory('all')">${escapeHtml(matT('all'))}</button>
         ${subs.map(s => `<button type="button" class="mcat-chip ${activeSub.toLowerCase() === s.name.toLowerCase() ? "active" : ""}" onclick="setMaterialSubcategory('${escapeJsString(s.name)}')">${escapeHtml(s.name)} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
       </div>
     ` : ""}
@@ -8617,10 +9010,10 @@ function renderMaterialPopularHtml() {
   const pop = getPopularMaterials();
   if (!pop.length) return "";
   return `
-    <div class="mcat-section-head"><h2 class="mcat-h2">Ko‘p ishlatilgan</h2></div>
+    <div class="mcat-section-head"><h2 class="mcat-h2">${escapeHtml(matT('popular_section'))}</h2></div>
     <div class="mcat-hscroll">
       ${pop.map(m => {
-        const title = m.name_uz || m.name || "Material";
+        const title = getMaterialTitle(m);
         const img = formatImageUrl(m.image_url || m.cover_image || "");
         const g = getMaterialGroup(m);
         return `
@@ -8630,7 +9023,7 @@ function renderMaterialPopularHtml() {
               ${img ? `<img src="${escapeHtml(img)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
             </div>
             <div class="mcat-pop-name">${escapeHtml(title)}</div>
-            <div class="mcat-pop-cat">${escapeHtml(g.name)}</div>
+            <div class="mcat-pop-cat">${escapeHtml(getLocalizedGroupName(g))}</div>
           </div>`;
       }).join("")}
     </div>
@@ -8644,17 +9037,20 @@ function renderMaterialCatalogHtml() {
   const sort = materialsState.sortBy || "popular";
   const flat = grpId !== "all" || !!search || materialsState.filterVerified || materialsState.filterMoisture || materialsState.filterFire || materialsState.filterInterior || (materialsState.selectedScope || "all") !== "all";
 
+  const groupObj = grpId !== "all" ? (MATERIAL_GROUPS.find(x => x.id === grpId) || getMaterialGroupsWithCounts().find(x => x.id === grpId)) : null;
+  const sectionTitle = groupObj ? getLocalizedGroupName(groupObj) : matT('all_materials');
+
   const head = `
     <div class="mcat-section-head">
-      <h2 class="mcat-h2">${grpId !== "all" ? "Materiallar" : "Barcha materiallar"} <span class="mcat-h2-n">${mats.length}</span></h2>
+      <h2 class="mcat-h2">${escapeHtml(sectionTitle)} <span class="mcat-h2-n">${mats.length}</span></h2>
       <label class="mcat-sort-wrap">
-        <span class="mcat-sr">Saralash</span>
-        <select class="mcat-sort" onchange="setMaterialSort(this.value)" aria-label="Saralash">
-          <option value="popular" ${sort === "popular" ? "selected" : ""}>Mashhurligi</option>
-          <option value="views" ${sort === "views" ? "selected" : ""}>Ko‘p ko‘rilgan</option>
-          <option value="saves" ${sort === "saves" ? "selected" : ""}>Ko‘p saqlangan</option>
-          <option value="newest" ${sort === "newest" ? "selected" : ""}>Yangi qo‘shilgan</option>
-          <option value="name" ${sort === "name" ? "selected" : ""}>A–Z</option>
+        <span class="mcat-sr">Sort</span>
+        <select class="mcat-sort" onchange="setMaterialSort(this.value)" aria-label="Sort">
+          <option value="popular" ${sort === "popular" ? "selected" : ""}>${escapeHtml(matT('popular_score'))}</option>
+          <option value="views" ${sort === "views" ? "selected" : ""}>${escapeHtml(matT('views'))}</option>
+          <option value="saves" ${sort === "saves" ? "selected" : ""}>${escapeHtml(matT('saves'))}</option>
+          <option value="newest" ${sort === "newest" ? "selected" : ""}>${escapeHtml(matT('newest'))}</option>
+          <option value="name" ${sort === "name" ? "selected" : ""}>${escapeHtml(matT('name_asc'))}</option>
         </select>
       </label>
     </div>`;
@@ -8663,8 +9059,8 @@ function renderMaterialCatalogHtml() {
     return head + `
       <div class="mcat-empty">
         <div class="mcat-empty-ico">🔍</div>
-        <div class="mcat-empty-title">Material topilmadi</div>
-        <div class="mcat-empty-sub">Boshqa nom yoki kategoriya bilan qidirib ko‘ring.</div>
+        <div class="mcat-empty-title">${escapeHtml(matT('not_found_title'))}</div>
+        <div class="mcat-empty-sub">${escapeHtml(matT('not_found_sub'))}</div>
       </div>`;
   }
 
@@ -8685,8 +9081,8 @@ function renderMaterialCatalogHtml() {
   return head + ordered.map(({ g, items }) => `
     <section class="mcat-group-section">
       <div class="mcat-group-head">
-        <div class="mcat-group-title"><span>${escapeHtml(g.icon || "🧱")}</span> ${escapeHtml(g.name)} <span class="mcat-h2-n">${items.length}</span></div>
-        <button type="button" class="mcat-link" onclick="setMaterialGroup('${escapeJsString(g.id)}')">Hammasi ›</button>
+        <div class="mcat-group-title"><span>${escapeHtml(g.icon || "🧱")}</span> ${escapeHtml(getLocalizedGroupName(g))} <span class="mcat-h2-n">${items.length}</span></div>
+        <button type="button" class="mcat-link" onclick="setMaterialGroup('${escapeJsString(g.id)}')">${escapeHtml(matT('all'))} ›</button>
       </div>
       <div class="mcat-grid">${items.map(renderMaterialCardHtml).join("")}</div>
     </section>
@@ -8721,27 +9117,30 @@ function renderMaterialsSectionHtml() {
 
   return `
     <div class="page lib-container lib-page-enter lib-materials-v2-container mcat">
-      <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      <div class="lib-materials-header-nav" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;">
+        <div class="lib-back-nav" style="margin-bottom:0;" onclick="closeLibrarySection()">
+          ${libIcons.back('lib-back-svg', 16)} ${escapeHtml(matT('back_lib_text') || 'Библиотека')}
+        </div>
+        ${renderMaterialsLangSelectorHtml()}
       </div>
 
       <div class="mcat-head">
-        <h1 class="mcat-title">Qurilish materiallari</h1>
-        <p class="mcat-sub">Arxitektura, qurilish, interyer va remont loyihalarida ishlatiladigan materiallar, ularning xususiyatlari, o‘lchamlari va qo‘llanilish sohasi.</p>
+        <h1 class="mcat-title">${escapeHtml(matT('materials_catalog_title'))}</h1>
+        <p class="mcat-sub">${escapeHtml(matT('materials_catalog_sub'))}</p>
       </div>
 
       <div class="mcat-search">
         <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
         <input id="lib-materials-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
                value="${escapeHtml(search)}" oninput="setMaterialSearch(this.value)" />
-        <div class="mcat-ph" aria-hidden="true"><span>Material qidiring...</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
+        <div class="mcat-ph" aria-hidden="true"><span>${escapeHtml(matT('search_short'))}</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
         <span id="lib-search-clear-wrap">${search ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : ""}</span>
       </div>
 
       <button type="button" id="mat-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${(materialsState.selectedGroup || "all") !== "all" ? "has-filter" : ""}" onclick="toggleMaterialPanel()">
         <span class="mcat-filter-left">
           <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          Kategoriyalar bo‘yicha saralash
+          ${escapeHtml(matT('filter_by_cats') || matT('categories_title'))}
         </span>
         <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -18841,7 +19240,12 @@ function renderAdminMaterialRowHtml(m) {
         <img src="${escapeHtml(imgUrl)}" style="width:58px; height:58px; object-fit:cover; border-radius:10px; border:1px solid var(--border); flex-shrink:0;" />
         <div style="flex:1; min-width:0;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
-            <span style="font-weight:800; font-size:14px; color:var(--text-primary);">${escapeHtml(m.title)}</span>
+            <span style="font-weight:800; font-size:14px; color:var(--text-primary);">${escapeHtml(m.title || m.name || m.name_ru)}</span>
+            <span style="font-size:10px; padding:2px 6px; border-radius:6px; background:rgba(0,0,0,0.06); font-family:monospace; font-weight:700;">
+              <span style="color:${(m.name || m.name_ru || m.description) ? '#10b981' : '#9ca3af'}">RU ${(m.name || m.name_ru || m.description) ? '✓' : '—'}</span> |
+              <span style="color:${(m.name_uz || m.description_uz) ? '#10b981' : '#9ca3af'}">UZ ${(m.name_uz || m.description_uz) ? '✓' : '—'}</span> |
+              <span style="color:${(m.name_en || m.description_en) ? '#10b981' : '#9ca3af'}">EN ${(m.name_en || m.description_en) ? '✓' : '—'}</span>
+            </span>
             ${isVerified ? `
               <span class="lib-mat-badge verified" style="font-size:10px; padding:2px 7px;">✓ Verified</span>
             ` : isPending ? `
@@ -19115,8 +19519,29 @@ async function openAdminMaterialForm(materialId) {
           </div>
 
           <div class="apple-field">
-            <label>Tavsif (Description)</label>
-            <textarea id="mat-desc" class="apple-input apple-textarea" rows="3" placeholder="Material haqida to‘liq ma'lumot...">${escapeHtml(material.description || '')}</textarea>
+            <label>🇷🇺 Название (RU) / Title</label>
+            <input id="mat-title-ru" class="apple-input" type="text" placeholder="Название на русском" value="${escapeHtml(material.name_ru || material.name || '')}">
+          </div>
+          <div class="apple-field">
+            <label>🇺🇿 Nomi (UZ) / Uzbek Name</label>
+            <input id="mat-title-uz" class="apple-input" type="text" placeholder="O‘zbekcha rasmiy nomi" value="${escapeHtml(material.name_uz || '')}">
+          </div>
+          <div class="apple-field">
+            <label>🇬🇧 Name (EN) / English Name</label>
+            <input id="mat-title-en" class="apple-input" type="text" placeholder="Official English name" value="${escapeHtml(material.name_en || '')}">
+          </div>
+
+          <div class="apple-field">
+            <label>🇷🇺 Описание (RU) / Description</label>
+            <textarea id="mat-desc" class="apple-input apple-textarea" rows="3" placeholder="Описание материала на русском...">${escapeHtml(material.description || material.description_ru || '')}</textarea>
+          </div>
+          <div class="apple-field">
+            <label>🇺🇿 Tavsif (UZ) / Uzbek Description</label>
+            <textarea id="mat-desc-uz" class="apple-input apple-textarea" rows="3" placeholder="Material haqida o‘zbekcha to‘liq ma'lumot...">${escapeHtml(material.description_uz || '')}</textarea>
+          </div>
+          <div class="apple-field">
+            <label>🇬🇧 Description (EN) / English Description</label>
+            <textarea id="mat-desc-en" class="apple-input apple-textarea" rows="3" placeholder="Material full description in English...">${escapeHtml(material.description_en || '')}</textarea>
           </div>
 
           <!-- 3. GEOMETRIK VA FIZIK-TEXNIK PARAMETRLAR -->
@@ -19204,6 +19629,11 @@ async function handleAdminMaterialSubmit(e, materialId) {
   const adminImages = [img1, img2, img3].filter(Boolean);
   const featured_image = img1;
   const description = document.getElementById("mat-desc")?.value.trim();
+  const name_ru = document.getElementById("mat-title-ru")?.value.trim() || title;
+  const name_uz = document.getElementById("mat-title-uz")?.value.trim() || title;
+  const name_en = document.getElementById("mat-title-en")?.value.trim() || title;
+  const description_uz = document.getElementById("mat-desc-uz")?.value.trim() || "";
+  const description_en = document.getElementById("mat-desc-en")?.value.trim() || "";
   const rawSizes = document.getElementById("mat-sizes")?.value.trim();
 
   const standard_sizes = rawSizes ? rawSizes.split("\n").map(s => s.trim()).filter(Boolean) : [];
@@ -19248,6 +19678,11 @@ async function handleAdminMaterialSubmit(e, materialId) {
     image_url: featured_image,
     images: adminImages,
     description,
+    name_ru,
+    name_uz,
+    name_en,
+    description_uz,
+    description_en,
     standard_sizes,
     specifications,
     sources

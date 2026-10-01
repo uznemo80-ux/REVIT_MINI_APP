@@ -100,22 +100,31 @@ async function initMaterialsTables(pool) {
       // Bilingual extensions
       { name: "name_uz", type: "VARCHAR(255)" },
       { name: "name_ru", type: "VARCHAR(255)" },
+      { name: "name_en", type: "VARCHAR(255)" },
       { name: "short_description_uz", type: "TEXT" },
       { name: "short_description_ru", type: "TEXT" },
+      { name: "short_description_en", type: "TEXT" },
       { name: "description_uz", type: "TEXT" },
       { name: "description_ru", type: "TEXT" },
+      { name: "description_en", type: "TEXT" },
       { name: "usage_area_uz", type: "TEXT" },
       { name: "usage_area_ru", type: "TEXT" },
+      { name: "usage_area_en", type: "TEXT" },
       { name: "pros_uz", type: "TEXT" },
       { name: "pros_ru", type: "TEXT" },
+      { name: "pros_en", type: "TEXT" },
       { name: "cons_uz", type: "TEXT" },
       { name: "cons_ru", type: "TEXT" },
+      { name: "cons_en", type: "TEXT" },
       { name: "architect_notes_uz", type: "TEXT" },
       { name: "architect_notes_ru", type: "TEXT" },
+      { name: "architect_notes_en", type: "TEXT" },
       { name: "mounting_instructions_uz", type: "TEXT" },
       { name: "mounting_instructions_ru", type: "TEXT" },
+      { name: "mounting_instructions_en", type: "TEXT" },
       { name: "dimensions_info_uz", type: "TEXT" },
       { name: "dimensions_info_ru", type: "TEXT" },
+      { name: "dimensions_info_en", type: "TEXT" },
       { name: "is_frequent", type: "BOOLEAN DEFAULT false" },
       // Image Verification fields
       { name: "image_url", type: "TEXT" },
@@ -192,6 +201,30 @@ async function initMaterialsTables(pool) {
     await pool.query(`
       ALTER TABLE material_categories ADD COLUMN IF NOT EXISTS scope VARCHAR(50) DEFAULT 'both';
     `).catch(e => console.warn('Cat scope col migration warn:', e.message));
+
+    // Multilingual Translations Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_translations (
+        id SERIAL PRIMARY KEY,
+        material_id INT REFERENCES materials(id) ON DELETE CASCADE,
+        language_code VARCHAR(10) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        short_description TEXT,
+        description TEXT,
+        application TEXT,
+        installation TEXT,
+        advantages TEXT,
+        disadvantages TEXT,
+        technical_description TEXT,
+        maintenance TEXT,
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(material_id, language_code)
+      );
+      CREATE INDEX IF NOT EXISTS idx_mat_trans_lang ON material_translations(language_code);
+      CREATE INDEX IF NOT EXISTS idx_mat_trans_mat_lang ON material_translations(material_id, language_code);
+    `).catch(e => console.warn('material_translations migration warn:', e.message));
 
     // 4. Create Material Types/Variants Table
     await pool.query(`
@@ -362,7 +395,9 @@ async function initMaterialsTables(pool) {
           price, currency, price_unit, price_region, price_date,
           underfloor_heating_compatible, underfloor_heating_type, maximum_temperature,
           wear_class, usage_class, slip_resistance, locking_system,
-          collection, article, subfloor_requirements, underlayment
+          collection, article, subfloor_requirements, underlayment,
+          name_en, short_description_en, description_en, usage_area_en, pros_en, cons_en,
+          architect_notes_en, mounting_instructions_en, dimensions_info_en
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
@@ -383,7 +418,8 @@ async function initMaterialsTables(pool) {
           $87, $88, $89, $90, $91,
           $92, $93, $94,
           $95, $96, $97, $98, $99,
-          $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110
+          $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110,
+          $111, $112, $113, $114, $115, $116, $117, $118, $119
         )
         ON CONFLICT (slug) DO UPDATE
         SET name = EXCLUDED.name, original_name = EXCLUDED.original_name, english_name = EXCLUDED.english_name,
@@ -439,7 +475,16 @@ async function initMaterialsTables(pool) {
             collection = EXCLUDED.collection,
             article = EXCLUDED.article,
             subfloor_requirements = EXCLUDED.subfloor_requirements,
-            underlayment = EXCLUDED.underlayment
+            underlayment = EXCLUDED.underlayment,
+            name_en = EXCLUDED.name_en,
+            short_description_en = EXCLUDED.short_description_en,
+            description_en = EXCLUDED.description_en,
+            usage_area_en = EXCLUDED.usage_area_en,
+            pros_en = EXCLUDED.pros_en,
+            cons_en = EXCLUDED.cons_en,
+            architect_notes_en = EXCLUDED.architect_notes_en,
+            mounting_instructions_en = EXCLUDED.mounting_instructions_en,
+            dimensions_info_en = EXCLUDED.dimensions_info_en
         RETURNING id;
       `, [
         m.name, m.slug, m.original_name, m.english_name, m.aliases || [], categoryId, m.subcategory_name, m.scope || 'both', m.purpose_tag || null,
@@ -492,10 +537,76 @@ async function initMaterialsTables(pool) {
         m.collection || 'Не указано',
         m.article || 'Не указано',
         m.subfloor_requirements || 'Не указано',
-        m.underlayment || 'Не указано'
+        m.underlayment || 'Не указано',
+        m.name_en || m.english_name || m.name_ru || m.name,
+        m.short_description_en || (m.description_en ? m.description_en.substring(0, 180) : null),
+        m.description_en || m.description_ru || m.description,
+        m.usage_area_en || m.usage_area_ru || m.usage_area,
+        m.pros_en || m.pros_ru || m.pros,
+        m.cons_en || m.cons_ru || m.cons,
+        m.architect_notes_en || m.architect_notes_ru || m.architect_notes,
+        m.mounting_instructions_en || m.mounting_instructions_ru || null,
+        m.dimensions_info_en || m.dimensions_info_ru || m.dimensions_info
       ]);
 
       const materialId = res.rows[0]?.id;
+
+      if (materialId) {
+        // Upsert 3 languages in material_translations
+        const transList = [
+          {
+            lang: 'ru',
+            name: m.name_ru || m.name,
+            short_desc: m.short_description_ru || (m.description_ru ? m.description_ru.substring(0, 180) : null),
+            desc: m.description_ru || m.description,
+            app: m.usage_area_ru || m.application_area || m.usage_area,
+            inst: m.mounting_instructions_ru || m.installation_method,
+            pros: m.pros_ru || m.pros,
+            cons: m.cons_ru || m.cons,
+            notes: m.architect_notes_ru || m.architect_notes
+          },
+          {
+            lang: 'uz',
+            name: m.name_uz || m.name,
+            short_desc: m.short_description_uz || (m.description_uz ? m.description_uz.substring(0, 180) : null),
+            desc: m.description_uz || m.description,
+            app: m.usage_area_uz || m.application_area || m.usage_area,
+            inst: m.mounting_instructions_uz || m.installation_method,
+            pros: m.pros_uz || m.pros,
+            cons: m.cons_uz || m.cons,
+            notes: m.architect_notes_uz || m.architect_notes
+          },
+          {
+            lang: 'en',
+            name: m.name_en || m.english_name || m.name_ru || m.name,
+            short_desc: m.short_description_en || (m.description_en ? m.description_en.substring(0, 180) : null),
+            desc: m.description_en || m.description_ru || m.description,
+            app: m.usage_area_en || m.usage_area_ru || m.usage_area,
+            inst: m.mounting_instructions_en || m.mounting_instructions_ru,
+            pros: m.pros_en || m.pros_ru || m.pros,
+            cons: m.cons_en || m.cons_ru || m.cons,
+            notes: m.architect_notes_en || m.architect_notes_ru || m.architect_notes
+          }
+        ];
+
+        for (const tr of transList) {
+          await pool.query(`
+            INSERT INTO material_translations (
+              material_id, language_code, name, short_description, description,
+              application, installation, advantages, disadvantages, notes, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+            ON CONFLICT (material_id, language_code) DO UPDATE
+            SET name = EXCLUDED.name, short_description = EXCLUDED.short_description,
+                description = EXCLUDED.description, application = EXCLUDED.application,
+                installation = EXCLUDED.installation, advantages = EXCLUDED.advantages,
+                disadvantages = EXCLUDED.disadvantages, notes = EXCLUDED.notes,
+                updated_at = NOW();
+          `, [
+            materialId, tr.lang, tr.name, tr.short_desc, tr.desc,
+            tr.app, tr.inst, tr.pros, tr.cons, tr.notes
+          ]).catch(e => console.warn('Trans upsert warn:', e.message));
+        }
+      }
 
       if (materialId && Array.isArray(m.types) && m.types.length > 0) {
         // Upsert types

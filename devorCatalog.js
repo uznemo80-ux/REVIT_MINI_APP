@@ -1,6 +1,6 @@
 // ======================================================
-// YOSHUZBEKK Academy — Devor Materiallari Kengaytirilgan Katalogi
-// To‘liq 327 ta material texnik kartalari va me’moriy parametrlari
+// YOSHUZBEKK Academy — Full Wall Technical Catalog
+// 327 Wall Materials (Multilingual: UZ / RU / EN)
 // ======================================================
 
 const DEVOR_MATERIALS = [
@@ -10,7 +10,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Keramik to‘liq (pishiq) g‘isht",
     "name_ru": "Керамический полнотелый кирпич",
     "original_name": "Керамический полнотелый кирпич",
-    "english_name": "Керамический полнотелый кирпич",
+    "english_name": "Solid ceramic brick",
     "slug": "keramicheskiy-polnotelyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -148,6 +148,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid ceramic brick",
+    "short_description_en": "Solid ceramic brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Solid ceramic brick (Керамический полнотелый кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Solid ceramic brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "solid ceramic brick",
+      "керамический полнотелый кирпич",
+      "keramik to‘liq (pishiq) g‘isht"
     ]
   },
   {
@@ -156,7 +170,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Keramik kovakli g‘isht",
     "name_ru": "Керамический пустотелый кирпич",
     "original_name": "Керамический пустотелый кирпич",
-    "english_name": "Керамический пустотелый кирпич",
+    "english_name": "Hollow ceramic brick",
     "slug": "keramicheskiy-pustotelyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -294,6 +308,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Hollow ceramic brick",
+    "short_description_en": "Hollow ceramic brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Hollow ceramic brick (Керамический пустотелый кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Hollow ceramic brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "hollow ceramic brick",
+      "керамический пустотелый кирпич",
+      "keramik kovakli g‘isht"
     ]
   },
   {
@@ -302,7 +330,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Keramik qoplama (oblitsovka) g‘isht",
     "name_ru": "Керамический облицовочный кирпич",
     "original_name": "Керамический облицовочный кирпич",
-    "english_name": "Керамический облицовочный кирпич",
+    "english_name": "Facing ceramic brick",
     "slug": "keramicheskiy-oblitsovochnyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -440,6 +468,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Facing ceramic brick",
+    "short_description_en": "Facing ceramic brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Facing ceramic brick (Керамический облицовочный кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Facing ceramic brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "facing ceramic brick",
+      "керамический облицовочный кирпич",
+      "keramik qoplama (oblitsovka) g‘isht"
     ]
   },
   {
@@ -448,7 +490,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Keramik klinker g‘isht",
     "name_ru": "Керамический клинкерный кирпич",
     "original_name": "Керамический клинкерный кирпич",
-    "english_name": "Керамический клинкерный кирпич",
+    "english_name": "Clinker ceramic brick",
     "slug": "keramicheskiy-klinkernyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -586,6 +628,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Clinker ceramic brick",
+    "short_description_en": "Clinker ceramic brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Clinker ceramic brick (Керамический клинкерный кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Clinker ceramic brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "clinker ceramic brick",
+      "керамический клинкерный кирпич",
+      "keramik klinker g‘isht"
     ]
   },
   {
@@ -594,7 +650,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Silikat to‘liq g‘isht",
     "name_ru": "Силикатный полнотелый кирпич",
     "original_name": "Силикатный полнотелый кирпич",
-    "english_name": "Силикатный полнотелый кирпич",
+    "english_name": "Solid sand-lime brick",
     "slug": "silikatnyy-polnotelyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -732,6 +788,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid sand-lime brick",
+    "short_description_en": "Solid sand-lime brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Solid sand-lime brick (Силикатный полнотелый кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Solid sand-lime brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "solid sand-lime brick",
+      "силикатный полнотелый кирпич",
+      "silikat to‘liq g‘isht"
     ]
   },
   {
@@ -740,7 +810,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Silikat kovakli g‘isht",
     "name_ru": "Силикатный пустотелый кирпич",
     "original_name": "Силикатный пустотелый кирпич",
-    "english_name": "Силикатный пустотелый кирпич",
+    "english_name": "Hollow sand-lime brick",
     "slug": "silikatnyy-pustotelyy-kirpich",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -878,6 +948,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Hollow sand-lime brick",
+    "short_description_en": "Hollow sand-lime brick — professional wall and construction material for architectural specifications.",
+    "description_en": "Hollow sand-lime brick (Силикатный пустотелый кирпич) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Hollow sand-lime brick\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "250x120x65 mm",
+    "aliases": [
+      "hollow sand-lime brick",
+      "силикатный пустотелый кирпич",
+      "silikat kovakli g‘isht"
     ]
   },
   {
@@ -886,7 +970,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Yirik formatli keramik blok (Keramoblok)",
     "name_ru": "Керамический крупноформатный блок",
     "original_name": "Керамический крупноформатный блок",
-    "english_name": "Керамический крупноформатный блок",
+    "english_name": "Large-format ceramic block",
     "slug": "keramicheskiy-krupnoformatnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1024,6 +1108,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Large-format ceramic block",
+    "short_description_en": "Large-format ceramic block — professional wall and construction material for architectural specifications.",
+    "description_en": "Large-format ceramic block (Керамический крупноформатный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Large-format ceramic block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "large-format ceramic block",
+      "керамический крупноформатный блок",
+      "yirik formatli keramik blok (keramoblok)"
     ]
   },
   {
@@ -1032,7 +1130,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Gazobeton blok (D500 / D600)",
     "name_ru": "Газобетонный блок",
     "original_name": "Газобетонный блок",
-    "english_name": "Газобетонный блок",
+    "english_name": "Autoclaved aerated concrete block",
     "slug": "gazobetonnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1170,6 +1268,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Autoclaved aerated concrete block",
+    "short_description_en": "Autoclaved aerated concrete block — professional wall and construction material for architectural specifications.",
+    "description_en": "Autoclaved aerated concrete block (Газобетонный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Autoclaved aerated concrete block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "600x300x200 mm",
+    "aliases": [
+      "autoclaved aerated concrete block",
+      "газобетонный блок",
+      "gazobeton blok (d500 / d600)"
     ]
   },
   {
@@ -1178,7 +1290,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Gazosilikat avtoklav blok",
     "name_ru": "Газосиликатный блок",
     "original_name": "Газосиликатный блок",
-    "english_name": "Газосиликатный блок",
+    "english_name": "Gas silicate block",
     "slug": "gazosilikatnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1316,6 +1428,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Gas silicate block",
+    "short_description_en": "Gas silicate block — professional wall and construction material for architectural specifications.",
+    "description_en": "Gas silicate block (Газосиликатный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Gas silicate block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "600x300x200 mm",
+    "aliases": [
+      "gas silicate block",
+      "газосиликатный блок",
+      "gazosilikat avtoklav blok"
     ]
   },
   {
@@ -1324,7 +1450,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Penobeton devor bloki",
     "name_ru": "Пенобетонный блок",
     "original_name": "Пенобетонный блок",
-    "english_name": "Пенобетонный блок",
+    "english_name": "Foam concrete block",
     "slug": "penobetonnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1462,6 +1588,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Foam concrete block",
+    "short_description_en": "Foam concrete block — professional wall and construction material for architectural specifications.",
+    "description_en": "Foam concrete block (Пенобетонный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Foam concrete block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "foam concrete block",
+      "пенобетонный блок",
+      "penobeton devor bloki"
     ]
   },
   {
@@ -1470,7 +1610,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Keramzitobeton devor bloki",
     "name_ru": "Керамзитобетонный блок",
     "original_name": "Керамзитобетонный блок",
-    "english_name": "Керамзитобетонный блок",
+    "english_name": "Expanded clay concrete block",
     "slug": "keramzitobetonnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1608,6 +1748,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Expanded clay concrete block",
+    "short_description_en": "Expanded clay concrete block — professional wall and construction material for architectural specifications.",
+    "description_en": "Expanded clay concrete block (Керамзитобетонный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Expanded clay concrete block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "expanded clay concrete block",
+      "керамзитобетонный блок",
+      "keramzitobeton devor bloki"
     ]
   },
   {
@@ -1616,7 +1770,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Polistirolbeton issiqlikbop blok",
     "name_ru": "Полистиролбетонный блок",
     "original_name": "Полистиролбетонный блок",
-    "english_name": "Полистиролбетонный блок",
+    "english_name": "Polystyrene concrete block",
     "slug": "polistirolbetonnyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1754,6 +1908,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Polystyrene concrete block",
+    "short_description_en": "Polystyrene concrete block — professional wall and construction material for architectural specifications.",
+    "description_en": "Polystyrene concrete block (Полистиролбетонный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Polystyrene concrete block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "polystyrene concrete block",
+      "полистиролбетонный блок",
+      "polistirolbeton issiqlikbop blok"
     ]
   },
   {
@@ -1762,7 +1930,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Shlakoblok devor toshi",
     "name_ru": "Шлакоблок",
     "original_name": "Шлакоблок",
-    "english_name": "Шлакоблок",
+    "english_name": "Cinder block",
     "slug": "shlakoblok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -1900,6 +2068,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Cinder block",
+    "short_description_en": "Cinder block — professional wall and construction material for architectural specifications.",
+    "description_en": "Cinder block (Шлакоблок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Cinder block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "cinder block",
+      "шлакоблок",
+      "shlakoblok devor toshi"
     ]
   },
   {
@@ -1908,7 +2090,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Arbolit blok (yog‘och-beton)",
     "name_ru": "Арболитовый блок",
     "original_name": "Арболитовый блок",
-    "english_name": "Арболитовый блок",
+    "english_name": "Wood concrete (Arbolit) block",
     "slug": "arbolitovyy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -2046,6 +2228,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Wood concrete (Arbolit) block",
+    "short_description_en": "Wood concrete (Arbolit) block — professional wall and construction material for architectural specifications.",
+    "description_en": "Wood concrete (Arbolit) block (Арболитовый блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Wood concrete (Arbolit) block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "wood concrete (arbolit) block",
+      "арболитовый блок",
+      "arbolit blok (yog‘och-beton)"
     ]
   },
   {
@@ -2192,6 +2388,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Опилкобетонный блок",
+    "short_description_en": "Опилкобетонный блок — professional wall and construction material for architectural specifications.",
+    "description_en": "Опилкобетонный блок (Опилкобетонный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Опилкобетонный блок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "опилкобетонный блок",
+      "qipiqbeton (opilkobeton) devor bloki"
     ]
   },
   {
@@ -2200,7 +2409,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Beton devor bloki",
     "name_ru": "Бетонный стеновой блок",
     "original_name": "Бетонный стеновой блок",
-    "english_name": "Бетонный стеновой блок",
+    "english_name": "Concrete wall masonry block",
     "slug": "betonnyy-stenovoy-blok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -2338,6 +2547,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Concrete wall masonry block",
+    "short_description_en": "Concrete wall masonry block — professional wall and construction material for architectural specifications.",
+    "description_en": "Concrete wall masonry block (Бетонный стеновой блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Concrete wall masonry block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "concrete wall masonry block",
+      "бетонный стеновой блок",
+      "beton devor bloki"
     ]
   },
   {
@@ -2484,6 +2707,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тяжёлый бетонный стеновой блок",
+    "short_description_en": "Тяжёлый бетонный стеновой блок — professional wall and construction material for architectural specifications.",
+    "description_en": "Тяжёлый бетонный стеновой блок (Тяжёлый бетонный стеновой блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Тяжёлый бетонный стеновой блок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "тяжёлый бетонный стеновой блок",
+      "og‘ir beton devor bloki"
     ]
   },
   {
@@ -2630,6 +2866,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лёгкий бетонный стеновой блок",
+    "short_description_en": "Лёгкий бетонный стеновой блок — professional wall and construction material for architectural specifications.",
+    "description_en": "Лёгкий бетонный стеновой блок (Лёгкий бетонный стеновой блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Лёгкий бетонный стеновой блок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "лёгкий бетонный стеновой блок",
+      "yengil beton devor bloki"
     ]
   },
   {
@@ -2638,7 +2887,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Temir-beton devor paneli",
     "name_ru": "Железобетонная стеновая панель",
     "original_name": "Железобетонная стеновая панель",
-    "english_name": "Железобетонная стеновая панель",
+    "english_name": "Precast reinforced concrete wall panel",
     "slug": "zhelezobetonnaya-stenovaya-panel",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -2776,6 +3025,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Precast reinforced concrete wall panel",
+    "short_description_en": "Precast reinforced concrete wall panel — professional wall and construction material for architectural specifications.",
+    "description_en": "Precast reinforced concrete wall panel (Железобетонная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Precast reinforced concrete wall panel\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "6000x1180x100 mm",
+    "aliases": [
+      "precast reinforced concrete wall panel",
+      "железобетонная стеновая панель",
+      "temir-beton devor paneli"
     ]
   },
   {
@@ -2784,7 +3047,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Monolit temir-beton devor konstruksiyasi",
     "name_ru": "Монолитная железобетонная стена",
     "original_name": "Монолитная железобетонная стена",
-    "english_name": "Монолитная железобетонная стена",
+    "english_name": "Monolithic cast-in-place RC wall",
     "slug": "monolitnaya-zhelezobetonnaya-stena",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -2922,6 +3185,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Monolithic cast-in-place RC wall",
+    "short_description_en": "Monolithic cast-in-place RC wall — professional wall and construction material for architectural specifications.",
+    "description_en": "Monolithic cast-in-place RC wall (Монолитная железобетонная стена) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Monolithic cast-in-place RC wall\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "390x190x188 mm",
+    "aliases": [
+      "monolithic cast-in-place rc wall",
+      "монолитная железобетонная стена",
+      "monolit temir-beton devor konstruksiyasi"
     ]
   },
   {
@@ -3068,6 +3345,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеновая панель из лёгкого бетона",
+    "short_description_en": "Стеновая панель из лёгкого бетона — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеновая панель из лёгкого бетона (Стеновая панель из лёгкого бетона) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеновая панель из лёгкого бетона\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "6000x1180x100 mm",
+    "aliases": [
+      "стеновая панель из лёгкого бетона",
+      "yengil beton devor paneli"
     ]
   },
   {
@@ -3076,7 +3366,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Sandvich-panel (devor uchun)",
     "name_ru": "Сэндвич-панель",
     "original_name": "Сэндвич-панель",
-    "english_name": "Сэндвич-панель",
+    "english_name": "Insulated sandwich wall panel",
     "slug": "sendvich-panel",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стеновые блоки и кирпич",
@@ -3214,6 +3504,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Insulated sandwich wall panel",
+    "short_description_en": "Insulated sandwich wall panel — professional wall and construction material for architectural specifications.",
+    "description_en": "Insulated sandwich wall panel (Сэндвич-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Insulated sandwich wall panel\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "6000x1180x100 mm",
+    "aliases": [
+      "insulated sandwich wall panel",
+      "сэндвич-панель",
+      "sandvich-panel (devor uchun)"
     ]
   },
   {
@@ -3360,6 +3664,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Трёхслойная стеновая панель",
+    "short_description_en": "Трёхслойная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Трёхслойная стеновая панель (Трёхслойная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Трёхслойная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "6000x1180x100 mm",
+    "aliases": [
+      "трёхслойная стеновая панель",
+      "uch qatlamli devor paneli"
     ]
   },
   {
@@ -3506,6 +3823,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фибробетонная стеновая панель",
+    "short_description_en": "Фибробетонная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фибробетонная стеновая панель (Фибробетонная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фибробетонная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "6000x1180x100 mm",
+    "aliases": [
+      "фибробетонная стеновая панель",
+      "fibrobeton devor paneli"
     ]
   },
   {
@@ -3514,7 +3844,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Gipsokarton oraliq to‘siq devor tizimi",
     "name_ru": "Гипсокартонная перегородка",
     "original_name": "Гипсокартонная перегородка",
-    "english_name": "Гипсокартонная перегородка",
+    "english_name": "Drywall partition wall",
     "slug": "gipsokartonnaya-peregorodka",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Перегородочные материалы",
@@ -3652,6 +3982,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Drywall partition wall",
+    "short_description_en": "Drywall partition wall — professional wall and construction material for architectural specifications.",
+    "description_en": "Drywall partition wall (Гипсокартонная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Drywall partition wall\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "drywall partition wall",
+      "гипсокартонная перегородка",
+      "gipsokarton oraliq to‘siq devor tizimi"
     ]
   },
   {
@@ -3660,7 +4004,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Gips pazogrebneviy plita (PGP)",
     "name_ru": "Гипсовая пазогребневая плита (ПГП)",
     "original_name": "Гипсовая пазогребневая плита (ПГП)",
-    "english_name": "Гипсовая пазогребневая плита (ПГП)",
+    "english_name": "Gypsum tongue-and-groove partition block (ПГП)",
     "slug": "gipsovaya-pazogrebnevaya-plita-pgp",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Перегородочные материалы",
@@ -3798,6 +4142,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Gypsum tongue-and-groove partition block (ПГП)",
+    "short_description_en": "Gypsum tongue-and-groove partition block (ПГП) — professional wall and construction material for architectural specifications.",
+    "description_en": "Gypsum tongue-and-groove partition block (ПГП) (Гипсовая пазогребневая плита (ПГП)) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Gypsum tongue-and-groove partition block (ПГП)\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "gypsum tongue-and-groove partition block (пгп)",
+      "гипсовая пазогребневая плита (пгп)",
+      "gips pazogrebneviy plita (pgp)"
     ]
   },
   {
@@ -3944,6 +4302,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гипсоблок",
+    "short_description_en": "Гипсоблок — professional wall and construction material for architectural specifications.",
+    "description_en": "Гипсоблок (Гипсоблок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гипсоблок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "гипсоблок",
+      "gipsblok oraliq devor toshi"
     ]
   },
   {
@@ -4090,6 +4461,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Газобетонная перегородочная плита",
+    "short_description_en": "Газобетонная перегородочная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "Газобетонная перегородочная плита (Газобетонная перегородочная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Газобетонная перегородочная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "газобетонная перегородочная плита",
+      "gazobeton oraliq to‘siq plitasi"
     ]
   },
   {
@@ -4236,6 +4620,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Газобетонный перегородочный блок",
+    "short_description_en": "Газобетонный перегородочный блок — professional wall and construction material for architectural specifications.",
+    "description_en": "Газобетонный перегородочный блок (Газобетонный перегородочный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Газобетонный перегородочный блок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "газобетонный перегородочный блок",
+      "gazobeton oraliq to‘siq bloki (100-150 mm)"
     ]
   },
   {
@@ -4382,6 +4779,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамический перегородочный блок",
+    "short_description_en": "Керамический перегородочный блок — professional wall and construction material for architectural specifications.",
+    "description_en": "Керамический перегородочный блок (Керамический перегородочный блок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Керамический перегородочный блок\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "керамический перегородочный блок",
+      "keramik oraliq to‘siq bloki"
     ]
   },
   {
@@ -4528,6 +4938,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Кирпичная перегородка",
+    "short_description_en": "Кирпичная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Кирпичная перегородка (Кирпичная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Кирпичная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "кирпичная перегородка",
+      "g‘ishtli oraliq devor (yarim g‘isht)"
     ]
   },
   {
@@ -4536,7 +4959,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Shishablok (dekorativ yorug‘lik o‘tkazuvchi blok)",
     "name_ru": "Стеклоблок",
     "original_name": "Стеклоблок",
-    "english_name": "Стеклоблок",
+    "english_name": "Architectural glass block",
     "slug": "stekloblok",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Перегородочные материалы",
@@ -4674,6 +5097,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Architectural glass block",
+    "short_description_en": "Architectural glass block — professional wall and construction material for architectural specifications.",
+    "description_en": "Architectural glass block (Стеклоблок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Architectural glass block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "architectural glass block",
+      "стеклоблок",
+      "shishablok (dekorativ yorug‘lik o‘tkazuvchi blok)"
     ]
   },
   {
@@ -4820,6 +5257,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклянная перегородка",
+    "short_description_en": "Стеклянная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклянная перегородка (Стеклянная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклянная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стеклянная перегородка",
+      "butun shishali oraliq to‘siq tizimi (triplex)"
     ]
   },
   {
@@ -4966,6 +5416,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каркасная перегородка",
+    "short_description_en": "Каркасная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Каркасная перегородка (Каркасная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каркасная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "каркасная перегородка",
+      "karkasli oraliq to‘siq"
     ]
   },
   {
@@ -5112,6 +5575,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каркасно-обшивная перегородка",
+    "short_description_en": "Каркасно-обшивная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Каркасно-обшивная перегородка (Каркасно-обшивная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каркасно-обшивная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "каркасно-обшивная перегородка",
+      "karkas-qoplamali devor to‘sig‘i"
     ]
   },
   {
@@ -5258,6 +5734,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мобильная перегородка",
+    "short_description_en": "Мобильная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Мобильная перегородка (Мобильная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мобильная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мобильная перегородка",
+      "mobil (ko‘chma) ofis to‘sig‘i"
     ]
   },
   {
@@ -5404,6 +5893,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая перегородка",
+    "short_description_en": "Акустическая перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустическая перегородка (Акустическая перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустическая перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустическая перегородка",
+      "akustik shovqin yutuvchi oraliq to‘siq"
     ]
   },
   {
@@ -5550,6 +6052,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стационарная офисная перегородка",
+    "short_description_en": "Стационарная офисная перегородка — professional wall and construction material for architectural specifications.",
+    "description_en": "Стационарная офисная перегородка (Стационарная офисная перегородка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стационарная офисная перегородка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стационарная офисная перегородка",
+      "statsionar alyuminiy ofis to‘sig‘i"
     ]
   },
   {
@@ -5696,6 +6211,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГКЛ — гипсокартонный лист",
+    "short_description_en": "ГКЛ — гипсокартонный лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГКЛ — гипсокартонный лист (ГКЛ — гипсокартонный лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГКЛ — гипсокартонный лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гкл — гипсокартонный лист",
+      "gkl — standart gipsokarton listi"
     ]
   },
   {
@@ -5842,6 +6370,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГКЛВ — влагостойкий гипсокартонный лист",
+    "short_description_en": "ГКЛВ — влагостойкий гипсокартонный лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГКЛВ — влагостойкий гипсокартонный лист (ГКЛВ — влагостойкий гипсокартонный лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГКЛВ — влагостойкий гипсокартонный лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гклв — влагостойкий гипсокартонный лист",
+      "gklv — namlikka chidamli gipsokarton listi"
     ]
   },
   {
@@ -5988,6 +6529,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГКЛО — огнестойкий гипсокартонный лист",
+    "short_description_en": "ГКЛО — огнестойкий гипсокартонный лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГКЛО — огнестойкий гипсокартонный лист (ГКЛО — огнестойкий гипсокартонный лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГКЛО — огнестойкий гипсокартонный лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гкло — огнестойкий гипсокартонный лист",
+      "gklo — yong‘inga chidamli gipsokarton listi"
     ]
   },
   {
@@ -6134,6 +6688,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГКЛВО — влагостойкий огнестойкий гипсокартонный лист",
+    "short_description_en": "ГКЛВО — влагостойкий огнестойкий гипсокартонный лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГКЛВО — влагостойкий огнестойкий гипсокартонный лист (ГКЛВО — влагостойкий огнестойкий гипсокартонный лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГКЛВО — влагостойкий огнестойкий гипсокартонный лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гклво — влагостойкий огнестойкий гипсокартонный лист",
+      "gklvo — namlik va olovga chidamli gipsokarton"
     ]
   },
   {
@@ -6280,6 +6847,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГСП — гипсовая строительная плита",
+    "short_description_en": "ГСП — гипсовая строительная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "ГСП — гипсовая строительная плита (ГСП — гипсовая строительная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГСП — гипсовая строительная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гсп — гипсовая строительная плита",
+      "gsp — gips qurilish plitasi"
     ]
   },
   {
@@ -6426,6 +7006,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГВЛ — гипсоволокнистый лист",
+    "short_description_en": "ГВЛ — гипсоволокнистый лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГВЛ — гипсоволокнистый лист (ГВЛ — гипсоволокнистый лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГВЛ — гипсоволокнистый лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гвл — гипсоволокнистый лист",
+      "gvl — gipstolali mustahkam list"
     ]
   },
   {
@@ -6572,6 +7165,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ГВЛВ — влагостойкий гипсоволокнистый лист",
+    "short_description_en": "ГВЛВ — влагостойкий гипсоволокнистый лист — professional wall and construction material for architectural specifications.",
+    "description_en": "ГВЛВ — влагостойкий гипсоволокнистый лист (ГВЛВ — влагостойкий гипсоволокнистый лист) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ГВЛВ — влагостойкий гипсоволокнистый лист\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "гвлв — влагостойкий гипсоволокнистый лист",
+      "gvlv — namlikka chidamli gipstolali list"
     ]
   },
   {
@@ -6718,6 +7324,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементная плита",
+    "short_description_en": "Цементная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементная плита (Цементная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "цементная плита",
+      "tsement plita (suvga chidamli)"
     ]
   },
   {
@@ -6864,6 +7483,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Аквапанель",
+    "short_description_en": "Аквапанель — professional wall and construction material for architectural specifications.",
+    "description_en": "Аквапанель (Аквапанель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Аквапанель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "аквапанель",
+      "akvapanel (knauf aquapanel indoor sement plita)"
     ]
   },
   {
@@ -7010,6 +7642,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фиброцементная плита",
+    "short_description_en": "Фиброцементная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "Фиброцементная плита (Фиброцементная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фиброцементная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "фиброцементная плита",
+      "tsement plita (suvga chidamli)"
     ]
   },
   {
@@ -7156,6 +7801,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементно-стружечная плита (ЦСП)",
+    "short_description_en": "Цементно-стружечная плита (ЦСП) — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементно-стружечная плита (ЦСП) (Цементно-стружечная плита (ЦСП)) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементно-стружечная плита (ЦСП)\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "цементно-стружечная плита (цсп)",
+      "tsement-qipikli plita (tssp)"
     ]
   },
   {
@@ -7302,6 +7960,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ориентированно-стружечная плита (OSB)",
+    "short_description_en": "Ориентированно-стружечная плита (OSB) — professional wall and construction material for architectural specifications.",
+    "description_en": "Ориентированно-стружечная плита (OSB) (Ориентированно-стружечная плита (OSB)) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ориентированно-стружечная плита (OSB)\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "ориентированно-стружечная плита (osb)",
+      "osb-3 yo‘naltirilgan qipiqli plita"
     ]
   },
   {
@@ -7448,6 +8119,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фанера",
+    "short_description_en": "Фанера — professional wall and construction material for architectural specifications.",
+    "description_en": "Фанера (Фанера) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фанера\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "фанера",
+      "namlikka chidamli fanera (fk / fsf)"
     ]
   },
   {
@@ -7594,6 +8278,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "МДФ-плита",
+    "short_description_en": "МДФ-плита — professional wall and construction material for architectural specifications.",
+    "description_en": "МДФ-плита (МДФ-плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"МДФ-плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "мдф-плита",
+      "mdf devor plitasi"
     ]
   },
   {
@@ -7740,6 +8437,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ДСП",
+    "short_description_en": "ДСП — professional wall and construction material for architectural specifications.",
+    "description_en": "ДСП (ДСП) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ДСП\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "дсп",
+      "dsp yog‘och qirindili plita"
     ]
   },
   {
@@ -7886,6 +8596,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ламинированная ДСП",
+    "short_description_en": "Ламинированная ДСП — professional wall and construction material for architectural specifications.",
+    "description_en": "Ламинированная ДСП (Ламинированная ДСП) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ламинированная ДСП\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "ламинированная дсп",
+      "laminatsiyalangan dsp (ldsp)"
     ]
   },
   {
@@ -7894,7 +8617,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "HPL yuqori bosimli laminat panel",
     "name_ru": "HPL-панель",
     "original_name": "HPL-панель",
-    "english_name": "HPL-панель",
+    "english_name": "High-pressure laminate (HPL) panel",
     "slug": "hpl-panel",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Гипсокартон и листовые материалы",
@@ -8032,6 +8755,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "High-pressure laminate (HPL) panel",
+    "short_description_en": "High-pressure laminate (HPL) panel — professional wall and construction material for architectural specifications.",
+    "description_en": "High-pressure laminate (HPL) panel (HPL-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"High-pressure laminate (HPL) panel\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "high-pressure laminate (hpl) panel",
+      "hpl-панель",
+      "hpl yuqori bosimli laminat panel"
     ]
   },
   {
@@ -8178,6 +8915,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Компакт-плита HPL",
+    "short_description_en": "Компакт-плита HPL — professional wall and construction material for architectural specifications.",
+    "description_en": "Компакт-плита HPL (Компакт-плита HPL) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Компакт-плита HPL\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2500x1200x12.5 mm",
+    "aliases": [
+      "компакт-плита hpl",
+      "hpl ixcham monolit devor plitasi"
     ]
   },
   {
@@ -8324,6 +9074,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементно-песчаная штукатурка",
+    "short_description_en": "Цементно-песчаная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементно-песчаная штукатурка (Цементно-песчаная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементно-песчаная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "цементно-песчаная штукатурка",
+      "tsement-qum asosli suvoq qorishmasi"
     ]
   },
   {
@@ -8470,6 +9233,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементная штукатурка",
+    "short_description_en": "Цементная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементная штукатурка (Цементная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "цементная штукатурка",
+      "tsementli devor suvog‘i"
     ]
   },
   {
@@ -8616,6 +9392,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Известково-цементная штукатурка",
+    "short_description_en": "Известково-цементная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Известково-цементная штукатурка (Известково-цементная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Известково-цементная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "известково-цементная штукатурка",
+      "tsementli devor suvog‘i"
     ]
   },
   {
@@ -8762,6 +9551,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гипсовая штукатурка",
+    "short_description_en": "Гипсовая штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Гипсовая штукатурка (Гипсовая штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гипсовая штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "гипсовая штукатурка",
+      "gips asosli suvoq (knauf rotband turi)"
     ]
   },
   {
@@ -8908,6 +9710,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Машинная штукатурка",
+    "short_description_en": "Машинная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Машинная штукатурка (Машинная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Машинная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "машинная штукатурка",
+      "mashinada sepiladigan gipsli suvoq (mp-75 turi)"
     ]
   },
   {
@@ -9054,6 +9869,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ручная штукатурка",
+    "short_description_en": "Ручная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Ручная штукатурка (Ручная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ручная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "ручная штукатурка",
+      "qo‘lda surtiladigan pardoz suvog‘i"
     ]
   },
   {
@@ -9200,6 +10028,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная штукатурка",
+    "short_description_en": "Декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная штукатурка (Декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -9346,6 +10187,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Минеральная декоративная штукатурка",
+    "short_description_en": "Минеральная декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Минеральная декоративная штукатурка (Минеральная декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Минеральная декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "минеральная декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -9492,6 +10346,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акриловая декоративная штукатурка",
+    "short_description_en": "Акриловая декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Акриловая декоративная штукатурка (Акриловая декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акриловая декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акриловая декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -9638,6 +10505,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Силиконовая декоративная штукатурка",
+    "short_description_en": "Силиконовая декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Силиконовая декоративная штукатурка (Силиконовая декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Силиконовая декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "силиконовая декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -9784,6 +10664,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Силикатная декоративная штукатурка",
+    "short_description_en": "Силикатная декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Силикатная декоративная штукатурка (Силикатная декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Силикатная декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "силикатная декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -9930,6 +10823,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Венецианская штукатурка",
+    "short_description_en": "Венецианская штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Венецианская штукатурка (Венецианская штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Венецианская штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "венецианская штукатурка",
+      "venetsianka (marmar effektli nafis suvoq)"
     ]
   },
   {
@@ -10076,6 +10982,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мраморная штукатурка",
+    "short_description_en": "Мраморная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Мраморная штукатурка (Мраморная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мраморная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мраморная штукатурка",
+      "marmar toshli dekorativ suvoq (bayramix turi)"
     ]
   },
   {
@@ -10222,6 +11141,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мозаичная штукатурка",
+    "short_description_en": "Мозаичная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Мозаичная штукатурка (Мозаичная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мозаичная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мозаичная штукатурка",
+      "rangli kvars-mozaikali suvoq"
     ]
   },
   {
@@ -10368,6 +11300,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменная штукатурка",
+    "short_description_en": "Каменная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Каменная штукатурка (Каменная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каменная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "каменная штукатурка",
+      "toshsimon dekorativ pardoz suvog‘i"
     ]
   },
   {
@@ -10514,6 +11459,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Терразитовая штукатурка",
+    "short_description_en": "Терразитовая штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Терразитовая штукатурка (Терразитовая штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Терразитовая штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "терразитовая штукатурка",
+      "terrazit relyefli fasad suvog‘i"
     ]
   },
   {
@@ -10660,6 +11618,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фактурная штукатурка",
+    "short_description_en": "Фактурная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Фактурная штукатурка (Фактурная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фактурная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фактурная штукатурка",
+      "fakturali relyefli dekorativ suvoq"
     ]
   },
   {
@@ -10806,6 +11777,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Структурная штукатурка",
+    "short_description_en": "Структурная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Структурная штукатурка (Структурная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Структурная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "структурная штукатурка",
+      "strukturali (qobiqxo‘r / yomg‘ircha) suvoq"
     ]
   },
   {
@@ -10814,7 +11798,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Beton effektli suvoq (Loft art-beton)",
     "name_ru": "Штукатурка с эффектом бетона",
     "original_name": "Штукатурка с эффектом бетона",
-    "english_name": "Штукатурка с эффектом бетона",
+    "english_name": "Plaster mortar с эффектом бетона",
     "slug": "shtukaturka-s-effektom-betona",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Штукатурка и выравнивание стен",
@@ -10952,6 +11936,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Plaster mortar с эффектом бетона",
+    "short_description_en": "Plaster mortar с эффектом бетона — professional wall and construction material for architectural specifications.",
+    "description_en": "Plaster mortar с эффектом бетона (Штукатурка с эффектом бетона) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Plaster mortar с эффектом бетона\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "plaster mortar с эффектом бетона",
+      "штукатурка с эффектом бетона",
+      "beton effektli suvoq (loft art-beton)"
     ]
   },
   {
@@ -10960,7 +11958,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Travertin tosh effektli dekorativ suvoq",
     "name_ru": "Штукатурка с эффектом травертина",
     "original_name": "Штукатурка с эффектом травертина",
-    "english_name": "Штукатурка с эффектом травертина",
+    "english_name": "Plaster mortar с эффектом травертина",
     "slug": "shtukaturka-s-effektom-travertina",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Штукатурка и выравнивание стен",
@@ -11098,6 +12096,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Plaster mortar с эффектом травертина",
+    "short_description_en": "Plaster mortar с эффектом травертина — professional wall and construction material for architectural specifications.",
+    "description_en": "Plaster mortar с эффектом травертина (Штукатурка с эффектом травертина) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Plaster mortar с эффектом травертина\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "plaster mortar с эффектом травертина",
+      "штукатурка с эффектом травертина",
+      "travertin tosh effektli dekorativ suvoq"
     ]
   },
   {
@@ -11106,7 +12118,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Marmar jilosi effektli suvoq",
     "name_ru": "Штукатурка с эффектом мрамора",
     "original_name": "Штукатурка с эффектом мрамора",
-    "english_name": "Штукатурка с эффектом мрамора",
+    "english_name": "Plaster mortar с эффектом мрамора",
     "slug": "shtukaturka-s-effektom-mramora",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Штукатурка и выравнивание стен",
@@ -11244,6 +12256,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Plaster mortar с эффектом мрамора",
+    "short_description_en": "Plaster mortar с эффектом мрамора — professional wall and construction material for architectural specifications.",
+    "description_en": "Plaster mortar с эффектом мрамора (Штукатурка с эффектом мрамора) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Plaster mortar с эффектом мрамора\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "plaster mortar с эффектом мрамора",
+      "штукатурка с эффектом мрамора",
+      "marmar jilosi effektli suvoq"
     ]
   },
   {
@@ -11252,7 +12278,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Ipak jilosi effektli dekorativ suvoq (Ottocento)",
     "name_ru": "Штукатурка с эффектом шёлка",
     "original_name": "Штукатурка с эффектом шёлка",
-    "english_name": "Штукатурка с эффектом шёлка",
+    "english_name": "Plaster mortar с эффектом шёлка",
     "slug": "shtukaturka-s-effektom-shyolka",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Штукатурка и выравнивание стен",
@@ -11390,6 +12416,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Plaster mortar с эффектом шёлка",
+    "short_description_en": "Plaster mortar с эффектом шёлка — professional wall and construction material for architectural specifications.",
+    "description_en": "Plaster mortar с эффектом шёлка (Штукатурка с эффектом шёлка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Plaster mortar с эффектом шёлка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "plaster mortar с эффектом шёлка",
+      "штукатурка с эффектом шёлка",
+      "ipak jilosi effektli dekorativ suvoq (ottocento)"
     ]
   },
   {
@@ -11398,7 +12438,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Qum shamoli effektli dekorativ suvoq (Sahara)",
     "name_ru": "Штукатурка с эффектом песка",
     "original_name": "Штукатурка с эффектом песка",
-    "english_name": "Штукатурка с эффектом песка",
+    "english_name": "Plaster mortar с эффектом песка",
     "slug": "shtukaturka-s-effektom-peska",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Штукатурка и выравнивание стен",
@@ -11536,6 +12576,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Plaster mortar с эффектом песка",
+    "short_description_en": "Plaster mortar с эффектом песка — professional wall and construction material for architectural specifications.",
+    "description_en": "Plaster mortar с эффектом песка (Штукатурка с эффектом песка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Plaster mortar с эффектом песка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "plaster mortar с эффектом песка",
+      "штукатурка с эффектом песка",
+      "qum shamoli effektli dekorativ suvoq (sahara)"
     ]
   },
   {
@@ -11682,6 +12736,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микроцемент",
+    "short_description_en": "Микроцемент — professional wall and construction material for architectural specifications.",
+    "description_en": "Микроцемент (Микроцемент) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Микроцемент\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "микроцемент",
+      "mikrotsement uzluksiz choksiz devor qoplamasi"
     ]
   },
   {
@@ -11828,6 +12895,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микробетон",
+    "short_description_en": "Микробетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Микробетон (Микробетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Микробетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "микробетон",
+      "mikrobeton yuqori mustahkam devor pardoz qorishmasi"
     ]
   },
   {
@@ -11974,6 +13054,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гипсовая шпаклёвка",
+    "short_description_en": "Гипсовая шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Гипсовая шпаклёвка (Гипсовая шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гипсовая шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "гипсовая шпаклёвка",
+      "gips asosli shpaklyovka"
     ]
   },
   {
@@ -12120,6 +13213,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементная шпаклёвка",
+    "short_description_en": "Цементная шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементная шпаклёвка (Цементная шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементная шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "цементная шпаклёвка",
+      "tsement asosli namlikka chidamli shpaklyovka"
     ]
   },
   {
@@ -12266,6 +13372,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полимерная шпаклёвка",
+    "short_description_en": "Полимерная шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Полимерная шпаклёвка (Полимерная шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Полимерная шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "полимерная шпаклёвка",
+      "polimer pardozlash shpaklyovkasi"
     ]
   },
   {
@@ -12412,6 +13531,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акриловая шпаклёвка",
+    "short_description_en": "Акриловая шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Акриловая шпаклёвка (Акриловая шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акриловая шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акриловая шпаклёвка",
+      "akril pastali tayyor shpaklyovka"
     ]
   },
   {
@@ -12558,6 +13690,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Финишная шпаклёвка",
+    "short_description_en": "Финишная шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Финишная шпаклёвка (Финишная шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Финишная шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "финишная шпаклёвка",
+      "finish shpaklyovka (silliq oq qatlam)"
     ]
   },
   {
@@ -12704,6 +13849,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стартовая шпаклёвка",
+    "short_description_en": "Стартовая шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Стартовая шпаклёвка (Стартовая шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стартовая шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стартовая шпаклёвка",
+      "boshlang‘ich (start) tekislovchi shpaklyovka"
     ]
   },
   {
@@ -12850,6 +14008,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Универсальная шпаклёвка",
+    "short_description_en": "Универсальная шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Универсальная шпаклёвка (Универсальная шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Универсальная шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "универсальная шпаклёвка",
+      "universal shpaklyovka qorishmasi"
     ]
   },
   {
@@ -12996,6 +14167,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Влагостойкая шпаклёвка",
+    "short_description_en": "Влагостойкая шпаклёвка — professional wall and construction material for architectural specifications.",
+    "description_en": "Влагостойкая шпаклёвка (Влагостойкая шпаклёвка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Влагостойкая шпаклёвка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "влагостойкая шпаклёвка",
+      "nam xonalar uchun namlikka chidamli shpaklyovka"
     ]
   },
   {
@@ -13142,6 +14326,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шпаклёвка для гипсокартона",
+    "short_description_en": "Шпаклёвка для гипсокартона — professional wall and construction material for architectural specifications.",
+    "description_en": "Шпаклёвка для гипсокартона (Шпаклёвка для гипсокартона) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Шпаклёвка для гипсокартона\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "шпаклёвка для гипсокартона",
+      "gipsokarton choklari uchun maxsus shpaklyovka (fugen)"
     ]
   },
   {
@@ -13288,6 +14485,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шпаклёвка для бетонных стен",
+    "short_description_en": "Шпаклёвка для бетонных стен — professional wall and construction material for architectural specifications.",
+    "description_en": "Шпаклёвка для бетонных стен (Шпаклёвка для бетонных стен) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Шпаклёвка для бетонных стен\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "шпаклёвка для бетонных стен",
+      "beton devorlar uchun maxsus shpaklyovka"
     ]
   },
   {
@@ -13434,6 +14644,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Водоэмульсионная краска",
+    "short_description_en": "Водоэмульсионная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Водоэмульсионная краска (Водоэмульсионная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Водоэмульсионная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "водоэмульсионная краска",
+      "suv-emulsiyali interyer bo‘yog‘i"
     ]
   },
   {
@@ -13580,6 +14803,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акриловая краска",
+    "short_description_en": "Акриловая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Акриловая краска (Акриловая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акриловая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акриловая краска",
+      "akril asosli yuviladigan devor bo‘yog‘i"
     ]
   },
   {
@@ -13726,6 +14962,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Латексная краска",
+    "short_description_en": "Латексная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Латексная краска (Латексная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Латексная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "латексная краска",
+      "lateks asosli yuqori elastik devor bo‘yog‘i"
     ]
   },
   {
@@ -13872,6 +15121,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Силиконовая краска",
+    "short_description_en": "Силиконовая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Силиконовая краска (Силиконовая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Силиконовая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "силиконовая краска",
+      "silikon asosli chang qaytaruvchi bo‘yoq"
     ]
   },
   {
@@ -14018,6 +15280,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Силикатная краска",
+    "short_description_en": "Силикатная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Силикатная краска (Силикатная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Силикатная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "силикатная краска",
+      "silikat bug‘ o‘tkazuvchi mineral bo‘yoq"
     ]
   },
   {
@@ -14164,6 +15439,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Минеральная краска",
+    "short_description_en": "Минеральная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Минеральная краска (Минеральная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Минеральная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "минеральная краска",
+      "mineral devor bo‘yog‘i"
     ]
   },
   {
@@ -14310,6 +15598,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алкидная краска",
+    "short_description_en": "Алкидная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Алкидная краска (Алкидная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алкидная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алкидная краска",
+      "alkid emal bo‘yog‘i"
     ]
   },
   {
@@ -14456,6 +15757,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Масляная краска",
+    "short_description_en": "Масляная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Масляная краска (Масляная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Масляная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "масляная краска",
+      "moyli (yog‘li) himoya bo‘yog‘i"
     ]
   },
   {
@@ -14602,6 +15916,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидная краска",
+    "short_description_en": "Эпоксидная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Эпоксидная краска (Эпоксидная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Эпоксидная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "эпоксидная краска",
+      "epoksid mustahkam himoya bo‘yog‘i"
     ]
   },
   {
@@ -14748,6 +16075,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановая краска",
+    "short_description_en": "Полиуретановая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Полиуретановая краска (Полиуретановая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Полиуретановая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "полиуретановая краска",
+      "poliuretan aşınmaya chidamli bo‘yoq"
     ]
   },
   {
@@ -14894,6 +16234,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадная краска",
+    "short_description_en": "Фасадная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадная краска (Фасадная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадная краска",
+      "ob-havoga chidamli fasad bo‘yog‘i"
     ]
   },
   {
@@ -15040,6 +16393,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Интерьерная краска",
+    "short_description_en": "Интерьерная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Интерьерная краска (Интерьерная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Интерьерная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "интерьерная краска",
+      "interyer devor va shift bo‘yog‘i"
     ]
   },
   {
@@ -15186,6 +16552,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Моющаяся краска",
+    "short_description_en": "Моющаяся краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Моющаяся краска (Моющаяся краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Моющаяся краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "моющаяся краска",
+      "yuviladigan tozalashga chidamli bo‘yoq"
     ]
   },
   {
@@ -15332,6 +16711,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Матовая краска",
+    "short_description_en": "Матовая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Матовая краска (Матовая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Матовая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "матовая краска",
+      "glut-mat (yarqiramaydigan) chuqur mot bo‘yoq"
     ]
   },
   {
@@ -15478,6 +16870,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полуматовая краска",
+    "short_description_en": "Полуматовая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Полуматовая краска (Полуматовая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Полуматовая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "полуматовая краска",
+      "glut-mat (yarqiramaydigan) chuqur mot bo‘yoq"
     ]
   },
   {
@@ -15624,6 +17029,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Глянцевая краска",
+    "short_description_en": "Глянцевая краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Глянцевая краска (Глянцевая краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Глянцевая краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "глянцевая краска",
+      "yaltiroq (glyanes) devor bo‘yog‘i"
     ]
   },
   {
@@ -15770,6 +17188,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фактурная краска",
+    "short_description_en": "Фактурная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Фактурная краска (Фактурная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фактурная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фактурная краска",
+      "fakturali relyef hosil qiluvchi bo‘yoq"
     ]
   },
   {
@@ -15916,6 +17347,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная краска",
+    "short_description_en": "Декоративная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная краска (Декоративная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная краска",
+      "maxsus effektli dekorativ bo‘yoq"
     ]
   },
   {
@@ -15924,7 +17368,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Loft beton effektli maxsus bo‘yoq",
     "name_ru": "Краска с эффектом бетона",
     "original_name": "Краска с эффектом бетона",
-    "english_name": "Краска с эффектом бетона",
+    "english_name": "Paint coating с эффектом бетона",
     "slug": "kraska-s-effektom-betona",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Краска",
@@ -16062,6 +17506,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Paint coating с эффектом бетона",
+    "short_description_en": "Paint coating с эффектом бетона — professional wall and construction material for architectural specifications.",
+    "description_en": "Paint coating с эффектом бетона (Краска с эффектом бетона) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Paint coating с эффектом бетона\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "paint coating с эффектом бетона",
+      "краска с эффектом бетона",
+      "loft beton effektli maxsus bo‘yoq"
     ]
   },
   {
@@ -16070,7 +17528,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Metall jilosi (oltin, bronza, po‘lat) effektli bo‘yoq",
     "name_ru": "Краска с эффектом металла",
     "original_name": "Краска с эффектом металла",
-    "english_name": "Краска с эффектом металла",
+    "english_name": "Paint coating с эффектом металла",
     "slug": "kraska-s-effektom-metalla",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Краска",
@@ -16208,6 +17666,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Paint coating с эффектом металла",
+    "short_description_en": "Paint coating с эффектом металла — professional wall and construction material for architectural specifications.",
+    "description_en": "Paint coating с эффектом металла (Краска с эффектом металла) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Paint coating с эффектом металла\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "paint coating с эффектом металла",
+      "краска с эффектом металла",
+      "metall jilosi (oltin, bronza, po‘lat) effektli bo‘yoq"
     ]
   },
   {
@@ -16216,7 +17688,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Ipak tolalari jilosi effektli bo‘yoq",
     "name_ru": "Краска с эффектом шелка",
     "original_name": "Краска с эффектом шелка",
-    "english_name": "Краска с эффектом шелка",
+    "english_name": "Paint coating с эффектом шелка",
     "slug": "kraska-s-effektom-shelka",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Краска",
@@ -16354,6 +17826,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Paint coating с эффектом шелка",
+    "short_description_en": "Paint coating с эффектом шелка — professional wall and construction material for architectural specifications.",
+    "description_en": "Paint coating с эффектом шелка (Краска с эффектом шелка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Paint coating с эффектом шелка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "paint coating с эффектом шелка",
+      "краска с эффектом шелка",
+      "ipak tolalari jilosi effektli bo‘yoq"
     ]
   },
   {
@@ -16500,6 +17986,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Магнитная краска",
+    "short_description_en": "Магнитная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Магнитная краска (Магнитная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Магнитная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "магнитная краска",
+      "magnitli devor bo‘yog‘i (magnit yopishadigan)"
     ]
   },
   {
@@ -16646,6 +18145,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Грифельная краска",
+    "short_description_en": "Грифельная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Грифельная краска (Грифельная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Грифельная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "грифельная краска",
+      "doska (bo‘r bilan yoziladigan) grifel bo‘yog‘i"
     ]
   },
   {
@@ -16792,6 +18304,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бумажные обои",
+    "short_description_en": "Бумажные обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Бумажные обои (Бумажные обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бумажные обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бумажные обои",
+      "qog‘oz gulqog‘oz (ekologik toza)"
     ]
   },
   {
@@ -16938,6 +18463,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловые обои",
+    "short_description_en": "Виниловые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Виниловые обои (Виниловые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Виниловые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "виниловые обои",
+      "vinil asosli mustahkam yuviladigan gulqog‘oz"
     ]
   },
   {
@@ -17084,6 +18622,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Флизелиновые обои",
+    "short_description_en": "Флизелиновые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Флизелиновые обои (Флизелиновые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Флизелиновые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "флизелиновые обои",
+      "flizelin asosli qulay yopishtiriladigan gulqog‘oz"
     ]
   },
   {
@@ -17230,6 +18781,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Текстильные обои",
+    "short_description_en": "Текстильные обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Текстильные обои (Текстильные обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Текстильные обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "текстильные обои",
+      "to‘qimachilik (tekstil) nafis gulqog‘oz"
     ]
   },
   {
@@ -17376,6 +18940,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклообои",
+    "short_description_en": "Стеклообои — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклообои (Стеклообои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклообои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стеклообои",
+      "shisha tolali o‘ta mustahkam gulqog‘oz (steklooboy)"
     ]
   },
   {
@@ -17522,6 +19099,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фотообои",
+    "short_description_en": "Фотообои — professional wall and construction material for architectural specifications.",
+    "description_en": "Фотообои (Фотообои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фотообои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фотообои",
+      "foto-gulqog‘oz (yuqori aniqlikdagi panoramik tasvir)"
     ]
   },
   {
@@ -17668,6 +19258,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Жидкие обои",
+    "short_description_en": "Жидкие обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Жидкие обои (Жидкие обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Жидкие обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "жидкие обои",
+      "suyuq gulqog‘oz (ipak va paxta tolali qoplama)"
     ]
   },
   {
@@ -17814,6 +19417,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковые обои",
+    "short_description_en": "Пробковые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Пробковые обои (Пробковые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Пробковые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пробковые обои",
+      "tabiiy po‘kak (probka) gulqog‘oz"
     ]
   },
   {
@@ -17960,6 +19576,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковые обои",
+    "short_description_en": "Бамбуковые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковые обои (Бамбуковые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковые обои",
+      "tabiiy bambuk gulqog‘oz"
     ]
   },
   {
@@ -18106,6 +19735,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянные обои",
+    "short_description_en": "Деревянные обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянные обои (Деревянные обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянные обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянные обои",
+      "yog‘och shponli tabiiy gulqog‘oz"
     ]
   },
   {
@@ -18252,6 +19894,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлизированные обои",
+    "short_description_en": "Металлизированные обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлизированные обои (Металлизированные обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлизированные обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлизированные обои",
+      "metallashtirilgan yaltiroq gulqog‘oz"
     ]
   },
   {
@@ -18398,6 +20053,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустические обои",
+    "short_description_en": "Акустические обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустические обои (Акустические обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустические обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустические обои",
+      "akustik shovqin yutuvchi gulqog‘oz"
     ]
   },
   {
@@ -18544,6 +20212,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Самоклеящиеся обои",
+    "short_description_en": "Самоклеящиеся обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Самоклеящиеся обои (Самоклеящиеся обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Самоклеящиеся обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "самоклеящиеся обои",
+      "o‘zi yopishuvchi dekorativ gulqog‘oz"
     ]
   },
   {
@@ -18552,7 +20233,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Bo‘yash uchun mo‘ljallangan relyefli gulqog‘oz",
     "name_ru": "Обои под покраску",
     "original_name": "Обои под покраску",
-    "english_name": "Обои под покраску",
+    "english_name": "Wallcovering wallpaper под покраску",
     "slug": "oboi-pod-pokrasku",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Обои",
@@ -18690,6 +20371,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Wallcovering wallpaper под покраску",
+    "short_description_en": "Wallcovering wallpaper под покраску — professional wall and construction material for architectural specifications.",
+    "description_en": "Wallcovering wallpaper под покраску (Обои под покраску) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Wallcovering wallpaper под покраску\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "wallcovering wallpaper под покраску",
+      "обои под покраску",
+      "bo‘yash uchun mo‘ljallangan relyefli gulqog‘oz"
     ]
   },
   {
@@ -18836,6 +20531,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D-обои",
+    "short_description_en": "3D-обои — professional wall and construction material for architectural specifications.",
+    "description_en": "3D-обои (3D-обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"3D-обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "3d-обои",
+      "3d hajmli chuqur vizual effektli gulqog‘oz"
     ]
   },
   {
@@ -18982,6 +20690,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фактурные обои",
+    "short_description_en": "Фактурные обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Фактурные обои (Фактурные обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фактурные обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фактурные обои",
+      "fakturali quyuq relyefli gulqog‘oz"
     ]
   },
   {
@@ -19128,6 +20849,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фреска-обои",
+    "short_description_en": "Фреска-обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Фреска-обои (Фреска-обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фреска-обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фреска-обои",
+      "freska uslubidagi badiiy devor gulqog‘ozi"
     ]
   },
   {
@@ -19274,6 +21008,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фотопанно",
+    "short_description_en": "Фотопанно — professional wall and construction material for architectural specifications.",
+    "description_en": "Фотопанно (Фотопанно) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фотопанно\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фотопанно",
+      "badiiy aksent fotopanno"
     ]
   },
   {
@@ -19420,6 +21167,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный деревянный массив",
+    "short_description_en": "Натуральный деревянный массив — professional wall and construction material for architectural specifications.",
+    "description_en": "Натуральный деревянный массив (Натуральный деревянный массив) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Натуральный деревянный массив\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "натуральный деревянный массив",
+      "tabiiy qattiq yog‘och massivi"
     ]
   },
   {
@@ -19566,6 +21326,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная вагонка",
+    "short_description_en": "Деревянная вагонка — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная вагонка (Деревянная вагонка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная вагонка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная вагонка",
+      "yog‘och vagonka devor qoplamasi"
     ]
   },
   {
@@ -19712,6 +21485,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Евровагонка",
+    "short_description_en": "Евровагонка — professional wall and construction material for architectural specifications.",
+    "description_en": "Евровагонка (Евровагонка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Евровагонка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "евровагонка",
+      "yevrovagonka profilli tabiiy yog‘och taxta"
     ]
   },
   {
@@ -19858,6 +21644,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная рейка",
+    "short_description_en": "Деревянная рейка — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная рейка (Деревянная рейка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная рейка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная рейка",
+      "yog‘och dekorativ devor reykasi (batten)"
     ]
   },
   {
@@ -20004,6 +21803,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная деревянная рейка",
+    "short_description_en": "Декоративная деревянная рейка — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная деревянная рейка (Декоративная деревянная рейка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная деревянная рейка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная деревянная рейка",
+      "yog‘och dekorativ devor reykasi (batten)"
     ]
   },
   {
@@ -20150,6 +21962,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная стеновая панель",
+    "short_description_en": "Деревянная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная стеновая панель (Деревянная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная стеновая панель",
+      "yog‘och devor paneli"
     ]
   },
   {
@@ -20296,6 +22121,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Массивная стеновая панель",
+    "short_description_en": "Массивная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Массивная стеновая панель (Массивная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Массивная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "массивная стеновая панель",
+      "massiv yog‘ochdan devor paneli"
     ]
   },
   {
@@ -20442,6 +22280,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шпонированная панель",
+    "short_description_en": "Шпонированная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Шпонированная панель (Шпонированная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Шпонированная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "шпонированная панель",
+      "tabiiy shpon qoplangan panel"
     ]
   },
   {
@@ -20588,6 +22439,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный шпон",
+    "short_description_en": "Натуральный шпон — professional wall and construction material for architectural specifications.",
+    "description_en": "Натуральный шпон (Натуральный шпон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Натуральный шпон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "натуральный шпон",
+      "tabiiy yog‘och shpon (yupqa qatlam)"
     ]
   },
   {
@@ -20734,6 +22598,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Реконструированный шпон",
+    "short_description_en": "Реконструированный шпон — professional wall and construction material for architectural specifications.",
+    "description_en": "Реконструированный шпон (Реконструированный шпон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Реконструированный шпон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "реконструированный шпон",
+      "qayta ishlangan modifikatsiyalangan shpon"
     ]
   },
   {
@@ -20880,6 +22757,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Fine-line шпон",
+    "short_description_en": "Fine-line шпон — professional wall and construction material for architectural specifications.",
+    "description_en": "Fine-line шпон (Fine-line шпон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Fine-line шпон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "fine-line шпон",
+      "fine-line yuksak aniqlikdagi muhandislik shponi"
     ]
   },
   {
@@ -21026,6 +22916,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "МДФ-панель со шпоном",
+    "short_description_en": "МДФ-панель со шпоном — professional wall and construction material for architectural specifications.",
+    "description_en": "МДФ-панель со шпоном (МДФ-панель со шпоном) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"МДФ-панель со шпоном\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мдф-панель со шпоном",
+      "shpon qoplangan mdf devor paneli"
     ]
   },
   {
@@ -21172,6 +23075,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "МДФ-панель",
+    "short_description_en": "МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "МДФ-панель (МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -21318,6 +23234,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ламинированная МДФ-панель",
+    "short_description_en": "Ламинированная МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Ламинированная МДФ-панель (Ламинированная МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ламинированная МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "ламинированная мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -21464,6 +23393,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Крашеная МДФ-панель",
+    "short_description_en": "Крашеная МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Крашеная МДФ-панель (Крашеная МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Крашеная МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "крашеная мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -21610,6 +23552,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная 3D-панель",
+    "short_description_en": "Деревянная 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная 3D-панель (Деревянная 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная 3d-панель",
+      "yog‘ochdan ishlangan 3d relyefli panel"
     ]
   },
   {
@@ -21756,6 +23711,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная акустическая панель",
+    "short_description_en": "Деревянная акустическая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная акустическая панель (Деревянная акустическая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная акустическая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная акустическая панель",
+      "tirqishli yog‘och akustik panel (sound absorbing)"
     ]
   },
   {
@@ -21902,6 +23870,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковая панель",
+    "short_description_en": "Пробковая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Пробковая панель (Пробковая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Пробковая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пробковая панель",
+      "tabiiy po‘kak (probka) devor paneli"
     ]
   },
   {
@@ -22048,6 +24029,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковая панель",
+    "short_description_en": "Бамбуковая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковая панель (Бамбуковая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковая панель",
+      "bambukdan tayyorlangan devor paneli"
     ]
   },
   {
@@ -22194,6 +24188,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная мозаика",
+    "short_description_en": "Деревянная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная мозаика (Деревянная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная мозаика",
+      "turli tusdagi tabiiy yog‘och mozaika"
     ]
   },
   {
@@ -22340,6 +24347,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термодерево",
+    "short_description_en": "Термодерево — professional wall and construction material for architectural specifications.",
+    "description_en": "Термодерево (Термодерево) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Термодерево\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "термодерево",
+      "termo-yog‘och (yuqori haroratda toblangan yog‘och)"
     ]
   },
   {
@@ -22486,6 +24506,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термообработанная древесина",
+    "short_description_en": "Термообработанная древесина — professional wall and construction material for architectural specifications.",
+    "description_en": "Термообработанная древесина (Термообработанная древесина) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Термообработанная древесина\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "термообработанная древесина",
+      "termo-ishlov berilgan bardoshli yog‘och"
     ]
   },
   {
@@ -22632,6 +24665,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фанерная декоративная панель",
+    "short_description_en": "Фанерная декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фанерная декоративная панель (Фанерная декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фанерная декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фанерная декоративная панель",
+      "qayin faneradan dekorativ devor paneli"
     ]
   },
   {
@@ -22778,6 +24824,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "МДФ стеновая панель",
+    "short_description_en": "МДФ стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "МДФ стеновая панель (МДФ стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"МДФ стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мдф стеновая панель",
+      "mdf devor paneli"
     ]
   },
   {
@@ -22924,6 +24983,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ламинированная МДФ-панель",
+    "short_description_en": "Ламинированная МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Ламинированная МДФ-панель (Ламинированная МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ламинированная МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "ламинированная мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -23070,6 +25142,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шпонированная МДФ-панель",
+    "short_description_en": "Шпонированная МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Шпонированная МДФ-панель (Шпонированная МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Шпонированная МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "шпонированная мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -23216,6 +25301,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Крашеная МДФ-панель",
+    "short_description_en": "Крашеная МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Крашеная МДФ-панель (Крашеная МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Крашеная МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "крашеная мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -23362,6 +25460,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D МДФ-панель",
+    "short_description_en": "3D МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "3D МДФ-панель (3D МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"3D МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "3d мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -23508,6 +25619,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая МДФ-панель",
+    "short_description_en": "Акустическая МДФ-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустическая МДФ-панель (Акустическая МДФ-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустическая МДФ-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустическая мдф-панель",
+      "mdf tekis devor paneli"
     ]
   },
   {
@@ -23654,6 +25778,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ стеновая панель",
+    "short_description_en": "ПВХ стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "ПВХ стеновая панель (ПВХ стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ПВХ стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пвх стеновая панель",
+      "pvx devor paneli (plastik qoplama)"
     ]
   },
   {
@@ -23800,6 +25937,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ 3D-панель",
+    "short_description_en": "ПВХ 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "ПВХ 3D-панель (ПВХ 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ПВХ 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пвх 3d-панель",
+      "pvx 3d hajmli yengil panel"
     ]
   },
   {
@@ -23946,6 +26096,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ декоративная панель",
+    "short_description_en": "ПВХ декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "ПВХ декоративная панель (ПВХ декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ПВХ декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пвх декоративная панель",
+      "pvx dekorativ naqshli panel"
     ]
   },
   {
@@ -24092,6 +26255,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ влагостойкая панель",
+    "short_description_en": "ПВХ влагостойкая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "ПВХ влагостойкая панель (ПВХ влагостойкая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ПВХ влагостойкая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пвх влагостойкая панель",
+      "pvx 100% suvga chidamli hammom paneli"
     ]
   },
   {
@@ -24238,6 +26414,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "HPL стеновая панель",
+    "short_description_en": "HPL стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "HPL стеновая панель (HPL стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"HPL стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "hpl стеновая панель",
+      "hpl chidamliligi yuqori devor paneli"
     ]
   },
   {
@@ -24384,6 +26573,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Компакт-панель HPL",
+    "short_description_en": "Компакт-панель HPL — professional wall and construction material for architectural specifications.",
+    "description_en": "Компакт-панель HPL (Компакт-панель HPL) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Компакт-панель HPL\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "компакт-панель hpl",
+      "monolit hpl ixcham panel (tirnalishga chidamli)"
     ]
   },
   {
@@ -24530,6 +26732,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "HPL декоративная панель",
+    "short_description_en": "HPL декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "HPL декоративная панель (HPL декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"HPL декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "hpl декоративная панель",
+      "hpl antibakterial dekorativ panel"
     ]
   },
   {
@@ -24676,6 +26891,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевая стеновая панель",
+    "short_description_en": "Алюминиевая стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевая стеновая панель (Алюминиевая стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевая стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевая стеновая панель",
+      "alyuminiy qoplamali devor paneli"
     ]
   },
   {
@@ -24822,6 +27050,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стальная стеновая панель",
+    "short_description_en": "Стальная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Стальная стеновая панель (Стальная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стальная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стальная стеновая панель",
+      "po‘lat devor paneli"
     ]
   },
   {
@@ -24968,6 +27209,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая декоративная панель",
+    "short_description_en": "Металлическая декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая декоративная панель (Металлическая декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическая декоративная панель",
+      "metall dekorativ panel"
     ]
   },
   {
@@ -25114,6 +27368,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Перфорированная металлическая панель",
+    "short_description_en": "Перфорированная металлическая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Перфорированная металлическая панель (Перфорированная металлическая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Перфорированная металлическая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "перфорированная металлическая панель",
+      "teshikli (perforatsiyalangan) metall panel"
     ]
   },
   {
@@ -25260,6 +27527,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевые композитные панели",
+    "short_description_en": "Алюминиевые композитные панели — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевые композитные панели (Алюминиевые композитные панели) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевые композитные панели\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевые композитные панели",
+      "alyuminiy kompozit panel (alukobond turi)"
     ]
   },
   {
@@ -25406,6 +27686,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фиброцементная стеновая панель",
+    "short_description_en": "Фиброцементная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фиброцементная стеновая панель (Фиброцементная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фиброцементная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фиброцементная стеновая панель",
+      "fibrotsement mustahkam devor paneli"
     ]
   },
   {
@@ -25552,6 +27845,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фиброцементная декоративная панель",
+    "short_description_en": "Фиброцементная декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фиброцементная декоративная панель (Фиброцементная декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фиброцементная декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фиброцементная декоративная панель",
+      "fibrotsement fakturali pardoz paneli"
     ]
   },
   {
@@ -25698,6 +28004,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гипсовая 3D-панель",
+    "short_description_en": "Гипсовая 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Гипсовая 3D-панель (Гипсовая 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гипсовая 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "гипсовая 3d-панель",
+      "gipsdan tayyorlangan ekologik 3d devor paneli"
     ]
   },
   {
@@ -25844,6 +28163,18 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "МДФ 3D-панель",
+    "short_description_en": "МДФ 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "МДФ 3D-панель (МДФ 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"МДФ 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мдф 3d-панель"
     ]
   },
   {
@@ -25990,6 +28321,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ 3D-панель",
+    "short_description_en": "ПВХ 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "ПВХ 3D-панель (ПВХ 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"ПВХ 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пвх 3d-панель",
+      "pvx 3d hajmli yengil panel"
     ]
   },
   {
@@ -26136,6 +28480,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановая 3D-панель",
+    "short_description_en": "Полиуретановая 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Полиуретановая 3D-панель (Полиуретановая 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Полиуретановая 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "полиуретановая 3d-панель",
+      "poliuretan yengil 3d devor paneli"
     ]
   },
   {
@@ -26282,6 +28639,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полистирольная 3D-панель",
+    "short_description_en": "Полистирольная 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Полистирольная 3D-панель (Полистирольная 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Полистирольная 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "полистирольная 3d-панель",
+      "polistirol dekorativ 3d panel"
     ]
   },
   {
@@ -26428,6 +28798,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонная 3D-панель",
+    "short_description_en": "Бетонная 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Бетонная 3D-панель (Бетонная 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бетонная 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бетонная 3d-панель",
+      "beton relyefli 3d devor paneli"
     ]
   },
   {
@@ -26574,6 +28957,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная 3D-панель",
+    "short_description_en": "Деревянная 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Деревянная 3D-панель (Деревянная 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Деревянная 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "деревянная 3d-панель",
+      "yog‘ochdan ishlangan 3d relyefli panel"
     ]
   },
   {
@@ -26720,6 +29116,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный мрамор",
+    "short_description_en": "Натуральный мрамор — professional wall and construction material for architectural specifications.",
+    "description_en": "Натуральный мрамор (Натуральный мрамор) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Натуральный мрамор\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "натуральный мрамор",
+      "tabiiy marmar plitasi"
     ]
   },
   {
@@ -26866,6 +29275,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гранит",
+    "short_description_en": "Гранит — professional wall and construction material for architectural specifications.",
+    "description_en": "Гранит (Гранит) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гранит\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "гранит",
+      "tabiiy granit plitasi"
     ]
   },
   {
@@ -27012,6 +29434,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Травертин",
+    "short_description_en": "Травертин — professional wall and construction material for architectural specifications.",
+    "description_en": "Травертин (Травертин) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Травертин\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "травертин",
+      "tabiiy travertin tosh qoplamasi"
     ]
   },
   {
@@ -27158,6 +29593,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Известняк",
+    "short_description_en": "Известняк — professional wall and construction material for architectural specifications.",
+    "description_en": "Известняк (Известняк) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Известняк\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "известняк",
+      "tabiiy ohaktosh (izvestnyak) toshi"
     ]
   },
   {
@@ -27304,6 +29752,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Песчаник",
+    "short_description_en": "Песчаник — professional wall and construction material for architectural specifications.",
+    "description_en": "Песчаник (Песчаник) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Песчаник\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "песчаник",
+      "tabiiy qumtosh (peschanik) qoplamasi"
     ]
   },
   {
@@ -27450,6 +29911,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сланец",
+    "short_description_en": "Сланец — professional wall and construction material for architectural specifications.",
+    "description_en": "Сланец (Сланец) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Сланец\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "сланец",
+      "tabiiy slanes (qatlamli tosh)"
     ]
   },
   {
@@ -27596,6 +30070,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Оникс",
+    "short_description_en": "Оникс — professional wall and construction material for architectural specifications.",
+    "description_en": "Оникс (Оникс) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Оникс\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "оникс",
+      "nafis oniks toshi (yorug‘lik o‘tkazuvchi yarim qimmatbaho)"
     ]
   },
   {
@@ -27742,6 +30229,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Кварцит",
+    "short_description_en": "Кварцит — professional wall and construction material for architectural specifications.",
+    "description_en": "Кварцит (Кварцит) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Кварцит\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "кварцит",
+      "tabiiy kvarsit mustahkam toshi"
     ]
   },
   {
@@ -27888,6 +30388,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный камень",
+    "short_description_en": "Натуральный камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Натуральный камень (Натуральный камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Натуральный камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "натуральный камень",
+      "tabiiy yovvoyi tosh qoplamasi"
     ]
   },
   {
@@ -28034,6 +30547,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменный шпон",
+    "short_description_en": "Каменный шпон — professional wall and construction material for architectural specifications.",
+    "description_en": "Каменный шпон (Каменный шпон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каменный шпон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "каменный шпон",
+      "moslashuvchan tabiiy tosh shponi (slate lite)"
     ]
   },
   {
@@ -28180,6 +30706,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Искусственный камень",
+    "short_description_en": "Искусственный камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Искусственный камень (Искусственный камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Искусственный камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "искусственный камень",
+      "sun‘iy bezak toshi (akril / kvars aglomerat)"
     ]
   },
   {
@@ -28326,6 +30865,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный искусственный камень",
+    "short_description_en": "Декоративный искусственный камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративный искусственный камень (Декоративный искусственный камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративный искусственный камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "декоративный искусственный камень",
+      "sun‘iy bezak toshi (akril / kvars aglomerat)"
     ]
   },
   {
@@ -28472,6 +31024,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменная панель",
+    "short_description_en": "Каменная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Каменная панель (Каменная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каменная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "каменная панель",
+      "tosh qoplamali yirik formatli panel"
     ]
   },
   {
@@ -28618,6 +31183,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гибкий камень",
+    "short_description_en": "Гибкий камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Гибкий камень (Гибкий камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Гибкий камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "гибкий камень",
+      "egilib turuvchi moslashuvchan tosh qoplamasi"
     ]
   },
   {
@@ -28764,6 +31342,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменный слэб",
+    "short_description_en": "Каменный слэб — professional wall and construction material for architectural specifications.",
+    "description_en": "Каменный слэб (Каменный слэб) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каменный слэб\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "2400-3000x1200-1800x20-30 mm",
+    "aliases": [
+      "каменный слэб",
+      "monolit yirik tosh slebi (marmar / granit)"
     ]
   },
   {
@@ -28910,6 +31501,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая настенная плитка",
+    "short_description_en": "Керамическая настенная плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Керамическая настенная плитка (Керамическая настенная плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Керамическая настенная плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "керамическая настенная плитка",
+      "keramik devor plitkasi (kafel)"
     ]
   },
   {
@@ -29056,6 +31660,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Глазурованная керамическая плитка",
+    "short_description_en": "Глазурованная керамическая плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Глазурованная керамическая плитка (Глазурованная керамическая плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Глазурованная керамическая плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "глазурованная керамическая плитка",
+      "sirlangan yaltiroq keramik plitka"
     ]
   },
   {
@@ -29202,6 +31819,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Неглазурованная керамическая плитка",
+    "short_description_en": "Неглазурованная керамическая плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Неглазурованная керамическая плитка (Неглазурованная керамическая плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Неглазурованная керамическая плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "неглазурованная керамическая плитка",
+      "sirlangan yaltiroq keramik plitka"
     ]
   },
   {
@@ -29210,7 +31840,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Tabiiy granit plitasi",
     "name_ru": "Керамогранит",
     "original_name": "Керамогранит",
-    "english_name": "Керамогранит",
+    "english_name": "Porcelain stoneware",
     "slug": "keramogranit",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -29348,6 +31978,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware",
+    "short_description_en": "Porcelain stoneware — professional wall and construction material for architectural specifications.",
+    "description_en": "Porcelain stoneware (Керамогранит) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Porcelain stoneware\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "porcelain stoneware",
+      "керамогранит",
+      "tabiiy granit plitasi"
     ]
   },
   {
@@ -29356,7 +32000,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Tabiiy granit plitasi",
     "name_ru": "Керамогранитная настенная облицовка",
     "original_name": "Керамогранитная настенная облицовка",
-    "english_name": "Керамогранитная настенная облицовка",
+    "english_name": "Porcelain stonewareная настенная облицовка",
     "slug": "keramogranitnaya-nastennaya-oblitsovka",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -29494,6 +32138,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stonewareная настенная облицовка",
+    "short_description_en": "Porcelain stonewareная настенная облицовка — professional wall and construction material for architectural specifications.",
+    "description_en": "Porcelain stonewareная настенная облицовка (Керамогранитная настенная облицовка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Porcelain stonewareная настенная облицовка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "porcelain stonewareная настенная облицовка",
+      "керамогранитная настенная облицовка",
+      "tabiiy granit plitasi"
     ]
   },
   {
@@ -29640,6 +32298,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка",
+    "short_description_en": "Клинкерная плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Клинкерная плитка (Клинкерная плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Клинкерная плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "клинкерная плитка",
+      "klinker fasad va devor plitkasi"
     ]
   },
   {
@@ -29786,6 +32457,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мозаика",
+    "short_description_en": "Мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Мозаика (Мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -29932,6 +32616,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклянная мозаика",
+    "short_description_en": "Стеклянная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклянная мозаика (Стеклянная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклянная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "стеклянная мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -30078,6 +32775,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая мозаика",
+    "short_description_en": "Керамическая мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Керамическая мозаика (Керамическая мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Керамическая мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "керамическая мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -30224,6 +32934,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменная мозаика",
+    "short_description_en": "Каменная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Каменная мозаика (Каменная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Каменная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "каменная мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -30370,6 +33093,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая мозаика",
+    "short_description_en": "Металлическая мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая мозаика (Металлическая мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "металлическая мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -30516,6 +33252,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мраморная мозаика",
+    "short_description_en": "Мраморная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Мраморная мозаика (Мраморная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мраморная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "мраморная мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -30662,6 +33411,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Терраццо-плитка",
+    "short_description_en": "Терраццо-плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Терраццо-плитка (Терраццо-плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Терраццо-плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "терраццо-плитка",
+      "terrazzo kompozit plitkasi (marmar donali)"
     ]
   },
   {
@@ -30808,6 +33570,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Майолика",
+    "short_description_en": "Майолика — professional wall and construction material for architectural specifications.",
+    "description_en": "Майолика (Майолика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Майолика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "майолика",
+      "mayolika an‘anaviy naqshli sirlangan plitka"
     ]
   },
   {
@@ -30954,6 +33729,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Метлахская плитка",
+    "short_description_en": "Метлахская плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Метлахская плитка (Метлахская плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Метлахская плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "метлахская плитка",
+      "metlax o‘ta pishiq qadimiy naqshli plitka"
     ]
   },
   {
@@ -30962,7 +33750,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Marmar teksturali devor plitkasi",
     "name_ru": "Плитка под мрамор",
     "original_name": "Плитка под мрамор",
-    "english_name": "Плитка под мрамор",
+    "english_name": "Tile под мрамор",
     "slug": "plitka-pod-mramor",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -31100,6 +33888,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile под мрамор",
+    "short_description_en": "Tile под мрамор — professional wall and construction material for architectural specifications.",
+    "description_en": "Tile под мрамор (Плитка под мрамор) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Tile под мрамор\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "tile под мрамор",
+      "плитка под мрамор",
+      "marmar teksturali devor plitkasi"
     ]
   },
   {
@@ -31108,7 +33910,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Beton teksturali loft uslubidagi plitka",
     "name_ru": "Плитка под бетон",
     "original_name": "Плитка под бетон",
-    "english_name": "Плитка под бетон",
+    "english_name": "Tile под бетон",
     "slug": "plitka-pod-beton",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -31246,6 +34048,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile под бетон",
+    "short_description_en": "Tile под бетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Tile под бетон (Плитка под бетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Tile под бетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "tile под бетон",
+      "плитка под бетон",
+      "beton teksturali loft uslubidagi plitka"
     ]
   },
   {
@@ -31254,7 +34070,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Yog‘och tolalari teksturali plitka",
     "name_ru": "Плитка под дерево",
     "original_name": "Плитка под дерево",
-    "english_name": "Плитка под дерево",
+    "english_name": "Tile под дерево",
     "slug": "plitka-pod-derevo",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -31392,6 +34208,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile под дерево",
+    "short_description_en": "Tile под дерево — professional wall and construction material for architectural specifications.",
+    "description_en": "Tile под дерево (Плитка под дерево) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Tile под дерево\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "tile под дерево",
+      "плитка под дерево",
+      "yog‘och tolalari teksturali plitka"
     ]
   },
   {
@@ -31400,7 +34230,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Tosh teksturali relyefli plitka",
     "name_ru": "Плитка под камень",
     "original_name": "Плитка под камень",
-    "english_name": "Плитка под камень",
+    "english_name": "Tile под камень",
     "slug": "plitka-pod-kamen",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Плитка и мозаика",
@@ -31538,6 +34368,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile под камень",
+    "short_description_en": "Tile под камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Tile под камень (Плитка под камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Tile под камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "tile под камень",
+      "плитка под камень",
+      "tosh teksturali relyefli plitka"
     ]
   },
   {
@@ -31684,6 +34528,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D-керамическая плитка",
+    "short_description_en": "3D-керамическая плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "3D-керамическая плитка (3D-керамическая плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"3D-керамическая плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "1200x600x9-11 mm",
+    "aliases": [
+      "3d-керамическая плитка",
+      "3d relyefli keramik plitka"
     ]
   },
   {
@@ -31830,6 +34687,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Закалённое стекло",
+    "short_description_en": "Закалённое стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Закалённое стекло (Закалённое стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Закалённое стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "закалённое стекло",
+      "toblangan xavfsiz shisha (stalinit)"
     ]
   },
   {
@@ -31976,6 +34846,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ламинированное стекло",
+    "short_description_en": "Ламинированное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Ламинированное стекло (Ламинированное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Ламинированное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "ламинированное стекло",
+      "laminatsiyalangan himoya oynasi"
     ]
   },
   {
@@ -32122,6 +35005,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Триплекс",
+    "short_description_en": "Триплекс — professional wall and construction material for architectural specifications.",
+    "description_en": "Триплекс (Триплекс) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Триплекс\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "триплекс",
+      "multipleks tripleks ko‘p qatlamli shisha"
     ]
   },
   {
@@ -32268,6 +35164,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Матовое стекло",
+    "short_description_en": "Матовое стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Матовое стекло (Матовое стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Матовое стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "матовое стекло",
+      "matoviy (qumlangan) shaffofmas shisha"
     ]
   },
   {
@@ -32414,6 +35323,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тонированное стекло",
+    "short_description_en": "Тонированное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Тонированное стекло (Тонированное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Тонированное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "тонированное стекло",
+      "qoraytirilgan (tonirovka qilingan) shisha"
     ]
   },
   {
@@ -32560,6 +35482,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное стекло",
+    "short_description_en": "Декоративное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное стекло (Декоративное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное стекло",
+      "badiiy dekorativ shisha"
     ]
   },
   {
@@ -32706,6 +35641,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рифлёное стекло",
+    "short_description_en": "Рифлёное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Рифлёное стекло (Рифлёное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Рифлёное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "рифлёное стекло",
+      "riflyoniy (gofra to‘lqinli) oraliq shisha"
     ]
   },
   {
@@ -32852,6 +35800,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Армированное стекло",
+    "short_description_en": "Армированное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Армированное стекло (Армированное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Армированное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "армированное стекло",
+      "sim to‘r bilan armaturalangan xavfsiz shisha"
     ]
   },
   {
@@ -32998,6 +35959,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лакобель",
+    "short_description_en": "Лакобель — professional wall and construction material for architectural specifications.",
+    "description_en": "Лакобель (Лакобель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Лакобель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "лакобель",
+      "lakobel orqa tomonidan bo‘yalgan yaltiroq shisha"
     ]
   },
   {
@@ -33144,6 +36118,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркальное стекло",
+    "short_description_en": "Зеркальное стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркальное стекло (Зеркальное стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркальное стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркальное стекло",
+      "ko‘zgu effektli maxsus shisha"
     ]
   },
   {
@@ -33290,6 +36277,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклянная стеновая панель",
+    "short_description_en": "Стеклянная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклянная стеновая панель (Стеклянная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклянная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стеклянная стеновая панель",
+      "shishali devor paneli (skinall / vanna uchun)"
     ]
   },
   {
@@ -33436,6 +36436,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклянная мозаика",
+    "short_description_en": "Стеклянная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклянная мозаика (Стеклянная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклянная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стеклянная мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -33444,7 +36457,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Shishablok (dekorativ yorug‘lik o‘tkazuvchi blok)",
     "name_ru": "Стеклоблок",
     "original_name": "Стеклоблок",
-    "english_name": "Стеклоблок",
+    "english_name": "Architectural glass block",
     "slug": "stekloblok-230",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Стекло",
@@ -33582,6 +36595,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Architectural glass block",
+    "short_description_en": "Architectural glass block — professional wall and construction material for architectural specifications.",
+    "description_en": "Architectural glass block (Стеклоблок) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Architectural glass block\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "architectural glass block",
+      "стеклоблок",
+      "shishablok (dekorativ yorug‘lik o‘tkazuvchi blok)"
     ]
   },
   {
@@ -33728,6 +36755,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Узорчатое стекло",
+    "short_description_en": "Узорчатое стекло — professional wall and construction material for architectural specifications.",
+    "description_en": "Узорчатое стекло (Узорчатое стекло) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Узорчатое стекло\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "узорчатое стекло",
+      "naqshli relyefli dekorativ shisha"
     ]
   },
   {
@@ -33874,6 +36914,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркало серебряное",
+    "short_description_en": "Зеркало серебряное — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркало серебряное (Зеркало серебряное) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркало серебряное\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркало серебряное",
+      "kumush qoplamali klassik billur ko‘zgu"
     ]
   },
   {
@@ -34020,6 +37073,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркало бронзовое",
+    "short_description_en": "Зеркало бронзовое — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркало бронзовое (Зеркало бронзовое) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркало бронзовое\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркало бронзовое",
+      "bronza rangli iliq tusli ko‘zgu"
     ]
   },
   {
@@ -34166,6 +37232,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркало графитовое",
+    "short_description_en": "Зеркало графитовое — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркало графитовое (Зеркало графитовое) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркало графитовое\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркало графитовое",
+      "grafit (qora-kulrang) zamonaviy ko‘zgu"
     ]
   },
   {
@@ -34312,6 +37391,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тонированное зеркало",
+    "short_description_en": "Тонированное зеркало — professional wall and construction material for architectural specifications.",
+    "description_en": "Тонированное зеркало (Тонированное зеркало) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Тонированное зеркало\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "тонированное зеркало",
+      "rangli jiloli qoraytirilgan ko‘zgu"
     ]
   },
   {
@@ -34458,6 +37550,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Состаренное зеркало",
+    "short_description_en": "Состаренное зеркало — professional wall and construction material for architectural specifications.",
+    "description_en": "Состаренное зеркало (Состаренное зеркало) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Состаренное зеркало\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "состаренное зеркало",
+      "qadimiy uslubda sun‘iy eskirgan ko‘zgu (antik)"
     ]
   },
   {
@@ -34604,6 +37709,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное зеркало",
+    "short_description_en": "Декоративное зеркало — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное зеркало (Декоративное зеркало) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное зеркало\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное зеркало",
+      "badiiy dekorativ ko‘zgu kompozitsiyasi"
     ]
   },
   {
@@ -34750,6 +37868,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркальная панель",
+    "short_description_en": "Зеркальная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркальная панель (Зеркальная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркальная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркальная панель",
+      "devorga yopishtiriladigan ko‘zgu paneli"
     ]
   },
   {
@@ -34896,6 +38027,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркальная мозаика",
+    "short_description_en": "Зеркальная мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркальная мозаика (Зеркальная мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркальная мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркальная мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -35042,6 +38186,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркало с фацетом",
+    "short_description_en": "Зеркало с фацетом — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркало с фацетом (Зеркало с фацетом) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркало с фацетом\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркало с фацетом",
+      "fasetli (qirrali sayqallangan) ko‘zgu plitkasi"
     ]
   },
   {
@@ -35188,6 +38345,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Зеркало с декоративной обработкой",
+    "short_description_en": "Зеркало с декоративной обработкой — professional wall and construction material for architectural specifications.",
+    "description_en": "Зеркало с декоративной обработкой (Зеркало с декоративной обработкой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Зеркало с декоративной обработкой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "зеркало с декоративной обработкой",
+      "lazer va qumtosh bilan ishlov berilgan ko‘zgu"
     ]
   },
   {
@@ -35334,6 +38504,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Текстильная стеновая панель",
+    "short_description_en": "Текстильная стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Текстильная стеновая панель (Текстильная стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Текстильная стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "текстильная стеновая панель",
+      "mato qoplangan yumshoq devor paneli"
     ]
   },
   {
@@ -35480,6 +38663,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тканевая стеновая панель",
+    "short_description_en": "Тканевая стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Тканевая стеновая панель (Тканевая стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Тканевая стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "тканевая стеновая панель",
+      "to‘qilgan matoli devor paneli"
     ]
   },
   {
@@ -35626,6 +38822,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мягкая стеновая панель",
+    "short_description_en": "Мягкая стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Мягкая стеновая панель (Мягкая стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мягкая стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мягкая стеновая панель",
+      "yumshoq ko‘p qatlamli devor paneli"
     ]
   },
   {
@@ -35772,6 +38981,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая текстильная панель",
+    "short_description_en": "Акустическая текстильная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустическая текстильная панель (Акустическая текстильная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустическая текстильная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустическая текстильная панель",
+      "shovqin yutuvchi to‘qimachilik paneli"
     ]
   },
   {
@@ -35918,6 +39140,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D мягкая панель",
+    "short_description_en": "3D мягкая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "3D мягкая панель (3D мягкая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"3D мягкая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "3d мягкая панель",
+      "3d hajmli yumshoq devor paneli"
     ]
   },
   {
@@ -36064,6 +39299,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с обивкой из велюра",
+    "short_description_en": "Панель с обивкой из велюра — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с обивкой из велюра (Панель с обивкой из велюра) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с обивкой из велюра\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с обивкой из велюра",
+      "baxmal (velyur) qoplamali nafis devor paneli"
     ]
   },
   {
@@ -36210,6 +39458,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с обивкой из рогожки",
+    "short_description_en": "Панель с обивкой из рогожки — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с обивкой из рогожки (Панель с обивкой из рогожки) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с обивкой из рогожки\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с обивкой из рогожки",
+      "dag‘al to‘qilgan zig‘ir (rogojka) qoplamali panel"
     ]
   },
   {
@@ -36356,6 +39617,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с обивкой из кожи",
+    "short_description_en": "Панель с обивкой из кожи — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с обивкой из кожи (Панель с обивкой из кожи) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с обивкой из кожи\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с обивкой из кожи",
+      "tabiiy charm qoplangan premium devor paneli"
     ]
   },
   {
@@ -36502,6 +39776,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с обивкой из экокожи",
+    "short_description_en": "Панель с обивкой из экокожи — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с обивкой из экокожи (Панель с обивкой из экокожи) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с обивкой из экокожи\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с обивкой из экокожи",
+      "ekocharm (sintetik charm) qoplangan panel"
     ]
   },
   {
@@ -36648,6 +39935,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное тканевое покрытие",
+    "short_description_en": "Декоративное тканевое покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное тканевое покрытие (Декоративное тканевое покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное тканевое покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное тканевое покрытие",
+      "badiiy to‘qimachilik devor qoplamasi"
     ]
   },
   {
@@ -36794,6 +40094,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мягкая стеновая панель",
+    "short_description_en": "Мягкая стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Мягкая стеновая панель (Мягкая стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мягкая стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мягкая стеновая панель",
+      "yumshoq ko‘p qatlamli devor paneli"
     ]
   },
   {
@@ -36940,6 +40253,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мягкая 3D-панель",
+    "short_description_en": "Мягкая 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Мягкая 3D-панель (Мягкая 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мягкая 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мягкая 3d-панель",
+      "yumshoq 3d yotoqxona va kinozal paneli"
     ]
   },
   {
@@ -37086,6 +40412,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Капитоне-панель",
+    "short_description_en": "Капитоне-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Капитоне-панель (Капитоне-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Капитоне-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "капитоне-панель",
+      "kapitone (tugmali karette choki) paneli"
     ]
   },
   {
@@ -37232,6 +40571,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с каретной стяжкой",
+    "short_description_en": "Панель с каретной стяжкой — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с каретной стяжкой (Панель с каретной стяжкой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с каретной стяжкой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с каретной стяжкой",
+      "klassik kareta chokli yumshoq panel"
     ]
   },
   {
@@ -37378,6 +40730,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая мягкая панель",
+    "short_description_en": "Акустическая мягкая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустическая мягкая панель (Акустическая мягкая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустическая мягкая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустическая мягкая панель",
+      "akustik porolonli yumshoq panel"
     ]
   },
   {
@@ -37524,6 +40889,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель из поролона с текстильной обивкой",
+    "short_description_en": "Панель из поролона с текстильной обивкой — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель из поролона с текстильной обивкой (Панель из поролона с текстильной обивкой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель из поролона с текстильной обивкой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель из поролона с текстильной обивкой",
+      "porolon asosli to‘qimachilik paneli"
     ]
   },
   {
@@ -37670,6 +41048,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с кожаной обивкой",
+    "short_description_en": "Панель с кожаной обивкой — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с кожаной обивкой (Панель с кожаной обивкой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с кожаной обивкой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с кожаной обивкой",
+      "charm bilan qoplangan oraliq panel"
     ]
   },
   {
@@ -37816,6 +41207,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Панель с велюровой обивкой",
+    "short_description_en": "Панель с велюровой обивкой — professional wall and construction material for architectural specifications.",
+    "description_en": "Панель с велюровой обивкой (Панель с велюровой обивкой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Панель с велюровой обивкой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "панель с велюровой обивкой",
+      "velyur matoli devor paneli"
     ]
   },
   {
@@ -37962,6 +41366,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковое настенное покрытие",
+    "short_description_en": "Пробковое настенное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Пробковое настенное покрытие (Пробковое настенное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Пробковое настенное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пробковое настенное покрытие",
+      "tabiiy po‘kak (probka) devor qoplamasi"
     ]
   },
   {
@@ -38108,6 +41525,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковые обои",
+    "short_description_en": "Пробковые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Пробковые обои (Пробковые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Пробковые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пробковые обои",
+      "tabiiy po‘kak (probka) gulqog‘oz"
     ]
   },
   {
@@ -38254,6 +41684,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковая панель",
+    "short_description_en": "Пробковая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Пробковая панель (Пробковая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Пробковая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "пробковая панель",
+      "tabiiy po‘kak (probka) devor paneli"
     ]
   },
   {
@@ -38400,6 +41843,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная пробковая панель",
+    "short_description_en": "Декоративная пробковая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная пробковая панель (Декоративная пробковая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная пробковая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная пробковая панель",
+      "tabiiy po‘kak (probka) devor paneli"
     ]
   },
   {
@@ -38546,6 +42002,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая пробковая панель",
+    "short_description_en": "Акустическая пробковая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Акустическая пробковая панель (Акустическая пробковая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Акустическая пробковая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "акустическая пробковая панель",
+      "tabiiy po‘kak (probka) devor paneli"
     ]
   },
   {
@@ -38692,6 +42161,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Самоклеящаяся пробковая плитка",
+    "short_description_en": "Самоклеящаяся пробковая плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Самоклеящаяся пробковая плитка (Самоклеящаяся пробковая плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Самоклеящаяся пробковая плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "самоклеящаяся пробковая плитка",
+      "o‘zi yopishuvchi probka plitkasi"
     ]
   },
   {
@@ -38838,6 +42320,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковая стеновая панель",
+    "short_description_en": "Бамбуковая стеновая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковая стеновая панель (Бамбуковая стеновая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковая стеновая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковая стеновая панель",
+      "tabiiy bambuk poyalaridan devor paneli"
     ]
   },
   {
@@ -38984,6 +42479,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковые обои",
+    "short_description_en": "Бамбуковые обои — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковые обои (Бамбуковые обои) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковые обои\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковые обои",
+      "tabiiy bambuk gulqog‘oz"
     ]
   },
   {
@@ -39130,6 +42638,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковая рейка",
+    "short_description_en": "Бамбуковая рейка — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковая рейка (Бамбуковая рейка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковая рейка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковая рейка",
+      "bambuk qirqilgan dekorativ reyka"
     ]
   },
   {
@@ -39276,6 +42797,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковая декоративная панель",
+    "short_description_en": "Бамбуковая декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковая декоративная панель (Бамбуковая декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковая декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковая декоративная панель",
+      "bambukdan to‘qilgan dekorativ devor paneli"
     ]
   },
   {
@@ -39422,6 +42956,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бамбуковая мозаика",
+    "short_description_en": "Бамбуковая мозаика — professional wall and construction material for architectural specifications.",
+    "description_en": "Бамбуковая мозаика (Бамбуковая мозаика) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бамбуковая мозаика\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бамбуковая мозаика",
+      "badiiy mozaika qoplamasi"
     ]
   },
   {
@@ -39568,6 +43115,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевая панель",
+    "short_description_en": "Алюминиевая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевая панель (Алюминиевая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевая панель",
+      "alyuminiy qatlamli devor paneli"
     ]
   },
   {
@@ -39714,6 +43274,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стальная панель",
+    "short_description_en": "Стальная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Стальная панель (Стальная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стальная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стальная панель",
+      "zanglamas po‘lat devor paneli"
     ]
   },
   {
@@ -39860,6 +43433,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Латунная панель",
+    "short_description_en": "Латунная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Латунная панель (Латунная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Латунная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "латунная панель",
+      "latun (sariq jez) dekorativ devor paneli"
     ]
   },
   {
@@ -40006,6 +43592,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Медная панель",
+    "short_description_en": "Медная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Медная панель (Медная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Медная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "медная панель",
+      "sof mis qoplamali nafis devor paneli"
     ]
   },
   {
@@ -40152,6 +43751,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Нержавеющая стальная панель",
+    "short_description_en": "Нержавеющая стальная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Нержавеющая стальная панель (Нержавеющая стальная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Нержавеющая стальная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "нержавеющая стальная панель",
+      "zanglamas po‘lat devor paneli"
     ]
   },
   {
@@ -40298,6 +43910,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая декоративная панель",
+    "short_description_en": "Металлическая декоративная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая декоративная панель (Металлическая декоративная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая декоративная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическая декоративная панель",
+      "metall dekorativ panel"
     ]
   },
   {
@@ -40444,6 +44069,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Перфорированная металлическая панель",
+    "short_description_en": "Перфорированная металлическая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Перфорированная металлическая панель (Перфорированная металлическая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Перфорированная металлическая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "перфорированная металлическая панель",
+      "teshikli (perforatsiyalangan) metall panel"
     ]
   },
   {
@@ -40590,6 +44228,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рифлёная металлическая панель",
+    "short_description_en": "Рифлёная металлическая панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Рифлёная металлическая панель (Рифлёная металлическая панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Рифлёная металлическая панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "рифлёная металлическая панель",
+      "riflyoniy (gofra qovurg‘ali) metall panel"
     ]
   },
   {
@@ -40736,6 +44387,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая 3D-панель",
+    "short_description_en": "Металлическая 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая 3D-панель (Металлическая 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическая 3d-панель",
+      "shtamplangan metall 3d devor paneli"
     ]
   },
   {
@@ -40882,6 +44546,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевый композитный материал (АКМ)",
+    "short_description_en": "Алюминиевый композитный материал (АКМ) — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевый композитный материал (АКМ) (Алюминиевый композитный материал (АКМ)) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевый композитный материал (АКМ)\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевый композитный материал (акм)",
+      "alyuminiy kompozit material (akm)"
     ]
   },
   {
@@ -41028,6 +44705,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевые композитные панели (АКП)",
+    "short_description_en": "Алюминиевые композитные панели (АКП) — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевые композитные панели (АКП) (Алюминиевые композитные панели (АКП)) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевые композитные панели (АКП)\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевые композитные панели (акп)",
+      "alyuminiy kompozit panel (alukobond turi)"
     ]
   },
   {
@@ -41174,6 +44864,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевые листы",
+    "short_description_en": "Алюминиевые листы — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевые листы (Алюминиевые листы) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевые листы\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевые листы",
+      "sayqallangan yupqa alyuminiy listlari"
     ]
   },
   {
@@ -41320,6 +45023,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая сетка",
+    "short_description_en": "Металлическая сетка — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая сетка (Металлическая сетка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая сетка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическая сетка",
+      "metall armatura to‘ri"
     ]
   },
   {
@@ -41466,6 +45182,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная металлическая сетка",
+    "short_description_en": "Декоративная металлическая сетка — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная металлическая сетка (Декоративная металлическая сетка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная металлическая сетка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная металлическая сетка",
+      "metall armatura to‘ri"
     ]
   },
   {
@@ -41612,6 +45341,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный бетон",
+    "short_description_en": "Декоративный бетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративный бетон (Декоративный бетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративный бетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративный бетон",
+      "dekorativ silliqlangan interyer betoni"
     ]
   },
   {
@@ -41758,6 +45500,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Архитектурный бетон",
+    "short_description_en": "Архитектурный бетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Архитектурный бетон (Архитектурный бетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Архитектурный бетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "архитектурный бетон",
+      "arxitektura betoni (arxbeton silliq yuzasi)"
     ]
   },
   {
@@ -41904,6 +45659,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная бетонная панель",
+    "short_description_en": "Декоративная бетонная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная бетонная панель (Декоративная бетонная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная бетонная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная бетонная панель",
+      "dekorativ yupqa devor beton paneli"
     ]
   },
   {
@@ -42050,6 +45818,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонная 3D-панель",
+    "short_description_en": "Бетонная 3D-панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Бетонная 3D-панель (Бетонная 3D-панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бетонная 3D-панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бетонная 3d-панель",
+      "beton relyefli 3d devor paneli"
     ]
   },
   {
@@ -42196,6 +45977,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микроцемент",
+    "short_description_en": "Микроцемент — professional wall and construction material for architectural specifications.",
+    "description_en": "Микроцемент (Микроцемент) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Микроцемент\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "микроцемент",
+      "mikrotsement uzluksiz choksiz devor qoplamasi"
     ]
   },
   {
@@ -42342,6 +46136,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микробетон",
+    "short_description_en": "Микробетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Микробетон (Микробетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Микробетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "микробетон",
+      "mikrobeton yuqori mustahkam devor pardoz qorishmasi"
     ]
   },
   {
@@ -42488,6 +46295,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементная декоративная штукатурка",
+    "short_description_en": "Цементная декоративная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Цементная декоративная штукатурка (Цементная декоративная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Цементная декоративная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "цементная декоративная штукатурка",
+      "dekorativ fasad va interyer suvog‘i"
     ]
   },
   {
@@ -42634,6 +46454,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное покрытие под бетон",
+    "short_description_en": "Декоративное покрытие под бетон — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное покрытие под бетон (Декоративное покрытие под бетон) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное покрытие под бетон\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное покрытие под бетон",
+      "beton fakturasini hosil qiluvchi qoplama"
     ]
   },
   {
@@ -42780,6 +46613,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонная облицовочная плитка",
+    "short_description_en": "Бетонная облицовочная плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Бетонная облицовочная плитка (Бетонная облицовочная плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бетонная облицовочная плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бетонная облицовочная плитка",
+      "betondan ishlangan devor qoplama plitkasi"
     ]
   },
   {
@@ -42926,6 +46772,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное покрытие",
+    "short_description_en": "Декоративное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное покрытие (Декоративное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное покрытие",
+      "interyer devor dekorativ qoplamasi"
     ]
   },
   {
@@ -43072,6 +46931,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фактурное покрытие",
+    "short_description_en": "Фактурное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Фактурное покрытие (Фактурное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фактурное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фактурное покрытие",
+      "fakturali qalin dekorativ qoplama"
     ]
   },
   {
@@ -43218,6 +47090,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная паста",
+    "short_description_en": "Декоративная паста — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративная паста (Декоративная паста) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративная паста\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративная паста",
+      "dekorativ reliesf pastasi"
     ]
   },
   {
@@ -43364,6 +47249,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мраморное покрытие",
+    "short_description_en": "Мраморное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Мраморное покрытие (Мраморное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Мраморное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "мраморное покрытие",
+      "marmar kukuni asosidagi qoplama"
     ]
   },
   {
@@ -43510,6 +47408,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шёлковое покрытие",
+    "short_description_en": "Шёлковое покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Шёлковое покрытие (Шёлковое покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Шёлковое покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "шёлковое покрытие",
+      "suyuq ipak jiloli hashamatli devor qoplamasi"
     ]
   },
   {
@@ -43656,6 +47567,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Песочное покрытие",
+    "short_description_en": "Песочное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Песочное покрытие (Песочное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Песочное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "песочное покрытие",
+      "dengiz qumi teksturali jiloli devor qoplamasi"
     ]
   },
   {
@@ -43802,6 +47726,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонное покрытие",
+    "short_description_en": "Бетонное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Бетонное покрытие (Бетонное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Бетонное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "бетонное покрытие",
+      "loft beton ko‘rinishli devor qoplamasi"
     ]
   },
   {
@@ -43948,6 +47885,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическое декоративное покрытие",
+    "short_description_en": "Металлическое декоративное покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическое декоративное покрытие (Металлическое декоративное покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическое декоративное покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическое декоративное покрытие",
+      "interyer devor dekorativ qoplamasi"
     ]
   },
   {
@@ -44094,6 +48044,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Перламутровое покрытие",
+    "short_description_en": "Перламутровое покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Перламутровое покрытие (Перламутровое покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Перламутровое покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "перламутровое покрытие",
+      "marvarid (perlamutr) jiloli nozik qoplama"
     ]
   },
   {
@@ -44240,6 +48203,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Велюровое покрытие",
+    "short_description_en": "Велюровое покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Велюровое покрытие (Велюровое покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Велюровое покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "велюровое покрытие",
+      "velyur baxmal yumshoqligini beruvchi qoplama"
     ]
   },
   {
@@ -44386,6 +48362,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Замшевое покрытие",
+    "short_description_en": "Замшевое покрытие — professional wall and construction material for architectural specifications.",
+    "description_en": "Замшевое покрытие (Замшевое покрытие) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Замшевое покрытие\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "замшевое покрытие",
+      "zamsha terisi tuyg‘usini beruvchi mat qoplama"
     ]
   },
   {
@@ -44532,6 +48521,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное покрытие под дерево",
+    "short_description_en": "Декоративное покрытие под дерево — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное покрытие под дерево (Декоративное покрытие под дерево) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное покрытие под дерево\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное покрытие под дерево",
+      "interyer devor dekorativ qoplamasi"
     ]
   },
   {
@@ -44678,6 +48680,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное покрытие под камень",
+    "short_description_en": "Декоративное покрытие под камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное покрытие под камень (Декоративное покрытие под камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное покрытие под камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное покрытие под камень",
+      "interyer devor dekorativ qoplamasi"
     ]
   },
   {
@@ -44824,6 +48839,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное покрытие под металл",
+    "short_description_en": "Декоративное покрытие под металл — professional wall and construction material for architectural specifications.",
+    "description_en": "Декоративное покрытие под металл (Декоративное покрытие под металл) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Декоративное покрытие под металл\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "декоративное покрытие под металл",
+      "interyer devor dekorativ qoplamasi"
     ]
   },
   {
@@ -44970,6 +48998,18 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадная штукатурка",
+    "short_description_en": "Фасадная штукатурка — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадная штукатурка (Фасадная штукатурка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадная штукатурка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадная штукатурка"
     ]
   },
   {
@@ -45116,6 +49156,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадная краска",
+    "short_description_en": "Фасадная краска — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадная краска (Фасадная краска) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадная краска\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадная краска",
+      "ob-havoga chidamli fasad bo‘yog‘i"
     ]
   },
   {
@@ -45262,6 +49315,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка",
+    "short_description_en": "Клинкерная плитка — professional wall and construction material for architectural specifications.",
+    "description_en": "Клинкерная плитка (Клинкерная плитка) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Клинкерная плитка\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "клинкерная плитка",
+      "klinker fasad va devor plitkasi"
     ]
   },
   {
@@ -45408,6 +49474,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадный керамогранит",
+    "short_description_en": "Фасадный керамогранит — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадный керамогранит (Фасадный керамогранит) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадный керамогранит\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадный керамогранит",
+      "tabiiy granit plitasi"
     ]
   },
   {
@@ -45554,6 +49633,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадный натуральный камень",
+    "short_description_en": "Фасадный натуральный камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадный натуральный камень (Фасадный натуральный камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадный натуральный камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадный натуральный камень",
+      "tabiiy yovvoyi tosh qoplamasi"
     ]
   },
   {
@@ -45700,6 +49792,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадный искусственный камень",
+    "short_description_en": "Фасадный искусственный камень — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадный искусственный камень (Фасадный искусственный камень) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадный искусственный камень\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадный искусственный камень",
+      "sun‘iy bezak toshi (akril / kvars aglomerat)"
     ]
   },
   {
@@ -45846,6 +49951,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фиброцементная фасадная панель",
+    "short_description_en": "Фиброцементная фасадная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фиброцементная фасадная панель (Фиброцементная фасадная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фиброцементная фасадная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фиброцементная фасадная панель",
+      "fibrotsement shamollatiladigan fasad paneli"
     ]
   },
   {
@@ -45992,6 +50110,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "HPL фасадная панель",
+    "short_description_en": "HPL фасадная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "HPL фасадная панель (HPL фасадная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"HPL фасадная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "hpl фасадная панель",
+      "hpl quyoshga chidamli fasad paneli"
     ]
   },
   {
@@ -46138,6 +50269,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевая фасадная панель",
+    "short_description_en": "Алюминиевая фасадная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевая фасадная панель (Алюминиевая фасадная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевая фасадная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевая фасадная панель",
+      "alyuminiy ventfasad paneli"
     ]
   },
   {
@@ -46284,6 +50428,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевые композитные панели",
+    "short_description_en": "Алюминиевые композитные панели — professional wall and construction material for architectural specifications.",
+    "description_en": "Алюминиевые композитные панели (Алюминиевые композитные панели) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Алюминиевые композитные панели\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "алюминиевые композитные панели",
+      "alyuminiy kompozit panel (alukobond turi)"
     ]
   },
   {
@@ -46430,6 +50587,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлическая фасадная кассета",
+    "short_description_en": "Металлическая фасадная кассета — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлическая фасадная кассета (Металлическая фасадная кассета) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлическая фасадная кассета\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлическая фасадная кассета",
+      "metall fasad kassetasi (kukun bo‘yoq bilan)"
     ]
   },
   {
@@ -46438,7 +50608,7 @@ const DEVOR_MATERIALS = [
     "name_uz": "Tabiiy granit plitasi",
     "name_ru": "Керамогранитная фасадная плита",
     "original_name": "Керамогранитная фасадная плита",
-    "english_name": "Керамогранитная фасадная плита",
+    "english_name": "Porcelain stonewareная фасадная плита",
     "slug": "keramogranitnaya-fasadnaya-plita",
     "category_slug": "devor-konstruksiya",
     "subcategory_name": "Фасадные материалы",
@@ -46576,6 +50746,20 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stonewareная фасадная плита",
+    "short_description_en": "Porcelain stonewareная фасадная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "Porcelain stonewareная фасадная плита (Керамогранитная фасадная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Porcelain stonewareная фасадная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "porcelain stonewareная фасадная плита",
+      "керамогранитная фасадная плита",
+      "tabiiy granit plitasi"
     ]
   },
   {
@@ -46722,6 +50906,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклофибробетонная панель",
+    "short_description_en": "Стеклофибробетонная панель — professional wall and construction material for architectural specifications.",
+    "description_en": "Стеклофибробетонная панель (Стеклофибробетонная панель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Стеклофибробетонная панель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "стеклофибробетонная панель",
+      "shishafibrobeton (sfrc) yengil va o‘ta pishiq fasad paneli"
     ]
   },
   {
@@ -46868,6 +51065,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая фасадная плита",
+    "short_description_en": "Керамическая фасадная плита — professional wall and construction material for architectural specifications.",
+    "description_en": "Керамическая фасадная плита (Керамическая фасадная плита) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Керамическая фасадная плита\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "керамическая фасадная плита",
+      "terrakota keramik fasad plitasi"
     ]
   },
   {
@@ -47014,6 +51224,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сайдинг",
+    "short_description_en": "Сайдинг — professional wall and construction material for architectural specifications.",
+    "description_en": "Сайдинг (Сайдинг) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Сайдинг\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "сайдинг",
+      "himoyalovchi fasad saydingi"
     ]
   },
   {
@@ -47160,6 +51383,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловый сайдинг",
+    "short_description_en": "Виниловый сайдинг — professional wall and construction material for architectural specifications.",
+    "description_en": "Виниловый сайдинг (Виниловый сайдинг) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Виниловый сайдинг\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "виниловый сайдинг",
+      "himoyalovchi fasad saydingi"
     ]
   },
   {
@@ -47306,6 +51542,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Металлический сайдинг",
+    "short_description_en": "Металлический сайдинг — professional wall and construction material for architectural specifications.",
+    "description_en": "Металлический сайдинг (Металлический сайдинг) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Металлический сайдинг\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "металлический сайдинг",
+      "himoyalovchi fasad saydingi"
     ]
   },
   {
@@ -47452,6 +51701,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фиброцементный сайдинг",
+    "short_description_en": "Фиброцементный сайдинг — professional wall and construction material for architectural specifications.",
+    "description_en": "Фиброцементный сайдинг (Фиброцементный сайдинг) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фиброцементный сайдинг\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фиброцементный сайдинг",
+      "himoyalovchi fasad saydingi"
     ]
   },
   {
@@ -47598,6 +51860,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Фасадная термопанель",
+    "short_description_en": "Фасадная термопанель — professional wall and construction material for architectural specifications.",
+    "description_en": "Фасадная термопанель (Фасадная термопанель) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Фасадная термопанель\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "фасадная термопанель",
+      "fasad termopaneli (penopolistirol + klinker)"
     ]
   },
   {
@@ -47744,6 +52019,19 @@ const DEVOR_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термопанель с клинкерной плиткой",
+    "short_description_en": "Термопанель с клинкерной плиткой — professional wall and construction material for architectural specifications.",
+    "description_en": "Термопанель с клинкерной плиткой (Термопанель с клинкерной плиткой) is a high-performance wall construction material compliant with GOST/EN standards. Engineered for superior structural strength, thermal efficiency, and acoustic insulation.",
+    "usage_area_en": "Load-bearing walls, partitions, and structural facades in residential and public buildings.",
+    "pros_en": "High compressive strength, fire resistance, excellent sound insulation, and long service life.",
+    "cons_en": "Requires skilled masonry or installation according to structural engineering requirements.",
+    "architect_notes_en": "Specify thermal bridging prevention, reinforcement belts, and structural load calculations in Revit/BIM drawings for \"Термопанель с клинкерной плиткой\".",
+    "mounting_instructions_en": "Construct in accordance with structural masonry and partition building standards.",
+    "dimensions_info_en": "Standart katalog o‘lchami",
+    "aliases": [
+      "термопанель с клинкерной плиткой",
+      "klinker plitkali issiqlik izolyatsiya termopaneli"
     ]
   }
 ];

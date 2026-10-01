@@ -1,6 +1,7 @@
 // ======================================================
-// YOSHUZBEKK Academy — Pol Materiallari Kengaytirilgan Katalogi
-// To‘liq 434 ta pol materiali texnik kartalari va me’moriy parametrlari
+// YOSHUZBEKK Academy — Full Flooring Technical Catalog
+// 434 Materials (Re-classified: pure flooring + profiles & baseboards)
+// Multilingual: UZ / RU / EN
 // ======================================================
 
 const POL_MATERIALS = [
@@ -10,7 +11,7 @@ const POL_MATERIALS = [
     "name_uz": "Maishiy laminat (uy sharoiti uchun)",
     "name_ru": "Ламинат бытовой",
     "original_name": "Ламинат бытовой",
-    "english_name": "Ламинат бытовой",
+    "english_name": "Residential laminate flooring",
     "slug": "pol-laminat-bytovoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -159,6 +160,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Residential laminate flooring",
+    "short_description_en": "Residential laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Residential laminate flooring (Ламинат бытовой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Residential laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "residential laminate flooring",
+      "ламинат бытовой",
+      "maishiy laminat (uy sharoiti uchun)"
     ]
   },
   {
@@ -167,7 +182,7 @@ const POL_MATERIALS = [
     "name_uz": "Tijoriy mustahkam laminat",
     "name_ru": "Ламинат коммерческий",
     "original_name": "Ламинат коммерческий",
-    "english_name": "Ламинат коммерческий",
+    "english_name": "Commercial laminate flooring",
     "slug": "pol-laminat-kommercheskiy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -316,6 +331,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Commercial laminate flooring",
+    "short_description_en": "Commercial laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Commercial laminate flooring (Ламинат коммерческий) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Commercial laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10 mm",
+    "aliases": [
+      "commercial laminate flooring",
+      "ламинат коммерческий",
+      "tijoriy mustahkam laminat"
     ]
   },
   {
@@ -324,7 +353,7 @@ const POL_MATERIALS = [
     "name_uz": "Namlikka chidamli laminat",
     "name_ru": "Ламинат влагостойкий",
     "original_name": "Ламинат влагостойкий",
-    "english_name": "Ламинат влагостойкий",
+    "english_name": "Moisture-resistant laminate flooring",
     "slug": "pol-laminat-vlagostoykiy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -473,6 +502,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Moisture-resistant laminate flooring",
+    "short_description_en": "Moisture-resistant laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Moisture-resistant laminate flooring (Ламинат влагостойкий) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Moisture-resistant laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "moisture-resistant laminate flooring",
+      "ламинат влагостойкий",
+      "namlikka chidamli laminat"
     ]
   },
   {
@@ -481,7 +524,7 @@ const POL_MATERIALS = [
     "name_uz": "Suvga 100% chidamli akva-laminat",
     "name_ru": "Ламинат водостойкий",
     "original_name": "Ламинат водостойкий",
-    "english_name": "Ламинат водостойкий",
+    "english_name": "Waterproof laminate flooring",
     "slug": "pol-laminat-vodostoykiy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -630,6 +673,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Waterproof laminate flooring",
+    "short_description_en": "Waterproof laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Waterproof laminate flooring (Ламинат водостойкий) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Waterproof laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "waterproof laminate flooring",
+      "ламинат водостойкий",
+      "suvga 100% chidamli akva-laminat"
     ]
   },
   {
@@ -638,7 +695,7 @@ const POL_MATERIALS = [
     "name_uz": "Oshxona uchun maxsus suvbardosh laminat",
     "name_ru": "Ламинат для кухни",
     "original_name": "Ламинат для кухни",
-    "english_name": "Ламинат для кухни",
+    "english_name": "Kitchen laminate flooring",
     "slug": "pol-laminat-dlya-kuhni",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -787,6 +844,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Kitchen laminate flooring",
+    "short_description_en": "Kitchen laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Kitchen laminate flooring (Ламинат для кухни) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Kitchen laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "kitchen laminate flooring",
+      "ламинат для кухни",
+      "oshxona uchun maxsus suvbardosh laminat"
     ]
   },
   {
@@ -795,7 +866,7 @@ const POL_MATERIALS = [
     "name_uz": "Dahliz va koridor uchun mustahkam laminat",
     "name_ru": "Ламинат для прихожей",
     "original_name": "Ламинат для прихожей",
-    "english_name": "Ламинат для прихожей",
+    "english_name": "Hallway laminate flooring",
     "slug": "pol-laminat-dlya-prihozhey",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -944,6 +1015,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Hallway laminate flooring",
+    "short_description_en": "Hallway laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Hallway laminate flooring (Ламинат для прихожей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Hallway laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "hallway laminate flooring",
+      "ламинат для прихожей",
+      "dahliz va koridor uchun mustahkam laminat"
     ]
   },
   {
@@ -952,7 +1037,7 @@ const POL_MATERIALS = [
     "name_uz": "Yotoqxona uchun ekologik shinam laminat",
     "name_ru": "Ламинат для спальни",
     "original_name": "Ламинат для спальни",
-    "english_name": "Ламинат для спальни",
+    "english_name": "Bedroom laminate flooring",
     "slug": "pol-laminat-dlya-spalni",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1101,6 +1186,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Bedroom laminate flooring",
+    "short_description_en": "Bedroom laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Bedroom laminate flooring (Ламинат для спальни) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Bedroom laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "bedroom laminate flooring",
+      "ламинат для спальни",
+      "yotoqxona uchun ekologik shinam laminat"
     ]
   },
   {
@@ -1109,7 +1208,7 @@ const POL_MATERIALS = [
     "name_uz": "Mehmonxona zallari uchun nafis laminat",
     "name_ru": "Ламинат для гостиной",
     "original_name": "Ламинат для гостиной",
-    "english_name": "Ламинат для гостиной",
+    "english_name": "Living room laminate flooring",
     "slug": "pol-laminat-dlya-gostinoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1258,6 +1357,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Living room laminate flooring",
+    "short_description_en": "Living room laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Living room laminate flooring (Ламинат для гостиной) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Living room laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "living room laminate flooring",
+      "ламинат для гостиной",
+      "mehmonxona zallari uchun nafis laminat"
     ]
   },
   {
@@ -1266,7 +1379,7 @@ const POL_MATERIALS = [
     "name_uz": "Ofis va ish xonalari uchun tirnalishga chidamli laminat",
     "name_ru": "Ламинат для офиса",
     "original_name": "Ламинат для офиса",
-    "english_name": "Ламинат для офиса",
+    "english_name": "Office laminate flooring",
     "slug": "pol-laminat-dlya-ofisa",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1415,6 +1528,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Office laminate flooring",
+    "short_description_en": "Office laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Office laminate flooring (Ламинат для офиса) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Office laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "office laminate flooring",
+      "ламинат для офиса",
+      "ofis va ish xonalari uchun tirnalishga chidamli laminat"
     ]
   },
   {
@@ -1423,7 +1550,7 @@ const POL_MATERIALS = [
     "name_uz": "Tijorat va jamoat joylari uchun 33/34 sinf laminat",
     "name_ru": "Ламинат для коммерческих помещений",
     "original_name": "Ламинат для коммерческих помещений",
-    "english_name": "Ламинат для коммерческих помещений",
+    "english_name": "Commercial grade laminate flooring",
     "slug": "pol-laminat-dlya-kommercheskih-pomescheniy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1572,6 +1699,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Commercial grade laminate flooring",
+    "short_description_en": "Commercial grade laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Commercial grade laminate flooring (Ламинат для коммерческих помещений) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Commercial grade laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "commercial grade laminate flooring",
+      "ламинат для коммерческих помещений",
+      "tijorat va jamoat joylari uchun 33/34 sinf laminat"
     ]
   },
   {
@@ -1580,7 +1721,7 @@ const POL_MATERIALS = [
     "name_uz": "Yuqori aşınmaya chidamli 34-sinf laminat",
     "name_ru": "Ламинат повышенной износостойкости",
     "original_name": "Ламинат повышенной износостойкости",
-    "english_name": "Ламинат повышенной износостойкости",
+    "english_name": "High wear-resistant laminate flooring",
     "slug": "pol-laminat-povyshennoy-iznosostoykosti",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1729,6 +1870,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "High wear-resistant laminate flooring",
+    "short_description_en": "High wear-resistant laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "High wear-resistant laminate flooring (Ламинат повышенной износостойкости) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"High wear-resistant laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x12 mm",
+    "aliases": [
+      "high wear-resistant laminate flooring",
+      "ламинат повышенной износостойкости",
+      "yuqori aşınmaya chidamli 34-sinf laminat"
     ]
   },
   {
@@ -1737,7 +1892,7 @@ const POL_MATERIALS = [
     "name_uz": "Faskali (burchaklari qirqilgan) laminat",
     "name_ru": "Ламинат с фаской",
     "original_name": "Ламинат с фаской",
-    "english_name": "Ламинат с фаской",
+    "english_name": "Beveled edge laminate flooring",
     "slug": "pol-laminat-s-faskoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -1886,6 +2041,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Beveled edge laminate flooring",
+    "short_description_en": "Beveled edge laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Beveled edge laminate flooring (Ламинат с фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Beveled edge laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "beveled edge laminate flooring",
+      "ламинат с фаской",
+      "faskali (burchaklari qirqilgan) laminat"
     ]
   },
   {
@@ -1894,7 +2063,7 @@ const POL_MATERIALS = [
     "name_uz": "Faskasiz (choksiz yagona tekislik) laminat",
     "name_ru": "Ламинат без фаски",
     "original_name": "Ламинат без фаски",
-    "english_name": "Ламинат без фаски",
+    "english_name": "Seamless edge laminate flooring",
     "slug": "pol-laminat-bez-faski",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2043,6 +2212,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Seamless edge laminate flooring",
+    "short_description_en": "Seamless edge laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Seamless edge laminate flooring (Ламинат без фаски) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Seamless edge laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "seamless edge laminate flooring",
+      "ламинат без фаски",
+      "faskasiz (choksiz yagona tekislik) laminat"
     ]
   },
   {
@@ -2051,7 +2234,7 @@ const POL_MATERIALS = [
     "name_uz": "V-shaklli faskaga ega laminat",
     "name_ru": "Ламинат с V-фаской",
     "original_name": "Ламинат с V-фаской",
-    "english_name": "Ламинат с V-фаской",
+    "english_name": "V-groove laminate flooring",
     "slug": "pol-laminat-s-v-faskoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2200,6 +2383,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "V-groove laminate flooring",
+    "short_description_en": "V-groove laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "V-groove laminate flooring (Ламинат с V-фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"V-groove laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "v-groove laminate flooring",
+      "ламинат с v-фаской",
+      "v-shaklli faskaga ega laminat"
     ]
   },
   {
@@ -2208,7 +2405,7 @@ const POL_MATERIALS = [
     "name_uz": "4 tomonlama chuqur faskali laminat",
     "name_ru": "Ламинат с 4-сторонней фаской",
     "original_name": "Ламинат с 4-сторонней фаской",
-    "english_name": "Ламинат с 4-сторонней фаской",
+    "english_name": "4-sided beveled laminate flooring",
     "slug": "pol-laminat-s-4-storonney-faskoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2357,6 +2554,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "4-sided beveled laminate flooring",
+    "short_description_en": "4-sided beveled laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "4-sided beveled laminate flooring (Ламинат с 4-сторонней фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"4-sided beveled laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "4-sided beveled laminate flooring",
+      "ламинат с 4-сторонней фаской",
+      "4 tomonlama chuqur faskali laminat"
     ]
   },
   {
@@ -2365,7 +2576,7 @@ const POL_MATERIALS = [
     "name_uz": "2 tomonlama bo‘ylama faskali laminat",
     "name_ru": "Ламинат с 2-сторонней фаской",
     "original_name": "Ламинат с 2-сторонней фаской",
-    "english_name": "Ламинат с 2-сторонней фаской",
+    "english_name": "2-sided beveled laminate flooring",
     "slug": "pol-laminat-s-2-storonney-faskoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2514,6 +2725,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "2-sided beveled laminate flooring",
+    "short_description_en": "2-sided beveled laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "2-sided beveled laminate flooring (Ламинат с 2-сторонней фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"2-sided beveled laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "2-sided beveled laminate flooring",
+      "ламинат с 2-сторонней фаской",
+      "2 tomonlama bo‘ylama faskali laminat"
     ]
   },
   {
@@ -2522,7 +2747,7 @@ const POL_MATERIALS = [
     "name_uz": "Yog‘och teksturali klassik laminat",
     "name_ru": "Ламинат под дерево",
     "original_name": "Ламинат под дерево",
-    "english_name": "Ламинат под дерево",
+    "english_name": "Wood effect laminate flooring",
     "slug": "pol-laminat-pod-derevo",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2671,6 +2896,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Wood effect laminate flooring",
+    "short_description_en": "Wood effect laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Wood effect laminate flooring (Ламинат под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Wood effect laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "wood effect laminate flooring",
+      "ламинат под дерево",
+      "yog‘och teksturali klassik laminat"
     ]
   },
   {
@@ -2679,7 +2918,7 @@ const POL_MATERIALS = [
     "name_uz": "Tosh fakturali zamonaviy laminat",
     "name_ru": "Ламинат под камень",
     "original_name": "Ламинат под камень",
-    "english_name": "Ламинат под камень",
+    "english_name": "Stone effect laminate flooring",
     "slug": "pol-laminat-pod-kamen",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2828,6 +3067,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Stone effect laminate flooring",
+    "short_description_en": "Stone effect laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Stone effect laminate flooring (Ламинат под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Stone effect laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "stone effect laminate flooring",
+      "ламинат под камень",
+      "tosh fakturali zamonaviy laminat"
     ]
   },
   {
@@ -2836,7 +3089,7 @@ const POL_MATERIALS = [
     "name_uz": "Loft beton ko‘rinishli laminat",
     "name_ru": "Ламинат под бетон",
     "original_name": "Ламинат под бетон",
-    "english_name": "Ламинат под бетон",
+    "english_name": "Concrete effect laminate flooring",
     "slug": "pol-laminat-pod-beton",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -2985,6 +3238,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Concrete effect laminate flooring",
+    "short_description_en": "Concrete effect laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Concrete effect laminate flooring (Ламинат под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Concrete effect laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "concrete effect laminate flooring",
+      "ламинат под бетон",
+      "loft beton ko‘rinishli laminat"
     ]
   },
   {
@@ -2993,7 +3260,7 @@ const POL_MATERIALS = [
     "name_uz": "Marmar jiloli premium laminat",
     "name_ru": "Ламинат под мрамор",
     "original_name": "Ламинат под мрамор",
-    "english_name": "Ламинат под мрамор",
+    "english_name": "Marble effect laminate flooring",
     "slug": "pol-laminat-pod-mramor",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3142,6 +3409,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Marble effect laminate flooring",
+    "short_description_en": "Marble effect laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Marble effect laminate flooring (Ламинат под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Marble effect laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "marble effect laminate flooring",
+      "ламинат под мрамор",
+      "marmar jiloli premium laminat"
     ]
   },
   {
@@ -3150,7 +3431,7 @@ const POL_MATERIALS = [
     "name_uz": "Plitka formatidagi to‘rtburchak laminat",
     "name_ru": "Ламинат под плитку",
     "original_name": "Ламинат под плитку",
-    "english_name": "Ламинат под плитку",
+    "english_name": "Tile effect laminate flooring",
     "slug": "pol-laminat-pod-plitku",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3299,6 +3580,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile effect laminate flooring",
+    "short_description_en": "Tile effect laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Tile effect laminate flooring (Ламинат под плитку) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Tile effect laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "tile effect laminate flooring",
+      "ламинат под плитку",
+      "plitka formatidagi to‘rtburchak laminat"
     ]
   },
   {
@@ -3307,7 +3602,7 @@ const POL_MATERIALS = [
     "name_uz": "Archa (yolochka) uslubida teriladigan laminat",
     "name_ru": "Ламинат ёлочка",
     "original_name": "Ламинат ёлочка",
-    "english_name": "Ламинат ёлочка",
+    "english_name": "Herringbone laminate flooring",
     "slug": "pol-laminat-yolochka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3456,6 +3751,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Herringbone laminate flooring",
+    "short_description_en": "Herringbone laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Herringbone laminate flooring (Ламинат ёлочка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Herringbone laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "herringbone laminate flooring",
+      "ламинат ёлочка",
+      "archa (yolochka) uslubida teriladigan laminat"
     ]
   },
   {
@@ -3464,7 +3773,7 @@ const POL_MATERIALS = [
     "name_uz": "Fransuzcha archa (chevron 45°) uslubidagi laminat",
     "name_ru": "Ламинат французская ёлка",
     "original_name": "Ламинат французская ёлка",
-    "english_name": "Ламинат французская ёлка",
+    "english_name": "Chevron French herringbone laminate flooring",
     "slug": "pol-laminat-frantsuzskaya-yolka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3613,6 +3922,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Chevron French herringbone laminate flooring",
+    "short_description_en": "Chevron French herringbone laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Chevron French herringbone laminate flooring (Ламинат французская ёлка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Chevron French herringbone laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "chevron french herringbone laminate flooring",
+      "ламинат французская ёлка",
+      "fransuzcha archa (chevron 45°) uslubidagi laminat"
     ]
   },
   {
@@ -3621,7 +3944,7 @@ const POL_MATERIALS = [
     "name_uz": "Inglizcha archa (klassik 90°) uslubidagi laminat",
     "name_ru": "Ламинат английская ёлка",
     "original_name": "Ламинат английская ёлка",
-    "english_name": "Ламинат английская ёлка",
+    "english_name": "English herringbone laminate flooring",
     "slug": "pol-laminat-angliyskaya-yolka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3770,6 +4093,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "English herringbone laminate flooring",
+    "short_description_en": "English herringbone laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "English herringbone laminate flooring (Ламинат английская ёлка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"English herringbone laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "english herringbone laminate flooring",
+      "ламинат английская ёлка",
+      "inglizcha archa (klassik 90°) uslubidagi laminat"
     ]
   },
   {
@@ -3778,7 +4115,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli keng laminat taxtasi",
     "name_ru": "Ламинат крупноформатный",
     "original_name": "Ламинат крупноформатный",
-    "english_name": "Ламинат крупноформатный",
+    "english_name": "Large format laminate flooring",
     "slug": "pol-laminat-krupnoformatnyy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -3927,6 +4264,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Large format laminate flooring",
+    "short_description_en": "Large format laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Large format laminate flooring (Ламинат крупноформатный) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Large format laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2050x193x8 mm",
+    "aliases": [
+      "large format laminate flooring",
+      "ламинат крупноформатный",
+      "katta formatli keng laminat taxtasi"
     ]
   },
   {
@@ -3935,7 +4286,7 @@ const POL_MATERIALS = [
     "name_uz": "Yupqa ensiz chiroyli laminat",
     "name_ru": "Ламинат узкополосный",
     "original_name": "Ламинат узкополосный",
-    "english_name": "Ламинат узкополосный",
+    "english_name": "Narrow plank laminate flooring",
     "slug": "pol-laminat-uzkopolosnyy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -4084,6 +4435,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Narrow plank laminate flooring",
+    "short_description_en": "Narrow plank laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Narrow plank laminate flooring (Ламинат узкополосный) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Narrow plank laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1280x134x8 mm",
+    "aliases": [
+      "narrow plank laminate flooring",
+      "ламинат узкополосный",
+      "yupqa ensiz chiroyli laminat"
     ]
   },
   {
@@ -4092,7 +4457,7 @@ const POL_MATERIALS = [
     "name_uz": "Keng formatli hashamatli laminat",
     "name_ru": "Ламинат широкоформатный",
     "original_name": "Ламинат широкоформатный",
-    "english_name": "Ламинат широкоформатный",
+    "english_name": "Wide plank laminate flooring",
     "slug": "pol-laminat-shirokoformatnyy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -4241,6 +4606,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Wide plank laminate flooring",
+    "short_description_en": "Wide plank laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Wide plank laminate flooring (Ламинат широкоформатный) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Wide plank laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x244x8 mm",
+    "aliases": [
+      "wide plank laminate flooring",
+      "ламинат широкоформатный",
+      "keng formatli hashamatli laminat"
     ]
   },
   {
@@ -4249,7 +4628,7 @@ const POL_MATERIALS = [
     "name_uz": "Zamokli qulf tizimli laminat (Click)",
     "name_ru": "Ламинат с замковым соединением",
     "original_name": "Ламинат с замковым соединением",
-    "english_name": "Ламинат с замковым соединением",
+    "english_name": "Click-lock laminate flooring",
     "slug": "pol-laminat-s-zamkovym-soedineniem",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -4398,6 +4777,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Click-lock laminate flooring",
+    "short_description_en": "Click-lock laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Click-lock laminate flooring (Ламинат с замковым соединением) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Click-lock laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "click-lock laminate flooring",
+      "ламинат с замковым соединением",
+      "zamokli qulf tizimli laminat (click)"
     ]
   },
   {
@@ -4406,7 +4799,7 @@ const POL_MATERIALS = [
     "name_uz": "Yelimlab o‘rnatiladigan laminat",
     "name_ru": "Ламинат клеевой",
     "original_name": "Ламинат клеевой",
-    "english_name": "Ламинат клеевой",
+    "english_name": "Glue-down laminate flooring",
     "slug": "pol-laminat-kleevoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ламинат",
@@ -4555,6 +4948,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Glue-down laminate flooring",
+    "short_description_en": "Glue-down laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Glue-down laminate flooring (Ламинат клеевой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Glue-down laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "glue-down laminate flooring",
+      "ламинат клеевой",
+      "yelimlab o‘rnatiladigan laminat"
     ]
   },
   {
@@ -4563,7 +4970,7 @@ const POL_MATERIALS = [
     "name_uz": "Donali klassik qattiq yog‘och parket",
     "name_ru": "Штучный паркет",
     "original_name": "Штучный паркет",
-    "english_name": "Штучный паркет",
+    "english_name": "Solid block parquet",
     "slug": "pol-shtuchnyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -4712,6 +5119,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid block parquet",
+    "short_description_en": "Solid block parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Solid block parquet (Штучный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Solid block parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "solid block parquet",
+      "штучный паркет",
+      "donali klassik qattiq yog‘och parket"
     ]
   },
   {
@@ -4720,7 +5141,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска",
     "original_name": "Паркетная доска",
-    "english_name": "Паркетная доска",
+    "english_name": "Engineered parquet board",
     "slug": "pol-parketnaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -4869,6 +5290,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered parquet board",
+    "short_description_en": "Engineered parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered parquet board (Паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "engineered parquet board",
+      "паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -4877,7 +5312,7 @@ const POL_MATERIALS = [
     "name_uz": "Butun massiv yog‘och parket",
     "name_ru": "Массивный паркет",
     "original_name": "Массивный паркет",
-    "english_name": "Массивный паркет",
+    "english_name": "Solid wood parquet",
     "slug": "pol-massivnyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5026,6 +5461,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid wood parquet",
+    "short_description_en": "Solid wood parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Solid wood parquet (Массивный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Solid wood parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "solid wood parquet",
+      "массивный паркет",
+      "butun massiv yog‘och parket"
     ]
   },
   {
@@ -5034,7 +5483,7 @@ const POL_MATERIALS = [
     "name_uz": "Badiiy naqshinkor saroy parketi",
     "name_ru": "Художественный паркет",
     "original_name": "Художественный паркет",
-    "english_name": "Художественный паркет",
+    "english_name": "Artistic decorative parquet",
     "slug": "pol-hudozhestvennyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5183,6 +5632,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Artistic decorative parquet",
+    "short_description_en": "Artistic decorative parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Artistic decorative parquet (Художественный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Artistic decorative parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "artistic decorative parquet",
+      "художественный паркет",
+      "badiiy naqshinkor saroy parketi"
     ]
   },
   {
@@ -5191,7 +5654,7 @@ const POL_MATERIALS = [
     "name_uz": "Modulli kvadrat geometrik parket",
     "name_ru": "Модульный паркет",
     "original_name": "Модульный паркет",
-    "english_name": "Модульный паркет",
+    "english_name": "Modular parquet tile",
     "slug": "pol-modulnyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5340,6 +5803,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Modular parquet tile",
+    "short_description_en": "Modular parquet tile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Modular parquet tile (Модульный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Modular parquet tile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "modular parquet tile",
+      "модульный паркет",
+      "modulli kvadrat geometrik parket"
     ]
   },
   {
@@ -5348,7 +5825,7 @@ const POL_MATERIALS = [
     "name_uz": "Qalqonli yig‘ma parket",
     "name_ru": "Щитовой паркет",
     "original_name": "Щитовой паркет",
-    "english_name": "Щитовой паркет",
+    "english_name": "Panel parquet",
     "slug": "pol-schitovoy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5497,6 +5974,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Panel parquet",
+    "short_description_en": "Panel parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Panel parquet (Щитовой паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Panel parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "panel parquet",
+      "щитовой паркет",
+      "qalqonli yig‘ma parket"
     ]
   },
   {
@@ -5505,7 +5996,7 @@ const POL_MATERIALS = [
     "name_uz": "Mozaik terma parket",
     "name_ru": "Наборный паркет",
     "original_name": "Наборный паркет",
-    "english_name": "Наборный паркет",
+    "english_name": "Mosaic parquet",
     "slug": "pol-nabornyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5654,6 +6145,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Mosaic parquet",
+    "short_description_en": "Mosaic parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Mosaic parquet (Наборный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Mosaic parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "mosaic parquet",
+      "наборный паркет",
+      "mozaik terma parket"
     ]
   },
   {
@@ -5662,7 +6167,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik parketi (fanera asosli)",
     "name_ru": "Инженерный паркет",
     "original_name": "Инженерный паркет",
-    "english_name": "Инженерный паркет",
+    "english_name": "Engineered parquet",
     "slug": "pol-inzhenernyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5811,6 +6316,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered parquet",
+    "short_description_en": "Engineered parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered parquet (Инженерный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "engineered parquet",
+      "инженерный паркет",
+      "muhandislik parketi (fanera asosli)"
     ]
   },
   {
@@ -5819,7 +6338,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik pol taxtasi",
     "name_ru": "Инженерная доска",
     "original_name": "Инженерная доска",
-    "english_name": "Инженерная доска",
+    "english_name": "Engineered wood plank",
     "slug": "pol-inzhenernaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -5968,6 +6487,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered wood plank",
+    "short_description_en": "Engineered wood plank — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered wood plank (Инженерная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered wood plank\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "engineered wood plank",
+      "инженерная доска",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -5976,7 +6509,7 @@ const POL_MATERIALS = [
     "name_uz": "Klassik archa uslubidagi parket",
     "name_ru": "Паркет ёлочка",
     "original_name": "Паркет ёлочка",
-    "english_name": "Паркет ёлочка",
+    "english_name": "Herringbone parquet",
     "slug": "pol-parket-yolochka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6125,6 +6658,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Herringbone parquet",
+    "short_description_en": "Herringbone parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Herringbone parquet (Паркет ёлочка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Herringbone parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "herringbone parquet",
+      "паркет ёлочка",
+      "klassik archa uslubidagi parket"
     ]
   },
   {
@@ -6133,7 +6680,7 @@ const POL_MATERIALS = [
     "name_uz": "Fransuzcha archa parketi (45° burchak)",
     "name_ru": "Паркет французская ёлка",
     "original_name": "Паркет французская ёлка",
-    "english_name": "Паркет французская ёлка",
+    "english_name": "Chevron French parquet",
     "slug": "pol-parket-frantsuzskaya-yolka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6282,6 +6829,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Chevron French parquet",
+    "short_description_en": "Chevron French parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Chevron French parquet (Паркет французская ёлка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Chevron French parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "chevron french parquet",
+      "паркет французская ёлка",
+      "fransuzcha archa parketi (45° burchak)"
     ]
   },
   {
@@ -6290,7 +6851,7 @@ const POL_MATERIALS = [
     "name_uz": "Inglizcha archa parketi (90° burchak)",
     "name_ru": "Паркет английская ёлка",
     "original_name": "Паркет английская ёлка",
-    "english_name": "Паркет английская ёлка",
+    "english_name": "Parquet flooring английская ёлка",
     "slug": "pol-parket-angliyskaya-yolka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6439,6 +7000,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooring английская ёлка",
+    "short_description_en": "Parquet flooring английская ёлка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooring английская ёлка (Паркет английская ёлка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooring английская ёлка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "parquet flooring английская ёлка",
+      "паркет английская ёлка",
+      "inglizcha archa parketi (90° burchak)"
     ]
   },
   {
@@ -6447,7 +7022,7 @@ const POL_MATERIALS = [
     "name_uz": "Eman (dub) yog‘ochidan ishlangan olijanob parket",
     "name_ru": "Дубовый паркет",
     "original_name": "Дубовый паркет",
-    "english_name": "Дубовый паркет",
+    "english_name": "Oak parquet flooring",
     "slug": "pol-dubovyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6596,6 +7171,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Oak parquet flooring",
+    "short_description_en": "Oak parquet flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Oak parquet flooring (Дубовый паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Oak parquet flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "oak parquet flooring",
+      "дубовый паркет",
+      "eman (dub) yog‘ochidan ishlangan olijanob parket"
     ]
   },
   {
@@ -6604,7 +7193,7 @@ const POL_MATERIALS = [
     "name_uz": "Zangori shumtol (yasen) yog‘och parketi",
     "name_ru": "Ясеневый паркет",
     "original_name": "Ясеневый паркет",
-    "english_name": "Ясеневый паркет",
+    "english_name": "Ash wood parquet",
     "slug": "pol-yasenevyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6753,6 +7342,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ash wood parquet",
+    "short_description_en": "Ash wood parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ash wood parquet (Ясеневый паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ash wood parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "ash wood parquet",
+      "ясеневый паркет",
+      "zangori shumtol (yasen) yog‘och parketi"
     ]
   },
   {
@@ -6761,7 +7364,7 @@ const POL_MATERIALS = [
     "name_uz": "Qoraqayin (buk) pushtirang yog‘och parketi",
     "name_ru": "Буковый паркет",
     "original_name": "Буковый паркет",
-    "english_name": "Буковый паркет",
+    "english_name": "Beech wood parquet",
     "slug": "pol-bukovyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -6910,6 +7513,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Beech wood parquet",
+    "short_description_en": "Beech wood parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Beech wood parquet (Буковый паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Beech wood parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "beech wood parquet",
+      "буковый паркет",
+      "qoraqayin (buk) pushtirang yog‘och parketi"
     ]
   },
   {
@@ -6918,7 +7535,7 @@ const POL_MATERIALS = [
     "name_uz": "Yong‘oq daraxtidan ishlangan qora-jigarrang parket",
     "name_ru": "Ореховый паркет",
     "original_name": "Ореховый паркет",
-    "english_name": "Ореховый паркет",
+    "english_name": "Walnut parquet flooring",
     "slug": "pol-orehovyy-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -7067,6 +7684,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Walnut parquet flooring",
+    "short_description_en": "Walnut parquet flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Walnut parquet flooring (Ореховый паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Walnut parquet flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "walnut parquet flooring",
+      "ореховый паркет",
+      "yong‘oq daraxtidan ishlangan qora-jigarrang parket"
     ]
   },
   {
@@ -7224,6 +7855,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Кленовый паркет",
+    "short_description_en": "Кленовый паркет — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Кленовый паркет (Кленовый паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Кленовый паркет\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "кленовый паркет",
+      "zarang (klyon) och rangli nafis parket"
     ]
   },
   {
@@ -7381,6 +8025,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Экзотический деревянный паркет",
+    "short_description_en": "Экзотический деревянный паркет — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Экзотический деревянный паркет (Экзотический деревянный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Экзотический деревянный паркет\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "экзотический деревянный паркет",
+      "eksotik daraxt (merbau, tik, venge) parketi"
     ]
   },
   {
@@ -7389,7 +8046,7 @@ const POL_MATERIALS = [
     "name_uz": "100% tabiiy toza yog‘och parket",
     "name_ru": "Паркет из натуральной древесины",
     "original_name": "Паркет из натуральной древесины",
-    "english_name": "Паркет из натуральной древесины",
+    "english_name": "Parquet flooring из натуральной древесины",
     "slug": "pol-parket-iz-naturalnoy-drevesiny",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркет",
@@ -7538,6 +8195,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooring из натуральной древесины",
+    "short_description_en": "Parquet flooring из натуральной древесины — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooring из натуральной древесины (Паркет из натуральной древесины) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooring из натуральной древесины\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "450-900x70-90x14 mm",
+    "aliases": [
+      "parquet flooring из натуральной древесины",
+      "паркет из натуральной древесины",
+      "100% tabiiy toza yog‘och parket"
     ]
   },
   {
@@ -7695,6 +8366,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Массивная доска",
+    "short_description_en": "Массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Массивная доска (Массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -7852,6 +8536,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Половая доска из массива",
+    "short_description_en": "Половая доска из массива — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Половая доска из массива (Половая доска из массива) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Половая доска из массива\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "половая доска из массива",
+      "butun massivdan yo‘nilgan pol taxtasi"
     ]
   },
   {
@@ -8009,6 +8706,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Дубовая массивная доска",
+    "short_description_en": "Дубовая массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Дубовая массивная доска (Дубовая массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Дубовая массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "дубовая массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -8166,6 +8876,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ясенёвая массивная доска",
+    "short_description_en": "Ясенёвая массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ясенёвая массивная доска (Ясенёвая массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ясенёвая массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "ясенёвая массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -8323,6 +9046,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Буковая массивная доска",
+    "short_description_en": "Буковая массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Буковая массивная доска (Буковая массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Буковая массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "буковая массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -8480,6 +9216,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ореховая массивная доска",
+    "short_description_en": "Ореховая массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ореховая массивная доска (Ореховая массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ореховая массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "ореховая массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -8637,6 +9386,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сосновая половая доска",
+    "short_description_en": "Сосновая половая доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Сосновая половая доска (Сосновая половая доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Сосновая половая доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "сосновая половая доска",
+      "qarag‘ay shpuntlangan pol taxtasi"
     ]
   },
   {
@@ -8794,6 +9556,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лиственничная половая доска",
+    "short_description_en": "Лиственничная половая доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Лиственничная половая доска (Лиственничная половая доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Лиственничная половая доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "лиственничная половая доска",
+      "qurigan tilog‘och (listvennitsa) pol taxtasi"
     ]
   },
   {
@@ -8951,6 +9726,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термообработанная массивная доска",
+    "short_description_en": "Термообработанная массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Термообработанная массивная доска (Термообработанная массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Термообработанная массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "термообработанная массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -9108,6 +9896,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Брашированная массивная доска",
+    "short_description_en": "Брашированная массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Брашированная массивная доска (Брашированная массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Брашированная массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "брашированная массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -9265,6 +10066,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Состаренная массивная доска",
+    "short_description_en": "Состаренная массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Состаренная массивная доска (Состаренная массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Состаренная массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "состаренная массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -9422,6 +10236,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лакированная массивная доска",
+    "short_description_en": "Лакированная массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Лакированная массивная доска (Лакированная массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Лакированная массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "лакированная массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -9579,6 +10406,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Масляная отделка массивной доски",
+    "short_description_en": "Масляная отделка массивной доски — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Масляная отделка массивной доски (Масляная отделка массивной доски) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Масляная отделка массивной доски\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200-2200x190x20 mm",
+    "aliases": [
+      "масляная отделка массивной доски",
+      "tabiiy moy va mum shimdirilgan massiv taxta"
     ]
   },
   {
@@ -9587,7 +10427,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik pol taxtasi",
     "name_ru": "Двухслойная инженерная доска",
     "original_name": "Двухслойная инженерная доска",
-    "english_name": "Двухслойная инженерная доска",
+    "english_name": "2-layer engineered wood flooring",
     "slug": "pol-dvuhsloynaya-inzhenernaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Инженерная доска",
@@ -9736,6 +10576,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "2-layer engineered wood flooring",
+    "short_description_en": "2-layer engineered wood flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "2-layer engineered wood flooring (Двухслойная инженерная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"2-layer engineered wood flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "2-layer engineered wood flooring",
+      "двухслойная инженерная доска",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -9744,7 +10598,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik pol taxtasi",
     "name_ru": "Трёхслойная инженерная доска",
     "original_name": "Трёхслойная инженерная доска",
-    "english_name": "Трёхслойная инженерная доска",
+    "english_name": "3-layer engineered wood flooring",
     "slug": "pol-tryohsloynaya-inzhenernaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Инженерная доска",
@@ -9893,6 +10747,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3-layer engineered wood flooring",
+    "short_description_en": "3-layer engineered wood flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "3-layer engineered wood flooring (Трёхслойная инженерная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"3-layer engineered wood flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "3-layer engineered wood flooring",
+      "трёхслойная инженерная доска",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -9901,7 +10769,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik pol taxtasi",
     "name_ru": "Инженерная доска с замком",
     "original_name": "Инженерная доска с замком",
-    "english_name": "Инженерная доска с замком",
+    "english_name": "Click-lock engineered flooring",
     "slug": "pol-inzhenernaya-doska-s-zamkom",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Инженерная доска",
@@ -10050,6 +10918,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Click-lock engineered flooring",
+    "short_description_en": "Click-lock engineered flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Click-lock engineered flooring (Инженерная доска с замком) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Click-lock engineered flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "click-lock engineered flooring",
+      "инженерная доска с замком",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -10207,6 +11089,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Инженерная доска под клей",
+    "short_description_en": "Инженерная доска под клей — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Инженерная доска под клей (Инженерная доска под клей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Инженерная доска под клей\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "инженерная доска под клей",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -10364,6 +11259,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Инженерная доска под укладку ёлочкой",
+    "short_description_en": "Инженерная доска под укладку ёлочкой — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Инженерная доска под укладку ёлочкой (Инженерная доска под укладку ёлочкой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Инженерная доска под укладку ёлочкой\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "инженерная доска под укладку ёлочкой",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -10521,6 +11429,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Шпонированная инженерная доска",
+    "short_description_en": "Шпонированная инженерная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Шпонированная инженерная доска (Шпонированная инженерная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Шпонированная инженерная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "шпонированная инженерная доска",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -10678,6 +11599,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Инженерная доска с натуральным шпоном",
+    "short_description_en": "Инженерная доска с натуральным шпоном — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Инженерная доска с натуральным шпоном (Инженерная доска с натуральным шпоном) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Инженерная доска с натуральным шпоном\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x15 mm",
+    "aliases": [
+      "инженерная доска с натуральным шпоном",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -10686,7 +11620,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Однополосная паркетная доска",
     "original_name": "Однополосная паркетная доска",
-    "english_name": "Однополосная паркетная доска",
+    "english_name": "1-strip parquet board",
     "slug": "pol-odnopolosnaya-parketnaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -10835,6 +11769,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "1-strip parquet board",
+    "short_description_en": "1-strip parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "1-strip parquet board (Однополосная паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"1-strip parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "1-strip parquet board",
+      "однополосная паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -10843,7 +11791,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Двухполосная паркетная доска",
     "original_name": "Двухполосная паркетная доска",
-    "english_name": "Двухполосная паркетная доска",
+    "english_name": "2-strip parquet board",
     "slug": "pol-dvuhpolosnaya-parketnaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -10992,6 +11940,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "2-strip parquet board",
+    "short_description_en": "2-strip parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "2-strip parquet board (Двухполосная паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"2-strip parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "2-strip parquet board",
+      "двухполосная паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11000,7 +11962,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Трёхполосная паркетная доска",
     "original_name": "Трёхполосная паркетная доска",
-    "english_name": "Трёхполосная паркетная доска",
+    "english_name": "3-strip parquet board",
     "slug": "pol-tryohpolosnaya-parketnaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -11149,6 +12111,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3-strip parquet board",
+    "short_description_en": "3-strip parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "3-strip parquet board (Трёхполосная паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"3-strip parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "3-strip parquet board",
+      "трёхполосная паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11157,7 +12133,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Многополосная паркетная доска",
     "original_name": "Многополосная паркетная доска",
-    "english_name": "Многополосная паркетная доска",
+    "english_name": "Multi-strip parquet board",
     "slug": "pol-mnogopolosnaya-parketnaya-doska",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -11306,6 +12282,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Multi-strip parquet board",
+    "short_description_en": "Multi-strip parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Multi-strip parquet board (Многополосная паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Multi-strip parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "multi-strip parquet board",
+      "многополосная паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11314,7 +12304,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска с фаской",
     "original_name": "Паркетная доска с фаской",
-    "english_name": "Паркетная доска с фаской",
+    "english_name": "Parquet flooringная доска с фаской",
     "slug": "pol-parketnaya-doska-s-faskoy",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -11463,6 +12453,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooringная доска с фаской",
+    "short_description_en": "Parquet flooringная доска с фаской — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooringная доска с фаской (Паркетная доска с фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooringная доска с фаской\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "parquet flooringная доска с фаской",
+      "паркетная доска с фаской",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11471,7 +12475,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска без фаски",
     "original_name": "Паркетная доска без фаски",
-    "english_name": "Паркетная доска без фаски",
+    "english_name": "Parquet flooringная доска без фаски",
     "slug": "pol-parketnaya-doska-bez-faski",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -11620,6 +12624,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooringная доска без фаски",
+    "short_description_en": "Parquet flooringная доска без фаски — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooringная доска без фаски (Паркетная доска без фаски) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooringная доска без фаски\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "parquet flooringная доска без фаски",
+      "паркетная доска без фаски",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11777,6 +12795,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лакированная паркетная доска",
+    "short_description_en": "Лакированная паркетная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Лакированная паркетная доска (Лакированная паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Лакированная паркетная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "лакированная паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11785,7 +12816,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска с масляным покрытием",
     "original_name": "Паркетная доска с масляным покрытием",
-    "english_name": "Паркетная доска с масляным покрытием",
+    "english_name": "Parquet flooringная доска с масляным покрытием",
     "slug": "pol-parketnaya-doska-s-maslyanym-pokrytiem",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -11934,6 +12965,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooringная доска с масляным покрытием",
+    "short_description_en": "Parquet flooringная доска с масляным покрытием — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooringная доска с масляным покрытием (Паркетная доска с масляным покрытием) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooringная доска с масляным покрытием\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "parquet flooringная доска с масляным покрытием",
+      "паркетная доска с масляным покрытием",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -11942,7 +12987,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска с защитным покрытием",
     "original_name": "Паркетная доска с защитным покрытием",
-    "english_name": "Паркетная доска с защитным покрытием",
+    "english_name": "Parquet flooringная доска с защитным покрытием",
     "slug": "pol-parketnaya-doska-s-zaschitnym-pokrytiem",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Паркетная доска",
@@ -12091,6 +13136,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooringная доска с защитным покрытием",
+    "short_description_en": "Parquet flooringная доска с защитным покрытием — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooringная доска с защитным покрытием (Паркетная доска с защитным покрытием) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooringная доска с защитным покрытием\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "parquet flooringная доска с защитным покрытием",
+      "паркетная доска с защитным покрытием",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -12099,7 +13158,7 @@ const POL_MATERIALS = [
     "name_uz": "Pol keramik kafel plitkasi",
     "name_ru": "Керамическая напольная плитка",
     "original_name": "Керамическая напольная плитка",
-    "english_name": "Керамическая напольная плитка",
+    "english_name": "Ceramic floor tile",
     "slug": "pol-keramicheskaya-napolnaya-plitka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамическая напольная плитка",
@@ -12248,6 +13307,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ceramic floor tile",
+    "short_description_en": "Ceramic floor tile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ceramic floor tile (Керамическая напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ceramic floor tile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "ceramic floor tile",
+      "керамическая напольная плитка",
+      "pol keramik kafel plitkasi"
     ]
   },
   {
@@ -12405,6 +13478,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Глазурованная напольная плитка",
+    "short_description_en": "Глазурованная напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Глазурованная напольная плитка (Глазурованная напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Глазурованная напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "глазурованная напольная плитка",
+      "sirlangan yaltiroq pol plitkasi"
     ]
   },
   {
@@ -12562,6 +13648,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Неглазурованная напольная плитка",
+    "short_description_en": "Неглазурованная напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Неглазурованная напольная плитка (Неглазурованная напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Неглазурованная напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "неглазурованная напольная плитка",
+      "sirlangan yaltiroq pol plitkasi"
     ]
   },
   {
@@ -12719,6 +13818,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Прессованная керамическая плитка",
+    "short_description_en": "Прессованная керамическая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Прессованная керамическая плитка (Прессованная керамическая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Прессованная керамическая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "прессованная керамическая плитка",
+      "presslangan zich pol kafel plitkasi"
     ]
   },
   {
@@ -12876,6 +13988,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Экструдированная керамическая плитка",
+    "short_description_en": "Экструдированная керамическая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Экструдированная керамическая плитка (Экструдированная керамическая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Экструдированная керамическая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "экструдированная керамическая плитка",
+      "ekstrudirlangan pol plitkasi"
     ]
   },
   {
@@ -13033,6 +14158,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рельефная напольная плитка",
+    "short_description_en": "Рельефная напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Рельефная напольная плитка (Рельефная напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Рельефная напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "рельефная напольная плитка",
+      "relyefli sirpanmaydigan pol plitkasi"
     ]
   },
   {
@@ -13190,6 +14328,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная напольная плитка",
+    "short_description_en": "Декоративная напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративная напольная плитка (Декоративная напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративная напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "декоративная напольная плитка",
+      "dekorativ naqshli pol plitkasi"
     ]
   },
   {
@@ -13347,6 +14498,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под дерево",
+    "short_description_en": "Керамическая плитка под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под дерево (Керамическая плитка под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под дерево",
+      "yog‘och tolalari ko‘rinishli kafel"
     ]
   },
   {
@@ -13504,6 +14668,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под камень",
+    "short_description_en": "Керамическая плитка под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под камень (Керамическая плитка под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под камень",
+      "tabiiy tosh fakturali pol plitkasi"
     ]
   },
   {
@@ -13661,6 +14838,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под бетон",
+    "short_description_en": "Керамическая плитка под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под бетон (Керамическая плитка под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под бетон",
+      "beton teksturali loft pol plitkasi"
     ]
   },
   {
@@ -13818,6 +15008,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под мрамор",
+    "short_description_en": "Керамическая плитка под мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под мрамор (Керамическая плитка под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под мрамор",
+      "marmar jiloli pol kafel plitkasi"
     ]
   },
   {
@@ -13975,6 +15178,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под металл",
+    "short_description_en": "Керамическая плитка под металл — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под металл (Керамическая плитка под металл) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под металл\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под металл",
+      "metall jiloli zamonaviy pol plitkasi"
     ]
   },
   {
@@ -14132,6 +15348,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Керамическая плитка под терраццо",
+    "short_description_en": "Керамическая плитка под терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Керамическая плитка под терраццо (Керамическая плитка под терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Керамическая плитка под терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "керамическая плитка под терраццо",
+      "terrazzo naqshli pol plitkasi"
     ]
   },
   {
@@ -14289,6 +15518,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D напольная плитка",
+    "short_description_en": "3D напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "3D напольная плитка (3D напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"3D напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "3d напольная плитка",
+      "3d hajmli vizual relyefli pol plitkasi"
     ]
   },
   {
@@ -14297,7 +15539,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит",
     "original_name": "Керамогранит",
-    "english_name": "Керамогранит",
+    "english_name": "Porcelain stoneware",
     "slug": "pol-keramogranit",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -14446,6 +15688,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware",
+    "short_description_en": "Porcelain stoneware — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware (Керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware",
+      "керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -14603,6 +15859,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полированный керамогранит",
+    "short_description_en": "Полированный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полированный керамогранит (Полированный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полированный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "полированный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -14760,6 +16029,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Матовый керамогранит",
+    "short_description_en": "Матовый керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Матовый керамогранит (Матовый керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Матовый керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "матовый керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -14917,6 +16199,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Лаппатированный керамогранит",
+    "short_description_en": "Лаппатированный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Лаппатированный керамогранит (Лаппатированный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Лаппатированный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "лаппатированный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15074,6 +16369,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сатинированный керамогранит",
+    "short_description_en": "Сатинированный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Сатинированный керамогранит (Сатинированный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Сатинированный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "сатинированный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15231,6 +16539,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Структурированный керамогранит",
+    "short_description_en": "Структурированный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Структурированный керамогранит (Структурированный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Структурированный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "структурированный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15388,6 +16709,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рельефный керамогранит",
+    "short_description_en": "Рельефный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Рельефный керамогранит (Рельефный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Рельефный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "рельефный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15545,6 +16879,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Глазурованный керамогранит",
+    "short_description_en": "Глазурованный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Глазурованный керамогранит (Глазурованный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Глазурованный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "глазурованный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15702,6 +17049,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Неглазурованный керамогранит",
+    "short_description_en": "Неглазурованный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Неглазурованный керамогранит (Неглазурованный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Неглазурованный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "неглазурованный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -15859,6 +17219,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Технический керамогранит",
+    "short_description_en": "Технический керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Технический керамогранит (Технический керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Технический керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "технический керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16016,6 +17389,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Утолщённый керамогранит",
+    "short_description_en": "Утолщённый керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Утолщённый керамогранит (Утолщённый керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Утолщённый керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x20 mm",
+    "aliases": [
+      "утолщённый керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16173,6 +17559,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Крупноформатный керамогранит",
+    "short_description_en": "Крупноформатный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Крупноформатный керамогранит (Крупноформатный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Крупноформатный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2780x1200x9.5 mm",
+    "aliases": [
+      "крупноформатный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16330,6 +17729,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тонкий керамогранит",
+    "short_description_en": "Тонкий керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Тонкий керамогранит (Тонкий керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Тонкий керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x6 mm",
+    "aliases": [
+      "тонкий керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16338,7 +17750,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под дерево",
     "original_name": "Керамогранит под дерево",
-    "english_name": "Керамогранит под дерево",
+    "english_name": "Porcelain stoneware под дерево",
     "slug": "pol-keramogranit-pod-derevo",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -16487,6 +17899,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под дерево",
+    "short_description_en": "Porcelain stoneware под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под дерево (Керамогранит под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под дерево",
+      "керамогранит под дерево",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16495,7 +17921,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под мрамор",
     "original_name": "Керамогранит под мрамор",
-    "english_name": "Керамогранит под мрамор",
+    "english_name": "Porcelain stoneware под мрамор",
     "slug": "pol-keramogranit-pod-mramor",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -16644,6 +18070,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под мрамор",
+    "short_description_en": "Porcelain stoneware под мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под мрамор (Керамогранит под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под мрамор",
+      "керамогранит под мрамор",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16652,7 +18092,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под гранит",
     "original_name": "Керамогранит под гранит",
-    "english_name": "Керамогранит под гранит",
+    "english_name": "Porcelain stoneware под гранит",
     "slug": "pol-keramogranit-pod-granit",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -16801,6 +18241,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под гранит",
+    "short_description_en": "Porcelain stoneware под гранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под гранит (Керамогранит под гранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под гранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под гранит",
+      "керамогранит под гранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16809,7 +18263,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под травертин",
     "original_name": "Керамогранит под травертин",
-    "english_name": "Керамогранит под травертин",
+    "english_name": "Porcelain stoneware под травертин",
     "slug": "pol-keramogranit-pod-travertin",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -16958,6 +18412,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под травертин",
+    "short_description_en": "Porcelain stoneware под травертин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под травертин (Керамогранит под травертин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под травертин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под травертин",
+      "керамогранит под травертин",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -16966,7 +18434,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под бетон",
     "original_name": "Керамогранит под бетон",
-    "english_name": "Керамогранит под бетон",
+    "english_name": "Porcelain stoneware под бетон",
     "slug": "pol-keramogranit-pod-beton",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -17115,6 +18583,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под бетон",
+    "short_description_en": "Porcelain stoneware под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под бетон (Керамогранит под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под бетон",
+      "керамогранит под бетон",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -17123,7 +18605,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под камень",
     "original_name": "Керамогранит под камень",
-    "english_name": "Керамогранит под камень",
+    "english_name": "Porcelain stoneware под камень",
     "slug": "pol-keramogranit-pod-kamen",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -17272,6 +18754,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под камень",
+    "short_description_en": "Porcelain stoneware под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под камень (Керамогранит под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под камень",
+      "керамогранит под камень",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -17280,7 +18776,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под металл",
     "original_name": "Керамогранит под металл",
-    "english_name": "Керамогранит под металл",
+    "english_name": "Porcelain stoneware под металл",
     "slug": "pol-keramogranit-pod-metall",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -17429,6 +18925,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под металл",
+    "short_description_en": "Porcelain stoneware под металл — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под металл (Керамогранит под металл) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под металл\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под металл",
+      "керамогранит под металл",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -17437,7 +18947,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит под терраццо",
     "original_name": "Керамогранит под терраццо",
-    "english_name": "Керамогранит под терраццо",
+    "english_name": "Porcelain stoneware под терраццо",
     "slug": "pol-keramogranit-pod-terratstso",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Керамогранит",
@@ -17586,6 +19096,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware под терраццо",
+    "short_description_en": "Porcelain stoneware под терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware под терраццо (Керамогранит под терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware под терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1200x600x9.5 mm",
+    "aliases": [
+      "porcelain stoneware под терраццо",
+      "керамогранит под терраццо",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -17743,6 +19267,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная напольная плитка",
+    "short_description_en": "Клинкерная напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкерная напольная плитка (Клинкерная напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкерная напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "клинкерная напольная плитка",
+      "klinker pol plitkasi"
     ]
   },
   {
@@ -17900,6 +19437,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка",
+    "short_description_en": "Клинкерная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкерная плитка (Клинкерная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкерная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "клинкерная плитка"
     ]
   },
   {
@@ -18057,6 +19606,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка для террас",
+    "short_description_en": "Клинкерная плитка для террас — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкерная плитка для террас (Клинкерная плитка для террас) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкерная плитка для террас\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "клинкерная плитка для террас",
+      "terrasalar uchun sovuqbardosh klinker"
     ]
   },
   {
@@ -18214,6 +19776,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка для лестниц",
+    "short_description_en": "Клинкерная плитка для лестниц — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкерная плитка для лестниц (Клинкерная плитка для лестниц) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкерная плитка для лестниц\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "клинкерная плитка для лестниц",
+      "zinalar uchun burchakli klinker bosqich"
     ]
   },
   {
@@ -18371,6 +19946,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкерная плитка для наружных площадок",
+    "short_description_en": "Клинкерная плитка для наружных площадок — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкерная плитка для наружных площадок (Клинкерная плитка для наружных площадок) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкерная плитка для наружных площадок\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "клинкерная плитка для наружных площадок",
+      "tashqi maydonlar va yo‘laklar klinkeri"
     ]
   },
   {
@@ -18528,6 +20116,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Противоскользящий клинкер",
+    "short_description_en": "Противоскользящий клинкер — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Противоскользящий клинкер (Противоскользящий клинкер) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Противоскользящий клинкер\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "противоскользящий клинкер",
+      "sirpanishga qarshi xavfsiz klinker (r11/r12)"
     ]
   },
   {
@@ -18685,6 +20286,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Технический клинкер",
+    "short_description_en": "Технический клинкер — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Технический клинкер (Технический клинкер) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Технический клинкер\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "600x600x9.5 mm",
+    "aliases": [
+      "технический клинкер",
+      "texnik yuqori yuklamali klinker tosh"
     ]
   },
   {
@@ -18842,6 +20456,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мрамор",
+    "short_description_en": "Мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Мрамор (Мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "мрамор"
     ]
   },
   {
@@ -18999,6 +20625,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гранит",
+    "short_description_en": "Гранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гранит (Гранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "гранит"
     ]
   },
   {
@@ -19156,6 +20794,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Травертин",
+    "short_description_en": "Травертин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Травертин (Травертин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Травертин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "травертин"
     ]
   },
   {
@@ -19313,6 +20963,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Известняк",
+    "short_description_en": "Известняк — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Известняк (Известняк) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Известняк\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "известняк"
     ]
   },
   {
@@ -19470,6 +21132,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Песчаник",
+    "short_description_en": "Песчаник — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Песчаник (Песчаник) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Песчаник\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "песчаник"
     ]
   },
   {
@@ -19627,6 +21301,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сланец",
+    "short_description_en": "Сланец — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Сланец (Сланец) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Сланец\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "сланец"
     ]
   },
   {
@@ -19784,6 +21470,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Оникс",
+    "short_description_en": "Оникс — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Оникс (Оникс) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Оникс\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "оникс"
     ]
   },
   {
@@ -19941,6 +21639,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Кварцит",
+    "short_description_en": "Кварцит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Кварцит (Кварцит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Кварцит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "кварцит"
     ]
   },
   {
@@ -20098,6 +21808,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный камень",
+    "short_description_en": "Натуральный камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Натуральный камень (Натуральный камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Натуральный камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "натуральный камень"
     ]
   },
   {
@@ -20255,6 +21977,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменная плитка",
+    "short_description_en": "Каменная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Каменная плитка (Каменная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Каменная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "каменная плитка"
     ]
   },
   {
@@ -20412,6 +22146,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменный слэб",
+    "short_description_en": "Каменный слэб — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Каменный слэб (Каменный слэб) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Каменный слэб\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "каменный слэб"
     ]
   },
   {
@@ -20569,6 +22315,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мраморная плитка",
+    "short_description_en": "Мраморная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Мраморная плитка (Мраморная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Мраморная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "мраморная плитка",
+      "tabiiy marmar pol plitkasi"
     ]
   },
   {
@@ -20726,6 +22485,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гранитная плитка",
+    "short_description_en": "Гранитная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гранитная плитка (Гранитная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гранитная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "гранитная плитка",
+      "tabiiy granit pishiq pol plitkasi"
     ]
   },
   {
@@ -20883,6 +22655,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Травертиновая плитка",
+    "short_description_en": "Травертиновая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Травертиновая плитка (Травертиновая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Травертиновая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "травертиновая плитка",
+      "tabiiy travertin pol plitkasi"
     ]
   },
   {
@@ -21040,6 +22825,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Сланцевая плитка",
+    "short_description_en": "Сланцевая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Сланцевая плитка (Сланцевая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Сланцевая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "сланцевая плитка",
+      "tabiiy slanes qatlamli tosh plitkasi"
     ]
   },
   {
@@ -21197,6 +22995,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каменная мозаика",
+    "short_description_en": "Каменная мозаика — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Каменная мозаика (Каменная мозаика) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Каменная мозаика\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "каменная мозаика",
+      "tabiiy toshlardan yig‘ilgan mozaika"
     ]
   },
   {
@@ -21354,6 +23165,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ-плитка",
+    "short_description_en": "ПВХ-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ПВХ-плитка (ПВХ-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ПВХ-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "пвх-плитка",
+      "pvx pol plitkasi"
     ]
   },
   {
@@ -21511,6 +23335,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловая плитка",
+    "short_description_en": "Виниловая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловая плитка (Виниловая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловая плитка",
+      "vinil elastik pol plitkasi"
     ]
   },
   {
@@ -21668,6 +23505,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловая напольная плитка",
+    "short_description_en": "Виниловая напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловая напольная плитка (Виниловая напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловая напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловая напольная плитка",
+      "vinilli modul pol plitkasi"
     ]
   },
   {
@@ -21825,6 +23675,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловая напольная доска",
+    "short_description_en": "Виниловая напольная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловая напольная доска (Виниловая напольная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловая напольная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловая напольная доска",
+      "vinil pol taxtasi (planka)"
     ]
   },
   {
@@ -21982,6 +23845,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ПВХ напольное покрытие",
+    "short_description_en": "ПВХ напольное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ПВХ напольное покрытие (ПВХ напольное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ПВХ напольное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "пвх напольное покрытие",
+      "pvx sintetik pol qoplamasi"
     ]
   },
   {
@@ -22139,6 +24015,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловое рулонное покрытие",
+    "short_description_en": "Виниловое рулонное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловое рулонное покрытие (Виниловое рулонное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловое рулонное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловое рулонное покрытие",
+      "vinil rulonli pol qoplamasi"
     ]
   },
   {
@@ -22296,6 +24185,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клеевая виниловая плитка",
+    "short_description_en": "Клеевая виниловая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клеевая виниловая плитка (Клеевая виниловая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клеевая виниловая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "клеевая виниловая плитка",
+      "vinil elastik pol plitkasi"
     ]
   },
   {
@@ -22453,6 +24355,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Замковая виниловая плитка",
+    "short_description_en": "Замковая виниловая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Замковая виниловая плитка (Замковая виниловая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Замковая виниловая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "замковая виниловая плитка",
+      "vinil elastik pol plitkasi"
     ]
   },
   {
@@ -22610,6 +24525,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT",
+    "short_description_en": "LVT — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT (LVT) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "lvt"
     ]
   },
   {
@@ -22767,6 +24694,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT-плитка",
+    "short_description_en": "LVT-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT-плитка (LVT-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "lvt-плитка",
+      "lvt premium dizayn vinil plitka"
     ]
   },
   {
@@ -22924,6 +24864,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT-доска",
+    "short_description_en": "LVT-доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT-доска (LVT-доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT-доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "lvt-доска",
+      "lvt pol taxtasi"
     ]
   },
   {
@@ -23081,6 +25034,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Luxury Vinyl Tile",
+    "short_description_en": "Luxury Vinyl Tile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Luxury Vinyl Tile (Luxury Vinyl Tile) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Luxury Vinyl Tile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "luxury vinyl tile",
+      "lvt hashamatli vinil plitkasi"
     ]
   },
   {
@@ -23238,6 +25204,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Luxury Vinyl Plank",
+    "short_description_en": "Luxury Vinyl Plank — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Luxury Vinyl Plank (Luxury Vinyl Plank) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Luxury Vinyl Plank\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "luxury vinyl plank",
+      "lvp hashamatli vinil taxtasi"
     ]
   },
   {
@@ -23395,6 +25374,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC",
+    "short_description_en": "SPC — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC (SPC) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "spc"
     ]
   },
   {
@@ -23552,6 +25543,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC-плитка",
+    "short_description_en": "SPC-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC-плитка (SPC-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "spc-плитка",
+      "spc qattiq tosh-polimer plitka"
     ]
   },
   {
@@ -23709,6 +25713,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC-доска",
+    "short_description_en": "SPC-доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC-доска (SPC-доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC-доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "spc-доска",
+      "spc qattiq tosh-polimer taxta"
     ]
   },
   {
@@ -23717,7 +25734,7 @@ const POL_MATERIALS = [
     "name_uz": "SPC tosh-polimer qattiq kompozit laminat",
     "name_ru": "SPC-ламинат",
     "original_name": "SPC-ламинат",
-    "english_name": "SPC-ламинат",
+    "english_name": "SPC rigid core laminate flooring",
     "slug": "pol-spc-laminat",
     "category_slug": "pol-materiallari",
     "subcategory_name": "ПВХ / Виниловые полы",
@@ -23866,6 +25883,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC rigid core laminate flooring",
+    "short_description_en": "SPC rigid core laminate flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC rigid core laminate flooring (SPC-ламинат) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC rigid core laminate flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "spc rigid core laminate flooring",
+      "spc-ламинат",
+      "spc tosh-polimer qattiq kompozit laminat"
     ]
   },
   {
@@ -24023,6 +26054,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "WPC напольное покрытие",
+    "short_description_en": "WPC напольное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "WPC напольное покрытие (WPC напольное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"WPC напольное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "wpc напольное покрытие",
+      "wpc yog‘och-polimer kompozit pol"
     ]
   },
   {
@@ -24180,6 +26224,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "WPC доска",
+    "short_description_en": "WPC доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "WPC доска (WPC доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"WPC доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "wpc доска",
+      "wpc suvga chidamli pol taxtasi"
     ]
   },
   {
@@ -24337,6 +26394,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Водостойкий виниловый пол",
+    "short_description_en": "Водостойкий виниловый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Водостойкий виниловый пол (Водостойкий виниловый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Водостойкий виниловый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "водостойкий виниловый пол",
+      "100% suv o‘tkazmaydigan vinil pol"
     ]
   },
   {
@@ -24494,6 +26564,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловый пол под дерево",
+    "short_description_en": "Виниловый пол под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловый пол под дерево (Виниловый пол под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловый пол под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловый пол под дерево",
+      "yog‘och tolalari ko‘rinishli vinil pol"
     ]
   },
   {
@@ -24651,6 +26734,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловый пол под камень",
+    "short_description_en": "Виниловый пол под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловый пол под камень (Виниловый пол под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловый пол под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловый пол под камень",
+      "tosh ko‘rinishli zamonaviy vinil pol"
     ]
   },
   {
@@ -24808,6 +26904,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловый пол под бетон",
+    "short_description_en": "Виниловый пол под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловый пол под бетон (Виниловый пол под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловый пол под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловый пол под бетон",
+      "loft beton ko‘rinishli vinil pol"
     ]
   },
   {
@@ -24965,6 +27074,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Виниловый пол под мрамор",
+    "short_description_en": "Виниловый пол под мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Виниловый пол под мрамор (Виниловый пол под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Виниловый пол под мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.0-3.0 mm",
+    "aliases": [
+      "виниловый пол под мрамор",
+      "marmar jiloli nafis vinil pol"
     ]
   },
   {
@@ -25122,6 +27244,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC-плитка",
+    "short_description_en": "SPC-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC-плитка (SPC-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc-плитка",
+      "spc qattiq tosh-polimer plitka"
     ]
   },
   {
@@ -25279,6 +27414,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC-доска",
+    "short_description_en": "SPC-доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC-доска (SPC-доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC-доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc-доска",
+      "spc qattiq tosh-polimer taxta"
     ]
   },
   {
@@ -25287,7 +27435,7 @@ const POL_MATERIALS = [
     "name_uz": "SPC ламинат",
     "name_ru": "SPC ламинат",
     "original_name": "SPC ламинат",
-    "english_name": "SPC ламинат",
+    "english_name": "SPC stone polymer composite floor",
     "slug": "pol-spc-laminat-162",
     "category_slug": "pol-materiallari",
     "subcategory_name": "SPC",
@@ -25436,6 +27584,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC stone polymer composite floor",
+    "short_description_en": "SPC stone polymer composite floor — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC stone polymer composite floor (SPC ламинат) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC stone polymer composite floor\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc stone polymer composite floor",
+      "spc ламинат"
     ]
   },
   {
@@ -25593,6 +27754,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC с подложкой",
+    "short_description_en": "SPC с подложкой — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC с подложкой (SPC с подложкой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC с подложкой\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc с подложкой",
+      "o‘rnatilgan ixpe podlojkali spc pol"
     ]
   },
   {
@@ -25750,6 +27924,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC без подложки",
+    "short_description_en": "SPC без подложки — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC без подложки (SPC без подложки) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC без подложки\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc без подложки",
+      "mustaqil taglik talab qiluvchi spc pol"
     ]
   },
   {
@@ -25907,6 +28094,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC с фаской",
+    "short_description_en": "SPC с фаской — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC с фаской (SPC с фаской) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC с фаской\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc с фаской",
+      "4 tomonlama faskali spc taxtasi"
     ]
   },
   {
@@ -26064,6 +28264,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC без фаски",
+    "short_description_en": "SPC без фаски — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC без фаски (SPC без фаски) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC без фаски\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc без фаски",
+      "faskasiz tekis spc pol qoplamasi"
     ]
   },
   {
@@ -26221,6 +28434,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC под дерево",
+    "short_description_en": "SPC под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC под дерево (SPC под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc под дерево"
     ]
   },
   {
@@ -26378,6 +28603,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC под камень",
+    "short_description_en": "SPC под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC под камень (SPC под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc под камень"
     ]
   },
   {
@@ -26535,6 +28772,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC под бетон",
+    "short_description_en": "SPC под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC под бетон (SPC под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc под бетон"
     ]
   },
   {
@@ -26692,6 +28941,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "SPC под мрамор",
+    "short_description_en": "SPC под мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "SPC под мрамор (SPC под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"SPC под мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "spc под мрамор"
     ]
   },
   {
@@ -26849,6 +29110,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "толщина;",
+    "short_description_en": "толщина; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "толщина; (толщина;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"толщина;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "толщина;"
     ]
   },
   {
@@ -27006,6 +29279,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "защитный слой;",
+    "short_description_en": "защитный слой; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "защитный слой; (защитный слой;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"защитный слой;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "защитный слой;"
     ]
   },
   {
@@ -27163,6 +29448,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "плотность;",
+    "short_description_en": "плотность; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "плотность; (плотность;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"плотность;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "плотность;"
     ]
   },
   {
@@ -27320,6 +29617,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "тип замка;",
+    "short_description_en": "тип замка; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "тип замка; (тип замка;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"тип замка;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "тип замка;"
     ]
   },
   {
@@ -27477,6 +29786,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "размер;",
+    "short_description_en": "размер; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "размер; (размер;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"размер;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "размер;"
     ]
   },
   {
@@ -27634,6 +29955,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "совместимость с тёплым полом;",
+    "short_description_en": "совместимость с тёплым полом; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "совместимость с тёплым полом; (совместимость с тёплым полом;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"совместимость с тёплым полом;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "совместимость с тёплым полом;"
     ]
   },
   {
@@ -27791,6 +30124,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "влагостойкость;",
+    "short_description_en": "влагостойкость; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "влагостойкость; (влагостойкость;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"влагостойкость;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "влагостойкость;"
     ]
   },
   {
@@ -27948,6 +30293,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "водостойкость;",
+    "short_description_en": "водостойкость; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "водостойкость; (водостойкость;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"водостойкость;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "водостойкость;"
     ]
   },
   {
@@ -28105,6 +30462,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "производитель;",
+    "short_description_en": "производитель; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "производитель; (производитель;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"производитель;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "производитель;"
     ]
   },
   {
@@ -28262,6 +30631,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "бренд;",
+    "short_description_en": "бренд; — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "бренд; (бренд;) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"бренд;\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "бренд;"
     ]
   },
   {
@@ -28419,6 +30800,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "коллекция.",
+    "short_description_en": "коллекция. — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "коллекция. (коллекция.) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"коллекция.\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x4.5-6.0 mm",
+    "aliases": [
+      "коллекция."
     ]
   },
   {
@@ -28576,6 +30969,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клеевой LVT",
+    "short_description_en": "Клеевой LVT — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клеевой LVT (Клеевой LVT) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клеевой LVT\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "клеевой lvt",
+      "yelimlanadigan lvt plitkasi (dry back)"
     ]
   },
   {
@@ -28733,6 +31139,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Замковый LVT",
+    "short_description_en": "Замковый LVT — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Замковый LVT (Замковый LVT) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Замковый LVT\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "замковый lvt",
+      "zamokli qulf bilan yig‘iladigan lvt"
     ]
   },
   {
@@ -28890,6 +31309,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT-плитка",
+    "short_description_en": "LVT-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT-плитка (LVT-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt-плитка",
+      "lvt premium dizayn vinil plitka"
     ]
   },
   {
@@ -29047,6 +31479,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT-доска",
+    "short_description_en": "LVT-доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT-доска (LVT-доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT-доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt-доска",
+      "lvt pol taxtasi"
     ]
   },
   {
@@ -29204,6 +31649,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT под дерево",
+    "short_description_en": "LVT под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT под дерево (LVT под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt под дерево"
     ]
   },
   {
@@ -29361,6 +31818,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT под камень",
+    "short_description_en": "LVT под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT под камень (LVT под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt под камень"
     ]
   },
   {
@@ -29518,6 +31987,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT под бетон",
+    "short_description_en": "LVT под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT под бетон (LVT под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt под бетон"
     ]
   },
   {
@@ -29675,6 +32156,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT под мрамор",
+    "short_description_en": "LVT под мрамор — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT под мрамор (LVT под мрамор) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT под мрамор\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt под мрамор"
     ]
   },
   {
@@ -29832,6 +32325,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT коммерческий",
+    "short_description_en": "LVT коммерческий — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT коммерческий (LVT коммерческий) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT коммерческий\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt коммерческий",
+      "tijoriy obyektlar uchun lvt (0.55-0.7mm himoya qatlami)"
     ]
   },
   {
@@ -29989,6 +32495,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT бытовой",
+    "short_description_en": "LVT бытовой — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT бытовой (LVT бытовой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT бытовой\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt бытовой",
+      "turar-joy xonalari uchun lvt plitkasi"
     ]
   },
   {
@@ -30146,6 +32665,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT влагостойкий",
+    "short_description_en": "LVT влагостойкий — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT влагостойкий (LVT влагостойкий) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT влагостойкий\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt влагостойкий",
+      "hammom va oshxona uchun suvbardosh lvt"
     ]
   },
   {
@@ -30303,6 +32835,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LVT для тёплого пола",
+    "short_description_en": "LVT для тёплого пола — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LVT для тёплого пола (LVT для тёплого пола) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LVT для тёплого пола\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1220x180x2.5-4.5 mm",
+    "aliases": [
+      "lvt для тёплого пола",
+      "issiq pol tizimlariga mos lvt qoplamasi"
     ]
   },
   {
@@ -30460,6 +33005,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бытовой линолеум",
+    "short_description_en": "Бытовой линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Бытовой линолеум (Бытовой линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Бытовой линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "бытовой линолеум",
+      "maishiy xonadon linoleumi"
     ]
   },
   {
@@ -30617,6 +33175,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полукоммерческий линолеум",
+    "short_description_en": "Полукоммерческий линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полукоммерческий линолеум (Полукоммерческий линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полукоммерческий линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x2.5 mm",
+    "aliases": [
+      "полукоммерческий линолеум",
+      "yarim tijoriy mustahkam linoleum"
     ]
   },
   {
@@ -30774,6 +33345,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Коммерческий линолеум",
+    "short_description_en": "Коммерческий линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Коммерческий линолеум (Коммерческий линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Коммерческий линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x2.0 mm",
+    "aliases": [
+      "коммерческий линолеум",
+      "tijoriy yuqori yuklamali linoleum"
     ]
   },
   {
@@ -30931,6 +33515,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гомогенный линолеум",
+    "short_description_en": "Гомогенный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гомогенный линолеум (Гомогенный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гомогенный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "гомогенный линолеум",
+      "gomogen (butun qalinligi bir xil) linoleum"
     ]
   },
   {
@@ -31088,6 +33685,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гетерогенный линолеум",
+    "short_description_en": "Гетерогенный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гетерогенный линолеум (Гетерогенный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гетерогенный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "гетерогенный линолеум",
+      "geterogen ko‘p qatlamli linoleum"
     ]
   },
   {
@@ -31245,6 +33855,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральный линолеум",
+    "short_description_en": "Натуральный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Натуральный линолеум (Натуральный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Натуральный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "натуральный линолеум",
+      "tabiiy ekologik linoleum (zig‘ir moyidan)"
     ]
   },
   {
@@ -31402,6 +34025,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мармолеум",
+    "short_description_en": "Мармолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Мармолеум (Мармолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Мармолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "мармолеум",
+      "marmoleum tabiiy antibakterial pol"
     ]
   },
   {
@@ -31559,6 +34195,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антистатический линолеум",
+    "short_description_en": "Антистатический линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антистатический линолеум (Антистатический линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антистатический линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "антистатический линолеум",
+      "antistatik elektr to‘plamaydigan linoleum"
     ]
   },
   {
@@ -31716,6 +34365,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Токопроводящий линолеум",
+    "short_description_en": "Токопроводящий линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Токопроводящий линолеум (Токопроводящий линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Токопроводящий линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "токопроводящий линолеум",
+      "tok o‘tkazuvchi tibbiy va laboratoriya linoleumi"
     ]
   },
   {
@@ -31873,6 +34535,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустический линолеум",
+    "short_description_en": "Акустический линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Акустический линолеум (Акустический линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Акустический линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "акустический линолеум",
+      "akustik shovqin yutuvchi qalin linoleum"
     ]
   },
   {
@@ -32030,6 +34705,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивный линолеум",
+    "short_description_en": "Спортивный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивный линолеум (Спортивный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "спортивный линолеум",
+      "sport zallari uchun amortizatsiyali linoleum"
     ]
   },
   {
@@ -32187,6 +34875,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Медицинский линолеум",
+    "short_description_en": "Медицинский линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Медицинский линолеум (Медицинский линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Медицинский линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "медицинский линолеум",
+      "kasalxona va klinikalar uchun tibbiy linoleum"
     ]
   },
   {
@@ -32344,6 +35045,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Противоскользящий линолеум",
+    "short_description_en": "Противоскользящий линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Противоскользящий линолеум (Противоскользящий линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Противоскользящий линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "противоскользящий линолеум",
+      "sirpanishdan himoyalangan korund zarrachali linoleum"
     ]
   },
   {
@@ -32501,6 +35215,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум с защитным слоем",
+    "short_description_en": "Линолеум с защитным слоем — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум с защитным слоем (Линолеум с защитным слоем) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум с защитным слоем\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум с защитным слоем",
+      "titan/pur himoya qatlamli linoleum"
     ]
   },
   {
@@ -32658,6 +35385,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум на вспененной основе",
+    "short_description_en": "Линолеум на вспененной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум на вспененной основе (Линолеум на вспененной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум на вспененной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум на вспененной основе",
+      "ko‘pirtirilgan pvx asosli qulay linoleum"
     ]
   },
   {
@@ -32815,6 +35555,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум на войлочной основе",
+    "short_description_en": "Линолеум на войлочной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум на войлочной основе (Линолеум на войлочной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум на войлочной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум на войлочной основе",
+      "issiq kigiz (voylok) asosli linoleum"
     ]
   },
   {
@@ -32972,6 +35725,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рулонный линолеум",
+    "short_description_en": "Рулонный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Рулонный линолеум (Рулонный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Рулонный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "рулонный линолеум",
+      "keng rulonli (2m - 4m) linoleum"
     ]
   },
   {
@@ -33129,6 +35895,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум под дерево",
+    "short_description_en": "Линолеум под дерево — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум под дерево (Линолеум под дерево) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум под дерево\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум под дерево",
+      "yog‘och laminat ko‘rinishli linoleum"
     ]
   },
   {
@@ -33286,6 +36065,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум под камень",
+    "short_description_en": "Линолеум под камень — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум под камень (Линолеум под камень) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум под камень\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум под камень",
+      "tosh va kafel ko‘rinishli linoleum"
     ]
   },
   {
@@ -33443,6 +36235,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум под бетон",
+    "short_description_en": "Линолеум под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум под бетон (Линолеум под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум под бетон",
+      "loft beton ko‘rinishli linoleum"
     ]
   },
   {
@@ -33600,6 +36405,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Линолеум под плитку",
+    "short_description_en": "Линолеум под плитку — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Линолеум под плитку (Линолеум под плитку) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Линолеум под плитку\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 20-30 metrx2000-4000x3.0 mm",
+    "aliases": [
+      "линолеум под плитку",
+      "plitka katakchalari ko‘rinishli linoleum"
     ]
   },
   {
@@ -33757,6 +36575,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бытовой ковролин",
+    "short_description_en": "Бытовой ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Бытовой ковролин (Бытовой ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Бытовой ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "бытовой ковролин",
+      "xonadon uchun mayin kovrolin"
     ]
   },
   {
@@ -33914,6 +36745,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Коммерческий ковролин",
+    "short_description_en": "Коммерческий ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Коммерческий ковролин (Коммерческий ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Коммерческий ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "коммерческий ковролин",
+      "ofis va tijorat uchun pishiq kovrolin"
     ]
   },
   {
@@ -34071,6 +36915,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Офисный ковролин",
+    "short_description_en": "Офисный ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Офисный ковролин (Офисный ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Офисный ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "офисный ковролин",
+      "ofislar va biznes markazlar kovrolini"
     ]
   },
   {
@@ -34228,6 +37085,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гостиничный ковролин",
+    "short_description_en": "Гостиничный ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гостиничный ковролин (Гостиничный ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гостиничный ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "гостиничный ковролин",
+      "mehmonxonalar uchun hashamatli kovrolin"
     ]
   },
   {
@@ -34385,6 +37255,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Выставочный ковролин",
+    "short_description_en": "Выставочный ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Выставочный ковролин (Выставочный ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Выставочный ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "выставочный ковролин",
+      "ko‘rgazmalar va tadbirlar uchun vaqtinchalik kovrolin"
     ]
   },
   {
@@ -34542,6 +37425,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Иглопробивной ковролин",
+    "short_description_en": "Иглопробивной ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Иглопробивной ковролин (Иглопробивной ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Иглопробивной ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "иглопробивной ковролин",
+      "igna bilan teshilgan (igloprobivnoy) kovrolin"
     ]
   },
   {
@@ -34699,6 +37595,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Тафтинговый ковролин",
+    "short_description_en": "Тафтинговый ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Тафтинговый ковролин (Тафтинговый ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Тафтинговый ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "тафтинговый ковролин",
+      "tafting to‘qilgan nafis kovrolin"
     ]
   },
   {
@@ -34856,6 +37765,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Иглопробивное ковровое покрытие",
+    "short_description_en": "Иглопробивное ковровое покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Иглопробивное ковровое покрытие (Иглопробивное ковровое покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Иглопробивное ковровое покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "иглопробивное ковровое покрытие"
     ]
   },
   {
@@ -35013,6 +37934,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин с ворсом",
+    "short_description_en": "Ковролин с ворсом — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин с ворсом (Ковролин с ворсом) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин с ворсом\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин с ворсом",
+      "qalin patli (vorsli) shinam kovrolin"
     ]
   },
   {
@@ -35170,6 +38104,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин без ворса",
+    "short_description_en": "Ковролин без ворса — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин без ворса (Ковролин без ворса) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин без ворса\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин без ворса",
+      "patsiz tekis to‘qilgan (rogojka) kovrolin"
     ]
   },
   {
@@ -35327,6 +38274,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Петлевой ковролин",
+    "short_description_en": "Петлевой ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Петлевой ковролин (Петлевой ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Петлевой ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "петлевой ковролин",
+      "halqasimon (petlevoy) chidamli kovrolin"
     ]
   },
   {
@@ -35484,6 +38444,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Разрезной ворс",
+    "short_description_en": "Разрезной ворс — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Разрезной ворс (Разрезной ворс) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Разрезной ворс\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "разрезной ворс",
+      "qirqilgan patli (razreznoy) yumshoq kovrolin"
     ]
   },
   {
@@ -35641,6 +38614,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Комбинированный ворс",
+    "short_description_en": "Комбинированный ворс — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Комбинированный ворс (Комбинированный ворс) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Комбинированный ворс\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "комбинированный ворс"
     ]
   },
   {
@@ -35798,6 +38783,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин на джутовой основе",
+    "short_description_en": "Ковролин на джутовой основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин на джутовой основе (Ковролин на джутовой основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин на джутовой основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин на джутовой основе",
+      "tabiiy jut asosli kovrolin"
     ]
   },
   {
@@ -35955,6 +38953,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин на войлочной основе",
+    "short_description_en": "Ковролин на войлочной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин на войлочной основе (Ковролин на войлочной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин на войлочной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин на войлочной основе",
+      "kigiz (voylok) issiq asosli kovrolin"
     ]
   },
   {
@@ -36112,6 +39123,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин на латексной основе",
+    "short_description_en": "Ковролин на латексной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин на латексной основе (Ковролин на латексной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин на латексной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин на латексной основе",
+      "lateks rezina asosli sirpanmas kovrolin"
     ]
   },
   {
@@ -36269,6 +39293,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковролин на ПВХ-основе",
+    "short_description_en": "Ковролин на ПВХ-основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковролин на ПВХ-основе (Ковролин на ПВХ-основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковролин на ПВХ-основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковролин на пвх-основе"
     ]
   },
   {
@@ -36277,7 +39313,7 @@ const POL_MATERIALS = [
     "name_uz": "Ковровая плитка",
     "name_ru": "Ковровая плитка",
     "original_name": "Ковровая плитка",
-    "english_name": "Ковровая плитка",
+    "english_name": "Modular carpet tile",
     "slug": "pol-kovrovaya-plitka",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ковролин",
@@ -36426,6 +39462,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Modular carpet tile",
+    "short_description_en": "Modular carpet tile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Modular carpet tile (Ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Modular carpet tile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "modular carpet tile",
+      "ковровая плитка"
     ]
   },
   {
@@ -36583,6 +39632,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковровая плитка с битумной основой",
+    "short_description_en": "Ковровая плитка с битумной основой — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковровая плитка с битумной основой (Ковровая плитка с битумной основой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковровая плитка с битумной основой\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковровая плитка с битумной основой",
+      "bitum asosli qattiq kovrolin plitkasi"
     ]
   },
   {
@@ -36740,6 +39802,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковровая плитка с ПВХ-основой",
+    "short_description_en": "Ковровая плитка с ПВХ-основой — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковровая плитка с ПВХ-основой (Ковровая плитка с ПВХ-основой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковровая плитка с ПВХ-основой\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "ковровая плитка с пвх-основой",
+      "pvx asosli modulli kovrolin plitkasi"
     ]
   },
   {
@@ -36897,6 +39972,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустический ковролин",
+    "short_description_en": "Акустический ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Акустический ковролин (Акустический ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Акустический ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "акустический ковролин",
+      "akustik shovqin yutuvchi kovrolin"
     ]
   },
   {
@@ -37054,6 +40142,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антистатический ковролин",
+    "short_description_en": "Антистатический ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антистатический ковролин (Антистатический ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антистатический ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "Rulon 25 metrx4000x6.5-8.5 mm",
+    "aliases": [
+      "антистатический ковролин",
+      "antistatik kovrolin"
     ]
   },
   {
@@ -37062,7 +40163,7 @@ const POL_MATERIALS = [
     "name_uz": "Ковровая плитка",
     "name_ru": "Ковровая плитка",
     "original_name": "Ковровая плитка",
-    "english_name": "Ковровая плитка",
+    "english_name": "Modular carpet tile",
     "slug": "pol-kovrovaya-plitka-237",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Ковровая плитка",
@@ -37211,6 +40312,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Modular carpet tile",
+    "short_description_en": "Modular carpet tile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Modular carpet tile (Ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Modular carpet tile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "modular carpet tile",
+      "ковровая плитка"
     ]
   },
   {
@@ -37368,6 +40482,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Модульная ковровая плитка",
+    "short_description_en": "Модульная ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Модульная ковровая плитка (Модульная ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Модульная ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "модульная ковровая плитка",
+      "modulli 50x50 cm kovrolin plitkasi"
     ]
   },
   {
@@ -37525,6 +40652,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Самоклеящаяся ковровая плитка",
+    "short_description_en": "Самоклеящаяся ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Самоклеящаяся ковровая плитка (Самоклеящаяся ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Самоклеящаяся ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "самоклеящаяся ковровая плитка",
+      "o‘zi yopishuvchi kovrolin plitkasi"
     ]
   },
   {
@@ -37682,6 +40822,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковровая плитка на битумной основе",
+    "short_description_en": "Ковровая плитка на битумной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковровая плитка на битумной основе (Ковровая плитка на битумной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковровая плитка на битумной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "ковровая плитка на битумной основе"
     ]
   },
   {
@@ -37839,6 +40991,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковровая плитка на ПВХ-основе",
+    "short_description_en": "Ковровая плитка на ПВХ-основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковровая плитка на ПВХ-основе (Ковровая плитка на ПВХ-основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковровая плитка на ПВХ-основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "ковровая плитка на пвх-основе"
     ]
   },
   {
@@ -37996,6 +41160,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ковровая плитка на войлочной основе",
+    "short_description_en": "Ковровая плитка на войлочной основе — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ковровая плитка на войлочной основе (Ковровая плитка на войлочной основе) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ковровая плитка на войлочной основе\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "ковровая плитка на войлочной основе"
     ]
   },
   {
@@ -38153,6 +41329,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Коммерческая ковровая плитка",
+    "short_description_en": "Коммерческая ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Коммерческая ковровая плитка (Коммерческая ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Коммерческая ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "коммерческая ковровая плитка"
     ]
   },
   {
@@ -38310,6 +41498,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая ковровая плитка",
+    "short_description_en": "Акустическая ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Акустическая ковровая плитка (Акустическая ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Акустическая ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "акустическая ковровая плитка"
     ]
   },
   {
@@ -38467,6 +41667,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антистатическая ковровая плитка",
+    "short_description_en": "Антистатическая ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антистатическая ковровая плитка (Антистатическая ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антистатическая ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "500x500x6.5-8.5 mm",
+    "aliases": [
+      "антистатическая ковровая плитка"
     ]
   },
   {
@@ -38624,6 +41836,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковая напольная плитка",
+    "short_description_en": "Пробковая напольная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковая напольная плитка (Пробковая напольная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковая напольная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковая напольная плитка",
+      "tabiiy po‘kak (probka) pol plitkasi"
     ]
   },
   {
@@ -38781,6 +42006,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковая напольная доска",
+    "short_description_en": "Пробковая напольная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковая напольная доска (Пробковая напольная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковая напольная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковая напольная доска",
+      "po‘kak pol taxtasi"
     ]
   },
   {
@@ -38938,6 +42176,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клеевой пробковый пол",
+    "short_description_en": "Клеевой пробковый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клеевой пробковый пол (Клеевой пробковый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клеевой пробковый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "клеевой пробковый пол",
+      "yelimlanadigan probka pol"
     ]
   },
   {
@@ -39095,6 +42346,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Замковый пробковый пол",
+    "short_description_en": "Замковый пробковый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Замковый пробковый пол (Замковый пробковый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Замковый пробковый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "замковый пробковый пол",
+      "qulfli zamok tizimli probka pol"
     ]
   },
   {
@@ -39252,6 +42516,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковый ламинат",
+    "short_description_en": "Пробковый ламинат — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковый ламинат (Пробковый ламинат) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковый ламинат\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковый ламинат",
+      "probka qatlamli qulay laminat"
     ]
   },
   {
@@ -39409,6 +42686,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковый пол с защитным покрытием",
+    "short_description_en": "Пробковый пол с защитным покрытием — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковый пол с защитным покрытием (Пробковый пол с защитным покрытием) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковый пол с защитным покрытием\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковый пол с защитным покрытием"
     ]
   },
   {
@@ -39566,6 +42855,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковый пол под лаком",
+    "short_description_en": "Пробковый пол под лаком — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковый пол под лаком (Пробковый пол под лаком) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковый пол под лаком\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковый пол под лаком"
     ]
   },
   {
@@ -39723,6 +43024,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковый пол под маслом",
+    "short_description_en": "Пробковый пол под маслом — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковый пол под маслом (Пробковый пол под маслом) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковый пол под маслом\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "пробковый пол под маслом"
     ]
   },
   {
@@ -39880,6 +43193,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновая плитка",
+    "short_description_en": "Резиновая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновая плитка (Резиновая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновая плитка",
+      "rezina modulli pol plitkasi"
     ]
   },
   {
@@ -40037,6 +43363,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновое рулонное покрытие",
+    "short_description_en": "Резиновое рулонное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновое рулонное покрытие (Резиновое рулонное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновое рулонное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновое рулонное покрытие",
+      "rulonli rezina pol qoplamasi"
     ]
   },
   {
@@ -40194,6 +43533,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновый пол",
+    "short_description_en": "Резиновый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновый пол (Резиновый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновый пол"
     ]
   },
   {
@@ -40351,6 +43702,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивное резиновое покрытие",
+    "short_description_en": "Спортивное резиновое покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивное резиновое покрытие (Спортивное резиновое покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивное резиновое покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивное резиновое покрытие",
+      "sport maydonlari rezina qoplamasi"
     ]
   },
   {
@@ -40508,6 +43872,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновая плитка для спортзалов",
+    "short_description_en": "Резиновая плитка для спортзалов — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновая плитка для спортзалов (Резиновая плитка для спортзалов) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновая плитка для спортзалов\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновая плитка для спортзалов",
+      "rezina modulli pol plitkasi"
     ]
   },
   {
@@ -40665,6 +44042,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновое покрытие для детских площадок",
+    "short_description_en": "Резиновое покрытие для детских площадок — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновое покрытие для детских площадок (Резиновое покрытие для детских площадок) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновое покрытие для детских площадок\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновое покрытие для детских площадок",
+      "bolalar maydonchalari xavfsiz rezina poli"
     ]
   },
   {
@@ -40822,6 +44212,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антистатическое резиновое покрытие",
+    "short_description_en": "Антистатическое резиновое покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антистатическое резиновое покрытие (Антистатическое резиновое покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антистатическое резиновое покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "антистатическое резиновое покрытие"
     ]
   },
   {
@@ -40979,6 +44381,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Противоскользящее резиновое покрытие",
+    "short_description_en": "Противоскользящее резиновое покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Противоскользящее резиновое покрытие (Противоскользящее резиновое покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Противоскользящее резиновое покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "противоскользящее резиновое покрытие"
     ]
   },
   {
@@ -41136,6 +44550,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновое покрытие для технических помещений",
+    "short_description_en": "Резиновое покрытие для технических помещений — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновое покрытие для технических помещений (Резиновое покрытие для технических помещений) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновое покрытие для технических помещений\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновое покрытие для технических помещений"
     ]
   },
   {
@@ -41293,6 +44719,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивный линолеум",
+    "short_description_en": "Спортивный линолеум — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивный линолеум (Спортивный линолеум) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивный линолеум\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивный линолеум",
+      "sport zallari uchun amortizatsiyali linoleum"
     ]
   },
   {
@@ -41450,6 +44889,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивный ПВХ",
+    "short_description_en": "Спортивный ПВХ — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивный ПВХ (Спортивный ПВХ) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивный ПВХ\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивный пвх"
     ]
   },
   {
@@ -41607,6 +45058,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивный винил",
+    "short_description_en": "Спортивный винил — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивный винил (Спортивный винил) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивный винил\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивный винил"
     ]
   },
   {
@@ -41764,6 +45227,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновое спортивное покрытие",
+    "short_description_en": "Резиновое спортивное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновое спортивное покрытие (Резиновое спортивное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновое спортивное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "резиновое спортивное покрытие"
     ]
   },
   {
@@ -41921,6 +45396,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивный паркет",
+    "short_description_en": "Спортивный паркет — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивный паркет (Спортивный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивный паркет\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивный паркет"
     ]
   },
   {
@@ -42078,6 +45565,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивная деревянная доска",
+    "short_description_en": "Спортивная деревянная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивная деревянная доска (Спортивная деревянная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивная деревянная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивная деревянная доска"
     ]
   },
   {
@@ -42235,6 +45734,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивная ковровая плитка",
+    "short_description_en": "Спортивная ковровая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивная ковровая плитка (Спортивная ковровая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивная ковровая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивная ковровая плитка"
     ]
   },
   {
@@ -42392,6 +45903,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Спортивное рулонное покрытие",
+    "short_description_en": "Спортивное рулонное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Спортивное рулонное покрытие (Спортивное рулонное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Спортивное рулонное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "спортивное рулонное покрытие"
     ]
   },
   {
@@ -42549,6 +46072,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Модульное спортивное покрытие",
+    "short_description_en": "Модульное спортивное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Модульное спортивное покрытие (Модульное спортивное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Модульное спортивное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "модульное спортивное покрытие"
     ]
   },
   {
@@ -42706,6 +46241,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Промышленный бетонный пол",
+    "short_description_en": "Промышленный бетонный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Промышленный бетонный пол (Промышленный бетонный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Промышленный бетонный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "промышленный бетонный пол",
+      "sanoat sayqallangan beton poli"
     ]
   },
   {
@@ -42863,6 +46411,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полимерный пол",
+    "short_description_en": "Полимерный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полимерный пол (Полимерный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полимерный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "полимерный пол",
+      "polimer choksiz qoplama pol"
     ]
   },
   {
@@ -43020,6 +46581,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидный пол",
+    "short_description_en": "Эпоксидный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидный пол (Эпоксидный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "эпоксидный пол",
+      "epoksid mustahkam qattiq quyma pol"
     ]
   },
   {
@@ -43177,6 +46751,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановый пол",
+    "short_description_en": "Полиуретановый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полиуретановый пол (Полиуретановый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полиуретановый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "полиуретановый пол",
+      "poliuretan elastik quyma pol"
     ]
   },
   {
@@ -43334,6 +46921,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидное покрытие",
+    "short_description_en": "Эпоксидное покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидное покрытие (Эпоксидное покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидное покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "эпоксидное покрытие"
     ]
   },
   {
@@ -43491,6 +47090,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановое покрытие",
+    "short_description_en": "Полиуретановое покрытие — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полиуретановое покрытие (Полиуретановое покрытие) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полиуретановое покрытие\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "полиуретановое покрытие"
     ]
   },
   {
@@ -43648,6 +47259,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Метилметакрилатный пол",
+    "short_description_en": "Метилметакрилатный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Метилметакрилатный пол (Метилметакрилатный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Метилметакрилатный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "метилметакрилатный пол"
     ]
   },
   {
@@ -43805,6 +47428,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полимерцементный пол",
+    "short_description_en": "Полимерцементный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полимерцементный пол (Полимерцементный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полимерцементный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "полимерцементный пол"
     ]
   },
   {
@@ -43962,6 +47597,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Топпинговый бетонный пол",
+    "short_description_en": "Топпинговый бетонный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Топпинговый бетонный пол (Топпинговый бетонный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Топпинговый бетонный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "топпинговый бетонный пол",
+      "topping bilan mustahkamlangan beton pol"
     ]
   },
   {
@@ -44119,6 +47767,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Наливной пол",
+    "short_description_en": "Наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Наливной пол (Наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "наливной пол"
     ]
   },
   {
@@ -44276,6 +47936,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Самонивелирующийся пол",
+    "short_description_en": "Самонивелирующийся пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Самонивелирующийся пол (Самонивелирующийся пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Самонивелирующийся пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "самонивелирующийся пол"
     ]
   },
   {
@@ -44433,6 +48105,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антистатический пол",
+    "short_description_en": "Антистатический пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антистатический пол (Антистатический пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антистатический пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "антистатический пол"
     ]
   },
   {
@@ -44590,6 +48274,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Токопроводящий пол",
+    "short_description_en": "Токопроводящий пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Токопроводящий пол (Токопроводящий пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Токопроводящий пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "токопроводящий пол"
     ]
   },
   {
@@ -44747,6 +48443,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Химически стойкий пол",
+    "short_description_en": "Химически стойкий пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Химически стойкий пол (Химически стойкий пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Химически стойкий пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "химически стойкий пол"
     ]
   },
   {
@@ -44904,6 +48612,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Износостойкий промышленный пол",
+    "short_description_en": "Износостойкий промышленный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Износостойкий промышленный пол (Износостойкий промышленный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Износостойкий промышленный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "износостойкий промышленный пол"
     ]
   },
   {
@@ -45061,6 +48781,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Противоскользящий промышленный пол",
+    "short_description_en": "Противоскользящий промышленный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Противоскользящий промышленный пол (Противоскользящий промышленный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Противоскользящий промышленный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "противоскользящий промышленный пол"
     ]
   },
   {
@@ -45218,6 +48950,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Самонивелирующийся наливной пол",
+    "short_description_en": "Самонивелирующийся наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Самонивелирующийся наливной пол (Самонивелирующийся наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Самонивелирующийся наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "самонивелирующийся наливной пол",
+      "o‘zi tekislanuvchi quyma pol qorishmasi"
     ]
   },
   {
@@ -45375,6 +49120,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементный наливной пол",
+    "short_description_en": "Цементный наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Цементный наливной пол (Цементный наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Цементный наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "цементный наливной пол",
+      "tsement asosli mustahkam quyma pol"
     ]
   },
   {
@@ -45532,6 +49290,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гипсовый наливной пол",
+    "short_description_en": "Гипсовый наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гипсовый наливной пол (Гипсовый наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гипсовый наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "гипсовый наливной пол",
+      "gips asosli tez quriydigan quyma pol"
     ]
   },
   {
@@ -45689,6 +49460,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидный наливной пол",
+    "short_description_en": "Эпоксидный наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидный наливной пол (Эпоксидный наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидный наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "эпоксидный наливной пол"
     ]
   },
   {
@@ -45846,6 +49629,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановый наливной пол",
+    "short_description_en": "Полиуретановый наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полиуретановый наливной пол (Полиуретановый наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полиуретановый наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "полиуретановый наливной пол"
     ]
   },
   {
@@ -46003,6 +49798,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидно-полиуретановый наливной пол",
+    "short_description_en": "Эпоксидно-полиуретановый наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидно-полиуретановый наливной пол (Эпоксидно-полиуретановый наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидно-полиуретановый наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "эпоксидно-полиуретановый наливной пол"
     ]
   },
   {
@@ -46160,6 +49967,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный наливной пол",
+    "short_description_en": "Декоративный наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный наливной пол (Декоративный наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "декоративный наливной пол",
+      "dekorativ bezakli quyma pol"
     ]
   },
   {
@@ -46317,6 +50137,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "3D наливной пол",
+    "short_description_en": "3D наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "3D наливной пол (3D наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"3D наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "3d наливной пол",
+      "3d fotosuratli shaffof polimer quyma pol"
     ]
   },
   {
@@ -46474,6 +50307,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Промышленный наливной пол",
+    "short_description_en": "Промышленный наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Промышленный наливной пол (Промышленный наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Промышленный наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "промышленный наливной пол"
     ]
   },
   {
@@ -46631,6 +50476,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Финишный наливной пол",
+    "short_description_en": "Финишный наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Финишный наливной пол (Финишный наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Финишный наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "финишный наливной пол"
     ]
   },
   {
@@ -46788,6 +50645,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Черновой наливной пол",
+    "short_description_en": "Черновой наливной пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Черновой наливной пол (Черновой наливной пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Черновой наливной пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-30 mm mm",
+    "aliases": [
+      "черновой наливной пол"
     ]
   },
   {
@@ -46945,6 +50814,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микроцемент",
+    "short_description_en": "Микроцемент — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Микроцемент (Микроцемент) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Микроцемент\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "микроцемент",
+      "choksiz mikrotsement pol qoplamasi"
     ]
   },
   {
@@ -47102,6 +50984,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Микробетон",
+    "short_description_en": "Микробетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Микробетон (Микробетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Микробетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "микробетон",
+      "mikrobeton yuqori pishiq pol pardoz qorishmasi"
     ]
   },
   {
@@ -47259,6 +51154,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный бетон",
+    "short_description_en": "Декоративный бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный бетон (Декоративный бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "декоративный бетон"
     ]
   },
   {
@@ -47416,6 +51323,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный микроцемент",
+    "short_description_en": "Декоративный микроцемент — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный микроцемент (Декоративный микроцемент) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный микроцемент\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "декоративный микроцемент",
+      "choksiz mikrotsement pol qoplamasi"
     ]
   },
   {
@@ -47573,6 +51493,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пол под бетон",
+    "short_description_en": "Пол под бетон — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пол под бетон (Пол под бетон) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пол под бетон\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "пол под бетон"
     ]
   },
   {
@@ -47730,6 +51662,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный цементный пол",
+    "short_description_en": "Декоративный цементный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный цементный пол (Декоративный цементный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный цементный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "декоративный цементный пол"
     ]
   },
   {
@@ -47887,6 +51831,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Венецианский декоративный пол",
+    "short_description_en": "Венецианский декоративный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Венецианский декоративный пол (Венецианский декоративный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Венецианский декоративный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "венецианский декоративный пол"
     ]
   },
   {
@@ -48044,6 +52000,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Терраццо",
+    "short_description_en": "Терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Терраццо (Терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "терраццо"
     ]
   },
   {
@@ -48201,6 +52169,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный терраццо-пол",
+    "short_description_en": "Декоративный терраццо-пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный терраццо-пол (Декоративный терраццо-пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный терраццо-пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-3 mm mm",
+    "aliases": [
+      "декоративный терраццо-пол"
     ]
   },
   {
@@ -48358,6 +52338,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементное терраццо",
+    "short_description_en": "Цементное терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Цементное терраццо (Цементное терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Цементное терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "цементное терраццо",
+      "tsement asosli klassik terrazzo poli"
     ]
   },
   {
@@ -48515,6 +52508,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полимерное терраццо",
+    "short_description_en": "Полимерное терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полимерное терраццо (Полимерное терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полимерное терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "полимерное терраццо",
+      "polimer qatronli nafis terrazzo"
     ]
   },
   {
@@ -48672,6 +52678,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Крупнозернистое терраццо",
+    "short_description_en": "Крупнозернистое терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Крупнозернистое терраццо (Крупнозернистое терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Крупнозернистое терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "крупнозернистое терраццо"
     ]
   },
   {
@@ -48829,6 +52847,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Мелкозернистое терраццо",
+    "short_description_en": "Мелкозернистое терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Мелкозернистое терраццо (Мелкозернистое терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Мелкозернистое терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "мелкозернистое терраццо"
     ]
   },
   {
@@ -48986,6 +53016,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Терраццо-плитка",
+    "short_description_en": "Терраццо-плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Терраццо-плитка (Терраццо-плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Терраццо-плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "терраццо-плитка",
+      "terrazzo pol plitkasi"
     ]
   },
   {
@@ -49143,6 +53186,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Терраццо-слэб",
+    "short_description_en": "Терраццо-слэб — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Терраццо-слэб (Терраццо-слэб) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Терраццо-слэб\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "терраццо-слэб"
     ]
   },
   {
@@ -49300,6 +53355,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Монолитное терраццо",
+    "short_description_en": "Монолитное терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Монолитное терраццо (Монолитное терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Монолитное терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "монолитное терраццо"
     ]
   },
   {
@@ -49457,6 +53524,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративное терраццо",
+    "short_description_en": "Декоративное терраццо — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративное терраццо (Декоративное терраццо) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративное терраццо\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x10-20 mm mm",
+    "aliases": [
+      "декоративное терраццо"
     ]
   },
   {
@@ -49614,6 +53693,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Закалённое стекло для пола",
+    "short_description_en": "Закалённое стекло для пола — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Закалённое стекло для пола (Закалённое стекло для пола) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Закалённое стекло для пола\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "закалённое стекло для пола",
+      "pol uchun toblangan xavfsiz shisha"
     ]
   },
   {
@@ -49771,6 +53863,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Ламинированное стекло для пола",
+    "short_description_en": "Ламинированное стекло для пола — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Ламинированное стекло для пола (Ламинированное стекло для пола) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Ламинированное стекло для пола\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "ламинированное стекло для пола",
+      "pol uchun ko‘p qatlamli tripleks shisha"
     ]
   },
   {
@@ -49779,7 +53884,7 @@ const POL_MATERIALS = [
     "name_uz": "Стеклянный пол",
     "name_ru": "Стеклянный пол",
     "original_name": "Стеклянный пол",
-    "english_name": "Стеклянный пол",
+    "english_name": "Laminated structural glass floor",
     "slug": "pol-steklyannyy-pol",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Стеклянные и декоративные полы",
@@ -49928,6 +54033,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Laminated structural glass floor",
+    "short_description_en": "Laminated structural glass floor — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Laminated structural glass floor (Стеклянный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Laminated structural glass floor\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "laminated structural glass floor",
+      "стеклянный пол"
     ]
   },
   {
@@ -50085,6 +54203,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стеклянная панель для пола",
+    "short_description_en": "Стеклянная панель для пола — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Стеклянная панель для пола (Стеклянная панель для пола) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Стеклянная панель для пола\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "стеклянная панель для пола"
     ]
   },
   {
@@ -50242,6 +54372,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный стеклянный пол",
+    "short_description_en": "Декоративный стеклянный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный стеклянный пол (Декоративный стеклянный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный стеклянный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "декоративный стеклянный пол"
     ]
   },
   {
@@ -50399,6 +54541,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Прозрачный стеклянный пол",
+    "short_description_en": "Прозрачный стеклянный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Прозрачный стеклянный пол (Прозрачный стеклянный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Прозрачный стеклянный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "прозрачный стеклянный пол"
     ]
   },
   {
@@ -50556,6 +54710,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Матовый стеклянный пол",
+    "short_description_en": "Матовый стеклянный пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Матовый стеклянный пол (Матовый стеклянный пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Матовый стеклянный пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "матовый стеклянный пол"
     ]
   },
   {
@@ -50713,6 +54879,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рифлёный металлический лист",
+    "short_description_en": "Рифлёный металлический лист — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Рифлёный металлический лист (Рифлёный металлический лист) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Рифлёный металлический лист\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "рифлёный металлический лист",
+      "riflyoniy (sirpanmas) metall list"
     ]
   },
   {
@@ -50870,6 +55049,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Стальной напольный лист",
+    "short_description_en": "Стальной напольный лист — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Стальной напольный лист (Стальной напольный лист) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Стальной напольный лист\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "стальной напольный лист",
+      "po‘lat mustahkam pol listi"
     ]
   },
   {
@@ -51027,6 +55219,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Алюминиевый напольный лист",
+    "short_description_en": "Алюминиевый напольный лист — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Алюминиевый напольный лист (Алюминиевый напольный лист) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Алюминиевый напольный лист\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "алюминиевый напольный лист",
+      "alyuminiy yengil korroziyasiz pol listi"
     ]
   },
   {
@@ -51184,6 +55389,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Нержавеющий напольный лист",
+    "short_description_en": "Нержавеющий напольный лист — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Нержавеющий напольный лист (Нержавеющий напольный лист) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Нержавеющий напольный лист\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "нержавеющий напольный лист"
     ]
   },
   {
@@ -51341,6 +55558,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Перфорированный металлический пол",
+    "short_description_en": "Перфорированный металлический пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Перфорированный металлический пол (Перфорированный металлический пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Перфорированный металлический пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "перфорированный металлический пол"
     ]
   },
   {
@@ -51498,6 +55727,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Решётчатый металлический настил",
+    "short_description_en": "Решётчатый металлический настил — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Решётчатый металлический настил (Решётчатый металлический настил) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Решётчатый металлический настил\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "решётчатый металлический настил"
     ]
   },
   {
@@ -51655,6 +55896,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Антискользящий металлический настил",
+    "short_description_en": "Антискользящий металлический настил — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Антискользящий металлический настил (Антискользящий металлический настил) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Антискользящий металлический настил\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "антискользящий металлический настил"
     ]
   },
   {
@@ -51812,6 +56065,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративный металлический пол",
+    "short_description_en": "Декоративный металлический пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративный металлический пол (Декоративный металлический пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративный металлический пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "декоративный металлический пол"
     ]
   },
   {
@@ -51969,6 +56234,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Массивная доска",
+    "short_description_en": "Массивная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Массивная доска (Массивная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Массивная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "массивная доска",
+      "massiv pol taxtasi"
     ]
   },
   {
@@ -51977,7 +56255,7 @@ const POL_MATERIALS = [
     "name_uz": "Паркет",
     "name_ru": "Паркет",
     "original_name": "Паркет",
-    "english_name": "Паркет",
+    "english_name": "Parquet flooring",
     "slug": "pol-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Деревянные напольные покрытия",
@@ -52126,6 +56404,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet flooring",
+    "short_description_en": "Parquet flooring — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet flooring (Паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet flooring\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "parquet flooring",
+      "паркет"
     ]
   },
   {
@@ -52134,7 +56425,7 @@ const POL_MATERIALS = [
     "name_uz": "Donali klassik qattiq yog‘och parket",
     "name_ru": "Штучный паркет",
     "original_name": "Штучный паркет",
-    "english_name": "Штучный паркет",
+    "english_name": "Solid block parquet",
     "slug": "pol-shtuchnyy-parket-333",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Деревянные напольные покрытия",
@@ -52283,6 +56574,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid block parquet",
+    "short_description_en": "Solid block parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Solid block parquet (Штучный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Solid block parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "solid block parquet",
+      "штучный паркет",
+      "donali klassik qattiq yog‘och parket"
     ]
   },
   {
@@ -52291,7 +56596,7 @@ const POL_MATERIALS = [
     "name_uz": "Uch qatlamli tabiiy parket taxtasi",
     "name_ru": "Паркетная доска",
     "original_name": "Паркетная доска",
-    "english_name": "Паркетная доска",
+    "english_name": "Engineered parquet board",
     "slug": "pol-parketnaya-doska-334",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Деревянные напольные покрытия",
@@ -52440,6 +56745,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered parquet board",
+    "short_description_en": "Engineered parquet board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered parquet board (Паркетная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered parquet board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "engineered parquet board",
+      "паркетная доска",
+      "uch qatlamli tabiiy parket taxtasi"
     ]
   },
   {
@@ -52448,7 +56767,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik pol taxtasi",
     "name_ru": "Инженерная доска",
     "original_name": "Инженерная доска",
-    "english_name": "Инженерная доска",
+    "english_name": "Engineered wood plank",
     "slug": "pol-inzhenernaya-doska-335",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Деревянные напольные покрытия",
@@ -52597,6 +56916,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered wood plank",
+    "short_description_en": "Engineered wood plank — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered wood plank (Инженерная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered wood plank\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "engineered wood plank",
+      "инженерная доска",
+      "muhandislik pol taxtasi"
     ]
   },
   {
@@ -52605,7 +56938,7 @@ const POL_MATERIALS = [
     "name_uz": "Muhandislik parketi (fanera asosli)",
     "name_ru": "Инженерный паркет",
     "original_name": "Инженерный паркет",
-    "english_name": "Инженерный паркет",
+    "english_name": "Engineered parquet",
     "slug": "pol-inzhenernyy-parket-336",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Деревянные напольные покрытия",
@@ -52754,6 +57087,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Engineered parquet",
+    "short_description_en": "Engineered parquet — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Engineered parquet (Инженерный паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Engineered parquet\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "engineered parquet",
+      "инженерный паркет",
+      "muhandislik parketi (fanera asosli)"
     ]
   },
   {
@@ -52911,6 +57258,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная половая доска",
+    "short_description_en": "Деревянная половая доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Деревянная половая доска (Деревянная половая доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Деревянная половая доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "деревянная половая доска"
     ]
   },
   {
@@ -53068,6 +57427,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термообработанная деревянная доска",
+    "short_description_en": "Термообработанная деревянная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Термообработанная деревянная доска (Термообработанная деревянная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Термообработанная деревянная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "термообработанная деревянная доска"
     ]
   },
   {
@@ -53225,6 +57596,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Брашированная доска",
+    "short_description_en": "Брашированная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Брашированная доска (Брашированная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Брашированная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "брашированная доска"
     ]
   },
   {
@@ -53382,6 +57765,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Состаренная доска",
+    "short_description_en": "Состаренная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Состаренная доска (Состаренная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Состаренная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "состаренная доска"
     ]
   },
   {
@@ -53539,6 +57934,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянный пол под маслом",
+    "short_description_en": "Деревянный пол под маслом — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Деревянный пол под маслом (Деревянный пол под маслом) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Деревянный пол под маслом\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "деревянный пол под маслом"
     ]
   },
   {
@@ -53696,6 +58103,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянный пол под лаком",
+    "short_description_en": "Деревянный пол под лаком — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Деревянный пол под лаком (Деревянный пол под лаком) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Деревянный пол под лаком\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "деревянный пол под лаком"
     ]
   },
   {
@@ -53853,6 +58272,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянный пол под воском",
+    "short_description_en": "Деревянный пол под воском — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Деревянный пол под воском (Деревянный пол под воском) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Деревянный пол под воском\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2200x190x14 mm",
+    "aliases": [
+      "деревянный пол под воском"
     ]
   },
   {
@@ -54010,6 +58441,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Террасная доска из ДПК",
+    "short_description_en": "Террасная доска из ДПК — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Террасная доска из ДПК (Террасная доска из ДПК) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Террасная доска из ДПК\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "террасная доска из дпк",
+      "dpk (kompozit) terrasa pol taxtasi"
     ]
   },
   {
@@ -54167,6 +58611,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ДПК доска",
+    "short_description_en": "ДПК доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ДПК доска (ДПК доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ДПК доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "дпк доска",
+      "dpk yog‘och-polimer taxtasi"
     ]
   },
   {
@@ -54324,6 +58781,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Деревянная террасная доска",
+    "short_description_en": "Деревянная террасная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Деревянная террасная доска (Деревянная террасная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Деревянная террасная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "деревянная террасная доска",
+      "tilog‘och tabiiy terrasa taxtasi (deking)"
     ]
   },
   {
@@ -54481,6 +58951,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Термообработанная террасная доска",
+    "short_description_en": "Термообработанная террасная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Термообработанная террасная доска (Термообработанная террасная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Термообработанная террасная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "термообработанная террасная доска",
+      "termo-yog‘och namga chidamli terrasa taxtasi"
     ]
   },
   {
@@ -54638,6 +59121,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Натуральная каменная плитка",
+    "short_description_en": "Натуральная каменная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Натуральная каменная плитка (Натуральная каменная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Натуральная каменная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "натуральная каменная плитка"
     ]
   },
   {
@@ -54646,7 +59141,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Керамогранит для террас",
     "original_name": "Керамогранит для террас",
-    "english_name": "Керамогранит для террас",
+    "english_name": "Porcelain stoneware для террас",
     "slug": "pol-keramogranit-dlya-terras",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Наружные напольные покрытия / террасы",
@@ -54795,6 +59290,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Porcelain stoneware для террас",
+    "short_description_en": "Porcelain stoneware для террас — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Porcelain stoneware для террас (Керамогранит для террас) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Porcelain stoneware для террас\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "porcelain stoneware для террас",
+      "керамогранит для террас",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -54952,6 +59461,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Клинкер для террас",
+    "short_description_en": "Клинкер для террас — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Клинкер для террас (Клинкер для террас) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Клинкер для террас\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "клинкер для террас"
     ]
   },
   {
@@ -55109,6 +59630,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонная тротуарная плитка",
+    "short_description_en": "Бетонная тротуарная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Бетонная тротуарная плитка (Бетонная тротуарная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Бетонная тротуарная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "бетонная тротуарная плитка",
+      "beton bruschatka yo‘lak plitkasi"
     ]
   },
   {
@@ -55266,6 +59800,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Бетонная плитка",
+    "short_description_en": "Бетонная плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Бетонная плитка (Бетонная плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Бетонная плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "бетонная плитка"
     ]
   },
   {
@@ -55423,6 +59969,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновая плитка",
+    "short_description_en": "Резиновая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновая плитка (Резиновая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "резиновая плитка",
+      "rezina modulli pol plitkasi"
     ]
   },
   {
@@ -55580,6 +60139,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Уличная керамическая плитка",
+    "short_description_en": "Уличная керамическая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Уличная керамическая плитка (Уличная керамическая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Уличная керамическая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "уличная керамическая плитка"
     ]
   },
   {
@@ -55737,6 +60308,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Уличный керамогранит",
+    "short_description_en": "Уличный керамогранит — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Уличный керамогранит (Уличный керамогранит) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Уличный керамогранит\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "уличный керамогранит",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -55894,6 +60478,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Противоскользящая плитка",
+    "short_description_en": "Противоскользящая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Противоскользящая плитка (Противоскользящая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Противоскользящая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "противоскользящая плитка"
     ]
   },
   {
@@ -56051,6 +60647,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Морозостойкая плитка",
+    "short_description_en": "Морозостойкая плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Морозостойкая плитка (Морозостойкая плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Морозостойкая плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "морозостойкая плитка"
     ]
   },
   {
@@ -56208,6 +60816,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Террасная доска из ДПК",
+    "short_description_en": "Террасная доска из ДПК — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Террасная доска из ДПК (Террасная доска из ДПК) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Террасная доска из ДПК\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "террасная доска из дпк",
+      "dpk (kompozit) terrasa pol taxtasi"
     ]
   },
   {
@@ -56365,6 +60986,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ДПК напольная доска",
+    "short_description_en": "ДПК напольная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ДПК напольная доска (ДПК напольная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ДПК напольная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "дпк напольная доска"
     ]
   },
   {
@@ -56522,6 +61155,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ДПК плитка",
+    "short_description_en": "ДПК плитка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ДПК плитка (ДПК плитка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ДПК плитка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "дпк плитка"
     ]
   },
   {
@@ -56679,6 +61324,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "ДПК садовый настил",
+    "short_description_en": "ДПК садовый настил — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "ДПК садовый настил (ДПК садовый настил) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"ДПК садовый настил\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "дпк садовый настил"
     ]
   },
   {
@@ -56836,6 +61493,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полимерная террасная доска",
+    "short_description_en": "Полимерная террасная доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полимерная террасная доска (Полимерная террасная доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полимерная террасная доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "полимерная террасная доска"
     ]
   },
   {
@@ -56993,6 +61662,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пустотелая ДПК доска",
+    "short_description_en": "Пустотелая ДПК доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пустотелая ДПК доска (Пустотелая ДПК доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пустотелая ДПК доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "пустотелая дпк доска",
+      "dpk yog‘och-polimer taxtasi"
     ]
   },
   {
@@ -57150,6 +61832,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полнотелая ДПК доска",
+    "short_description_en": "Полнотелая ДПК доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полнотелая ДПК доска (Полнотелая ДПК доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полнотелая ДПК доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "полнотелая дпк доска",
+      "dpk yog‘och-polimer taxtasi"
     ]
   },
   {
@@ -57307,6 +62002,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Рифлёная ДПК доска",
+    "short_description_en": "Рифлёная ДПК доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Рифлёная ДПК доска (Рифлёная ДПК доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Рифлёная ДПК доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "рифлёная дпк доска",
+      "dpk yog‘och-polimer taxtasi"
     ]
   },
   {
@@ -57464,6 +62172,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гладкая ДПК доска",
+    "short_description_en": "Гладкая ДПК доска — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гладкая ДПК доска (Гладкая ДПК доска) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior and exterior architectural applications",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гладкая ДПК доска\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "3000-4000x140-150x22-25 mm",
+    "aliases": [
+      "гладкая дпк доска",
+      "dpk yog‘och-polimer taxtasi"
     ]
   },
   {
@@ -57621,6 +62342,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пенополиэтиленовая подложка",
+    "short_description_en": "Пенополиэтиленовая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пенополиэтиленовая подложка (Пенополиэтиленовая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пенополиэтиленовая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "пенополиэтиленовая подложка",
+      "ko‘pirtirilgan polietilen taglik (ppe podlojka)"
     ]
   },
   {
@@ -57778,6 +62512,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Экструдированный пенополистирол",
+    "short_description_en": "Экструдированный пенополистирол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Экструдированный пенополистирол (Экструдированный пенополистирол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Экструдированный пенополистирол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "экструдированный пенополистирол",
+      "ekstrudirlangan polistirol zich taglik (xps)"
     ]
   },
   {
@@ -57935,6 +62682,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Пробковая подложка",
+    "short_description_en": "Пробковая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Пробковая подложка (Пробковая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Пробковая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "пробковая подложка",
+      "tabiiy po‘kak taglik (probka podlojka)"
     ]
   },
   {
@@ -58092,6 +62852,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Резиновая подложка",
+    "short_description_en": "Резиновая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Резиновая подложка (Резиновая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Резиновая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "резиновая подложка",
+      "rezina-probka akustik taglik"
     ]
   },
   {
@@ -58249,6 +63022,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Каучуковая подложка",
+    "short_description_en": "Каучуковая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Каучуковая подложка (Каучуковая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Каучуковая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "каучуковая подложка"
     ]
   },
   {
@@ -58406,6 +63191,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Комбинированная подложка",
+    "short_description_en": "Комбинированная подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Комбинированная подложка (Комбинированная подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Комбинированная подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "комбинированная подложка"
     ]
   },
   {
@@ -58563,6 +63360,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Акустическая подложка",
+    "short_description_en": "Акустическая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Акустическая подложка (Акустическая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Акустическая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "акустическая подложка",
+      "shovqin yutuvchi ovoz izolyatsiya tagligi"
     ]
   },
   {
@@ -58720,6 +63530,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Теплоизоляционная подложка",
+    "short_description_en": "Теплоизоляционная подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Теплоизоляционная подложка (Теплоизоляционная подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Теплоизоляционная подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "теплоизоляционная подложка",
+      "issiqlik saqlovchi folgali taglik"
     ]
   },
   {
@@ -58877,6 +63700,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Влагостойкая подложка",
+    "short_description_en": "Влагостойкая подложка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Влагостойкая подложка (Влагостойкая подложка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Влагостойкая подложка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "влагостойкая подложка"
     ]
   },
   {
@@ -58885,7 +63720,7 @@ const POL_MATERIALS = [
     "name_uz": "Laminat osti maxsus tagligi",
     "name_ru": "Подложка под ламинат",
     "original_name": "Подложка под ламинат",
-    "english_name": "Подложка под ламинат",
+    "english_name": "Flooring underlayment под ламинат",
     "slug": "pol-podlozhka-pod-laminat",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59034,6 +63869,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под ламинат",
+    "short_description_en": "Flooring underlayment под ламинат — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под ламинат (Подложка под ламинат) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под ламинат\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под ламинат",
+      "подложка под ламинат",
+      "laminat osti maxsus tagligi"
     ]
   },
   {
@@ -59042,7 +63891,7 @@ const POL_MATERIALS = [
     "name_uz": "Parket va muhandislik taxtasi osti tagligi",
     "name_ru": "Подложка под паркет",
     "original_name": "Подложка под паркет",
-    "english_name": "Подложка под паркет",
+    "english_name": "Flooring underlayment под паркет",
     "slug": "pol-podlozhka-pod-parket",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59191,6 +64040,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под паркет",
+    "short_description_en": "Flooring underlayment под паркет — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под паркет (Подложка под паркет) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под паркет\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под паркет",
+      "подложка под паркет",
+      "parket va muhandislik taxtasi osti tagligi"
     ]
   },
   {
@@ -59199,7 +64062,7 @@ const POL_MATERIALS = [
     "name_uz": "Подложка под инженерную доску",
     "name_ru": "Подложка под инженерную доску",
     "original_name": "Подложка под инженерную доску",
-    "english_name": "Подложка под инженерную доску",
+    "english_name": "Flooring underlayment под инженерную доску",
     "slug": "pol-podlozhka-pod-inzhenernuyu-dosku",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59348,6 +64211,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под инженерную доску",
+    "short_description_en": "Flooring underlayment под инженерную доску — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под инженерную доску (Подложка под инженерную доску) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под инженерную доску\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под инженерную доску",
+      "подложка под инженерную доску"
     ]
   },
   {
@@ -59356,7 +64232,7 @@ const POL_MATERIALS = [
     "name_uz": "LVT va vinil osti o‘ta zich tagligi",
     "name_ru": "Подложка под виниловый пол",
     "original_name": "Подложка под виниловый пол",
-    "english_name": "Подложка под виниловый пол",
+    "english_name": "Flooring underlayment под виниловый пол",
     "slug": "pol-podlozhka-pod-vinilovyy-pol",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59505,6 +64381,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под виниловый пол",
+    "short_description_en": "Flooring underlayment под виниловый пол — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под виниловый пол (Подложка под виниловый пол) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под виниловый пол\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под виниловый пол",
+      "подложка под виниловый пол",
+      "lvt va vinil osti o‘ta zich tagligi"
     ]
   },
   {
@@ -59513,7 +64403,7 @@ const POL_MATERIALS = [
     "name_uz": "Подложка под SPC, если разрешена производителем",
     "name_ru": "Подложка под SPC, если разрешена производителем",
     "original_name": "Подложка под SPC, если разрешена производителем",
-    "english_name": "Подложка под SPC, если разрешена производителем",
+    "english_name": "Flooring underlayment под SPC, если разрешена производителем",
     "slug": "pol-podlozhka-pod-spc-esli-razreshena-proizvoditelem",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59662,6 +64552,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под SPC, если разрешена производителем",
+    "short_description_en": "Flooring underlayment под SPC, если разрешена производителем — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под SPC, если разрешена производителем (Подложка под SPC, если разрешена производителем) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под SPC, если разрешена производителем\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под spc, если разрешена производителем",
+      "подложка под spc, если разрешена производителем"
     ]
   },
   {
@@ -59670,7 +64573,7 @@ const POL_MATERIALS = [
     "name_uz": "Подложка под ковролин",
     "name_ru": "Подложка под ковролин",
     "original_name": "Подложка под ковролин",
-    "english_name": "Подложка под ковролин",
+    "english_name": "Flooring underlayment под ковролин",
     "slug": "pol-podlozhka-pod-kovrolin",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Подложки под напольные покрытия",
@@ -59819,6 +64722,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flooring underlayment под ковролин",
+    "short_description_en": "Flooring underlayment под ковролин — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flooring underlayment под ковролин (Подложка под ковролин) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flooring underlayment под ковролин\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x2-5 mm mm",
+    "aliases": [
+      "flooring underlayment под ковролин",
+      "подложка под ковролин"
     ]
   },
   {
@@ -59827,7 +64743,7 @@ const POL_MATERIALS = [
     "name_uz": "Ikki komponentli poliuretan parket yelimi",
     "name_ru": "Клей для паркета",
     "original_name": "Клей для паркета",
-    "english_name": "Клей для паркета",
+    "english_name": "Adhesive для паркета",
     "slug": "pol-kley-dlya-parketa",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -59976,6 +64892,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для паркета",
+    "short_description_en": "Adhesive для паркета — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для паркета (Клей для паркета) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для паркета\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для паркета",
+      "клей для паркета",
+      "ikki komponentli poliuretan parket yelimi"
     ]
   },
   {
@@ -59984,7 +64914,7 @@ const POL_MATERIALS = [
     "name_uz": "Elastik polimer muhandislik taxtasi yelimi",
     "name_ru": "Клей для инженерной доски",
     "original_name": "Клей для инженерной доски",
-    "english_name": "Клей для инженерной доски",
+    "english_name": "Adhesive для инженерной доски",
     "slug": "pol-kley-dlya-inzhenernoy-doski",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60133,6 +65063,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для инженерной доски",
+    "short_description_en": "Adhesive для инженерной доски — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для инженерной доски (Клей для инженерной доски) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для инженерной доски\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для инженерной доски",
+      "клей для инженерной доски",
+      "elastik polimer muhandislik taxtasi yelimi"
     ]
   },
   {
@@ -60141,7 +65085,7 @@ const POL_MATERIALS = [
     "name_uz": "Клей для линолеума",
     "name_ru": "Клей для линолеума",
     "original_name": "Клей для линолеума",
-    "english_name": "Клей для линолеума",
+    "english_name": "Adhesive для линолеума",
     "slug": "pol-kley-dlya-linoleuma",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60290,6 +65234,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для линолеума",
+    "short_description_en": "Adhesive для линолеума — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для линолеума (Клей для линолеума) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для линолеума\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для линолеума",
+      "клей для линолеума"
     ]
   },
   {
@@ -60298,7 +65255,7 @@ const POL_MATERIALS = [
     "name_uz": "Kovrolin yopishtirish uchun maxsus yelim",
     "name_ru": "Клей для ковролина",
     "original_name": "Клей для ковролина",
-    "english_name": "Клей для ковролина",
+    "english_name": "Adhesive для ковролина",
     "slug": "pol-kley-dlya-kovrolina",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60447,6 +65404,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для ковролина",
+    "short_description_en": "Adhesive для ковролина — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для ковролина (Клей для ковролина) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для ковролина\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для ковролина",
+      "клей для ковролина",
+      "kovrolin yopishtirish uchun maxsus yelim"
     ]
   },
   {
@@ -60455,7 +65426,7 @@ const POL_MATERIALS = [
     "name_uz": "LVT va PVX plitkalar uchun kontaktli yelim",
     "name_ru": "Клей для LVT",
     "original_name": "Клей для LVT",
-    "english_name": "Клей для LVT",
+    "english_name": "Adhesive для LVT",
     "slug": "pol-kley-dlya-lvt",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60604,6 +65575,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для LVT",
+    "short_description_en": "Adhesive для LVT — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для LVT (Клей для LVT) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для LVT\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для lvt",
+      "клей для lvt",
+      "lvt va pvx plitkalar uchun kontaktli yelim"
     ]
   },
   {
@@ -60612,7 +65597,7 @@ const POL_MATERIALS = [
     "name_uz": "Клей для ПВХ-плитки",
     "name_ru": "Клей для ПВХ-плитки",
     "original_name": "Клей для ПВХ-плитки",
-    "english_name": "Клей для ПВХ-плитки",
+    "english_name": "Adhesive для ПВХ-плитки",
     "slug": "pol-kley-dlya-pvh-plitki",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60761,6 +65746,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для ПВХ-плитки",
+    "short_description_en": "Adhesive для ПВХ-плитки — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для ПВХ-плитки (Клей для ПВХ-плитки) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для ПВХ-плитки\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для пвх-плитки",
+      "клей для пвх-плитки"
     ]
   },
   {
@@ -60769,7 +65767,7 @@ const POL_MATERIALS = [
     "name_uz": "Клей для винилового покрытия",
     "name_ru": "Клей для винилового покрытия",
     "original_name": "Клей для винилового покрытия",
-    "english_name": "Клей для винилового покрытия",
+    "english_name": "Adhesive для винилового покрытия",
     "slug": "pol-kley-dlya-vinilovogo-pokrytiya",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -60918,6 +65916,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для винилового покрытия",
+    "short_description_en": "Adhesive для винилового покрытия — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для винилового покрытия (Клей для винилового покрытия) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для винилового покрытия\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для винилового покрытия",
+      "клей для винилового покрытия"
     ]
   },
   {
@@ -60926,7 +65937,7 @@ const POL_MATERIALS = [
     "name_uz": "Клей для пробкового пола",
     "name_ru": "Клей для пробкового пола",
     "original_name": "Клей для пробкового пола",
-    "english_name": "Клей для пробкового пола",
+    "english_name": "Adhesive для пробкового пола",
     "slug": "pol-kley-dlya-probkovogo-pola",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -61075,6 +66086,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для пробкового пола",
+    "short_description_en": "Adhesive для пробкового пола — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для пробкового пола (Клей для пробкового пола) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для пробкового пола\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для пробкового пола",
+      "клей для пробкового пола"
     ]
   },
   {
@@ -61083,7 +66107,7 @@ const POL_MATERIALS = [
     "name_uz": "Клей для керамической плитки",
     "name_ru": "Клей для керамической плитки",
     "original_name": "Клей для керамической плитки",
-    "english_name": "Клей для керамической плитки",
+    "english_name": "Adhesive для керамической плитки",
     "slug": "pol-kley-dlya-keramicheskoy-plitki",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -61232,6 +66256,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для керамической плитки",
+    "short_description_en": "Adhesive для керамической плитки — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для керамической плитки (Клей для керамической плитки) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для керамической плитки\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для керамической плитки",
+      "клей для керамической плитки"
     ]
   },
   {
@@ -61240,7 +66277,7 @@ const POL_MATERIALS = [
     "name_uz": "Katta formatli mustahkam keramogranit plitasi",
     "name_ru": "Клей для керамогранита",
     "original_name": "Клей для керамогранита",
-    "english_name": "Клей для керамогранита",
+    "english_name": "Adhesive для керамогранита",
     "slug": "pol-kley-dlya-keramogranita",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Клеи для напольных покрытий",
@@ -61389,6 +66426,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Adhesive для керамогранита",
+    "short_description_en": "Adhesive для керамогранита — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Adhesive для керамогранита (Клей для керамогранита) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Adhesive для керамогранита\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "adhesive для керамогранита",
+      "клей для керамогранита",
+      "katta formatli mustahkam keramogranit plitasi"
     ]
   },
   {
@@ -61546,6 +66597,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидный клей",
+    "short_description_en": "Эпоксидный клей — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидный клей (Эпоксидный клей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидный клей\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "эпоксидный клей"
     ]
   },
   {
@@ -61703,6 +66766,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Полиуретановый клей",
+    "short_description_en": "Полиуретановый клей — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Полиуретановый клей (Полиуретановый клей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Полиуретановый клей\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "полиуретановый клей"
     ]
   },
   {
@@ -61860,6 +66935,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Дисперсионный клей",
+    "short_description_en": "Дисперсионный клей — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Дисперсионный клей (Дисперсионный клей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Дисперсионный клей\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "дисперсионный клей"
     ]
   },
   {
@@ -62017,6 +67104,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементный плиточный клей",
+    "short_description_en": "Цементный плиточный клей — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Цементный плиточный клей (Цементный плиточный клей) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Цементный плиточный клей\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "цементный плиточный клей"
     ]
   },
   {
@@ -62174,6 +67273,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Цементная затирка",
+    "short_description_en": "Цементная затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Цементная затирка (Цементная затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Цементная затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "цементная затирка",
+      "tsement asosli namlikka chidamli chok to‘ldirgich"
     ]
   },
   {
@@ -62331,6 +67443,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Эпоксидная затирка",
+    "short_description_en": "Эпоксидная затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Эпоксидная затирка (Эпоксидная затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Эпоксидная затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "эпоксидная затирка",
+      "epoksid suv o‘tkazmaydigan antibakterial zatirka"
     ]
   },
   {
@@ -62488,6 +67613,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Декоративная затирка",
+    "short_description_en": "Декоративная затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Декоративная затирка (Декоративная затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Декоративная затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "декоративная затирка"
     ]
   },
   {
@@ -62645,6 +67782,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Водостойкая затирка",
+    "short_description_en": "Водостойкая затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Водостойкая затирка (Водостойкая затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Водостойкая затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "водостойкая затирка"
     ]
   },
   {
@@ -62802,6 +67951,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Морозостойкая затирка",
+    "short_description_en": "Морозостойкая затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Морозостойкая затирка (Морозостойкая затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Морозостойкая затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "морозостойкая затирка"
     ]
   },
   {
@@ -62959,6 +68120,18 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Гибкая затирка",
+    "short_description_en": "Гибкая затирка — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Гибкая затирка (Гибкая затирка) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Гибкая затирка\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "гибкая затирка"
     ]
   },
   {
@@ -62967,7 +68140,7 @@ const POL_MATERIALS = [
     "name_uz": "Затирка для широких швов",
     "name_ru": "Затирка для широких швов",
     "original_name": "Затирка для широких швов",
-    "english_name": "Затирка для широких швов",
+    "english_name": "Tile grout для широких швов",
     "slug": "pol-zatirka-dlya-shirokih-shvov",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Затирки и швы",
@@ -63116,6 +68289,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile grout для широких швов",
+    "short_description_en": "Tile grout для широких швов — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Tile grout для широких швов (Затирка для широких швов) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Tile grout для широких швов\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "tile grout для широких швов",
+      "затирка для широких швов"
     ]
   },
   {
@@ -63124,7 +68310,7 @@ const POL_MATERIALS = [
     "name_uz": "Затирка для узких швов",
     "name_ru": "Затирка для узких швов",
     "original_name": "Затирка для узких швов",
-    "english_name": "Затирка для узких швов",
+    "english_name": "Tile grout для узких швов",
     "slug": "pol-zatirka-dlya-uzkih-shvov",
     "category_slug": "pol-materiallari",
     "subcategory_name": "Затирки и швы",
@@ -63273,6 +68459,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile grout для узких швов",
+    "short_description_en": "Tile grout для узких швов — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Tile grout для узких швов (Затирка для узких швов) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Tile grout для узких швов\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "1380x193x8 mm",
+    "aliases": [
+      "tile grout для узких швов",
+      "затирка для узких швов"
     ]
   },
   {
@@ -63281,10 +68480,10 @@ const POL_MATERIALS = [
     "name_uz": "Alyuminiy xromlangan pol ostonasi",
     "name_ru": "Алюминиевый порог",
     "original_name": "Алюминиевый порог",
-    "english_name": "Алюминиевый порог",
+    "english_name": "Aluminum floor threshold profile",
     "slug": "pol-alyuminievyy-porog",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -63430,6 +68629,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Aluminum floor threshold profile",
+    "short_description_en": "Aluminum floor threshold profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Aluminum floor threshold profile (Алюминиевый порог) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Aluminum floor threshold profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "aluminum floor threshold profile",
+      "алюминиевый порог",
+      "alyuminiy xromlangan pol ostonasi"
     ]
   },
   {
@@ -63438,10 +68651,10 @@ const POL_MATERIALS = [
     "name_uz": "Стальной порог",
     "name_ru": "Стальной порог",
     "original_name": "Стальной порог",
-    "english_name": "Стальной порог",
+    "english_name": "Stainless steel floor threshold profile",
     "slug": "pol-stalnoy-porog",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -63587,6 +68800,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Stainless steel floor threshold profile",
+    "short_description_en": "Stainless steel floor threshold profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Stainless steel floor threshold profile (Стальной порог) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Stainless steel floor threshold profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "stainless steel floor threshold profile",
+      "стальной порог"
     ]
   },
   {
@@ -63595,10 +68821,10 @@ const POL_MATERIALS = [
     "name_uz": "Латунный порог",
     "name_ru": "Латунный порог",
     "original_name": "Латунный порог",
-    "english_name": "Латунный порог",
+    "english_name": "Brass floor threshold profile",
     "slug": "pol-latunnyy-porog",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -63744,6 +68970,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Brass floor threshold profile",
+    "short_description_en": "Brass floor threshold profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Brass floor threshold profile (Латунный порог) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Brass floor threshold profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "brass floor threshold profile",
+      "латунный порог"
     ]
   },
   {
@@ -63752,10 +68991,10 @@ const POL_MATERIALS = [
     "name_uz": "Деревянный порог",
     "name_ru": "Деревянный порог",
     "original_name": "Деревянный порог",
-    "english_name": "Деревянный порог",
+    "english_name": "Solid wood threshold profile",
     "slug": "pol-derevyannyy-porog",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -63901,6 +69140,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid wood threshold profile",
+    "short_description_en": "Solid wood threshold profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Solid wood threshold profile (Деревянный порог) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Solid wood threshold profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "solid wood threshold profile",
+      "деревянный порог"
     ]
   },
   {
@@ -63909,10 +69161,10 @@ const POL_MATERIALS = [
     "name_uz": "Пластиковый порог",
     "name_ru": "Пластиковый порог",
     "original_name": "Пластиковый порог",
-    "english_name": "Пластиковый порог",
+    "english_name": "PVC floor threshold profile",
     "slug": "pol-plastikovyy-porog",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64058,6 +69310,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "PVC floor threshold profile",
+    "short_description_en": "PVC floor threshold profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "PVC floor threshold profile (Пластиковый порог) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"PVC floor threshold profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "pvc floor threshold profile",
+      "пластиковый порог"
     ]
   },
   {
@@ -64066,10 +69331,10 @@ const POL_MATERIALS = [
     "name_uz": "Переходный профиль",
     "name_ru": "Переходный профиль",
     "original_name": "Переходный профиль",
-    "english_name": "Переходный профиль",
+    "english_name": "Transition floor profile",
     "slug": "pol-perehodnyy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64215,6 +69480,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Transition floor profile",
+    "short_description_en": "Transition floor profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Transition floor profile (Переходный профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Transition floor profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "transition floor profile",
+      "переходный профиль"
     ]
   },
   {
@@ -64223,10 +69501,10 @@ const POL_MATERIALS = [
     "name_uz": "Pol qoplamalari orasidagi ajratuvchi profil",
     "name_ru": "Разделительный профиль",
     "original_name": "Разделительный профиль",
-    "english_name": "Разделительный профиль",
+    "english_name": "Expansion joint divider profile",
     "slug": "pol-razdelitelnyy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64372,6 +69650,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Expansion joint divider profile",
+    "short_description_en": "Expansion joint divider profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Expansion joint divider profile (Разделительный профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Expansion joint divider profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "expansion joint divider profile",
+      "разделительный профиль",
+      "pol qoplamalari orasidagi ajratuvchi profil"
     ]
   },
   {
@@ -64380,10 +69672,10 @@ const POL_MATERIALS = [
     "name_uz": "Kengayish kompensatsiya (deformatsiya) profili",
     "name_ru": "Деформационный профиль",
     "original_name": "Деформационный профиль",
-    "english_name": "Деформационный профиль",
+    "english_name": "Structural expansion joint profile",
     "slug": "pol-deformatsionnyy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64529,6 +69821,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Structural expansion joint profile",
+    "short_description_en": "Structural expansion joint profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Structural expansion joint profile (Деформационный профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Structural expansion joint profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "structural expansion joint profile",
+      "деформационный профиль",
+      "kengayish kompensatsiya (deformatsiya) profili"
     ]
   },
   {
@@ -64537,10 +69843,10 @@ const POL_MATERIALS = [
     "name_uz": "Кромочный профиль",
     "name_ru": "Кромочный профиль",
     "original_name": "Кромочный профиль",
-    "english_name": "Кромочный профиль",
+    "english_name": "Floor edge trim profile",
     "slug": "pol-kromochnyy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64686,6 +69992,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Floor edge trim profile",
+    "short_description_en": "Floor edge trim profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Floor edge trim profile (Кромочный профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Floor edge trim profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "floor edge trim profile",
+      "кромочный профиль"
     ]
   },
   {
@@ -64694,10 +70013,10 @@ const POL_MATERIALS = [
     "name_uz": "Торцевой профиль",
     "name_ru": "Торцевой профиль",
     "original_name": "Торцевой профиль",
-    "english_name": "Торцевой профиль",
+    "english_name": "End cap finishing profile",
     "slug": "pol-tortsevoy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -64843,6 +70162,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "End cap finishing profile",
+    "short_description_en": "End cap finishing profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "End cap finishing profile (Торцевой профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"End cap finishing profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "end cap finishing profile",
+      "торцевой профиль"
     ]
   },
   {
@@ -64851,10 +70183,10 @@ const POL_MATERIALS = [
     "name_uz": "Угловой профиль",
     "name_ru": "Угловой профиль",
     "original_name": "Угловой профиль",
-    "english_name": "Угловой профиль",
+    "english_name": "Corner protection floor profile",
     "slug": "pol-uglovoy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65000,6 +70332,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Corner protection floor profile",
+    "short_description_en": "Corner protection floor profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Corner protection floor profile (Угловой профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Corner protection floor profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "corner protection floor profile",
+      "угловой профиль"
     ]
   },
   {
@@ -65008,10 +70353,10 @@ const POL_MATERIALS = [
     "name_uz": "Т-образный профиль",
     "name_ru": "Т-образный профиль",
     "original_name": "Т-образный профиль",
-    "english_name": "Т-образный профиль",
+    "english_name": "T-molding transition profile",
     "slug": "pol-t-obraznyy-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65157,6 +70502,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "T-molding transition profile",
+    "short_description_en": "T-molding transition profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "T-molding transition profile (Т-образный профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"T-molding transition profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "t-molding transition profile",
+      "т-образный профиль"
     ]
   },
   {
@@ -65165,10 +70523,10 @@ const POL_MATERIALS = [
     "name_uz": "L-профиль",
     "name_ru": "L-профиль",
     "original_name": "L-профиль",
-    "english_name": "L-профиль",
+    "english_name": "L-angle floor edge profile",
     "slug": "pol-l-profil",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65314,6 +70672,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "L-angle floor edge profile",
+    "short_description_en": "L-angle floor edge profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "L-angle floor edge profile (L-профиль) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"L-angle floor edge profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "l-angle floor edge profile",
+      "l-профиль"
     ]
   },
   {
@@ -65322,10 +70693,10 @@ const POL_MATERIALS = [
     "name_uz": "Профиль для плитки",
     "name_ru": "Профиль для плитки",
     "original_name": "Профиль для плитки",
-    "english_name": "Профиль для плитки",
+    "english_name": "Tile edge trim profile",
     "slug": "pol-profil-dlya-plitki",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65471,6 +70842,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Tile edge trim profile",
+    "short_description_en": "Tile edge trim profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Tile edge trim profile (Профиль для плитки) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Tile edge trim profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "tile edge trim profile",
+      "профиль для плитки"
     ]
   },
   {
@@ -65479,10 +70863,10 @@ const POL_MATERIALS = [
     "name_uz": "Плинтус для ламината",
     "name_ru": "Плинтус для ламината",
     "original_name": "Плинтус для ламината",
-    "english_name": "Плинтус для ламината",
+    "english_name": "Laminate floor baseboard",
     "slug": "pol-plintus-dlya-laminata",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65628,6 +71012,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Laminate floor baseboard",
+    "short_description_en": "Laminate floor baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Laminate floor baseboard (Плинтус для ламината) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Laminate floor baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "laminate floor baseboard",
+      "плинтус для ламината"
     ]
   },
   {
@@ -65636,10 +71033,10 @@ const POL_MATERIALS = [
     "name_uz": "Плинтус для паркета",
     "name_ru": "Плинтус для паркета",
     "original_name": "Плинтус для паркета",
-    "english_name": "Плинтус для паркета",
+    "english_name": "Parquet floor baseboard",
     "slug": "pol-plintus-dlya-parketa",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65785,6 +71182,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Parquet floor baseboard",
+    "short_description_en": "Parquet floor baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Parquet floor baseboard (Плинтус для паркета) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Parquet floor baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "parquet floor baseboard",
+      "плинтус для паркета"
     ]
   },
   {
@@ -65793,10 +71203,10 @@ const POL_MATERIALS = [
     "name_uz": "Плинтус для ПВХ",
     "name_ru": "Плинтус для ПВХ",
     "original_name": "Плинтус для ПВХ",
-    "english_name": "Плинтус для ПВХ",
+    "english_name": "PVC floor baseboard",
     "slug": "pol-plintus-dlya-pvh",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -65942,6 +71352,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "PVC floor baseboard",
+    "short_description_en": "PVC floor baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "PVC floor baseboard (Плинтус для ПВХ) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"PVC floor baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "pvc floor baseboard",
+      "плинтус для пвх"
     ]
   },
   {
@@ -65950,10 +71373,10 @@ const POL_MATERIALS = [
     "name_uz": "Плинтус для ковролина",
     "name_ru": "Плинтус для ковролина",
     "original_name": "Плинтус для ковролина",
-    "english_name": "Плинтус для ковролина",
+    "english_name": "Carpet baseboard trim",
     "slug": "pol-plintus-dlya-kovrolina",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Пороги, профили и дополнительные элементы",
+    "category_slug": "profillar",
+    "subcategory_name": "Напольные профили и пороги",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66099,6 +71522,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Carpet baseboard trim",
+    "short_description_en": "Carpet baseboard trim — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Carpet baseboard trim (Плинтус для ковролина) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Carpet baseboard trim\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "900-1800x193x8 mm",
+    "aliases": [
+      "carpet baseboard trim",
+      "плинтус для ковролина"
     ]
   },
   {
@@ -66107,10 +71543,10 @@ const POL_MATERIALS = [
     "name_uz": "Tabiiy yog‘och pol plintusi",
     "name_ru": "Деревянный плинтус",
     "original_name": "Деревянный плинтус",
-    "english_name": "Деревянный плинтус",
+    "english_name": "Solid wood baseboard",
     "slug": "pol-derevyannyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66256,6 +71692,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Solid wood baseboard",
+    "short_description_en": "Solid wood baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Solid wood baseboard (Деревянный плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Solid wood baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "solid wood baseboard",
+      "деревянный плинтус",
+      "tabiiy yog‘och pol plintusi"
     ]
   },
   {
@@ -66264,10 +71714,10 @@ const POL_MATERIALS = [
     "name_uz": "MDF bo‘yaladigan pol plintusi",
     "name_ru": "МДФ плинтус",
     "original_name": "МДФ плинтус",
-    "english_name": "МДФ плинтус",
+    "english_name": "MDF skirt board",
     "slug": "pol-mdf-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66413,6 +71863,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "MDF skirt board",
+    "short_description_en": "MDF skirt board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "MDF skirt board (МДФ плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"MDF skirt board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "mdf skirt board",
+      "мдф плинтус",
+      "mdf bo‘yaladigan pol plintusi"
     ]
   },
   {
@@ -66421,10 +71885,10 @@ const POL_MATERIALS = [
     "name_uz": "PVX kabel kanalli plastik plintus",
     "name_ru": "ПВХ плинтус",
     "original_name": "ПВХ плинтус",
-    "english_name": "ПВХ плинтус",
+    "english_name": "PVC skirt board",
     "slug": "pol-pvh-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66570,6 +72034,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "PVC skirt board",
+    "short_description_en": "PVC skirt board — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "PVC skirt board (ПВХ плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"PVC skirt board\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "pvc skirt board",
+      "пвх плинтус",
+      "pvx kabel kanalli plastik plintus"
     ]
   },
   {
@@ -66578,10 +72056,10 @@ const POL_MATERIALS = [
     "name_uz": "Alyuminiy zamonaviy devor plintusi",
     "name_ru": "Алюминиевый плинтус",
     "original_name": "Алюминиевый плинтус",
-    "english_name": "Алюминиевый плинтус",
+    "english_name": "Aluminum baseboard profile",
     "slug": "pol-alyuminievyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66727,6 +72205,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Aluminum baseboard profile",
+    "short_description_en": "Aluminum baseboard profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Aluminum baseboard profile (Алюминиевый плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Aluminum baseboard profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "aluminum baseboard profile",
+      "алюминиевый плинтус",
+      "alyuminiy zamonaviy devor plintusi"
     ]
   },
   {
@@ -66735,10 +72227,10 @@ const POL_MATERIALS = [
     "name_uz": "Металлический плинтус",
     "name_ru": "Металлический плинтус",
     "original_name": "Металлический плинтус",
-    "english_name": "Металлический плинтус",
+    "english_name": "Metal baseboard profile",
     "slug": "pol-metallicheskiy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -66884,6 +72376,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Metal baseboard profile",
+    "short_description_en": "Metal baseboard profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Metal baseboard profile (Металлический плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Metal baseboard profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "metal baseboard profile",
+      "металлический плинтус"
     ]
   },
   {
@@ -66892,10 +72397,10 @@ const POL_MATERIALS = [
     "name_uz": "Полиуретановый плинтус",
     "name_ru": "Полиуретановый плинтус",
     "original_name": "Полиуретановый плинтус",
-    "english_name": "Полиуретановый плинтус",
+    "english_name": "Polyurethane architectural baseboard",
     "slug": "pol-poliuretanovyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67041,6 +72546,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Polyurethane architectural baseboard",
+    "short_description_en": "Polyurethane architectural baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Polyurethane architectural baseboard (Полиуретановый плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Polyurethane architectural baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "polyurethane architectural baseboard",
+      "полиуретановый плинтус"
     ]
   },
   {
@@ -67049,10 +72567,10 @@ const POL_MATERIALS = [
     "name_uz": "Дюрополимерный плинтус",
     "name_ru": "Дюрополимерный плинтус",
     "original_name": "Дюрополимерный плинтус",
-    "english_name": "Дюрополимерный плинтус",
+    "english_name": "Duropolymer high-impact baseboard",
     "slug": "pol-dyuropolimernyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67198,6 +72716,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Duropolymer high-impact baseboard",
+    "short_description_en": "Duropolymer high-impact baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Duropolymer high-impact baseboard (Дюрополимерный плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Duropolymer high-impact baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "duropolymer high-impact baseboard",
+      "дюрополимерный плинтус"
     ]
   },
   {
@@ -67206,10 +72737,10 @@ const POL_MATERIALS = [
     "name_uz": "Гибкий плинтус",
     "name_ru": "Гибкий плинтус",
     "original_name": "Гибкий плинтус",
-    "english_name": "Гибкий плинтус",
+    "english_name": "Flexible baseboard trim",
     "slug": "pol-gibkiy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67355,6 +72886,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Flexible baseboard trim",
+    "short_description_en": "Flexible baseboard trim — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Flexible baseboard trim (Гибкий плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Flexible baseboard trim\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "flexible baseboard trim",
+      "гибкий плинтус"
     ]
   },
   {
@@ -67363,10 +72907,10 @@ const POL_MATERIALS = [
     "name_uz": "Yashirin montaj qilinadigan suzuvchi plintus",
     "name_ru": "Скрытый плинтус",
     "original_name": "Скрытый плинтус",
-    "english_name": "Скрытый плинтус",
+    "english_name": "Concealed flush-mount baseboard",
     "slug": "pol-skrytyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67512,6 +73056,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Concealed flush-mount baseboard",
+    "short_description_en": "Concealed flush-mount baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Concealed flush-mount baseboard (Скрытый плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Concealed flush-mount baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "concealed flush-mount baseboard",
+      "скрытый плинтус",
+      "yashirin montaj qilinadigan suzuvchi plintus"
     ]
   },
   {
@@ -67520,10 +73078,10 @@ const POL_MATERIALS = [
     "name_uz": "Tenevoy soya tirqishli plintus",
     "name_ru": "Теневой плинтус",
     "original_name": "Теневой плинтус",
-    "english_name": "Теневой плинтус",
+    "english_name": "Concealed shadow gap baseboard profile",
     "slug": "pol-tenevoy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67669,6 +73227,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Concealed shadow gap baseboard profile",
+    "short_description_en": "Concealed shadow gap baseboard profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Concealed shadow gap baseboard profile (Теневой плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Concealed shadow gap baseboard profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "concealed shadow gap baseboard profile",
+      "теневой плинтус",
+      "tenevoy soya tirqishli plintus"
     ]
   },
   {
@@ -67677,10 +73249,10 @@ const POL_MATERIALS = [
     "name_uz": "Встроенный плинтус",
     "name_ru": "Встроенный плинтус",
     "original_name": "Встроенный плинтус",
-    "english_name": "Встроенный плинтус",
+    "english_name": "Recessed integrated baseboard",
     "slug": "pol-vstroennyy-plintus",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67826,6 +73398,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Recessed integrated baseboard",
+    "short_description_en": "Recessed integrated baseboard — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Recessed integrated baseboard (Встроенный плинтус) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Recessed integrated baseboard\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "recessed integrated baseboard",
+      "встроенный плинтус"
     ]
   },
   {
@@ -67834,10 +73419,10 @@ const POL_MATERIALS = [
     "name_uz": "Плинтус с кабель-каналом",
     "name_ru": "Плинтус с кабель-каналом",
     "original_name": "Плинтус с кабель-каналом",
-    "english_name": "Плинтус с кабель-каналом",
+    "english_name": "Baseboard with cable channel",
     "slug": "pol-plintus-s-kabel-kanalom",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -67983,6 +73568,19 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "Baseboard with cable channel",
+    "short_description_en": "Baseboard with cable channel — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "Baseboard with cable channel (Плинтус с кабель-каналом) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"Baseboard with cable channel\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "baseboard with cable channel",
+      "плинтус с кабель-каналом"
     ]
   },
   {
@@ -67991,10 +73589,10 @@ const POL_MATERIALS = [
     "name_uz": "LED yoritgichli zamonaviy plintus",
     "name_ru": "Плинтус с LED-подсветкой",
     "original_name": "Плинтус с LED-подсветкой",
-    "english_name": "Плинтус с LED-подсветкой",
+    "english_name": "LED illuminated baseboard profile",
     "slug": "pol-plintus-s-led-podsvetkoy",
-    "category_slug": "pol-materiallari",
-    "subcategory_name": "Плинтусы",
+    "category_slug": "profillar",
+    "subcategory_name": "Плинтусы и теневые плинтусы",
     "scope": "interior",
     "purpose_tag": "pol",
     "manufacturer_slug": "arbiton-progress-profiles-eurokraab",
@@ -68140,6 +73738,20 @@ const POL_MATERIALS = [
         "http_status": 200,
         "content_matched": true
       }
+    ],
+    "name_en": "LED illuminated baseboard profile",
+    "short_description_en": "LED illuminated baseboard profile — professional technical product designed for modern interior architecture and construction specifications.",
+    "description_en": "LED illuminated baseboard profile (Плинтус с LED-подсветкой) is a premium-grade product compliant with international building codes and European/national standards. Ideal for residential, commercial, and architectural projects.",
+    "usage_area_en": "Interior flooring, residential, and commercial spaces",
+    "pros_en": "High durability, wear resistance, dimensional stability, environmental safety, and easy maintenance.",
+    "cons_en": "Requires professional surface preparation and compliance with manufacturer installation guidelines.",
+    "architect_notes_en": "In BIM models and architectural drawings for \"LED illuminated baseboard profile\", verify subfloor tolerances, expansion gap perimeter, and underfloor heating compatibility.",
+    "mounting_instructions_en": "Install in accordance with manufacturer technical specifications, relevant building codes (EN/GOST), and standard expansion gap rules.",
+    "dimensions_info_en": "2400-2500x193x8 mm",
+    "aliases": [
+      "led illuminated baseboard profile",
+      "плинтус с led-подсветкой",
+      "led yoritgichli zamonaviy plintus"
     ]
   }
 ];

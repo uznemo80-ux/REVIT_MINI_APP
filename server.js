@@ -8016,11 +8016,16 @@ app.all('/api/materials/list', async function (req, res) {
         m.name_ru ILIKE $` + paramIdx + ` OR
         m.original_name ILIKE $` + paramIdx + ` OR
         m.english_name ILIKE $` + paramIdx + ` OR
+        m.name_en ILIKE $` + paramIdx + ` OR
+        m.brand ILIKE $` + paramIdx + ` OR
+        m.article ILIKE $` + paramIdx + ` OR
+        m.collection ILIKE $` + paramIdx + ` OR
         m.subcategory_name ILIKE $` + paramIdx + ` OR
         m.product_code ILIKE $` + paramIdx + ` OR
         m.description ILIKE $` + paramIdx + ` OR
         m.description_uz ILIKE $` + paramIdx + ` OR
         m.description_ru ILIKE $` + paramIdx + ` OR
+        m.description_en ILIKE $` + paramIdx + ` OR
         m.usage_area ILIKE $` + paramIdx + ` OR
         m.usage_area_uz ILIKE $` + paramIdx + ` OR
         mfg.name ILIKE $` + paramIdx + ` OR
@@ -8070,6 +8075,8 @@ app.all('/api/materials/list', async function (req, res) {
         m.pros_uz, m.pros_ru, m.cons_uz, m.cons_ru,
         m.architect_notes_uz, m.architect_notes_ru, m.mounting_instructions_uz, m.mounting_instructions_ru,
         m.dimensions_info_uz, m.dimensions_info_ru, m.is_frequent,
+        m.name_en, m.short_description_en, m.description_en, m.usage_area_en,
+        m.pros_en, m.cons_en, m.architect_notes_en, m.mounting_instructions_en, m.dimensions_info_en,
         COALESCE(m.gallery_images, '{}') AS gallery_images,
         COALESCE(m.image_url, m.cover_image) AS cover_image,
         COALESCE(m.image_url, m.cover_image) AS image_url,
@@ -8117,6 +8124,7 @@ app.all('/api/materials/list', async function (req, res) {
           name: sm.name_uz || sm.name,
           name_uz: sm.name_uz || sm.name,
           name_ru: sm.name_ru || sm.original_name,
+          name_en: sm.name_en || sm.english_name || sm.name_ru || sm.name,
           cover_image: sm.image_url || sm.cover_image,
           image_url: sm.image_url || sm.cover_image,
           featured_image: sm.image_url || sm.cover_image,
@@ -8188,6 +8196,7 @@ app.all('/api/materials/list', async function (req, res) {
         name: sm.name_uz || sm.name,
         name_uz: sm.name_uz || sm.name,
         name_ru: sm.name_ru || sm.original_name,
+        name_en: sm.name_en || sm.english_name || sm.name_ru || sm.name,
         cover_image: sm.image_url || sm.cover_image,
         image_url: sm.image_url || sm.cover_image,
         featured_image: sm.image_url || sm.cover_image,
@@ -8247,6 +8256,56 @@ app.all('/api/materials/detail', async function (req, res) {
 
     var mat = matRes.rows[0];
     var materialId = mat.id;
+
+    // Multilingual Translations (ru, uz, en)
+    var transRes = await pool.query(`
+      SELECT language_code, name, short_description, description, application, installation, advantages, disadvantages, notes
+      FROM material_translations
+      WHERE material_id = $1
+    `, [materialId]).catch(function() { return { rows: [] }; });
+
+    var translations = {};
+    (transRes.rows || []).forEach(function(tr) {
+      translations[tr.language_code] = tr;
+    });
+
+    if (!translations.ru) {
+      translations.ru = {
+        name: mat.name_ru || mat.name,
+        description: mat.description_ru || mat.description,
+        short_description: mat.short_description_ru,
+        application: mat.usage_area_ru || mat.application_area || mat.usage_area,
+        installation: mat.mounting_instructions_ru || mat.installation_method,
+        advantages: mat.pros_ru || mat.pros,
+        disadvantages: mat.cons_ru || mat.cons,
+        notes: mat.architect_notes_ru || mat.architect_notes
+      };
+    }
+    if (!translations.uz) {
+      translations.uz = {
+        name: mat.name_uz || mat.name,
+        description: mat.description_uz || mat.description,
+        short_description: mat.short_description_uz,
+        application: mat.usage_area_uz || mat.application_area || mat.usage_area,
+        installation: mat.mounting_instructions_uz || mat.installation_method,
+        advantages: mat.pros_uz || mat.pros,
+        disadvantages: mat.cons_uz || mat.cons,
+        notes: mat.architect_notes_uz || mat.architect_notes
+      };
+    }
+    if (!translations.en) {
+      translations.en = {
+        name: mat.name_en || mat.english_name || mat.name_ru || mat.name,
+        description: mat.description_en || mat.description_ru || mat.description,
+        short_description: mat.short_description_en,
+        application: mat.usage_area_en || mat.usage_area_ru || mat.usage_area,
+        installation: mat.mounting_instructions_en || mat.mounting_instructions_ru,
+        advantages: mat.pros_en || mat.pros_ru || mat.pros,
+        disadvantages: mat.cons_en || mat.cons_ru || mat.cons,
+        notes: mat.architect_notes_en || mat.architect_notes_ru || mat.architect_notes
+      };
+    }
+    mat.translations = translations;
 
     // Types / Variants
     var typesRes = await pool.query(`
@@ -8436,6 +8495,9 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
     var nameRu = (b.name_ru || b.original_name || name).trim();
     var slug = (b.slug || (nameUz || name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')).trim();
     var originalName = (b.original_name || nameRu).trim();
+    var nameEn = (b.name_en || b.english_name || '').trim();
+    var shortDescEn = (b.short_description_en || '').trim();
+    var descEn = (b.description_en || '').trim();
     var englishName = (b.english_name || '').trim();
     var aliases = Array.isArray(b.aliases) ? b.aliases : (b.aliases ? String(b.aliases).split(',').map(s => s.trim()).filter(Boolean) : []);
     var categoryId = parseInt(b.category_id, 10) || null;
@@ -8621,6 +8683,45 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
           `, [materialId, s.source_type || 'official_product_page', s.title, s.url, s.publisher || '', s.document_name || '', s.document_version || '', s.published_date || '', s.status || 'verified', Boolean(s.is_primary)]);
         }
       }
+    }
+
+    // Sync multilingual translations in material_translations
+    try {
+      if (nameEn || descEn || shortDescEn) {
+        await pool.query(`
+          UPDATE materials
+          SET name_en = COALESCE(NULLIF($1, ''), name_en),
+              short_description_en = COALESCE(NULLIF($2, ''), short_description_en),
+              description_en = COALESCE(NULLIF($3, ''), description_en)
+          WHERE id = $4
+        `, [nameEn, shortDescEn, descEn, materialId]);
+      }
+      if (nameUz || descUz) {
+        await pool.query(`
+          INSERT INTO material_translations (material_id, language_code, name, short_description, description, updated_at)
+          VALUES ($1, 'uz', $2, $3, $4, NOW())
+          ON CONFLICT (material_id, language_code) DO UPDATE
+          SET name = EXCLUDED.name, short_description = EXCLUDED.short_description, description = EXCLUDED.description, updated_at = NOW()
+        `, [materialId, nameUz || name, shortDescUz, descUz || b.description || '']);
+      }
+      if (nameRu || descRu) {
+        await pool.query(`
+          INSERT INTO material_translations (material_id, language_code, name, short_description, description, updated_at)
+          VALUES ($1, 'ru', $2, $3, $4, NOW())
+          ON CONFLICT (material_id, language_code) DO UPDATE
+          SET name = EXCLUDED.name, short_description = EXCLUDED.short_description, description = EXCLUDED.description, updated_at = NOW()
+        `, [materialId, nameRu || name, shortDescRu, descRu || b.description || '']);
+      }
+      if (nameEn || descEn) {
+        await pool.query(`
+          INSERT INTO material_translations (material_id, language_code, name, short_description, description, updated_at)
+          VALUES ($1, 'en', $2, $3, $4, NOW())
+          ON CONFLICT (material_id, language_code) DO UPDATE
+          SET name = EXCLUDED.name, short_description = EXCLUDED.short_description, description = EXCLUDED.description, updated_at = NOW()
+        `, [materialId, nameEn || name, shortDescEn, descEn || '']);
+      }
+    } catch (e) {
+      console.warn('Translation sync warning:', e.message);
     }
 
     return res.json({ ok: true, material_id: materialId, message: 'Material muvaffaqiyatli saqlandi' });

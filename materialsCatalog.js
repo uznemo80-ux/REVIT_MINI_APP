@@ -1,6 +1,7 @@
 // ======================================================
 // YOSHUZBEKK Academy — Materials Knowledge Base
-// 17 Base Materials + 327 Full Wall Technical Catalog (344 Total)
+// 17 Base Materials + 327 Devor + 434 Pol (778 Total)
+// Multilingual: UZ / RU / EN
 // ======================================================
 
 const { DEVOR_MATERIALS } = require('./devorCatalog');
@@ -163,7 +164,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Shadow Gap Profile for Drywall",
+    "short_description_en": "Shadow Gap Profile for Drywall — professional architectural and construction product.",
+    "description_en": "Shadow Gap Profile for Drywall is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Shadow Gap Profile for Drywall.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Razdelitelniy profil (Shift ajratuvchi chok)",
@@ -296,7 +305,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Ceiling Separator Shadow Profile",
+    "short_description_en": "Ceiling Separator Shadow Profile — professional architectural and construction product.",
+    "description_en": "Ceiling Separator Shadow Profile is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Ceiling Separator Shadow Profile.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Tenevoy plintus (Yashirin suzuvchi devor plintusi)",
@@ -437,7 +454,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Concealed Shadow Baseboard Profile",
+    "short_description_en": "Concealed Shadow Baseboard Profile — professional architectural and construction product.",
+    "description_en": "Concealed Shadow Baseboard Profile is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Concealed Shadow Baseboard Profile.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Yashirin parda karniz profili (Shiftga integratsiya)",
@@ -572,7 +597,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Concealed Curtain Track Profile",
+    "short_description_en": "Concealed Curtain Track Profile — professional architectural and construction product.",
+    "description_en": "Concealed Curtain Track Profile is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Concealed Curtain Track Profile.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "LED chiziqli yoritish profili (Svetovaya liniya)",
@@ -705,7 +738,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Linear Light Ceiling Profile",
+    "short_description_en": "Linear Light Ceiling Profile — professional architectural and construction product.",
+    "description_en": "Linear Light Ceiling Profile is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Linear Light Ceiling Profile.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Burchak himoya profili (Uglovoy profil 90°)",
@@ -840,7 +881,15 @@ const BASE_17_MATERIALS = [
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Corner Bead Drywall Profile",
+    "short_description_en": "Corner Bead Drywall Profile — professional architectural and construction product.",
+    "description_en": "Corner Bead Drywall Profile is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Corner Bead Drywall Profile.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Knauf GKL 12.5mm Devor Gipsokartoni",
@@ -979,7 +1028,15 @@ const BASE_17_MATERIALS = [
     "thermal_conductivity": "Не указано",
     "water_absorption": "Не указано",
     "frost_resistance": "Не указано",
-    "service_life": "50+ yil"
+    "service_life": "50+ yil",
+    "name_en": "Knauf Standard Gypsum Plasterboard 12.5mm",
+    "short_description_en": "Knauf Standard Gypsum Plasterboard 12.5mm — professional architectural and construction product.",
+    "description_en": "Knauf Standard Gypsum Plasterboard 12.5mm is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Knauf Standard Gypsum Plasterboard 12.5mm.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Knauf GKL 9.5mm Shift Gipsokartoni",
@@ -1113,7 +1170,15 @@ const BASE_17_MATERIALS = [
     "frost_resistance": "Не указано",
     "sound_insulation": "Не указано",
     "service_life": "50+ yil",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Knauf Ceiling Gypsum Board 9.5mm",
+    "short_description_en": "Knauf Ceiling Gypsum Board 9.5mm — professional architectural and construction product.",
+    "description_en": "Knauf Ceiling Gypsum Board 9.5mm is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Knauf Ceiling Gypsum Board 9.5mm.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Knauf GKLV Namlikka Chidamli Gipsokarton (Yashil)",
@@ -1249,7 +1314,15 @@ const BASE_17_MATERIALS = [
     "sound_insulation": "Не указано",
     "service_life": "50+ yil",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Knauf Moisture Resistant Gypsum Board H2",
+    "short_description_en": "Knauf Moisture Resistant Gypsum Board H2 — professional architectural and construction product.",
+    "description_en": "Knauf Moisture Resistant Gypsum Board H2 is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Knauf Moisture Resistant Gypsum Board H2.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Knauf Akvapanel Indoor (Sement plita)",
@@ -1383,7 +1456,15 @@ const BASE_17_MATERIALS = [
     "sound_insulation": "Не указано",
     "service_life": "50+ yil",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Knauf Aquapanel Cement Board Indoor",
+    "short_description_en": "Knauf Aquapanel Cement Board Indoor — professional architectural and construction product.",
+    "description_en": "Knauf Aquapanel Cement Board Indoor is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Knauf Aquapanel Cement Board Indoor.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Akril vanna (100% PMMA quyma akril)",
@@ -1516,7 +1597,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Cast Acrylic Bathtub PMMA",
+    "short_description_en": "Cast Acrylic Bathtub PMMA — professional architectural and construction product.",
+    "description_en": "Cast Acrylic Bathtub PMMA is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Cast Acrylic Bathtub PMMA.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Chiziqli zanglamas dush trapi (Lineyniy trap)",
@@ -1649,7 +1738,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Linear Shower Drain Stainless Steel",
+    "short_description_en": "Linear Shower Drain Stainless Steel — professional architectural and construction product.",
+    "description_en": "Linear Shower Drain Stainless Steel is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Linear Shower Drain Stainless Steel.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Geberit Duofix yashirin montaj installyatsiyasi",
@@ -1782,7 +1879,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Geberit Duofix Concealed Cistern Frame",
+    "short_description_en": "Geberit Duofix Concealed Cistern Frame — professional architectural and construction product.",
+    "description_en": "Geberit Duofix Concealed Cistern Frame is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Geberit Duofix Concealed Cistern Frame.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Keramogranit 600x1200mm (Katta formatli kafel)",
@@ -1917,7 +2022,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Porcelain Stoneware Tile 600x1200mm",
+    "short_description_en": "Porcelain Stoneware Tile 600x1200mm — professional architectural and construction product.",
+    "description_en": "Porcelain Stoneware Tile 600x1200mm is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Porcelain Stoneware Tile 600x1200mm.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "EGGER LDSP 18mm Mebel Plitasi",
@@ -2049,7 +2162,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "EGGER Melamine Faced Chipboard 18mm",
+    "short_description_en": "EGGER Melamine Faced Chipboard 18mm — professional architectural and construction product.",
+    "description_en": "EGGER Melamine Faced Chipboard 18mm is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for EGGER Melamine Faced Chipboard 18mm.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Arton Avtoklav Gazobeton Bloki D500",
@@ -2182,7 +2303,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Autoclaved Aerated Concrete Block D500",
+    "short_description_en": "Autoclaved Aerated Concrete Block D500 — professional architectural and construction product.",
+    "description_en": "Autoclaved Aerated Concrete Block D500 is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Autoclaved Aerated Concrete Block D500.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   },
   {
     "name_uz": "Ceresit CM 17 Super Flexible Plitka Yelimi",
@@ -2316,7 +2445,15 @@ const BASE_17_MATERIALS = [
     "suitable_rooms": "Barcha turdagi xonalar",
     "suitable_surfaces": "Standart yuzalar",
     "installation_method": "Standart montaj yo‘riqnomasi",
-    "required_tools": "Standart qurilish asboblari"
+    "required_tools": "Standart qurilish asboblari",
+    "name_en": "Ceresit CM 17 Highly Flexible Tile Adhesive S1",
+    "short_description_en": "Ceresit CM 17 Highly Flexible Tile Adhesive S1 — professional architectural and construction product.",
+    "description_en": "Ceresit CM 17 Highly Flexible Tile Adhesive S1 is engineered for modern architectural, interior, and construction specifications according to European and international standards.",
+    "usage_area_en": "Modern residential and commercial architecture and interior design.",
+    "pros_en": "Premium build quality, verified compliance, and seamless integration.",
+    "cons_en": "Requires professional installation and adherence to manufacturer instructions.",
+    "architect_notes_en": "Ensure accurate BIM family parameters and clearance details for Ceresit CM 17 Highly Flexible Tile Adhesive S1.",
+    "mounting_instructions_en": "Install according to official technical instructions and manufacturer guidelines."
   }
 ];
 
