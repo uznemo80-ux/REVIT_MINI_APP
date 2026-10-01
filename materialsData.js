@@ -124,7 +124,8 @@ async function initMaterialsTables(pool) {
       { name: "image_alt", type: "VARCHAR(255)" },
       { name: "image_verified", type: "BOOLEAN DEFAULT true" },
       { name: "image_verified_at", type: "TIMESTAMP WITH TIME ZONE" },
-      { name: "image_verification_note", type: "TEXT" }
+      { name: "image_verification_note", type: "TEXT" },
+      { name: "gallery_images", type: "TEXT[] DEFAULT '{}'" }
     ];
 
     for (const col of colsToEnsure) {
@@ -282,6 +283,8 @@ async function initMaterialsTables(pool) {
       const categoryId = catMap[m.category_slug] || null;
       const manufacturerId = mfgMap[m.manufacturer_slug] || null;
 
+      const galleryImages = Array.isArray(m.images) && m.images.length > 0 ? m.images : (m.image_url ? [m.image_url] : []);
+
       const res = await pool.query(`
         INSERT INTO materials (
           name, slug, original_name, english_name, aliases, category_id, subcategory_name, scope, purpose_tag,
@@ -292,7 +295,8 @@ async function initMaterialsTables(pool) {
           name_uz, name_ru, short_description_uz, short_description_ru, description_uz, description_ru,
           usage_area_uz, usage_area_ru, pros_uz, pros_ru, cons_uz, cons_ru, architect_notes_uz, architect_notes_ru,
           mounting_instructions_uz, mounting_instructions_ru, dimensions_info_uz, dimensions_info_ru,
-          is_frequent, image_url, image_source, image_source_url, image_alt, image_verified, image_verified_at, image_verification_note
+          is_frequent, image_url, image_source, image_source_url, image_alt, image_verified, image_verified_at, image_verification_note,
+          gallery_images
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
@@ -303,7 +307,8 @@ async function initMaterialsTables(pool) {
           $32, $33, $34, $35, $36, $37,
           $38, $39, $40, $41, $42, $43, $44, $45,
           $46, $47, $48, $49,
-          $50, $51, $52, $53, $54, $55, NOW(), $56
+          $50, $51, $52, $53, $54, $55, NOW(), $56,
+          $57
         )
         ON CONFLICT (slug) DO UPDATE
         SET name = EXCLUDED.name, original_name = EXCLUDED.original_name, english_name = EXCLUDED.english_name,
@@ -331,7 +336,8 @@ async function initMaterialsTables(pool) {
             image_url = EXCLUDED.image_url, image_source = EXCLUDED.image_source,
             image_source_url = EXCLUDED.image_source_url, image_alt = EXCLUDED.image_alt,
             image_verified = EXCLUDED.image_verified, image_verified_at = NOW(),
-            image_verification_note = EXCLUDED.image_verification_note
+            image_verification_note = EXCLUDED.image_verification_note,
+            gallery_images = EXCLUDED.gallery_images
         RETURNING id;
       `, [
         m.name, m.slug, m.original_name, m.english_name, m.aliases || [], categoryId, m.subcategory_name, m.scope || 'both', m.purpose_tag || null,
@@ -355,7 +361,8 @@ async function initMaterialsTables(pool) {
         m.image_source_url || null,
         m.image_alt || m.name_uz,
         m.image_verified !== false,
-        m.image_verification_note || 'Manba tekshirilgan va tasdiqlangan'
+        m.image_verification_note || 'Manba tekshirilgan va tasdiqlangan',
+        galleryImages
       ]);
 
       const materialId = res.rows[0]?.id;

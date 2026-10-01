@@ -8070,6 +8070,7 @@ app.all('/api/materials/list', async function (req, res) {
         m.pros_uz, m.pros_ru, m.cons_uz, m.cons_ru,
         m.architect_notes_uz, m.architect_notes_ru, m.mounting_instructions_uz, m.mounting_instructions_ru,
         m.dimensions_info_uz, m.dimensions_info_ru, m.is_frequent,
+        COALESCE(m.gallery_images, '{}') AS gallery_images,
         COALESCE(m.image_url, m.cover_image) AS cover_image,
         COALESCE(m.image_url, m.cover_image) AS image_url,
         COALESCE(m.image_url, m.cover_image) AS featured_image,
@@ -8151,6 +8152,17 @@ app.all('/api/materials/list', async function (req, res) {
       total = returnedMaterials.length;
     }
 
+        returnedMaterials.forEach(function(rm) {
+      var gImages = Array.isArray(rm.gallery_images) && rm.gallery_images.length ? rm.gallery_images : (Array.isArray(rm.images) && rm.images.length ? rm.images : []);
+      if (!gImages.length && (rm.image_url || rm.cover_image)) {
+        gImages = [rm.image_url || rm.cover_image];
+      }
+      rm.images = gImages;
+      rm.image_url = gImages[0] || rm.image_url || rm.cover_image || '';
+      rm.cover_image = rm.image_url;
+      rm.featured_image = rm.image_url;
+    });
+
     return res.json({
       ok: true,
       materials: returnedMaterials,
@@ -8174,6 +8186,17 @@ app.all('/api/materials/list', async function (req, res) {
         sources_count: (sm.sources || []).length
       }, sm);
     });
+        fallbackSeed.forEach(function(rm) {
+      var gImages = Array.isArray(rm.gallery_images) && rm.gallery_images.length ? rm.gallery_images : (Array.isArray(rm.images) && rm.images.length ? rm.images : []);
+      if (!gImages.length && (rm.image_url || rm.cover_image)) {
+        gImages = [rm.image_url || rm.cover_image];
+      }
+      rm.images = gImages;
+      rm.image_url = gImages[0] || rm.image_url || rm.cover_image || '';
+      rm.cover_image = rm.image_url;
+      rm.featured_image = rm.image_url;
+    });
+
     return res.json({
       ok: true,
       materials: fallbackSeed,
@@ -8279,6 +8302,14 @@ app.all('/api/materials/detail', async function (req, res) {
     mat.title = mat.name_uz || mat.name;
     mat.cover_image = mat.image_url || mat.cover_image;
     mat.featured_image = mat.cover_image;
+    var gDetailImages = Array.isArray(mat.gallery_images) && mat.gallery_images.length ? mat.gallery_images : (Array.isArray(mat.images) && mat.images.length ? mat.images : []);
+    if (!gDetailImages.length && (mat.image_url || mat.cover_image)) {
+      gDetailImages = [mat.image_url || mat.cover_image];
+    }
+    mat.images = gDetailImages;
+    mat.image_url = gDetailImages[0] || mat.image_url || '';
+    mat.cover_image = mat.image_url;
+    mat.featured_image = mat.image_url;
 
     // Statistika: bir foydalanuvchi bir kunda bir marta hisoblanadi
     var matStats = { view_count: Number(mat.view_count) || 0, like_count: 0, save_count: 0, liked: false, saved: false };
@@ -8403,7 +8434,13 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
     var manufacturerId = parseInt(b.manufacturer_id, 10) || null;
     var productCode = (b.product_code || '').trim();
     var materialType = (b.material_type || '').trim();
-    var coverImage = (b.image_url || b.cover_image || '').trim();
+    var galleryImages = Array.isArray(b.images) && b.images.length ? b.images : [];
+    if (!galleryImages.length) {
+      var rawImgList = [b.image_1 || b.image1, b.image_2 || b.image2, b.image_3 || b.image3, b.featured_image, b.image_url, b.cover_image];
+      galleryImages = rawImgList.map(function(s) { return (s || '').trim(); }).filter(Boolean);
+      galleryImages = Array.from(new Set(galleryImages));
+    }
+    var coverImage = (galleryImages[0] || b.image_url || b.cover_image || '').trim();
     var imageUrl = (b.image_url || b.cover_image || '').trim();
     var imageSource = (b.image_source || '').trim();
     var imageSourceUrl = (b.image_source_url || '').trim();
@@ -8495,6 +8532,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
         notesUz, notesRu, mountUz, mountRu,
         dimUz, dimRu, isFrequent,
         imageUrl, imageSource, imageSourceUrl, imageAlt, imageVerified, imageVerificationNote,
+        galleryImages,
         id
       ]);
 

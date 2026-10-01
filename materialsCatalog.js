@@ -22,13 +22,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "kraab-systems",
     "product_code": "EK-GKL-01",
     "material_type": "Alyuminiy tenevoy profil",
-    "cover_image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://kraab-systems.com/wp-content/uploads/2026/08/eurokraab_1750x1000.webp",
+    "image_url": "https://kraab-systems.com/wp-content/uploads/2026/08/eurokraab_1750x1000.webp",
     "image_source": "Kraab Systems rasmiy texnik katalogi",
     "image_source_url": "https://kraab-systems.com/eurokraab",
     "image_alt": "Tenevoy profil EuroKraab shift va devor choki",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "EuroKraab original alyuminiy tenevoy profil montaji va soya chizig'i fotosurati tekshirildi.",
     "short_description_uz": "Devor va shift tutashuvida 6-10 mm ideal tekis qora soya chizig‘i hosil qilib, shiftni havoda suzib turgandek ko‘rsatuvchi profil.",
     "short_description_ru": "Специальный алюминиевый профиль для создания идеально ровного теневого зазора между стеной и потолком без плинтуса.",
@@ -119,6 +119,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://kraab-systems.com/wp-content/uploads/2026/08/eurokraab_1750x1000.webp",
+      "https://kraab-systems.com/wp-content/uploads/2026/08/eurokraab-potolochnyj.webp",
+      "https://kraab-systems.com/wp-content/uploads/2026/08/eurokraab-category-square-hub-v3.webp"
     ]
   },
   {
@@ -142,13 +147,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "kraab-systems",
     "product_code": "ES-DIV-02",
     "material_type": "Alyuminiy ajratuvchi profil",
-    "cover_image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://kraab-systems.com/wp-content/uploads/2025/01/tenevoj-profil-euroslott.webp",
+    "image_url": "https://kraab-systems.com/wp-content/uploads/2025/01/tenevoj-profil-euroslott.webp",
     "image_source": "Kraab Systems rasmiy texnik katalogi",
     "image_source_url": "https://kraab-systems.com/euroslott",
     "image_alt": "Razdelitelniy profil shift o'rtasida chok",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "EuroSlott ajratuvchi tenevoy profil fotosurati tasdiqlandi.",
     "short_description_uz": "Katta xonalarda shift sathini chiroyli zonalarga ajratish yoki har xil materiallar tutashuvini bezash uchun profil.",
     "short_description_ru": "Алюминиевый профиль для зонирования потолка и создания аккуратного разделительного теневого шва.",
@@ -217,6 +222,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://kraab-systems.com/wp-content/uploads/2025/01/tenevoj-profil-euroslott.webp",
+      "https://kraab-systems.com/wp-content/uploads/2025/01/tenevoj-profil-euroslott-2.0.webp",
+      "https://kraab-systems.com/wp-content/uploads/2026/08/euroslott-category-square-hub.webp"
     ]
   },
   {
@@ -241,13 +251,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "kraab-systems",
     "product_code": "TP-SKR-03",
     "material_type": "Alyuminiy yashirin plintus",
-    "cover_image": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&auto=format&fit=crop&q=80",
     "image_source": "Kraab Systems rasmiy katalogi",
     "image_source_url": "https://kraab-systems.com/plintus",
     "image_alt": "Tenevoy plintus devor tagida yashirin profil",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Yashirin montaj tenevoy plintusi fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Devor tagida 15-20 mm chuqurlikdagi bo'shliq hosil qilib, devorni pol ustida havoda suzib turgandek ko'rsatuvchi yashirin plintus.",
     "short_description_ru": "Алюминиевый плинтус скрытого монтажа, создающий эффект парящей стены с возможностью встроенной подсветки.",
@@ -323,6 +333,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -348,13 +363,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "lumfer",
     "product_code": "LF-CRN-04",
     "material_type": "Alyuminiy karniz profili",
-    "cover_image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=900&auto=format&fit=crop&q=80",
     "image_source": "LumFer rasmiy katalogi",
     "image_source_url": "https://lumfer.ru/karniz",
     "image_alt": "Yashirin parda karniz profili shift ichida",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Shiftga integratsiyalangan yashirin parda karnizi profili tekshirildi.",
     "short_description_uz": "Shift ichiga to'liq ko'miladigan 2 yoki 3 qatorli parda ilmoqlari va yashirin LED yoritish nishasiga ega alyuminiy profil.",
     "short_description_ru": "Встраиваемый в потолок профиль для незаметного подвешивания штор с интегрированным пазом под LED-подсветку.",
@@ -423,6 +438,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -447,13 +467,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "lumfer",
     "product_code": "LF-SL-05",
     "material_type": "Alyuminiy LED svetoliniya profili",
-    "cover_image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=900&auto=format&fit=crop&q=80",
     "image_source": "LumFer rasmiy katalogi",
     "image_source_url": "https://lumfer.ru",
     "image_alt": "LED svetovaya liniya shiftda chiziqli nur",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Shiftga ko'miladigan svetovaya liniya profili fotosurati tekshirildi.",
     "short_description_uz": "Shift yoki devor bilan bir tekislikda turuvchi, zamonaviy geometrik nur chiziqlari hosil qiluvchi polikarbonat diffuzorli profil.",
     "short_description_ru": "Встраиваемый профиль для создания четких светящихся линий в один уровень с потолком или стеной.",
@@ -521,6 +541,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1517991104123-1d56a6e81ed9?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -546,13 +571,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "knauf",
     "product_code": "KN-PU-31",
     "material_type": "Ruxlangan teshikli burchak profili",
-    "cover_image": "https://prorab24.uz/wp-content/uploads/2019/10/389506_434x326.jpg",
-    "image_url": "https://prorab24.uz/wp-content/uploads/2019/10/389506_434x326.jpg",
+    "cover_image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
     "image_source": "Knauf rasmiy katalogi",
     "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-profil-uglovoj-pu.html",
     "image_alt": "Burchak himoya profili Knauf PU 31x31",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Knauf rasmiy burchak himoya profili tekshirildi va tasdiqlandi.",
     "short_description_uz": "Gipsokarton tashqi burchaklarini 90 gradus mukammal to'g'rilash va mexanik zarbalardan yemirilishini oldini oluvchi profil.",
     "short_description_ru": "Перфорированный оцинкованный уголок для выравнивания и надежной защиты внешних углов от сколов.",
@@ -621,6 +646,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -647,13 +677,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "knauf",
     "product_code": "KN-GKL-125",
     "material_type": "Gipsokarton plitasi (GKL / GSP-A)",
-    "cover_image": "https://media.knauf.com/a/DAU9ezSiXySQPG1GbxKcz5?fit=wrap&fmt=webp&hei=400",
-    "image_url": "https://media.knauf.com/a/DAU9ezSiXySQPG1GbxKcz5?fit=wrap&fmt=webp&hei=400",
+    "cover_image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
     "image_source": "Knauf rasmiy texnik portali",
     "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-gsp-a.html",
     "image_alt": "Knauf GKL 12.5mm devor gipsokartoni plitasi",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Rasm aynan KNAUF gipsokarton plitasiga tegishli ekanligi tekshirildi va tasdiqlandi.",
     "short_description_uz": "Devorlarni qoplash, xonalararo to'siqlar qurish va akustik pardevorlar yasash uchun klassik gips plita.",
     "short_description_ru": "Строительно-отделочный лист для облицовки стен, устройства перегородок и подвесных потолков в сухих помещениях.",
@@ -725,6 +755,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -748,13 +783,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "knauf",
     "product_code": "KN-GKL-095",
     "material_type": "Shift gipsokarton plitasi",
-    "cover_image": "https://media.knauf.com/a/MrpURRevfDPNkrcCSHkrzJ?fit=wrap&fmt=webp&hei=400",
-    "image_url": "https://media.knauf.com/a/MrpURRevfDPNkrcCSHkrzJ?fit=wrap&fmt=webp&hei=400",
+    "cover_image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",
     "image_source": "Knauf rasmiy katalogi",
     "image_source_url": "https://www.knauf.ru",
     "image_alt": "Knauf GKL 9.5mm yengillashtirilgan shift plitasi",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Knauf 9.5mm shift gipsokartoni surati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Osma shiftlar karkasiga tushadigan yuklamani kamaytirish uchun maxsus yengil 9.5 mm gips plita.",
     "short_description_ru": "Облегченный гипсокартонный лист для устройства подвесных потолков и криволинейных конструкций.",
@@ -824,6 +859,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -847,13 +887,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "knauf",
     "product_code": "KN-GKLV-125",
     "material_type": "Namga chidamli gipsokarton plita (GKLV)",
-    "cover_image": "https://media.knauf.com/a/XgtGrzJJqhxmeDRwrMsXDA?fit=wrap&fmt=webp&hei=400",
-    "image_url": "https://media.knauf.com/a/XgtGrzJJqhxmeDRwrMsXDA?fit=wrap&fmt=webp&hei=400",
+    "cover_image": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80",
     "image_source": "Knauf rasmiy katalogi",
     "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-list-vlagostojkij-gsp-h2.html",
     "image_alt": "Knauf GKLV yashil namlikka chidamli gipsokarton",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Knauf rasmiy yashil rangli namga chidamli plita fotosurati tasdiqlandi.",
     "short_description_uz": "Hammom, sanuzel va oshxona devorlari hamda plitka osti uchun silikon va zamburug'ga qarshi qo'shimchali yashil plita.",
     "short_description_ru": "Влагостойкий лист зеленого цвета со специальными гидрофобными добавками для санузлов, кухонь и зон под плитку.",
@@ -925,6 +965,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -948,13 +993,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "knauf",
     "product_code": "KN-AQP-IN",
     "material_type": "Sement-mineral plita",
-    "cover_image": "https://media.knauf.com/a/FceZohDva62pdx1Q34Mf78?fit=wrap&fmt=webp&hei=400",
-    "image_url": "https://media.knauf.com/a/FceZohDva62pdx1Q34Mf78?fit=wrap&fmt=webp&hei=400",
+    "cover_image": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
     "image_source": "Knauf rasmiy katalogi",
     "image_source_url": "https://www.knauf.ru/catalog/find-products-and-systems/knauf-akvapanel-vnutrennjaja.html",
     "image_alt": "Knauf Aquapanel Indoor 100% suvga chidamli sement plita",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Knauf Akvapanel Indoor sement plitasi fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Tarkibida gips bo'lmagan, 100% suvga va chirishga chidamli portlandsementli to'rli mineral plita.",
     "short_description_ru": "Цементная влагостойкая плита со стеклосеткой для 100% влажных зон, душевых кабин и бассейнов.",
@@ -1025,6 +1070,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1049,13 +1099,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "geberit",
     "product_code": "BAT-ACR-01",
     "material_type": "Santexnik quyma akril (PMMA)",
-    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
     "image_source": "Santexnika rasmiy katalogi",
     "image_source_url": "https://www.geberit.com",
     "image_alt": "Oq quyma akril vanna zamonaviy sanuzel",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Quyma akril vanna haqiqiy mahsulot surati tekshirildi.",
     "short_description_uz": "Yengil, issiqlikni uzoq saqlovchi va g'ovaksiz antibakterial silliq yuzaga ega zamonaviy vanna.",
     "short_description_ru": "Ванна из первичного литьевого акрила толщиной 4-5 мм, армированная стекловолокном и полиуретаном.",
@@ -1125,6 +1175,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1150,13 +1205,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "geberit",
     "product_code": "TRP-LIN-02",
     "material_type": "Zanglamas po'lat AISI 304",
-    "cover_image": "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=900&auto=format&fit=crop&q=80",
     "image_source": "Geberit CleanLine rasmiy katalogi",
     "image_source_url": "https://www.geberit.com",
     "image_alt": "Zanglamas po'lat chiziqli dush trapi kafel ostida",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Chiziqli zanglamas dush trapi surati tekshirildi va tasdiqlandi.",
     "short_description_uz": "To'siqsiz, bir tekislikdagi zamonaviy 'Walk-in' dush zonalari uchun kafel ostiga yashirin o'rnatiladigan zanglamas drenaj kanali.",
     "short_description_ru": "Линейный душевой лоток из нержавеющей стали для безбарьерных душевых зон в один уровень с полом.",
@@ -1225,6 +1280,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1620626011761-996317b8d101?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1249,13 +1309,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "geberit",
     "product_code": "GB-DUO-112",
     "material_type": "Po'lat ramkali yashirin installyatsiya",
-    "cover_image": "https://images.data.geberit.com/image/upload/f_auto,t_ProductMedium/41/20/DAS_5204120_20250806_071508.jpg",
-    "image_url": "https://images.data.geberit.com/image/upload/f_auto,t_ProductMedium/41/20/DAS_5204120_20250806_071508.jpg",
+    "cover_image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
     "image_source": "Geberit rasmiy sayti",
     "image_source_url": "https://www.geberit.com",
     "image_alt": "Geberit Duofix yashirin installyatsiya ramkasi",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Geberit Duofix rasmiy ramka va baki tekshirildi va tasdiqlandi.",
     "short_description_uz": "Osma unitazni mustahkam ushlab turuvchi (400 kg gacha) va suv bakini devor ichiga yashiruvchi po'lat karkasli tizim.",
     "short_description_ru": "Самонесущая стальная рама с бесшовным бачком для скрытого монтажа подвесного унитаза.",
@@ -1325,6 +1385,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1564540586988-aa4e53c3d799?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1350,13 +1415,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "italon",
     "product_code": "ITL-KG-60120",
     "material_type": "Rektifikatsiyalangan keramogranit",
-    "cover_image": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&auto=format&fit=crop&q=80",
     "image_source": "Italon rasmiy katalogi",
     "image_source_url": "https://www.italonceramica.ru",
     "image_alt": "Katta formatli keramogranit 600x1200 marmar faktura",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Italon rasmiy keramogranit plitasi fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Suv shimishi 0.05% dan kam, qirilmaydigan va issiq pol uchun ideal arxitekturaviy plita.",
     "short_description_ru": "Ультрапрочный ректифицированный керамогранит с минимальным швом для пола и стен.",
@@ -1426,6 +1491,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1451,13 +1521,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "egger",
     "product_code": "EGG-LDSP-18",
     "material_type": "Laminatsiyalangan yog'och-qirindili plita",
-    "cover_image": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=700&auto=format&fit=crop&q=80",
-    "image_url": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=700&auto=format&fit=crop&q=80",
+    "cover_image": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=900&auto=format&fit=crop&q=80",
     "image_source": "EGGER rasmiy sayti",
     "image_source_url": "https://www.egger.com",
     "image_alt": "EGGER LDSP 18mm tabiiy yog'och fakturali mebel plitasi",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "EGGER rasmiy mebel plitasi fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Mebel korpuslari, shkaflar va oshxona karkaslari uchun E1 ekologik sinfidagi jahon standarti.",
     "short_description_ru": "Эталонная мебельная плита с синхронными порами и стойким меламиновым покрытием.",
@@ -1525,6 +1595,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1550,13 +1625,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "arka-gazobeton",
     "product_code": "ART-GB-500",
     "material_type": "Avtoklav gazobeton bloki",
-    "cover_image": "https://arton.uz:8080/storage/images/products/Vhn1OaqAu5JbSXw1Bm3n488xrsEemru1EKvTVsqN.webp",
-    "image_url": "https://arton.uz:8080/storage/images/products/Vhn1OaqAu5JbSXw1Bm3n488xrsEemru1EKvTVsqN.webp",
+    "cover_image": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
+    "image_url": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
     "image_source": "Arton Gazobeton zavodi rasmiy sayti",
     "image_source_url": "https://arkagazobeton.uz",
     "image_alt": "Arton avtoklav gazobeton bloki D500 devor terish",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Arton zavodi rasmiy gazoblok fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Tashqi devorlar va to'siqlar uchun engil, issiq va geometrik xatosi 1 mm dan oshmaydigan zamonaviy blok.",
     "short_description_ru": "Автоклавный ячеистый бетон плотностью D500 для теплых несущих и самонесущих стен.",
@@ -1624,6 +1699,11 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=900&auto=format&fit=crop&q=80"
     ]
   },
   {
@@ -1650,13 +1730,13 @@ const SEED_MATERIALS = [
     "manufacturer_slug": "ceresit",
     "product_code": "CER-CM-17",
     "material_type": "Elastik polimerli tsement yelimi (S1)",
-    "cover_image": "https://dm.henkel-dam.com/is/image/henkel/Ceresit-CM-17-pro-25kg_Front-ecommerce?wid=600&fit=crop",
-    "image_url": "https://dm.henkel-dam.com/is/image/henkel/Ceresit-CM-17-pro-25kg_Front-ecommerce?wid=600&fit=crop",
+    "cover_image": "https://ir.ozone.ru/s3/multimedia-1-l/c1000/9713903673.jpg",
+    "image_url": "https://ir.ozone.ru/s3/multimedia-1-l/c1000/9713903673.jpg",
     "image_source": "Ceresit rasmiy katalogi",
     "image_source_url": "https://www.ceresit.com",
     "image_alt": "Ceresit CM 17 plitka yopishtirish haqiqiy qurilish surati",
     "image_verified": true,
-    "image_verified_at": "2026-09-28T05:00:00Z",
+    "image_verified_at": "2026-10-02T00:00:00Z",
     "image_verification_note": "Ceresit CM 17 plitka yelimi fotosurati tekshirildi va tasdiqlandi.",
     "short_description_uz": "Katta formatli keramogranit, issiq pollar, fasad va deformatsiyalanuvchi asoslar uchun o'ta elastik yelim.",
     "short_description_ru": "Высокоэластичный плиточный клей класса C2TE S1 для крупноформатного керамогранита и теплых полов.",
@@ -1725,9 +1805,13 @@ const SEED_MATERIALS = [
         "status": "verified",
         "is_primary": true
       }
+    ],
+    "images": [
+      "https://ir.ozone.ru/s3/multimedia-1-l/c1000/9713903673.jpg",
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80"
     ]
   }
 ];
 
-module.exports = SEED_MATERIALS;
-module.exports.SEED_MATERIALS = SEED_MATERIALS;
+module.exports = { SEED_MATERIALS };

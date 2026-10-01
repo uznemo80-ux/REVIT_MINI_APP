@@ -6686,6 +6686,7 @@ function openLibrarySection(slug) {
 
 function closeLibrarySection() {
   haptic("light");
+  stopMaterialCardRotationTicker();
   currentView = null;
   activeMaterialDetail = null;
   libraryActiveSection = null;
@@ -8702,6 +8703,7 @@ function renderMaterialsSectionHtml() {
   }
 
   ensureMaterialPlaceholderTicker();
+  ensureMaterialCardRotationTicker();
   const search = materialsState.searchQuery || "";
   const open = !!materialsState.panelOpen;
 
@@ -8743,18 +8745,157 @@ function renderMaterialsSectionHtml() {
   `;
 }
 
+
+// ------------------------------------------------------
+// MATERIALS MULTI-IMAGE ROTATION & INTERACTIVE GALLERY
+// ------------------------------------------------------
+
+let materialCardRotationInterval = null;
+let activeMaterialGalleryIndex = 0;
+let matGalleryTouchStartX = 0;
+let matGalleryTouchEndX = 0;
+
+function ensureMaterialCardRotationTicker() {
+  if (materialCardRotationInterval) return;
+  startMaterialCardRotationTicker();
+}
+
+function startMaterialCardRotationTicker() {
+  if (materialCardRotationInterval) clearInterval(materialCardRotationInterval);
+  materialCardRotationInterval = setInterval(() => {
+    // Only rotate if currently viewing materials catalog (not detail and not other section)
+    if (libraryActiveSection !== "materials" || (currentView && currentView.type === "material_detail")) {
+      return;
+    }
+    const cards = document.querySelectorAll('.mcat-card[data-images]');
+    if (!cards || !cards.length) return;
+
+    cards.forEach(card => {
+      // Pause rotation if hovered on desktop
+      if (card.matches && card.matches(':hover')) return;
+
+      try {
+        const raw = card.getAttribute('data-images');
+        if (!raw) return;
+        const images = JSON.parse(raw);
+        if (!Array.isArray(images) || images.length <= 1) return;
+
+        let curIdx = parseInt(card.getAttribute('data-img-idx') || '0', 10);
+        let nextIdx = (curIdx + 1) % images.length;
+        card.setAttribute('data-img-idx', String(nextIdx));
+
+        const imgEl = card.querySelector('.mcat-card-img img');
+        if (imgEl && images[nextIdx]) {
+          imgEl.classList.add('mcat-fade-out');
+          setTimeout(() => {
+            imgEl.src = formatImageUrl(images[nextIdx]);
+            imgEl.classList.remove('mcat-fade-out');
+          }, 200);
+        }
+
+        const dots = card.querySelectorAll('.mcat-card-dot');
+        dots.forEach((dot, dIdx) => {
+          dot.classList.toggle('active', dIdx === nextIdx);
+        });
+      } catch (e) {}
+    });
+  }, 5000);
+}
+
+function stopMaterialCardRotationTicker() {
+  if (materialCardRotationInterval) {
+    clearInterval(materialCardRotationInterval);
+    materialCardRotationInterval = null;
+  }
+}
+
+function selectMaterialGalleryImage(idx) {
+  haptic("light");
+  const m = activeMaterialDetail ? (activeMaterialDetail.material || activeMaterialDetail) : null;
+  if (!m) return;
+  const images = (Array.isArray(m.images) && m.images.length ? m.images : [m.image_url || m.cover_image]).filter(Boolean);
+  if (!images.length) return;
+  activeMaterialGalleryIndex = Math.max(0, Math.min(idx, images.length - 1));
+  updateMaterialGalleryUi(images);
+}
+
+function navigateMaterialGallery(delta) {
+  haptic("light");
+  const m = activeMaterialDetail ? (activeMaterialDetail.material || activeMaterialDetail) : null;
+  if (!m) return;
+  const images = (Array.isArray(m.images) && m.images.length ? m.images : [m.image_url || m.cover_image]).filter(Boolean);
+  if (images.length <= 1) return;
+  activeMaterialGalleryIndex = (activeMaterialGalleryIndex + delta + images.length) % images.length;
+  updateMaterialGalleryUi(images);
+}
+
+function updateMaterialGalleryUi(images) {
+  const imgEl = document.getElementById("lib-mat-gallery-img");
+  const counterEl = document.getElementById("lib-mat-gallery-counter");
+  if (imgEl && images[activeMaterialGalleryIndex]) {
+    imgEl.classList.add("fade-out");
+    setTimeout(() => {
+      imgEl.src = formatImageUrl(images[activeMaterialGalleryIndex]);
+      imgEl.classList.remove("fade-out");
+    }, 150);
+  }
+  if (counterEl) {
+    counterEl.textContent = (activeMaterialGalleryIndex + 1) + " / " + images.length;
+  }
+  const thumbs = document.querySelectorAll(".lib-mat-thumb-btn");
+  thumbs.forEach((th, i) => {
+    th.classList.toggle("active", i === activeMaterialGalleryIndex);
+  });
+}
+
+function handleGalleryTouchStart(e) {
+  if (e.changedTouches && e.changedTouches[0]) {
+    matGalleryTouchStartX = e.changedTouches[0].clientX;
+  }
+}
+
+function handleGalleryTouchEnd(e) {
+  if (e.changedTouches && e.changedTouches[0]) {
+    matGalleryTouchEndX = e.changedTouches[0].clientX;
+    const diff = matGalleryTouchEndX - matGalleryTouchStartX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        navigateMaterialGallery(-1);
+      } else {
+        navigateMaterialGallery(1);
+      }
+    }
+  }
+}
+
+// Global desktop keyboard arrow navigation for gallery
+window.addEventListener("keydown", (e) => {
+  if (currentView && currentView.type === "material_detail") {
+    if (e.key === "ArrowLeft") navigateMaterialGallery(-1);
+    if (e.key === "ArrowRight") navigateMaterialGallery(1);
+  }
+});
+
 function renderMaterialCardHtml(mat) {
   const title = mat.name_uz || mat.name || mat.title || "Material";
-  const img = formatImageUrl(mat.image_url || mat.cover_image || mat.featured_image || "");
+  const images = (Array.isArray(mat.images) && mat.images.length ? mat.images : [mat.image_url || mat.cover_image || mat.featured_image]).filter(Boolean);
+  const initIdx = images.length > 1 ? Math.floor(Math.random() * images.length) : 0;
+  const activeImg = formatImageUrl(images[initIdx] || mat.image_url || mat.cover_image || "");
   const g = getMaterialGroup(mat);
   const tag = mat.subcategory_name || g.name;
   const desc = mat.short_description_uz || mat.material_type || "";
   const dim = mat.dimensions_info_uz || mat.dimensions_info || "";
   return `
-    <div class="mcat-card" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
+    <div class="mcat-card" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})"
+         ${images.length > 1 ? `data-images="${escapeHtml(JSON.stringify(images))}" data-img-idx="${initIdx}"` : ""}>
       <div class="mcat-card-img">
         <span class="mcat-ph-emoji">${escapeHtml(g.icon || mat.category_icon || "🧱")}</span>
-        ${img ? `<img src="${escapeHtml(img)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
+        ${activeImg ? `<img src="${escapeHtml(activeImg)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
+        ${images.length > 1 ? `
+          <div class="mcat-card-dots" aria-hidden="true">
+            ${images.map((_, dIdx) => `<span class="mcat-card-dot ${dIdx === initIdx ? 'active' : ''}"></span>`).join('')}
+          </div>
+        ` : ""}
         <div class="mcat-card-actions">
           ${matReactionButtonHtml(mat.id, "like", true)}
           ${matReactionButtonHtml(mat.id, "save", true)}
@@ -9878,7 +10019,10 @@ function renderMaterialDetailPage(detailData) {
   const titleRu = m.name_ru || m.original_name || "";
   const isVerified = m.image_verified !== false && (m.verification_status === "verified" || m.is_verified);
   const verifiedDate = m.last_verified_at ? new Date(m.last_verified_at).toLocaleDateString('uz-UZ') : "28.09.2026";
-  const img = formatImageUrl(m.image_url || m.cover_image || "");
+  const images = (Array.isArray(m.images) && m.images.length ? m.images : (Array.isArray(m.gallery_images) && m.gallery_images.length ? m.gallery_images : [m.image_url || m.cover_image])).filter(Boolean);
+  const activeImg = formatImageUrl(images[0] || m.image_url || m.cover_image || "");
+  const img = activeImg;
+  activeMaterialGalleryIndex = 0;
   const subcatName = m.subcategory_name || "";
   const catName = m.category_name || "Qurilish";
 
@@ -9900,16 +10044,45 @@ function renderMaterialDetailPage(detailData) {
         </div>
       </div>
 
-      <!-- HERO SECTION -->
+      <!-- HERO SECTION / MODERN RESPONSIVE GALLERY -->
       <div class="lib-mat-detail-hero">
-        ${img ? `
-          <div class="lib-mat-hero-banner" style="position:relative;">
-            <img src="${escapeHtml(img)}" onerror="handleImageError(this)" alt="${escapeHtml(titleUz)}" />
+        <div class="lib-mat-hero-gallery" id="lib-mat-hero-gallery"
+             ontouchstart="handleGalleryTouchStart(event)"
+             ontouchend="handleGalleryTouchEnd(event)">
+          <div class="lib-mat-gallery-main">
+            <img id="lib-mat-gallery-img" class="lib-mat-gallery-img" src="${escapeHtml(activeImg)}" onerror="handleImageError(this)" alt="${escapeHtml(titleUz)}" />
+            ${images.length > 1 ? `
+              <button type="button" class="lib-mat-gallery-nav prev" onclick="navigateMaterialGallery(-1); event.stopPropagation();" aria-label="Oldingi rasm">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button type="button" class="lib-mat-gallery-nav next" onclick="navigateMaterialGallery(1); event.stopPropagation();" aria-label="Keyingi rasm">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            ` : ''}
+            <div class="lib-mat-gallery-top-badges">
+              ${isVerified ? `
+                <span class="lib-mat-gallery-badge verified">✓ Verified</span>
+              ` : `
+                <span class="lib-mat-gallery-badge pending">🟡 Tekshiruvda</span>
+              `}
+              ${images.length > 1 ? `
+                <span class="lib-mat-gallery-badge counter" id="lib-mat-gallery-counter">1 / ${images.length}</span>
+              ` : ''}
+            </div>
             <div class="lib-mat-img-source-tag">
               📷 Manba: ${escapeHtml(m.image_source || 'Rasmiy ishlab chiqaruvchi')}
             </div>
           </div>
-        ` : ""}
+          ${images.length > 1 ? `
+            <div class="lib-mat-thumb-strip">
+              ${images.map((imgUrl, idx) => `
+                <button type="button" class="lib-mat-thumb-btn ${idx === 0 ? 'active' : ''}" onclick="selectMaterialGalleryImage(${idx}); event.stopPropagation();" aria-label="Rasm ${idx + 1}">
+                  <img src="${escapeHtml(formatImageUrl(imgUrl))}" alt="${escapeHtml(titleUz)} ${idx + 1}" onerror="this.parentElement.style.display='none';" />
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
 
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-top:12px;">
           <div>
@@ -18643,6 +18816,13 @@ async function openAdminMaterialForm(materialId) {
     material.standard_sizes.map(s => typeof s === 'object' ? `${s.name || ''}: ${s.thickness || s.size || ''}` : String(s)).join("\n") :
     (typeof material.standard_sizes === 'string' ? material.standard_sizes : '');
 
+  const matImgs = Array.isArray(material.images) && material.images.length ? material.images :
+    (Array.isArray(material.gallery_images) && material.gallery_images.length ? material.gallery_images :
+    [material.featured_image || material.image_url || material.cover_image || '']);
+  const img1 = matImgs[0] || material.featured_image || material.image_url || material.cover_image || '';
+  const img2 = matImgs[1] || '';
+  const img3 = matImgs[2] || '';
+
   const specs = Array.isArray(material.specifications) ? material.specifications : [];
   const densitySpec = specs.find(s => s.parameter === 'density') || {};
   const fireSpec = specs.find(s => s.parameter === 'fire_rating' || s.parameter === 'fire_resistance') || {};
@@ -18722,9 +18902,23 @@ async function openAdminMaterialForm(materialId) {
             </div>
           </div>
 
+          <!-- 2.1 MAHSULOT RASMLARI (2-3 TA MOS RASM) -->
+          <div style="font-size:15px; font-weight:750; margin:18px 0 8px 0; border-bottom:1px solid var(--border); padding-bottom:6px; color:var(--text-primary);">
+            2.1. Mahsulot Rasmlari (2–3 ta aniq mos rasm)
+          </div>
           <div class="apple-field">
-            <label>Rasm URL (Featured Image)</label>
-            <input id="mat-image" class="apple-input" type="url" placeholder="https://..." value="${escapeHtml(material.featured_image || '')}">
+            <label>1-Rasm (Asosiy / Muqova) *</label>
+            <input id="mat-image-1" class="apple-input" type="url" placeholder="https://..." value="${escapeHtml(img1)}">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="apple-field">
+              <label>2-Rasm (Detal / Kesim / Paket)</label>
+              <input id="mat-image-2" class="apple-input" type="url" placeholder="https://..." value="${escapeHtml(img2)}">
+            </div>
+            <div class="apple-field">
+              <label>3-Rasm (O‘rnatilgan / Qo‘llanish)</label>
+              <input id="mat-image-3" class="apple-input" type="url" placeholder="https://..." value="${escapeHtml(img3)}">
+            </div>
           </div>
 
           <div class="apple-field">
@@ -18811,7 +19005,11 @@ async function handleAdminMaterialSubmit(e, materialId) {
   const country_of_origin = document.getElementById("mat-country")?.value.trim();
   const verification_status = document.getElementById("mat-status")?.value || "verified";
   const confidence_score = Number(document.getElementById("mat-confidence")?.value || 100);
-  const featured_image = document.getElementById("mat-image")?.value.trim();
+  const img1 = document.getElementById("mat-image-1")?.value.trim() || document.getElementById("mat-image")?.value.trim() || "";
+  const img2 = document.getElementById("mat-image-2")?.value.trim() || "";
+  const img3 = document.getElementById("mat-image-3")?.value.trim() || "";
+  const adminImages = [img1, img2, img3].filter(Boolean);
+  const featured_image = img1;
   const description = document.getElementById("mat-desc")?.value.trim();
   const rawSizes = document.getElementById("mat-sizes")?.value.trim();
 
@@ -18853,6 +19051,9 @@ async function handleAdminMaterialSubmit(e, materialId) {
     is_verified: verification_status === 'verified',
     confidence_score,
     featured_image,
+    cover_image: featured_image,
+    image_url: featured_image,
+    images: adminImages,
     description,
     standard_sizes,
     specifications,
