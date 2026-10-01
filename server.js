@@ -170,6 +170,93 @@ app.use(cors());
 
 app.use(express.json({ limit: '10mb' }));
 
+// ======================================================
+// I18N: 5 tilli tizim (uz, ru, en, tr, ar) — orqaga mos qatlam
+// ======================================================
+var fs = require('fs');
+var path = require('path');
+var I18N_LANGS = ['uz', 'ru', 'en', 'tr', 'ar'];
+var I18N_NAMESPACES = ['common', 'navigation', 'lessons', 'library', 'profile', 'settings', 'errors'];
+var I18N_LOCALES_DIR = path.join(__dirname, 'public', 'locales');
+var i18nCache = {};
+
+function normLang(l) {
+  l = String(l || '').toLowerCase().slice(0, 2);
+  return I18N_LANGS.indexOf(l) !== -1 ? l : 'uz';
+}
+
+function readLocale(lang) {
+  var out = {};
+  I18N_NAMESPACES.forEach(function (ns) {
+    try {
+      var raw = fs.readFileSync(path.join(I18N_LOCALES_DIR, lang, ns + '.json'), 'utf8');
+      var obj = JSON.parse(raw);
+      Object.keys(obj).forEach(function (k) { out[ns + '.' + k] = obj[k]; });
+    } catch (e) {}
+  });
+  return out;
+}
+
+// Tanlangan til -> en -> ru zanjiri bilan yig'ilgan lug'at (uz manba matni o'zgarmaydi)
+function buildI18nPayload(lang) {
+  if (i18nCache[lang]) return i18nCache[lang];
+  var uz = readLocale('uz');
+  var chain = lang === 'uz' ? [] : [lang].concat(['en', 'ru'].filter(function (x) { return x !== lang; }));
+  var locs = chain.map(readLocale);
+  var dict = {}, pairs = [];
+  Object.keys(uz).forEach(function (k) {
+    var val = null;
+    for (var i = 0; i < locs.length; i++) { if (locs[i][k]) { val = locs[i][k]; break; } }
+    if (val) { dict[k] = val; pairs.push([uz[k], val]); }
+  });
+  var payload = { ok: true, lang: lang, dir: lang === 'ar' ? 'rtl' : 'ltr', dict: dict, pairs: pairs, uz: uz, version: 1 };
+  i18nCache[lang] = payload;
+  return payload;
+}
+
+app.get('/api/i18n/:lang', function (req, res) {
+  var lang = normLang(req.params.lang);
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.json(buildI18nPayload(lang));
+});
+
+// Kontent (dars, modul, kitob, material...) tarjimasi: qatorlardagi `i18n` JSONB maydonini tilga qarab qo'llaydi
+function localizeBody(body, lang, depth) {
+  if (!body || typeof body !== 'object' || depth > 9) return body;
+  if (Array.isArray(body)) { for (var i = 0; i < body.length; i++) body[i] = localizeBody(body[i], lang, depth + 1); return body; }
+  if (Object.prototype.hasOwnProperty.call(body, 'i18n') && body.i18n && typeof body.i18n === 'object' && !Array.isArray(body.i18n)) {
+    var tr = body.i18n;
+    if (lang !== 'uz') {
+      var order = [lang].concat(['en', 'ru'].filter(function (x) { return x !== lang; }));
+      var fields = {};
+      order.slice().reverse().forEach(function (lg) {
+        var o = tr[lg];
+        if (o && typeof o === 'object') Object.keys(o).forEach(function (f) { if (typeof o[f] === 'string' && o[f].trim()) fields[f] = o[f]; });
+      });
+      Object.keys(fields).forEach(function (f) { body[f] = fields[f]; });
+    }
+    delete body.i18n;
+  }
+  var keys = Object.keys(body);
+  for (var j = 0; j < keys.length; j++) {
+    var v = body[keys[j]];
+    if (v && typeof v === 'object') body[keys[j]] = localizeBody(v, lang, depth + 1);
+  }
+  return body;
+}
+
+app.use('/api', function (req, res, next) {
+  if (req.path.indexOf('/admin') === 0 || req.path.indexOf('/i18n') === 0) return next();
+  var lang = normLang(req.headers['x-app-lang'] || (req.body && req.body.lang));
+  var orig = res.json.bind(res);
+  res.json = function (body) {
+    try { body = localizeBody(body, lang, 0); } catch (e) { console.warn('i18n localize:', e.message); }
+    return orig(body);
+  };
+  return next();
+});
+
+
 app.use(express.static('public', {
   etag: false,
   lastModified: false,
@@ -258,6 +345,8 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE modules ADD COLUMN IF NOT EXISTS description TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS active_device_id TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(5) DEFAULT 'uz'");
+    await pool.query("UPDATE users SET preferred_language = 'uz' WHERE preferred_language IS NULL");
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted BOOLEAN DEFAULT false');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE lessons ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT');
@@ -895,7 +984,9 @@ async function ensureUserActivityTable() {
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS course_title VARCHAR(500)',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_progress INT DEFAULT 0',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_duration INT DEFAULT 0',
-      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_status VARCHAR(30) DEFAULT 'watching'",
+      "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS video_status VARCHAR(30) DEFAULT 'idle'",
+      "ALTER TABLE user_activity ALTER COLUMN video_status SET DEFAULT 'idle'",
+      "UPDATE user_activity SET video_status = 'idle' WHERE lesson_id IS NULL AND video_status = 'watching'",
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS module_id INT',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_question_index INT DEFAULT 0',
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS test_total_questions INT DEFAULT 0',
@@ -1319,6 +1410,8 @@ async function ensureLibraryV2Tables() {
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS author VARCHAR(255)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_size VARCHAR(50)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_bytes BIGINT",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS software VARCHAR(30)",
+        "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS file_format VARCHAR(30)",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS size_checked_at TIMESTAMPTZ",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS page_count INT",
         "ALTER TABLE library_resources ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'uz'",
@@ -1505,6 +1598,10 @@ async function ensureLibraryV2Tables() {
         }
       ])]);
     }
+
+    try {
+      await pool.query("UPDATE library_resources SET software = 'Revit' WHERE section_slug = 'sources' AND software IS NULL");
+    } catch (swErr) { console.warn('software migratsiya:', swErr.message); }
 
     // Tavsiya: faqat admin belgilaganlar. Avto-yaratilgan demo test/materiallarni bir marta tozalash
     try {
@@ -2240,7 +2337,8 @@ app.post('/api/auth', async function (req, res) {
       is_admin: Boolean(admin || isMainAdmin),
       admin_role: isMainAdmin ? 'super_admin' : (admin ? admin.role : null),
       terms_accepted: Boolean(user.terms_accepted),
-      terms_accepted_at: user.terms_accepted_at || null
+      terms_accepted_at: user.terms_accepted_at || null,
+      language: normLang(user.preferred_language)
     });
   } catch (error) {
     console.error('AUTH ERROR:', error);
@@ -2277,6 +2375,70 @@ app.post('/api/user/accept-terms', async function (req, res) {
 // ======================================================
 // PROFILE UPDATE
 // ======================================================
+
+app.post('/api/user/language', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    var lang = normLang(req.body.language);
+    await pool.query('UPDATE users SET preferred_language = $1 WHERE id = $2', [lang, user.id]);
+    return res.json({ ok: true, language: lang });
+  } catch (e) {
+    console.error('LANGUAGE SAVE ERROR:', e.message);
+    return res.status(500).json({ error: 'Tilni saqlashda xatolik' });
+  }
+});
+
+// Admin: kontent tarjimalarini o'qish/yozish (5 til). Original (uz) maydonlarga tegilmaydi.
+// Kontent tarjimalari uchun i18n JSONB ustunlari (idempotent; jadvallar keyinroq yaratilishi mumkin, shuning uchun qayta uriniladi)
+var I18N_CONTENT_TABLES = ['courses', 'modules', 'lessons', 'library_books', 'library_resources', 'library_sections', 'materials', 'material_categories', 'faqs'];
+async function ensureI18nColumns() {
+  for (var i = 0; i < I18N_CONTENT_TABLES.length; i++) {
+    try { await pool.query("ALTER TABLE IF EXISTS " + I18N_CONTENT_TABLES[i] + " ADD COLUMN IF NOT EXISTS i18n JSONB DEFAULT '{}'::jsonb"); }
+    catch (e) { console.warn('i18n column ' + I18N_CONTENT_TABLES[i] + ':', e.message); }
+  }
+}
+[15000, 60000, 240000].forEach(function (ms) { setTimeout(function () { ensureI18nColumns().catch(function () {}); }, ms); });
+
+var I18N_ENTITIES = {
+  lessons: { table: 'lessons', fields: ['title', 'task_text', 'warning_text'] },
+  modules: { table: 'modules', fields: ['title', 'description'] },
+  courses: { table: 'courses', fields: ['title', 'subtitle'] },
+  books: { table: 'library_books', fields: ['title', 'author', 'short_description', 'what_you_learn'] },
+  resources: { table: 'library_resources', fields: ['title', 'subtitle', 'description', 'category'] },
+  sections: { table: 'library_sections', fields: ['name', 'subtitle', 'description'] },
+  materials: { table: 'materials', fields: ['name_uz', 'short_description_uz', 'description_uz'] },
+  faqs: { table: 'faqs', fields: ['question', 'answer'] }
+};
+
+app.post('/api/admin/i18n/get', requireAdmin, async function (req, res) {
+  try {
+    var ent = I18N_ENTITIES[req.body.entity];
+    if (!ent) return res.status(400).json({ error: "Noma'lum obyekt turi" });
+    var r = await pool.query('SELECT i18n FROM ' + ent.table + ' WHERE id = $1', [parseInt(req.body.id, 10)]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Topilmadi' });
+    return res.json({ ok: true, fields: ent.fields, langs: I18N_LANGS, i18n: r.rows[0].i18n || {} });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/i18n/set', requireAdmin, async function (req, res) {
+  try {
+    var ent = I18N_ENTITIES[req.body.entity];
+    if (!ent) return res.status(400).json({ error: "Noma'lum obyekt turi" });
+    var lang = String(req.body.lang || '').toLowerCase();
+    if (lang === 'uz' || I18N_LANGS.indexOf(lang) === -1) return res.status(400).json({ error: "Til noto'g'ri (uz asl matn — asosiy maydonda saqlanadi)" });
+    var id = parseInt(req.body.id, 10);
+    var incoming = req.body.fields || {};
+    var clean = {};
+    ent.fields.forEach(function (f) { if (typeof incoming[f] === 'string') clean[f] = incoming[f].slice(0, 20000); });
+    var cur = await pool.query('SELECT i18n FROM ' + ent.table + ' WHERE id = $1', [id]);
+    if (!cur.rows.length) return res.status(404).json({ error: 'Topilmadi' });
+    var all = cur.rows[0].i18n || {};
+    all[lang] = Object.assign({}, all[lang] || {}, clean);
+    await pool.query('UPDATE ' + ent.table + ' SET i18n = $1::jsonb WHERE id = $2', [JSON.stringify(all), id]);
+    return res.json({ ok: true, i18n: all });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
 
 app.post('/api/profile/update', async function (req, res) {
   try {
@@ -3826,15 +3988,22 @@ app.post('/api/activity/heartbeat', async function (req, res) {
     var courseTitle = b.course_title ? String(b.course_title).slice(0, 500) : null;
     var videoProgress = Math.max(0, parseInt(b.video_progress) || 0);
     var videoDuration = Math.max(0, parseInt(b.video_duration) || 0);
-    var videoStatus = (b.video_status || 'watching').slice(0, 30);
+    var videoStatus = (b.video_status || 'idle').slice(0, 30);
     var moduleId = b.module_id ? parseInt(b.module_id) : null;
     var testQuestionIndex = Math.max(0, parseInt(b.test_question_index) || 0);
     var testTotalQuestions = Math.max(0, parseInt(b.test_total_questions) || 0);
     var deviceInfo = (b.device_info || '').slice(0, 100);
 
-    if (lessonId && videoStatus === 'watching') {
+    if (!lessonId) {
+      // Dars ochiq emas: tomosha qilmayapti
+      videoStatus = 'idle';
+      if (status === 'watching') status = 'online';
+    } else if (status !== 'idle' && videoStatus === 'watching') {
       status = 'watching';
-    } else if (moduleId && status === 'testing') {
+    } else if (status === 'watching') {
+      status = 'online';
+    }
+    if (moduleId && status === 'testing') {
       status = 'testing';
     }
 
@@ -3909,7 +4078,7 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       var liveResult = await pool.query(`
         SELECT
           COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+          COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND lesson_id IS NOT NULL AND status = 'watching' AND video_status = 'watching' THEN 1 END)::int AS watching_now,
           COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
           COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
         FROM user_activity
@@ -3970,7 +4139,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
     var liveActivityPromise = pool.query(`
       SELECT
         COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND (status = 'watching' OR video_status = 'watching') THEN 1 END)::int AS watching_now,
+        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND lesson_id IS NOT NULL AND status = 'watching' AND video_status = 'watching' THEN 1 END)::int AS watching_now,
         COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
         COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
       FROM user_activity
@@ -5785,6 +5954,22 @@ function formatBytesUz(n) {
   return Math.max(1, Math.round(n / 1024)) + ' KB';
 }
 
+function extToFormat(name) {
+  var m = String(name || '').toLowerCase().match(/\.([a-z0-9]{2,5})$/);
+  if (!m) return null;
+  var e = m[1];
+  if (['rvt','rfa','rte','rft','dwg','dwt','dxf','max','skp','fbx','obj','3ds','zip','rar','7z'].indexOf(e) !== -1) return e.toUpperCase();
+  if (['exe','msi','iso','dmg'].indexOf(e) !== -1) return 'INSTALLER';
+  return null;
+}
+function softwareFromFormat(f) {
+  f = String(f || '').toUpperCase();
+  if (['RVT','RFA','RTE','RFT'].indexOf(f) !== -1) return 'Revit';
+  if (['DWG','DWT','DXF'].indexOf(f) !== -1) return 'AutoCAD';
+  if (['MAX','3DS','FBX','OBJ'].indexOf(f) !== -1) return '3ds Max';
+  return null;
+}
+
 function isGoogleDriveUrl(u) {
   return /drive\.google\.com|docs\.google\.com/i.test(String(u || ''));
 }
@@ -5982,7 +6167,8 @@ async function refreshResourceSize(row) {
     var r = await resolveAnySize(url, ADMIN_TELEGRAM_ID);
     if (r.ok) {
       var fs2 = formatBytesUz(r.bytes);
-      await pool.query('UPDATE library_resources SET size_bytes = $1, file_size = $2, size_checked_at = NOW() WHERE id = $3', [r.bytes, fs2, row.id]);
+      var ff = extToFormat(r.name);
+      await pool.query('UPDATE library_resources SET size_bytes = $1, file_size = $2, size_checked_at = NOW(), file_format = COALESCE(file_format, $4), software = COALESCE(software, $5) WHERE id = $3', [r.bytes, fs2, row.id, ff, softwareFromFormat(ff)]);
       row.size_bytes = r.bytes; row.file_size = fs2;
     } else {
       await pool.query('UPDATE library_resources SET size_checked_at = NOW() WHERE id = $1', [row.id]);
@@ -6784,7 +6970,14 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
       savedCount = countRes.rows[0].count || 0;
       var rpRes = await pool.query('SELECT page_number FROM reading_progress WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
       if (rpRes.rows.length) lastPage = rpRes.rows[0].page_number || 1;
-    } catch (bmErr) {}
+    } catch (bmErr) {}
+    var isLiked = false, likeCount = 0, readCount = 0;
+    try {
+      await ensureBookLikes();
+      isLiked = (await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId])).rows.length > 0;
+      likeCount = (await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId])).rows[0].c;
+      readCount = (await pool.query('SELECT COUNT(*)::int AS c FROM reading_progress WHERE book_id = $1', [bookId])).rows[0].c;
+    } catch (lkErr) {}
 
     var whatLearn = [];
     if (bRow.what_you_learn) {
@@ -6827,6 +7020,10 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
         is_saved: isSaved,
         saved_count: savedCount,
         last_page: lastPage,
+        is_liked: isLiked,
+        like_count: likeCount,
+        read_count: readCount,
+        i18n: bRow.i18n || null,
         view_count: (bRow.view_count || 0) + 1
       }
     });
@@ -6917,6 +7114,82 @@ app.post('/api/library/v2/resource/:id', async function (req, res) {
 // ======================================================
 // KUTUBXONA V2: SAQLANGAN KITOBLAR (SAVED BOOKS) & READING PROGRESS
 // ======================================================
+
+// ------------------------------------------------------
+// KITOBLAR KATALOGI: like (yoqtirish), o'qilganlar va mashhurlik (orqaga mos)
+// ------------------------------------------------------
+var bookLikesReady = null;
+function ensureBookLikes() {
+  if (!bookLikesReady) {
+    bookLikesReady = pool.query("CREATE TABLE IF NOT EXISTS book_likes (user_id INT NOT NULL, book_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, book_id))")
+      .catch(function (e) { console.warn('ensureBookLikes:', e.message); bookLikesReady = null; });
+  }
+  return bookLikesReady;
+}
+
+var libBooksHasI18n = null;
+async function booksI18nColumnSql() {
+  if (libBooksHasI18n === null) {
+    try {
+      var c = await pool.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'library_books' AND column_name = 'i18n'");
+      libBooksHasI18n = c.rows.length > 0;
+    } catch (e) { libBooksHasI18n = false; }
+  }
+  return libBooksHasI18n ? ', lb.i18n' : '';
+}
+
+app.post('/api/library/v2/books/toggle-like', async function (req, res) {
+  try {
+    await ensureBookLikes();
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya xatosi' });
+    var bookId = parseInt(req.body.book_id, 10);
+    if (!bookId) return res.status(400).json({ error: 'book_id majburiy' });
+    var ex = await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
+    var liked;
+    if (ex.rows.length) { await pool.query('DELETE FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId]); liked = false; }
+    else { await pool.query('INSERT INTO book_likes (user_id, book_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, bookId]); liked = true; }
+    var c = await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId]);
+    return res.json({ ok: true, liked: liked, like_count: c.rows[0].c });
+  } catch (e) {
+    console.error('BOOK LIKE ERROR:', e.message);
+    return res.status(500).json({ error: 'Saqlashda xatolik' });
+  }
+});
+
+// Katalog: barcha nashr etilgan kitoblar (yengil maydonlar) + real faollik statistikasi
+app.post('/api/library/v2/books/catalog', async function (req, res) {
+  try {
+    await ensureBookLikes();
+    var user = req.body.initData ? await getOrCreateUser(req.body.initData).catch(function () { return null; }) : null;
+    var uid = user ? user.id : 0;
+    var i18nCol = await booksI18nColumnSql();
+    var q = `
+      SELECT lb.id, lb.title, lb.author, LEFT(COALESCE(lb.short_description, ''), 260) AS short_description,
+             lb.categories, lb.tags, lb.cover_url, lb.generated_cover_url, lb.page_count, lb.reading_time_minutes,
+             lb.access_type, lb.is_recommended, lb.language, lb.publication_year, lb.drive_file_id,
+             COALESCE(lb.view_count, 0) AS view_count, lb.created_at${i18nCol},
+             COALESCE((SELECT COUNT(*)::int FROM saved_books sb WHERE sb.book_id = lb.id), 0) AS saved_count,
+             COALESCE((SELECT COUNT(*)::int FROM book_likes bl WHERE bl.book_id = lb.id), 0) AS like_count,
+             COALESCE((SELECT COUNT(*)::int FROM reading_progress rp WHERE rp.book_id = lb.id), 0) AS read_count,
+             EXISTS(SELECT 1 FROM saved_books usb WHERE usb.book_id = lb.id AND usb.user_id = $1) AS is_saved,
+             EXISTS(SELECT 1 FROM book_likes ubl WHERE ubl.book_id = lb.id AND ubl.user_id = $1) AS is_liked,
+             COALESCE((SELECT rp2.page_number FROM reading_progress rp2 WHERE rp2.book_id = lb.id AND rp2.user_id = $1), 1) AS last_page
+      FROM library_books lb
+      WHERE lb.status = 'published'
+      ORDER BY lb.id DESC
+      LIMIT 2000`;
+    var r = await pool.query(q, [uid]);
+    var books = r.rows.map(function (b) {
+      b.pop_score = (Number(b.view_count) || 0) + (Number(b.read_count) || 0) * 2 + (Number(b.like_count) || 0) * 3 + (Number(b.saved_count) || 0) * 5;
+      return b;
+    });
+    return res.json({ ok: true, books: books, total: books.length });
+  } catch (err) {
+    console.error('BOOKS CATALOG ERROR:', err);
+    return res.status(500).json({ error: 'Kitoblar katalogini yuklashda xatolik' });
+  }
+});
 
 // Kitobni saqlash (Saved books / bookmark toggle)
 app.post('/api/library/v2/saved-books/toggle', async function (req, res) {
@@ -7330,6 +7603,65 @@ app.post('/api/admin/learning/resource/delete', requireAdmin, async function (re
 // MATERIALLAR KUTUBXONASI (MATERIALS KNOWLEDGE BASE) API
 // ======================================================
 
+// ------------------------------------------------------
+// MATERIALLAR STATISTIKASI: ko'rishlar, like va saqlashlar (orqaga mos, buzmaydi)
+// ------------------------------------------------------
+var matStatsReady = null;
+function ensureMatStats() {
+  if (!matStatsReady) {
+    matStatsReady = (async function () {
+      try {
+        await pool.query("ALTER TABLE materials ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_likes (user_id INT NOT NULL, material_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, material_id))");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_saves (user_id INT NOT NULL, material_id INT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, material_id))");
+        await pool.query("CREATE TABLE IF NOT EXISTS material_view_log (user_id INT NOT NULL, material_id INT NOT NULL, viewed_on DATE NOT NULL DEFAULT CURRENT_DATE, PRIMARY KEY (user_id, material_id, viewed_on))");
+      } catch (e) {
+        console.warn('ensureMatStats:', e.message);
+        matStatsReady = null;
+      }
+    })();
+  }
+  return matStatsReady;
+}
+
+async function matUserFromReq(req) {
+  try { return await getOrCreateUser(req.body && req.body.initData); } catch (e) { return null; }
+}
+
+app.post('/api/materials/my-state', async function (req, res) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.json({ ok: true, liked_ids: [], saved_ids: [] });
+    var l = await pool.query('SELECT material_id FROM material_likes WHERE user_id = $1', [user.id]);
+    var sv = await pool.query('SELECT material_id FROM material_saves WHERE user_id = $1', [user.id]);
+    return res.json({ ok: true, liked_ids: l.rows.map(function (r) { return r.material_id; }), saved_ids: sv.rows.map(function (r) { return r.material_id; }) });
+  } catch (e) {
+    return res.json({ ok: true, liked_ids: [], saved_ids: [] });
+  }
+});
+
+async function toggleMatFlag(req, res, table) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.status(401).json({ error: 'Avtorizatsiya kerak' });
+    var mid = parseInt(req.body.id, 10);
+    if (!mid) return res.status(400).json({ error: 'Material ID kerak' });
+    var ex = await pool.query('SELECT 1 FROM ' + table + ' WHERE user_id = $1 AND material_id = $2', [user.id, mid]);
+    var on;
+    if (ex.rows.length) { await pool.query('DELETE FROM ' + table + ' WHERE user_id = $1 AND material_id = $2', [user.id, mid]); on = false; }
+    else { await pool.query('INSERT INTO ' + table + ' (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, mid]); on = true; }
+    var c = await pool.query('SELECT COUNT(*)::int AS c FROM ' + table + ' WHERE material_id = $1', [mid]);
+    return res.json({ ok: true, active: on, count: c.rows[0].c });
+  } catch (e) {
+    console.error('TOGGLE MATERIAL FLAG ERROR:', e.message);
+    return res.status(500).json({ error: 'Saqlashda xatolik' });
+  }
+}
+app.post('/api/materials/toggle-like', function (req, res) { return toggleMatFlag(req, res, 'material_likes'); });
+app.post('/api/materials/toggle-save', function (req, res) { return toggleMatFlag(req, res, 'material_saves'); });
+
 // 1. Kategoriyalar va ishlab chiqaruvchilar ro'yxati (GET & POST)
 app.all('/api/materials/categories', async function (req, res) {
   try {
@@ -7488,6 +7820,7 @@ app.all('/api/materials/list', async function (req, res) {
     }
 
     var whereSql = whereClauses.length ? 'WHERE ' + whereClauses.join(' AND ') : '';
+    await ensureMatStats();
 
     // Sorting
     var orderSql = 'ORDER BY m.id DESC';
@@ -7495,6 +7828,7 @@ app.all('/api/materials/list', async function (req, res) {
     else if (sort === 'verified') orderSql = 'ORDER BY m.verification_status ASC, m.last_verified_at DESC';
     else if (sort === 'frequent') orderSql = 'ORDER BY m.is_frequent DESC, m.id DESC';
     else if (sort === 'newest') orderSql = 'ORDER BY m.created_at DESC, m.id DESC';
+    else if (sort === 'views') orderSql = 'ORDER BY COALESCE(m.view_count, 0) DESC, m.id DESC';
 
     // Total count
     var countQuery = `
@@ -7533,6 +7867,9 @@ app.all('/api/materials/list', async function (req, res) {
         m.status, m.verification_status, m.access_type, m.last_verified_at, m.created_at,
         c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon, c.scope AS category_scope,
         mfg.id AS manufacturer_id, mfg.name AS manufacturer_name, mfg.slug AS manufacturer_slug, mfg.logo AS manufacturer_logo, mfg.country AS manufacturer_country,
+        COALESCE(m.view_count, 0) AS view_count,
+        (SELECT COUNT(*)::int FROM material_likes ml WHERE ml.material_id = m.id) AS like_count,
+        (SELECT COUNT(*)::int FROM material_saves msv WHERE msv.material_id = m.id) AS save_count,
         0 AS specs_count,
         0 AS docs_count,
         (SELECT COUNT(msrc.id)::int FROM material_sources msrc WHERE msrc.material_id = m.id) AS sources_count,
@@ -7729,8 +8066,24 @@ app.all('/api/materials/detail', async function (req, res) {
     mat.cover_image = mat.image_url || mat.cover_image;
     mat.featured_image = mat.cover_image;
 
+    // Statistika: bir foydalanuvchi bir kunda bir marta hisoblanadi
+    var matStats = { view_count: Number(mat.view_count) || 0, like_count: 0, save_count: 0, liked: false, saved: false };
+    try {
+      await ensureMatStats();
+      var detUser = await matUserFromReq(req);
+      if (detUser) {
+        var ins = await pool.query('INSERT INTO material_view_log (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING 1', [detUser.id, materialId]);
+        if (ins.rows.length) { await pool.query('UPDATE materials SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1', [materialId]); matStats.view_count += 1; }
+        matStats.liked = (await pool.query('SELECT 1 FROM material_likes WHERE user_id = $1 AND material_id = $2', [detUser.id, materialId])).rows.length > 0;
+        matStats.saved = (await pool.query('SELECT 1 FROM material_saves WHERE user_id = $1 AND material_id = $2', [detUser.id, materialId])).rows.length > 0;
+      }
+      matStats.like_count = (await pool.query('SELECT COUNT(*)::int AS c FROM material_likes WHERE material_id = $1', [materialId])).rows[0].c;
+      matStats.save_count = (await pool.query('SELECT COUNT(*)::int AS c FROM material_saves WHERE material_id = $1', [materialId])).rows[0].c;
+    } catch (stErr) { console.warn('material stats:', stErr.message); }
+
     return res.json({
       ok: true,
+      stats: matStats,
       material: mat,
       types: typesRes.rows || [],
       sources: sourcesRes.rows || [],
@@ -8520,7 +8873,7 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
     if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; } else { b._size_warning = autoSize.error || 'Hajm aniqlanmadi'; }
+      if (autoSize.ok) { b.file_size = formatBytesUz(autoSize.bytes); b._size_bytes = autoSize.bytes; if (!b.file_format) b.file_format = extToFormat(autoSize.name); } else { b._size_warning = autoSize.error || 'Hajm aniqlanmadi'; }
       if (parseTelegramLink(b.content_url)) b.storage_provider = 'telegram';
     }
 
@@ -8529,12 +8882,12 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
         type, section_slug, title, subtitle, description, category, sub_category, tags,
         content_url, content_type, content_data, preview_image_url, storage_provider, storage_id,
         author, file_size, page_count, language, version, versions, course_id, source_label,
-        difficulty, time_limit_min, status, order_index, is_featured
+        difficulty, time_limit_min, status, order_index, is_featured, software, file_format
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,
         $9,$10,$11,$12,$13,$14,
         $15,$16,$17,$18,$19,$20,$21,$22,
-        $23,$24,$25,$26,$27
+        $23,$24,$25,$26,$27,$28,$29
       )
       RETURNING *
     `, [
@@ -8549,7 +8902,8 @@ app.post('/api/admin/library-v2/resource/add', requireAdmin, async function (req
       b.versions ? (typeof b.versions === 'string' ? b.versions : JSON.stringify(b.versions)) : '[]',
       b.course_id || null, b.source_label || null,
       b.difficulty || 'medium', b.time_limit_min || 15,
-      b.status || 'published', b.order_index || 0, b.is_featured || false
+      b.status || 'published', b.order_index || 0, b.is_featured || false,
+      b.software || softwareFromFormat(b.file_format) || null, b.file_format ? String(b.file_format).toUpperCase() : null
     ]);
 
     if (b._size_bytes) { try { await pool.query('UPDATE library_resources SET size_bytes = $1, size_checked_at = NOW() WHERE id = $2', [b._size_bytes, result.rows[0].id]); } catch (e) {} }
@@ -8569,7 +8923,7 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
     if (b.file_size && !/^\d/.test(String(b.file_size))) b.file_size = null;
     if (b.content_url && (isGoogleDriveUrl(b.content_url) || parseTelegramLink(b.content_url))) {
       var autoSize2 = await resolveAnySize(b.content_url, req.user.telegram_id);
-      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; } else { b._size_warning = autoSize2.error || 'Hajm aniqlanmadi'; }
+      if (autoSize2.ok) { b.file_size = formatBytesUz(autoSize2.bytes); b._size_bytes = autoSize2.bytes; if (!b.file_format) b.file_format = extToFormat(autoSize2.name); } else { b._size_warning = autoSize2.error || 'Hajm aniqlanmadi'; }
     }
 
     var result = await pool.query(`
@@ -8599,6 +8953,8 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
         status = COALESCE($23, status),
         order_index = COALESCE($24, order_index),
         is_featured = COALESCE($25, is_featured),
+        software = COALESCE($27, software),
+        file_format = COALESCE($28, file_format),
         updated_at = NOW()
       WHERE id = $26
       RETURNING *
@@ -8615,6 +8971,8 @@ app.post('/api/admin/library-v2/resource/:id/update', requireAdmin, async functi
       b.difficulty, b.time_limit_min,
       b.status, b.order_index, b.is_featured,
       resourceId
+    ,
+      b.software || softwareFromFormat(b.file_format) || null, b.file_format ? String(b.file_format).toUpperCase() : null
     ]);
 
     if (!result.rows.length) return res.status(404).json({ error: 'Resurs topilmadi' });
@@ -9024,48 +9382,130 @@ async function testGoogleDriveFolderAccess(folderId, apiKey) {
 async function scanGoogleDriveFolder(folderId, apiKey, sourceName) {
   var results = [];
   var visited = new Set();
-  var key = (apiKey || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+  var key = (apiKey || '').trim() || (await getDriveApiKey());
   if (!key) {
-    console.warn('[scanGoogleDriveFolder] GOOGLE_DRIVE_API_KEY is missing');
-    return [];
+    throw new Error("Google Drive API kaliti topilmadi. Railway Variables'ga GOOGLE_DRIVE_API_KEY qo'shing yoki Drive manbasida kalitni kiriting.");
   }
 
   async function traverse(fId, currentCategory, depth) {
-    if (depth > 5 || visited.has(fId)) return;
+    if (depth > 6 || visited.has(fId)) return;
     visited.add(fId);
-
-    try {
-      var query = encodeURIComponent(`'${fId}' in parents and trashed = false`);
-      var apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,size,webViewLink,parents)&pageSize=1000&key=${encodeURIComponent(key)}`;
+    var pageToken = '';
+    do {
+      var query = encodeURIComponent("'" + fId + "' in parents and trashed = false");
+      var apiUrl = 'https://www.googleapis.com/drive/v3/files?q=' + query +
+        '&fields=nextPageToken,files(id,name,mimeType,size,webViewLink,modifiedTime)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&key=' + encodeURIComponent(key) +
+        (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
       var res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (res.ok) {
-        var data = await res.json();
-        var files = data.files || [];
-        for (var item of files) {
-          if (item.mimeType === 'application/vnd.google-apps.folder') {
-            var catName = item.name.trim();
-            await traverse(item.id, catName, depth + 1);
-          } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
-            results.push({
-              id: item.id,
-              fileId: item.id,
-              name: item.name,
-              fileName: item.name,
-              size: parseInt(item.size) || 0,
-              mimeType: item.mimeType || 'application/pdf',
-              webViewLink: item.webViewLink || `https://drive.google.com/file/d/${item.id}/view`,
-              category: currentCategory || 'Arxitektura'
-            });
-          }
+      if (!res.ok) {
+        var ej = {};
+        try { ej = await res.json(); } catch (e) {}
+        var em = (ej.error && ej.error.message) || 'xatolik';
+        var hint = res.status === 404 ? " Papka topilmadi yoki ochiq emas ('Anyone with the link')."
+          : (res.status === 400 || res.status === 403) ? " API kalit noto'g'ri, Google Cloud'da 'Google Drive API' yoqilmagan yoki papka ochiq emas."
+          : '';
+        throw new Error('Google Drive (' + res.status + '): ' + em + '.' + hint);
+      }
+      var data = await res.json();
+      for (var item of (data.files || [])) {
+        if (item.mimeType === 'application/vnd.google-apps.folder') {
+          await traverse(item.id, item.name.trim(), depth + 1);
+        } else if (item.mimeType === 'application/pdf' || (item.name && item.name.toLowerCase().endsWith('.pdf'))) {
+          results.push({
+            id: item.id,
+            fileId: item.id,
+            name: item.name,
+            fileName: item.name,
+            size: parseInt(item.size) || 0,
+            mimeType: item.mimeType || 'application/pdf',
+            webViewLink: item.webViewLink || ('https://drive.google.com/file/d/' + item.id + '/view'),
+            category: currentCategory || 'Arxitektura'
+          });
         }
       }
-    } catch (apiErr) {
-      console.warn('Drive API v3 fetch warning:', apiErr.message);
-    }
+      pageToken = data.nextPageToken || '';
+    } while (pageToken && results.length < 5000);
   }
 
   await traverse(folderId, sourceName || 'Arxitektura', 0);
   return results;
+}
+
+// Fayl nomidan sarlavha, muallif va yilni ajratish
+function parseBookFileName(name) {
+  var base = String(name || '').replace(/\.pdf$/i, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  var year = null;
+  var ym = base.match(/\b(19[5-9]\d|20[0-3]\d)\b/);
+  if (ym) year = ym[1];
+  var title = base, author = '';
+  var m = base.match(/^(.{3,60}?)\s+[-–—]\s+(.{3,})$/);
+  if (m) {
+    var left = m[1].trim(), right = m[2].trim();
+    var looksName = function (t) { var w = t.split(/\s+/); return w.length >= 1 && w.length <= 4 && w.every(function (x) { return /^[A-ZА-ЯЁ][\p{L}.'’-]+$/u.test(x); }); };
+    var topicWord = /revit|autodesk|guide|manual|bim|design|architect|handbook|course|standard|shnq|kmk|gost|snip|autocad|max|data|construction/i;
+    var isPerson = function (t) { return looksName(t) && t.split(/\s+/).length >= 2 && !topicWord.test(t); };
+    if (isPerson(left)) { author = left; title = right; }
+    else if (isPerson(right)) { author = right; title = left; }
+  }
+  var pm = title.match(/^(.*?)\s*\(([^()]{3,60})\)\s*$/);
+  if (pm && !/^\d{4}$/.test(pm[2].trim()) && !author && /^[\p{L}.,'’ -]+(\d{4})?$/u.test(pm[2])) {
+    author = pm[2].replace(/[,\s]*\d{4}\s*$/, '').trim();
+    title = pm[1].trim();
+  }
+  title = title.replace(/\[[^\]]*\]/g, '').replace(/\((?:19|20)\d\d\)/g, '').replace(/\s+/g, ' ').replace(/^\d+[\s.)-]+/, '').trim();
+  return { title: title || base, author: author, year: year };
+}
+
+// PDF ichidan sahifalar soni va muallifni o'qish (boshi va oxiridan qisman)
+async function probePdfInfo(fileId, key, size) {
+  var info = { pages: 0, title: '', author: '' };
+  async function range(a, b) {
+    var r = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId) + '?alt=media&supportsAllDrives=true&key=' + encodeURIComponent(key), { headers: { Range: 'bytes=' + a + '-' + b } });
+    if (r.status !== 206) { try { if (r.body && r.body.cancel) r.body.cancel(); } catch (e) {} return ''; }
+    return Buffer.from(await r.arrayBuffer()).toString('latin1');
+  }
+  try {
+    var head = await range(0, 1048575);
+    var tail = (size && size > 2097152) ? await range(size - 1048576, size - 1) : '';
+    var txt = head + '\n' + tail;
+    var best = 0, mm, re = /\/Type\s*\/Pages\b[\s\S]{0,300}?\/Count\s+(\d+)|\/Count\s+(\d+)[\s\S]{0,300}?\/Type\s*\/Pages\b/g;
+    while ((mm = re.exec(txt)) !== null) { var n = parseInt(mm[1] || mm[2], 10); if (n > best && n < 20000) best = n; }
+    info.pages = best;
+    var clean = function (v) { v = String(v || '').replace(/\\([()\\])/g, '$1').trim(); return /^[\x20-\x7E]{2,150}$/.test(v) ? v : ''; };
+    var am = txt.match(/\/Author\s*\(([^)]{2,150})\)/); if (am) info.author = clean(am[1]);
+    var tm = txt.match(/\/Title\s*\(([^)]{3,200})\)/); if (tm) info.title = clean(tm[1]);
+  } catch (e) { console.warn('probePdfInfo:', e.message); }
+  return info;
+}
+
+var bookEnrichRunning = false;
+async function enrichBooksInBackground(bookIds, key) {
+  if (bookEnrichRunning || !bookIds.length) return;
+  bookEnrichRunning = true;
+  try {
+    for (var id of bookIds) {
+      try {
+        var br = await pool.query('SELECT * FROM library_books WHERE id = $1', [id]);
+        if (!br.rows.length) continue;
+        var book = br.rows[0];
+        var meta = await generateBookAiMetadata(book);
+        var parsed = parseBookFileName(book.drive_file_name || book.title);
+        var pdf = key ? await probePdfInfo(book.drive_file_id, key, Number(book.drive_file_size) || 0) : { pages: 0, title: '', author: '' };
+        var author = pdf.author || parsed.author || meta.author;
+        var pages = pdf.pages || book.page_count || 0;
+        await pool.query(
+          `UPDATE library_books SET title = $1, author = $2, short_description = $3, what_you_learn = $4, categories = $5, tags = $6,
+             language = $7, publication_year = COALESCE($8, publication_year), page_count = $9, reading_time_minutes = $10,
+             ai_generated = true, updated_at = NOW() WHERE id = $11`,
+          [meta.title || parsed.title, author, meta.short_description, Array.isArray(meta.what_you_learn) ? meta.what_you_learn.join('\n') : String(meta.what_you_learn || ''),
+           [meta.category], meta.tags, meta.language, parsed.year || meta.publication_year || null, pages, pages ? Math.max(5, pages * 2) : (book.reading_time_minutes || 30), id]
+        );
+      } catch (e) {
+        console.warn('[BOOK ENRICH]', id, e.message);
+        try { await pool.query('UPDATE library_books SET sync_error = $1 WHERE id = $2', [e.message, id]); } catch (e2) {}
+      }
+    }
+  } finally { bookEnrichRunning = false; }
 }
 
 async function generateBookAiMetadata(book) {
@@ -9175,7 +9615,7 @@ Qat'iy faqat quyidagi JSON formatida javob bering, ortiqcha belgisiz:
     category: detectedCat,
     tags: [detectedCat.toLowerCase(), 'arxitektura', 'kutubxona', lang],
     language: lang,
-    publication_year: new Date().getFullYear().toString(),
+    publication_year: (parseBookFileName(fileName).year) || null,
     ai_generated: true
   };
 }
@@ -9332,17 +9772,14 @@ app.get('/api/admin/drive/status', requireAdmin, async function (req, res) {
 // Admin: Google Drive papkasini skanerlash va yangi kitoblarni import qilish (Incremental Sync)
 app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) {
   try {
-    if (!libraryBooksTableReady) {
-      await ensureLibraryBooksTable();
-    }
+    if (!libraryBooksTableReady) await ensureLibraryBooksTable();
 
     var folderIdInput = (req.body.folder_id || req.body.root_folder_id || '').trim();
     var sourceId = req.body.source_id ? parseInt(req.body.source_id) : null;
-    var apiKey = (req.body.api_key || process.env.GOOGLE_DRIVE_API_KEY || '').trim();
+    var apiKey = (req.body.api_key || '').trim();
     var sourceName = 'Google Drive';
 
-    // Agar ma'lumotlar berilmagan bo'lsa, oxirgi saqlangan manbadan olish
-    if (!folderIdInput || !apiKey) {
+    if (!folderIdInput || !apiKey || sourceId) {
       var sRes = sourceId
         ? await pool.query('SELECT * FROM drive_sources WHERE id = $1', [sourceId])
         : await pool.query('SELECT * FROM drive_sources WHERE is_active = true ORDER BY id DESC LIMIT 1');
@@ -9350,107 +9787,93 @@ app.post('/api/admin/books/sync-drive', requireAdmin, async function (req, res) 
         var src = sRes.rows[0];
         sourceId = src.id;
         if (!folderIdInput) folderIdInput = src.root_folder_id;
-        if (!apiKey) apiKey = src.api_key || process.env.GOOGLE_DRIVE_API_KEY || '';
+        if (!apiKey) apiKey = src.api_key || '';
         sourceName = src.name || 'Google Drive';
       }
     }
+    if (!apiKey) apiKey = await getDriveApiKey();
 
     var targetFolderId = extractGoogleDriveFolderId(folderIdInput);
     if (!targetFolderId) {
-      return res.status(400).json({ error: 'Google Drive papka ID si yoki havolasi kiritilmadi' });
+      return res.status(400).json({ error: "Google Drive papka havolasi noto'g'ri. Havola https://drive.google.com/drive/folders/... ko'rinishida bo'lsin." });
     }
 
-    console.log(`[DRIVE SYNC START] Folder: ${targetFolderId} (Source: ${sourceName})`);
-    var scannedFiles = await scanGoogleDriveFolder(targetFolderId, apiKey, sourceName);
-    console.log(`[DRIVE SYNC FILES FOUND] Total: ${scannedFiles.length}`);
+    var scannedFiles;
+    try {
+      scannedFiles = await scanGoogleDriveFolder(targetFolderId, apiKey, sourceName);
+    } catch (scanErr) {
+      return res.status(400).json({ error: scanErr.message });
+    }
+    if (!scannedFiles.length) {
+      return res.status(400).json({ error: "Papka ochildi, lekin ichidan PDF kitob topilmadi (ichki papkalar ham tekshirildi). Papkada .pdf fayllar borligini va papka 'Anyone with the link' ekanini tekshiring." });
+    }
 
-    var stats = {
-      found: scannedFiles.length,
-      new: 0,
-      existing: 0,
-      failed: 0
-    };
+    var stats = { found: scannedFiles.length, new: 0, existing: 0, failed: 0 };
+    var toEnrich = [];
 
     for (var file of scannedFiles) {
       try {
         var existing = await pool.query(
-          'SELECT id, title, drive_file_id FROM library_books WHERE drive_file_id = $1 OR pdf_url LIKE $2 LIMIT 1',
+          'SELECT id, drive_file_id, status FROM library_books WHERE drive_file_id = $1 OR pdf_url LIKE $2 LIMIT 1',
           [file.id, '%' + file.id + '%']
         );
-
         if (existing.rows.length) {
           stats.existing++;
-          // Agar drive_file_id bo'lmasa biriktirib qo'yish
-          if (!existing.rows[0].drive_file_id) {
-            await pool.query(
-              'UPDATE library_books SET drive_file_id = $1, drive_source_id = $2, drive_file_name = $3, drive_file_size = $4 WHERE id = $5',
-              [file.id, sourceId, file.name, file.size, existing.rows[0].id]
-            );
+          var ex = existing.rows[0];
+          if (!ex.drive_file_id) {
+            await pool.query('UPDATE library_books SET drive_file_id = $1, drive_source_id = $2, drive_file_name = $3, drive_file_size = $4 WHERE id = $5', [file.id, sourceId, file.name, file.size, ex.id]);
+          }
+          if (/^(needs_review|discovered)$/i.test(ex.status || '')) {
+            await pool.query("UPDATE library_books SET status = 'published', admin_approved = true, published_at = NOW(), drive_file_size = COALESCE(NULLIF(drive_file_size, 0), $2) WHERE id = $1", [ex.id, file.size]);
+            toEnrich.push(ex.id);
           }
         } else {
-          // Yangi kitobni yaratish (DISCOVERED / NEEDS_REVIEW holatida)
-          var cleanName = (file.name || 'Yangi Kitob')
-            .replace(/\.pdf$/i, '')
-            .replace(/[_-]+/g, ' ')
-            .trim();
-          var coverThumb = `https://drive.google.com/thumbnail?id=${file.id}&sz=w800`;
-          var viewUrl = `https://drive.google.com/file/d/${file.id}/view`;
+          var parsed = parseBookFileName(file.name);
+          var coverThumb = 'https://drive.google.com/thumbnail?id=' + file.id + '&sz=w800';
+          var viewUrl = 'https://drive.google.com/file/d/' + file.id + '/view';
           var category = file.category && file.category !== 'Boshqa' ? file.category : 'Arxitektura';
-
-          await pool.query(`
+          var ins = await pool.query(`
             INSERT INTO library_books (
               title, author, short_description, what_you_learn, categories,
               pdf_url, cover_url, generated_cover_url, page_count, reading_time_minutes,
               access_type, is_recommended, status, drive_source_id, drive_file_id,
-              drive_file_name, drive_web_view_url, drive_file_size, language,
-              ai_generated, admin_approved, created_at
+              drive_file_name, drive_web_view_url, drive_file_size, language, publication_year,
+              ai_generated, admin_approved, published_at, created_at
             ) VALUES (
-              $1, 'Autodesk BIM & Architecture', $2, $3, $4,
-              $5, $6, $6, 0, 30,
-              'free', false, 'NEEDS_REVIEW', $7, $8,
-              $9, $10, $11, 'uz',
-              false, false, NOW()
-            )
+              $1, $2, $3, $4, $5,
+              $6, $7, $7, 0, 30,
+              'free', false, 'published', $8, $9,
+              $10, $11, $12, 'uz', $13,
+              false, true, NOW(), NOW()
+            ) RETURNING id
           `, [
-            cleanName,
-            cleanName + " bo'yicha batafsil qo'llanma va o'quv materiali.",
-            JSON.stringify([
-              "Loyiha chizmalarini professional rasmiylashtirish",
-              "Arxitektura va BIM standartlariga mos ishlash",
-              "Amaliy tajriba va ilg'or usullar"
-            ]),
+            parsed.title,
+            parsed.author || 'Muallif ko\'rsatilmagan',
+            parsed.title + " bo'yicha o'quv materiali.",
+            '',
             [category],
-            viewUrl,
-            coverThumb,
-            sourceId,
-            file.id,
-            file.name,
-            viewUrl,
-            file.size
+            viewUrl, coverThumb, sourceId, file.id, file.name, viewUrl, file.size, parsed.year
           ]);
-
+          toEnrich.push(ins.rows[0].id);
           stats.new++;
         }
       } catch (itemErr) {
-        console.warn(`[DRIVE SYNC ITEM ERROR] ${file.name}:`, itemErr.message);
+        console.warn('[DRIVE SYNC ITEM ERROR] ' + file.name + ':', itemErr.message);
         stats.failed++;
       }
     }
 
-    // Source ning last_sync parametrlarini yangilash
     if (sourceId) {
-      await pool.query(
-        'UPDATE drive_sources SET last_sync_at = NOW(), last_sync_stats = $1, root_folder_id = $2 WHERE id = $3',
-        [JSON.stringify(stats), targetFolderId, sourceId]
-      );
+      await pool.query('UPDATE drive_sources SET last_sync_at = NOW(), last_sync_stats = $1, root_folder_id = $2 WHERE id = $3', [JSON.stringify(stats), targetFolderId, sourceId]);
     }
 
-    console.log(`[DRIVE SYNC FINISHED] New: ${stats.new}, Existing: ${stats.existing}, Failed: ${stats.failed}`);
+    // Metadata (muallif, sahifalar, tavsif) fonda to'ldiriladi
+    enrichBooksInBackground(toEnrich, apiKey).catch(function (e) { console.warn('enrich:', e.message); });
 
     return res.json({
       ok: true,
       stats: stats,
-      message: `Sinxronizatsiya yakunlandi: ${stats.new} ta yangi kitob topildi, ${stats.existing} ta avvaldan mavjud.`
+      message: 'Papkadan ' + stats.found + ' ta PDF topildi: ' + stats.new + ' ta yangi kitob qo\'shildi va nashr qilindi, ' + stats.existing + ' tasi avvaldan bor. Muallif, sahifalar soni va tavsif birozdan keyin avtomatik to\'ladi.'
     });
   } catch (err) {
     console.error('DRIVE SYNC ERROR:', err);

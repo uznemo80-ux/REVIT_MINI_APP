@@ -700,7 +700,7 @@ let liveActivityState = {
   course_title: null,
   video_progress: 0,
   video_duration: 0,
-  video_status: "watching",
+  video_status: "idle",
   module_id: null,
   test_question_index: 0,
   test_total_questions: 0,
@@ -718,7 +718,8 @@ async function api(path, body = {}) {
   const res = await fetch(path, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...(window.I18N ? window.I18N.headers() : {})
     },
     body: JSON.stringify({
       initData,
@@ -891,7 +892,7 @@ function initHeartbeat() {
   // Mini App yashirilganda / qayta ochilganda nazorat
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      sendHeartbeat({ status: "idle" });
+      sendHeartbeat({ status: "idle", video_status: "paused" });
     } else {
       sendHeartbeat();
     }
@@ -991,7 +992,7 @@ function clearActivitySpecialState() {
   liveActivityState.module_title = null;
   liveActivityState.video_progress = 0;
   liveActivityState.video_duration = 0;
-  liveActivityState.video_status = "watching";
+  liveActivityState.video_status = "idle";
   liveActivityState.module_id = null;
   liveActivityState.test_question_index = 0;
   liveActivityState.test_total_questions = 0;
@@ -1020,6 +1021,7 @@ async function loadAuth() {
       terms_accepted: Boolean(data.terms_accepted),
       terms_accepted_at: data.terms_accepted_at || null
     };
+    try { if (window.I18N && data.language) window.I18N.reconcile(data.language); } catch (e) { console.warn("i18n reconcile:", e); }
     return data;
   } catch (error) {
     console.error("AUTH ERROR:", error);
@@ -3834,7 +3836,8 @@ function fmtDate(d) {
   if (!d) return null;
   const date = new Date(d);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("uz-UZ", {
+  const _loc = { uz: "uz-UZ", ru: "ru-RU", en: "en-GB", tr: "tr-TR", ar: "ar" }[(window.I18N && window.I18N.lang) || "uz"] || "uz-UZ";
+  return date.toLocaleDateString(_loc, {
     day: "2-digit",
     month: "long",
     year: "numeric"
@@ -6555,6 +6558,7 @@ function openLibrarySection(slug) {
   if (slug === "books") {
     studentBooksPage = 1;
     studentBooksList = null;
+    resetBooksUi();
     loadStudentBooks();
   }
   if (slug === "materials") {
@@ -6586,6 +6590,96 @@ function closeMaterialDetail() {
   libraryActiveSection = "materials";
   render();
   window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
+}
+
+
+// ------------------------------------------------------
+// MANBALAR: dastur (Revit / 3ds Max / AutoCAD) va format (RVT / RFA / RTE ...) filtri
+// ------------------------------------------------------
+let librarySourceSoftware = "Barchasi";
+let librarySourceFormat = "Barchasi";
+const SOURCE_SOFTWARE_ORDER = ["Revit", "3ds Max", "AutoCAD", "Boshqa"];
+const SOURCE_FORMAT_OPTIONS = ["RVT", "RFA", "RTE", "RFT", "DWG", "DWT", "MAX", "SKP", "FBX", "INSTALLER", "KUTUBXONA", "ZIP", "BOSHQA"];
+
+function sourceFormatLabel(f) {
+  const k = String(f || "").toUpperCase();
+  if (k === "INSTALLER") return "O‘rnatuvchi";
+  if (k === "KUTUBXONA") return "Kutubxona";
+  if (k === "BOSHQA") return "Boshqa";
+  return k;
+}
+
+function getAllSources() {
+  return libraryV2Resources.filter(r =>
+    (r.section_slug === "sources" || r.type === "source" || r.type === "family" || r.type === "family_pack" || r.type === "template") &&
+    r.content_url && String(r.content_url).trim()
+  );
+}
+
+function getFilteredSources() {
+  const search = (librarySectionSearchQuery || "").toLowerCase().trim();
+  let list = getAllSources();
+  if (librarySourceSoftware !== "Barchasi") {
+    list = list.filter(s => (s.software || "Revit") === librarySourceSoftware);
+  }
+  if (librarySourceFormat !== "Barchasi") {
+    list = list.filter(s => String(s.file_format || "").toUpperCase() === librarySourceFormat);
+  }
+  if (search) {
+    list = list.filter(s =>
+      (s.title && s.title.toLowerCase().includes(search)) ||
+      (s.description && s.description.toLowerCase().includes(search)) ||
+      (s.category && s.category.toLowerCase().includes(search)) ||
+      (s.version && String(s.version).toLowerCase().includes(search)) ||
+      (s.file_format && String(s.file_format).toLowerCase().includes(search))
+    );
+  }
+  return list;
+}
+
+function renderSourcesFiltersHtml() {
+  const all = getAllSources();
+  const softwares = SOURCE_SOFTWARE_ORDER.filter(sw => all.some(s => (s.software || "Revit") === sw));
+  const inSw = librarySourceSoftware === "Barchasi" ? all : all.filter(s => (s.software || "Revit") === librarySourceSoftware);
+  const fmts = [...new Set(inSw.map(s => String(s.file_format || "").toUpperCase()).filter(Boolean))];
+  const chip = (label, active, fn, arg) =>
+    `<div class="chip ${active ? "active" : ""}" onclick="${fn}('${escapeJsString(arg)}')">${escapeHtml(label)}</div>`;
+  const row1 = ["Barchasi", ...softwares].map(sw => chip(sw, librarySourceSoftware === sw, "setLibrarySourceSoftware", sw)).join("");
+  const row2 = fmts.length ? ["Barchasi", ...fmts].map(f => chip(f === "Barchasi" ? "Barcha formatlar" : sourceFormatLabel(f), librarySourceFormat === f, "setLibrarySourceFormat", f)).join("") : "";
+  return `
+    <div class="category-chips lib-chips-row lib-src-chip-row">${row1}</div>
+    ${row2 ? `<div class="category-chips lib-chips-row lib-src-chip-row lib-src-chip-row-2">${row2}</div>` : ""}
+    <div class="lib-src-count">${getFilteredSources().length} ta manba</div>
+  `;
+}
+
+function renderSourcesGridInnerHtml() {
+  const list = getFilteredSources();
+  return list.length ? list.map(renderSourceCardHtml).join("") : `
+    <div class="empty-box" style="grid-column: 1 / -1;">
+      Bu filtr bo‘yicha manba topilmadi. Boshqa dastur yoki formatni tanlang.
+    </div>
+  `;
+}
+
+function updateSourcesUiInPlace() {
+  const f = document.getElementById("lib-src-filters");
+  if (f) f.innerHTML = renderSourcesFiltersHtml();
+  const g = document.getElementById("lib-section-list-container");
+  if (g) g.innerHTML = renderSourcesGridInnerHtml();
+}
+
+function setLibrarySourceSoftware(sw) {
+  haptic("light");
+  librarySourceSoftware = sw;
+  librarySourceFormat = "Barchasi";
+  updateSourcesUiInPlace();
+}
+
+function setLibrarySourceFormat(f) {
+  haptic("light");
+  librarySourceFormat = f;
+  updateSourcesUiInPlace();
 }
 
 function setLibrarySectionCategory(cat) {
@@ -6649,34 +6743,7 @@ function renderActiveSectionItemsHtml() {
   }
 
   if (libraryActiveSection === "sources") {
-    let sources = libraryV2Resources.filter(r =>
-      r.section_slug === "sources" ||
-      r.type === "source" ||
-      r.type === "family" ||
-      r.type === "template"
-    );
-
-    // Manbasi (havolasi) yo'q resurslar ko'rsatilmaydi
-    sources = sources.filter(r => r.content_url && String(r.content_url).trim());
-
-    if (cat !== "Barchasi") {
-      sources = sources.filter(s => s.category === cat);
-    }
-
-    if (search) {
-      sources = sources.filter(s =>
-        (s.title && s.title.toLowerCase().includes(search)) ||
-        (s.description && s.description.toLowerCase().includes(search)) ||
-        (s.category && s.category.toLowerCase().includes(search)) ||
-        (s.version && s.version.toLowerCase().includes(search))
-      );
-    }
-
-    return sources.length ? sources.map(renderSourceCardHtml).join("") : `
-      <div class="empty-box" style="grid-column: 1 / -1;">
-        Ushbu bo‘limda hozircha manbalar yo‘q. Tez orada yangi Revit oilalari qo‘shiladi!
-      </div>
-    `;
+    return renderSourcesGridInnerHtml();
   }
 
   if (libraryActiveSection === "materials") {
@@ -6733,6 +6800,8 @@ function setLibrarySectionSearch(q) {
       studentBooksPage = 1;
       loadStudentBooks();
     }, 350);
+  } else if (libraryActiveSection === "sources") {
+    updateSourcesUiInPlace();
   } else {
     const listEl = document.getElementById("lib-section-list-container");
     if (listEl) {
@@ -6902,61 +6971,567 @@ function renderTasksHomeHtml() {
 // ------------------------------------------------------
 // 2. KITOBLAR EKRANI (Books Screen — 500+ Books & Pagination)
 // ------------------------------------------------------
-async function loadStudentBooks() {
-  if (studentBooksLoading) return;
-  studentBooksLoading = true;
-  const listEl = document.getElementById("lib-section-list-container");
-  if (listEl) {
-    listEl.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 40px 0;">
-        <div class="spinner" style="margin: 0 auto 12px;"></div>
-        <div style="font-size: 13px; color: var(--text-secondary);">Kitoblar yuklanmoqda...</div>
-      </div>
-    `;
+// ======================================================
+// KITOBLAR KATALOGI: qidiruv → kategoriyalar → ko'p o'qilgan → barcha kitoblar
+// (Materiallar bo'limidagi UX arxitekturasi; o'quvchi/detail/saqlash mantiqi o'zgarmaydi)
+// ======================================================
+const BOOK_GROUPS = [
+  { id: "arxitektura", name: "Arxitektura", icon: "🏛️", re: /arxitektur|architect|bino|turar joy|jamoat|sanoat bino|zamonaviy|loyihalash/ },
+  { id: "interyer", name: "Interyer", icon: "🛋️", re: /interyer|interior|dizayn|design|mebel|furniture|yoritish|lighting|ergonomik|dekor/ },
+  { id: "revit", name: "Revit", icon: "🧩", re: /revit/ },
+  { id: "bim", name: "BIM", icon: "🗂️", re: /\bbim\b/ },
+  { id: "qurilish", name: "Qurilish", icon: "🏗️", re: /qurilish|construction|montaj|material|building/ },
+  { id: "konstruksiya", name: "Konstruktsiyalar", icon: "🔩", re: /konstruk|konstrukt|temir.?beton|beton|poydevor|karkas|metall|yog.och|tom konstruk|structur/ },
+  { id: "chizma", name: "Chizma va loyiha hujjatlari", icon: "📐", re: /chizma|drawing|rabochka|ishchi|detail|spetsifik|specification|loyiha hujjat|documentation/ },
+  { id: "shaharsozlik", name: "Shaharsozlik", icon: "🏙️", re: /shaharsoz|urban|landscape|peyzaj|planning|reja/ },
+  { id: "normativ", name: "Normativ va standartlar", icon: "📜", re: /normativ|shnq|qmq|kmk|gost|snip|standart|norma|terminlar/ },
+  { id: "tarix", name: "Tarix / Nazariya", icon: "🎨", re: /tarix|history|nazariya|theory|san.at|\bart\b|falsafa|philosoph/ },
+  { id: "kasb", name: "Professional rivojlanish", icon: "💼", re: /portfolio|professional|career|karyera|business|practice|biznes/ }
+];
+// Bir kitob bir nechta guruhga tegishli bo'lishi mumkin; "Barcha kitoblar"da birinchi (ustuvor) guruhida chiqadi
+const BOOK_GROUP_PRIORITY = ["normativ", "revit", "bim", "chizma", "konstruksiya", "shaharsozlik", "interyer", "qurilish", "arxitektura", "tarix", "kasb"];
+const BOOK_PH_WORDS = ["Arxitektura", "Interyer dizayn", "Revit", "BIM", "Qurilish", "Loyiha", "Konstruktsiya", "Chizma", "Arxitektura tarixi"];
+const BOOKS_PAGE_STEP = 24;
+
+const booksState = {
+  loaded: false, loading: false, failed: false,
+  books: [], list: [],
+  searchQuery: "", group: "all", sub: "all", sort: "popular",
+  panelOpen: false, visible: BOOKS_PAGE_STEP,
+  likedIds: new Set()
+};
+
+let _bkPhIdx = 0, _bkPhText = "", _bkPhPhase = "typing", _bkPhTimer = null, _bkSearchTimer = null;
+const _bkGroupCache = new Map();
+
+function bkNorm(s) {
+  return String(s == null ? "" : s).toLowerCase().replace(/[\u2018\u2019\u02bb\u02bc`\u00b4]/g, "'").replace(/\s+/g, " ").trim();
+}
+
+function bookCategoriesOf(b) {
+  if (Array.isArray(b.categories) && b.categories.length) return b.categories.filter(Boolean);
+  if (b.category) return [b.category];
+  return [];
+}
+
+function getBookGroupIds(b) {
+  const key = b.id + "|" + bookCategoriesOf(b).join(",") + "|" + (b.title || "");
+  if (_bkGroupCache.has(key)) return _bkGroupCache.get(key);
+  const cats = bkNorm(bookCategoriesOf(b).join(" "));
+  const tags = bkNorm((Array.isArray(b.tags) ? b.tags : []).join(" "));
+  const title = bkNorm(b.title);
+  // Administrator belgilagan kategoriya ustuvor; faqat u mos kelmasa sarlavha/teglardan aniqlanadi
+  let ids = BOOK_GROUPS.filter(g => g.re.test(cats)).map(g => g.id);
+  if (!ids.length) ids = BOOK_GROUPS.filter(g => g.re.test(tags + " " + title)).map(g => g.id);
+  ids.sort((a, z) => BOOK_GROUP_PRIORITY.indexOf(a) - BOOK_GROUP_PRIORITY.indexOf(z));
+  if (!ids.length) {
+    const own = bookCategoriesOf(b)[0];
+    ids = [own ? "cat:" + own : "boshqa"];
   }
+  _bkGroupCache.set(key, ids);
+  return ids;
+}
 
+function bookGroupMeta(id) {
+  const g = BOOK_GROUPS.find(x => x.id === id);
+  if (g) return g;
+  if (String(id).startsWith("cat:")) return { id, name: String(id).slice(4), icon: "📚" };
+  return { id: "boshqa", name: "Boshqa kitoblar", icon: "📚" };
+}
+
+function bookPopScore(b) {
+  if (b.pop_score != null) return Number(b.pop_score) || 0;
+  return (Number(b.view_count) || 0) + (Number(b.read_count) || 0) * 2 + (Number(b.like_count) || 0) * 3 + (Number(b.saved_count) || 0) * 5;
+}
+
+function bookCoverUrl(b) {
+  let u = b.preview_image_url || b.cover_url || b.generated_cover_url || "";
+  if (!u && b.drive_file_id) u = "https://drive.google.com/thumbnail?id=" + b.drive_file_id + "&sz=w800";
+  return u ? formatImageUrl(u) : "";
+}
+
+function isBookSaved(id) { return libraryV2SavedBookIds.has(Number(id)); }
+function isBookLiked(id) { return booksState.likedIds.has(Number(id)); }
+
+function sortBooksList(list, sortBy) {
+  const arr = list.slice();
+  const t = b => bkNorm(b.title);
+  if (sortBy === "reads") arr.sort((a, b) => (b.read_count || 0) - (a.read_count || 0) || bookPopScore(b) - bookPopScore(a) || b.id - a.id);
+  else if (sortBy === "saves") arr.sort((a, b) => (b.saved_count || 0) - (a.saved_count || 0) || b.id - a.id);
+  else if (sortBy === "likes") arr.sort((a, b) => (b.like_count || 0) - (a.like_count || 0) || b.id - a.id);
+  else if (sortBy === "newest") arr.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0) || b.id - a.id);
+  else if (sortBy === "name") arr.sort((a, b) => t(a).localeCompare(t(b), "uz"));
+  else arr.sort((a, b) => bookPopScore(b) - bookPopScore(a) || (b.is_recommended ? 1 : 0) - (a.is_recommended ? 1 : 0) || b.id - a.id);
+  return arr;
+}
+
+function matchBookSearch(b, q) {
+  const hay = bkNorm([b.title, b.author, bookCategoriesOf(b).join(" "), b.short_description, (Array.isArray(b.tags) ? b.tags.join(" ") : "")].join(" "));
+  return q.split(" ").filter(Boolean).every(tok => hay.includes(tok));
+}
+
+function filterBooksLocally() {
+  let list = booksState.books;
+  const g = booksState.group, sub = booksState.sub, q = bkNorm(booksState.searchQuery);
+  if (g !== "all") list = list.filter(b => getBookGroupIds(b).includes(g));
+  if (sub !== "all") list = list.filter(b => bookCategoriesOf(b).some(c => bkNorm(c) === bkNorm(sub)));
+  if (q) list = list.filter(b => matchBookSearch(b, q));
+  let sorted = sortBooksList(list, booksState.sort);
+  if (q && booksState.sort === "popular") {
+    const th = b => { const h = bkNorm(b.title + " " + (b.author || "")); return q.split(" ").filter(Boolean).every(tok => h.includes(tok)) ? 1 : 0; };
+    sorted = sorted.map((b, i) => ({ b, i, h: th(b) })).sort((x, y) => y.h - x.h || x.i - y.i).map(x => x.b);
+  }
+  booksState.list = sorted;
+}
+
+async function loadStudentBooks() {
+  if (booksState.loading) return;
+  booksState.loading = true;
+  booksState.failed = false;
   try {
-    const cat = librarySectionSelectedCategory;
-    const search = (librarySectionSearchQuery || "").trim();
-    const res = await api("/api/library/v2/books/search", {
-      page: studentBooksPage,
-      limit: 18,
-      category: cat === "Barchasi" ? "all" : cat,
-      search: search
-    });
-
+    const res = await api("/api/library/v2/books/catalog", {});
     if (res && res.ok && Array.isArray(res.books)) {
-      studentBooksList = res.books;
-      studentBooksTotal = res.total || res.books.length;
-      studentBooksTotalPages = res.total_pages || Math.ceil(studentBooksTotal / 18) || 1;
+      booksState.books = res.books;
+      studentBooksList = res.books;                 // detail sahifasi uchun tezkor ma'lumot
+      studentBooksTotal = res.books.length;
+      booksState.likedIds = new Set(res.books.filter(b => b.is_liked).map(b => Number(b.id)));
+      res.books.forEach(b => { if (b.is_saved) libraryV2SavedBookIds.add(Number(b.id)); });
     } else {
-      studentBooksList = (libraryV2Resources || []).filter(r => r.section_slug === "books" || r.type === "book");
-      studentBooksTotal = studentBooksList.length;
-      studentBooksTotalPages = 1;
-    }
-
-    if (!studentShelvesLoaded) {
-      loadStudentShelves();
+      throw new Error("catalog");
     }
   } catch (err) {
-    console.warn("loadStudentBooks error:", err);
-    studentBooksList = (libraryV2Resources || []).filter(r => r.section_slug === "books" || r.type === "book");
-    studentBooksTotal = studentBooksList.length;
-    studentBooksTotalPages = 1;
+    console.warn("loadStudentBooks (catalog) error:", err);
+    // Zaxira: eski qidiruv endpointi (cheklangan sahifa)
+    try {
+      const old = await api("/api/library/v2/books/search", { page: 1, limit: 60, category: "all", search: "" });
+      if (old && old.ok && Array.isArray(old.books)) {
+        booksState.books = old.books;
+        studentBooksList = old.books;
+        studentBooksTotal = old.total || old.books.length;
+      } else booksState.failed = true;
+    } catch (e2) { booksState.failed = true; }
   } finally {
-    studentBooksLoading = false;
-    if (libraryActiveSection === "books") {
-      const listEl = document.getElementById("lib-section-list-container");
-      const searchField = document.querySelector(".lib-search-field");
-      if (listEl && searchField && document.activeElement === searchField) {
-        listEl.innerHTML = studentBooksList.length
-          ? studentBooksList.map(renderBookCardHtml).join("")
-          : `<div class="empty-box" style="grid-column: 1 / -1;">Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.</div>`;
-      } else {
-        render();
-      }
-    }
+    booksState.loaded = true;
+    booksState.loading = false;
+    filterBooksLocally();
+    loadBooksShelvesOnce();
+    if (libraryActiveSection === "books") render();
   }
+}
+
+let _bkShelvesInFlight = false;
+function loadBooksShelvesOnce() {
+  if (_bkShelvesInFlight || studentShelvesLoaded) return;
+  _bkShelvesInFlight = true;
+  Promise.resolve(loadStudentShelves()).finally(() => { _bkShelvesInFlight = false; });
+}
+
+function resetBooksUi() {
+  booksState.searchQuery = "";
+  booksState.group = "all";
+  booksState.sub = "all";
+  booksState.sort = "popular";
+  booksState.panelOpen = false;
+  booksState.visible = BOOKS_PAGE_STEP;
+  booksState.loaded = false;
+}
+
+// ---- yangilash (sahifani qayta chizmasdan) ----
+function updateBooksUiInPlace() {
+  const root = document.querySelector(".bk-container");
+  if (!root || libraryActiveSection !== "books") { if (libraryActiveSection === "books") render(); return; }
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set("bk-panel-inner", renderBooksPanelInnerHtml());
+  set("bk-active-filter", renderBooksActiveFilterHtml());
+  set("bk-saved-wrap", renderBooksSavedShelfHtml());
+  set("bk-popular-wrap", renderBooksPopularHtml());
+  set("bk-catalog-wrap", renderBooksCatalogHtml());
+  const cw = document.getElementById("bk-search-clear");
+  if (cw) cw.innerHTML = booksState.searchQuery ? `<button class="lib-search-clear-btn" onclick="clearBookSearch()">✕</button>` : "";
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.toggle("has-filter", booksState.group !== "all");
+}
+
+function setBookSearch(q) {
+  booksState.searchQuery = q;
+  clearTimeout(_bkSearchTimer);
+  _bkSearchTimer = setTimeout(() => { booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }, 120);
+}
+function clearBookSearch() {
+  booksState.searchQuery = "";
+  const inp = document.getElementById("lib-books-search-input");
+  if (inp) inp.value = "";
+  booksState.visible = BOOKS_PAGE_STEP;
+  filterBooksLocally(); updateBooksUiInPlace();
+}
+function setBookGroup(id) {
+  haptic("light");
+  booksState.group = id; booksState.sub = "all"; booksState.panelOpen = false; booksState.visible = BOOKS_PAGE_STEP;
+  const panel = document.getElementById("bk-panel");
+  if (panel) panel.classList.remove("open");
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.remove("open");
+  filterBooksLocally(); updateBooksUiInPlace();
+  const anchor = document.getElementById("bk-active-filter");
+  if (anchor && id !== "all") {
+    const top = anchor.getBoundingClientRect().top + (window.scrollY || 0) - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
+}
+function setBookSub(name) { haptic("light"); booksState.sub = name; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function clearBookGroupFilter() { haptic("light"); booksState.group = "all"; booksState.sub = "all"; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function setBookSort(v) { booksState.sort = v; booksState.visible = BOOKS_PAGE_STEP; filterBooksLocally(); updateBooksUiInPlace(); }
+function showMoreBooks() { haptic("light"); booksState.visible += BOOKS_PAGE_STEP; updateBooksUiInPlace(); }
+function toggleBooksPanel() {
+  haptic("light");
+  booksState.panelOpen = !booksState.panelOpen;
+  const panel = document.getElementById("bk-panel");
+  if (panel) panel.classList.toggle("open", booksState.panelOpen);
+  const btn = document.getElementById("bk-panel-btn");
+  if (btn) btn.classList.toggle("open", booksState.panelOpen);
+}
+
+// ---- save / like (optimistik) ----
+function _bkPatchBtn(attr, id, on, count) {
+  document.querySelectorAll(`[${attr}="${Number(id)}"]`).forEach(el => {
+    el.classList.toggle("on", on);
+    const c = el.querySelector(".mcat-count");
+    if (c) c.textContent = count > 0 ? count : "";
+  });
+}
+
+async function toggleBookReaction(id, kind, e) {
+  if (e) e.stopPropagation();
+  id = Number(id);
+  const b = booksState.books.find(x => Number(x.id) === id);
+  const isSave = kind === "save";
+  const was = isSave ? isBookSaved(id) : isBookLiked(id);
+  haptic(was ? "light" : "medium");
+  const key = isSave ? "saved_count" : "like_count";
+  const apply = on => {
+    const set = isSave ? libraryV2SavedBookIds : booksState.likedIds;
+    if (on) set.add(id); else set.delete(id);
+    if (b) b[key] = Math.max(0, (Number(b[key]) || 0) + (on === was ? 0 : (on ? 1 : -1)));
+    _bkPatchBtn(isSave ? "data-bk-save" : "data-bk-like", id, on, b ? b[key] : 0);
+    const dl = document.getElementById(isSave ? `lib-bm-btn-${id}` : `bk-like-btn-${id}`);
+    if (dl) dl.classList.toggle("bookmarked", on);
+  };
+  apply(!was);
+  try {
+    const res = await api(isSave ? "/api/library/v2/saved-books/toggle" : "/api/library/v2/books/toggle-like", { book_id: id });
+    if (!res || !res.ok) throw new Error("fail");
+    if (isSave) { studentShelvesLoaded = false; refreshBooksSavedShelf(); }
+    if (b) {
+      b[key] = isSave ? (res.saved_count != null ? res.saved_count : b[key]) : (res.like_count != null ? res.like_count : b[key]);
+      _bkPatchBtn(isSave ? "data-bk-save" : "data-bk-like", id, isSave ? !!res.saved : !!res.liked, b[key]);
+    }
+  } catch (err) {
+    apply(was);
+    showToast("Saqlab bo‘lmadi, qayta urinib ko‘ring");
+  }
+}
+
+async function refreshBooksSavedShelf() {
+  try {
+    const savedRes = await api("/api/library/v2/saved-books/list", {}, "POST");
+    if (savedRes && savedRes.ok && Array.isArray(savedRes.books)) {
+      studentSavedBooksList = savedRes.books;
+      studentShelvesLoaded = true;
+      const el = document.getElementById("bk-saved-wrap");
+      if (el && libraryActiveSection === "books") el.innerHTML = renderBooksSavedShelfHtml();
+    }
+  } catch (e) {}
+}
+
+function bookReactionBtnHtml(id, kind, count) {
+  const isLike = kind === "like";
+  const on = isLike ? isBookLiked(id) : isBookSaved(id);
+  const icon = isLike
+    ? `<svg viewBox="0 0 24 24" width="15" height="15" class="mcat-ico"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.5 2.8 5 6.2 5c2 0 3.3 1 3.8 2.1C10.5 6 11.8 5 13.8 5c3.4 0 5.2 3.5 3.8 6.8C19.5 16.4 12 21 12 21z" transform="translate(1 0)"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="15" height="15" class="mcat-ico"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>`;
+  return `<button type="button" class="mcat-icon-btn ${on ? "on" : ""}" ${isLike ? "data-bk-like" : "data-bk-save"}="${Number(id)}" aria-label="${isLike ? "Yoqdi" : "Saqlash"}" onclick="toggleBookReaction(${Number(id)}, '${kind}', event)">${icon}<span class="mcat-count">${count > 0 ? count : ""}</span></button>`;
+}
+
+// ---- animatsiyali placeholder (yozuv effekti) ----
+function ensureBooksPlaceholderTicker() {
+  if (_bkPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("bk-ph-word");
+    const inp = document.getElementById("lib-books-search-input");
+    if (!el || document.hidden || (inp && inp.value)) { _bkPhTimer = setTimeout(step, 400); return; }
+    const word = BOOK_PH_WORDS[_bkPhIdx % BOOK_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) { _bkPhText = word; el.textContent = word; _bkPhIdx++; _bkPhTimer = setTimeout(step, 2400); return; }
+    if (_bkPhPhase === "typing") {
+      _bkPhText = word.slice(0, _bkPhText.length + 1); delay = 85 + Math.random() * 60;
+      if (_bkPhText.length >= word.length) { _bkPhPhase = "hold"; delay = 1500; }
+    } else if (_bkPhPhase === "hold") { _bkPhPhase = "deleting"; delay = 60; }
+    else {
+      _bkPhText = _bkPhText.slice(0, -1); delay = 38;
+      if (!_bkPhText.length) { _bkPhPhase = "typing"; _bkPhIdx++; delay = 320; }
+    }
+    el.textContent = _bkPhText;
+    _bkPhTimer = setTimeout(step, delay);
+  };
+  _bkPhTimer = setTimeout(step, 250);
+}
+
+// ---- UI bo'laklari ----
+function getBookGroupsWithCounts() {
+  const map = new Map();
+  booksState.books.forEach(b => getBookGroupIds(b).forEach(id => {
+    if (!map.has(id)) map.set(id, { ...bookGroupMeta(id), count: 0 });
+    map.get(id).count++;
+  }));
+  const ordered = [];
+  BOOK_GROUPS.forEach(g => { if (map.has(g.id)) ordered.push(map.get(g.id)); });
+  map.forEach((g, id) => { if (!BOOK_GROUPS.some(x => x.id === id)) ordered.push(g); });
+  return ordered;
+}
+
+function getBookSubcategories(groupId) {
+  const inGroup = booksState.books.filter(b => getBookGroupIds(b).includes(groupId));
+  const counts = new Map();
+  inGroup.forEach(b => bookCategoriesOf(b).forEach(c => counts.set(c, (counts.get(c) || 0) + 1)));
+  if (counts.size < 2 || inGroup.length < 6) return [];
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n }));
+}
+
+function renderBooksPanelInnerHtml() {
+  const groups = getBookGroupsWithCounts();
+  const active = booksState.group;
+  return `
+    <div class="mcat-panel-title">Kategoriyalar</div>
+    <div class="mcat-group-grid">
+      <button type="button" class="mcat-group-tile ${active === "all" ? "active" : ""}" onclick="setBookGroup('all')">
+        <span class="mcat-group-ico">📚</span>
+        <span class="mcat-group-name">Barcha kitoblar</span>
+        <span class="mcat-group-count">${booksState.books.length}</span>
+      </button>
+      ${groups.map(g => `
+        <button type="button" class="mcat-group-tile ${active === g.id ? "active" : ""}" onclick="setBookGroup('${escapeJsString(g.id)}')">
+          <span class="mcat-group-ico">${escapeHtml(g.icon || "📚")}</span>
+          <span class="mcat-group-name">${escapeHtml(g.name)}</span>
+          <span class="mcat-group-count">${g.count}</span>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderBooksActiveFilterHtml() {
+  const id = booksState.group;
+  if (id === "all") return "";
+  const g = bookGroupMeta(id);
+  const subs = getBookSubcategories(id);
+  return `
+    <div class="mcat-active">
+      <div class="mcat-active-chip">
+        <span class="mcat-active-label">Kategoriya:</span>
+        <span class="mcat-active-name">${escapeHtml(g.name)}</span>
+        <button type="button" class="mcat-active-x" aria-label="Filtrni olib tashlash" onclick="clearBookGroupFilter()">×</button>
+      </div>
+    </div>
+    ${subs.length ? `
+      <div class="mcat-sub-row">
+        <button type="button" class="mcat-chip ${booksState.sub === "all" ? "active" : ""}" onclick="setBookSub('all')">Hammasi</button>
+        ${subs.map(s => `<button type="button" class="mcat-chip ${bkNorm(booksState.sub) === bkNorm(s.name) ? "active" : ""}" onclick="setBookSub('${escapeJsString(s.name)}')">${escapeHtml(s.name)} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
+      </div>` : ""}`;
+}
+
+function renderBooksSavedShelfHtml() {
+  const filtering = booksState.group !== "all" || bkNorm(booksState.searchQuery);
+  if (filtering || !studentSavedBooksList.length) return "";
+  return `
+    <div class="mcat-section-head"><h2 class="mcat-h2">Saqlangan kitoblarim <span class="mcat-h2-n">${studentSavedBooksList.length}</span></h2></div>
+    <div class="lib-shelf-scroll">${studentSavedBooksList.map(renderSavedBookShelfCard).join("")}</div>`;
+}
+
+function renderBooksPopularHtml() {
+  if (booksState.group !== "all" || bkNorm(booksState.searchQuery)) return "";
+  let pop = booksState.books.filter(b => bookPopScore(b) > 0).sort((a, b) => bookPopScore(b) - bookPopScore(a) || b.id - a.id).slice(0, 10);
+  if (pop.length < 5) {
+    const ids = new Set(pop.map(b => b.id));
+    booksState.books.filter(b => b.is_recommended && !ids.has(b.id)).forEach(b => { if (pop.length < 8) pop.push(b); });
+  }
+  if (!pop.length) return "";
+  return `
+    <div class="mcat-section-head"><h2 class="mcat-h2">Ko‘p o‘qilgan</h2></div>
+    <div class="mcat-hscroll">
+      ${pop.map(b => {
+        const cover = bookCoverUrl(b);
+        const cat = bookCategoriesOf(b)[0] || "";
+        return `
+          <div class="bk-pop-card" onclick="openBookDetail(${Number(b.id)})">
+            <div class="bk-cover bk-pop-cover">
+              <span class="bk-cover-ph">📖</span>
+              ${cover ? `<img src="${escapeHtml(cover)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';" />` : ""}
+              ${b.access_type === "pro" ? `<span class="bk-badge bk-badge-pro">PRO 🔒</span>` : ""}
+            </div>
+            <div class="mcat-pop-name">${escapeHtml(b.title)}</div>
+            <div class="mcat-pop-cat">${escapeHtml(b.author || cat)}</div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderBookCatalogCardHtml(b) {
+  const cover = bookCoverUrl(b);
+  const cat = bookCategoriesOf(b)[0] || "Kitob";
+  const pro = b.access_type === "pro";
+  const pages = Number(b.page_count) > 0 ? `<span>${Number(b.page_count)} bet</span>` : "";
+  const time = Number(b.reading_time_minutes) > 0 ? `<span>${escapeHtml(formatReadingTimeMinutes(b.reading_time_minutes))}</span>` : "";
+  const meta = [pages, time].filter(Boolean).join(" • ");
+  return `
+    <div class="bk-card" onclick="openBookDetail(${Number(b.id)})">
+      <div class="bk-cover">
+        <span class="bk-cover-ph">📖</span>
+        ${cover ? `<img src="${escapeHtml(cover)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';" />` : ""}
+        <span class="bk-badge ${pro ? "bk-badge-pro" : "bk-badge-free"}">${pro ? "PRO 🔒" : "FREE"}</span>
+        <div class="mcat-card-actions">
+          ${bookReactionBtnHtml(b.id, "like", Number(b.like_count) || 0)}
+          ${bookReactionBtnHtml(b.id, "save", Number(b.saved_count) || 0)}
+        </div>
+      </div>
+      <div class="mcat-card-body">
+        <div class="mcat-card-cat">${escapeHtml(cat)}</div>
+        <h3 class="mcat-card-title">${escapeHtml(b.title)}</h3>
+        ${b.author ? `<p class="mcat-card-desc bk-author">${escapeHtml(b.author)}</p>` : ""}
+        ${meta ? `<div class="mcat-card-meta">${meta}</div>` : ""}
+      </div>
+    </div>`;
+}
+
+function renderBooksCatalogHtml() {
+  const list = booksState.list;
+  const flat = booksState.group !== "all" || bkNorm(booksState.searchQuery);
+  const sort = booksState.sort;
+  const head = `
+    <div class="mcat-section-head">
+      <h2 class="mcat-h2">${flat ? "Kitoblar" : "Barcha kitoblar"} <span class="mcat-h2-n">${list.length}</span></h2>
+      <label class="mcat-sort-wrap">
+        <span class="mcat-sr">Saralash</span>
+        <select class="mcat-sort" onchange="setBookSort(this.value)" aria-label="Saralash">
+          <option value="popular" ${sort === "popular" ? "selected" : ""}>Mashhurligi</option>
+          <option value="reads" ${sort === "reads" ? "selected" : ""}>Ko‘p o‘qilgan</option>
+          <option value="saves" ${sort === "saves" ? "selected" : ""}>Ko‘p saqlangan</option>
+          <option value="likes" ${sort === "likes" ? "selected" : ""}>Ko‘p yoqtirilgan</option>
+          <option value="newest" ${sort === "newest" ? "selected" : ""}>Yangi qo‘shilgan</option>
+          <option value="name" ${sort === "name" ? "selected" : ""}>A–Z</option>
+        </select>
+      </label>
+    </div>`;
+
+  if (!list.length) {
+    return head + `
+      <div class="mcat-empty">
+        <div class="mcat-empty-ico">🔍</div>
+        <div class="mcat-empty-title">Kitob topilmadi</div>
+        <div class="mcat-empty-sub">Boshqa nom, muallif yoki kategoriya bilan qidirib ko‘ring.</div>
+      </div>`;
+  }
+
+  if (flat) {
+    const shown = list.slice(0, booksState.visible);
+    return head + `<div class="bk-grid">${shown.map(renderBookCatalogCardHtml).join("")}</div>` +
+      (list.length > shown.length ? `<div class="bk-more"><button type="button" class="mcat-chip" onclick="showMoreBooks()">Yana ko‘rsatish (${list.length - shown.length})</button></div>` : "");
+  }
+
+  // Guruhlar bo'yicha: har bir kitob o'zining ustuvor guruhida bir marta chiqadi
+  const byGroup = new Map();
+  list.forEach(b => {
+    const id = getBookGroupIds(b)[0];
+    if (!byGroup.has(id)) byGroup.set(id, []);
+    byGroup.get(id).push(b);
+  });
+  const ordered = [];
+  BOOK_GROUPS.forEach(g => { if (byGroup.has(g.id)) ordered.push([g.id, byGroup.get(g.id)]); });
+  byGroup.forEach((items, id) => { if (!BOOK_GROUPS.some(x => x.id === id)) ordered.push([id, items]); });
+
+  return head + ordered.map(([id, items]) => {
+    const g = bookGroupMeta(id);
+    const shown = items.slice(0, 6);
+    return `
+      <section class="mcat-group-section">
+        <div class="mcat-group-head">
+          <div class="mcat-group-title"><span>${escapeHtml(g.icon || "📚")}</span> ${escapeHtml(g.name)} <span class="mcat-h2-n">${items.length}</span></div>
+          <button type="button" class="mcat-link" onclick="setBookGroup('${escapeJsString(id)}')">Hammasi ›</button>
+        </div>
+        <div class="bk-grid">${shown.map(renderBookCatalogCardHtml).join("")}</div>
+      </section>`;
+  }).join("");
+}
+
+function renderBooksSectionHtml() {
+  if (!booksState.loaded && !booksState.loading) setTimeout(loadStudentBooks, 30);
+  if (!studentShelvesLoaded) setTimeout(loadBooksShelvesOnce, 60);
+  ensureBooksPlaceholderTicker();
+
+  const head = `
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>`;
+
+  if (!booksState.loaded) {
+    return `
+      <div class="page lib-container lib-page-enter bk-container">
+        ${head}
+        <div style="padding: 80px 20px; text-align: center;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Kitoblar yuklanmoqda...</div>
+        </div>
+      </div>`;
+  }
+
+  const search = booksState.searchQuery || "";
+  const open = !!booksState.panelOpen;
+  return `
+    <div class="page lib-container lib-page-enter bk-container mcat">
+      ${head}
+
+      <div class="mcat-head">
+        <h1 class="mcat-title">Kitoblar</h1>
+        <p class="mcat-sub">Arxitektura, interyer, qurilish, Revit, BIM va loyihalash bo‘yicha foydali kitoblar va professional manbalar.</p>
+      </div>
+
+      <div class="learning-entry-banner" onclick="openLearningCenter()" style="margin-bottom:12px;">
+        <div class="learning-entry-left">
+          <div class="learning-entry-icon">🏛️</div>
+          <div>
+            <div class="learning-entry-title">Arxitektura va RD O‘rganish Markazi</div>
+            <div class="learning-entry-sub">9 bosqichli bilimlar bazasi, ShNQ/QMQ, GOST, spetsifikatsiyalar</div>
+          </div>
+        </div>
+        <div class="learning-entry-arrow">O‘rganish →</div>
+      </div>
+
+      <div class="mcat-search">
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+        <input id="lib-books-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
+               value="${escapeHtml(search)}" oninput="setBookSearch(this.value)" />
+        <div class="mcat-ph" aria-hidden="true"><span>Kitob qidiring...</span> <span class="mcat-ph-word" id="bk-ph-word">${escapeHtml(_bkPhText)}</span></div>
+        <span id="bk-search-clear">${search ? `<button class="lib-search-clear-btn" onclick="clearBookSearch()">✕</button>` : ""}</span>
+      </div>
+
+      <button type="button" id="bk-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${booksState.group !== "all" ? "has-filter" : ""}" onclick="toggleBooksPanel()">
+        <span class="mcat-filter-left">
+          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          Kategoriyalar bo‘yicha saralash
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div id="bk-panel" class="mcat-panel ${open ? "open" : ""}">
+        <div class="mcat-panel-clip"><div class="mcat-panel-inner" id="bk-panel-inner">${renderBooksPanelInnerHtml()}</div></div>
+      </div>
+
+      <div id="bk-active-filter">${renderBooksActiveFilterHtml()}</div>
+      <div id="bk-saved-wrap">${renderBooksSavedShelfHtml()}</div>
+      <div id="bk-popular-wrap">${renderBooksPopularHtml()}</div>
+      <div id="bk-catalog-wrap">${booksState.failed && !booksState.books.length ? `
+        <div class="mcat-empty"><div class="mcat-empty-ico">⚠️</div><div class="mcat-empty-title">Xatolik yuz berdi</div>
+        <div class="mcat-empty-sub">Internet aloqasini tekshiring yoki qayta urinib ko‘ring</div>
+        <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="booksState.loaded=false; loadStudentBooks();">🔄 Qayta yuklash</button></div>` : renderBooksCatalogHtml()}</div>
+    </div>`;
 }
 
 async function loadStudentShelves() {
@@ -7037,162 +7612,6 @@ function renderTopSavedBookShelfCard(book) {
   `;
 }
 
-function renderBooksSectionHtml() {
-  const cats = SECTION_CATEGORIES.books;
-  const cat = librarySectionSelectedCategory;
-  const isSearching = Boolean((librarySectionSearchQuery || "").trim());
-
-  let books = Array.isArray(studentBooksList) ? studentBooksList : libraryV2Resources.filter(r =>
-    r.section_slug === "books" ||
-    r.type === "book" ||
-    r.type === "normative" ||
-    r.type === "guide"
-  );
-
-  // Standart 3 ta asosiy kitob zaxirasi
-  if (!books.length && !studentBooksLoading) {
-    books = (state.open_resources || []).filter(r => r.type === "book").map(r => ({
-      ...r,
-      section_slug: "books",
-      author: "Autodesk / O'zbekiston",
-      language: "UZ",
-      page_count: 240,
-      what_you_learn: ["Revit dasturi interfeysi va asosiy tushunchalari", "BIM modellashtirish va listlarni sozlash", "ShNQ va KMK me'yoriy talablari"]
-    }));
-  }
-
-  // Agar birinchi marta kirilayotgan bo'lsa va hali yuklanmagan bo'lsa
-  if (studentBooksList === null && !studentBooksLoading) {
-    setTimeout(loadStudentBooks, 50);
-  }
-  if (!studentShelvesLoaded) {
-    setTimeout(loadStudentShelves, 60);
-  }
-
-  const paginationHtml = studentBooksTotalPages > 1 ? `
-    <div class="lib-books-pagination">
-      <button class="lib-page-btn" ${studentBooksPage <= 1 ? "disabled" : ""} onclick="changeStudentBooksPage(-1)">
-        ◀ Oldingi
-      </button>
-      <span class="lib-page-indicator">${studentBooksPage} / ${studentBooksTotalPages}</span>
-      <button class="lib-page-btn" ${studentBooksPage >= studentBooksTotalPages ? "disabled" : ""} onclick="changeStudentBooksPage(1)">
-        Keyingi ▶
-      </button>
-    </div>
-  ` : "";
-
-  const totalDesc = studentBooksTotal > 0 ? `${studentBooksTotal} ta kitob mavjud` : "500+ elektron kitoblar va qo'llanmalar";
-
-  return `
-    <div class="page lib-container lib-page-enter">
-      <!-- 1. HEADER -->
-      <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ${libIcons.back('lib-back-svg', 16)} Kutubxona
-      </div>
-
-      <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">Kitoblar</h2>
-        <p class="lib-page-desc">Revit, BIM standartlari, arxitektura va ShNQ rasmiy qo'llanmalari (${totalDesc})</p>
-      </div>
-
-      <!-- O'RGANISH KNOWLEDGE CENTER BANNER -->
-      <div class="learning-entry-banner" onclick="openLearningCenter()" style="margin-bottom:14px;">
-        <div class="learning-entry-left">
-          <div class="learning-entry-icon">🏛️</div>
-          <div>
-            <div class="learning-entry-title">Arxitektura va RD O‘rganish Markazi</div>
-            <div class="learning-entry-sub">9 bosqichli bilimlar bazasi, ShNQ/QMQ, GOST, spetsifikatsiyalar</div>
-          </div>
-        </div>
-        <div class="learning-entry-arrow">O‘rganish →</div>
-      </div>
-
-      <!-- 2. SEARCH & SORT -->
-      <div class="lib-filter-bar">
-        <div class="lib-search-input-wrap">
-          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
-          <input type="text"
-                 class="apple-input lib-search-field"
-                 placeholder="Kitob, muallif yoki mavzu qidiring..."
-                 value="${escapeHtml(librarySectionSearchQuery)}"
-                 oninput="setLibrarySectionSearch(this.value)">
-        </div>
-        <select class="apple-input lib-sort-select" onchange="setLibrarySectionSort(this.value)">
-          <option value="latest" ${librarySectionSort === "latest" ? "selected" : ""}>Eng yangi</option>
-          <option value="popular" ${librarySectionSort === "popular" ? "selected" : ""}>Ko‘p o‘qilgan</option>
-        </select>
-      </div>
-
-      <!-- 3. KATEGORIYA CHIPLARI -->
-      <div class="category-chips lib-chips-row">
-        ${cats.map(c => `
-          <div class="chip ${cat === c ? "active" : ""}" onclick="setLibrarySectionCategory('${escapeJsString(c)}')">
-            ${escapeHtml(c)}
-          </div>
-        `).join("")}
-      </div>
-
-      <!-- QIDIRUV BO'LMAGANDA: 4. SAQLANGANLAR VA 5. ENG KO'P SAQLANGAN -->
-      ${!isSearching && cat === "Barchasi" ? `
-        <!-- 4. SAQLANGAN KITOBLARIM -->
-        <div class="lib-shelf-section">
-          <div class="lib-shelf-header">
-            <div class="lib-shelf-title">
-              <span>Saqlangan kitoblarim</span>
-              ${studentSavedBooksList.length ? `<span style="font-size:12px; color:var(--text-secondary); font-weight:500;">(${studentSavedBooksList.length})</span>` : ""}
-            </div>
-          </div>
-          ${studentSavedBooksList.length ? `
-            <div class="lib-shelf-scroll">
-              ${studentSavedBooksList.map(renderSavedBookShelfCard).join("")}
-            </div>
-          ` : `
-            <div class="lib-shelf-empty">
-              Saqlangan kitoblaringiz shu yerda ko‘rinadi
-            </div>
-          `}
-        </div>
-
-        <!-- 5. ENG KO'P SAQLANGAN -->
-        ${studentTopSavedBooksList.length ? `
-          <div class="lib-shelf-section">
-            <div class="lib-shelf-header">
-              <div class="lib-shelf-title">
-                <span>Eng ko‘p saqlangan</span>
-              </div>
-            </div>
-            <div class="lib-shelf-scroll">
-              ${studentTopSavedBooksList.map(renderTopSavedBookShelfCard).join("")}
-            </div>
-          </div>
-        ` : ""}
-      ` : ""}
-
-      <!-- 6. BARCHA KITOBLAR -->
-      <div class="lib-shelf-header" style="margin-top: ${isSearching || cat !== 'Barchasi' ? '8px' : '16px'};">
-        <div class="lib-shelf-title">
-          <span>${isSearching ? "Qidiruv natijalari" : (cat !== "Barchasi" ? cat : "Barcha kitoblar")}</span>
-        </div>
-      </div>
-
-      <div id="lib-section-list-container" class="lib-books-grid">
-        ${studentBooksLoading ? `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 0;">
-            <div class="spinner" style="margin: 0 auto 12px;"></div>
-            <div style="font-size: 13px; color: var(--text-secondary);">Kitoblar yuklanmoqda...</div>
-          </div>
-        ` : (books.length ? books.map(renderBookCardHtml).join("") : `
-          <div class="empty-box" style="grid-column: 1 / -1;">
-            Kitoblar topilmadi. Qidiruv so'zini tekshirib ko'ring.
-          </div>
-        `)}
-      </div>
-
-      ${paginationHtml}
-    </div>
-  `;
-}
-
 function renderBookCardHtml(book) {
   const cover = formatImageUrl(book.preview_image_url || book.cover_url || book.generated_cover_url || "");
   const badge = getLibraryTypeBadge(book.type || "book");
@@ -7233,30 +7652,6 @@ function renderBookCardHtml(book) {
 // 3. MANBALAR EKRANI (Sources Screen — File Types Focus)
 // ------------------------------------------------------
 function renderSourcesSectionHtml() {
-  const cats = SECTION_CATEGORIES.sources;
-  const search = (librarySectionSearchQuery || "").toLowerCase().trim();
-  const cat = librarySectionSelectedCategory;
-
-  let sources = libraryV2Resources.filter(r =>
-    r.section_slug === "sources" ||
-    r.type === "source" ||
-    r.type === "family_pack" ||
-    r.type === "family"
-  );
-
-  if (cat !== "Barchasi") {
-    sources = sources.filter(s => s.category === cat);
-  }
-
-  if (search) {
-    sources = sources.filter(s =>
-      (s.title && s.title.toLowerCase().includes(search)) ||
-      (s.description && s.description.toLowerCase().includes(search)) ||
-      (s.category && s.category.toLowerCase().includes(search)) ||
-      (s.version && s.version.toLowerCase().includes(search))
-    );
-  }
-
   return `
     <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
@@ -7265,7 +7660,7 @@ function renderSourcesSectionHtml() {
 
       <div class="lib-section-title-wrap">
         <h2 class="lib-page-title">Manbalar va Shablonlar</h2>
-        <p class="lib-page-desc">Revit parametrik oilalari (.rfa), loyiha shablonlari (.rte) va DWG bloklar</p>
+        <p class="lib-page-desc">Revit modellari (.rvt, .rfa), shablonlar (.rte), 3ds Max va AutoCAD fayllari</p>
       </div>
 
       <!-- SEARCH -->
@@ -7274,28 +7669,18 @@ function renderSourcesSectionHtml() {
           <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
           <input type="text"
                  class="apple-input lib-search-field"
-                 placeholder="Oila, mebel, shablon yoki DWG qidirish..."
+                 placeholder="Masalan: divan, shablon, RFA..."
                  value="${escapeHtml(librarySectionSearchQuery)}"
                  oninput="setLibrarySectionSearch(this.value)">
         </div>
       </div>
 
-      <!-- KATEGORIYA CHIPLARI -->
-      <div class="category-chips lib-chips-row">
-        ${cats.map(c => `
-          <div class="chip ${cat === c ? "active" : ""}" onclick="setLibrarySectionCategory('${escapeJsString(c)}')">
-            ${escapeHtml(c)}
-          </div>
-        `).join("")}
-      </div>
+      <!-- DASTUR VA FORMAT FILTRI -->
+      <div id="lib-src-filters">${renderSourcesFiltersHtml()}</div>
 
       <!-- MANBALAR GRIDI -->
       <div id="lib-section-list-container" class="lib-sources-grid">
-        ${sources.length ? sources.map(renderSourceCardHtml).join("") : `
-          <div class="empty-box" style="grid-column: 1 / -1;">
-            Ushbu bo‘limda hozircha manbalar yo‘q. Tez orada yangi Revit oilalari qo‘shiladi!
-          </div>
-        `}
+        ${renderSourcesGridInnerHtml()}
       </div>
     </div>
   `;
@@ -7305,7 +7690,7 @@ function renderSourceCardHtml(source) {
   const cover = formatImageUrl(source.preview_image_url || "");
   const version = source.version || "";
   const size = formatFileSizeUz(source.file_size);
-  const ext = (source.content_url || "").split('.').pop().toUpperCase() || "RFA";
+  const ext = (source.file_format ? sourceFormatLabel(source.file_format) : "") || "FAYL";
 
   return `
     <div class="lib-source-card" onclick="openSourceDetail(${Number(source.id)})">
@@ -7451,7 +7836,11 @@ let materialsState = {
   filterInterior: false,
   filterMoisture: false,
   filterFire: false,
-  sortBy: "newest",
+  sortBy: "popular",
+  selectedGroup: "all",
+  panelOpen: false,
+  likedIds: new Set(),
+  savedIds: new Set(),
   limit: 150,
   offset: 0
 };
@@ -7603,80 +7992,133 @@ function matchMaterialSearch(m, search) {
   });
 }
 
+// ======================================================
+// MATERIALLAR KATALOGI: guruhlar, saralash, mashhurlik (mavjud ma'lumotlarga tegmaydi)
+// ======================================================
+const MATERIAL_GROUPS = [
+  { id: "devor", name: "Devor materiallari", icon: "🧱", slugs: ["devor-konstruksiya", "gipsokarton-quruq"] },
+  { id: "profil", name: "Profil va karkas", icon: "📐", slugs: ["profillar"] },
+  { id: "shift", name: "Shift materiallari", icon: "☁️", slugs: ["shift", "akustik-materiallar"] },
+  { id: "pol", name: "Pol materiallari", icon: "🟫", slugs: ["pol-materiallari"] },
+  { id: "pardoz", name: "Devor pardoz materiallari", icon: "🎨", slugs: ["boyoq-dekor", "dekorativ-materiallar"] },
+  { id: "tosh", name: "Tosh materiallari", icon: "🪨", slugs: ["tosh-materiallari"] },
+  { id: "eshik", name: "Eshiklar", icon: "🚪", slugs: ["eshik-deraza"] },
+  { id: "oyna", name: "Oyna / vitraj", icon: "🪟", slugs: ["oyna-shisha"] },
+  { id: "sanitariya", name: "Sanitariya priborlari", icon: "🚿", slugs: ["santexnika-sanuzel"] },
+  { id: "izolyatsiya", name: "Issiqlik / izolyatsiya", icon: "🧊", slugs: ["issiqlik-izolyatsiyasi"] },
+  { id: "gidro", name: "Gidroizolyatsiya", icon: "💧", slugs: ["gidroizolyatsiya"] },
+  { id: "fasad", name: "Fasad", icon: "🏢", slugs: ["fasad-materiallari"] },
+  { id: "tom", name: "Tom materiallari", icon: "🏠", slugs: ["tom-materiallari"] },
+  { id: "yelim", name: "Yelim / qorishma", icon: "🧴", slugs: ["yelim-germetik"] },
+  { id: "yogoch", name: "Yog‘och materiallari", icon: "🪵", slugs: ["yogoch-plitalar"] },
+  { id: "metall", name: "Metall", icon: "🔩", slugs: ["metall-materiallar"] },
+  { id: "elektr", name: "Elektr / muhandislik", icon: "💡", slugs: ["yoritish-elektr"] }
+];
+
+const MATERIAL_GROUP_KEYWORDS = [
+  ["sanitariya", /vanna|dush|unitaz|rakovina|bidet|pissuar|smesitel|installyatsiya|santexnika/],
+  ["oyna", /oyna|deraza|shisha|vitraj|glazing|triplex/],
+  ["fasad", /fasad|klinker|\bhpl\b|kompozit/],
+  ["eshik", /eshik/],
+  ["profil", /profil|karkas/],
+  ["shift", /shift|armstrong|grilyato/],
+  ["pol", /keramogranit|kafel|laminat|parket|vinil|linoleum/],
+  ["pardoz", /oboy|bo.yoq|suvoq|mikrocement|panel/],
+  ["izolyatsiya", /izolyats|wool|penoplex|\beps\b|\bxps\b|\bpir\b/],
+  ["gidro", /gidro|membrana|mastika/],
+  ["yelim", /yelim|qorishma|shpakl|germetik|ko.pik/],
+  ["yogoch", /mdf|ldsp|\bdsp\b|fanera|yog.och/],
+  ["metall", /armatura|metall|alyuminiy|po.lat/],
+  ["elektr", /kabel|elektr|yoritish/],
+  ["devor", /g.isht|gazobeton|penoblok|shlakoblok|beton|gipsokarton|\bosb\b/]
+];
+
+const _matGroupCache = new Map();
+
+function getMaterialGroup(m) {
+  const key = String(m.id) + "|" + (m.category_slug || "") + "|" + (m.name || "");
+  if (_matGroupCache.has(key)) return _matGroupCache.get(key);
+  const slug = String(m.category_slug || "").toLowerCase();
+  const text = ((m.name_uz || m.name || "") + " " + (m.subcategory_name || "") + " " + (m.category_name || "")).toLowerCase();
+  let group = MATERIAL_GROUPS.find(g => g.slugs.includes(slug));
+
+  // "Eshik va fasad" kabi aralash kategoriyalarni aniqlashtirish
+  if (group && group.id === "eshik") {
+    if (/oyna|deraza|shisha|vitraj/.test(text)) group = MATERIAL_GROUPS.find(g => g.id === "oyna");
+    else if (/fasad|klinker|\bhpl\b|kompozit/.test(text) && !/eshik/.test(text)) group = MATERIAL_GROUPS.find(g => g.id === "fasad");
+  }
+  if (!group) {
+    const hit = MATERIAL_GROUP_KEYWORDS.find(([, re]) => re.test(text));
+    if (hit) group = MATERIAL_GROUPS.find(g => g.id === hit[0]);
+  }
+  if (!group) {
+    group = m.category_name
+      ? { id: "cat:" + (slug || m.category_name), name: m.category_name, icon: m.category_icon || "🧱" }
+      : { id: "boshqa", name: "Boshqa materiallar", icon: "🧱" };
+  }
+  _matGroupCache.set(key, group);
+  return group;
+}
+
+function getMaterialScore(m) {
+  return (Number(m.view_count) || 0) + (Number(m.like_count) || 0) * 3 + (Number(m.save_count) || 0) * 5;
+}
+
+function sortMaterialsList(list, sortBy) {
+  const arr = list.slice();
+  const nameOf = m => (m.name_uz || m.name || "").toLowerCase();
+  if (sortBy === "views") arr.sort((a, b) => (b.view_count || 0) - (a.view_count || 0) || b.id - a.id);
+  else if (sortBy === "saves") arr.sort((a, b) => (b.save_count || 0) - (a.save_count || 0) || b.id - a.id);
+  else if (sortBy === "newest") arr.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0) || b.id - a.id);
+  else if (sortBy === "name") arr.sort((a, b) => nameOf(a).localeCompare(nameOf(b), "uz"));
+  else arr.sort((a, b) => getMaterialScore(b) - getMaterialScore(a) || (b.is_frequent ? 1 : 0) - (a.is_frequent ? 1 : 0) || b.id - a.id);
+  return arr;
+}
+
 function filterMaterialsLocally() {
   let list = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
              materialsState.allMaterials : (materialsState.materials || []);
   const scope = materialsState.selectedScope || "all";
   const purpose = materialsState.selectedPurpose || "all";
   const cat = materialsState.selectedCategory || "all";
+  const grp = materialsState.selectedGroup || "all";
   const subcat = materialsState.selectedSubcategory || "all";
   const isFreq = materialsState.selectedFrequent;
   const search = (materialsState.searchQuery || "").trim().toLowerCase();
 
-  // 1. Scope filter (Qurilish vs Interyer vs Barchasi)
   if (scope && scope !== "all") {
-    if (scope === "architecture") {
-      list = list.filter(m => m.scope === "architecture" || m.scope === "both");
-    } else if (scope === "interior") {
-      list = list.filter(m => m.scope === "interior" || m.scope === "both");
-    }
+    if (scope === "architecture") list = list.filter(m => m.scope === "architecture" || m.scope === "both");
+    else if (scope === "interior") list = list.filter(m => m.scope === "interior" || m.scope === "both");
   }
+  if (purpose && purpose !== "all") list = list.filter(m => m.purpose_tag === purpose);
+  if (cat && cat !== "all") list = list.filter(m => m.category_slug === cat);
+  if (grp && grp !== "all") list = list.filter(m => getMaterialGroup(m).id === grp);
+  if (subcat && subcat !== "all") list = list.filter(m => (m.subcategory_name || "").toLowerCase() === subcat.toLowerCase());
+  if (isFreq) list = list.filter(m => m.is_frequent === true);
 
-  // 2. Purpose / Zona filter
-  if (purpose && purpose !== "all") {
-    list = list.filter(m => m.purpose_tag === purpose);
-  }
+  // Qidiruv tanlangan kategoriya ichida ishlaydi
+  if (search) list = list.filter(m => matchMaterialSearch(m, search));
 
-  // 3. Category filter
-  if (cat && cat !== "all") {
-    list = list.filter(m => m.category_slug === cat);
-  }
-
-  // 4. Subcategory filter
-  if (subcat && subcat !== "all") {
-    list = list.filter(m => (m.subcategory_name || "").toLowerCase().includes(subcat.toLowerCase()));
-  }
-
-  // 5. Frequent only
-  if (isFreq) {
-    list = list.filter(m => m.is_frequent === true);
-  }
-
-  // 6. Multilingual 100% search matching with cross-category fallback
-  if (search) {
-    let searchFiltered = list.filter(m => matchMaterialSearch(m, search));
-    // Agar tanlangan kategoriya ichida topilmasa, butun baza bo'yicha qidirib 100% natija beradi
-    if (!searchFiltered.length && (cat !== "all" || subcat !== "all" || scope !== "all" || purpose !== "all")) {
-      const allList = Array.isArray(materialsState.allMaterials) && materialsState.allMaterials.length ?
-                      materialsState.allMaterials : (materialsState.materials || []);
-      searchFiltered = allList.filter(m => matchMaterialSearch(m, search));
-    }
-    list = searchFiltered;
-  }
-
-  // 7. Quick filter chips
-  if (materialsState.filterVerified) {
-    list = list.filter(m => m.verification_status === "verified" || m.image_verified === true);
-  }
+  if (materialsState.filterVerified) list = list.filter(m => m.verification_status === "verified" || m.image_verified === true);
   if (materialsState.filterMoisture) {
-    list = list.filter(m => (m.moisture_resistance && m.moisture_resistance.toLowerCase().includes("yuqori")) || (m.material_type && m.material_type.toLowerCase().includes("nam")));
+    list = list.filter(m => (m.moisture_resistance && m.moisture_resistance.toLowerCase().includes("yuqori")) || (m.material_type && m.material_type.toLowerCase().includes("nam")) || (m.description && m.description.toLowerCase().includes("namlik")));
   }
   if (materialsState.filterFire) {
     list = list.filter(m => (m.fire_rating && (m.fire_rating.includes("KM0") || m.fire_rating.includes("NG") || m.fire_rating.includes("G1"))));
   }
-  if (materialsState.filterInterior) {
-    list = list.filter(m => m.scope === "interior" || m.scope === "both");
+  if (materialsState.filterInterior) list = list.filter(m => m.scope === "interior" || m.scope === "both");
+
+  let sorted = sortMaterialsList(list, materialsState.sortBy || "popular");
+  if (search && (materialsState.sortBy || "popular") === "popular") {
+    // Qidiruvda sarlavha/toifa mos kelganlar oldinda, tavsifda uchraganlar keyin
+    const titleHit = m => {
+      const head = ((m.name_uz || "") + " " + (m.name || "") + " " + (m.name_ru || "") + " " + (m.subcategory_name || "") + " " + (Array.isArray(m.aliases) ? m.aliases.join(" ") : "")).toLowerCase();
+      const hv = head + " " + transliterateUzRu(head);
+      return search.split(/\s+/).filter(Boolean).every(t => hv.includes(t) || transliterateUzRu(t).split(/\s+/).some(v => v && hv.includes(v))) ? 1 : 0;
+    };
+    sorted = sorted.map((m, i) => ({ m, i, h: titleHit(m) })).sort((x, y) => y.h - x.h || x.i - y.i).map(x => x.m);
   }
-
-  materialsState.materials = list;
-
-  // Dynamically update category item counts
-  (materialsState.categories || []).forEach(c => {
-    c.materials_count = (materialsState.allMaterials || []).filter(m => 
-      m.category_slug === c.slug && (scope === "all" || m.scope === scope || m.scope === "both") &&
-      (purpose === "all" || m.purpose_tag === purpose)
-    ).length;
-  });
+  materialsState.materials = sorted;
 }
 
 async function loadMaterialsData(forceReload) {
@@ -7694,16 +8136,9 @@ async function loadMaterialsData(forceReload) {
       }
     }
 
-    const payload = {
-      search: "",
-      scope: "all",
-      category_slug: "all",
-      manufacturer_slug: "all",
-      limit: 200,
-      offset: 0
-    };
-
-    const listRes = await api("/api/materials/list", payload).catch(err => {
+    const listRes = await api("/api/materials/list", {
+      search: "", scope: "all", category_slug: "all", manufacturer_slug: "all", limit: 300, offset: 0
+    }).catch(err => {
       console.warn("Materials list fetch error:", err);
       return null;
     });
@@ -7711,6 +8146,15 @@ async function loadMaterialsData(forceReload) {
       materialsState.allMaterials = Array.isArray(listRes.materials) ? listRes.materials : [];
       materialsState.total = listRes.total || materialsState.allMaterials.length;
     }
+
+    // Foydalanuvchining like/save holati (xato bo'lsa katalogga ta'sir qilmaydi)
+    api("/api/materials/my-state").then(st => {
+      if (st && st.ok) {
+        materialsState.likedIds = new Set((st.liked_ids || []).map(Number));
+        materialsState.savedIds = new Set((st.saved_ids || []).map(Number));
+        if (libraryActiveSection === "materials") updateMaterialsUiInPlace();
+      }
+    }).catch(() => {});
   } catch (err) {
     console.error("LOAD MATERIALS DATA ERROR:", err);
   } finally {
@@ -7726,60 +8170,18 @@ function updateMaterialsUiInPlace() {
     if (libraryActiveSection === "materials") render();
     return;
   }
-
-  // 1. Update Scope Switcher
-  const currentScope = materialsState.selectedScope || "all";
-  container.querySelectorAll(".lib-mat-scope-btn").forEach(btn => {
-    const s = btn.getAttribute("data-scope");
-    if (s === currentScope) btn.classList.add("active");
-    else btn.classList.remove("active");
-  });
-
-  // 2. Update Quick Picks
-  const qpBar = container.querySelector(".lib-mat-quickpicks-scroll");
-  if (qpBar) {
-    qpBar.innerHTML = renderMaterialQuickPicksHtml();
-  }
-
-  // 3. Update Category Pills
-  const catScroll = container.querySelector(".lib-mat-cat-scroll");
-  if (catScroll) {
-    catScroll.innerHTML = renderMaterialCategoryPillsHtml();
-  }
-
-  // 4. Update Subcategories Bar
-  const subcatBar = container.querySelector(".lib-mat-subcategories-bar");
-  if (subcatBar) {
-    subcatBar.innerHTML = renderMaterialSubcategoriesHtml();
-  }
-
-  // 5. Update Quick Filter Chips
-  const chips = container.querySelectorAll(".lib-chips-row .chip");
-  chips.forEach(ch => {
-    const key = ch.getAttribute("data-filter-key");
-    if (key && materialsState[key]) ch.classList.add("active");
-    else if (key) ch.classList.remove("active");
-  });
-
-  // 6. Update Grid
-  const grid = container.querySelector(".lib-materials-grid-v2");
-  if (grid) {
-    const mats = materialsState.materials || [];
-    if (mats.length) {
-      grid.innerHTML = mats.map(renderMaterialCardHtml).join("");
-    } else {
-      grid.innerHTML = `
-        <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
-          <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
-          <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
-          <div style="font-size: 12.5px; color: var(--text-secondary);">
-            Tanlangan bo‘lim, kategoriya yoki qidiruv so‘zini o‘zgartirib ko‘ring.
-          </div>
-        </div>
-      `;
-    }
-  }
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set("mat-panel-inner", renderMaterialPanelInnerHtml());
+  set("mat-active-filter", renderMaterialActiveFilterHtml());
+  set("mat-popular-wrap", renderMaterialPopularHtml());
+  set("mat-catalog-wrap", renderMaterialCatalogHtml());
+  const clearWrap = document.getElementById("lib-search-clear-wrap");
+  if (clearWrap) clearWrap.innerHTML = materialsState.searchQuery ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : "";
+  const btn = document.getElementById("mat-panel-btn");
+  if (btn) btn.classList.toggle("has-filter", (materialsState.selectedGroup || "all") !== "all");
 }
+
+let _matSearchTimer = null;
 
 function setMaterialScope(scope) {
   haptic("light");
@@ -7796,15 +8198,29 @@ function setMaterialCategory(catSlug) {
   haptic("light");
   materialsState.selectedCategory = catSlug;
   materialsState.selectedSubcategory = "all";
-  materialsState.offset = 0;
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
+}
+
+function setMaterialGroup(groupId) {
+  haptic("light");
+  materialsState.selectedGroup = groupId;
+  materialsState.selectedSubcategory = "all";
+  materialsState.panelOpen = false;
+  const panel = document.getElementById("mat-panel");
+  if (panel) panel.classList.remove("open");
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
+  const anchor = document.getElementById("mat-active-filter");
+  if (anchor && groupId !== "all") {
+    const top = anchor.getBoundingClientRect().top + (window.scrollY || 0) - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
 }
 
 function setMaterialSubcategory(subcat) {
   haptic("light");
   materialsState.selectedSubcategory = subcat;
-  materialsState.offset = 0;
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
 }
@@ -7820,36 +8236,25 @@ function setMaterialQuickPick(query) {
 
 function setMaterialSearch(query) {
   materialsState.searchQuery = query;
-  filterMaterialsLocally();
-  const grid = document.querySelector(".lib-materials-v2-container .lib-materials-grid-v2");
-  if (grid) {
-    const mats = materialsState.materials || [];
-    if (mats.length) {
-      grid.innerHTML = mats.map(renderMaterialCardHtml).join("");
-    } else {
-      grid.innerHTML = `
-        <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
-          <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
-          <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
-          <div style="font-size: 12.5px; color: var(--text-secondary);">
-            "${escapeHtml(query)}" bo‘yicha material topilmadi.
-          </div>
-        </div>
-      `;
-    }
-    const clearWrap = document.getElementById("lib-search-clear-wrap");
-    if (clearWrap) {
-      clearWrap.innerHTML = query ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : '';
-    }
-  } else if (libraryActiveSection === "materials") {
-    render();
-  }
+  clearTimeout(_matSearchTimer);
+  _matSearchTimer = setTimeout(() => {
+    filterMaterialsLocally();
+    updateMaterialsUiInPlace();
+  }, 120);
 }
 
 function clearMaterialSearch() {
   materialsState.searchQuery = "";
   const inp = document.getElementById("lib-materials-search-input");
   if (inp) inp.value = "";
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
+}
+
+function clearMaterialCategoryFilter() {
+  haptic("light");
+  materialsState.selectedGroup = "all";
+  materialsState.selectedSubcategory = "all";
   filterMaterialsLocally();
   updateMaterialsUiInPlace();
 }
@@ -7861,63 +8266,303 @@ function toggleMaterialFilter(filterKey) {
   updateMaterialsUiInPlace();
 }
 
-function renderMaterialQuickPicksHtml() {
-  const currentQuery = (materialsState.searchQuery || "").toLowerCase();
-  return MATERIAL_QUICK_PICKS.map(p => {
-    const isActive = currentQuery === p.query;
-    return `
-      <button type="button" class="lib-mat-quickpick-chip ${isActive ? 'active' : ''}" onclick="setMaterialQuickPick('${escapeJsString(p.query)}')">
-        <span>${p.icon}</span>
-        <span>${escapeHtml(p.name)}</span>
+function setMaterialSort(val) {
+  materialsState.sortBy = val;
+  filterMaterialsLocally();
+  updateMaterialsUiInPlace();
+}
+
+function toggleMaterialPanel() {
+  haptic("light");
+  materialsState.panelOpen = !materialsState.panelOpen;
+  const panel = document.getElementById("mat-panel");
+  if (panel) panel.classList.toggle("open", materialsState.panelOpen);
+  const btn = document.getElementById("mat-panel-btn");
+  if (btn) btn.classList.toggle("open", materialsState.panelOpen);
+}
+
+// ---- Like / Save (optimistik yangilanish) ----
+function _matPatch(id, key, on, delta) {
+  const m = (materialsState.allMaterials || []).find(x => Number(x.id) === Number(id));
+  if (m) m[key] = Math.max(0, (Number(m[key]) || 0) + delta);
+  const setName = key === "like_count" ? "likedIds" : "savedIds";
+  if (!(materialsState[setName] instanceof Set)) materialsState[setName] = new Set();
+  if (on) materialsState[setName].add(Number(id)); else materialsState[setName].delete(Number(id));
+  const attr = key === "like_count" ? "data-mat-like" : "data-mat-save";
+  document.querySelectorAll(`[${attr}="${Number(id)}"]`).forEach(el => {
+    el.classList.toggle("on", on);
+    const c = el.querySelector(".mcat-count");
+    if (c && m) c.textContent = (m[key] || 0) > 0 ? m[key] : "";
+  });
+  return m;
+}
+
+async function toggleMaterialReaction(id, kind) {
+  const key = kind === "like" ? "like_count" : "save_count";
+  const setName = kind === "like" ? "likedIds" : "savedIds";
+  const was = materialsState[setName] instanceof Set && materialsState[setName].has(Number(id));
+  haptic(was ? "light" : "medium");
+  _matPatch(id, key, !was, was ? -1 : 1);
+  try {
+    const res = await api(kind === "like" ? "/api/materials/toggle-like" : "/api/materials/toggle-save", { id: Number(id) });
+    if (!res || !res.ok) throw new Error("fail");
+  } catch (e) {
+    _matPatch(id, key, was, was ? 1 : -1);
+    showToast("Saqlab bo‘lmadi, qayta urinib ko‘ring");
+  }
+}
+
+function syncMaterialStatsFromDetail(res) {
+  if (!res || !res.stats || !res.material) return;
+  const id = Number(res.material.id);
+  if (!(materialsState.likedIds instanceof Set)) materialsState.likedIds = new Set();
+  if (!(materialsState.savedIds instanceof Set)) materialsState.savedIds = new Set();
+  if (res.stats.liked) materialsState.likedIds.add(id); else materialsState.likedIds.delete(id);
+  if (res.stats.saved) materialsState.savedIds.add(id); else materialsState.savedIds.delete(id);
+  const m = (materialsState.allMaterials || []).find(x => Number(x.id) === id);
+  if (m) {
+    m.view_count = res.stats.view_count;
+    m.like_count = res.stats.like_count;
+    m.save_count = res.stats.save_count;
+  }
+}
+
+function matReactionButtonHtml(id, kind, small) {
+  const isLike = kind === "like";
+  const set = isLike ? materialsState.likedIds : materialsState.savedIds;
+  const on = set instanceof Set && set.has(Number(id));
+  const m = (materialsState.allMaterials || []).find(x => Number(x.id) === Number(id));
+  const cnt = m ? (isLike ? m.like_count : m.save_count) : 0;
+  const icon = isLike
+    ? `<svg viewBox="0 0 24 24" width="${small ? 15 : 17}" height="${small ? 15 : 17}" class="mcat-ico"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.5 2.8 5 6.2 5c2 0 3.3 1 3.8 2.1C10.5 6 11.8 5 13.8 5c3.4 0 5.2 3.5 3.8 6.8C19.5 16.4 12 21 12 21z" transform="translate(1 0)"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="${small ? 15 : 17}" height="${small ? 15 : 17}" class="mcat-ico"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>`;
+  return `<button type="button" class="mcat-icon-btn ${on ? "on" : ""}" ${isLike ? "data-mat-like" : "data-mat-save"}="${Number(id)}" aria-label="${isLike ? "Yoqdi" : "Saqlash"}" onclick="event.stopPropagation(); toggleMaterialReaction(${Number(id)}, '${kind}')">${icon}<span class="mcat-count">${cnt > 0 ? cnt : ""}</span></button>`;
+}
+
+// ---- Animatsiyali placeholder: harflab yozilib, keyin o‘chib, keyingi so‘zga o‘tadi ----
+const MAT_PH_WORDS = ["Gipsokarton", "Profil", "Keramogranit", "Laminat", "Bo‘yoq", "Plitka", "Eshik", "Oyna"];
+let _matPhIdx = 0;
+let _matPhText = "";
+let _matPhPhase = "typing"; // typing -> hold -> deleting
+let _matPhTimer = null;
+
+function ensureMaterialPlaceholderTicker() {
+  if (_matPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("mat-ph-word");
+    const inp = document.getElementById("lib-materials-search-input");
+    // Sahifa yopilgan bo'lsa, tekshiruvni sekinlashtirib kutamiz
+    if (!el || document.hidden || (inp && inp.value)) { _matPhTimer = setTimeout(step, 400); return; }
+    const word = MAT_PH_WORDS[_matPhIdx % MAT_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) {
+      _matPhText = word;
+      el.textContent = word;
+      _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
+      _matPhTimer = setTimeout(step, 2400);
+      return;
+    }
+    if (_matPhPhase === "typing") {
+      _matPhText = word.slice(0, _matPhText.length + 1);
+      delay = 85 + Math.random() * 60;
+      if (_matPhText.length >= word.length) { _matPhPhase = "hold"; delay = 1500; }
+    } else if (_matPhPhase === "hold") {
+      _matPhPhase = "deleting";
+      delay = 60;
+    } else {
+      _matPhText = _matPhText.slice(0, -1);
+      delay = 38;
+      if (!_matPhText.length) {
+        _matPhPhase = "typing";
+        _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
+        delay = 320;
+      }
+    }
+    el.textContent = _matPhText;
+    _matPhTimer = setTimeout(step, delay);
+  };
+  _matPhTimer = setTimeout(step, 250);
+}
+
+// ---- Bo'lim UI ----
+function getScopedMaterials() {
+  const scope = materialsState.selectedScope || "all";
+  let list = materialsState.allMaterials || [];
+  if (scope === "architecture") list = list.filter(m => m.scope === "architecture" || m.scope === "both");
+  else if (scope === "interior") list = list.filter(m => m.scope === "interior" || m.scope === "both");
+  return list;
+}
+
+function getMaterialGroupsWithCounts() {
+  const map = new Map();
+  getScopedMaterials().forEach(m => {
+    const g = getMaterialGroup(m);
+    if (!map.has(g.id)) map.set(g.id, { ...g, count: 0 });
+    map.get(g.id).count++;
+  });
+  const ordered = [];
+  MATERIAL_GROUPS.forEach(g => { if (map.has(g.id)) ordered.push(map.get(g.id)); });
+  map.forEach((g, id) => { if (!MATERIAL_GROUPS.some(x => x.id === id)) ordered.push(g); });
+  return ordered;
+}
+
+function getGroupSubcategories(groupId) {
+  const inGroup = getScopedMaterials().filter(m => getMaterialGroup(m).id === groupId);
+  const counts = new Map();
+  inGroup.forEach(m => { const s = (m.subcategory_name || "").trim(); if (s) counts.set(s, (counts.get(s) || 0) + 1); });
+  if (counts.size < 2 || inGroup.length < 6) return [];
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n }));
+}
+
+function renderMaterialPanelInnerHtml() {
+  const groups = getMaterialGroupsWithCounts();
+  const active = materialsState.selectedGroup || "all";
+  const scope = materialsState.selectedScope || "all";
+  const total = getScopedMaterials().length;
+  return `
+    <div class="mcat-panel-title">Kategoriyalar</div>
+    <div class="mcat-group-grid">
+      <button type="button" class="mcat-group-tile ${active === "all" ? "active" : ""}" onclick="setMaterialGroup('all')">
+        <span class="mcat-group-ico">🌐</span>
+        <span class="mcat-group-name">Barcha materiallar</span>
+        <span class="mcat-group-count">${total}</span>
       </button>
-    `;
-  }).join("");
+      ${groups.map(g => `
+        <button type="button" class="mcat-group-tile ${active === g.id ? "active" : ""}" onclick="setMaterialGroup('${escapeJsString(g.id)}')">
+          <span class="mcat-group-ico">${escapeHtml(g.icon || "🧱")}</span>
+          <span class="mcat-group-name">${escapeHtml(g.name)}</span>
+          <span class="mcat-group-count">${g.count}</span>
+        </button>
+      `).join("")}
+    </div>
+    <div class="mcat-panel-title" style="margin-top:14px;">Qo‘shimcha filtrlar</div>
+    <div class="mcat-chip-row">
+      <button type="button" class="mcat-chip ${scope === "all" ? "active" : ""}" onclick="setMaterialScope('all')">Barchasi</button>
+      <button type="button" class="mcat-chip ${scope === "architecture" ? "active" : ""}" onclick="setMaterialScope('architecture')">🏛️ Qurilish</button>
+      <button type="button" class="mcat-chip ${scope === "interior" ? "active" : ""}" onclick="setMaterialScope('interior')">🛋️ Interyer</button>
+      <button type="button" class="mcat-chip ${materialsState.filterVerified ? "active" : ""}" onclick="toggleMaterialFilter('filterVerified')">✓ Tekshirilgan</button>
+      <button type="button" class="mcat-chip ${materialsState.filterMoisture ? "active" : ""}" onclick="toggleMaterialFilter('filterMoisture')">💧 Namlikka chidamli</button>
+      <button type="button" class="mcat-chip ${materialsState.filterFire ? "active" : ""}" onclick="toggleMaterialFilter('filterFire')">🔥 NG / KM0</button>
+    </div>
+  `;
 }
 
-function renderMaterialCategoryPillsHtml() {
-  const allCats = materialsState.categories || [];
-  const currentScope = materialsState.selectedScope || "all";
-  const cats = currentScope === "all" ? allCats : allCats.filter(c => c.scope === currentScope || c.scope === "both");
+function renderMaterialActiveFilterHtml() {
+  const grpId = materialsState.selectedGroup || "all";
+  if (grpId === "all") return "";
+  const g = getMaterialGroupsWithCounts().find(x => x.id === grpId) || MATERIAL_GROUPS.find(x => x.id === grpId);
+  const subs = getGroupSubcategories(grpId);
+  const activeSub = materialsState.selectedSubcategory || "all";
+  return `
+    <div class="mcat-active">
+      <div class="mcat-active-chip">
+        <span class="mcat-active-label">Kategoriya:</span>
+        <span class="mcat-active-name">${escapeHtml(g ? g.name : "")}</span>
+        <button type="button" class="mcat-active-x" aria-label="Filtrni olib tashlash" onclick="clearMaterialCategoryFilter()">×</button>
+      </div>
+    </div>
+    ${subs.length ? `
+      <div class="mcat-sub-row">
+        <button type="button" class="mcat-chip ${activeSub === "all" ? "active" : ""}" onclick="setMaterialSubcategory('all')">Hammasi</button>
+        ${subs.map(s => `<button type="button" class="mcat-chip ${activeSub.toLowerCase() === s.name.toLowerCase() ? "active" : ""}" onclick="setMaterialSubcategory('${escapeJsString(s.name)}')">${escapeHtml(s.name)} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
+      </div>
+    ` : ""}
+  `;
+}
+
+function getPopularMaterials() {
+  const base = getScopedMaterials();
+  const scored = base.filter(m => getMaterialScore(m) > 0).sort((a, b) => getMaterialScore(b) - getMaterialScore(a) || b.id - a.id);
+  let list = scored.slice(0, 10);
+  if (list.length < 5) {
+    // Faollik hali kam: admin "ko‘p ishlatiladigan" deb belgilaganlar bilan to‘ldiriladi
+    const ids = new Set(list.map(m => m.id));
+    base.filter(m => m.is_frequent && !ids.has(m.id)).forEach(m => { if (list.length < 8) list.push(m); });
+  }
+  return list;
+}
+
+function renderMaterialPopularHtml() {
+  const filtering = (materialsState.selectedGroup || "all") !== "all" || (materialsState.searchQuery || "").trim();
+  if (filtering) return "";
+  const pop = getPopularMaterials();
+  if (!pop.length) return "";
+  return `
+    <div class="mcat-section-head"><h2 class="mcat-h2">Ko‘p ishlatilgan</h2></div>
+    <div class="mcat-hscroll">
+      ${pop.map(m => {
+        const title = m.name_uz || m.name || "Material";
+        const img = formatImageUrl(m.image_url || m.cover_image || "");
+        const g = getMaterialGroup(m);
+        return `
+          <div class="mcat-pop-card" onclick="openMaterialKnowledgeDetail(${Number(m.id)})">
+            <div class="mcat-pop-img">
+              <span class="mcat-ph-emoji">${escapeHtml(g.icon || "🧱")}</span>
+              ${img ? `<img src="${escapeHtml(img)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
+            </div>
+            <div class="mcat-pop-name">${escapeHtml(title)}</div>
+            <div class="mcat-pop-cat">${escapeHtml(g.name)}</div>
+          </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderMaterialCatalogHtml() {
   const mats = materialsState.materials || [];
-  const activeCat = materialsState.selectedCategory || "all";
+  const grpId = materialsState.selectedGroup || "all";
+  const search = (materialsState.searchQuery || "").trim();
+  const sort = materialsState.sortBy || "popular";
+  const flat = grpId !== "all" || !!search || materialsState.filterVerified || materialsState.filterMoisture || materialsState.filterFire || materialsState.filterInterior || (materialsState.selectedScope || "all") !== "all";
 
-  return `
-    <div class="lib-mat-cat-pill ${activeCat === 'all' ? 'active' : ''}" onclick="setMaterialCategory('all')">
-      🌐 Barchasi
-      <span class="lib-mat-cat-count">${materialsState.total || mats.length}</span>
-    </div>
-    ${cats.map(c => `
-      <div class="lib-mat-cat-pill ${activeCat === c.slug ? 'active' : ''}" onclick="setMaterialCategory('${escapeJsString(c.slug)}')">
-        <span>${escapeHtml(c.icon || '🧱')}</span>
-        <span>${escapeHtml(c.name)}</span>
-        <span class="lib-mat-cat-count">${c.materials_count || 0}</span>
+  const head = `
+    <div class="mcat-section-head">
+      <h2 class="mcat-h2">${grpId !== "all" ? "Materiallar" : "Barcha materiallar"} <span class="mcat-h2-n">${mats.length}</span></h2>
+      <label class="mcat-sort-wrap">
+        <span class="mcat-sr">Saralash</span>
+        <select class="mcat-sort" onchange="setMaterialSort(this.value)" aria-label="Saralash">
+          <option value="popular" ${sort === "popular" ? "selected" : ""}>Mashhurligi</option>
+          <option value="views" ${sort === "views" ? "selected" : ""}>Ko‘p ko‘rilgan</option>
+          <option value="saves" ${sort === "saves" ? "selected" : ""}>Ko‘p saqlangan</option>
+          <option value="newest" ${sort === "newest" ? "selected" : ""}>Yangi qo‘shilgan</option>
+          <option value="name" ${sort === "name" ? "selected" : ""}>A–Z</option>
+        </select>
+      </label>
+    </div>`;
+
+  if (!mats.length) {
+    return head + `
+      <div class="mcat-empty">
+        <div class="mcat-empty-ico">🔍</div>
+        <div class="mcat-empty-title">Material topilmadi</div>
+        <div class="mcat-empty-sub">Boshqa nom yoki kategoriya bilan qidirib ko‘ring.</div>
+      </div>`;
+  }
+
+  if (flat) {
+    return head + `<div class="mcat-grid">${mats.map(renderMaterialCardHtml).join("")}</div>`;
+  }
+
+  const byGroup = new Map();
+  mats.forEach(m => {
+    const g = getMaterialGroup(m);
+    if (!byGroup.has(g.id)) byGroup.set(g.id, { g, items: [] });
+    byGroup.get(g.id).items.push(m);
+  });
+  const ordered = [];
+  MATERIAL_GROUPS.forEach(g => { if (byGroup.has(g.id)) ordered.push(byGroup.get(g.id)); });
+  byGroup.forEach((v, id) => { if (!MATERIAL_GROUPS.some(x => x.id === id)) ordered.push(v); });
+
+  return head + ordered.map(({ g, items }) => `
+    <section class="mcat-group-section">
+      <div class="mcat-group-head">
+        <div class="mcat-group-title"><span>${escapeHtml(g.icon || "🧱")}</span> ${escapeHtml(g.name)} <span class="mcat-h2-n">${items.length}</span></div>
+        <button type="button" class="mcat-link" onclick="setMaterialGroup('${escapeJsString(g.id)}')">Hammasi ›</button>
       </div>
-    `).join("")}
-  `;
-}
-
-function renderMaterialSubcategoriesHtml() {
-  const activeCat = materialsState.selectedCategory;
-  const subcats = CATEGORY_SUBCATEGORIES_MAP[activeCat];
-  if (!subcats || !subcats.length) return "";
-
-  const activeSubcat = materialsState.selectedSubcategory || "all";
-  return `
-    <div class="lib-mat-subcat-wrapper">
-      <div class="lib-mat-subcat-label">Toifalar:</div>
-      <div class="h-scroll-wrapper">
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -240)" aria-label="Chapga">‹</button>
-        <div class="lib-mat-subcat-scroll">
-          ${subcats.map(sc => `
-            <button type="button" class="lib-mat-subcat-pill ${activeSubcat === sc.id ? 'active' : ''}" onclick="setMaterialSubcategory('${escapeJsString(sc.id)}')">
-              ${escapeHtml(sc.name)}
-            </button>
-          `).join("")}
-        </div>
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 240)" aria-label="O'ngga">›</button>
-      </div>
-    </div>
-  `;
+      <div class="mcat-grid">${items.map(renderMaterialCardHtml).join("")}</div>
+    </section>
+  `).join("");
 }
 
 function renderMaterialsSectionHtml() {
@@ -7936,188 +8581,80 @@ function renderMaterialsSectionHtml() {
         <div style="padding: 80px 20px; text-align: center;">
           <div class="spinner" style="margin: 0 auto 16px;"></div>
           <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Materiallar katalogi yuklanmoqda...</div>
-          <div style="font-size: 12.5px; color: var(--text-secondary);">Rasmiy ishlab chiqaruvchilar va GOST spetsifikatsiyalari tekshirilmoqda</div>
         </div>
       </div>
     `;
   }
 
-  const currentScope = materialsState.selectedScope || "all";
-  const mats = materialsState.materials || [];
+  ensureMaterialPlaceholderTicker();
   const search = materialsState.searchQuery || "";
+  const open = !!materialsState.panelOpen;
 
   return `
-    <div class="page lib-container lib-page-enter lib-materials-v2-container">
+    <div class="page lib-container lib-page-enter lib-materials-v2-container mcat">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
-      <!-- APPLE-LIKE HERO HEADER -->
-      <div class="lib-mat-hero">
-        <div class="lib-mat-badge">🧱 MATERIALLAR KATALOGI • BILINGUAL UZ / RU</div>
-        <h1 class="lib-mat-title">Qurilish & Interyer Materiallari</h1>
-        <p class="lib-mat-desc">
-          Arxitektorlar va dizaynerlar uchun spetsifikatsiyalar, standart o‘lchamlar, tasdiqlangan rasmlar va rasmiy manbalar bazasi.
-        </p>
+      <div class="mcat-head">
+        <h1 class="mcat-title">Qurilish materiallari</h1>
+        <p class="mcat-sub">Arxitektura, qurilish, interyer va remont loyihalarida ishlatiladigan materiallar, ularning xususiyatlari, o‘lchamlari va qo‘llanilish sohasi.</p>
       </div>
 
-      <!-- 1. ASOSIY BO'LIM TANLASH (Barchasi / Qurilish / Interyer) -->
-      <div class="lib-mat-scope-bar">
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'all' ? 'active' : ''}" data-scope="all" onclick="setMaterialScope('all')">
-          🌐 Barchasi
-        </button>
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'architecture' ? 'active' : ''}" data-scope="architecture" onclick="setMaterialScope('architecture')">
-          🏛️ Qurilish
-        </button>
-        <button type="button" class="lib-mat-scope-btn ${currentScope === 'interior' ? 'active' : ''}" data-scope="interior" onclick="setMaterialScope('interior')">
-          🛋️ Interyer
-        </button>
+      <div class="mcat-search">
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+        <input id="lib-materials-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
+               value="${escapeHtml(search)}" oninput="setMaterialSearch(this.value)" />
+        <div class="mcat-ph" aria-hidden="true"><span>Material qidiring...</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
+        <span id="lib-search-clear-wrap">${search ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : ""}</span>
       </div>
 
-      <!-- 2. SEARCH BAR (UZ / RU / Inglizcha / Aliaslar) -->
-      <div class="lib-filter-bar" style="margin-top: 10px;">
-        <div class="lib-search-input-wrap" style="width:100%;">
-          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
-          <input
-            id="lib-materials-search-input"
-            type="text"
-            class="apple-input lib-search-field"
-            placeholder="Material qidiring (Gipsokarton, Tenevoy profil, LDSP, MDF, Gazobeton...)"
-            value="${escapeHtml(search)}"
-            oninput="setMaterialSearch(this.value)"
-          />
-          <span id="lib-search-clear-wrap">
-            ${search ? `
-              <button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>
-            ` : ""}
-          </span>
-        </div>
+      <button type="button" id="mat-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${(materialsState.selectedGroup || "all") !== "all" ? "has-filter" : ""}" onclick="toggleMaterialPanel()">
+        <span class="mcat-filter-left">
+          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          Kategoriyalar bo‘yicha saralash
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div id="mat-panel" class="mcat-panel ${open ? "open" : ""}">
+        <div class="mcat-panel-clip"><div class="mcat-panel-inner" id="mat-panel-inner">${renderMaterialPanelInnerHtml()}</div></div>
       </div>
 
-      <!-- 3. KO'P ISHLATILADIGANLAR (QUICK PICKS) -->
-      <div class="lib-mat-quickpicks-section">
-        <div class="lib-mat-section-subtitle">⚡ Ko‘p ishlatiladiganlar:</div>
-        <div class="h-scroll-wrapper">
-          <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -260)" aria-label="Chapga">‹</button>
-          <div class="lib-mat-quickpicks-scroll">
-            ${renderMaterialQuickPicksHtml()}
-          </div>
-          <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 260)" aria-label="O'ngga">›</button>
-        </div>
-      </div>
-
-      <!-- 4. KATEGORIYALAR (Horizontal Scroll with Icons and Counts) -->
-      <div class="h-scroll-wrapper" style="margin-top: 12px;">
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -280)" aria-label="Chapga">‹</button>
-        <div class="lib-mat-cat-scroll">
-          ${renderMaterialCategoryPillsHtml()}
-        </div>
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 280)" aria-label="O'ngga">›</button>
-      </div>
-
-      <!-- 5. SUBKATEGORIYALAR (e.g. Profillar: Tenevoy, Razdelitelniy, Plintus, Karniz...) -->
-      <div class="lib-mat-subcategories-bar">
-        ${renderMaterialSubcategoriesHtml()}
-      </div>
-
-      <!-- 6. QUICK FILTER CHIPS -->
-      <div class="h-scroll-wrapper" style="margin-top: 6px;">
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-left" onclick="scrollHRow(this, -220)" aria-label="Chapga">‹</button>
-        <div class="category-chips lib-chips-row">
-          <div class="chip ${materialsState.filterVerified ? 'active' : ''}" data-filter-key="filterVerified" onclick="toggleMaterialFilter('filterVerified')">
-            ✓ Faqat tekshirilgan
-          </div>
-          <div class="chip ${materialsState.filterMoisture ? 'active' : ''}" data-filter-key="filterMoisture" onclick="toggleMaterialFilter('filterMoisture')">
-            💧 Namlikka chidamli
-          </div>
-          <div class="chip ${materialsState.filterFire ? 'active' : ''}" data-filter-key="filterFire" onclick="toggleMaterialFilter('filterFire')">
-            🔥 Yong'in klassi NG/KM0
-          </div>
-          <div class="chip ${materialsState.filterInterior ? 'active' : ''}" data-filter-key="filterInterior" onclick="toggleMaterialFilter('filterInterior')">
-            🏠 Ichki ishlar
-          </div>
-        </div>
-        <button type="button" class="h-scroll-arrow h-scroll-arrow-right" onclick="scrollHRow(this, 220)" aria-label="O'ngga">›</button>
-      </div>
-
-      <!-- 7. MATERIALLAR GRIDI (2-Column Mobile, 3-4 Column Tablet/Desktop) -->
-      <div class="lib-materials-grid-v2">
-        ${mats.length ? mats.map(renderMaterialCardHtml).join("") : `
-          <div class="empty-box" style="grid-column: 1 / -1; padding: 40px 20px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🧱</div>
-            <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Material topilmadi</div>
-            <div style="font-size: 12.5px; color: var(--text-secondary);">
-              Tanlangan bo‘lim, kategoriya yoki qidiruv so‘zini o‘zgartirib ko‘ring.
-            </div>
-          </div>
-        `}
-      </div>
+      <div id="mat-active-filter">${renderMaterialActiveFilterHtml()}</div>
+      <div id="mat-popular-wrap">${renderMaterialPopularHtml()}</div>
+      <div id="mat-catalog-wrap">${renderMaterialCatalogHtml()}</div>
     </div>
   `;
 }
 
 function renderMaterialCardHtml(mat) {
-  const titleUz = mat.name_uz || mat.name || mat.title || "Material";
-  const titleRu = mat.name_ru || mat.original_name || "";
+  const title = mat.name_uz || mat.name || mat.title || "Material";
   const img = formatImageUrl(mat.image_url || mat.cover_image || mat.featured_image || "");
-  const isVerified = mat.image_verified !== false && (mat.verification_status === "verified" || mat.is_verified);
-  const catName = mat.category_name || "Qurilish";
-  const subcatName = mat.subcategory_name || "";
-  const mfgName = mat.manufacturer_name || "";
-  const typesCount = Number(mat.types_count || (Array.isArray(mat.types) ? mat.types.length : 0));
-  const dimensions = mat.dimensions_info_uz || mat.dimensions_info || "";
-
+  const g = getMaterialGroup(mat);
+  const tag = mat.subcategory_name || g.name;
+  const desc = mat.short_description_uz || mat.material_type || "";
+  const dim = mat.dimensions_info_uz || mat.dimensions_info || "";
   return `
-    <div class="lib-material-card-v2" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
-      <div class="lib-mat-thumb-wrap-v2">
-        <div class="lib-material-thumb-placeholder">
-          ${escapeHtml(mat.category_icon || '🧱')}
+    <div class="mcat-card" onclick="openMaterialKnowledgeDetail(${Number(mat.id)})">
+      <div class="mcat-card-img">
+        <span class="mcat-ph-emoji">${escapeHtml(g.icon || mat.category_icon || "🧱")}</span>
+        ${img ? `<img src="${escapeHtml(img)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
+        <div class="mcat-card-actions">
+          ${matReactionButtonHtml(mat.id, "like", true)}
+          ${matReactionButtonHtml(mat.id, "save", true)}
         </div>
-        ${img ? `
-          <img src="${escapeHtml(img)}" class="lib-mat-thumb-img" onerror="this.style.display='none';" alt="${escapeHtml(titleUz)}" loading="lazy" />
-        ` : ""}
-        ${isVerified ? `
-          <span class="lib-mat-badge-verified">✓ Tasdiqlangan</span>
-        ` : `
-          <span class="lib-mat-badge-pending">🟡 Tekshiruvda</span>
-        `}
-        ${typesCount > 0 ? `
-          <span class="lib-mat-badge-types">${typesCount} xil turi</span>
-        ` : ""}
       </div>
-
-      <div class="lib-mat-card-body">
-        <div class="lib-mat-card-tags">
-          <span class="lib-mat-card-cat-tag">${escapeHtml(subcatName || catName)}</span>
-          ${mfgName ? `<span class="lib-mat-card-mfg-tag">${escapeHtml(mfgName)}</span>` : ""}
-        </div>
-
-        <h3 class="lib-mat-card-title">${escapeHtml(titleUz)}</h3>
-        ${titleRu ? `<div class="lib-mat-card-sub-title">${escapeHtml(titleRu)}</div>` : ""}
-
-        <div class="lib-mat-card-type">
-          ${escapeHtml(mat.material_type || mat.short_description_uz || "")}
-        </div>
-
-        <div class="lib-mat-card-price-row">
-          ${mat.approx_price ? `
-            <span class="lib-mat-price-badge">💰 ${escapeHtml(mat.approx_price.split('(')[0].trim())}</span>
-          ` : ""}
-          ${mat.uzb_market_availability ? `
-            <span class="lib-mat-avail-badge">📍 Mavjud</span>
-          ` : ""}
-        </div>
-
-        <div class="lib-mat-card-footer">
-          <span class="lib-mat-card-specs-count">
-            ${dimensions ? `📏 ${escapeHtml(dimensions.slice(0, 22))}` : "Spetsifikatsiya"}
-          </span>
-          <span class="lib-mat-card-arrow">Batafsil →</span>
-        </div>
+      <div class="mcat-card-body">
+        <div class="mcat-card-cat">${escapeHtml(tag)}</div>
+        <h3 class="mcat-card-title">${escapeHtml(title)}</h3>
+        ${desc ? `<p class="mcat-card-desc">${escapeHtml(desc)}</p>` : ""}
+        ${dim ? `<div class="mcat-card-meta">📏 ${escapeHtml(String(dim).slice(0, 40))}</div>` : ""}
       </div>
     </div>
   `;
 }
+
 
 // ------------------------------------------------------
 // 6. DETAIL VIEWS (Apple-Inspired Sheet & In-App Reader)
@@ -9006,6 +9543,8 @@ async function openBookDetail(resId) {
   const pages = book.page_count ? `${book.page_count} bet` : (book.drive_file_size || "PDF Kitob");
   const lang = (book.language || "UZ").toUpperCase();
   const isBookmarked = libraryV2Bookmarks.has(Number(book.id));
+  if (typeof book.is_liked === "boolean") { if (book.is_liked) booksState.likedIds.add(Number(book.id)); else booksState.likedIds.delete(Number(book.id)); }
+  const isLikedBook = booksState.likedIds.has(Number(book.id));
 
   let whatLearn = [];
   if (book.content_data) {
@@ -9033,9 +9572,14 @@ async function openBookDetail(resId) {
           <div class="lib-back-nav" style="margin:0;" onclick="closeDetail()">
             ${libIcons.back('lib-back-svg', 16)} Orqaga
           </div>
+          <div class="bk-detail-actions">
+            <button id="bk-like-btn-${Number(book.id)}" class="lib-bookmark-toggle-btn ${isLikedBook ? "bookmarked" : ""}" aria-label="Yoqdi" onclick="toggleBookReaction(${Number(book.id)}, 'like', event)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="${isLikedBook ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.5 2.8 5 6.2 5c2 0 3.3 1 3.8 2.1C10.5 6 11.8 5 13.8 5c3.4 0 5.2 3.5 3.8 6.8C19.5 16.4 12 21 12 21z" transform="translate(1 0)"/></svg>
+            </button>
           <button id="lib-bm-btn-${Number(book.id)}" class="lib-bookmark-toggle-btn ${isBookmarked ? "bookmarked" : ""}" onclick="toggleLibraryBookmark(${Number(book.id)}, event)" title="Saqlash">
             ${libIcons.bookmark('lib-bm-svg', 20, isBookmarked)}
           </button>
+          </div>
         </div>
 
         <div class="lib-detail-hero-card">
@@ -9185,6 +9729,7 @@ async function openMaterialKnowledgeDetail(matId) {
     }
 
     activeMaterialDetail = res;
+    try { syncMaterialStatsFromDetail(res); } catch (e) {}
 
     currentView = {
       type: "material_detail",
@@ -9227,6 +9772,11 @@ function renderMaterialDetailPage(detailData) {
         <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeMaterialDetail()">
           ${libIcons.back('lib-back-svg', 16)} Materiallar katalogi
         </button>
+        <div class="mcat-detail-actions">
+          <span class="mcat-views" title="Ko‘rishlar">👁 ${Number((detailData.stats && detailData.stats.view_count) || m.view_count || 0)}</span>
+          ${matReactionButtonHtml(m.id, "like", false)}
+          ${matReactionButtonHtml(m.id, "save", false)}
+        </div>
       </div>
 
       <!-- HERO SECTION -->
@@ -10597,6 +11147,10 @@ function renderProfile() {
       <button class="btn secondary" onclick="openEditProfile()">
         ✏️ Profil ma'lumotlarini tahrirlash
       </button>
+
+      <!-- SOZLAMALAR: TIL / LANGUAGE -->
+      <div class="profile-section-title">Sozlamalar</div>
+      ${window.I18N ? window.I18N.renderLanguageRow() : ""}
 
       <!-- 1-TALAB: PLATFORMANI QO'LLAB-QUVVATLASH (FAQAT BITTA TUGMA) -->
       <div class="profile-action-row" onclick="openSupportCardsModal()" role="button" tabindex="0">
@@ -12096,7 +12650,7 @@ function renderAdminLiveUsersHtml(users) {
 
   return users.map(u => {
     const isRecent = u.last_seen_at && (Date.now() - new Date(u.last_seen_at).getTime()) < 75000;
-    const isWatching = u.status === "watching" || u.video_status === "watching";
+    const isWatching = isRecent && !!u.lesson_id && u.status === "watching" && u.video_status === "watching";
     const isTesting = u.status === "testing";
     const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
     const progressPercent = u.video_duration > 0 ? Math.min(100, Math.round((u.video_progress / u.video_duration) * 100)) : 0;
@@ -17105,6 +17659,22 @@ function openAddLibraryV2ResourceModal(presetSection) {
             <input id="v2-author" class="apple-input" type="text" placeholder="Masalan: Autodesk / ShNQ">
           </div>
 
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div class="apple-field">
+              <label>Dastur</label>
+              <select id="v2-software" class="apple-input">
+                ${["", ...SOURCE_SOFTWARE_ORDER].map(o => `<option value="${o}" ${({}).software === o ? "selected" : ""}>${o || "Avto"}</option>`).join("")}
+              </select>
+            </div>
+            <div class="apple-field">
+              <label>Fayl formati</label>
+              <select id="v2-format" class="apple-input">
+                ${["", ...SOURCE_FORMAT_OPTIONS].map(o => `<option value="${o}" ${String(({}).file_format || "").toUpperCase() === o ? "selected" : ""}>${o ? sourceFormatLabel(o) : "Avto (fayl nomidan)"}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <div class="apple-field">
               <label>Revit Versiyasi (Manbalar uchun)</label>
@@ -17205,6 +17775,8 @@ async function submitCreateLibraryV2Resource() {
   const category = document.getElementById("v2-cat")?.value;
   const author = document.getElementById("v2-author")?.value.trim();
   const version = document.getElementById("v2-version")?.value.trim();
+  const softwareVal = document.getElementById("v2-software")?.value || "";
+  const formatVal = document.getElementById("v2-format")?.value || "";
   const fileSize = document.getElementById("v2-filesize")?.value.trim();
   const courseId = document.getElementById("v2-course-id")?.value ? Number(document.getElementById("v2-course-id").value) : null;
   const contentUrl = document.getElementById("v2-url")?.value.trim();
@@ -17231,6 +17803,8 @@ async function submitCreateLibraryV2Resource() {
       category: category,
       author: author,
       version: version,
+      software: softwareVal || null,
+      file_format: formatVal || null,
       file_size: fileSize,
       course_id: courseId,
       is_featured: isFeatured,
@@ -17309,6 +17883,22 @@ function openEditLibraryV2ResourceModal(resId) {
             <input id="ev2-author" class="apple-input" type="text" value="${escapeHtml(item.author || "")}">
           </div>
 
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div class="apple-field">
+              <label>Dastur</label>
+              <select id="ev2-software" class="apple-input">
+                ${["", ...SOURCE_SOFTWARE_ORDER].map(o => `<option value="${o}" ${item.software === o ? "selected" : ""}>${o || "Avto"}</option>`).join("")}
+              </select>
+            </div>
+            <div class="apple-field">
+              <label>Fayl formati</label>
+              <select id="ev2-format" class="apple-input">
+                ${["", ...SOURCE_FORMAT_OPTIONS].map(o => `<option value="${o}" ${String(item.file_format || "").toUpperCase() === o ? "selected" : ""}>${o ? sourceFormatLabel(o) : "Avto (fayl nomidan)"}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <div class="apple-field">
               <label>Revit Versiyasi</label>
@@ -17375,6 +17965,8 @@ async function submitUpdateLibraryV2Resource(resId) {
   const category = document.getElementById("ev2-cat")?.value;
   const author = document.getElementById("ev2-author")?.value.trim();
   const version = document.getElementById("ev2-version")?.value.trim();
+  const softwareVal = document.getElementById("ev2-software")?.value || "";
+  const formatVal = document.getElementById("ev2-format")?.value || "";
   const fileSize = document.getElementById("ev2-filesize")?.value.trim();
   const courseId = document.getElementById("ev2-course-id")?.value ? Number(document.getElementById("ev2-course-id").value) : null;
   const contentUrl = document.getElementById("ev2-url")?.value.trim();
@@ -17401,6 +17993,8 @@ async function submitUpdateLibraryV2Resource(resId) {
       category: category,
       author: author,
       version: version,
+      software: softwareVal || null,
+      file_format: formatVal || null,
       file_size: fileSize,
       course_id: courseId,
       is_featured: isFeatured,
@@ -18888,7 +19482,6 @@ async function submitCourseAccessRequest(courseId) {
   }
 }
 
-
 async function checkAdminTelegramVideo(inputId, resultId) {
   const input = document.getElementById(inputId);
   const resultDiv = document.getElementById(resultId);
@@ -18913,7 +19506,6 @@ async function checkAdminTelegramVideo(inputId, resultId) {
   }
 }
 
-
 async function saveStudentVideoPlatform(studentId) {
   const select = document.getElementById("student-video-platform");
   if (!select) return;
@@ -18926,3 +19518,25 @@ async function saveStudentVideoPlatform(studentId) {
     showAlert(err.message || "Video platformasini saqlashda xato yuz berdi.");
   }
 }
+
+// ======================================================
+// I18N: til o'zgarganda kontent qayta yuklanadi (server dars/kitob/material tarjimalarini qaytaradi)
+// ======================================================
+window.onI18nChanged = function () {
+  try {
+    if (typeof materialsState !== "undefined") {
+      materialsState.loaded = false;
+      materialsState.categories = [];
+      materialsState.allMaterials = [];
+    }
+    if (state && state.telegram_id) {
+      loadContent();
+    } else if (typeof render === "function") {
+      render();
+    }
+  } catch (e) {
+    console.warn("onI18nChanged:", e);
+  }
+};
+
+try { if (window.I18N) window.I18N.wrapGlobals(); } catch (e) {}
