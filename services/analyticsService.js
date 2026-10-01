@@ -456,14 +456,14 @@ async function getDashboardData(params = {}) {
       lb.id,
       lb.title,
       lb.author,
-      lb.category,
+      COALESCE(lb.categories[1], 'Boshqa') AS category,
       COALESCE(lb.view_count, 0)::int AS view_count,
       COUNT(DISTINCT rp.user_id)::int AS unique_readers,
       COALESCE((SELECT COUNT(*)::int FROM saved_books sb WHERE sb.book_id = lb.id), 0)::int AS saved_count
     FROM library_books lb
     LEFT JOIN reading_progress rp ON rp.book_id = lb.id
     WHERE lb.status = 'published'
-    GROUP BY lb.id
+    GROUP BY lb.id, lb.title, lb.author, lb.categories, lb.view_count
     ORDER BY unique_readers DESC, lb.view_count DESC
     LIMIT 10
   `).catch(err => {
@@ -475,12 +475,13 @@ async function getDashboardData(params = {}) {
   const materialsDeepQuery = pool.query(`
     SELECT
       m.id,
-      m.name_uz,
-      m.category,
+      COALESCE(m.name_uz, m.name, 'Material') AS name_uz,
+      COALESCE(c.name, 'Boshqa') AS category,
       COALESCE(m.view_count, 0)::int AS view_count,
       COALESCE((SELECT COUNT(*)::int FROM material_likes ml WHERE ml.material_id = m.id), 0)::int AS like_count,
       COALESCE((SELECT COUNT(*)::int FROM material_saves ms WHERE ms.material_id = m.id), 0)::int AS save_count
     FROM materials m
+    LEFT JOIN material_categories c ON c.id = m.category_id
     ORDER BY m.view_count DESC
     LIMIT 10
   `).catch(err => {
@@ -490,11 +491,12 @@ async function getDashboardData(params = {}) {
 
   const materialsCatQuery = pool.query(`
     SELECT
-      category,
-      COUNT(*)::int AS item_count,
-      COALESCE(SUM(view_count), 0)::int AS total_views
-    FROM materials
-    GROUP BY category
+      COALESCE(c.name, 'Boshqa') AS category,
+      COUNT(m.id)::int AS item_count,
+      COALESCE(SUM(m.view_count), 0)::int AS total_views
+    FROM materials m
+    LEFT JOIN material_categories c ON c.id = m.category_id
+    GROUP BY c.name
     ORDER BY total_views DESC
     LIMIT 8
   `).catch(err => {
