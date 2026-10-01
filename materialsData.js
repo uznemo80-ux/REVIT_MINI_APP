@@ -168,7 +168,19 @@ async function initMaterialsTables(pool) {
       { name: "currency", type: "VARCHAR(20) DEFAULT 'UZS'" },
       { name: "price_unit", type: "VARCHAR(50) DEFAULT 'm²'" },
       { name: "price_region", type: "VARCHAR(100) DEFAULT 'Toshkent'" },
-      { name: "price_date", type: "VARCHAR(50)" }
+      { name: "price_date", type: "VARCHAR(50)" },
+      // Flooring Specific Catalog Columns
+      { name: "underfloor_heating_compatible", type: "VARCHAR(100)" },
+      { name: "underfloor_heating_type", type: "VARCHAR(100)" },
+      { name: "maximum_temperature", type: "VARCHAR(50)" },
+      { name: "wear_class", type: "VARCHAR(100)" },
+      { name: "usage_class", type: "VARCHAR(100)" },
+      { name: "slip_resistance", type: "VARCHAR(50)" },
+      { name: "locking_system", type: "VARCHAR(100)" },
+      { name: "collection", type: "VARCHAR(150)" },
+      { name: "article", type: "VARCHAR(100)" },
+      { name: "subfloor_requirements", type: "TEXT" },
+      { name: "underlayment", type: "TEXT" }
     ];
 
     for (const col of colsToEnsure) {
@@ -347,7 +359,10 @@ async function initMaterialsTables(pool) {
           installation_method, installation_steps, installation_materials, required_tools,
           technical_drawing, technical_passport, certificate, catalog, instruction_manual,
           source_name, source_url, manufacturer_url,
-          price, currency, price_unit, price_region, price_date
+          price, currency, price_unit, price_region, price_date,
+          underfloor_heating_compatible, underfloor_heating_type, maximum_temperature,
+          wear_class, usage_class, slip_resistance, locking_system,
+          collection, article, subfloor_requirements, underlayment
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
@@ -367,7 +382,8 @@ async function initMaterialsTables(pool) {
           $83, $84, $85, $86,
           $87, $88, $89, $90, $91,
           $92, $93, $94,
-          $95, $96, $97, $98, $99
+          $95, $96, $97, $98, $99,
+          $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110
         )
         ON CONFLICT (slug) DO UPDATE
         SET name = EXCLUDED.name, original_name = EXCLUDED.original_name, english_name = EXCLUDED.english_name,
@@ -412,7 +428,18 @@ async function initMaterialsTables(pool) {
             certificate = EXCLUDED.certificate, catalog = EXCLUDED.catalog, instruction_manual = EXCLUDED.instruction_manual,
             source_name = EXCLUDED.source_name, source_url = EXCLUDED.source_url, manufacturer_url = EXCLUDED.manufacturer_url,
             price = EXCLUDED.price, currency = EXCLUDED.currency, price_unit = EXCLUDED.price_unit,
-            price_region = EXCLUDED.price_region, price_date = EXCLUDED.price_date
+            price_region = EXCLUDED.price_region, price_date = EXCLUDED.price_date,
+            underfloor_heating_compatible = EXCLUDED.underfloor_heating_compatible,
+            underfloor_heating_type = EXCLUDED.underfloor_heating_type,
+            maximum_temperature = EXCLUDED.maximum_temperature,
+            wear_class = EXCLUDED.wear_class,
+            usage_class = EXCLUDED.usage_class,
+            slip_resistance = EXCLUDED.slip_resistance,
+            locking_system = EXCLUDED.locking_system,
+            collection = EXCLUDED.collection,
+            article = EXCLUDED.article,
+            subfloor_requirements = EXCLUDED.subfloor_requirements,
+            underlayment = EXCLUDED.underlayment
         RETURNING id;
       `, [
         m.name, m.slug, m.original_name, m.english_name, m.aliases || [], categoryId, m.subcategory_name, m.scope || 'both', m.purpose_tag || null,
@@ -454,7 +481,18 @@ async function initMaterialsTables(pool) {
         m.technical_drawing || null, m.technical_passport || 'Mahsulot texnik pasporti',
         m.certificate || 'GOST / O‘zDSt', m.catalog || 'Ishlab chiqaruvchi katalogi', m.instruction_manual || 'Qo‘llanma',
         m.source_name || 'Rasmiy manba', m.source_url || 'https://mc.uz', m.manufacturer_url || 'https://standart.uz',
-        m.price || 'Не указано', m.currency || 'UZS', m.price_unit || 'm²', m.price_region || 'Toshkent', m.price_date || '2026-09-30'
+        m.price || 'Не указано', m.currency || 'UZS', m.price_unit || 'm²', m.price_region || 'Toshkent', m.price_date || '2026-09-30',
+        m.underfloor_heating_compatible || 'Не указано',
+        m.underfloor_heating_type || 'Не указано',
+        m.maximum_temperature || 'Не указано',
+        m.wear_class || 'Не указано',
+        m.usage_class || 'Не указано',
+        m.slip_resistance || 'Не указано',
+        m.locking_system || 'Не указано',
+        m.collection || 'Не указано',
+        m.article || 'Не указано',
+        m.subfloor_requirements || 'Не указано',
+        m.underlayment || 'Не указано'
       ]);
 
       const materialId = res.rows[0]?.id;

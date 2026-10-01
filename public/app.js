@@ -8085,6 +8085,11 @@ function getMaterialSearchCorpus(m) {
     (m.advantages_uz || "") + " " +
     (m.advantages_ru || "") + " " +
     (m.composition || "") + " " +
+    (m.collection || "") + " " +
+    (m.article || "") + " " +
+    (m.wear_class || "") + " " +
+    (m.locking_system || "") + " " +
+    (m.underfloor_heating_compatible || "") + " " +
     aliasesStr + " " +
     typesStr
   ).toLowerCase();
@@ -8260,7 +8265,7 @@ async function loadMaterialsData(forceReload) {
     }
 
     const listRes = await api("/api/materials/list", {
-      search: "", scope: "all", category_slug: "all", manufacturer_slug: "all", limit: 1000, offset: 0
+      search: "", scope: "all", category_slug: "all", manufacturer_slug: "all", limit: 1500, offset: 0
     }).catch(err => {
       console.warn("Materials list fetch error:", err);
       return null;
@@ -10339,6 +10344,60 @@ function renderMaterialDetailPage(detailData) {
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">Mos yuzalar:</span>
                 <span class="lib-mat-spec-val">${escapeHtml(m.suitable_surfaces)}</span>
+              </div>
+            ` : ""}
+            ${(m.wear_class && m.wear_class !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Yeyilishga chidamlilik (Klass):</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.wear_class)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.usage_class && m.usage_class !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Ekspluatatsiya toifasi:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.usage_class)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.underfloor_heating_compatible && m.underfloor_heating_compatible !== 'Не указано') ? `
+              <div class="lib-mat-spec-row" style="background:rgba(245,158,11,0.06); padding:6px 8px; border-radius:8px;">
+                <span class="lib-mat-spec-label" style="color:#d97706; font-weight:700;">Issiq pol (Тёплый пол):</span>
+                <span class="lib-mat-spec-val" style="color:#d97706; font-weight:800;">${escapeHtml(m.underfloor_heating_compatible)}${m.maximum_temperature && m.maximum_temperature !== 'Не указано' ? ' (Maks: ' + escapeHtml(m.maximum_temperature) + ')' : ''}</span>
+              </div>
+            ` : ""}
+            ${(m.slip_resistance && m.slip_resistance !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Sirpanishga qarshilik (Slip):</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.slip_resistance)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.locking_system && m.locking_system !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Qulflanish / Zamok turi:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.locking_system)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.collection && m.collection !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Kolleksiya:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.collection)}</span>
+              </div>
+            ` : ""}
+            ${(m.article && m.article !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Artikul:</span>
+                <span class="lib-mat-spec-val"><code>${escapeHtml(m.article)}</code></span>
+              </div>
+            ` : ""}
+            ${(m.subfloor_requirements && m.subfloor_requirements !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Asosga (styajkaga) talablar:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.subfloor_requirements)}</span>
+              </div>
+            ` : ""}
+            ${(m.underlayment && m.underlayment !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Tavsiya etilgan podlojka:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.underlayment)}</span>
               </div>
             ` : ""}
             ${(m.certificate || m.standards_info) ? `

@@ -4,6 +4,7 @@
 // ======================================================
 
 const { DEVOR_MATERIALS } = require('./devorCatalog');
+const { POL_MATERIALS } = require('./polCatalog');
 
 const BASE_17_MATERIALS = [
   {
@@ -2319,10 +2320,11 @@ const BASE_17_MATERIALS = [
   }
 ];
 
-const SEED_MATERIALS = [...BASE_17_MATERIALS, ...DEVOR_MATERIALS];
+const SEED_MATERIALS = [...BASE_17_MATERIALS, ...DEVOR_MATERIALS, ...POL_MATERIALS];
 
 module.exports = {
   SEED_MATERIALS,
   BASE_17_MATERIALS,
-  DEVOR_MATERIALS
+  DEVOR_MATERIALS,
+  POL_MATERIALS
 };

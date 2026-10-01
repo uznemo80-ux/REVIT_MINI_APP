@@ -7937,7 +7937,7 @@ app.all('/api/materials/list', async function (req, res) {
     var filterFire = Boolean(b.filter_fire === true || b.filter_fire === 'true');
     var status = (b.status || 'published').trim();
     var sort = b.sort || 'newest';
-    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 100, 1), 1000);
+    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 100, 1), 1500);
     var offset = Math.max(parseInt(b.offset, 10) || 0, 0);
 
     var whereClauses = [];
@@ -8076,6 +8076,15 @@ app.all('/api/materials/list', async function (req, res) {
         COALESCE(m.image_url, m.cover_image) AS featured_image,
         m.image_source, m.image_source_url, m.image_alt, m.image_verified, m.image_verification_note,
         m.subcategory_name, m.product_code, m.material_type,
+        m.brand, m.manufacturer, m.country, m.region, m.city,
+        m.length_mm, m.width_mm, m.height_mm, m.thickness_mm, m.density_kg_m3, m.weight_kg,
+        m.strength, m.strength_class, m.thermal_conductivity, m.water_absorption, m.frost_resistance, m.sound_insulation, m.service_life,
+        m.application, m.application_area, m.interior_exterior, m.suitable_rooms, m.suitable_surfaces,
+        m.installation_method, m.installation_steps, m.installation_materials, m.required_tools,
+        m.price, m.currency, m.price_unit, m.price_region, m.price_date,
+        m.underfloor_heating_compatible, m.underfloor_heating_type, m.maximum_temperature,
+        m.wear_class, m.usage_class, m.slip_resistance, m.locking_system,
+        m.collection, m.article, m.subfloor_requirements, m.underlayment,
         m.description, m.dimensions_info, m.thicknesses, m.composition, m.usage_area, m.pros, m.cons,
         m.approx_price, m.uzb_market_availability, m.architect_notes, m.standards_info, m.lifespan,
         m.moisture_resistance, m.fire_rating, m.standard_sizes, m.scope, m.purpose_tag,
