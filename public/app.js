@@ -250,6 +250,65 @@ function getDeviceId() {
 }
 const deviceId = getDeviceId();
 
+function getAnalyticsSessionId() {
+  try {
+    let sid = sessionStorage.getItem("agy_analytics_session_id");
+    if (!sid) {
+      sid = "ses-" + Date.now() + "-" + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem("agy_analytics_session_id", sid);
+    }
+    return sid;
+  } catch (e) {
+    return "ses-" + Date.now() + "-" + Math.random().toString(36).substring(2, 10);
+  }
+}
+
+function getClientDeviceInfo() {
+  const ua = navigator.userAgent || "";
+  const tgPlatform = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform) ? String(window.Telegram.WebApp.platform).toLowerCase() : "";
+  
+  let deviceType = "mobile";
+  let os = "Unknown";
+  let clientType = tgPlatform ? ("Telegram (" + tgPlatform + ")") : "Web Browser";
+
+  if (/android/i.test(ua) || tgPlatform === "android") {
+    os = "Android";
+    deviceType = "mobile";
+  } else if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    os = "iPad / Tablet";
+    deviceType = "tablet";
+  } else if (/iPhone|iPod/i.test(ua) || tgPlatform === "ios") {
+    os = "iPhone / iOS";
+    deviceType = "mobile";
+  } else if (/Windows/i.test(ua) || tgPlatform === "tdesktop") {
+    os = "Windows";
+    deviceType = "desktop";
+  } else if (/Macintosh|Mac OS X/i.test(ua) || tgPlatform === "macos") {
+    os = "macOS";
+    deviceType = "desktop";
+  } else if (/Linux/i.test(ua)) {
+    os = "Linux";
+    deviceType = "desktop";
+  }
+
+  const w = window.innerWidth || (window.screen ? window.screen.width : 0);
+  const h = window.innerHeight || (window.screen ? window.screen.height : 0);
+  if (deviceType === "mobile" && Math.min(w, h) >= 600) {
+    deviceType = "tablet";
+    if (os === "Unknown") os = "Tablet";
+  }
+
+  return {
+    sessionId: getAnalyticsSessionId(),
+    deviceType: deviceType,
+    operatingSystem: os,
+    clientType: clientType,
+    screenWidth: window.screen ? window.screen.width : w,
+    screenHeight: window.screen ? window.screen.height : h
+  };
+}
+
+
 // ======================================================
 // HTML & JS ESCAPE UTILITIES
 // ======================================================
@@ -924,6 +983,7 @@ function initHeartbeat() {
 
 async function sendHeartbeat(extra = {}) {
   if (!initData) return;
+  const dev = getClientDeviceInfo();
   const payload = {
     current_tab: activeTab || "home",
     status: extra.status || liveActivityState.status,
@@ -937,7 +997,13 @@ async function sendHeartbeat(extra = {}) {
     module_id: liveActivityState.module_id,
     test_question_index: liveActivityState.test_question_index,
     test_total_questions: liveActivityState.test_total_questions,
-    device_info: specDevice || "mobile",
+    device_info: dev.operatingSystem + " (" + dev.deviceType + ")",
+    session_id: dev.sessionId,
+    device_type: dev.deviceType,
+    operating_system: dev.operatingSystem,
+    client_type: dev.clientType,
+    screen_width: dev.screenWidth,
+    screen_height: dev.screenHeight,
     ...extra
   };
   try {
@@ -11868,12 +11934,16 @@ function renderAdminRootMenu() {
 async function trackAnalyticsEvent(eventType, category = 'general', contentId = null, metadata = {}, durationSeconds = 0) {
   try {
     if (!state.user && !tgUser) return;
+    const dev = getClientDeviceInfo();
     await api('/api/analytics/track', {
       event_type: eventType,
       category,
       content_id: contentId ? Number(contentId) : null,
       metadata,
-      duration_seconds: Number(durationSeconds) || 0
+      duration_seconds: Number(durationSeconds) || 0,
+      session_id: dev.sessionId,
+      device_type: dev.deviceType,
+      operating_system: dev.operatingSystem
     });
   } catch (e) {
     // Non-blocking telemetry
@@ -11906,6 +11976,7 @@ function renderAdminStatsView() {
   const heatmap = dash?.heatmap || [];
   const deepDives = dash?.deep_dives || {};
   const retention = dash?.retention || { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 };
+  const devices = dash?.devices || null;
   const topStudents = dash?.top_students || [];
 
   const period = adminAnalyticsDashboardState.period || '7days';
@@ -12423,6 +12494,25 @@ function renderAdminStatsView() {
         ${renderAnalyticsHeatmapHtml(heatmap)}
       </div>
 
+      <!-- 5. QURILMA / DEVICE ANALYTICS (24-BO'LIM) -->
+      <div class="analytics-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>📱</span> 24. Qurilma / Device Analytics
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">
+              Foydalanuvchilar qaysi qurilmalardan kirayotgani, platformalar taqsimoti, kontent aloqasi va faol vaqtlar
+            </div>
+          </div>
+          <span class="admin-hub-badge" style="background:rgba(52,199,89,0.15); color:#34c759; font-weight:750;">
+            Real-Time Sessions
+          </span>
+        </div>
+
+        ${renderAnalyticsDeviceSectionHtml(devices)}
+      </div>
+
       <!-- 8. KONTENT BO'YICHA CHUQUR TAHLIL (DEEP DIVES) -->
       <div class="analytics-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
@@ -12784,6 +12874,331 @@ function renderAnalyticsHeatmapHtml(heatmap) {
 
   html += `</div>`;
   return html;
+}
+
+
+// -------------------------------------------------------------
+// 24. QURILMA / DEVICE ANALYTICS RENDERER
+// -------------------------------------------------------------
+function renderAnalyticsDeviceSectionHtml(devices) {
+  if (!devices) {
+    return `<div class="empty-box" style="padding:24px 12px;">Qurilmalar analitikasi ma'lumotlari yuklanmoqda...</div>`;
+  }
+
+  const summary = devices.summary || {
+    mobile: { users: 0, active: 0, sessions: 0, pct: 0 },
+    desktop: { users: 0, active: 0, sessions: 0, pct: 0 },
+    tablet: { users: 0, active: 0, sessions: 0, pct: 0 }
+  };
+  const distribution = devices.distribution || [];
+  const timeSeries = devices.time_series || [];
+  const contentMatrix = devices.content_matrix || [];
+  const peakHours = devices.peak_hours || {
+    mobile: { peak: '20:00 - 22:00', label: 'Kechki payt' },
+    desktop: { peak: '10:00 - 13:00', label: 'Ish vaqti' },
+    tablet: { peak: '19:00 - 21:00', label: 'Dam olish' }
+  };
+  const hourly = devices.hourly_breakdown || [];
+
+  const osColors = {
+    'Android': '#34c759',
+    'iPhone / iOS': '#007aff',
+    'iOS': '#007aff',
+    'Windows': '#00a4ef',
+    'macOS': '#af52de',
+    'iPad / Tablet': '#ff9500',
+    'Linux': '#ffcc00',
+    'Unknown': '#8e8e93'
+  };
+
+  const maxTimeVal = Math.max(1, ...timeSeries.map(t => Math.max(t.mobile || 0, t.desktop || 0, t.tablet || 0)));
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      
+      <!-- 24.1. UMUMIY DEVICE STATISTIKASI (CARDS) -->
+      <div>
+        <div style="font-size:12.5px; font-weight:750; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+          24.1. Umumiy Qurilmalar Holati
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+          
+          <!-- MOBILE -->
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:rgba(52,199,89,0.15); color:#34c759; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                  📱
+                </div>
+                <div>
+                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Mobile</div>
+                  <div style="font-size:11px; color:var(--text-muted);">Smartfonlar (Android, iOS)</div>
+                </div>
+              </div>
+              <span class="admin-hub-badge" style="background:rgba(52,199,89,0.18); color:#34c759; font-weight:800; font-size:12px;">
+                ${summary.mobile.pct}%
+              </span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
+              ${summary.mobile.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
+            </div>
+            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
+              <div>Faol: <strong style="color:#34c759;">${summary.mobile.active}</strong></div>
+              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.mobile.sessions}</strong></div>
+            </div>
+          </div>
+
+          <!-- DESKTOP -->
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:rgba(0,122,255,0.15); color:#007aff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                  💻
+                </div>
+                <div>
+                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Desktop</div>
+                  <div style="font-size:11px; color:var(--text-muted);">Kompyuterlar (Win, Mac)</div>
+                </div>
+              </div>
+              <span class="admin-hub-badge" style="background:rgba(0,122,255,0.18); color:#007aff; font-weight:800; font-size:12px;">
+                ${summary.desktop.pct}%
+              </span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
+              ${summary.desktop.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
+            </div>
+            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
+              <div>Faol: <strong style="color:#007aff;">${summary.desktop.active}</strong></div>
+              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.desktop.sessions}</strong></div>
+            </div>
+          </div>
+
+          <!-- TABLET -->
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,149,0,0.15); color:#ff9500; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                  📱
+                </div>
+                <div>
+                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Tablet</div>
+                  <div style="font-size:11px; color:var(--text-muted);">Planshetlar (iPad, Tab)</div>
+                </div>
+              </div>
+              <span class="admin-hub-badge" style="background:rgba(255,149,0,0.18); color:#ff9500; font-weight:800; font-size:12px;">
+                ${summary.tablet.pct}%
+              </span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
+              ${summary.tablet.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
+            </div>
+            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
+              <div>Faol: <strong style="color:#ff9500;">${summary.tablet.active}</strong></div>
+              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.tablet.sessions}</strong></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 24.2. DEVICE DISTRIBUTION -->
+      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div>
+            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.2. Qurilmalar & Operatsion Tizimlar Taqsimoti (Distribution)</div>
+            <div style="font-size:11.5px; color:var(--text-secondary);">Foydalanuvchilar qaysi OT va platformalardan kirmoqda</div>
+          </div>
+        </div>
+
+        <!-- Segmented bar -->
+        <div style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:rgba(255,255,255,0.06); margin-bottom:12px;">
+          ${distribution.map(d => {
+            const clr = osColors[d.name] || '#8e8e93';
+            return `<div style="width:${Math.max(2, d.pct)}%; background:${clr};" title="${escapeHtml(d.name)}: ${d.pct}% (${d.count} user)"></div>`;
+          }).join('')}
+        </div>
+
+        <!-- Distribution cards -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
+          ${distribution.map(d => {
+            const clr = osColors[d.name] || '#8e8e93';
+            return `
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-size:15px;">${d.icon || '📱'}</span>
+                  <div>
+                    <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${escapeHtml(d.name)}</div>
+                    <div style="font-size:10px; color:var(--text-muted);">${d.count} user</div>
+                  </div>
+                </div>
+                <span class="admin-hub-badge" style="background:${clr}22; color:${clr}; font-size:11px; font-weight:800;">
+                  ${d.pct}%
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- 24.3. VAQT BO'YICHA DEVICE ACTIVITY -->
+      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.3. Vaqt Bo'yicha Qurilmalar Faolligi Dinamikasi</div>
+            <div style="font-size:11.5px; color:var(--text-secondary);">Tanlangan davr bo'yicha Mobile, Desktop va Tablet harakatlari</div>
+          </div>
+          <div style="display:flex; gap:10px; font-size:11px;">
+            <span style="display:flex; align-items:center; gap:4px; color:#34c759;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#34c759;"></span> Mobile</span>
+            <span style="display:flex; align-items:center; gap:4px; color:#007aff;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#007aff;"></span> Desktop</span>
+            <span style="display:flex; align-items:center; gap:4px; color:#ff9500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ff9500;"></span> Tablet</span>
+          </div>
+        </div>
+
+        ${timeSeries.length ? `
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:6px; overflow-x:auto;">
+            ${timeSeries.map((t, idx) => {
+              const mH = Math.max(4, Math.round(((t.mobile || 0) / maxTimeVal) * 100));
+              const dH = Math.max(4, Math.round(((t.desktop || 0) / maxTimeVal) * 100));
+              const tH = Math.max(4, Math.round(((t.tablet || 0) / maxTimeVal) * 100));
+              const showLbl = timeSeries.length <= 14 || idx % Math.ceil(timeSeries.length / 10) === 0 || idx === timeSeries.length - 1;
+              return `
+                <div style="flex:1; min-width:28px; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${t.label} | Mobile: ${t.mobile || 0}, Desktop: ${t.desktop || 0}, Tablet: ${t.tablet || 0}">
+                  <div style="display:flex; gap:2px; align-items:flex-end; width:100%; justify-content:center; height:100%;">
+                    <div style="width:6px; height:${mH}%; background:#34c759; border-radius:2px 2px 0 0;" title="Mobile: ${t.mobile || 0}"></div>
+                    <div style="width:6px; height:${dH}%; background:#007aff; border-radius:2px 2px 0 0;" title="Desktop: ${t.desktop || 0}"></div>
+                    <div style="width:6px; height:${tH}%; background:#ff9500; border-radius:2px 2px 0 0;" title="Tablet: ${t.tablet || 0}"></div>
+                  </div>
+                  <div style="font-size:9.5px; color:var(--text-muted); margin-top:6px; white-space:nowrap;">
+                    ${showLbl ? escapeHtml(t.label) : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : `<div class="empty-box" style="padding:20px;">Vaqt bo'yicha dinamika ma'lumotlari topilmadi</div>`}
+      </div>
+
+      <!-- 24.4. DEVICE X CONTENT ANALYTICS -->
+      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.4. Qurilma × Kontent Analitikasi (Device × Content)</div>
+            <div style="font-size:11.5px; color:var(--text-secondary);">Qaysi qurilmadan qaysi kontent ko‘proq foydalanilayotganini ko‘rsatuvchi matritsa</div>
+          </div>
+          <span class="admin-hub-badge" style="background:rgba(255,255,255,0.06); color:var(--text-secondary); font-size:11px;">
+            📊 Matritsa
+          </span>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Qurilma</th>
+                <th style="text-align:right;">🎬 Darslar</th>
+                <th style="text-align:right;">📖 Kitoblar</th>
+                <th style="text-align:right;">🧱 Materiallar</th>
+                <th style="text-align:right;">📐 Manbalar</th>
+                <th style="text-align:right;">Jami Harakat</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${contentMatrix.map(cm => `
+                <tr>
+                  <td>
+                    <div style="font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                      <span>${cm.icon || '📱'}</span>
+                      <span>${escapeHtml(cm.device)}</span>
+                    </div>
+                  </td>
+                  <td style="text-align:right; font-weight:700; color:#007aff;">${cm.lessons}</td>
+                  <td style="text-align:right; font-weight:700; color:#ff9500;">${cm.books}</td>
+                  <td style="text-align:right; font-weight:700; color:#34c759;">${cm.materials}</td>
+                  <td style="text-align:right; font-weight:700; color:#af52de;">${cm.sources}</td>
+                  <td style="text-align:right;">
+                    <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-weight:800;">
+                      ${cm.total}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:10px; padding:10px 12px; background:rgba(0,122,255,0.06); border-radius:8px; border:1px solid rgba(0,122,255,0.15); font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          💡 <strong>Tahliliy xulosa:</strong> Telefon (Android va iOS) orqali talabalar ko‘proq video darslarni tomosha qilishadi; kompyuter (Windows / Mac) foydalanuvchilari esa asosan kutubxona kitoblari va katta arxitektura manbalarini ko‘proq o‘rganishadi.
+        </div>
+      </div>
+
+      <!-- 24.5. DEVICE BO'YICHA FAOL VAQT (PEAK HOURS) -->
+      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">
+          24.5. Qurilma Bo'yicha Faol Vaqt & Peak Soatlar
+        </div>
+        <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
+          Har bir platformada o'quvchilarning eng yuqori faollik soatlari (Peak hours)
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:14px;">
+          <div style="background:rgba(52,199,89,0.08); border:1px solid rgba(52,199,89,0.2); border-radius:10px; padding:10px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12px; font-weight:750; color:#34c759;">📱 Mobile Peak</span>
+              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.mobile.label)}</span>
+            </div>
+            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
+              ${escapeHtml(peakHours.mobile.peak)}
+            </div>
+          </div>
+
+          <div style="background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.2); border-radius:10px; padding:10px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12px; font-weight:750; color:#007aff;">💻 Desktop Peak</span>
+              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.desktop.label)}</span>
+            </div>
+            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
+              ${escapeHtml(peakHours.desktop.peak)}
+            </div>
+          </div>
+
+          <div style="background:rgba(255,149,0,0.08); border:1px solid rgba(255,149,0,0.2); border-radius:10px; padding:10px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12px; font-weight:750; color:#ff9500;">📱 Tablet Peak</span>
+              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.tablet.label)}</span>
+            </div>
+            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
+              ${escapeHtml(peakHours.tablet.peak)}
+            </div>
+          </div>
+        </div>
+
+        <!-- 24-Hour Comparative Breakdown -->
+        <div style="font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:8px;">
+          24 Soatlik Taqsimot (Mobile vs Desktop)
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; height:100px; padding:6px 2px 0 2px; gap:2px;">
+          ${hourly.map((h, i) => {
+            const maxH = Math.max(1, ...hourly.map(x => Math.max(x.mobile || 0, x.desktop || 0)));
+            const mPct = Math.max(4, Math.round(((h.mobile || 0) / maxH) * 100));
+            const dPct = Math.max(4, Math.round(((h.desktop || 0) / maxH) * 100));
+            const showLbl = i % 4 === 0 || i === 23;
+            return `
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${h.hour}:00 — Mobile: ${h.mobile || 0}, Desktop: ${h.desktop || 0}">
+                <div style="display:flex; gap:1px; align-items:flex-end; width:100%; justify-content:center; height:100%;">
+                  <div style="width:50%; height:${mPct}%; background:#34c759; border-radius:2px 2px 0 0;"></div>
+                  <div style="width:50%; height:${dPct}%; background:#007aff; border-radius:2px 2px 0 0;"></div>
+                </div>
+                <div style="font-size:9px; color:var(--text-muted); margin-top:4px; height:12px;">
+                  ${showLbl ? h.hour : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+    </div>
+  `;
 }
 
 // -------------------------------------------------------------
@@ -14241,6 +14656,48 @@ async function openAdminStudentLiveDossier(userId) {
               </div>
             </div>
 
+            <!-- 24.6. QURILMA / DEVICE MA'LUMOTLARI -->
+            ${st.device_profile ? `
+              <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px;">
+                <div style="font-size:12px; font-weight:750; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <span>📱</span> Qurilma va Platforma (Device Profile):
+                </div>
+                ${st.device_profile.last_device ? `
+                  <div style="font-size:12px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; background:rgba(0,122,255,0.06); padding:8px 10px; border-radius:8px; border:1px solid rgba(0,122,255,0.15);">
+                    <div>
+                      <div style="font-size:10.5px; color:var(--text-muted);">Oxirgi ishlatilgan qurilma:</div>
+                      <div style="font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px; margin-top:2px;">
+                        <span>${st.device_profile.last_device.icon}</span>
+                        <span>${escapeHtml(st.device_profile.last_device.operating_system)}</span>
+                        <span style="font-size:11px; color:var(--text-secondary); font-weight:500;">(${escapeHtml(st.device_profile.last_device.client_type)})</span>
+                      </div>
+                    </div>
+                    <div style="text-align:right; font-size:11px; color:var(--text-muted);">
+                      ${formatRelativeTime(st.device_profile.last_device.last_activity_at)}
+                    </div>
+                  </div>
+                ` : `<div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;">Qurilma ma'lumotlari hali yozilmagan.</div>`}
+
+                ${st.device_profile.devices_used && st.device_profile.devices_used.length ? `
+                  <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Foydalanilgan barcha qurilmalar:</div>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    ${st.device_profile.devices_used.map(d => `
+                      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; padding:4px 6px; border-radius:4px; background:rgba(255,255,255,0.02);">
+                        <span style="display:flex; align-items:center; gap:6px;">
+                          <span>${d.icon}</span>
+                          <span style="font-weight:600; color:var(--text-primary);">${escapeHtml(d.operating_system)}</span>
+                          <span style="color:var(--text-muted); font-size:10.5px;">(${escapeHtml(d.client_type || d.device_type)})</span>
+                        </span>
+                        <span class="admin-hub-badge" style="font-size:10.5px; padding:2px 6px; font-weight:700;">
+                          ${d.session_count} ta session
+                        </span>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
             <!-- HOZIRGI JONLI FAOLLIGI -->
             <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px;">
               <div style="font-size:12px; font-weight:750; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
@@ -14586,6 +15043,48 @@ async function openAdminStudentModal(id) {
               </span>
             </div>
           </div>
+
+          <!-- 24.6. QURILMA VA FOYDALANILGAN PLATFORMALAR -->
+          ${st.device_profile ? `
+            <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:16px;">
+              <div style="font-weight:700; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                <span>📱</span> Qurilma va Session Tarixi
+              </div>
+              ${st.device_profile.last_device ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,122,255,0.06); padding:8px 12px; border-radius:8px; margin-bottom:8px; border:1px solid rgba(0,122,255,0.15);">
+                  <div>
+                    <div style="font-size:11px; color:var(--text-muted);">Oxirgi faol bo'lgan qurilma:</div>
+                    <div style="font-size:13px; font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px; margin-top:2px;">
+                      <span>${st.device_profile.last_device.icon}</span>
+                      <span>${escapeHtml(st.device_profile.last_device.operating_system)}</span>
+                      <span style="font-size:11.5px; color:var(--text-secondary); font-weight:500;">(${escapeHtml(st.device_profile.last_device.client_type)})</span>
+                    </div>
+                  </div>
+                  <div style="text-align:right; font-size:11px; color:var(--text-muted);">
+                    ${formatRelativeTime(st.device_profile.last_device.last_activity_at)}
+                  </div>
+                </div>
+              ` : `<div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Qurilma ma'lumotlari mavjud emas.</div>`}
+
+              ${st.device_profile.devices_used && st.device_profile.devices_used.length ? `
+                <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px; font-weight:600;">Foydalanilgan barcha qurilmalar:</div>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  ${st.device_profile.devices_used.map(d => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 8px; border-radius:4px; background:rgba(255,255,255,0.02);">
+                      <span style="display:flex; align-items:center; gap:6px;">
+                        <span>${d.icon}</span>
+                        <span style="font-weight:600; color:var(--text-primary);">${escapeHtml(d.operating_system)}</span>
+                        <span style="color:var(--text-muted); font-size:11px;">(${escapeHtml(d.client_type || d.device_type)})</span>
+                      </span>
+                      <span class="admin-hub-badge" style="font-size:10.5px; padding:2px 8px; font-weight:700;">
+                        ${d.session_count} sessions
+                      </span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
 
           <!-- BAN / UNBAN MANAGEMENT -->
           ${isSelf ? `

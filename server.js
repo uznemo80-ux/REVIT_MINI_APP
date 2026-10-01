@@ -4051,6 +4051,10 @@ app.post('/api/activity/heartbeat', async function (req, res) {
 
     await pool.query('UPDATE users SET device_last_seen = NOW() WHERE id = $1', [user.id]);
 
+    analyticsService.recordSessionPing(user.id, b, req.headers['user-agent']).catch(function(e) {
+      console.error('Session ping record error:', e.message);
+    });
+
     return res.json({ ok: true, server_time: new Date() });
   } catch (error) {
     console.error('HEARTBEAT ERROR:', error.message);
@@ -4311,9 +4315,13 @@ app.post('/api/analytics/track', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
     if (!user) return res.status(401).json({ error: 'Autentifikatsiya talab etiladi' });
-    var { event_type, category, content_id, metadata, duration_seconds } = req.body;
+    var { event_type, category, content_id, metadata, duration_seconds, session_id, device_type, operating_system } = req.body;
     if (event_type) {
-      await analyticsService.trackEvent(user.id, event_type, category, content_id, metadata, duration_seconds);
+      await analyticsService.trackEvent(user.id, event_type, category, content_id, metadata, duration_seconds, {
+        session_id,
+        device_type,
+        operating_system
+      });
     }
     return res.json({ ok: true });
   } catch (e) {
@@ -4365,7 +4373,7 @@ app.post('/api/admin/student/:id/live-dossier', requireAdmin, async function (re
       ORDER BY mr.attempted_at DESC
     `, [userId]);
 
-    var [booksRes, matsRes, sourcesRes, savedBooksRes] = await Promise.all([
+    var [booksRes, matsRes, sourcesRes, savedBooksRes, deviceProfile] = await Promise.all([
       pool.query('SELECT COUNT(DISTINCT book_id)::int AS c FROM reading_progress WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
       pool.query('SELECT COUNT(DISTINCT material_id)::int AS c FROM material_view_log WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
       pool.query('SELECT COUNT(DISTINCT resource_id)::int AS c FROM library_views WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
@@ -4603,6 +4611,7 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
       }
     }
 
+    var deviceProfile = await analyticsService.getUserDeviceProfile(student.id);
     var detailAcc = getUserAccessState(student);
     return res.json({
       ok: true,
@@ -4625,7 +4634,8 @@ app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
       tests: testResult.rows,
       courses: coursesResult.rows,
       modules: modulesForGrantResult.rows,
-      granted_module_ids: grantedModuleIds
+      granted_module_ids: grantedModuleIds,
+      device_profile: deviceProfile
     });
   } catch (error) {
     console.error('ADMIN STUDENT DETAIL ERROR:', error);
