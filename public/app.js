@@ -19496,10 +19496,23 @@ async function checkAdminTelegramVideo(inputId, resultId) {
   try {
     const res = await adminApi("/api/admin/telegram/check-video", { telegram_url: val });
     if (res.ok) {
-      const mb = res.file_size ? (res.file_size / (1024 * 1024)).toFixed(1) + " MB" : "hajmi noma'lum";
-      resultDiv.innerHTML = `<span style="color:#34c759; font-weight:600;">✓ Video topildi: ${escapeHtml(res.file_name)} (${mb})</span>`;
+      const mb = res.file_size ? (res.file_size / (1024 * 1024)).toFixed(1) + " MB" : "";
+      const chan = res.channel_title ? `[${res.channel_title}]` : "";
+      const sizeTxt = mb ? `(${mb})` : "";
+      resultDiv.innerHTML = `
+        <div style="background:rgba(52,199,89,0.1); border:1px solid rgba(52,199,89,0.3); border-radius:8px; padding:8px 10px; margin-top:4px;">
+          <div style="color:#34c759; font-weight:700; font-size:12px;">✓ Video ulandi: ${escapeHtml(chan)} ${escapeHtml(res.file_name)} ${sizeTxt}</div>
+          <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">Chat ID: ${escapeHtml(res.chat_id)} | Post #${res.message_id}</div>
+        </div>
+      `;
     } else {
-      resultDiv.innerHTML = `<span style="color:#ff3b30; font-weight:600;">✕ Xatolik: ${escapeHtml(res.error || "Xabar topilmadi")}</span>`;
+      resultDiv.innerHTML = `
+        <div style="background:rgba(255,59,48,0.08); border:1px solid rgba(255,59,48,0.25); border-radius:8px; padding:10px 12px; margin-top:4px;">
+          <div style="color:#ff3b30; font-weight:700; font-size:12.5px; margin-bottom:4px;">✕ ${escapeHtml(res.error || "Telegram xabari topilmadi")}</div>
+          ${res.details ? `<div style="color:var(--text-secondary); font-size:11px; margin-bottom:4px;"><strong>Telegram javobi:</strong> ${escapeHtml(res.details)}</div>` : ""}
+          ${res.hint ? `<div style="color:#ff9500; font-size:11.5px; font-weight:600; line-height:1.4;">💡 Nima qilish kerak: ${escapeHtml(res.hint)}</div>` : ""}
+        </div>
+      `;
     }
   } catch (err) {
     resultDiv.innerHTML = `<span style="color:#ff3b30; font-weight:600;">✕ Tekshirishda xato: ${escapeHtml(err.message)}</span>`;

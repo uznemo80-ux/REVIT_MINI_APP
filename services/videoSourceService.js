@@ -73,22 +73,38 @@ function parseTelegramVideoSource(input) {
   if (!input) return null;
   const str = String(input).trim();
 
-  // Pattern: https://t.me/c/1234567890/123 or t.me/c/1234567890/123
-  let m = str.match(/^(?:https?:\/\/)?(?:t\.me|telegram\.me)\/c\/(\d+)\/(?:\d+\/)?(\d+)/i);
+  // 1. web.telegram.org: https://web.telegram.org/a/#-1001234567890_45 or web.telegram.org/k/#-1001234567890_45
+  let m = str.match(/web\.telegram\.org\/[ak]\/#(-?\d+)_(\d+)/i);
   if (m) {
-    return {
-      chat_id: '-100' + m[1],
-      message_id: parseInt(m[2], 10)
-    };
+    let cid = m[1];
+    if (!cid.startsWith('-100') && !cid.startsWith('-')) cid = '-100' + cid;
+    return { chat_id: cid, message_id: parseInt(m[2], 10) };
   }
 
-  // Pattern: https://t.me/channel_username/123
-  m = str.match(/^(?:https?:\/\/)?(?:t\.me|telegram\.me)\/([A-Za-z][A-Za-z0-9_]{3,})\/(?:\d+\/)?(\d+)/i);
+  // 2. tg://privatepost?channel=1234567890&post=45
+  m = str.match(/tg:\/\/privatepost\?channel=(\d+)&post=(\d+)/i);
   if (m) {
-    return {
-      chat_id: '@' + m[1],
-      message_id: parseInt(m[2], 10)
-    };
+    return { chat_id: '-100' + m[1], message_id: parseInt(m[2], 10) };
+  }
+
+  // 3. https://t.me/c/1234567890/45 or t.me/c/1234567890/99/45 (forum topic)
+  m = str.match(/(?:t\.me|telegram\.me)\/c\/(\d+)(?:\/\d+)?\/(\d+)/i);
+  if (m) {
+    return { chat_id: '-100' + m[1], message_id: parseInt(m[2], 10) };
+  }
+
+  // 4. https://t.me/channel_username/123
+  m = str.match(/(?:t\.me|telegram\.me)\/([A-Za-z][A-Za-z0-9_]{3,})(?:\/\d+)?\/(\d+)/i);
+  if (m) {
+    return { chat_id: '@' + m[1], message_id: parseInt(m[2], 10) };
+  }
+
+  // 5. -1001234567890/45 or -1001234567890:45 or 1234567890/45
+  m = str.match(/^(-100\d+|\d+)[:\/](\d+)$/);
+  if (m) {
+    let cid = m[1];
+    if (!cid.startsWith('-100')) cid = '-100' + cid;
+    return { chat_id: cid, message_id: parseInt(m[2], 10) };
   }
 
   return null;

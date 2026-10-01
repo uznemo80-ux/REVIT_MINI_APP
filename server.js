@@ -5211,21 +5211,104 @@ app.post('/api/admin/telegram/check-video', requireAdmin, async function (req, r
       }
     }
     if (!parsed) {
-      return res.status(400).json({ ok: false, error: "Telegram havolasi yoki chat_id/message_id noto'g'ri" });
+      return res.status(400).json({
+        ok: false,
+        error: "Telegram havolasi noto'g'ri kiritildi",
+        hint: "Namuna: https://t.me/c/1234567890/45 yoki https://t.me/kanal_nomi/45"
+      });
     }
 
-    var r = await tgApi('forwardMessage', {
-      chat_id: ADMIN_TELEGRAM_ID,
-      from_chat_id: parsed.chat_id,
-      message_id: parsed.message_id
-    });
+    // 1. Bot haqidagi ma'lumotni olish
+    var botMe = null;
+    var botUsername = '@bot';
+    try {
+      botMe = await tgApi('getMe', {});
+      if (botMe && botMe.result && botMe.result.username) {
+        botUsername = '@' + botMe.result.username;
+      }
+    } catch (e) {}
 
-    if (!r || !r.ok || !r.result) {
+    // 2. Avval kanal/guruh mavjudligini va bot a'zoligini tekshiramiz
+    var chatInfo = null;
+    try {
+      chatInfo = await tgApi('getChat', { chat_id: parsed.chat_id });
+    } catch (e) {}
+
+    if (!chatInfo || !chatInfo.ok || !chatInfo.result) {
+      var tgDesc = (chatInfo && chatInfo.description) || '';
       return res.json({
         ok: false,
-        error: "Telegram xabari topilmadi yoki bot kanal/guruhda admin emas",
-        details: r ? r.description : null,
-        parsed: parsed
+        error: "Bot kanal/guruhni topa olmadi",
+        details: tgDesc,
+        hint: "Telegram kanalingizga kiring -> Sozlamalar -> Administratorlar -> " + botUsername + " ni ADMIN qilib qo'shing.",
+        parsed: parsed,
+        bot_username: botUsername
+      });
+    }
+
+    var channelTitle = chatInfo.result.title || chatInfo.result.username || 'Telegram kanali';
+
+    // 3. Postdagi videoni tekshiramiz
+    var recipientChatId = (req.user && req.user.telegram_id) || ADMIN_TELEGRAM_ID;
+
+    var r = null;
+    try {
+      r = await tgApi('forwardMessage', {
+        chat_id: recipientChatId,
+        from_chat_id: parsed.chat_id,
+        message_id: parsed.message_id
+      });
+    } catch (e) {}
+
+    // Agar forward qilish taqiqlangan bo'lsa (Protect content) yoki boshqa xato bo'lsa
+    if (!r || !r.ok || !r.result) {
+      var fwdError = (r && r.description) || '';
+
+      // Agar bot adminga xabar yuborolmasa (admin botga /start bosmagan)
+      if (/chat not found|bot was blocked|user is deactivated/i.test(fwdError)) {
+        return res.json({
+          ok: false,
+          error: "Bot sizning shaxsiy Telegramingizga xabar yubora olmadi",
+          details: fwdError,
+          hint: "Iltimos, avval Telegramda " + botUsername + " ga kiring va /start tugmasini bosing.",
+          parsed: parsed,
+          channel_title: channelTitle
+        });
+      }
+
+      // Agar kanal posti topilmasa
+      if (/message.*not found/i.test(fwdError)) {
+        return res.json({
+          ok: false,
+          error: "Kanalda #" + parsed.message_id + " raqamli post topilmadi",
+          details: fwdError,
+          hint: "Post raqami to'g'riligini yoki kanal ichida post o'chirilmaganini tekshiring.",
+          parsed: parsed,
+          channel_title: channelTitle
+        });
+      }
+
+      // Agar kontent himoyalangan bo'lsa (Protected content), kanal mavjud va bot admin ekanligi ma'lum!
+      if (/can't be forwarded|protected/i.test(fwdError)) {
+        return res.json({
+          ok: true,
+          chat_id: parsed.chat_id,
+          message_id: parsed.message_id,
+          channel_title: channelTitle,
+          file_name: "Himoyalangan video (Kanal: " + channelTitle + ")",
+          file_size: 0,
+          protected_content: true,
+          message: "✓ Kanal tasdiqlandi: \"" + channelTitle + "\" (Post #" + parsed.message_id + ")"
+        });
+      }
+
+      return res.json({
+        ok: false,
+        error: "Xabarni olishda xatolik yuz berdi",
+        details: fwdError,
+        hint: botUsername + " kanalga admin qilinganini va post mavjudligini tekshiring.",
+        parsed: parsed,
+        channel_title: channelTitle
       });
     }
 
@@ -5234,17 +5317,29 @@ app.post('/api/admin/telegram/check-video', requireAdmin, async function (req, r
     var fileSize = media ? (media.file_size || 0) : 0;
     var fileName = (media && (media.file_name || (fMsg.video ? 'Video fayl' : 'Fayl'))) || 'Telegram video';
 
+    // Xabarni darhol o'chirib tozalash
     try {
       await tgApi('deleteMessage', {
-        chat_id: ADMIN_TELEGRAM_ID,
+        chat_id: recipientChatId,
         message_id: fMsg.message_id
       });
     } catch (e) {}
+
+    if (!media) {
+      return res.json({
+        ok: false,
+        error: "Ushbu postda video fayl topilmadi",
+        hint: "Kiritilgan post video formatda ekanligiga ishonch hosil qiling.",
+        parsed: parsed,
+        channel_title: channelTitle
+      });
+    }
 
     return res.json({
       ok: true,
       chat_id: parsed.chat_id,
       message_id: parsed.message_id,
+      channel_title: channelTitle,
       file_size: fileSize,
       file_name: fileName,
       file_id: media ? media.file_id : null,
@@ -5252,7 +5347,7 @@ app.post('/api/admin/telegram/check-video', requireAdmin, async function (req, r
     });
   } catch (error) {
     console.error('CHECK TELEGRAM VIDEO ERROR:', error);
-    return res.status(500).json({ ok: false, error: 'Telegram videoni tekshirishda xatolik: ' + error.message });
+    return res.status(500).json({ ok: false, error: 'Telegram videoni tekshirishda server xatosi: ' + error.message });
   }
 });
 
