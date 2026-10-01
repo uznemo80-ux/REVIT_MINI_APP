@@ -227,6 +227,51 @@ window.updateHScrollArrows = updateHScrollArrows;
   });
 })();
 
+// ======================================================
+// INTERACTION MODEL CONTROLLER (DESKTOP MOUSE vs MOBILE TOUCH)
+// ======================================================
+(function initInteractionModeController() {
+  function updateDeviceInteractionClass() {
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (isTouch && !canHover) {
+      document.documentElement.classList.add('is-touch-device');
+      document.documentElement.classList.remove('is-desktop-device');
+    } else {
+      document.documentElement.classList.add('is-desktop-device');
+      document.documentElement.classList.remove('is-touch-device');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateDeviceInteractionClass);
+  } else {
+    updateDeviceInteractionClass();
+  }
+
+  // Prevent sticky hover/focus states on mobile touch release
+  window.addEventListener('touchend', function() {
+    if (document.activeElement && document.activeElement !== document.body && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      setTimeout(() => {
+        try {
+          if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+          }
+        } catch (err) {}
+      }, 120);
+    }
+  }, { passive: true });
+
+  // On first touch on dual/hybrid devices, switch to touch-device mode
+  window.addEventListener('touchstart', function() {
+    if (!document.documentElement.classList.contains('is-touch-device') && window.matchMedia('(pointer: coarse)').matches) {
+      document.documentElement.classList.add('is-touch-device');
+      document.documentElement.classList.remove('is-desktop-device');
+    }
+  }, { passive: true });
+})();
+
 const initData = tg.initData || "";
 const app = document.getElementById("app");
 

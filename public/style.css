@@ -9112,7 +9112,6 @@ html.light .h-scroll-arrow {
     height: 110px;
   }
 }
-}
 
 .lib-mat-thumb-img {
   width: 100%;
@@ -10103,3 +10102,476 @@ html.light .h-scroll-arrow {
 .bk-more { display: flex; justify-content: center; margin: 14px 0 4px; }
 .bk-detail-actions { display: inline-flex; align-items: center; gap: 8px; }
 @media (max-width: 359px) { .bk-pop-card, .bk-pop-cover { flex-basis: 108px; width: 108px; } .bk-grid { gap: 10px; } }
+
+/* ==========================================================================
+   DESKTOP VS MOBILE INTERACTION ARCHITECTURE (Apple / Swiss Standard)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Universal Touch & Performance Optimization
+   -------------------------------------------------------------------------- */
+button, a, input, select, textarea,
+.card, .card-clickable, .btn, .nav-item, .chip,
+.module-head, .lesson, [role="button"], [onclick] {
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation;
+}
+
+/* --------------------------------------------------------------------------
+   2. MOBILE & TOUCH INTERACTION MODEL (NO HOVER, PURE TACTILE TAP)
+   Applies to touch screens and when hover is not supported
+   -------------------------------------------------------------------------- */
+@media (hover: none) and (pointer: coarse), (pointer: coarse) {
+  /* A. Neutralize all desktop hover transformations, lifts, zooms and sticky shadows */
+  .admin-hub-card:hover,
+  .free-minicourse-card:hover,
+  .library-tile-card:hover,
+  .lib-book-card:hover,
+  .lib-source-card:hover,
+  .lib-test-card:hover,
+  .lib-quiz-option:hover,
+  .lib-material-card:hover,
+  .lib-material-card-v2:hover,
+  .library-v2-card:hover,
+  .mcat-card:hover,
+  .bk-card:hover,
+  .mcat-pop-card:hover,
+  .bk-pop-card:hover,
+  .nav-item:hover,
+  .nav-item.active:hover,
+  .profile-action-row:hover,
+  .profile-support-entry:hover,
+  .rules-card:hover,
+  .support-card-item:hover,
+  .social-card:hover,
+  .pc-specs-compact-card:hover,
+  .learning-entry-banner:hover,
+  .admin-book-card:hover,
+  .card-clickable:hover,
+  .course-card:hover,
+  .continue-card:hover,
+  .task-card:hover,
+  .analytics-kpi-card:hover,
+  .admin-back-btn:hover,
+  .admin-breadcrumb-item:hover,
+  .fmc-start-btn:hover,
+  .sheet-chip:hover,
+  .sheet-chip-btn:hover,
+  .admin-chip:hover,
+  .admin-filter-chip:hover,
+  .stat-pill:hover,
+  .lib-cms-btn:hover,
+  .lib-recent-card:hover,
+  .lib-rec-card:hover,
+  .lib-page-btn:hover,
+  .lib-mat-cat-pill:hover,
+  .lib-mat-scope-btn:hover,
+  .lib-mat-purpose-chip:hover,
+  .lib-mat-quickpick-chip:hover,
+  .lib-mat-doc-btn:hover,
+  .lib-mat-spec-info-btn:hover,
+  .live-user-card:hover,
+  .donate-pill:hover,
+  .donate-telegram-row:hover,
+  .carousel-sheet-card:hover .carousel-image-preview,
+  .carousel-sheet-card:hover .sheet-zoom-overlay-hint,
+  .lib-book-card:hover .lib-book-cover,
+  .lib-material-card-v2:hover .lib-mat-thumb-img,
+  .library-tile-card:hover .library-tile-icon-box,
+  .library-tile-card:hover .library-tile-chevron,
+  .profile-action-row:hover .profile-action-icon,
+  .profile-action-row:hover .profile-action-chevron,
+  .admin-hub-card:hover .admin-hub-chevron,
+  .h-scroll-arrow:hover,
+  .learning-table tr:hover td,
+  .analytics-table tbody tr:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+    filter: none !important;
+    background-color: inherit;
+    border-color: inherit;
+  }
+
+  /* B. Fast, tactile tap response on press (:active) with 100-140ms recovery */
+
+  /* Buttons: quick 0.97 scale and slight opacity feedback */
+  .btn:active,
+  .admin-btn:active,
+  .admin-small-btn:active,
+  .fmc-start-btn:active,
+  .lib-cms-btn:active,
+  .learning-action-btn:active,
+  .sf-tool-btn:active,
+  .sf-close-btn:active,
+  .sf-nav-btn:active,
+  .library-v2-bookmark-btn:active,
+  .lib-bookmark-toggle-btn:active,
+  .mcat-icon-btn:active,
+  .mcat-chip:active {
+    transform: scale(0.97) !important;
+    opacity: 0.88 !important;
+    transition: transform 90ms ease, opacity 90ms ease !important;
+  }
+
+  /* Interactive cards: 0.98 scale-down on tap */
+  .card-clickable:active,
+  .course-card:active,
+  .continue-card:active,
+  .task-card:active,
+  .admin-hub-card:active,
+  .admin-student-card:active,
+  .free-minicourse-card:active,
+  .library-tile-card:active,
+  .lib-book-card:active,
+  .lib-material-card:active,
+  .lib-material-card-v2:active,
+  .lib-source-card:active,
+  .lib-test-card:active,
+  .rules-card:active,
+  .support-card-item:active,
+  .admin-book-card:active,
+  .mcat-card:active,
+  .bk-card:active,
+  .mcat-pop-card:active,
+  .bk-pop-card:active,
+  .lib-recent-card:active,
+  .lib-rec-card:active,
+  .lib-shelf-card:active,
+  .lib-mat-related-card:active,
+  .analytics-kpi-card:active,
+  .learning-entry-banner:active,
+  .social-card:active,
+  .pc-specs-compact-card:active,
+  .free-lesson-chip-card:active,
+  .carousel-sheet-card:active {
+    transform: scale(0.98) !important;
+    opacity: 0.93 !important;
+    transition: transform 100ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 100ms ease !important;
+  }
+
+  /* List items & clickable rows */
+  .module-head:active,
+  .lesson:active,
+  .profile-action-row:active,
+  .profile-support-entry:active,
+  .admin-back-btn:active,
+  .admin-breadcrumb-item:active {
+    transform: scale(0.985) !important;
+    background: var(--bg-surface-hover) !important;
+    transition: transform 90ms ease, background 90ms ease !important;
+  }
+
+  /* Small Chips, Tags, Pills */
+  .chip:active,
+  .sheet-chip:active,
+  .sheet-chip-btn:active,
+  .admin-chip:active,
+  .admin-filter-chip:active,
+  .analytics-chip:active,
+  .stat-pill:active,
+  .fmc-tag:active,
+  .lib-mat-purpose-chip:active,
+  .lib-mat-scope-btn:active,
+  .lib-mat-cat-pill:active,
+  .lib-mat-quickpick-chip:active,
+  .donate-pill:active {
+    transform: scale(0.95) !important;
+    opacity: 0.85 !important;
+    transition: transform 80ms ease, opacity 80ms ease !important;
+  }
+
+  /* Bottom Navigation tap feedback (no translateY sticking) */
+  .nav-item:active {
+    transform: scale(0.92) !important;
+    opacity: 0.72 !important;
+    transition: transform 90ms ease, opacity 90ms ease !important;
+  }
+
+  /* Fast spring return on tap release (110-150ms) */
+  .btn,
+  .card-clickable,
+  .course-card,
+  .continue-card,
+  .task-card,
+  .admin-hub-card,
+  .library-tile-card,
+  .lib-book-card,
+  .lib-material-card,
+  .lib-material-card-v2,
+  .lib-source-card,
+  .nav-item,
+  .chip,
+  .module-head,
+  .lesson,
+  .profile-action-row,
+  .profile-support-entry {
+    transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), opacity 140ms ease !important;
+  }
+
+  /* Suppress tooltips on touch devices */
+  [data-tooltip]::after,
+  [data-tooltip]::before {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. DESKTOP & MOUSE INTERACTION MODEL (HOVER, SHADOW, CURSOR, TOOLTIP)
+   Applies only when a mouse/pointer is fine and hover is available
+   -------------------------------------------------------------------------- */
+@media (hover: hover) and (pointer: fine) {
+  /* Cursor Pointer on all clickable items */
+  .card-clickable,
+  .course-card,
+  .continue-card,
+  .task-card,
+  .admin-hub-card,
+  .free-minicourse-card,
+  .library-tile-card,
+  .lib-book-card,
+  .lib-material-card,
+  .lib-material-card-v2,
+  .lib-source-card,
+  .lib-test-card,
+  .library-v2-card,
+  .admin-book-card,
+  .mcat-card,
+  .bk-card,
+  .mcat-pop-card,
+  .bk-pop-card,
+  .social-card,
+  .pc-specs-compact-card,
+  .analytics-kpi-card,
+  .carousel-sheet-card,
+  .btn,
+  .chip,
+  .module-head,
+  .lesson:not(.disabled),
+  .profile-action-row,
+  .profile-support-entry,
+  .nav-item,
+  .admin-breadcrumb-item,
+  .admin-back-btn,
+  .stat-pill,
+  .fmc-tag {
+    cursor: pointer;
+  }
+
+  /* Smooth 180-240ms transition timing for desktop hover */
+  .card-clickable,
+  .course-card,
+  .continue-card,
+  .task-card,
+  .admin-hub-card,
+  .free-minicourse-card,
+  .library-tile-card,
+  .lib-book-card,
+  .lib-material-card,
+  .lib-material-card-v2,
+  .lib-source-card,
+  .lib-test-card,
+  .library-v2-card,
+  .admin-book-card,
+  .mcat-card,
+  .bk-card,
+  .mcat-pop-card,
+  .bk-pop-card,
+  .analytics-kpi-card,
+  .social-card,
+  .pc-specs-compact-card,
+  .carousel-sheet-card {
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
+  }
+
+  /* Desktop Card Hover: Subtle 2px lift, soft shadow, subtle border highlight */
+  .card-clickable:hover,
+  .course-card:hover,
+  .continue-card:hover,
+  .task-card:hover,
+  .analytics-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  .admin-hub-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent);
+    background: var(--bg-surface-elevated);
+  }
+  .admin-hub-card:hover .admin-hub-chevron {
+    transform: translateX(3px);
+    color: var(--accent);
+  }
+
+  .library-tile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 107, 0, 0.4);
+    background: var(--bg-surface-elevated);
+  }
+  .library-tile-card:hover .library-tile-icon-box {
+    transform: scale(1.05);
+    color: var(--yosh-orange);
+    border-color: rgba(255, 107, 0, 0.3);
+  }
+  .library-tile-card:hover .library-tile-chevron {
+    transform: translateX(3px);
+    color: var(--yosh-orange);
+  }
+
+  .lib-book-card:hover,
+  .bk-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 107, 0, 0.4);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+  }
+  .lib-book-card:hover .lib-book-cover,
+  .bk-card:hover .bk-cover img {
+    transform: scale(1.03);
+  }
+
+  .lib-material-card-v2:hover,
+  .mcat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  .lib-material-card-v2:hover .lib-mat-thumb-img,
+  .mcat-card:hover img {
+    transform: scale(1.03);
+  }
+
+  .free-minicourse-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(41, 121, 255, 0.55);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), 0 0 30px rgba(41, 121, 255, 0.16);
+  }
+
+  .carousel-sheet-card:hover .carousel-image-preview {
+    transform: scale(1.02);
+  }
+  .carousel-sheet-card:hover .sheet-zoom-overlay-hint {
+    background: rgba(41, 121, 255, 0.9);
+    transform: scale(1.05);
+  }
+
+  .social-card:hover,
+  .pc-specs-compact-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    background: var(--bg-surface-elevated);
+    box-shadow: 0 6px 20px rgba(41, 121, 255, 0.12);
+  }
+
+  /* Desktop Button Hover & Active */
+  .btn:hover,
+  .admin-btn:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(41, 121, 255, 0.25);
+    transition: filter 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  }
+  .btn:active,
+  .admin-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.98);
+    box-shadow: none;
+    transition: transform 80ms ease;
+  }
+
+  /* Desktop Navigation Hover */
+  .nav-item {
+    transition: all 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .nav-item:hover {
+    opacity: 0.95;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+  }
+  .nav-item.active:hover {
+    opacity: 1;
+    background: rgba(41, 121, 255, 0.16);
+  }
+
+  /* Desktop Module & Lesson Hover */
+  .module-head:hover {
+    background: var(--bg-surface-hover);
+  }
+  .lesson:hover:not(.disabled) {
+    background: var(--bg-surface-hover);
+  }
+
+  /* Desktop Profile Action Rows */
+  .profile-action-row:hover {
+    border-color: var(--border-focus);
+    background: var(--bg-surface-elevated);
+  }
+  .profile-action-row:hover .profile-action-icon {
+    color: var(--accent);
+  }
+  .profile-action-row:hover .profile-action-chevron {
+    transform: translateX(3px);
+    color: var(--text-primary);
+  }
+
+  /* Desktop Chips, Pills & Filters */
+  .chip:hover,
+  .sheet-chip:hover,
+  .sheet-chip-btn:hover,
+  .admin-chip:hover,
+  .admin-filter-chip:hover,
+  .analytics-chip:hover,
+  .stat-pill:hover,
+  .lib-mat-cat-pill:hover,
+  .lib-mat-purpose-chip:hover,
+  .lib-mat-scope-btn:hover,
+  .lib-mat-quickpick-chip:hover,
+  .fmc-tag:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.12));
+    color: var(--text-primary);
+    border-color: var(--accent);
+    transition: all 160ms ease;
+  }
+
+  /* Desktop Tables */
+  .learning-table tr:hover td,
+  .analytics-table tbody tr:hover {
+    background: var(--bg-surface-elevated, rgba(255, 255, 255, 0.035));
+  }
+
+  /* Desktop Tooltip System ([data-tooltip]) */
+  [data-tooltip] {
+    position: relative;
+  }
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(18, 18, 24, 0.94);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 160ms ease, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 9999;
+  }
+  [data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    transition-delay: 150ms;
+  }
+}
