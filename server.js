@@ -10722,14 +10722,22 @@ app.all('/api/normatives/list', async function (req, res) {
       document_type: p.document_type || p.type,
       status: p.status,
       search: p.search || p.q,
-      limit: parseInt(p.limit, 10) || 50,
+      limit: parseInt(p.limit, 10) || 100,
       offset: parseInt(p.offset, 10) || 0,
       sort: p.sort || 'newest'
     });
-    return res.json(Object.assign({ ok: true }, data));
+    var items = data.items || [];
+    return res.json({
+      ok: true,
+      items: items,
+      documents: items,
+      total: data.total !== undefined ? data.total : items.length,
+      limit: data.limit || 100,
+      offset: data.offset || 0
+    });
   } catch (err) {
     console.error('NORMATIVES LIST ERROR:', err);
-    return res.status(500).json({ ok: false, error: 'Normativlarni yuklashda xatolik' });
+    return res.status(500).json({ ok: false, error: 'Normativlarni yuklashda xatolik', items: [], documents: [] });
   }
 });
 
@@ -10738,7 +10746,7 @@ app.all('/api/normatives/detail/:id', async function (req, res) {
     var id = parseInt(req.params.id, 10);
     var doc = await getNormativeDetail(pool, id);
     if (!doc) return res.status(404).json({ ok: false, error: 'Hujjat topilmadi' });
-    return res.json({ ok: true, document: doc });
+    return res.json({ ok: true, document: doc.document, cases: doc.cases || [] });
   } catch (err) {
     console.error('NORMATIVE DETAIL ERROR:', err);
     return res.status(500).json({ ok: false, error: "Hujjat ma'lumotini yuklashda xatolik" });
@@ -10752,10 +10760,10 @@ app.all('/api/normatives/cases', async function (req, res) {
       category: p.category,
       search: p.search || p.q
     });
-    return res.json({ ok: true, cases: cases });
+    return res.json({ ok: true, cases: cases, items: cases });
   } catch (err) {
     console.error('NORMATIVE CASES LIST ERROR:', err);
-    return res.status(500).json({ ok: false, error: 'Amaliy vaziyatlarni yuklashda xatolik' });
+    return res.status(500).json({ ok: false, error: 'Amaliy vaziyatlarni yuklashda xatolik', cases: [], items: [] });
   }
 });
 
@@ -10764,7 +10772,24 @@ app.all('/api/normatives/cases/:id', async function (req, res) {
     var idOrSlug = req.params.id;
     var cs = await getPracticalCaseDetail(pool, idOrSlug);
     if (!cs) return res.status(404).json({ ok: false, error: 'Vaziyat topilmadi' });
-    return res.json({ ok: true, case: cs });
+    var checklist = cs.checklist;
+    if (typeof checklist === 'string') {
+      try { checklist = JSON.parse(checklist); } catch (e) { checklist = []; }
+    }
+    var steps = (Array.isArray(checklist) ? checklist : []).map(function(st, idx) {
+      var step = Object.assign({}, st);
+      step.step_order = step.step_order || (idx + 1);
+      if (step.document_numbers && Array.isArray(step.document_numbers) && step.document_numbers.length && Array.isArray(cs.documents)) {
+        var foundDoc = cs.documents.find(function(d) {
+          return step.document_numbers.some(function(num) {
+            return (d.document_number || '').trim().toLowerCase() === num.trim().toLowerCase();
+          });
+        });
+        if (foundDoc) step.document = foundDoc;
+      }
+      return step;
+    });
+    return res.json({ ok: true, case: cs, steps: steps });
   } catch (err) {
     console.error('NORMATIVE CASE DETAIL ERROR:', err);
     return res.status(500).json({ ok: false, error: 'Amaliy vaziyatni yuklashda xatolik' });
@@ -10778,6 +10803,45 @@ app.all('/api/normatives/stats', async function (req, res) {
   } catch (err) {
     console.error('NORMATIVES STATS ERROR:', err);
     return res.status(500).json({ ok: false, error: 'Statistikani yuklashda xatolik' });
+  }
+});
+
+app.all('/api/normatives/diagnostic', async function (req, res) {
+  try {
+    // If table count is 0, trigger initNormativesTables to self-heal immediately
+    var cntDocs = await pool.query('SELECT COUNT(*)::int AS cnt FROM normative_documents');
+    if ((cntDocs.rows[0]?.cnt || 0) === 0) {
+      await initNormativesTables(pool);
+    }
+
+    var [docsRes, casesRes, linksRes, statsRes] = await Promise.all([
+      pool.query('SELECT id, document_number, title, status, category, adopted_date, official_source_url FROM normative_documents ORDER BY id ASC'),
+      pool.query('SELECT id, title, slug, icon, category, jsonb_array_length(COALESCE(checklist, \'[]\'::jsonb)) AS step_count FROM practical_cases ORDER BY id ASC'),
+      pool.query(`
+        SELECT cd.id, pc.title AS case_title, nd.document_number, nd.title AS doc_title, cd.stage_name
+        FROM case_documents cd
+        JOIN practical_cases pc ON pc.id = cd.case_id
+        JOIN normative_documents nd ON nd.id = cd.document_id
+        ORDER BY cd.id ASC
+      `),
+      getNormativesStats(pool)
+    ]);
+
+    return res.json({
+      ok: true,
+      database: {
+        normative_documents_count: docsRes.rows.length,
+        practical_cases_count: casesRes.rows.length,
+        case_documents_count: linksRes.rows.length
+      },
+      stats: statsRes,
+      documents: docsRes.rows,
+      cases: casesRes.rows,
+      links: linksRes.rows
+    });
+  } catch (err) {
+    console.error('NORMATIVES DIAGNOSTIC ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 

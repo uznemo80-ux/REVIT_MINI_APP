@@ -11775,8 +11775,8 @@ async function adminNavigate(to, subTo) {
           api("/api/normatives/cases").catch(() => ({ cases: [] })),
           api("/api/normatives/stats").catch(() => ({ stats: {} }))
         ]);
-        adminData.normativesList = (listRes && listRes.documents) || [];
-        adminData.normativesCases = (casesRes && casesRes.cases) || [];
+        adminData.normativesList = (listRes && (listRes.documents || listRes.items)) || [];
+        adminData.normativesCases = (casesRes && (casesRes.cases || casesRes.items)) || [];
         adminData.normativesStats = (statsRes && statsRes.stats) || {};
       } catch (ne) {
         console.warn("Normatives admin load error:", ne);
@@ -22025,12 +22025,11 @@ async function loadNormativesData() {
       api('/api/normatives/cases')
     ]);
 
-    if (docsRes && Array.isArray(docsRes.documents)) {
-      normativesState.documents = docsRes.documents;
-    }
-    if (casesRes && Array.isArray(casesRes.cases)) {
-      normativesState.cases = casesRes.cases;
-    }
+    const docs = (docsRes && (docsRes.documents || docsRes.items)) || [];
+    normativesState.documents = Array.isArray(docs) ? docs : [];
+
+    const cases = (casesRes && (casesRes.cases || casesRes.items)) || [];
+    normativesState.cases = Array.isArray(cases) ? cases : [];
     normativesState.loaded = true;
   } catch (err) {
     console.error("LOAD NORMATIVES ERROR:", err);
@@ -22194,7 +22193,11 @@ function renderNormativeCasesTabHtml() {
   let list = normativesState.cases || [];
 
   if (selCat && selCat !== "Barchasi") {
-    list = list.filter(c => (c.category && c.category.toLowerCase().includes(selCat.toLowerCase())) || selCat.includes(c.category));
+    list = list.filter(c => {
+      const cat = (c.category || "").toLowerCase();
+      const sel = selCat.toLowerCase();
+      return cat === sel || cat.includes(sel) || sel.includes(cat);
+    });
   }
 
   if (query) {
@@ -22271,9 +22274,13 @@ function renderNormativeDocsTabHtml() {
     } else if (selCat === "QMQ") {
       list = list.filter(d => (d.document_type || "").toUpperCase() === "QMQ");
     } else if (selCat.includes("Standart") || selCat.includes("O‘z DSt")) {
-      list = list.filter(d => (d.document_type || "").includes("DSt") || (d.document_type || "").includes("GOST") || (d.category || "").includes("standart"));
+      list = list.filter(d => (d.document_type || "").includes("DSt") || (d.document_type || "").includes("GOST") || (d.category || "").toLowerCase().includes("standart") || (d.category || "").toLowerCase().includes("material"));
     } else {
-      list = list.filter(d => (d.category && d.category.toLowerCase().includes(selCat.toLowerCase())) || selCat.toLowerCase().includes((d.category || "").toLowerCase()));
+      list = list.filter(d => {
+        const cat = (d.category || "").toLowerCase();
+        const sel = selCat.toLowerCase();
+        return cat === sel || cat.includes(sel) || sel.includes(cat);
+      });
     }
   }
 
@@ -22620,7 +22627,7 @@ function closeNormativeCaseDetail() {
 
 function renderNormativeCaseDetailPage(res) {
   const c = res.case || {};
-  const steps = res.steps || [];
+  const steps = res.steps || c.steps || (Array.isArray(c.checklist) ? c.checklist : (typeof c.checklist === 'string' ? JSON.parse(c.checklist || '[]') : [])) || [];
   const icon = c.icon || "🏠";
 
   return `
@@ -23010,7 +23017,7 @@ async function handleSaveNormativeDoc(e, docId) {
         api("/api/normatives/list", { limit: 100 }),
         api("/api/normatives/stats")
       ]);
-      adminData.normativesList = (listRes && listRes.documents) || [];
+      adminData.normativesList = (listRes && (listRes.documents || listRes.items)) || [];
       adminData.normativesStats = (statsRes && statsRes.stats) || {};
       normativesState.documents = adminData.normativesList;
       renderAdminPanel();
