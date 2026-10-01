@@ -17,6 +17,17 @@ var initLearningTables = learningModule.initLearningTables;
 var materialsModule = require('./materialsData');
 var initMaterialsTables = materialsModule.initMaterialsTables;
 
+var videoSourceService = require('./services/videoSourceService');
+var signVideoToken = videoSourceService.signVideoToken;
+var verifyVideoToken = videoSourceService.verifyVideoToken;
+var parseTelegramVideoSource = videoSourceService.parseTelegramVideoSource;
+var resolveLessonVideoSource = videoSourceService.resolveLessonVideoSource;
+
+var telegramStreamService = require('./services/telegramStreamService');
+var resolveTelegramFileId = telegramStreamService.resolveTelegramFileId;
+var getTelegramFileStreamUrl = telegramStreamService.getTelegramFileStreamUrl;
+var proxyStreamRange = telegramStreamService.proxyStreamRange;
+
 var app = express();
 
 // ======================================================
@@ -249,6 +260,11 @@ async function initExtendedTables() {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_last_seen TIMESTAMPTZ');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted BOOLEAN DEFAULT false');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE lessons ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT');
+    await pool.query('ALTER TABLE lessons ADD COLUMN IF NOT EXISTS telegram_message_id BIGINT');
+    await pool.query('ALTER TABLE lessons ADD COLUMN IF NOT EXISTS telegram_file_id TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS video_platform VARCHAR(50) DEFAULT NULL');
+    await pool.query("INSERT INTO academy_settings (key, value) VALUES ('default_video_platform', 'youtube') ON CONFLICT (key) DO NOTHING");
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS approved_by BIGINT');
@@ -2721,7 +2737,7 @@ app.post('/api/lesson/:id', async function (req, res) {
     if (await enforceNotRestricted(user, res)) return;
 
     var lessonResult = await pool.query(
-      'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text FROM lessons WHERE id = $1 LIMIT 1',
+      'SELECT id, module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text, telegram_chat_id, telegram_message_id, telegram_file_id FROM lessons WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     var lesson = lessonResult.rows[0];
@@ -2945,6 +2961,58 @@ app.post('/api/lesson/:id', async function (req, res) {
       console.error('LESSON QUESTIONS QUERY ERROR:', qErr);
     }
 
+    // Multi-source video resolution (YouTube + Telegram + Bunny)
+    var defaultPlatform = 'youtube';
+    try {
+      var dSetting = await pool.query("SELECT value FROM academy_settings WHERE key = 'default_video_platform' LIMIT 1");
+      if (dSetting.rows.length && dSetting.rows[0].value) {
+        defaultPlatform = dSetting.rows[0].value.trim();
+      }
+    } catch (settErr) {}
+
+    var resolved = resolveLessonVideoSource(lesson, user, defaultPlatform);
+
+    if (resolved.chosenPlatform === 'telegram') {
+      var streamToken = signVideoToken({ user_id: user.id, lesson_id: lesson.id });
+      var streamUrl = '/api/video/stream?token=' + encodeURIComponent(streamToken);
+      return res.json({
+        id: lesson.id,
+        title: lesson.title,
+        video_type: 'telegram',
+        stream_url: streamUrl,
+        video_url: streamUrl,
+        chosen_platform: 'telegram',
+        available_sources: resolved.availableSources,
+        task_text: lesson.task_text || '',
+        warning_text: warningText,
+        files: files,
+        my_submission: mySubmission,
+        watched: isWatched,
+        questions: questions
+      });
+    }
+
+    if (resolved.chosenPlatform === 'bunny') {
+      var libId = process.env.BUNNY_LIBRARY_ID || 'library';
+      var bunnyPlayerUrl = generateBunnyPlayerUrl(libId, lesson.bunny_video_id);
+      return res.json({
+        id: lesson.id,
+        title: lesson.title,
+        video_type: 'bunny',
+        bunny_video_id: lesson.bunny_video_id,
+        bunny_library_id: libId,
+        bunny_player_url: bunnyPlayerUrl,
+        chosen_platform: 'bunny',
+        available_sources: resolved.availableSources,
+        task_text: lesson.task_text || '',
+        warning_text: warningText,
+        files: files,
+        my_submission: mySubmission,
+        watched: isWatched,
+        questions: questions
+      });
+    }
+
     var rawVideoUrl = (lesson.youtube_url || '').trim();
     if (!rawVideoUrl && lesson.bunny_video_id && /^https?:\/\//i.test(lesson.bunny_video_id.trim())) {
       rawVideoUrl = lesson.bunny_video_id.trim();
@@ -3132,6 +3200,69 @@ app.post('/api/admin/practice/:id/review', requireAdmin, async function (req, re
 // ======================================================
 
 // O'quvchi dars bo'yicha savol yuborishi
+
+// ======================================================
+// SECURE TELEGRAM VIDEO STREAMING PROXY (HTTP 206 RANGE)
+// ======================================================
+
+app.get('/api/video/stream', async function (req, res) {
+  try {
+    var token = req.query.token;
+    var tokenResult = verifyVideoToken(token);
+    if (!tokenResult.valid) {
+      return res.status(403).json({ error: tokenResult.error || 'Yaroqsiz yoki muddati tugagan video token' });
+    }
+
+    var userId = tokenResult.payload.user_id;
+    var lessonId = tokenResult.payload.lesson_id;
+
+    // 1. Foydalanuvchini olish va cheklovlarni tekshirish
+    var uRes = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [userId]);
+    var user = uRes.rows[0];
+    if (!user) return res.status(401).json({ error: 'Foydalanuvchi topilmadi' });
+
+    if (await enforceNotRestricted(user, res)) return;
+
+    // 2. Darsni olish
+    var lRes = await pool.query(
+      'SELECT id, module_id, title, is_free, telegram_chat_id, telegram_message_id, telegram_file_id FROM lessons WHERE id = $1 LIMIT 1',
+      [lessonId]
+    );
+    var lesson = lRes.rows[0];
+    if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
+
+    // 3. Ruxsat tekshiruvi: is_free darslar, adminlar yoki to\'lov qilingan access
+    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    var adminUser = await getAdminByTelegramId(user.telegram_id);
+    var isAdmin = Boolean(isMainAdminUser || adminUser);
+    var userHasAccess = hasAccess(user);
+
+    if (!lesson.is_free && !isAdmin && !userHasAccess) {
+      return res.status(403).json({ error: 'ACCESS_DENIED', message: 'Ushbu videoni ko\'rish uchun pullik kurs ruxsati kerak' });
+    }
+
+    // 4. Telegram file_id ni olish / keshdan topish
+    var fileId = await resolveTelegramFileId(pool, tgApi, ADMIN_TELEGRAM_ID, lesson);
+    if (!fileId) {
+      return res.status(404).json({ error: 'Telegram video fayli topilmadi yoki bot kanal/guruh admini emas' });
+    }
+
+    // 5. Telegram Bot API orqali stream URL olish
+    var streamUrl = await getTelegramFileStreamUrl(tgApi, fileId);
+    if (!streamUrl) {
+      return res.status(404).json({ error: 'Telegram video faylini olishda xatolik yuz berdi' });
+    }
+
+    // 6. Range bilan stream qilish
+    await proxyStreamRange(req, res, streamUrl);
+  } catch (err) {
+    console.error('VIDEO STREAM ROUTE ERROR:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Video oqimida xatolik yuz berdi' });
+    }
+  }
+});
+
 app.post('/api/lesson/:id/question', async function (req, res) {
   try {
     var user = await getOrCreateUser(req.body.initData);
@@ -4193,7 +4324,7 @@ app.post('/api/admin/students', requireAdmin, async function (req, res) {
 app.post('/api/admin/student/:id', requireAdmin, async function (req, res) {
   try {
     var studentResult = await pool.query(
-      'SELECT id, telegram_id, first_name, last_name, phone, username, access_until, access_started_at, access_expires_at, access_revoked_at, created_at FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, telegram_id, first_name, last_name, phone, username, video_platform, access_until, access_started_at, access_expires_at, access_revoked_at, created_at FROM users WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     var student = studentResult.rows[0];
@@ -4461,6 +4592,27 @@ app.post('/api/admin/student/:id/restrictions/history', requireAdmin, async func
 // ======================================================
 // ADMIN STUDENT ACCESS
 // ======================================================
+
+
+// ======================================================
+// SET STUDENT VIDEO PLATFORM PREFERENCE
+// ======================================================
+
+app.post('/api/admin/student/:id/video-platform', requireAdmin, async function (req, res) {
+  try {
+    var studentId = Number(req.params.id);
+    var platform = req.body.platform ? String(req.body.platform).toLowerCase().trim() : null;
+    if (platform && !['default', 'youtube', 'telegram', 'bunny'].includes(platform)) {
+      return res.status(400).json({ error: "Noto'g'ri video platformasi" });
+    }
+    var dbVal = (platform === 'default' || !platform) ? null : platform;
+    await pool.query('UPDATE users SET video_platform = $1 WHERE id = $2', [dbVal, studentId]);
+    return res.json({ ok: true, message: 'Talabaning video platformasi yangilandi', video_platform: dbVal });
+  } catch (error) {
+    console.error('SET VIDEO PLATFORM ERROR:', error);
+    return res.status(500).json({ error: 'Video platformani yangilashda xato: ' + error.message });
+  }
+});
 
 app.post('/api/admin/student/:id/access', requireAdmin, async function (req, res) {
   try {
@@ -4760,9 +4912,19 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
     );
     var orderIndex = Number(maxOrderResult.rows[0].max_order) + 1;
 
+    var tgChatId = req.body.telegram_chat_id || null;
+    var tgMsgId = req.body.telegram_message_id ? parseInt(req.body.telegram_message_id, 10) : null;
+    if (req.body.telegram_url) {
+      var parsedTg = parseTelegramVideoSource(req.body.telegram_url);
+      if (parsedTg) {
+        tgChatId = parsedTg.chat_id;
+        tgMsgId = parsedTg.message_id;
+      }
+    }
+
     var result = await pool.query(
-      'INSERT INTO lessons (module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [Number(moduleId), title.trim(), orderIndex, req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null]
+      'INSERT INTO lessons (module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text, telegram_chat_id, telegram_message_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [Number(moduleId), title.trim(), orderIndex, req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null, tgChatId, tgMsgId]
     );
 
     var createdLesson = result.rows[0];
@@ -4809,9 +4971,36 @@ app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res)
       return res.status(400).json({ error: 'Bu modulda ushbu tartib raqamli boshqa dars mavjud' });
     }
 
+    var tgChatId = existing.telegram_chat_id;
+    var tgMsgId = existing.telegram_message_id;
+    var tgFileId = existing.telegram_file_id;
+
+    if (req.body.telegram_url !== undefined) {
+      if (req.body.telegram_url && String(req.body.telegram_url).trim()) {
+        var parsedTg = parseTelegramVideoSource(req.body.telegram_url);
+        if (parsedTg) {
+          if (tgChatId !== parsedTg.chat_id || tgMsgId !== parsedTg.message_id) {
+            tgFileId = null; // Reset cached file_id if source post changed
+          }
+          tgChatId = parsedTg.chat_id;
+          tgMsgId = parsedTg.message_id;
+        }
+      } else {
+        tgChatId = null;
+        tgMsgId = null;
+        tgFileId = null;
+      }
+    } else {
+      if (req.body.telegram_chat_id !== undefined) tgChatId = req.body.telegram_chat_id || null;
+      if (req.body.telegram_message_id !== undefined) tgMsgId = req.body.telegram_message_id ? parseInt(req.body.telegram_message_id, 10) : null;
+      if (tgChatId !== existing.telegram_chat_id || tgMsgId !== existing.telegram_message_id) {
+        tgFileId = null;
+      }
+    }
+
     var result = await pool.query(
-      'UPDATE lessons SET module_id = $1, title = $2, order_index = $3, youtube_url = $4, task_text = $5, is_free = $6, bunny_video_id = $7, warning_text = $8 WHERE id = $9 RETURNING *',
-      [moduleId, title, orderIndex, youtubeUrl, taskText, isFree, bunnyVideoId, warningText, Number(req.params.id)]
+      'UPDATE lessons SET module_id = $1, title = $2, order_index = $3, youtube_url = $4, task_text = $5, is_free = $6, bunny_video_id = $7, warning_text = $8, telegram_chat_id = $9, telegram_message_id = $10, telegram_file_id = $11 WHERE id = $12 RETURNING *',
+      [moduleId, title, orderIndex, youtubeUrl, taskText, isFree, bunnyVideoId, warningText, tgChatId, tgMsgId, tgFileId, Number(req.params.id)]
     );
 
     // Agar yangilayotganda yangi fayl ham kiritilgan bo'lsa
@@ -4834,6 +5023,69 @@ app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res)
 // ======================================================
 // DELETE LESSON
 // ======================================================
+
+
+// ======================================================
+// ADMIN TELEGRAM VIDEO VALIDATION
+// ======================================================
+
+app.post('/api/admin/telegram/check-video', requireAdmin, async function (req, res) {
+  try {
+    var rawInput = req.body.telegram_url || req.body.url || '';
+    var parsed = parseTelegramVideoSource(rawInput);
+    if (!parsed) {
+      if (req.body.chat_id && req.body.message_id) {
+        parsed = {
+          chat_id: String(req.body.chat_id).trim(),
+          message_id: parseInt(req.body.message_id, 10)
+        };
+      }
+    }
+    if (!parsed) {
+      return res.status(400).json({ ok: false, error: "Telegram havolasi yoki chat_id/message_id noto'g'ri" });
+    }
+
+    var r = await tgApi('forwardMessage', {
+      chat_id: ADMIN_TELEGRAM_ID,
+      from_chat_id: parsed.chat_id,
+      message_id: parsed.message_id
+    });
+
+    if (!r || !r.ok || !r.result) {
+      return res.json({
+        ok: false,
+        error: "Telegram xabari topilmadi yoki bot kanal/guruhda admin emas",
+        details: r ? r.description : null,
+        parsed: parsed
+      });
+    }
+
+    var fMsg = r.result;
+    var media = fMsg.video || fMsg.document || fMsg.animation || null;
+    var fileSize = media ? (media.file_size || 0) : 0;
+    var fileName = (media && (media.file_name || (fMsg.video ? 'Video fayl' : 'Fayl'))) || 'Telegram video';
+
+    try {
+      await tgApi('deleteMessage', {
+        chat_id: ADMIN_TELEGRAM_ID,
+        message_id: fMsg.message_id
+      });
+    } catch (e) {}
+
+    return res.json({
+      ok: true,
+      chat_id: parsed.chat_id,
+      message_id: parsed.message_id,
+      file_size: fileSize,
+      file_name: fileName,
+      file_id: media ? media.file_id : null,
+      has_video: Boolean(fMsg.video || (fMsg.document && fMsg.document.mime_type && fMsg.document.mime_type.startsWith('video/')))
+    });
+  } catch (error) {
+    console.error('CHECK TELEGRAM VIDEO ERROR:', error);
+    return res.status(500).json({ ok: false, error: 'Telegram videoni tekshirishda xatolik: ' + error.message });
+  }
+});
 
 app.post('/api/admin/lesson/:id/delete', requireAdmin, async function (req, res) {
   try {
@@ -4859,7 +5111,7 @@ app.post('/api/admin/lesson/:id/delete', requireAdmin, async function (req, res)
 app.post('/api/admin/lesson/:id', requireAdmin, async function (req, res) {
   try {
     var result = await pool.query(
-      'SELECT id, module_id, title, order_index, youtube_url, bunny_video_id, task_text, warning_text, is_free FROM lessons WHERE id = $1 LIMIT 1',
+      'SELECT id, module_id, title, order_index, youtube_url, bunny_video_id, task_text, warning_text, is_free, telegram_chat_id, telegram_message_id, telegram_file_id FROM lessons WHERE id = $1 LIMIT 1',
       [req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Dars topilmadi' });
@@ -5280,6 +5532,12 @@ app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
     }
     if (req.body.free_minicourse_points !== undefined) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_points\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_points).trim()]);
+    }
+    if (req.body.default_video_platform !== undefined) {
+      var dPlatform = String(req.body.default_video_platform).toLowerCase().trim();
+      if (['youtube', 'telegram', 'bunny'].includes(dPlatform)) {
+        await pool.query("INSERT INTO academy_settings (key, value) VALUES ('default_video_platform', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [dPlatform]);
+      }
     }
     if (req.body.free_minicourse_lesson_ids !== undefined) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_lesson_ids\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_lesson_ids).trim()]);

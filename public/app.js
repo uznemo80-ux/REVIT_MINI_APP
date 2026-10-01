@@ -5932,7 +5932,20 @@ async function openLesson(id) {
       getClientYouTubeEmbed(lesson.bunny_video_id);
 
     let videoHtml = "";
-    if (ytEmbed) {
+    const isTelegramStream = lesson.video_type === 'telegram' || Boolean(lesson.stream_url);
+    const tgStreamSrc = lesson.stream_url || (lesson.video_type === 'telegram' ? lesson.video_url : null);
+
+    if (isTelegramStream && tgStreamSrc) {
+      videoHtml = `
+        <div class="video-container" style="background:#000; display:flex; align-items:center; justify-content:center;">
+          <video controls playsinline controlslist="nodownload" preload="metadata" style="width:100%; max-height:420px; border-radius:12px;">
+            <source src="${escapeHtml(tgStreamSrc)}" type="video/mp4">
+            Brauzeringiz videoni qo'llab-quvvatlamaydi.
+          </video>
+          ${watermarkHtml}
+        </div>
+      `;
+    } else if (ytEmbed) {
       videoHtml = `
         <div class="video-container">
           <iframe src="${escapeHtml(ytEmbed)}" title="${escapeHtml(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -10302,6 +10315,7 @@ async function submitAdminSettings() {
   const socialInsta = document.getElementById("set-social-insta")?.value.trim();
   const socialYt = document.getElementById("set-social-yt")?.value.trim();
   const socialChat = document.getElementById("set-social-chat")?.value.trim();
+  const defVideoPlatform = document.getElementById("set-default-video-platform")?.value;
 
   try {
     haptic("medium");
@@ -10312,7 +10326,8 @@ async function submitAdminSettings() {
       social_telegram: socialTg,
       social_instagram: socialInsta,
       social_youtube: socialYt,
-      social_channel: socialChat
+      social_channel: socialChat,
+      default_video_platform: defVideoPlatform
     });
     showToast("Sozlamalar muvaffaqiyatli saqlandi!");
     closeDetail();
@@ -11827,6 +11842,15 @@ function renderAdminSettingsView() {
         </div>
 
         <div class="apple-field">
+          <label>🎬 Asosiy Video Manbasi (Global Standart)</label>
+          <select id="set-default-video-platform" class="apple-input">
+            <option value="youtube" ${(s.default_video_platform === 'youtube' || !s.default_video_platform) ? 'selected' : ''}>YouTube</option>
+            <option value="telegram" ${s.default_video_platform === 'telegram' ? 'selected' : ''}>Telegram (Tezkor oqim)</option>
+            <option value="bunny" ${s.default_video_platform === 'bunny' ? 'selected' : ''}>Bunny Stream</option>
+          </select>
+        </div>
+
+        <div class="apple-field">
           <label>Admin Telegram Usernamesi (shaxsiy lichka)</label>
           <input id="set-tg" class="apple-input" value="${escapeHtml(s.contact_telegram || '')}" placeholder="texnikuzb (boshida @ siz)" type="text">
         </div>
@@ -12665,6 +12689,27 @@ async function openAdminStudentModal(id) {
           <div class="back-btn" onclick="adminSetTab('students')">← O'quvchilar ro'yxatiga qaytish</div>
           <div class="page-title">${escapeHtml(fullName)}</div>
 
+          <!-- VIDEO PLATFORM SELECTION -->
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:16px;">
+            <div style="font-weight:700; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+              <span>🎬 Talaba Uchun Video Platformasi</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+              Ushbu o'quvchiga kurs darslari qaysi manbadan o'ynatilishi kerakligini belgilang.
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <select id="student-video-platform" class="apple-input" style="flex:1;">
+                <option value="default" ${(!st.video_platform || st.video_platform === 'default') ? 'selected' : ''}>🌐 Standart (Platforma sozlamasi)</option>
+                <option value="youtube" ${st.video_platform === 'youtube' ? 'selected' : ''}>YouTube</option>
+                <option value="telegram" ${st.video_platform === 'telegram' ? 'selected' : ''}>Telegram (Tezkor oqim)</option>
+                <option value="bunny" ${st.video_platform === 'bunny' ? 'selected' : ''}>Bunny Stream</option>
+              </select>
+              <button class="btn" style="width:auto; margin:0; padding:10px 16px; white-space:nowrap;" onclick="saveStudentVideoPlatform(${Number(st.id)})">
+                Saqlash
+              </button>
+            </div>
+          </div>
+
           <div class="info-card">
             <div class="info-row">
               <span class="info-label">Telegram ID</span>
@@ -13254,14 +13299,30 @@ function openAddLessonView(moduleId) {
             <input id="new-l-title" class="apple-input" type="text" placeholder="Masalan: 1-Dars. Revit interfeysi">
           </div>
 
-          <div class="apple-field">
-            <label>Dars video linki (YouTube Unlisted / Embed)</label>
-            <input id="new-l-yt" class="apple-input" type="url" placeholder="https://youtu.be/... yoki https://youtube.com/embed/...">
-          </div>
+          <!-- VIDEO SOURCES CARD -->
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); padding:14px; border-radius:var(--radius-sm); margin-bottom:16px;">
+            <div style="font-weight:700; font-size:13px; margin-bottom:12px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+              <span>🎬 Video Manbalari (YouTube / Telegram / Bunny)</span>
+            </div>
 
-          <div class="apple-field">
-            <label>Yoki Bunny Stream Video ID (ixtiyoriy)</label>
-            <input id="new-l-bunny" class="apple-input" type="text" placeholder="Video ID">
+            <div class="apple-field" style="margin-bottom:12px;">
+              <label>1. YouTube Video Havolasi</label>
+              <input id="new-l-yt" class="apple-input" type="url" placeholder="https://youtu.be/... yoki https://youtube.com/embed/...">
+            </div>
+
+            <div class="apple-field" style="margin-bottom:12px;">
+              <label>2. Telegram Video Posti (yopiq/ochiq kanal)</label>
+              <div style="display:flex; gap:8px;">
+                <input id="new-l-tg" class="apple-input" type="text" placeholder="https://t.me/c/1234567890/123 yoki kanal/123" style="flex:1;">
+                <button type="button" class="admin-small-btn" style="padding:0 12px; white-space:nowrap;" onclick="checkAdminTelegramVideo('new-l-tg', 'new-tg-check-result')">Tekshirish</button>
+              </div>
+              <div id="new-tg-check-result" style="font-size:11.5px; margin-top:4px; display:none;"></div>
+            </div>
+
+            <div class="apple-field" style="margin-bottom:0;">
+              <label>3. Bunny Stream Video ID</label>
+              <input id="new-l-bunny" class="apple-input" type="text" placeholder="Video ID">
+            </div>
           </div>
 
           <!-- Darsga tegishli manba / fayl (Talab 6) -->
@@ -13305,6 +13366,7 @@ async function submitCreateLesson() {
   const moduleId = document.getElementById("new-l-module")?.value;
   const title = document.getElementById("new-l-title")?.value.trim();
   const ytUrl = document.getElementById("new-l-yt")?.value.trim();
+  const tgUrl = document.getElementById("new-l-tg")?.value.trim();
   const bunnyId = document.getElementById("new-l-bunny")?.value.trim();
   const fileName = document.getElementById("new-l-filename")?.value.trim();
   const fileUrl = document.getElementById("new-l-fileurl")?.value.trim();
@@ -13322,6 +13384,7 @@ async function submitCreateLesson() {
       module_id: Number(moduleId),
       title,
       youtube_url: ytUrl || null,
+      telegram_url: tgUrl || null,
       bunny_video_id: bunnyId || null,
       file_name: fileName || null,
       file_url: fileUrl || null,
@@ -13348,6 +13411,17 @@ async function openEditLessonView(lessonId) {
     haptic("light");
     const lessonData = await adminApi(`/api/admin/lesson/${Number(lessonId)}`);
     const lesson = lessonData.lesson || {};
+    const hasYt = Boolean(lesson.youtube_url && lesson.youtube_url.trim());
+    const hasTg = Boolean((lesson.telegram_chat_id && lesson.telegram_message_id) || lesson.telegram_file_id);
+    const hasBunny = Boolean(lesson.bunny_video_id && lesson.bunny_video_id.trim());
+    let tgDisplayVal = '';
+    if (lesson.telegram_chat_id && lesson.telegram_message_id) {
+      if (String(lesson.telegram_chat_id).startsWith('-100')) {
+        tgDisplayVal = 'https://t.me/c/' + String(lesson.telegram_chat_id).slice(4) + '/' + lesson.telegram_message_id;
+      } else {
+        tgDisplayVal = lesson.telegram_chat_id + '/' + lesson.telegram_message_id;
+      }
+    }
     const filesData = await adminApi(`/api/admin/lesson/${Number(lessonId)}/files`);
     const files = filesData.files || [];
     const modules = (courseModulesData && courseModulesData.modules) || [];
@@ -13380,14 +13454,39 @@ async function openEditLessonView(lessonId) {
               <input id="edit-l-title" class="apple-input" type="text" value="${escapeHtml(lesson.title)}">
             </div>
 
-            <div class="apple-field">
-              <label>YouTube Video Link</label>
-              <input id="edit-l-yt" class="apple-input" type="url" value="${escapeHtml(lesson.youtube_url || '')}">
-            </div>
+            <!-- VIDEO SOURCES CARD -->
+            <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); padding:14px; border-radius:var(--radius-sm); margin-bottom:16px;">
+              <div style="font-weight:700; font-size:13px; margin-bottom:12px; color:var(--text-primary); display:flex; align-items:center; justify-content:space-between;">
+                <span>🎬 Video Manbalari (YouTube / Telegram / Bunny)</span>
+              </div>
 
-            <div class="apple-field">
-              <label>Bunny Stream Video ID</label>
-              <input id="edit-l-bunny" class="apple-input" type="text" value="${escapeHtml(lesson.bunny_video_id || '')}">
+              <div class="apple-field" style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <label style="margin-bottom:0;">1. YouTube Video Havolasi</label>
+                  <span style="font-size:11px; color:var(--text-secondary);">${hasYt ? '🟢 Ulangan' : '⚪ Kiritilmagan'}</span>
+                </div>
+                <input id="edit-l-yt" class="apple-input" type="url" value="${escapeHtml(lesson.youtube_url || '')}" placeholder="https://youtu.be/...">
+              </div>
+
+              <div class="apple-field" style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <label style="margin-bottom:0;">2. Telegram Video Posti (yopiq/ochiq kanal)</label>
+                  <span style="font-size:11px; color:var(--text-secondary);">${hasTg ? '🟢 Ulangan: ' + escapeHtml(lesson.telegram_chat_id) + ' #' + lesson.telegram_message_id : '⚪ Kiritilmagan'}</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <input id="edit-l-tg" class="apple-input" type="text" value="${escapeHtml(tgDisplayVal)}" placeholder="https://t.me/c/1234567890/123 yoki chat_id:msg_id" style="flex:1;">
+                  <button type="button" class="admin-small-btn" style="padding:0 12px; white-space:nowrap;" onclick="checkAdminTelegramVideo('edit-l-tg', 'edit-tg-check-result')">Tekshirish</button>
+                </div>
+                <div id="edit-tg-check-result" style="font-size:11.5px; margin-top:4px; display:none;"></div>
+              </div>
+
+              <div class="apple-field" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <label style="margin-bottom:0;">3. Bunny Stream Video ID</label>
+                  <span style="font-size:11px; color:var(--text-secondary);">${hasBunny ? '🟢 Ulangan' : '⚪ Kiritilmagan'}</span>
+                </div>
+                <input id="edit-l-bunny" class="apple-input" type="text" value="${escapeHtml(lesson.bunny_video_id || '')}" placeholder="Bunny Video GUID">
+              </div>
             </div>
 
             <label class="apple-check-row">
@@ -13473,6 +13572,7 @@ async function submitUpdateLesson(lessonId) {
   const orderIndex = document.getElementById("edit-l-order")?.value;
   const title = document.getElementById("edit-l-title")?.value.trim();
   const ytUrl = document.getElementById("edit-l-yt")?.value.trim();
+  const tgUrl = document.getElementById("edit-l-tg")?.value.trim();
   const bunnyId = document.getElementById("edit-l-bunny")?.value.trim();
   const isFree = document.getElementById("edit-l-free")?.checked;
   const task = document.getElementById("edit-l-task")?.value.trim();
@@ -13487,6 +13587,7 @@ async function submitUpdateLesson(lessonId) {
       order_index: Number(orderIndex),
       title,
       youtube_url: ytUrl || null,
+      telegram_url: tgUrl !== undefined ? tgUrl : null,
       bunny_video_id: bunnyId || null,
       task_text: task || null,
       warning_text: warning || null,
@@ -18784,5 +18885,44 @@ async function submitCourseAccessRequest(courseId) {
     }
   } catch (err) {
     showAlert(err.message || "So'rov yuborishda xatolik yuz berdi.");
+  }
+}
+
+
+async function checkAdminTelegramVideo(inputId, resultId) {
+  const input = document.getElementById(inputId);
+  const resultDiv = document.getElementById(resultId);
+  if (!input || !resultDiv) return;
+  const val = input.value.trim();
+  if (!val) {
+    showAlert("Telegram havolasi yoki chat_id/message_id ni kiriting!");
+    return;
+  }
+  resultDiv.style.display = "block";
+  resultDiv.innerHTML = "<span style='color:var(--text-secondary);'>⏳ Telegram xabari tekshirilmoqda...</span>";
+  try {
+    const res = await adminApi("/api/admin/telegram/check-video", { telegram_url: val });
+    if (res.ok) {
+      const mb = res.file_size ? (res.file_size / (1024 * 1024)).toFixed(1) + " MB" : "hajmi noma'lum";
+      resultDiv.innerHTML = `<span style="color:#34c759; font-weight:600;">✓ Video topildi: ${escapeHtml(res.file_name)} (${mb})</span>`;
+    } else {
+      resultDiv.innerHTML = `<span style="color:#ff3b30; font-weight:600;">✕ Xatolik: ${escapeHtml(res.error || "Xabar topilmadi")}</span>`;
+    }
+  } catch (err) {
+    resultDiv.innerHTML = `<span style="color:#ff3b30; font-weight:600;">✕ Tekshirishda xato: ${escapeHtml(err.message)}</span>`;
+  }
+}
+
+
+async function saveStudentVideoPlatform(studentId) {
+  const select = document.getElementById("student-video-platform");
+  if (!select) return;
+  const platform = select.value;
+  try {
+    haptic("medium");
+    await adminApi(`/api/admin/student/${Number(studentId)}/video-platform`, { platform });
+    showToast("Talabaning video platformasi yangilandi!");
+  } catch (err) {
+    showAlert(err.message || "Video platformasini saqlashda xato yuz berdi.");
   }
 }
