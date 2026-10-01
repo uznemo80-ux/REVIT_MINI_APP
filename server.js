@@ -3137,12 +3137,16 @@ app.post('/api/lesson/:id', async function (req, res) {
     if (resolved.chosenPlatform === 'telegram') {
       var streamToken = signVideoToken({ user_id: user.id, lesson_id: lesson.id });
       var streamUrl = '/api/video/stream?token=' + encodeURIComponent(streamToken);
+      var fallbackYtUrl = lesson.youtube_url ? generateYouTubePlayerUrl(lesson.youtube_url) : null;
+      var fallbackBunnyUrl = lesson.bunny_video_id ? generateBunnyPlayerUrl(process.env.BUNNY_LIBRARY_ID || 'library', lesson.bunny_video_id) : null;
       return res.json({
         id: lesson.id,
         title: lesson.title,
         video_type: 'telegram',
         stream_url: streamUrl,
         video_url: streamUrl,
+        youtube_player_url: fallbackYtUrl,
+        bunny_player_url: fallbackBunnyUrl,
         chosen_platform: 'telegram',
         available_sources: resolved.availableSources,
         task_text: lesson.task_text || '',

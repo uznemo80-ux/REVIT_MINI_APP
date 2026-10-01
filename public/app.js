@@ -5939,10 +5939,12 @@ async function openLesson(id) {
     const tgStreamSrc = lesson.stream_url || (lesson.video_type === 'telegram' ? lesson.video_url : null);
 
     if (isTelegramStream && tgStreamSrc) {
+      const fbYt = ytEmbed || '';
+      const fbBunny = (lesson.bunny_player_url && !lesson.bunny_player_url.includes(tgStreamSrc)) ? lesson.bunny_player_url : '';
       videoHtml = `
-        <div class="video-container" style="background:#000; display:flex; align-items:center; justify-content:center;">
-          <video controls playsinline controlslist="nodownload" preload="metadata" style="width:100%; max-height:420px; border-radius:12px;">
-            <source src="${escapeHtml(tgStreamSrc)}" type="video/mp4">
+        <div class="video-container" style="background:#000; display:flex; align-items:center; justify-content:center;" data-yt-fallback="${escapeHtml(fbYt)}" data-bunny-fallback="${escapeHtml(fbBunny)}">
+          <video controls playsinline controlslist="nodownload" preload="metadata" style="width:100%; max-height:420px; border-radius:12px;" onerror="handleTgStreamFallback(this)">
+            <source src="${escapeHtml(tgStreamSrc)}" type="video/mp4" onerror="handleTgStreamFallback(this.parentElement)">
             Brauzeringiz videoni qo'llab-quvvatlamaydi.
           </video>
           ${watermarkHtml}
@@ -19566,3 +19568,30 @@ window.onI18nChanged = function () {
 };
 
 try { if (window.I18N) window.I18N.wrapGlobals(); } catch (e) {}
+
+window.handleTgStreamFallback = function(videoEl) {
+  if (!videoEl) return;
+  const container = videoEl.closest('.video-container');
+  if (!container || container.dataset.fallbackDone) return;
+  container.dataset.fallbackDone = 'true';
+  const ytFb = container.dataset.ytFallback;
+  const bunnyFb = container.dataset.bunnyFallback;
+  const wm = container.querySelector('.video-watermark')?.outerHTML || '';
+  if (ytFb) {
+    container.innerHTML = `<iframe src="${ytFb}" title="Video" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>${wm}`;
+    showToast("ℹ️ Telegram limiti (20MB+) tufayli YouTube manbasidan ochildi");
+  } else if (bunnyFb) {
+    container.innerHTML = `<iframe src="${bunnyFb}" title="Video" allowfullscreen></iframe>${wm}`;
+    showToast("ℹ️ Telegram limiti (20MB+) tufayli Bunny manbasidan ochildi");
+  } else {
+    container.innerHTML = `
+      <div style="background:#111; color:#fff; padding:24px 16px; text-align:center; border-radius:12px; width:100%;">
+        <div style="font-size:26px; margin-bottom:8px;">⚠️</div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:6px; color:#ff9500;">Ushbu video hajmi 20 MB dan katta</div>
+        <div style="font-size:12px; color:#aaa; line-height:1.5; max-width:320px; margin:0 auto 12px;">Telegram Bot API rasmiy qoidasiga ko'ra, faqat 20 MB gacha videolar to'g'ridan-to'g'ri o'ynatiladi.<br>Iltimos, ushbu dars uchun YouTube yoki Bunny manbasini ulang.</div>
+      </div>
+      ${wm}
+    `;
+  }
+};
+
