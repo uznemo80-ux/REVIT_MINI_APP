@@ -380,6 +380,26 @@ function calcGrowth(curr, prev) {
   return Math.round(((c - p) / p) * 100);
 }
 
+function withTimeout(promise, ms, fallback) {
+  let timer;
+  const timeoutPromise = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      resolve(fallback);
+    }, ms);
+  });
+  return Promise.race([
+    promise.then(res => {
+      clearTimeout(timer);
+      return res;
+    }).catch(err => {
+      clearTimeout(timer);
+      console.warn('Analytics query error:', err.message);
+      return fallback;
+    }),
+    timeoutPromise
+  ]);
+}
+
 // ======================================================
 // 24. DEVICE ANALYTICS AGGREGATOR
 // ======================================================
@@ -389,7 +409,7 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
 
   try {
     // 1. Summary by Device Type: mobile, desktop, tablet
-    const summaryQuery = pool.query(`
+    const summaryQuery = withTimeout(pool.query(`
       WITH sess AS (
         SELECT
           LOWER(device_type) AS dev,
@@ -405,13 +425,10 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
         COUNT(*)::int AS sessions_count
       FROM sess
       GROUP BY dev
-    `).catch(err => {
-      console.warn('DEVICE SUMMARY QUERY WARN:', err.message);
-      return { rows: [] };
-    });
+    `), 2000, { rows: [] });
 
     // 2. OS Distribution
-    const osQuery = pool.query(`
+    const osQuery = withTimeout(pool.query(`
       SELECT
         operating_system,
         device_type,
@@ -421,10 +438,7 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       WHERE started_at >= ${startDate} AND started_at < ${endDate}
       GROUP BY operating_system, device_type
       ORDER BY sessions_count DESC
-    `).catch(err => {
-      console.warn('DEVICE OS QUERY WARN:', err.message);
-      return { rows: [] };
-    });
+    `), 2000, { rows: [] });
 
     // 3. Time Series by Device Type (Mobile, Desktop, Tablet)
     let intervalUnit = '1 day';
@@ -453,7 +467,7 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       labelFormat = 'HH24:MI';
     }
 
-    const timeSeriesDeviceQuery = pool.query(`
+    const timeSeriesDeviceQuery = withTimeout(pool.query(`
       WITH buckets AS (
         SELECT generate_series(
           DATE_TRUNC('${truncField}', (${startDate})::timestamptz),
@@ -481,13 +495,10 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       LEFT JOIN s_counts c ON c.bucket = b.bucket
       ORDER BY b.bucket ASC
       LIMIT 100
-    `).catch(err => {
-      console.warn('DEVICE TIME SERIES WARN:', err.message);
-      return { rows: [] };
-    });
+    `), 2000, { rows: [] });
 
     // 4. Device × Content Matrix
-    const contentMatrixQuery = pool.query(`
+    const contentMatrixQuery = withTimeout(pool.query(`
       SELECT
         COALESCE(NULLIF(operating_system, 'Unknown'), CASE WHEN LOWER(device_type) = 'desktop' THEN 'Windows' ELSE 'Android' END) AS device,
         COUNT(CASE WHEN category = 'lesson' OR event_type LIKE '%lesson%' THEN 1 END)::int AS lessons,
@@ -500,13 +511,10 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       GROUP BY 1
       ORDER BY total DESC
       LIMIT 10
-    `).catch(err => {
-      console.warn('DEVICE CONTENT MATRIX WARN:', err.message);
-      return { rows: [] };
-    });
+    `), 2000, { rows: [] });
 
     // 5. Peak Hours by Device Type (Tashkent Time)
-    const peakHoursQuery = pool.query(`
+    const peakHoursQuery = withTimeout(pool.query(`
       SELECT
         LOWER(device_type) AS device_type,
         EXTRACT(HOUR FROM (last_activity_at AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
@@ -515,12 +523,9 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       WHERE started_at >= ${startDate} AND started_at < ${endDate}
       GROUP BY 1, 2
       ORDER BY 1, 2 ASC
-    `).catch(err => {
-      console.warn('DEVICE PEAK HOURS WARN:', err.message);
-      return { rows: [] };
-    });
+    `), 2000, { rows: [] });
 
-    const baseUsersCountRes = await pool.query('SELECT COUNT(*)::int AS c FROM users').catch(() => ({ rows: [{ c: 0 }] }));
+    const baseUsersCountRes = await withTimeout(pool.query('SELECT COUNT(*)::int AS c FROM users'), 2000, { rows: [{ c: 0 }] });
     const totalUsers = baseUsersCountRes.rows[0]?.c || 0;
 
     const [
@@ -681,7 +686,7 @@ async function getDashboardData(params = {}) {
   const seriesConfig = getSeriesSqlConfig(granularity);
 
   // 1. TOP KPI: Foydalanuvchilar va Kontent faolligi (Parallel queries)
-  const kpiQuery = pool.query(`
+  const kpiQuery = withTimeout(pool.query(`
     SELECT
       (SELECT COUNT(*)::int FROM users) AS total_users,
       (SELECT COUNT(*)::int FROM users WHERE access_until > NOW()) AS paid_users,
@@ -744,13 +749,10 @@ async function getDashboardData(params = {}) {
       (SELECT COUNT(*)::int FROM material_view_log WHERE viewed_on >= (${prevStartDate})::date AND viewed_on < (${prevEndDate})::date) AS prev_material_views,
       (SELECT COUNT(*)::int FROM library_views WHERE viewed_at >= ${startDate} AND viewed_at < ${endDate}) AS period_source_views,
       (SELECT COUNT(*)::int FROM library_views WHERE viewed_at >= ${prevStartDate} AND viewed_at < ${prevEndDate}) AS prev_source_views
-  `).catch(err => {
-    console.error('KPI QUERY ERROR:', err.message);
-    return { rows: [{}] };
-  });
+  `), 2500, { rows: [{}] });
 
   // 2. TIME SERIES (Dinamik o'sish va faollik grafigi)
-  const timeSeriesQuery = pool.query(`
+  const timeSeriesQuery = withTimeout(pool.query(`
     WITH series AS (
       SELECT generate_series(
         (${startDate})::timestamptz,
@@ -849,13 +851,10 @@ async function getDashboardData(params = {}) {
     LEFT JOIN m_counts m ON m.bucket = s.bucket
     LEFT JOIN s_counts sc ON sc.bucket = s.bucket
     ORDER BY s.bucket ASC
-  `).catch(err => {
-    console.error('TIME SERIES QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 3. HAFTA KUNLARI FAOLLIGI (1=Dushanba ... 7=Yakshanba - Tashkent Time)
-  const weekdayQuery = pool.query(`
+  const weekdayQuery = withTimeout(pool.query(`
     SELECT
       EXTRACT(ISODOW FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS dow,
       COUNT(DISTINCT user_id)::int AS active_users,
@@ -875,13 +874,10 @@ async function getDashboardData(params = {}) {
     WHERE act_time IS NOT NULL
     GROUP BY dow
     ORDER BY dow ASC
-  `).catch(err => {
-    console.error('WEEKDAY QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 4. SOATLIK FAOLLIK (00:00 - 23:00 - Tashkent Time)
-  const hourlyQuery = pool.query(`
+  const hourlyQuery = withTimeout(pool.query(`
     SELECT
       EXTRACT(HOUR FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
       COUNT(DISTINCT user_id)::int AS active_users,
@@ -897,13 +893,10 @@ async function getDashboardData(params = {}) {
     WHERE act_time IS NOT NULL
     GROUP BY hour
     ORDER BY hour ASC
-  `).catch(err => {
-    console.error('HOURLY QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 5. HAFTA KUNI X SOAT HEATMAP (168 cells - Tashkent Time)
-  const heatmapQuery = pool.query(`
+  const heatmapQuery = withTimeout(pool.query(`
     SELECT
       EXTRACT(ISODOW FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS day,
       EXTRACT(HOUR FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
@@ -917,13 +910,10 @@ async function getDashboardData(params = {}) {
     ) acts
     WHERE act_time IS NOT NULL
     GROUP BY day, hour
-  `).catch(err => {
-    console.error('HEATMAP QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 6. DEEP DIVE: DARSLAR (Top and least watched)
-  const lessonsDeepQuery = pool.query(`
+  const lessonsDeepQuery = withTimeout(pool.query(`
     SELECT
       l.id,
       l.title,
@@ -940,13 +930,10 @@ async function getDashboardData(params = {}) {
     GROUP BY l.id, m.title, c.title
     ORDER BY view_count DESC
     LIMIT 15
-  `).catch(err => {
-    console.error('LESSONS DEEP QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 7. DEEP DIVE: KITOBLAR (Top read & most saved)
-  const booksDeepQuery = pool.query(`
+  const booksDeepQuery = withTimeout(pool.query(`
     SELECT
       lb.id,
       lb.title,
@@ -961,13 +948,10 @@ async function getDashboardData(params = {}) {
     GROUP BY lb.id, lb.title, lb.author, lb.categories, lb.view_count
     ORDER BY unique_readers DESC, lb.view_count DESC
     LIMIT 10
-  `).catch(err => {
-    console.error('BOOKS DEEP QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 8. DEEP DIVE: MATERIALLAR (Top viewed & category distribution)
-  const materialsDeepQuery = pool.query(`
+  const materialsDeepQuery = withTimeout(pool.query(`
     SELECT
       m.id,
       COALESCE(m.name_uz, m.name, 'Material') AS name_uz,
@@ -979,12 +963,9 @@ async function getDashboardData(params = {}) {
     LEFT JOIN material_categories c ON c.id = m.category_id
     ORDER BY (COALESCE(m.view_count, 0) + COALESCE((SELECT COUNT(*)::int FROM material_view_log mvl WHERE mvl.material_id = m.id), 0)) DESC
     LIMIT 10
-  `).catch(err => {
-    console.error('MATERIALS DEEP QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
-  const materialsCatQuery = pool.query(`
+  const materialsCatQuery = withTimeout(pool.query(`
     SELECT
       COALESCE(c.name, 'Boshqa') AS category,
       COUNT(m.id)::int AS item_count,
@@ -994,13 +975,10 @@ async function getDashboardData(params = {}) {
     GROUP BY c.name
     ORDER BY total_views DESC
     LIMIT 8
-  `).catch(err => {
-    console.error('MATERIALS CAT QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 9. DEEP DIVE: MANBALAR (Top used/downloaded library resources)
-  const sourcesDeepQuery = pool.query(`
+  const sourcesDeepQuery = withTimeout(pool.query(`
     SELECT
       lr.id,
       lr.title,
@@ -1011,13 +989,10 @@ async function getDashboardData(params = {}) {
     WHERE lr.status = 'published'
     ORDER BY (COALESCE(lr.view_count, 0) + COALESCE(lr.download_count, 0) * 2) DESC
     LIMIT 10
-  `).catch(err => {
-    console.error('SOURCES DEEP QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 10. TOP ACTIVE STUDENTS TABLE
-  const topStudentsQuery = pool.query(`
+  const topStudentsQuery = withTimeout(pool.query(`
     SELECT
       u.id,
       u.first_name,
@@ -1032,7 +1007,12 @@ async function getDashboardData(params = {}) {
       COALESCE(m.viewed_materials, 0)::int AS viewed_materials,
       COALESCE(s.used_sources, 0)::int AS used_sources,
       (COALESCE(p.watched_lessons, 0) * 3 + COALESCE(b.read_books, 0) * 2 + COALESCE(m.viewed_materials, 0) + COALESCE(s.used_sources, 0))::int AS total_activity_score
-    FROM users u
+    FROM (
+      SELECT id, first_name, last_name, username, telegram_id, access_until, created_at
+      FROM users
+      ORDER BY id DESC
+      LIMIT 100
+    ) u
     LEFT JOIN user_activity ua ON ua.user_id = u.id
     LEFT JOIN (
       SELECT user_id, COUNT(*)::int AS watched_lessons
@@ -1057,15 +1037,16 @@ async function getDashboardData(params = {}) {
     ) s ON s.user_id = u.id
     ORDER BY total_activity_score DESC, ua.last_seen_at DESC NULLS LAST
     LIMIT 20
-  `).catch(err => {
-    console.error('TOP STUDENTS QUERY ERROR:', err.message);
-    return { rows: [] };
-  });
+  `), 2000, { rows: [] });
 
   // 11. USER RETENTION (Cohorts)
-  const retentionQuery = pool.query(`
+  const retentionQuery = withTimeout(pool.query(`
     WITH base_cohort AS (
-      SELECT id, created_at FROM users WHERE created_at <= NOW() - INTERVAL '30 DAYS'
+      SELECT id, created_at FROM users
+      WHERE created_at <= NOW() - INTERVAL '30 DAYS'
+        AND created_at >= NOW() - INTERVAL '90 DAYS'
+      ORDER BY created_at DESC
+      LIMIT 100
     ),
     retention_stats AS (
       SELECT
@@ -1093,10 +1074,7 @@ async function getDashboardData(params = {}) {
       ROUND((day_7_active::numeric / GREATEST(total_cohort, 1)) * 100, 1)::float AS day_7_pct,
       ROUND((day_30_active::numeric / GREATEST(total_cohort, 1)) * 100, 1)::float AS day_30_pct
     FROM retention_stats
-  `).catch(err => {
-    console.error('RETENTION QUERY ERROR:', err.message);
-    return { rows: [{ total_cohort: 0, day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 }] };
-  });
+  `), 2000, { rows: [{ total_cohort: 0, day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 }] });
 
   // Await all queries in parallel
   const [
@@ -1126,7 +1104,7 @@ async function getDashboardData(params = {}) {
     sourcesDeepQuery,
     topStudentsQuery,
     retentionQuery,
-    getDeviceAnalytics({ startDate, endDate }, granularity, pool)
+    withTimeout(getDeviceAnalytics({ startDate, endDate }, granularity, pool), 2500, null)
   ]);
 
   const k = kpiRes.rows[0] || {};
