@@ -56,9 +56,12 @@ if (pool) {
     chat_username TEXT,
     file_name TEXT,
     file_size BIGINT,
+    file_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (chat_id, message_id)
-  )`).catch(function (e) { console.warn('tg_file_index:', e.message); });
+  )`).then(function () {
+    return pool.query('ALTER TABLE tg_file_index ADD COLUMN IF NOT EXISTS file_id TEXT');
+  }).catch(function (e) { console.warn('tg_file_index:', e.message); });
 }
 
 bot.on(['channel_post', 'edited_channel_post', 'message'], async function (ctx, next) {
@@ -67,12 +70,12 @@ bot.on(['channel_post', 'edited_channel_post', 'message'], async function (ctx, 
     if (pool && msg && msg.chat && msg.chat.type !== 'private') {
       var f = msg.document || msg.video || msg.audio || msg.animation ||
         (msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1] : null);
-      if (f && f.file_size) {
+      if (f && (f.file_size || f.file_id)) {
         await pool.query(
-          `INSERT INTO tg_file_index (chat_id, message_id, chat_username, file_name, file_size)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (chat_id, message_id) DO UPDATE SET file_name = EXCLUDED.file_name, file_size = EXCLUDED.file_size`,
-          [String(msg.chat.id), msg.message_id, msg.chat.username ? msg.chat.username.toLowerCase() : null, f.file_name || f.title || null, f.file_size]
+          `INSERT INTO tg_file_index (chat_id, message_id, chat_username, file_name, file_size, file_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (chat_id, message_id) DO UPDATE SET file_name = EXCLUDED.file_name, file_size = EXCLUDED.file_size, file_id = COALESCE(EXCLUDED.file_id, tg_file_index.file_id)`,
+          [String(msg.chat.id), msg.message_id, msg.chat.username ? msg.chat.username.toLowerCase() : null, f.file_name || f.title || null, f.file_size || 0, f.file_id || null]
         );
       }
     }

@@ -33,6 +33,19 @@ async function resolveTelegramFileId(pool, tgApi, adminChatId, lesson) {
   const chatId = String(lesson.telegram_chat_id).trim();
   const messageId = parseInt(lesson.telegram_message_id, 10);
 
+  // 0. Check if file_id is already in tg_file_index
+  try {
+    const idxRes = await pool.query(
+      'SELECT file_id FROM tg_file_index WHERE chat_id = $1 AND message_id = $2 AND file_id IS NOT NULL LIMIT 1',
+      [chatId, messageId]
+    );
+    if (idxRes.rows.length && idxRes.rows[0].file_id) {
+      const fId = idxRes.rows[0].file_id;
+      pool.query('UPDATE lessons SET telegram_file_id = $1 WHERE id = $2', [fId, lesson.id]).catch(() => {});
+      return fId;
+    }
+  } catch (idxErr) {}
+
   try {
     // 1. Forward the message to the admin chat to get the message metadata
     const r = await tgApi('forwardMessage', {
