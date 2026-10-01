@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="dBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#dBg)"/>
+
+  <text x="400" y="60" text-anchor="middle" font-family="'Inter', sans-serif" font-size="22" font-weight="800" fill="#f8fafc" letter-spacing="1">CHIZIQLI DUSH TRAPI — TUZILISHI</text>
+  <text x="400" y="88" text-anchor="middle" font-family="'Inter', sans-serif" font-size="14" fill="#94a3b8">AISI 304 zanglamas po'lat + 360° aylanuvchi quruq/ho'l gidrozatvor</text>
+
+  <!-- Drain diagram -->
+  <g transform="translate(100, 140)">
+    <!-- Stainless steel tray -->
+    <rect x="0" y="40" width="600" height="40" rx="2" fill="url(#steelGrad)" stroke="#cbd5e1" stroke-width="1.5"/>
+
+    <!-- Grate perforations -->
+    <g fill="#1e293b">
+      <rect x="30" y="48" width="40" height="8" rx="2"/>
+      <rect x="90" y="48" width="40" height="8" rx="2"/>
+      <rect x="150" y="48" width="40" height="8" rx="2"/>
+      <rect x="210" y="48" width="40" height="8" rx="2"/>
+      <rect x="270" y="48" width="40" height="8" rx="2"/>
+      <rect x="330" y="48" width="40" height="8" rx="2"/>
+      <rect x="390" y="48" width="40" height="8" rx="2"/>
+      <rect x="450" y="48" width="40" height="8" rx="2"/>
+      <rect x="510" y="48" width="40" height="8" rx="2"/>
+    </g>
+
+    <!-- Lower Trap / Siphon Body -->
+    <g transform="translate(230, 80)">
+      <rect x="0" y="0" width="140" height="110" rx="6" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
+      <!-- Siphon water seal / valve -->
+      <path d="M 30,30 C 30,70 110,70 110,30" fill="none" stroke="#38bdf8" stroke-width="4"/>
+      <text x="70" y="55" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" font-weight="700" fill="#38bdf8">GIDROZATVOR</text>
+      <!-- Drain outlet pipe -->
+      <rect x="140" y="40" width="70" height="35" rx="3" fill="#334155" stroke="#0284c7" stroke-width="1.5"/>
+      <text x="175" y="62" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" font-weight="700" fill="#94a3b8">Ø 50 mm</text>
+    </g>
+
+    <!-- Membrane flange edge -->
+    <line x1="-30" y1="40" x2="0" y2="40" stroke="#f59e0b" stroke-width="3"/>
+    <line x1="600" y1="40" x2="630" y2="40" stroke="#f59e0b" stroke-width="3"/>
+    <text x="-40" y="35" text-anchor="end" font-family="'Inter', sans-serif" font-size="11" font-weight="700" fill="#f59e0b">Gidroizolyatsiya yoqasi</text>
+  </g>
+
+  <!-- Technical badges footer -->
+  <g transform="translate(100, 420)">
+    <rect width="600" height="110" rx="8" fill="#0b1329" stroke="#334155" stroke-width="1"/>
+    
+    <g transform="translate(40, 25)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">Suv o'tkazish tezligi:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#38bdf8">48 litr / daqiqa</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Tropik dush uchun yetarli</text>
+    </g>
+
+    <g transform="translate(240, 25)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">Zanglashga chidami:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#22c55e">AISI 304 po'lat</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">100% zanglamaydi</text>
+    </g>
+
+    <g transform="translate(440, 25)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">O'rnatish minimal chuqurligi:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#f59e0b">65 mm balandlik</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Yupqa styajkaga mos</text>
+    </g>
+  </g>
+</svg>

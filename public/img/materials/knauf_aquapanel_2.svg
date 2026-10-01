@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="cementGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bgGrad2)"/>
+
+  <!-- Technical Diagram Title -->
+  <text x="400" y="60" text-anchor="middle" font-family="'Inter', sans-serif" font-size="22" font-weight="800" fill="#f8fafc" letter-spacing="1">KNAUF AQUAPANEL® INDOOR — STRUKTURASI</text>
+  <text x="400" y="88" text-anchor="middle" font-family="'Inter', sans-serif" font-size="14" fill="#94a3b8">12.5 mm sement plita qatlamlari kesimi (Cross-section)</text>
+
+  <!-- Cross section block -->
+  <g transform="translate(150, 140)">
+    <!-- Main Cement Core -->
+    <rect x="0" y="40" width="500" height="180" rx="4" fill="url(#cementGrad)" stroke="#64748b" stroke-width="1.5"/>
+
+    <!-- Aggregate texture dots inside core -->
+    <g fill="#cbd5e1" opacity="0.3">
+      <circle cx="50" cy="80" r="4"/><circle cx="120" cy="110" r="6"/><circle cx="210" cy="70" r="5"/>
+      <circle cx="340" cy="120" r="7"/><circle cx="430" cy="85" r="4"/><circle cx="80" cy="160" r="5"/>
+      <circle cx="180" cy="180" r="6"/><circle cx="280" cy="150" r="4"/><circle cx="390" cy="170" r="5"/>
+    </g>
+
+    <!-- Top Fiberglass Mesh Grid (Blue dashed) -->
+    <line x1="0" y1="46" x2="500" y2="46" stroke="#0284c7" stroke-width="4" stroke-dasharray="8 4"/>
+    <text x="520" y="50" font-family="'Inter', sans-serif" font-size="13" font-weight="700" fill="#38bdf8">1. Shishatola to'r (Yuqori armatura)</text>
+
+    <!-- Cement Core Label -->
+    <text x="250" y="135" text-anchor="middle" font-family="'Inter', sans-serif" font-size="16" font-weight="800" fill="#ffffff" letter-spacing="1">PORTLANDSEMENT VA MINERAL AGREGATLAR</text>
+    <text x="250" y="158" text-anchor="middle" font-family="'Inter', sans-serif" font-size="12" fill="#94a3b8">Gips mavjud emas • Chirishga 100% chidamli • Zichlik 1050 kg/m³</text>
+
+    <!-- Bottom Fiberglass Mesh Grid (Blue dashed) -->
+    <line x1="0" y1="214" x2="500" y2="214" stroke="#0284c7" stroke-width="4" stroke-dasharray="8 4"/>
+    <text x="520" y="218" font-family="'Inter', sans-serif" font-size="13" font-weight="700" fill="#38bdf8">2. Shishatola to'r (Pastki armatura)</text>
+
+    <!-- Dimension Bracket Left -->
+    <path d="M -20,40 L -30,40 L -30,220 L -20,220" fill="none" stroke="#94a3b8" stroke-width="2"/>
+    <text x="-40" y="135" text-anchor="end" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#38bdf8">12.5 mm</text>
+  </g>
+
+  <!-- Technical specs badges footer -->
+  <g transform="translate(100, 420)">
+    <rect width="600" height="120" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    
+    <g transform="translate(40, 30)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">Radiusli egilish:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#f8fafc">R ≥ 1 metr</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Quruq usulda egiladi</text>
+    </g>
+
+    <g transform="translate(240, 30)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">Yong'in klassi:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#22c55e">KM0 (NG)</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Mutlaqo yonmaydi</text>
+    </g>
+
+    <g transform="translate(440, 30)">
+      <text x="0" y="16" font-family="'Inter', sans-serif" font-size="12" fill="#64748b">Yelim bilan yopishish:</text>
+      <text x="0" y="38" font-family="'Inter', sans-serif" font-size="15" font-weight="800" fill="#38bdf8">&gt; 1.0 MPa</text>
+      <text x="0" y="55" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Kafel va tosh uchun</text>
+    </g>
+  </g>
+</svg>

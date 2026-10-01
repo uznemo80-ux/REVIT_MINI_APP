@@ -401,7 +401,7 @@ function formatImageUrl(url) {
     return cleanUrl.replace(/[?&]dl=0/, "").concat(cleanUrl.includes("?") ? "&raw=1" : "?raw=1");
   }
 
-  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://") && !cleanUrl.startsWith("data:")) {
+  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://") && !cleanUrl.startsWith("data:") && !cleanUrl.startsWith("/")) {
     cleanUrl = "https://" + cleanUrl;
   }
 
@@ -8762,6 +8762,11 @@ function ensureMaterialCardRotationTicker() {
 
 function startMaterialCardRotationTicker() {
   if (materialCardRotationInterval) clearInterval(materialCardRotationInterval);
+
+  // Initialize per-card staggered timing on first run
+  _initCardStaggerTimings();
+
+  // One master ticker at 1000ms — checks each card's individual schedule
   materialCardRotationInterval = setInterval(() => {
     // Only rotate if currently viewing materials catalog (not detail and not other section)
     if (libraryActiveSection !== "materials" || (currentView && currentView.type === "material_detail")) {
@@ -8770,11 +8775,25 @@ function startMaterialCardRotationTicker() {
     const cards = document.querySelectorAll('.mcat-card[data-images]');
     if (!cards || !cards.length) return;
 
-    cards.forEach(card => {
+    const now = Date.now();
+    cards.forEach((card, i) => {
       // Pause rotation if hovered on desktop
       if (card.matches && card.matches(':hover')) return;
 
       try {
+        // If not initialized yet (e.g. after re-render/filter), assign unique staggered schedule
+        if (!card.hasAttribute('data-rotate-interval')) {
+          const interval = 5000 + ((i * 2749 + 1301) % 7001);
+          const delay = 1000 + ((i * 3571 + 2137) % 5001);
+          card.setAttribute('data-rotate-interval', String(interval));
+          card.setAttribute('data-next-rotate', String(now + delay));
+          return;
+        }
+
+        // Check if this card's next rotation time has arrived
+        const nextRotate = parseInt(card.getAttribute('data-next-rotate') || '0', 10);
+        if (!nextRotate || now < nextRotate) return;
+
         const raw = card.getAttribute('data-images');
         if (!raw) return;
         const images = JSON.parse(raw);
@@ -8783,6 +8802,10 @@ function startMaterialCardRotationTicker() {
         let curIdx = parseInt(card.getAttribute('data-img-idx') || '0', 10);
         let nextIdx = (curIdx + 1) % images.length;
         card.setAttribute('data-img-idx', String(nextIdx));
+
+        // Schedule next rotation for THIS card with its own interval
+        const interval = parseInt(card.getAttribute('data-rotate-interval') || '7000', 10);
+        card.setAttribute('data-next-rotate', String(now + interval));
 
         const imgEl = card.querySelector('.mcat-card-img img');
         if (imgEl && images[nextIdx]) {
@@ -8799,7 +8822,23 @@ function startMaterialCardRotationTicker() {
         });
       } catch (e) {}
     });
-  }, 5000);
+  }, 1000);
+}
+
+/** Assign each card a unique rotation interval and staggered initial delay */
+function _initCardStaggerTimings() {
+  const cards = document.querySelectorAll('.mcat-card[data-images]');
+  if (!cards || !cards.length) return;
+  const now = Date.now();
+  cards.forEach((card, i) => {
+    if (card.getAttribute('data-rotate-interval')) return; // already initialized
+    // Deterministic pseudo-random interval between 5000-12000ms
+    const interval = 5000 + ((i * 2749 + 1301) % 7001);
+    // Deterministic pseudo-random initial delay between 1000-6000ms
+    const delay = 1000 + ((i * 3571 + 2137) % 5001);
+    card.setAttribute('data-rotate-interval', String(interval));
+    card.setAttribute('data-next-rotate', String(now + delay));
+  });
 }
 
 function stopMaterialCardRotationTicker() {
