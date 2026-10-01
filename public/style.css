@@ -10575,3 +10575,107 @@ button, a, input, select, textarea,
     transition-delay: 150ms;
   }
 }
+
+/* --------------------------------------------------------------------------
+   4. TOUCH OPTIMIZATIONS: 44px+ TARGETS, SPACING & VIEWPORT POLISH
+   -------------------------------------------------------------------------- */
+@media (hover: none) and (pointer: coarse), (pointer: coarse), (max-width: 640px) {
+  /* Ensure comfortable min-44px touch targets on mobile */
+  .btn,
+  .admin-btn,
+  .admin-small-btn,
+  .sf-tool-btn,
+  .sf-close-btn,
+  .sf-nav-btn,
+  .modal-close,
+  .sheet-close-btn,
+  .mcat-icon-btn,
+  .library-v2-bookmark-btn,
+  .lib-bookmark-toggle-btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Filter and navigation chips: minimum 38px height with comfortable padding */
+  .chip,
+  .sheet-chip,
+  .sheet-chip-btn,
+  .admin-chip,
+  .admin-filter-chip,
+  .analytics-chip,
+  .stat-pill {
+    min-height: 38px;
+    padding: 7px 14px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Prevent accidental mis-taps: minimum 8px gap between action buttons */
+  .admin-action-row,
+  .admin-btn-group,
+  .analytics-chip-group {
+    gap: 8px !important;
+  }
+
+  /* iOS Safari auto-zoom prevention: enforce 16px font-size on all mobile inputs */
+  input,
+  select,
+  textarea,
+  .apple-input,
+  .search-input {
+    font-size: 16px !important;
+  }
+
+  /* Bottom nav safe-area inset */
+  .bottom-nav {
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 12px)) !important;
+  }
+}
+
+/* Viewport overflow prevention across all screen widths */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+.admin-panel,
+.analytics-dashboard-page,
+.app-container {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   5. ANALYTICS SKELETON SHIMMER & RESPONSIVE CONTAINERS
+   -------------------------------------------------------------------------- */
+.analytics-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.analytics-table-wrap,
+.analytics-chart-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  width: 100%;
+}
+

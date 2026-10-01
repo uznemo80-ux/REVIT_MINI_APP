@@ -11574,7 +11574,8 @@ let adminAnalyticsDashboardState = {
   granularity: 'auto',
   activeMetric: 'all', // 'all', 'new_users', 'lesson_views', 'book_reads', 'material_views'
   deepDiveTab: 'lessons', // 'lessons', 'books', 'materials', 'sources'
-  loading: false
+  loading: false,
+  error: null
 };
 let adminData = {
   stats: null,
@@ -11653,24 +11654,43 @@ async function adminNavigate(to, subTo) {
   try {
     if (to === "stats") {
       adminView = "dashboard";
-      const [liveData, historyData, dashboardData] = await Promise.all([
-        adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
-        adminApi("/api/admin/analytics/history", { period: adminAnalyticsDashboardState.period || "7days" }).catch(() => ({ summary: {}, daily: [] })),
-        adminApi("/api/admin/analytics/dashboard", {
-          period: adminAnalyticsDashboardState.period || "7days",
-          start_date: adminAnalyticsDashboardState.startDate || undefined,
-          end_date: adminAnalyticsDashboardState.endDate || undefined,
-          granularity: adminAnalyticsDashboardState.granularity || undefined
-        }).catch(err => {
-          console.warn("Analytics master dashboard fetch warning:", err.message);
-          return null;
-        })
-      ]);
-      adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
-      adminData.activeUsers = liveData.active_users || [];
-      adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
-      adminData.analyticsDashboard = dashboardData;
-      startAdminLivePolling();
+      adminAnalyticsDashboardState.loading = !adminData.analyticsDashboard;
+      adminAnalyticsDashboardState.error = null;
+      renderAdminPanel(); // Instant skeleton render so UI never freezes!
+
+      try {
+        const [liveData, historyData, dashboardData] = await Promise.all([
+          adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
+          adminApi("/api/admin/analytics/history", { period: adminAnalyticsDashboardState.period || "7days" }).catch(() => ({ summary: {}, daily: [] })),
+          adminApi("/api/admin/analytics/dashboard", {
+            period: adminAnalyticsDashboardState.period || "7days",
+            start_date: adminAnalyticsDashboardState.startDate || undefined,
+            end_date: adminAnalyticsDashboardState.endDate || undefined,
+            granularity: adminAnalyticsDashboardState.granularity || undefined
+          }).catch(err => {
+            console.warn("Analytics master dashboard fetch warning:", err.message);
+            adminAnalyticsDashboardState.error = err.message;
+            return null;
+          })
+        ]);
+        adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
+        adminData.activeUsers = liveData.active_users || [];
+        adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
+        if (dashboardData) {
+          adminData.analyticsDashboard = dashboardData;
+          adminAnalyticsDashboardState.error = null;
+        } else if (!adminData.analyticsDashboard) {
+          adminAnalyticsDashboardState.error = adminAnalyticsDashboardState.error || "Statistika ma'lumotlarini yuklab bo'lmadi";
+        }
+        startAdminLivePolling();
+      } catch (statsErr) {
+        console.warn("stats navigate error:", statsErr);
+        adminAnalyticsDashboardState.error = statsErr.message || "Yuklashda xatolik yuz berdi";
+      } finally {
+        adminAnalyticsDashboardState.loading = false;
+        renderAdminPanel();
+      }
+      return;
     } else {
       stopAdminLivePolling();
     }
@@ -11997,6 +12017,108 @@ async function trackAnalyticsEvent(eventType, category = 'general', contentId = 
 window.trackAnalyticsEvent = trackAnalyticsEvent;
 
 // ======================================================
+// 2. MASTER ANALYTICS DASHBOARD SKELETON & ERROR HANDLERS
+// ======================================================
+
+function renderAdminStatsSkeletonHtml() {
+  return `
+    <div class="admin-stats-page analytics-dashboard-page" id="admin-analytics-dashboard-wrap">
+      <!-- HERO HEADER SKELETON -->
+      <div class="admin-section-hero" style="margin-bottom:18px;">
+        <div>
+          <div class="admin-hero-title">📊 Analytics Dashboard</div>
+          <div class="admin-hero-desc">Platformaning to'liq ko'rsatkichlari yuklanmoqda...</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+            <div class="spinner-inline" style="width:14px; height:14px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+            Yuklanmoqda...
+          </div>
+        </div>
+      </div>
+
+      <!-- SKELETON TOOLBAR -->
+      <div class="analytics-toolbar">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="analytics-skeleton" style="width:140px; height:20px; border-radius:6px;"></div>
+          <div class="analytics-skeleton" style="width:160px; height:32px; border-radius:8px;"></div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+          <div class="analytics-skeleton" style="width:75px; height:30px; border-radius:8px;"></div>
+          <div class="analytics-skeleton" style="width:75px; height:30px; border-radius:8px;"></div>
+          <div class="analytics-skeleton" style="width:95px; height:30px; border-radius:8px;"></div>
+          <div class="analytics-skeleton" style="width:105px; height:30px; border-radius:8px;"></div>
+          <div class="analytics-skeleton" style="width:80px; height:30px; border-radius:8px;"></div>
+          <div class="analytics-skeleton" style="width:80px; height:30px; border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <!-- SKELETON KPI CARDS -->
+      <div style="margin-bottom:20px;">
+        <div class="analytics-skeleton" style="width:180px; height:18px; margin-bottom:12px; border-radius:4px;"></div>
+        <div class="analytics-kpi-grid">
+          ${[1, 2, 3, 4, 5, 6].map(() => `
+            <div class="analytics-kpi-card" style="min-height:120px;">
+              <div class="analytics-kpi-top">
+                <div class="analytics-skeleton" style="width:36px; height:36px; border-radius:10px;"></div>
+                <div class="analytics-skeleton" style="width:45px; height:18px; border-radius:6px;"></div>
+              </div>
+              <div class="analytics-skeleton" style="width:80px; height:28px; border-radius:6px; margin:8px 0 4px 0;"></div>
+              <div class="analytics-skeleton" style="width:110px; height:14px; border-radius:4px;"></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- SKELETON CHART CARD -->
+      <div class="analytics-card" style="min-height:280px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+          <div class="analytics-skeleton" style="width:220px; height:22px; border-radius:6px;"></div>
+          <div class="analytics-skeleton" style="width:100px; height:28px; border-radius:8px;"></div>
+        </div>
+        <div class="analytics-skeleton" style="width:100%; height:200px; border-radius:10px;"></div>
+      </div>
+
+      <!-- SKELETON DEVICE STATS -->
+      <div class="analytics-card" style="min-height:200px;">
+        <div class="analytics-skeleton" style="width:200px; height:20px; margin-bottom:14px; border-radius:6px;"></div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
+          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
+          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminStatsErrorHtml(errMsg) {
+  return `
+    <div class="admin-stats-page analytics-dashboard-page" style="padding:24px 16px; max-width:680px; margin:0 auto; text-align:center;">
+      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:18px; padding:32px 24px; box-shadow:0 8px 30px rgba(0,0,0,0.15);">
+        <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,59,48,0.12); color:#ff3b30; font-size:28px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+          ⚠️
+        </div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:8px;">
+          Statistika ma'lumotlarini yuklashda xatolik
+        </div>
+        <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:24px; max-width:440px; margin-left:auto; margin-right:auto;">
+          ${escapeHtml(errMsg || "Serverdan statistik ko'rsatkichlarni olishda uzilish yuz berdi. Internet aloqasini tekshiring yoki qayta urinib ko'ring.")}
+        </div>
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+          <button class="btn" onclick="refreshAdminAnalyticsDashboard()" style="min-width:160px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--accent); color:#fff; border-radius:12px; font-weight:700;">
+            🔄 Qayta yuklash
+          </button>
+          <button class="btn btn-secondary" onclick="adminNavigate('root')" style="min-width:140px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px;">
+            Ortga qaytish
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ======================================================
 // 2. MASTER ANALYTICS DASHBOARD
 // ======================================================
 
@@ -12009,6 +12131,13 @@ function renderAdminStatsView() {
   const allMats = (adminMaterialsState && adminMaterialsState.materials) || DEFAULT_MATERIALS || [];
 
   const dash = adminData.analyticsDashboard || null;
+
+  if (adminAnalyticsDashboardState.loading && !dash) {
+    return renderAdminStatsSkeletonHtml();
+  }
+  if (adminAnalyticsDashboardState.error && !dash) {
+    return renderAdminStatsErrorHtml(adminAnalyticsDashboardState.error);
+  }
   const kpi = dash?.kpi || null;
   const timeSeries = dash?.time_series || null;
   const seriesData = timeSeries?.data || [];
@@ -12297,8 +12426,18 @@ function renderAdminStatsView() {
         </div>
       </div>
 
+      <!-- QUICK SECTION NAVIGATION CHIPS -->
+      <div class="analytics-chip-group" style="margin-bottom:18px; overflow-x:auto; padding-bottom:6px; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;">
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-kpi')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📌 Asosiy KPI</button>
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-dynamics')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📈 Dinamika</button>
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-hourly')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">⏰ Soatlik & Heatmap</button>
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-devices')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📱 Qurilmalar</button>
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-content')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📚 Kontent Tahlili</button>
+        <button class="analytics-chip" onclick="document.getElementById('analytics-section-students')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">🏆 O'quvchilar Reytingi</button>
+      </div>
+
       <!-- 2. YUQORI KPI KARTALAR (FOYDALANUVCHILAR) -->
-      <div style="margin-bottom:12px;">
+      <div id="analytics-section-kpi" style="margin-bottom:12px;">
         <div class="admin-section-title" style="margin-bottom:10px;">👥 Foydalanuvchilar Ko'rsatkichlari</div>
         <div class="analytics-kpi-grid">
           <div class="analytics-kpi-card">
@@ -12422,7 +12561,7 @@ function renderAdminStatsView() {
       </div>
 
       <!-- 4. O'QUVCHILAR QO'SHILISH DINAMIKASI VA FAOLLIK GRAFIGI -->
-      <div class="analytics-card">
+      <div id="analytics-section-dynamics" class="analytics-card">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
           <div>
             <div style="font-size:15px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
@@ -12484,7 +12623,7 @@ function renderAdminStatsView() {
       </div>
 
       <!-- 6. HAFTA KUNLARI VA 24 SOATLIK FAOLLIK (2 USTUNLI GRID) -->
-      <div class="analytics-two-col" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-bottom:20px;">
+      <div id="analytics-section-hourly" class="analytics-two-col" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-bottom:20px;">
         <!-- HAFTANING ENG FAOL KUNLARI -->
         <div class="analytics-card" style="margin-bottom:0;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -12540,7 +12679,7 @@ function renderAdminStatsView() {
       </div>
 
       <!-- 5. QURILMA / DEVICE ANALYTICS (24-BO'LIM) -->
-      <div class="analytics-card">
+      <div id="analytics-section-devices" class="analytics-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
           <div>
             <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
@@ -12559,7 +12698,7 @@ function renderAdminStatsView() {
       </div>
 
       <!-- 8. KONTENT BO'YICHA CHUQUR TAHLIL (DEEP DIVES) -->
-      <div class="analytics-card">
+      <div id="analytics-section-content" class="analytics-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
           <div>
             <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
@@ -12631,7 +12770,7 @@ function renderAdminStatsView() {
       </div>
 
       <!-- 10. ENG FAOL O'QUVCHILAR JADVALI (TOP ACTIVE STUDENTS) -->
-      <div class="analytics-card">
+      <div id="analytics-section-students" class="analytics-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div>
             <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
@@ -12646,7 +12785,7 @@ function renderAdminStatsView() {
           </button>
         </div>
 
-        <div style="overflow-x:auto;">
+        <div class="analytics-table-wrap" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
           <table class="analytics-table">
             <thead>
               <tr>
@@ -12930,20 +13069,31 @@ function renderAnalyticsDeviceSectionHtml(devices) {
     return `<div class="empty-box" style="padding:24px 12px;">Qurilmalar analitikasi ma'lumotlari yuklanmoqda...</div>`;
   }
 
-  const summary = devices.summary || {
-    mobile: { users: 0, active: 0, sessions: 0, pct: 0 },
-    desktop: { users: 0, active: 0, sessions: 0, pct: 0 },
-    tablet: { users: 0, active: 0, sessions: 0, pct: 0 }
+  const rawSummary = devices.summary || {};
+  const mob = rawSummary.mobile || {};
+  const desk = rawSummary.desktop || {};
+  const tab = rawSummary.tablet || {};
+
+  const summary = {
+    mobile: {
+      pct: mob.pct ?? mob.percentage ?? 0,
+      users: mob.users ?? mob.users_count ?? 0,
+      active: mob.active ?? mob.active_count ?? 0,
+      sessions: mob.sessions ?? mob.sessions_count ?? 0
+    },
+    desktop: {
+      pct: desk.pct ?? desk.percentage ?? 0,
+      users: desk.users ?? desk.users_count ?? 0,
+      active: desk.active ?? desk.active_count ?? 0,
+      sessions: desk.sessions ?? desk.sessions_count ?? 0
+    },
+    tablet: {
+      pct: tab.pct ?? tab.percentage ?? 0,
+      users: tab.users ?? tab.users_count ?? 0,
+      active: tab.active ?? tab.active_count ?? 0,
+      sessions: tab.sessions ?? tab.sessions_count ?? 0
+    }
   };
-  const distribution = devices.distribution || [];
-  const timeSeries = devices.time_series || [];
-  const contentMatrix = devices.content_matrix || [];
-  const peakHours = devices.peak_hours || {
-    mobile: { peak: '20:00 - 22:00', label: 'Kechki payt' },
-    desktop: { peak: '10:00 - 13:00', label: 'Ish vaqti' },
-    tablet: { peak: '19:00 - 21:00', label: 'Dam olish' }
-  };
-  const hourly = devices.hourly_breakdown || [];
 
   const osColors = {
     'Android': '#34c759',
@@ -12955,6 +13105,23 @@ function renderAnalyticsDeviceSectionHtml(devices) {
     'Linux': '#ffcc00',
     'Unknown': '#8e8e93'
   };
+
+  const distribution = (devices.distribution || []).map(d => {
+    const name = d.name || d.os || 'Unknown';
+    const pct = d.pct ?? d.percentage ?? 0;
+    const count = d.count ?? d.users_count ?? d.sessions_count ?? 0;
+    const clr = osColors[name] || d.color || '#8e8e93';
+    return { ...d, name, pct, count, clr };
+  });
+
+  const timeSeries = devices.time_series || [];
+  const contentMatrix = devices.content_matrix || [];
+  const peakHours = devices.peak_hours || {
+    mobile: { peak: '20:00 - 22:00', label: 'Kechki payt' },
+    desktop: { peak: '10:00 - 13:00', label: 'Ish vaqti' },
+    tablet: { peak: '19:00 - 21:00', label: 'Dam olish' }
+  };
+  const hourly = devices.hourly_breakdown || [];
 
   const maxTimeVal = Math.max(1, ...timeSeries.map(t => Math.max(t.mobile || 0, t.desktop || 0, t.tablet || 0)));
 
@@ -13058,15 +13225,13 @@ function renderAnalyticsDeviceSectionHtml(devices) {
         <!-- Segmented bar -->
         <div style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:rgba(255,255,255,0.06); margin-bottom:12px;">
           ${distribution.map(d => {
-            const clr = osColors[d.name] || '#8e8e93';
-            return `<div style="width:${Math.max(2, d.pct)}%; background:${clr};" title="${escapeHtml(d.name)}: ${d.pct}% (${d.count} user)"></div>`;
+            return `<div style="width:${Math.max(2, d.pct)}%; background:${d.clr};" title="${escapeHtml(d.name)}: ${d.pct}% (${d.count} user)"></div>`;
           }).join('')}
         </div>
 
         <!-- Distribution cards -->
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
           ${distribution.map(d => {
-            const clr = osColors[d.name] || '#8e8e93';
             return `
               <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -13076,7 +13241,7 @@ function renderAnalyticsDeviceSectionHtml(devices) {
                     <div style="font-size:10px; color:var(--text-muted);">${d.count} user</div>
                   </div>
                 </div>
-                <span class="admin-hub-badge" style="background:${clr}22; color:${clr}; font-size:11px; font-weight:800;">
+                <span class="admin-hub-badge" style="background:${d.clr}22; color:${d.clr}; font-size:11px; font-weight:800;">
                   ${d.pct}%
                 </span>
               </div>
@@ -13480,6 +13645,9 @@ async function refreshAdminAnalyticsDashboard(opts = {}) {
   if (opts.metric !== undefined) adminAnalyticsDashboardState.activeMetric = opts.metric;
 
   adminAnalyticsDashboardState.loading = true;
+  adminAnalyticsDashboardState.error = null;
+  renderAdminPanel(); // Render skeleton/loading state immediately!
+
   try {
     const data = await adminApi("/api/admin/analytics/dashboard", {
       period: adminAnalyticsDashboardState.period,
@@ -13487,9 +13655,15 @@ async function refreshAdminAnalyticsDashboard(opts = {}) {
       end_date: adminAnalyticsDashboardState.endDate || undefined,
       granularity: adminAnalyticsDashboardState.granularity || undefined
     });
-    adminData.analyticsDashboard = data;
+    if (data) {
+      adminData.analyticsDashboard = data;
+      adminAnalyticsDashboardState.error = null;
+    } else {
+      adminAnalyticsDashboardState.error = "Ma'lumotlar topilmadi";
+    }
   } catch (err) {
-    showAlert("Analytics yuklashda xatolik: " + err.message);
+    console.warn("Analytics refresh xatosi:", err);
+    adminAnalyticsDashboardState.error = err.message || "Yangilashda xatolik yuz berdi";
   } finally {
     adminAnalyticsDashboardState.loading = false;
     renderAdminPanel();

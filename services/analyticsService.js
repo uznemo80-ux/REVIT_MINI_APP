@@ -41,6 +41,7 @@ async function ensureAnalyticsTables() {
       ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS device_type VARCHAR(32) DEFAULT 'unknown';
       ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS operating_system VARCHAR(32) DEFAULT 'Unknown';
       ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS session_id VARCHAR(64);
+      ALTER TABLE materials ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0;
 
       -- 24.7. Dedicated user_sessions table
       CREATE TABLE IF NOT EXISTS user_sessions (
@@ -272,68 +273,71 @@ const WEEKDAY_NAMES = [
   'Yakshanba'
 ];
 
+const TASHKENT_TODAY_TZ = "((NOW() AT TIME ZONE 'Asia/Tashkent')::date AT TIME ZONE 'Asia/Tashkent')";
+const TASHKENT_MONTH_TZ = "(DATE_TRUNC('month', (NOW() AT TIME ZONE 'Asia/Tashkent')) AT TIME ZONE 'Asia/Tashkent')";
+const TASHKENT_YEAR_TZ = "(DATE_TRUNC('year', (NOW() AT TIME ZONE 'Asia/Tashkent')) AT TIME ZONE 'Asia/Tashkent')";
+
 function calculatePeriodDates(period, customStart, customEnd) {
-  const now = new Date();
   let startDate, endDate, prevStartDate, prevEndDate;
 
   if (period === 'today') {
-    startDate = "CURRENT_DATE";
-    endDate = "CURRENT_DATE + INTERVAL '1 DAY'";
-    prevStartDate = "CURRENT_DATE - INTERVAL '1 DAY'";
-    prevEndDate = "CURRENT_DATE";
+    startDate = TASHKENT_TODAY_TZ;
+    endDate = `${TASHKENT_TODAY_TZ} + INTERVAL '1 DAY'`;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '1 DAY'`;
+    prevEndDate = TASHKENT_TODAY_TZ;
   } else if (period === 'yesterday') {
-    startDate = "CURRENT_DATE - INTERVAL '1 DAY'";
-    endDate = "CURRENT_DATE";
-    prevStartDate = "CURRENT_DATE - INTERVAL '2 DAYS'";
-    prevEndDate = "CURRENT_DATE - INTERVAL '1 DAY'";
+    startDate = `${TASHKENT_TODAY_TZ} - INTERVAL '1 DAY'`;
+    endDate = TASHKENT_TODAY_TZ;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '2 DAYS'`;
+    prevEndDate = `${TASHKENT_TODAY_TZ} - INTERVAL '1 DAY'`;
   } else if (period === '30days') {
-    startDate = "CURRENT_DATE - INTERVAL '29 DAYS'";
-    endDate = "CURRENT_DATE + INTERVAL '1 DAY'";
-    prevStartDate = "CURRENT_DATE - INTERVAL '59 DAYS'";
-    prevEndDate = "CURRENT_DATE - INTERVAL '29 DAYS'";
+    startDate = `${TASHKENT_TODAY_TZ} - INTERVAL '29 DAYS'`;
+    endDate = `${TASHKENT_TODAY_TZ} + INTERVAL '1 DAY'`;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '59 DAYS'`;
+    prevEndDate = `${TASHKENT_TODAY_TZ} - INTERVAL '29 DAYS'`;
   } else if (period === 'this_month') {
-    startDate = "DATE_TRUNC('month', CURRENT_DATE)";
-    endDate = "DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 MONTH'";
-    prevStartDate = "DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 MONTH'";
-    prevEndDate = "DATE_TRUNC('month', CURRENT_DATE)";
+    startDate = TASHKENT_MONTH_TZ;
+    endDate = `${TASHKENT_MONTH_TZ} + INTERVAL '1 MONTH'`;
+    prevStartDate = `${TASHKENT_MONTH_TZ} - INTERVAL '1 MONTH'`;
+    prevEndDate = TASHKENT_MONTH_TZ;
   } else if (period === 'last_month') {
-    startDate = "DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 MONTH'";
-    endDate = "DATE_TRUNC('month', CURRENT_DATE)";
-    prevStartDate = "DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 MONTHS'";
-    prevEndDate = "DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 MONTH'";
+    startDate = `${TASHKENT_MONTH_TZ} - INTERVAL '1 MONTH'`;
+    endDate = TASHKENT_MONTH_TZ;
+    prevStartDate = `${TASHKENT_MONTH_TZ} - INTERVAL '2 MONTHS'`;
+    prevEndDate = `${TASHKENT_MONTH_TZ} - INTERVAL '1 MONTH'`;
   } else if (period === '3months') {
-    startDate = "CURRENT_DATE - INTERVAL '90 DAYS'";
-    endDate = "CURRENT_DATE + INTERVAL '1 DAY'";
-    prevStartDate = "CURRENT_DATE - INTERVAL '180 DAYS'";
-    prevEndDate = "CURRENT_DATE - INTERVAL '90 DAYS'";
+    startDate = `${TASHKENT_TODAY_TZ} - INTERVAL '90 DAYS'`;
+    endDate = `${TASHKENT_TODAY_TZ} + INTERVAL '1 DAY'`;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '180 DAYS'`;
+    prevEndDate = `${TASHKENT_TODAY_TZ} - INTERVAL '90 DAYS'`;
   } else if (period === '6months') {
-    startDate = "CURRENT_DATE - INTERVAL '180 DAYS'";
-    endDate = "CURRENT_DATE + INTERVAL '1 DAY'";
-    prevStartDate = "CURRENT_DATE - INTERVAL '360 DAYS'";
-    prevEndDate = "CURRENT_DATE - INTERVAL '180 DAYS'";
+    startDate = `${TASHKENT_TODAY_TZ} - INTERVAL '180 DAYS'`;
+    endDate = `${TASHKENT_TODAY_TZ} + INTERVAL '1 DAY'`;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '360 DAYS'`;
+    prevEndDate = `${TASHKENT_TODAY_TZ} - INTERVAL '180 DAYS'`;
   } else if (period === 'this_year') {
-    startDate = "DATE_TRUNC('year', CURRENT_DATE)";
-    endDate = "DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '1 YEAR'";
-    prevStartDate = "DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '1 YEAR'";
-    prevEndDate = "DATE_TRUNC('year', CURRENT_DATE)";
+    startDate = TASHKENT_YEAR_TZ;
+    endDate = `${TASHKENT_YEAR_TZ} + INTERVAL '1 YEAR'`;
+    prevStartDate = `${TASHKENT_YEAR_TZ} - INTERVAL '1 YEAR'`;
+    prevEndDate = TASHKENT_YEAR_TZ;
   } else if (period === 'last_year') {
-    startDate = "DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '1 YEAR'";
-    endDate = "DATE_TRUNC('year', CURRENT_DATE)";
-    prevStartDate = "DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '2 YEARS'";
-    prevEndDate = "DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '1 YEAR'";
+    startDate = `${TASHKENT_YEAR_TZ} - INTERVAL '1 YEAR'`;
+    endDate = TASHKENT_YEAR_TZ;
+    prevStartDate = `${TASHKENT_YEAR_TZ} - INTERVAL '2 YEARS'`;
+    prevEndDate = `${TASHKENT_YEAR_TZ} - INTERVAL '1 YEAR'`;
   } else if (period === 'custom' && customStart && customEnd) {
     const sSanitized = customStart.replace(/[^0-9-]/g, '');
     const eSanitized = customEnd.replace(/[^0-9-]/g, '');
-    startDate = `'${sSanitized}'::timestamptz`;
-    endDate = `'${eSanitized}'::timestamptz + INTERVAL '1 DAY'`;
-    prevStartDate = `'${sSanitized}'::timestamptz - (('${eSanitized}'::date - '${sSanitized}'::date + 1) * INTERVAL '1 DAY')`;
-    prevEndDate = `'${sSanitized}'::timestamptz`;
+    startDate = `'${sSanitized}'::date AT TIME ZONE 'Asia/Tashkent'`;
+    endDate = `('${eSanitized}'::date AT TIME ZONE 'Asia/Tashkent') + INTERVAL '1 DAY'`;
+    prevStartDate = `('${sSanitized}'::date AT TIME ZONE 'Asia/Tashkent') - (('${eSanitized}'::date - '${sSanitized}'::date + 1) * INTERVAL '1 DAY')`;
+    prevEndDate = `'${sSanitized}'::date AT TIME ZONE 'Asia/Tashkent'`;
   } else {
     // Default: 7 days
-    startDate = "CURRENT_DATE - INTERVAL '6 DAYS'";
-    endDate = "CURRENT_DATE + INTERVAL '1 DAY'";
-    prevStartDate = "CURRENT_DATE - INTERVAL '13 DAYS'";
-    prevEndDate = "CURRENT_DATE - INTERVAL '6 DAYS'";
+    startDate = `${TASHKENT_TODAY_TZ} - INTERVAL '6 DAYS'`;
+    endDate = `${TASHKENT_TODAY_TZ} + INTERVAL '1 DAY'`;
+    prevStartDate = `${TASHKENT_TODAY_TZ} - INTERVAL '13 DAYS'`;
+    prevEndDate = `${TASHKENT_TODAY_TZ} - INTERVAL '6 DAYS'`;
   }
 
   return { startDate, endDate, prevStartDate, prevEndDate };
@@ -501,11 +505,11 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
       return { rows: [] };
     });
 
-    // 5. Peak Hours by Device Type
+    // 5. Peak Hours by Device Type (Tashkent Time)
     const peakHoursQuery = pool.query(`
       SELECT
         LOWER(device_type) AS device_type,
-        EXTRACT(HOUR FROM last_activity_at)::int AS hour,
+        EXTRACT(HOUR FROM (last_activity_at AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
         COUNT(*)::int AS actions
       FROM user_sessions
       WHERE started_at >= ${startDate} AND started_at < ${endDate}
@@ -577,20 +581,25 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
         const pct = Math.round((r.sessions_count / (totalSessions || 1)) * 1000) / 10;
         return {
           os: osName,
+          name: osName,
           icon,
           sessions_count: r.sessions_count,
+          sessions: r.sessions_count,
           users_count: r.users_count,
+          users: r.users_count,
+          count: r.users_count || r.sessions_count,
           percentage: pct,
+          pct: pct,
           color
         };
       });
     } else {
       distribution = [
-        { os: 'Android', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.54), users_count: Math.round(totalUsers * 0.54), percentage: 54.0, color: '#10b981' },
-        { os: 'iOS (iPhone)', icon: '🍎', sessions_count: Math.round(effectiveTotalSessions * 0.22), users_count: Math.round(totalUsers * 0.22), percentage: 22.0, color: '#007aff' },
-        { os: 'Windows', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.18), users_count: Math.round(totalUsers * 0.18), percentage: 18.0, color: '#00b0ff' },
-        { os: 'macOS', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.04), users_count: Math.round(totalUsers * 0.04), percentage: 4.0, color: '#ff9500' },
-        { os: 'iPad / Tablet', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.02), users_count: Math.round(totalUsers * 0.02), percentage: 2.0, color: '#af52de' }
+        { os: 'Android', name: 'Android', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.54), sessions: Math.round(effectiveTotalSessions * 0.54), users_count: Math.round(totalUsers * 0.54), users: Math.round(totalUsers * 0.54), count: Math.round(totalUsers * 0.54), percentage: 54.0, pct: 54.0, color: '#10b981' },
+        { os: 'iOS (iPhone)', name: 'iPhone / iOS', icon: '🍎', sessions_count: Math.round(effectiveTotalSessions * 0.22), sessions: Math.round(effectiveTotalSessions * 0.22), users_count: Math.round(totalUsers * 0.22), users: Math.round(totalUsers * 0.22), count: Math.round(totalUsers * 0.22), percentage: 22.0, pct: 22.0, color: '#007aff' },
+        { os: 'Windows', name: 'Windows', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.18), sessions: Math.round(effectiveTotalSessions * 0.18), users_count: Math.round(totalUsers * 0.18), users: Math.round(totalUsers * 0.18), count: Math.round(totalUsers * 0.18), percentage: 18.0, pct: 18.0, color: '#00b0ff' },
+        { os: 'macOS', name: 'macOS', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.04), sessions: Math.round(effectiveTotalSessions * 0.04), users_count: Math.round(totalUsers * 0.04), users: Math.round(totalUsers * 0.04), count: Math.round(totalUsers * 0.04), percentage: 4.0, pct: 4.0, color: '#ff9500' },
+        { os: 'iPad / Tablet', name: 'iPad / Tablet', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.02), sessions: Math.round(effectiveTotalSessions * 0.02), users_count: Math.round(totalUsers * 0.02), users: Math.round(totalUsers * 0.02), count: Math.round(totalUsers * 0.02), percentage: 2.0, pct: 2.0, color: '#af52de' }
       ];
     }
 
@@ -636,9 +645,9 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
 
     return {
       summary: {
-        mobile: { users_count: mobUsers, active_count: mobActive, sessions_count: mobSessions, percentage: mobPct },
-        desktop: { users_count: deskUsers, active_count: deskActive, sessions_count: deskSessions, percentage: deskPct },
-        tablet: { users_count: tabUsers, active_count: tabActive, sessions_count: tabSessions, percentage: tabPct },
+        mobile: { users: mobUsers, users_count: mobUsers, active: mobActive, active_count: mobActive, sessions: mobSessions, sessions_count: mobSessions, pct: mobPct, percentage: mobPct },
+        desktop: { users: deskUsers, users_count: deskUsers, active: deskActive, active_count: deskActive, sessions: deskSessions, sessions_count: deskSessions, pct: deskPct, percentage: deskPct },
+        tablet: { users: tabUsers, users_count: tabUsers, active: tabActive, active_count: tabActive, sessions: tabSessions, sessions_count: tabSessions, pct: tabPct, percentage: tabPct },
         total_sessions: effectiveTotalSessions
       },
       distribution,
@@ -676,9 +685,9 @@ async function getDashboardData(params = {}) {
     SELECT
       (SELECT COUNT(*)::int FROM users) AS total_users,
       (SELECT COUNT(*)::int FROM users WHERE access_until > NOW()) AS paid_users,
-      (SELECT COUNT(*)::int FROM users WHERE created_at >= CURRENT_DATE) AS new_today,
-      (SELECT COUNT(*)::int FROM users WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)) AS new_this_week,
-      (SELECT COUNT(*)::int FROM users WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)) AS new_this_month,
+      (SELECT COUNT(*)::int FROM users WHERE created_at >= ${TASHKENT_TODAY_TZ}) AS new_today,
+      (SELECT COUNT(*)::int FROM users WHERE created_at >= (DATE_TRUNC('week', (NOW() AT TIME ZONE 'Asia/Tashkent')) AT TIME ZONE 'Asia/Tashkent')) AS new_this_week,
+      (SELECT COUNT(*)::int FROM users WHERE created_at >= ${TASHKENT_MONTH_TZ}) AS new_this_month,
       (SELECT COUNT(*)::int FROM users WHERE created_at >= ${startDate} AND created_at < ${endDate}) AS new_in_period,
       (SELECT COUNT(*)::int FROM users WHERE created_at >= ${prevStartDate} AND created_at < ${prevEndDate}) AS new_in_prev_period,
 
@@ -708,23 +717,23 @@ async function getDashboardData(params = {}) {
         SELECT user_id AS uid FROM analytics_events WHERE created_at >= ${prevStartDate} AND created_at < ${prevEndDate}
       ) a_prev) AS active_in_prev_period,
 
-      -- Bugun faol o'quvchilar
+      -- Bugun faol o'quvchilar (Tashkent timezone)
       (SELECT COUNT(DISTINCT uid)::int FROM (
-        SELECT user_id AS uid FROM user_activity WHERE last_seen_at >= CURRENT_DATE
+        SELECT user_id AS uid FROM user_activity WHERE last_seen_at >= ${TASHKENT_TODAY_TZ}
         UNION
-        SELECT user_id AS uid FROM progress WHERE watched = true AND watched_at >= CURRENT_DATE
+        SELECT user_id AS uid FROM progress WHERE watched = true AND watched_at >= ${TASHKENT_TODAY_TZ}
         UNION
-        SELECT user_id AS uid FROM reading_progress WHERE updated_at >= CURRENT_DATE
+        SELECT user_id AS uid FROM reading_progress WHERE updated_at >= ${TASHKENT_TODAY_TZ}
         UNION
-        SELECT user_id AS uid FROM material_view_log WHERE viewed_on >= CURRENT_DATE
+        SELECT user_id AS uid FROM material_view_log WHERE viewed_on >= (NOW() AT TIME ZONE 'Asia/Tashkent')::date
       ) a_tod) AS active_today,
 
-      -- Bugungi kontent ko'rilishi
-      (SELECT COUNT(DISTINCT user_id)::int FROM progress WHERE watched = true AND watched_at >= CURRENT_DATE) AS today_lesson_viewers,
-      (SELECT COUNT(*)::int FROM progress WHERE watched = true AND watched_at >= CURRENT_DATE) AS today_lesson_views,
-      (SELECT COUNT(DISTINCT user_id)::int FROM reading_progress WHERE updated_at >= CURRENT_DATE) AS today_book_readers,
-      (SELECT COUNT(DISTINCT user_id)::int FROM material_view_log WHERE viewed_on >= CURRENT_DATE) AS today_material_viewers,
-      (SELECT COUNT(DISTINCT user_id)::int FROM library_views WHERE viewed_at >= CURRENT_DATE) AS today_source_users,
+      -- Bugungi kontent ko'rilishi (Tashkent timezone)
+      (SELECT COUNT(DISTINCT user_id)::int FROM progress WHERE watched = true AND watched_at >= ${TASHKENT_TODAY_TZ}) AS today_lesson_viewers,
+      (SELECT COUNT(*)::int FROM progress WHERE watched = true AND watched_at >= ${TASHKENT_TODAY_TZ}) AS today_lesson_views,
+      (SELECT COUNT(DISTINCT user_id)::int FROM reading_progress WHERE updated_at >= ${TASHKENT_TODAY_TZ}) AS today_book_readers,
+      (SELECT COUNT(DISTINCT user_id)::int FROM material_view_log WHERE viewed_on >= (NOW() AT TIME ZONE 'Asia/Tashkent')::date) AS today_material_viewers,
+      (SELECT COUNT(DISTINCT user_id)::int FROM library_views WHERE viewed_at >= ${TASHKENT_TODAY_TZ}) AS today_source_users,
 
       -- Period actions
       (SELECT COUNT(*)::int FROM progress WHERE watched = true AND watched_at >= ${startDate} AND watched_at < ${endDate}) AS period_lesson_views,
@@ -845,10 +854,10 @@ async function getDashboardData(params = {}) {
     return { rows: [] };
   });
 
-  // 3. HAFTA KUNLARI FAOLLIGI (1=Dushanba ... 7=Yakshanba)
+  // 3. HAFTA KUNLARI FAOLLIGI (1=Dushanba ... 7=Yakshanba - Tashkent Time)
   const weekdayQuery = pool.query(`
     SELECT
-      EXTRACT(ISODOW FROM act_time)::int AS dow,
+      EXTRACT(ISODOW FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS dow,
       COUNT(DISTINCT user_id)::int AS active_users,
       COUNT(CASE WHEN act_type = 'lesson' THEN 1 END)::int AS lesson_views,
       COUNT(CASE WHEN act_type = 'book' THEN 1 END)::int AS book_reads,
@@ -871,10 +880,10 @@ async function getDashboardData(params = {}) {
     return { rows: [] };
   });
 
-  // 4. SOATLIK FAOLLIK (00:00 - 23:00)
+  // 4. SOATLIK FAOLLIK (00:00 - 23:00 - Tashkent Time)
   const hourlyQuery = pool.query(`
     SELECT
-      EXTRACT(HOUR FROM act_time)::int AS hour,
+      EXTRACT(HOUR FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
       COUNT(DISTINCT user_id)::int AS active_users,
       COUNT(CASE WHEN act_type = 'lesson' THEN 1 END)::int AS lesson_views,
       COUNT(*)::int AS total_activity
@@ -893,11 +902,11 @@ async function getDashboardData(params = {}) {
     return { rows: [] };
   });
 
-  // 5. HAFTA KUNI X SOAT HEATMAP (168 cells)
+  // 5. HAFTA KUNI X SOAT HEATMAP (168 cells - Tashkent Time)
   const heatmapQuery = pool.query(`
     SELECT
-      EXTRACT(ISODOW FROM act_time)::int AS day,
-      EXTRACT(HOUR FROM act_time)::int AS hour,
+      EXTRACT(ISODOW FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS day,
+      EXTRACT(HOUR FROM (act_time AT TIME ZONE 'Asia/Tashkent'))::int AS hour,
       COUNT(*)::int AS count
     FROM (
       SELECT watched_at AS act_time FROM progress WHERE watched = true AND watched_at >= ${startDate} AND watched_at < ${endDate}
@@ -963,12 +972,12 @@ async function getDashboardData(params = {}) {
       m.id,
       COALESCE(m.name_uz, m.name, 'Material') AS name_uz,
       COALESCE(c.name, 'Boshqa') AS category,
-      COALESCE(m.view_count, 0)::int AS view_count,
+      (COALESCE(m.view_count, 0) + COALESCE((SELECT COUNT(*)::int FROM material_view_log mvl WHERE mvl.material_id = m.id), 0))::int AS view_count,
       COALESCE((SELECT COUNT(*)::int FROM material_likes ml WHERE ml.material_id = m.id), 0)::int AS like_count,
       COALESCE((SELECT COUNT(*)::int FROM material_saves ms WHERE ms.material_id = m.id), 0)::int AS save_count
     FROM materials m
     LEFT JOIN material_categories c ON c.id = m.category_id
-    ORDER BY m.view_count DESC
+    ORDER BY (COALESCE(m.view_count, 0) + COALESCE((SELECT COUNT(*)::int FROM material_view_log mvl WHERE mvl.material_id = m.id), 0)) DESC
     LIMIT 10
   `).catch(err => {
     console.error('MATERIALS DEEP QUERY ERROR:', err.message);
@@ -979,7 +988,7 @@ async function getDashboardData(params = {}) {
     SELECT
       COALESCE(c.name, 'Boshqa') AS category,
       COUNT(m.id)::int AS item_count,
-      COALESCE(SUM(m.view_count), 0)::int AS total_views
+      COALESCE(SUM(COALESCE(m.view_count, 0) + COALESCE((SELECT COUNT(*)::int FROM material_view_log mvl WHERE mvl.material_id = m.id), 0)), 0)::int AS total_views
     FROM materials m
     LEFT JOIN material_categories c ON c.id = m.category_id
     GROUP BY c.name
