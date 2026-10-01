@@ -765,7 +765,8 @@ let librarySections = [
   { id: 1, slug: 'books', name: 'Kitoblar', icon: '📚', description: 'Revit, BIM, arxitektura va interyer elektron kitoblari hamda ShNQ normativlari', is_active: true, order_index: 1 },
   { id: 2, slug: 'sources', name: 'Manbalar', icon: '📦', description: 'Revit oilalari (.rfa), shablonlar (.rte), DWG chizmalar va 3D parametrlar', is_active: true, order_index: 2 },
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
-  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 }
+  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
+  { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 }
 ];
 let libraryActiveSection = null; // null: Home (4 tiles + recent + recommended) | 'books' | 'sources' | 'tests' | 'materials'
 let libraryV2Resources = [];
@@ -6674,6 +6675,11 @@ function openLibrarySection(slug) {
       });
     }
   }
+  if (slug === "normatives") {
+    if (!normativesState.loaded && !normativesState.loading) {
+      loadNormativesData();
+    }
+  }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
@@ -6943,6 +6949,8 @@ function renderTasks() {
     content = renderTestsSectionHtml();
   } else if (libraryActiveSection === "materials") {
     content = renderMaterialsSectionHtml();
+  } else if (libraryActiveSection === "normatives") {
+    content = renderNormativesSectionHtml();
   } else if (libraryActiveSection) {
     content = renderGenericSectionHtml(libraryActiveSection);
   } else {
@@ -6968,6 +6976,7 @@ function renderTasksHomeHtml() {
       case "sources": return libIcons.sources("lib-sec-svg", 22);
       case "tests": return libIcons.tests("lib-sec-svg", 22);
       case "materials": return libIcons.materials("lib-sec-svg", 22);
+      case "normatives": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
       default: return libIcons.sources("lib-sec-svg", 22);
     }
   }
@@ -11758,6 +11767,20 @@ async function adminNavigate(to, subTo) {
       adminView = "admins";
       const data = await adminApi("/api/admin/admins").catch(() => ({ admins: [] }));
       adminData.admins = data.admins || [];
+    } else if (to === "normatives") {
+      adminView = "normatives";
+      try {
+        const [listRes, casesRes, statsRes] = await Promise.all([
+          api("/api/normatives/list", { limit: 100 }).catch(() => ({ documents: [] })),
+          api("/api/normatives/cases").catch(() => ({ cases: [] })),
+          api("/api/normatives/stats").catch(() => ({ stats: {} }))
+        ]);
+        adminData.normativesList = (listRes && listRes.documents) || [];
+        adminData.normativesCases = (casesRes && casesRes.cases) || [];
+        adminData.normativesStats = (statsRes && statsRes.stats) || {};
+      } catch (ne) {
+        console.warn("Normatives admin load error:", ne);
+      }
     }
   } catch (navErr) {
     console.warn("adminNavigate yuklash xatosi:", navErr);
@@ -11813,7 +11836,8 @@ function renderAdminNavBar() {
     tasks: { label: "Vazifalar va Testlar", icon: "📝" },
     chat: { label: "Chat va Murojaatlar", icon: "💬" },
     settings: { label: "Sozlamalar", icon: "⚙️" },
-    admins: { label: "Adminlar", icon: "🔐" }
+    admins: { label: "Adminlar", icon: "🔐" },
+    normatives: { label: "Normativlar", icon: "📋" }
   };
 
   let backLabel = "← Ilovaga qaytish";
@@ -12004,6 +12028,21 @@ function renderAdminRootMenu() {
               8. Adminlar / Xavfsizlik
             </div>
             <div class="admin-hub-desc">Adminlar tizimi, rollar, taqiqlar va tizim xavfsizligi</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 9. NORMATIVLAR VA STANDARTLAR -->
+        <div class="admin-hub-card" onclick="adminNavigate('normatives')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(50,173,230,0.12); color:#32ade6;">
+            📋
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              9. Normativlar va Standartlar
+              <span class="admin-hub-badge">${(adminData.normativesStats && adminData.normativesStats.total_documents) || 0} hujjat</span>
+            </div>
+            <div class="admin-hub-desc">SHNQ, QMQ, O‘z DSt va amaliy "Nima kerak?" keyslari CMS boshqaruvi</div>
           </div>
           <div class="admin-hub-chevron">→</div>
         </div>
@@ -14090,6 +14129,20 @@ function renderAdminLibraryHubView() {
           </div>
           <div class="admin-hub-chevron">→</div>
         </div>
+
+        <div class="admin-hub-card" onclick="adminNavigate('normatives')" style="border-left: 4px solid #32ade6;">
+          <div class="admin-hub-icon-wrap" style="background:rgba(50,173,230,0.12); color:#32ade6;">
+            📋
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              Normativlar & Standartlar
+              <span class="admin-hub-badge">${(adminData.normativesStats && adminData.normativesStats.total_documents) || 0} ta</span>
+            </div>
+            <div class="admin-hub-desc">SHNQ, QMQ, amaldagi standartlar va loyihalash amaliy keyslari</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
       </div>
 
       <!-- QO'SHIMCHA VOSITALAR -->
@@ -14708,6 +14761,8 @@ function renderAdminPanel() {
     bodyHtml = renderAdminSettingsView();
   } else if (currentLevel === "admins") {
     bodyHtml = renderAdminAdminsView();
+  } else if (currentLevel === "normatives") {
+    bodyHtml = renderAdminNormativesCMS();
   } else {
     bodyHtml = renderAdminRootMenu();
   }
@@ -21923,4 +21978,1176 @@ window.handleTgStreamFallback = function(videoEl) {
     `;
   }
 };
+
+
+
+// ============================================================================
+// 📋 NORMATIVLAR VA AMALIY YECHIMLAR (SHNQ / QMQ / STANDARTLAR & CASES)
+// ============================================================================
+
+let normativesState = {
+  activeTab: 'cases', // 'cases' (Nima kerak?) | 'docs' (Normativlar bazasi)
+  documents: [],
+  cases: [],
+  categories: [
+    "Barchasi",
+    "Qurilish uchun kerakli hujjatlar",
+    "Loyihalash",
+    "Konstruksiya",
+    "O‘lchamlar va standartlar",
+    "Yong‘in xavfsizligi",
+    "Qurilish materiallari",
+    "Smeta va qurilish iqtisodiyoti",
+    "Shaharsozlik",
+    "Interyer",
+    "SHNQ",
+    "QMQ",
+    "O‘z DSt / GOST va boshqa standartlar"
+  ],
+  selectedCategory: "Barchasi",
+  searchQuery: "",
+  selectedStatus: "all",
+  selectedDocType: "all",
+  loading: false,
+  loaded: false,
+  selectedDoc: null,
+  selectedCase: null,
+  activeStepIndex: 0
+};
+
+// DATA LOADER
+async function loadNormativesData() {
+  if (normativesState.loading) return;
+  normativesState.loading = true;
+  try {
+    const [docsRes, casesRes] = await Promise.all([
+      api('/api/normatives/list', { limit: 150 }),
+      api('/api/normatives/cases')
+    ]);
+
+    if (docsRes && Array.isArray(docsRes.documents)) {
+      normativesState.documents = docsRes.documents;
+    }
+    if (casesRes && Array.isArray(casesRes.cases)) {
+      normativesState.cases = casesRes.cases;
+    }
+    normativesState.loaded = true;
+  } catch (err) {
+    console.error("LOAD NORMATIVES ERROR:", err);
+  } finally {
+    normativesState.loading = false;
+    if (libraryActiveSection === "normatives") {
+      render();
+    }
+  }
+}
+
+// FILTER & TAB HANDLERS
+function setNormativesTab(tab) {
+  haptic("light");
+  normativesState.activeTab = tab;
+  render();
+}
+
+function setNormativesCategory(cat) {
+  haptic("light");
+  normativesState.selectedCategory = cat;
+  render();
+}
+
+function setNormativesSearch(val) {
+  normativesState.searchQuery = (val || "").trim().toLowerCase();
+  render();
+}
+
+function clearNormativesSearch() {
+  normativesState.searchQuery = "";
+  render();
+}
+
+function setNormativesStatusFilter(status) {
+  haptic("light");
+  normativesState.selectedStatus = status;
+  render();
+}
+
+function setNormativesDocTypeFilter(docType) {
+  haptic("light");
+  normativesState.selectedDocType = docType;
+  render();
+}
+
+// STATUS BADGE HELPER
+function renderNormativeStatusBadge(status) {
+  const st = String(status || "AMALDA").toUpperCase();
+  if (st === "AMALDA") {
+    return `<span class="norm-status-pill status-amalda"><span class="norm-dot"></span>AMALDA</span>`;
+  } else if (st === "O‘ZGARTIRILGAN" || st === "OZGARTIRILGAN") {
+    return `<span class="norm-status-pill status-ozgartirilgan"><span class="norm-dot"></span>O‘ZGARTIRILGAN</span>`;
+  } else if (st === "KUCHINI YO‘QOTGAN" || st === "KUCHINI YOQOTGAN") {
+    return `<span class="norm-status-pill status-yoqotgan"><span class="norm-dot"></span>KUCHINI YO‘QOTGAN</span>`;
+  } else if (st === "YANGI") {
+    return `<span class="norm-status-pill status-yangi"><span class="norm-dot"></span>YANGI</span>`;
+  } else if (st === "TARIXIY") {
+    return `<span class="norm-status-pill status-tarixiy"><span class="norm-dot"></span>TARIXIY</span>`;
+  }
+  return `<span class="norm-status-pill">${escapeHtml(st)}</span>`;
+}
+
+// MAIN SECTION RENDERER
+function renderNormativesSectionHtml() {
+  if (!normativesState.loaded && !normativesState.loading) {
+    loadNormativesData();
+  }
+
+  if (normativesState.loading && !normativesState.loaded) {
+    return `
+      <div class="page lib-container lib-page-enter">
+        <div class="lib-back-nav" onclick="closeLibrarySection()">
+          ${libIcons.back('lib-back-svg', 16)} Kutubxona
+        </div>
+        <div style="padding: 70px 20px; text-align: center;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Normativlar va amaliy yechimlar yuklanmoqda...</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">SHNQ, QMQ va standartlar bazasi</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const activeTab = normativesState.activeTab;
+  const searchQuery = normativesState.searchQuery;
+  const selectedCat = normativesState.selectedCategory;
+
+  return `
+    <div class="page lib-container lib-page-enter normatives-page">
+      <!-- TOP NAVIGATION BAR -->
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>
+
+      <!-- HERO HEAD -->
+      <div class="norm-hero-head">
+        <div class="norm-hero-icon">📋</div>
+        <div>
+          <h1 class="norm-hero-title">Normativlar va amaliy yechimlar</h1>
+          <p class="norm-hero-subtitle">
+            O‘zbekiston SHNQ, QMQ va davlat standartlari hamda arxitektor, loyihachi va quruvchilar uchun qonuniy yo‘l xaritalari.
+          </p>
+        </div>
+      </div>
+
+      <!-- SUB-NAVIGATION SEGMENTED CONTROL -->
+      <div class="norm-segmented-control">
+        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
+          💡 Nima kerak? (Amaliy vaziyatlar)
+        </button>
+        <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
+          📑 Normativlar bazasi (${normativesState.documents.length})
+        </button>
+      </div>
+
+      <!-- SEARCH BAR -->
+      <div class="norm-search-wrap">
+        <span class="norm-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+        <input 
+          type="text" 
+          class="norm-search-input" 
+          placeholder="Hujjat raqami (SHNQ 2.08.01), mavzu, poydevor, yong'in, zinapoya..." 
+          value="${escapeHtml(searchQuery)}" 
+          oninput="setNormativesSearch(this.value)" 
+        />
+        ${searchQuery ? `<button class="norm-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ''}
+      </div>
+
+      <!-- 12 CATEGORIES HORIZONTAL CHIPS SCROLL -->
+      <div class="norm-categories-scroll">
+        ${normativesState.categories.map(cat => {
+          const isActive = selectedCat === cat;
+          return `
+            <button 
+              type="button" 
+              class="norm-cat-chip ${isActive ? 'active' : ''}" 
+              onclick="setNormativesCategory('${escapeJsString(cat)}')"
+            >
+              ${escapeHtml(cat)}
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- CONTENT SWITCHER -->
+      <div class="norm-tab-content">
+        ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : renderNormativeDocsTabHtml()}
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 1. "NIMA KERAK?" (PRACTICAL CASES) TAB
+// ----------------------------------------------------------------------------
+function renderNormativeCasesTabHtml() {
+  const query = normativesState.searchQuery;
+  const selCat = normativesState.selectedCategory;
+
+  let list = normativesState.cases || [];
+
+  if (selCat && selCat !== "Barchasi") {
+    list = list.filter(c => (c.category && c.category.toLowerCase().includes(selCat.toLowerCase())) || selCat.includes(c.category));
+  }
+
+  if (query) {
+    list = list.filter(c => {
+      const t = (c.title || "").toLowerCase();
+      const d = (c.description || "").toLowerCase();
+      const cat = (c.category || "").toLowerCase();
+      const sc = (c.scope || "").toLowerCase();
+      return t.includes(query) || d.includes(query) || cat.includes(query) || sc.includes(query);
+    });
+  }
+
+  if (!list.length) {
+    return `
+      <div class="norm-empty-state">
+        <div style="font-size: 38px; margin-bottom: 8px;">🔍</div>
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">Amaliy vaziyat topilmadi</div>
+        <div style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 14px;">
+          Qidiruv so‘zini o‘zgartiring yoki barcha kategoriyalarni tanlang.
+        </div>
+        <button class="norm-empty-reset-btn" onclick="clearNormativesSearch(); setNormativesCategory('Barchasi');">
+          Barcha vaziyatlarni ko‘rish
+        </button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="norm-cases-intro">
+      <div class="norm-intro-badge">⚡ Bosqichma-bosqich qonuniy yo‘riqnoma</div>
+      <div class="norm-intro-desc">
+        O‘zingizga kerakli qurilish yoki loyihalash vaziyatini tanlang. Qonun bo‘yicha talab qilinadigan barcha ruxsatnomalar, hujjatlar va ularning me'yoriy asoslari ko‘rsatiladi.
+      </div>
+    </div>
+
+    <div class="norm-cases-grid">
+      ${list.map(item => {
+        const icon = item.icon || "🏠";
+        const stepCount = item.step_count || (Array.isArray(item.steps) ? item.steps.length : 6);
+        return `
+          <div class="norm-case-card" onclick="openNormativeCaseDetail(${Number(item.id)})">
+            <div class="norm-case-card-header">
+              <span class="norm-case-icon">${escapeHtml(icon)}</span>
+              <span class="norm-case-cat-pill">${escapeHtml(item.category || "Qurilish")}</span>
+            </div>
+            <h3 class="norm-case-title">${escapeHtml(item.title)}</h3>
+            <p class="norm-case-desc">${escapeHtml(item.description || "")}</p>
+            <div class="norm-case-footer">
+              <span class="norm-case-steps-tag">📋 ${stepCount} ta asosiy hujjat bosqichi</span>
+              <span class="norm-case-chevron">›</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 2. NORMATIVLAR BAZASI (DOCS LIST) TAB
+// ----------------------------------------------------------------------------
+function renderNormativeDocsTabHtml() {
+  const query = normativesState.searchQuery;
+  const selCat = normativesState.selectedCategory;
+  const selStatus = normativesState.selectedStatus;
+  const selType = normativesState.selectedDocType;
+
+  let list = normativesState.documents || [];
+
+  // Filter category
+  if (selCat && selCat !== "Barchasi") {
+    if (selCat === "SHNQ") {
+      list = list.filter(d => (d.document_type || "").toUpperCase() === "SHNQ");
+    } else if (selCat === "QMQ") {
+      list = list.filter(d => (d.document_type || "").toUpperCase() === "QMQ");
+    } else if (selCat.includes("Standart") || selCat.includes("O‘z DSt")) {
+      list = list.filter(d => (d.document_type || "").includes("DSt") || (d.document_type || "").includes("GOST") || (d.category || "").includes("standart"));
+    } else {
+      list = list.filter(d => (d.category && d.category.toLowerCase().includes(selCat.toLowerCase())) || selCat.toLowerCase().includes((d.category || "").toLowerCase()));
+    }
+  }
+
+  // Filter status
+  if (selStatus && selStatus !== "all") {
+    list = list.filter(d => (d.status || "").toUpperCase() === selStatus.toUpperCase());
+  }
+
+  // Filter doc type
+  if (selType && selType !== "all") {
+    list = list.filter(d => (d.document_type || "").toUpperCase() === selType.toUpperCase());
+  }
+
+  // Filter query
+  if (query) {
+    list = list.filter(d => {
+      const num = (d.document_number || "").toLowerCase();
+      const t = (d.title || "").toLowerCase();
+      const desc = (d.description || "").toLowerCase();
+      const req = (d.requirements || "").toLowerCase();
+      const sc = (d.application_scope || "").toLowerCase();
+      const cat = (d.category || "").toLowerCase();
+      return num.includes(query) || t.includes(query) || desc.includes(query) || req.includes(query) || sc.includes(query) || cat.includes(query);
+    });
+  }
+
+  return `
+    <!-- QUICK TYPE & STATUS FILTER STRIP -->
+    <div class="norm-filter-strip">
+      <div class="norm-filter-row">
+        <span class="norm-filter-label">Turi:</span>
+        <button type="button" class="norm-subchip ${selType === 'all' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('all')">Barchasi</button>
+        <button type="button" class="norm-subchip ${selType === 'SHNQ' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('SHNQ')">SHNQ</button>
+        <button type="button" class="norm-subchip ${selType === 'QMQ' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('QMQ')">QMQ</button>
+        <button type="button" class="norm-subchip ${selType === 'O‘z DSt' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('O‘z DSt')">O‘z DSt / Standart</button>
+        <button type="button" class="norm-subchip ${selType === 'Qaror' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('Qaror')">Qarorlar</button>
+      </div>
+      <div class="norm-filter-row" style="margin-top:6px;">
+        <span class="norm-filter-label">Holati:</span>
+        <button type="button" class="norm-subchip ${selStatus === 'all' ? 'active' : ''}" onclick="setNormativesStatusFilter('all')">Barchasi</button>
+        <button type="button" class="norm-subchip ${selStatus === 'AMALDA' ? 'active' : ''}" onclick="setNormativesStatusFilter('AMALDA')">🟢 AMALDA</button>
+        <button type="button" class="norm-subchip ${selStatus === 'O‘ZGARTIRILGAN' ? 'active' : ''}" onclick="setNormativesStatusFilter('O‘ZGARTIRILGAN')">🟡 O‘ZGARTIRILGAN</button>
+        <button type="button" class="norm-subchip ${selStatus === 'KUCHINI YO‘QOTGAN' ? 'active' : ''}" onclick="setNormativesStatusFilter('KUCHINI YO‘QOTGAN')">🔴 KUCHINI YO‘QOTGAN</button>
+      </div>
+    </div>
+
+    ${!list.length ? `
+      <div class="norm-empty-state">
+        <div style="font-size: 38px; margin-bottom: 8px;">📑</div>
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">Normativ hujjat topilmadi</div>
+        <div style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 14px;">
+          Qidiruv parametrlarini tozalab qayta urinib ko‘ring.
+        </div>
+        <button class="norm-empty-reset-btn" onclick="clearNormativesSearch(); setNormativesCategory('Barchasi'); setNormativesStatusFilter('all'); setNormativesDocTypeFilter('all');">
+          Barcha hujjatlarni ko‘rish
+        </button>
+      </div>
+    ` : `
+      <div class="norm-docs-grid">
+        ${list.map(doc => {
+          const docNum = doc.document_number || "Normativ";
+          const status = doc.status || "AMALDA";
+          const dateStr = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : (doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "");
+          return `
+            <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
+              <div class="norm-doc-header">
+                <div class="norm-doc-num-tag">${escapeHtml(docNum)}</div>
+                ${renderNormativeStatusBadge(status)}
+              </div>
+              <h3 class="norm-doc-title">${escapeHtml(doc.title)}</h3>
+              ${doc.application_scope ? `<div class="norm-doc-scope">🎯 ${escapeHtml(doc.application_scope)}</div>` : ''}
+              <div class="norm-doc-footer">
+                <div class="norm-doc-meta">
+                  <span class="norm-doc-cat">${escapeHtml(doc.category || doc.document_type || "Normativ")}</span>
+                  ${dateStr ? `<span class="norm-doc-date">📅 ${escapeHtml(dateStr)}</span>` : ''}
+                </div>
+                <span class="norm-doc-action">Ko‘rish ›</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `}
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 3. NORMATIVE DOCUMENT FULL DETAIL PAGE
+// ----------------------------------------------------------------------------
+async function openNormativeDocDetail(docId) {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  showToast("📄 Normativ ma'lumotlari yuklanmoqda...");
+
+  try {
+    const res = await api(`/api/normatives/detail/${Number(docId)}`);
+    if (!res || !res.ok || !res.document) {
+      return showAlert("Hujjat ma'lumotlari topilmadi.");
+    }
+
+    normativesState.selectedDoc = res.document;
+    currentView = {
+      type: "normative_doc_detail",
+      html: renderNormativeDocDetailPage(res.document, res.cases || [])
+    };
+    render();
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } catch (err) {
+    console.error("OPEN NORMATIVE DETAIL ERROR:", err);
+    showAlert("Hujjatni ochishda xatolik yuz berdi.");
+  }
+}
+
+function closeNormativeDocDetail() {
+  haptic("light");
+  currentView = null;
+  normativesState.selectedDoc = null;
+  activeTab = "tasks";
+  libraryActiveSection = "normatives";
+  render();
+  window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
+}
+
+function renderNormativeDocDetailPage(doc, linkedCases) {
+  const status = doc.status || "AMALDA";
+  const docNum = doc.document_number || "Normativ";
+  const adoptedDate = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : "—";
+  const effectiveDate = doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "—";
+  const verifiedDate = doc.last_verified_at ? new Date(doc.last_verified_at).toLocaleDateString('uz-UZ') : "01.10.2026";
+  const authority = doc.issuing_authority || "O‘zbekiston Respublikasi Qurilish va uy-joy kommunal xo‘jaligi vazirligi";
+  const hasAmendedInfo = doc.previous_edition || doc.new_edition || doc.amendment_date || status === "O‘ZGARTIRILGAN" || status === "KUCHINI YO‘QOTGAN";
+
+  return `
+    <div class="page lib-container norm-detail-page">
+      <!-- TOP NAVIGATION BAR -->
+      <div class="lib-detail-top-bar" style="margin-bottom: 14px;">
+        <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeNormativeDocDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Normativlar ro‘yxati
+        </button>
+      </div>
+
+      <!-- HERO SECTION -->
+      <div class="norm-detail-hero">
+        <div class="norm-detail-badge-row">
+          <span class="norm-doc-pill-big">${escapeHtml(doc.document_type || "SHNQ")} • ${escapeHtml(docNum)}</span>
+          ${renderNormativeStatusBadge(status)}
+        </div>
+
+        <h1 class="norm-detail-title">${escapeHtml(doc.title)}</h1>
+        <div class="norm-detail-cat-row">
+          <span>🏛 ${escapeHtml(authority)}</span>
+        </div>
+
+        <div class="norm-verified-pill">
+          ✓ Rasmiy manbadan tekshirilgan • ${verifiedDate}
+        </div>
+      </div>
+
+      <!-- 1. NIMA UCHUN KERAK -->
+      <div class="norm-card-block">
+        <div class="norm-card-header">
+          <span class="norm-card-icon">💡</span>
+          <h2 class="norm-card-title">Nima uchun kerak?</h2>
+        </div>
+        <div class="norm-card-content">
+          ${escapeHtml(doc.description || "Ushbu normativ hujjat arxitektura va shaharsozlik talablarini belgilaydi.")}
+        </div>
+      </div>
+
+      <!-- 2. NIMA TALAB QILINADI -->
+      <div class="norm-card-block">
+        <div class="norm-card-header">
+          <span class="norm-card-icon">📋</span>
+          <h2 class="norm-card-title">Nima talab qilinadi? (Asosiy me'yorlar)</h2>
+        </div>
+        <div class="norm-card-content formatted-text">
+          ${escapeHtml(doc.requirements || "Loyiha hujjatlari ushbu normativda ko‘rsatilgan xavfsizlik, o‘lcham va konstruktiv talablarga to‘liq javob berishi shart.")}
+        </div>
+      </div>
+
+      <!-- 3. KIM UCHUN & QAYSI HOLATDA -->
+      <div class="norm-two-col-grid">
+        <div class="norm-card-block" style="margin:0;">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">👤</span>
+            <h2 class="norm-card-title">Kim uchun?</h2>
+          </div>
+          <div class="norm-card-content">
+            ${escapeHtml(doc.target_audience || "Arxitektorlar, konstruktorlar, bosh loyihachilar va buyurtmachilar.")}
+          </div>
+        </div>
+
+        <div class="norm-card-block" style="margin:0;">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">🎯</span>
+            <h2 class="norm-card-title">Qaysi holatda kerak?</h2>
+          </div>
+          <div class="norm-card-content">
+            ${escapeHtml(doc.application_scope || "Yangi qurilish, rekonstruksiya, qayta rejalashtirish va kapital ta'mirlashda.")}
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. MANBA VA METAMA'LUMOTLAR -->
+      <div class="norm-card-block">
+        <div class="norm-card-header">
+          <span class="norm-card-icon">🏛</span>
+          <h2 class="norm-card-title">Rasmiy Hujjat Rekvizitlari</h2>
+        </div>
+        <div class="norm-meta-table">
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Hujjat turi:</span>
+            <span class="norm-meta-val">${escapeHtml(doc.document_type || "Normativ")}</span>
+          </div>
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Hujjat raqami:</span>
+            <span class="norm-meta-val" style="font-weight:700; color:var(--accent);">${escapeHtml(docNum)}</span>
+          </div>
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Qabul qilingan sana:</span>
+            <span class="norm-meta-val">${escapeHtml(adoptedDate)}</span>
+          </div>
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Kuchga kirgan sana:</span>
+            <span class="norm-meta-val">${escapeHtml(effectiveDate)}</span>
+          </div>
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Qabul qilgan organ:</span>
+            <span class="norm-meta-val">${escapeHtml(authority)}</span>
+          </div>
+          <div class="norm-meta-row">
+            <span class="norm-meta-key">Kategoriya:</span>
+            <span class="norm-meta-val">${escapeHtml(doc.category || "Umumiy")}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. AGAR O'ZGARTIRILGAN / BEKOR QILINGAN BO'LSA -->
+      ${hasAmendedInfo ? `
+        <div class="norm-card-block ${status === 'KUCHINI YO‘QOTGAN' ? 'border-danger' : 'border-warning'}">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">${status === 'KUCHINI YO‘QOTGAN' ? '🔴' : '🟡'}</span>
+            <h2 class="norm-card-title">${status === 'KUCHINI YO‘QOTGAN' ? 'Bekor qilinganlik holati' : 'O‘zgartirishlar tarixi'}</h2>
+          </div>
+          <div class="norm-meta-table">
+            ${doc.previous_edition ? `
+              <div class="norm-meta-row">
+                <span class="norm-meta-key">Eski tahrir:</span>
+                <span class="norm-meta-val">${escapeHtml(doc.previous_edition)}</span>
+              </div>
+            ` : ''}
+            ${doc.new_edition ? `
+              <div class="norm-meta-row">
+                <span class="norm-meta-key">Yangi tahrir / O‘rniga:</span>
+                <span class="norm-meta-val" style="font-weight:700; color:#10b981;">${escapeHtml(doc.new_edition)}</span>
+              </div>
+            ` : ''}
+            ${doc.amendment_date ? `
+              <div class="norm-meta-row">
+                <span class="norm-meta-key">O‘zgartirilgan sana:</span>
+                <span class="norm-meta-val">${escapeHtml(new Date(doc.amendment_date).toLocaleDateString('uz-UZ'))}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 6. AMALIY KEYS BOG'LIQLIKLARI -->
+      ${Array.isArray(linkedCases) && linkedCases.length ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">⚡</span>
+            <h2 class="norm-card-title">Tegishli Amaliy Vaziyatlar</h2>
+          </div>
+          <div class="norm-linked-cases-list">
+            ${linkedCases.map(c => `
+              <div class="norm-linked-case-item" onclick="openNormativeCaseDetail(${Number(c.id)})">
+                <div>
+                  <div style="font-weight:700; font-size:14px; color:var(--text-primary);">${escapeHtml(c.title)}</div>
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">${escapeHtml(c.category || "")}</div>
+                </div>
+                <span class="norm-case-chevron">›</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 7. ACTION BUTTONS (LEXUZ & PDF) -->
+      <div class="norm-action-buttons-wrap">
+        ${doc.official_source_url ? `
+          <button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(doc.official_source_url)}')">
+            🌐 LexUZ rasmiy manbasi ↗
+          </button>
+        ` : ''}
+        ${doc.pdf_url ? `
+          <button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(doc.pdf_url)}')">
+            📥 PDF Hujjatni yuklab olish
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 4. PRACTICAL CASE FULL CHECKLIST DETAIL PAGE
+// ----------------------------------------------------------------------------
+async function openNormativeCaseDetail(caseId) {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  showToast("💡 Amaliy yo‘riqnoma yuklanmoqda...");
+
+  try {
+    const res = await api(`/api/normatives/cases/${Number(caseId)}`);
+    if (!res || !res.ok || !res.case) {
+      return showAlert("Vaziyat ma'lumotlari topilmadi.");
+    }
+
+    normativesState.selectedCase = res;
+    normativesState.activeStepIndex = 0;
+
+    currentView = {
+      type: "normative_case_detail",
+      html: renderNormativeCaseDetailPage(res)
+    };
+    render();
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } catch (err) {
+    console.error("OPEN CASE DETAIL ERROR:", err);
+    showAlert("Vaziyatni ochishda xatolik yuz berdi.");
+  }
+}
+
+function closeNormativeCaseDetail() {
+  haptic("light");
+  currentView = null;
+  normativesState.selectedCase = null;
+  activeTab = "tasks";
+  libraryActiveSection = "normatives";
+  render();
+  window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
+}
+
+function renderNormativeCaseDetailPage(res) {
+  const c = res.case || {};
+  const steps = res.steps || [];
+  const icon = c.icon || "🏠";
+
+  return `
+    <div class="page lib-container norm-detail-page">
+      <!-- TOP NAVIGATION BAR -->
+      <div class="lib-detail-top-bar" style="margin-bottom: 14px;">
+        <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeNormativeCaseDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Amaliy vaziyatlar
+        </button>
+      </div>
+
+      <!-- HERO HEAD -->
+      <div class="norm-case-detail-hero">
+        <div class="norm-case-hero-top">
+          <span class="norm-case-icon-lg">${escapeHtml(icon)}</span>
+          <span class="norm-case-cat-pill">${escapeHtml(c.category || "Amaliy")}</span>
+        </div>
+        <h1 class="norm-case-detail-title">${escapeHtml(c.title)}</h1>
+        <p class="norm-case-detail-desc">${escapeHtml(c.description || "")}</p>
+        <div class="norm-case-stats-bar">
+          <span>📋 Jami ${steps.length} ta ketma-ket rasmiy bosqich</span>
+          <span>✓ Qonuniy talablar</span>
+        </div>
+      </div>
+
+      <!-- STEP-BY-STEP INTERACTIVE CHECKLIST -->
+      <div class="norm-checklist-section">
+        <div class="norm-checklist-title">
+          <span>📌 Rasmiy Hujjatlar va Qadamlar Ketma-ketligi</span>
+        </div>
+
+        <div class="norm-steps-list">
+          ${steps.map((st, idx) => {
+            const stepNum = st.step_order || (idx + 1);
+            const doc = st.document;
+            return `
+              <div class="norm-step-card">
+                <div class="norm-step-header">
+                  <div class="norm-step-number">${stepNum}</div>
+                  <div class="norm-step-meta">
+                    <h3 class="norm-step-title">${escapeHtml(st.title)}</h3>
+                    ${st.is_mandatory !== false ? '<span class="norm-mandatory-tag">Majburiy</span>' : ''}
+                  </div>
+                </div>
+
+                <div class="norm-step-desc">
+                  ${escapeHtml(st.description || "")}
+                </div>
+
+                <!-- LINKED OFFICIAL DOCUMENT CARD (IF PRESENT) -->
+                ${doc ? `
+                  <div class="norm-step-linked-doc" onclick="openNormativeDocDetail(${Number(doc.id)})">
+                    <div class="norm-step-doc-left">
+                      <span class="norm-step-doc-ico">📄</span>
+                      <div>
+                        <div class="norm-step-doc-num">${escapeHtml(doc.document_number)} ${renderNormativeStatusBadge(doc.status)}</div>
+                        <div class="norm-step-doc-name">${escapeHtml(doc.title)}</div>
+                      </div>
+                    </div>
+                    <span class="norm-step-doc-arrow">Asos hujjat ›</span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- LEGAL DISCLAIMER -->
+      <div class="norm-legal-notice">
+        ⚖️ <strong>Eslatma:</strong> Barcha bosqichlar va talablar O‘zbekiston Respublikasi shaharsozlik qonunchiligi (SHNQ, QMQ) va Vazirlar Mahkamasi qarorlariga asoslangan. Har bir bosqich bo‘yicha batafsil normativni ustiga bosib ko‘rishingiz mumkin.
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 5. ADMIN PANEL NORMATIVLAR CMS VIEW & CRUD
+// ----------------------------------------------------------------------------
+let adminNormativesTab = "docs"; // "docs" | "cases"
+let adminNormativesSearch = "";
+
+function renderAdminNormativesCMS() {
+  const stats = adminData.normativesStats || {};
+  const docs = adminData.normativesList || [];
+  const cases = adminData.normativesCases || [];
+
+  let filteredDocs = docs;
+  if (adminNormativesSearch) {
+    const q = adminNormativesSearch.toLowerCase();
+    filteredDocs = docs.filter(d => (d.document_number || "").toLowerCase().includes(q) || (d.title || "").toLowerCase().includes(q) || (d.category || "").toLowerCase().includes(q));
+  }
+
+  let filteredCases = cases;
+  if (adminNormativesSearch) {
+    const q = adminNormativesSearch.toLowerCase();
+    filteredCases = cases.filter(c => (c.title || "").toLowerCase().includes(q) || (c.category || "").toLowerCase().includes(q));
+  }
+
+  return `
+    <div class="admin-normatives-cms">
+      <div class="admin-section-hero" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div class="admin-hero-title">📋 Normativlar va Standartlar CMS</div>
+          <div class="admin-hero-desc">SHNQ, QMQ, O‘z DSt va amaliy "Nima kerak?" yo‘l xaritalari boshqaruvi</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" onclick="openAdminNormativeEditModal(null)">
+            + Yangi Normativ
+          </button>
+          <button class="btn btn-secondary" onclick="openAdminCaseEditModal(null)">
+            + Yangi Keys
+          </button>
+        </div>
+      </div>
+
+      <!-- STATS TILES -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin: 14px 0;">
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:var(--text-secondary);">Jami Hujjatlar</div>
+          <div style="font-size:20px; font-weight:800; color:var(--accent);">${stats.total_documents || docs.length}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#10b981;">Amalda</div>
+          <div style="font-size:20px; font-weight:800; color:#10b981;">${stats.in_force || 0}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#f59e0b;">O‘zgartirilgan</div>
+          <div style="font-size:20px; font-weight:800; color:#f59e0b;">${stats.amended || 0}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#ef4444;">Bekor qilingan</div>
+          <div style="font-size:20px; font-weight:800; color:#ef4444;">${stats.repealed || 0}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#8b5cf6;">Amaliy Keyslar</div>
+          <div style="font-size:20px; font-weight:800; color:#8b5cf6;">${stats.total_cases || cases.length}</div>
+        </div>
+      </div>
+
+      <!-- SEARCH & SUBTABS -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <div class="norm-segmented-control" style="margin:0; max-width:340px;">
+          <button type="button" class="norm-seg-btn ${adminNormativesTab === 'docs' ? 'active' : ''}" onclick="adminNormativesTab='docs'; renderAdminPanel();">
+            📑 Normativlar (${filteredDocs.length})
+          </button>
+          <button type="button" class="norm-seg-btn ${adminNormativesTab === 'cases' ? 'active' : ''}" onclick="adminNormativesTab='cases'; renderAdminPanel();">
+            💡 Keyslar (${filteredCases.length})
+          </button>
+        </div>
+
+        <input 
+          type="text" 
+          class="input" 
+          placeholder="Qidirish..." 
+          style="max-width:240px; margin:0;" 
+          value="${escapeHtml(adminNormativesSearch)}" 
+          oninput="adminNormativesSearch=this.value; renderAdminPanel();" 
+        />
+      </div>
+
+      <!-- CMS TABLES -->
+      ${adminNormativesTab === 'docs' ? `
+        <div class="table-wrap">
+          <table class="table" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="text-align:left; border-bottom:1px solid var(--border-color); font-size:12px; color:var(--text-secondary);">
+                <th style="padding:10px 8px;">Raqami</th>
+                <th style="padding:10px 8px;">Nomi</th>
+                <th style="padding:10px 8px;">Turi / Kategoriya</th>
+                <th style="padding:10px 8px;">Holati</th>
+                <th style="padding:10px 8px; text-align:right;">Amallar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredDocs.map(d => `
+                <tr style="border-bottom:1px solid var(--border-color); font-size:13px;">
+                  <td style="padding:10px 8px; font-weight:700; color:var(--accent);">${escapeHtml(d.document_number)}</td>
+                  <td style="padding:10px 8px; max-width:280px; font-weight:600;">${escapeHtml(d.title)}</td>
+                  <td style="padding:10px 8px; color:var(--text-secondary); font-size:12px;">${escapeHtml(d.document_type || '')} • ${escapeHtml(d.category || '')}</td>
+                  <td style="padding:10px 8px;">${renderNormativeStatusBadge(d.status)}</td>
+                  <td style="padding:10px 8px; text-align:right; white-space:nowrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="openAdminNormativeEditModal(${Number(d.id)})">✏️</button>
+                    <button class="btn btn-secondary btn-sm" style="color:#ef4444;" onclick="deleteAdminNormativeDoc(${Number(d.id)})">🗑️</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : `
+        <div class="table-wrap">
+          <table class="table" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="text-align:left; border-bottom:1px solid var(--border-color); font-size:12px; color:var(--text-secondary);">
+                <th style="padding:10px 8px;">Keys nomi</th>
+                <th style="padding:10px 8px;">Kategoriya</th>
+                <th style="padding:10px 8px;">Bosqichlar</th>
+                <th style="padding:10px 8px; text-align:right;">Amallar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredCases.map(c => `
+                <tr style="border-bottom:1px solid var(--border-color); font-size:13px;">
+                  <td style="padding:10px 8px; font-weight:700;">${escapeHtml(c.icon || '🏠')} ${escapeHtml(c.title)}</td>
+                  <td style="padding:10px 8px; color:var(--text-secondary);">${escapeHtml(c.category || '')}</td>
+                  <td style="padding:10px 8px;"><span class="badge">${c.step_count || (c.steps ? c.steps.length : 0)} ta bosqich</span></td>
+                  <td style="padding:10px 8px; text-align:right; white-space:nowrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="openAdminCaseEditModal(${Number(c.id)})">✏️</button>
+                    <button class="btn btn-secondary btn-sm" style="color:#ef4444;" onclick="deleteAdminPracticalCase(${Number(c.id)})">🗑️</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+// ADMIN MODAL & CRUD HANDLERS
+function openAdminNormativeEditModal(docId) {
+  haptic("light");
+  const doc = docId ? (adminData.normativesList || []).find(d => Number(d.id) === Number(docId)) : null;
+
+  const categories = [
+    "Qurilish uchun kerakli hujjatlar",
+    "Loyihalash",
+    "Konstruksiya",
+    "O‘lchamlar va standartlar",
+    "Yong‘in xavfsizligi",
+    "Qurilish materiallari",
+    "Smeta va qurilish iqtisodiyoti",
+    "Shaharsozlik",
+    "Interyer",
+    "SHNQ",
+    "QMQ",
+    "O‘z DSt / GOST va boshqa standartlar"
+  ];
+
+  const html = `
+    <div class="modal-overlay active" id="admin-norm-modal" onclick="if(event.target===this) closeAdminModal();">
+      <div class="modal-card" style="max-width:540px; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="font-size:18px; font-weight:800; color:var(--text-primary);">${doc ? 'Normativni Tahrirlash' : 'Yangi Normativ Qo‘shish'}</h2>
+          <button class="modal-close-btn" onclick="closeAdminModal()">✕</button>
+        </div>
+
+        <form onsubmit="handleSaveNormativeDoc(event, ${doc ? doc.id : 'null'})">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Hujjat raqami *</label>
+            <input type="text" id="norm-form-number" class="input" required value="${escapeHtml((doc && doc.document_number) || '')}" placeholder="SHNQ 2.08.01-24" />
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Hujjat nomi *</label>
+            <input type="text" id="norm-form-title" class="input" required value="${escapeHtml((doc && doc.title) || '')}" placeholder="Turar joy obyektlarini loyihalash" />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="label">Hujjat turi</label>
+              <select id="norm-form-type" class="input">
+                <option value="SHNQ" ${doc && doc.document_type === 'SHNQ' ? 'selected' : ''}>SHNQ</option>
+                <option value="QMQ" ${doc && doc.document_type === 'QMQ' ? 'selected' : ''}>QMQ</option>
+                <option value="O‘z DSt" ${doc && doc.document_type === 'O‘z DSt' ? 'selected' : ''}>O‘z DSt</option>
+                <option value="Qaror" ${doc && doc.document_type === 'Qaror' ? 'selected' : ''}>Qaror / Buyruq</option>
+                <option value="Boshqa" ${doc && doc.document_type === 'Boshqa' ? 'selected' : ''}>Boshqa</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Holati (Status) *</label>
+              <select id="norm-form-status" class="input">
+                <option value="AMALDA" ${!doc || doc.status === 'AMALDA' ? 'selected' : ''}>🟢 AMALDA</option>
+                <option value="O‘ZGARTIRILGAN" ${doc && doc.status === 'O‘ZGARTIRILGAN' ? 'selected' : ''}>🟡 O‘ZGARTIRILGAN</option>
+                <option value="KUCHINI YO‘QOTGAN" ${doc && doc.status === 'KUCHINI YO‘QOTGAN' ? 'selected' : ''}>🔴 KUCHINI YO‘QOTGAN</option>
+                <option value="YANGI" ${doc && doc.status === 'YANGI' ? 'selected' : ''}>🔵 YANGI</option>
+                <option value="TARIXIY" ${doc && doc.status === 'TARIXIY' ? 'selected' : ''}>⚪ TARIXIY</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Kategoriya</label>
+            <select id="norm-form-cat" class="input">
+              ${categories.map(cat => `
+                <option value="${escapeHtml(cat)}" ${doc && doc.category === cat ? 'selected' : ''}>${escapeHtml(cat)}</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Nima uchun kerak? (Tushuntirish)</label>
+            <textarea id="norm-form-desc" class="input" rows="2" placeholder="Oddiy va tushunarli tilda tushuntirish...">${escapeHtml((doc && doc.description) || '')}</textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Nima talab qilinadi? (Me'yorlar)</label>
+            <textarea id="norm-form-req" class="input" rows="3" placeholder="Aynan qanday talab va cheklovlar bor...">${escapeHtml((doc && doc.requirements) || '')}</textarea>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="label">Kim uchun?</label>
+              <input type="text" id="norm-form-audience" class="input" value="${escapeHtml((doc && doc.target_audience) || '')}" placeholder="Arxitektor, buyurtmachi..." />
+            </div>
+            <div>
+              <label class="label">Qaysi holatda kerak?</label>
+              <input type="text" id="norm-form-scope" class="input" value="${escapeHtml((doc && doc.application_scope) || '')}" placeholder="Yangi uy qurish, rekonstruksiya..." />
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="label">Qabul qilingan sana</label>
+              <input type="date" id="norm-form-date" class="input" value="${doc && doc.adopted_date ? doc.adopted_date.split('T')[0] : ''}" />
+            </div>
+            <div>
+              <label class="label">Qabul qilgan organ</label>
+              <input type="text" id="norm-form-auth" class="input" value="${escapeHtml((doc && doc.issuing_authority) || 'Qurilish vazirligi')}" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Rasmiy manba (LexUZ URL)</label>
+            <input type="url" id="norm-form-lexurl" class="input" value="${escapeHtml((doc && doc.official_source_url) || '')}" placeholder="https://lex.uz/docs/..." />
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">PDF Hujjat URL</label>
+            <input type="url" id="norm-form-pdfurl" class="input" value="${escapeHtml((doc && doc.pdf_url) || '')}" placeholder="https://..." />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="label">Eski tahrir (agar o'zgargan bo'lsa)</label>
+              <input type="text" id="norm-form-old-edit" class="input" value="${escapeHtml((doc && doc.previous_edition) || '')}" placeholder="SHNQ 2.08.01-19" />
+            </div>
+            <div>
+              <label class="label">Yangi tahrir / O‘rniga</label>
+              <input type="text" id="norm-form-new-edit" class="input" value="${escapeHtml((doc && doc.new_edition) || '')}" placeholder="SHNQ 2.08.01-24" />
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  showAppModalHtml(html);
+}
+
+async function handleSaveNormativeDoc(e, docId) {
+  e.preventDefault();
+  haptic("medium");
+  const payload = {
+    id: docId || undefined,
+    document_number: document.getElementById('norm-form-number').value.trim(),
+    title: document.getElementById('norm-form-title').value.trim(),
+    document_type: document.getElementById('norm-form-type').value,
+    status: document.getElementById('norm-form-status').value,
+    category: document.getElementById('norm-form-cat').value,
+    description: document.getElementById('norm-form-desc').value.trim(),
+    requirements: document.getElementById('norm-form-req').value.trim(),
+    target_audience: document.getElementById('norm-form-audience').value.trim(),
+    application_scope: document.getElementById('norm-form-scope').value.trim(),
+    adopted_date: document.getElementById('norm-form-date').value || null,
+    issuing_authority: document.getElementById('norm-form-auth').value.trim(),
+    official_source_url: document.getElementById('norm-form-lexurl').value.trim(),
+    pdf_url: document.getElementById('norm-form-pdfurl').value.trim(),
+    previous_edition: document.getElementById('norm-form-old-edit').value.trim(),
+    new_edition: document.getElementById('norm-form-new-edit').value.trim()
+  };
+
+  try {
+    const res = await adminApi('/api/admin/normatives/save', payload);
+    if (res && res.ok) {
+      showToast("✓ Normativ muvaffaqiyatli saqlandi!");
+      closeAdminModal();
+      // Reload admin data
+      const [listRes, statsRes] = await Promise.all([
+        api("/api/normatives/list", { limit: 100 }),
+        api("/api/normatives/stats")
+      ]);
+      adminData.normativesList = (listRes && listRes.documents) || [];
+      adminData.normativesStats = (statsRes && statsRes.stats) || {};
+      normativesState.documents = adminData.normativesList;
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "Saqlashda xatolik.");
+    }
+  } catch (err) {
+    console.error("SAVE NORMATIVE ERROR:", err);
+    showAlert("Saqlashda xatolik yuz berdi.");
+  }
+}
+
+async function deleteAdminNormativeDoc(docId) {
+  haptic("warning");
+  if (!confirm("Haqiqatan ham ushbu normativ hujjatni o‘chirmoqchimisiz?")) return;
+
+  try {
+    const res = await adminApi(`/api/admin/normatives/delete/${Number(docId)}`, {});
+    if (res && res.ok) {
+      showToast("✓ Normativ o‘chirildi.");
+      adminData.normativesList = (adminData.normativesList || []).filter(d => Number(d.id) !== Number(docId));
+      normativesState.documents = adminData.normativesList;
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "O‘chirishda xatolik.");
+    }
+  } catch (err) {
+    console.error("DELETE NORMATIVE ERROR:", err);
+    showAlert("O‘chirishda xatolik yuz berdi.");
+  }
+}
+
+function openAdminCaseEditModal(caseId) {
+  haptic("light");
+  const c = caseId ? (adminData.normativesCases || []).find(x => Number(x.id) === Number(caseId)) : null;
+
+  const html = `
+    <div class="modal-overlay active" id="admin-case-modal" onclick="if(event.target===this) closeAdminModal();">
+      <div class="modal-card" style="max-width:500px; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="font-size:18px; font-weight:800; color:var(--text-primary);">${c ? 'Keysni Tahrirlash' : 'Yangi Amaliy Keys'}</h2>
+          <button class="modal-close-btn" onclick="closeAdminModal()">✕</button>
+        </div>
+
+        <form onsubmit="handleSavePracticalCase(event, ${c ? c.id : 'null'})">
+          <div style="display:grid; grid-template-columns:70px 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="label">Belgi</label>
+              <input type="text" id="case-form-icon" class="input" value="${escapeHtml((c && c.icon) || '🏠')}" />
+            </div>
+            <div>
+              <label class="label">Vaziyat / Keys nomi *</label>
+              <input type="text" id="case-form-title" class="input" required value="${escapeHtml((c && c.title) || '')}" placeholder="2 qavatli uy qurish" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Kategoriya</label>
+            <input type="text" id="case-form-cat" class="input" value="${escapeHtml((c && c.category) || 'Qurilish uchun kerakli hujjatlar')}" />
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">Tavsif</label>
+            <textarea id="case-form-desc" class="input" rows="3" placeholder="Qisqacha amaliy yo‘l xaritasi tavsifi...">${escapeHtml((c && c.description) || '')}</textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  showAppModalHtml(html);
+}
+
+async function handleSavePracticalCase(e, caseId) {
+  e.preventDefault();
+  haptic("medium");
+  const payload = {
+    id: caseId || undefined,
+    icon: document.getElementById('case-form-icon').value.trim() || '🏠',
+    title: document.getElementById('case-form-title').value.trim(),
+    category: document.getElementById('case-form-cat').value.trim(),
+    description: document.getElementById('case-form-desc').value.trim()
+  };
+
+  try {
+    const res = await adminApi('/api/admin/normatives/case/save', payload);
+    if (res && res.ok) {
+      showToast("✓ Keys muvaffaqiyatli saqlandi!");
+      closeAdminModal();
+      const casesRes = await api("/api/normatives/cases");
+      adminData.normativesCases = (casesRes && casesRes.cases) || [];
+      normativesState.cases = adminData.normativesCases;
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "Saqlashda xatolik.");
+    }
+  } catch (err) {
+    console.error("SAVE CASE ERROR:", err);
+    showAlert("Saqlashda xatolik yuz berdi.");
+  }
+}
+
+async function deleteAdminPracticalCase(caseId) {
+  haptic("warning");
+  if (!confirm("Ushbu amaliy keysni o‘chirmoqchimisiz?")) return;
+
+  try {
+    const res = await adminApi(`/api/admin/normatives/case/delete/${Number(caseId)}`, {});
+    if (res && res.ok) {
+      showToast("✓ Keys o‘chirildi.");
+      adminData.normativesCases = (adminData.normativesCases || []).filter(c => Number(c.id) !== Number(caseId));
+      normativesState.cases = adminData.normativesCases;
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "O‘chirishda xatolik.");
+    }
+  } catch (err) {
+    console.error("DELETE CASE ERROR:", err);
+    showAlert("O‘chirishda xatolik yuz berdi.");
+  }
+}
+
+function showAppModalHtml(html) {
+  closeAdminModal();
+  const wrap = document.createElement('div');
+  wrap.id = 'app-dynamic-modal-wrap';
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap);
+}
+
+function closeAdminModal() {
+  const m = document.getElementById('app-dynamic-modal-wrap');
+  if (m) m.remove();
+}
 

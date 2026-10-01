@@ -16,6 +16,13 @@ var learningModule = require('./learningData');
 var initLearningTables = learningModule.initLearningTables;
 var materialsModule = require('./materialsData');
 var initMaterialsTables = materialsModule.initMaterialsTables;
+var normativesModule = require('./normativesData');
+var initNormativesTables = normativesModule.initNormativesTables;
+var getNormativesList = normativesModule.getNormativesList;
+var getNormativeDetail = normativesModule.getNormativeDetail;
+var getPracticalCasesList = normativesModule.getPracticalCasesList;
+var getPracticalCaseDetail = normativesModule.getPracticalCaseDetail;
+var getNormativesStats = normativesModule.getNormativesStats;
 
 var videoSourceService = require('./services/videoSourceService');
 var signVideoToken = videoSourceService.signVideoToken;
@@ -1826,6 +1833,7 @@ ensureUserActivityTable();
 ensureLibraryV2Tables();
 initLearningTables(pool);
 initMaterialsTables(pool);
+initNormativesTables(pool);
 
 // ======================================================
 // USER RESTRICTIONS (BAN & RESTRICTION SYSTEM)
@@ -10701,6 +10709,215 @@ app.post('/api/admin/books/:id/toggle-recommend', requireAdmin, async function (
 
 
 // ======================================================
+
+// ======================================================
+// NORMATIVLAR VA AMALIY YECHIMLAR API (PUBLIC & ADMIN)
+// ======================================================
+
+app.all('/api/normatives/list', async function (req, res) {
+  try {
+    var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var data = await getNormativesList(pool, {
+      category: p.category,
+      document_type: p.document_type || p.type,
+      status: p.status,
+      search: p.search || p.q,
+      limit: parseInt(p.limit, 10) || 50,
+      offset: parseInt(p.offset, 10) || 0,
+      sort: p.sort || 'newest'
+    });
+    return res.json(Object.assign({ ok: true }, data));
+  } catch (err) {
+    console.error('NORMATIVES LIST ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Normativlarni yuklashda xatolik' });
+  }
+});
+
+app.all('/api/normatives/detail/:id', async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    var doc = await getNormativeDetail(pool, id);
+    if (!doc) return res.status(404).json({ ok: false, error: 'Hujjat topilmadi' });
+    return res.json({ ok: true, document: doc });
+  } catch (err) {
+    console.error('NORMATIVE DETAIL ERROR:', err);
+    return res.status(500).json({ ok: false, error: "Hujjat ma'lumotini yuklashda xatolik" });
+  }
+});
+
+app.all('/api/normatives/cases', async function (req, res) {
+  try {
+    var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var cases = await getPracticalCasesList(pool, {
+      category: p.category,
+      search: p.search || p.q
+    });
+    return res.json({ ok: true, cases: cases });
+  } catch (err) {
+    console.error('NORMATIVE CASES LIST ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Amaliy vaziyatlarni yuklashda xatolik' });
+  }
+});
+
+app.all('/api/normatives/cases/:id', async function (req, res) {
+  try {
+    var idOrSlug = req.params.id;
+    var cs = await getPracticalCaseDetail(pool, idOrSlug);
+    if (!cs) return res.status(404).json({ ok: false, error: 'Vaziyat topilmadi' });
+    return res.json({ ok: true, case: cs });
+  } catch (err) {
+    console.error('NORMATIVE CASE DETAIL ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Amaliy vaziyatni yuklashda xatolik' });
+  }
+});
+
+app.all('/api/normatives/stats', async function (req, res) {
+  try {
+    var stats = await getNormativesStats(pool);
+    return res.json({ ok: true, stats: stats });
+  } catch (err) {
+    console.error('NORMATIVES STATS ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Statistikani yuklashda xatolik' });
+  }
+});
+
+app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body || {};
+    var id = parseInt(b.id, 10) || null;
+    var title = (b.title || '').trim();
+    var docNumber = (b.document_number || '').trim();
+    var docType = (b.document_type || 'SHNQ').trim();
+    var category = (b.category || 'design').trim();
+    var description = (b.description || '').trim();
+    var requirements = (b.requirements || '').trim();
+    var targetAudience = (b.target_audience || '').trim();
+    var applicationScope = (b.application_scope || '').trim();
+    var status = (b.status || 'AMALDA').trim();
+    var adoptedDate = b.adopted_date || null;
+    var effectiveDate = b.effective_date || null;
+    var repealedDate = b.repealed_date || null;
+    var issuingAuthority = (b.issuing_authority || '').trim();
+    var officialUrl = (b.official_source_url || '').trim();
+    var pdfUrl = (b.pdf_url || '').trim();
+    var oldEdition = (b.old_edition_note || '').trim();
+    var newEdition = (b.new_edition_note || '').trim();
+    var changeDate = b.change_date || null;
+
+    if (!title || !docNumber) {
+      return res.status(400).json({ ok: false, error: 'Hujjat raqami va nomi kiritilishi shart' });
+    }
+
+    var result;
+    if (id) {
+      result = await pool.query(`
+        UPDATE normative_documents SET
+          title = $1, document_number = $2, document_type = $3, category = $4,
+          description = $5, requirements = $6, target_audience = $7, application_scope = $8,
+          status = $9, adopted_date = $10, effective_date = $11, repealed_date = $12,
+          issuing_authority = $13, official_source_url = $14, pdf_url = $15,
+          old_edition_note = $16, new_edition_note = $17, change_date = $18,
+          last_verified_at = NOW(), updated_at = NOW()
+        WHERE id = $19
+        RETURNING *
+      `, [
+        title, docNumber, docType, category, description, requirements,
+        targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
+        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate, id
+      ]);
+    } else {
+      result = await pool.query(`
+        INSERT INTO normative_documents (
+          title, document_number, document_type, category, description,
+          requirements, target_audience, application_scope, status,
+          adopted_date, effective_date, repealed_date, issuing_authority,
+          official_source_url, pdf_url, old_edition_note, new_edition_note,
+          change_date, last_verified_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9,
+          $10, $11, $12, $13, $14, $15, $16, $17,
+          $18, NOW()
+        )
+        RETURNING *
+      `, [
+        title, docNumber, docType, category, description, requirements,
+        targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
+        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate
+      ]);
+    }
+
+    return res.json({ ok: true, document: result.rows[0], message: id ? 'Hujjat yangilandi' : 'Yangi normativ qo\'shildi' });
+  } catch (err) {
+    console.error('ADMIN NORMATIVE SAVE ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message || 'Normativni saqlashda xatolik' });
+  }
+});
+
+app.post('/api/admin/normatives/delete/:id', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ ok: false, error: 'Noto\'g\'ri ID' });
+    await pool.query('DELETE FROM normative_documents WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Normativ hujjat o\'chirildi' });
+  } catch (err) {
+    console.error('ADMIN NORMATIVE DELETE ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'O\'chirishda xatolik yuz berdi' });
+  }
+});
+
+app.post('/api/admin/normatives/case/save', requireAdmin, async function (req, res) {
+  try {
+    var b = req.body || {};
+    var id = parseInt(b.id, 10) || null;
+    var title = (b.title || '').trim();
+    var slug = (b.slug || title.toLowerCase().replace(/[^a-z0-9]/g, '-')).trim();
+    var icon = (b.icon || '🏠').trim();
+    var category = (b.category || 'construction_docs').trim();
+    var subtitle = (b.subtitle || '').trim();
+    var description = (b.description || '').trim();
+    var targetUser = (b.target_user || '').trim();
+    var checklist = Array.isArray(b.checklist) ? JSON.stringify(b.checklist) : (typeof b.checklist === 'string' ? b.checklist : '[]');
+
+    if (!title) return res.status(400).json({ ok: false, error: 'Vaziyat sarlavhasi kiritilishi shart' });
+
+    var result;
+    if (id) {
+      result = await pool.query(`
+        UPDATE practical_cases SET
+          title = $1, slug = $2, icon = $3, category = $4,
+          subtitle = $5, description = $6, target_user = $7,
+          checklist = $8::jsonb, updated_at = NOW()
+        WHERE id = $9
+        RETURNING *
+      `, [title, slug, icon, category, subtitle, description, targetUser, checklist, id]);
+    } else {
+      result = await pool.query(`
+        INSERT INTO practical_cases (
+          title, slug, icon, category, subtitle, description, target_user, checklist
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+        RETURNING *
+      `, [title, slug, icon, category, subtitle, description, targetUser, checklist]);
+    }
+
+    return res.json({ ok: true, case: result.rows[0], message: 'Amaliy vaziyat saqlandi' });
+  } catch (err) {
+    console.error('ADMIN CASE SAVE ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message || 'Saqlashda xatolik' });
+  }
+});
+
+app.post('/api/admin/normatives/case/delete/:id', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ ok: false, error: 'Noto\'g\'ri ID' });
+    await pool.query('DELETE FROM practical_cases WHERE id = $1', [id]);
+    return res.json({ ok: true, message: 'Amaliy vaziyat o\'chirildi' });
+  } catch (err) {
+    console.error('ADMIN CASE DELETE ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'O\'chirishda xatolik' });
+  }
+});
+
 // HEALTH CHECK
 // ======================================================
 
