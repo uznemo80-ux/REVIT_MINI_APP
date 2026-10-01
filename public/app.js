@@ -13978,7 +13978,16 @@ async function openEditLessonView(lessonId) {
     }
     const filesData = await adminApi(`/api/admin/lesson/${Number(lessonId)}/files`);
     const files = filesData.files || [];
-    const modules = (courseModulesData && courseModulesData.modules) || [];
+    let modules = (courseModulesData && courseModulesData.modules) || [];
+    if (!modules.length) {
+      try {
+        const mRes = await adminApi('/api/admin/modules');
+        if (mRes && mRes.modules) modules = mRes.modules;
+      } catch (e) {}
+    }
+    if (lesson.module_id && !modules.some(m => Number(m.id) === Number(lesson.module_id))) {
+      modules.unshift({ id: lesson.module_id, title: lesson.module_title || `Modul #${lesson.module_id}` });
+    }
 
     currentView = {
       html: `
@@ -14122,7 +14131,8 @@ async function openEditLessonView(lessonId) {
 }
 
 async function submitUpdateLesson(lessonId) {
-  const moduleId = document.getElementById("edit-l-module")?.value;
+  const rawModVal = document.getElementById("edit-l-module")?.value;
+  const modIdNum = (rawModVal && Number(rawModVal) > 0) ? Number(rawModVal) : undefined;
   const orderIndex = document.getElementById("edit-l-order")?.value;
   const title = document.getElementById("edit-l-title")?.value.trim();
   const ytUrl = document.getElementById("edit-l-yt")?.value.trim();
@@ -14137,8 +14147,8 @@ async function submitUpdateLesson(lessonId) {
   try {
     haptic("medium");
     await adminApi(`/api/admin/lesson/${Number(lessonId)}/update`, {
-      module_id: Number(moduleId),
-      order_index: Number(orderIndex),
+      module_id: modIdNum,
+      order_index: (orderIndex !== undefined && orderIndex !== null && orderIndex !== "") ? Number(orderIndex) : undefined,
       title,
       youtube_url: ytUrl || null,
       telegram_url: tgUrl !== undefined ? tgUrl : null,

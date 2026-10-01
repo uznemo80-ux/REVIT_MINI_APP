@@ -5123,7 +5123,16 @@ app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res)
     if (existingResult.rows.length === 0) return res.status(404).json({ error: 'Dars topilmadi' });
     var existing = existingResult.rows[0];
 
-    var moduleId = req.body.module_id !== undefined ? Number(req.body.module_id) : existing.module_id;
+    var rawModId = req.body.module_id;
+    var moduleId = (rawModId !== undefined && rawModId !== null && Number(rawModId) > 0)
+      ? Number(rawModId)
+      : existing.module_id;
+
+    // Agar berilgan modul bazada bo'lmasa, mavjud modulni saqlab qolish
+    var modCheck = await pool.query('SELECT id FROM modules WHERE id = $1 LIMIT 1', [moduleId]);
+    if (modCheck.rows.length === 0) {
+      moduleId = existing.module_id;
+    }
     var title = req.body.title ? String(req.body.title).trim() : existing.title;
     var orderIndex = req.body.order_index !== undefined ? Number(req.body.order_index) : existing.order_index;
     var youtubeUrl = req.body.youtube_url !== undefined ? (req.body.youtube_url || null) : existing.youtube_url;
