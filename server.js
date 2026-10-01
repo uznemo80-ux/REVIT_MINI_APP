@@ -5667,6 +5667,25 @@ app.post('/api/admin/faq/:id/delete', requireAdmin, async function (req, res) {
 // ADMIN COURSES CRUD (Talab 3)
 // ======================================================
 
+app.all(['/api/admin/courses'], requireAdmin, async function (req, res) {
+  try {
+    var result = await pool.query(
+      'SELECT c.*, ' +
+      'COUNT(DISTINCT m.id)::int AS module_count, ' +
+      'COUNT(DISTINCT l.id)::int AS lesson_count ' +
+      'FROM courses c ' +
+      'LEFT JOIN modules m ON m.course_id = c.id ' +
+      'LEFT JOIN lessons l ON l.module_id = m.id ' +
+      'GROUP BY c.id ' +
+      'ORDER BY c.order_index ASC, c.id ASC'
+    );
+    return res.json({ ok: true, courses: result.rows });
+  } catch (error) {
+    console.error('ADMIN COURSES LIST ERROR:', error);
+    return res.status(500).json({ error: 'Kurslarni olishda xato' });
+  }
+});
+
 app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
   try {
     var title = String(req.body.title || '').trim();

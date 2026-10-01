@@ -4077,16 +4077,12 @@ function openFreeMiniCourseLessonsModal() {
   const modules = Array.isArray(state.modules) ? state.modules : [];
   const s = state.settings || {};
   let fmcLessons = [];
-  if (s.free_minicourse_lesson_ids) {
+  if (typeof s.free_minicourse_lesson_ids === "string" && s.free_minicourse_lesson_ids.trim().length > 0) {
     const ids = s.free_minicourse_lesson_ids.split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
     const allL = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
-    fmcLessons = ids.map(id => allL.find(l => l.id === id)).filter(Boolean);
-  }
-  if (!fmcLessons.length) {
+    fmcLessons = ids.map(id => allL.find(l => Number(l.id) === Number(id))).filter(Boolean);
+  } else if (!s.free_minicourse_lesson_ids) {
     fmcLessons = modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => ({ ...l, module_title: m.title })));
-  }
-  if (!fmcLessons.length && modules[0]?.lessons?.length) {
-    fmcLessons = modules[0].lessons.slice(0, 6).map(l => ({ ...l, module_title: modules[0].title }));
   }
 
   const freeTitle = s.free_minicourse_title || "REVIT 0 DAN";
@@ -4153,19 +4149,15 @@ function renderFreeMiniCourseCard() {
   const freePoints = rawPoints.split("\n").map(p => p.trim()).filter(Boolean);
 
   let fmcLessons = [];
-  if (s.free_minicourse_lesson_ids) {
+  if (typeof s.free_minicourse_lesson_ids === "string" && s.free_minicourse_lesson_ids.trim().length > 0) {
     const ids = s.free_minicourse_lesson_ids.split(",").map(n => parseInt(n.trim(), 10)).filter(Boolean);
     const allL = modules.flatMap(m => (m.lessons || []).map(l => ({ ...l, module_title: m.title })));
-    fmcLessons = ids.map(id => allL.find(l => l.id === id)).filter(Boolean);
-  }
-  if (!fmcLessons.length) {
+    fmcLessons = ids.map(id => allL.find(l => Number(l.id) === Number(id))).filter(Boolean);
+  } else if (!s.free_minicourse_lesson_ids) {
     fmcLessons = modules.flatMap(m => (m.lessons || []).filter(l => l.is_free).map(l => ({ ...l, module_title: m.title })));
   }
-  if (!fmcLessons.length && modules[0]?.lessons?.length) {
-    fmcLessons = modules[0].lessons.slice(0, 6).map(l => ({ ...l, module_title: modules[0].title }));
-  }
 
-  const countText = fmcLessons.length > 0 ? `${fmcLessons.length} ta bepul dars` : "6 ta bepul dars";
+  const countText = fmcLessons.length > 0 ? `${fmcLessons.length} ta bepul dars` : "Bepul darslar";
 
   return `
     <div class="free-minicourse-card" onclick="openFreeMiniCourseLessonsModal()" style="cursor:pointer;" title="Bepul mini-kurs darslarini ko'rish">
@@ -11456,6 +11448,7 @@ function renderQuizResults(moduleId, result) {
 let adminView = "dashboard";
 let adminNavPath = ["root"]; // ['root'], ['stats'], ['library'], ['library', 'books'], ['library', 'sources'], etc.
 let adminTasksActiveTab = "practice"; // "practice" or "tests"
+let adminSelectedCourseId = null;
 let adminData = {
   stats: null,
   activeUsers: [],
@@ -11560,8 +11553,12 @@ async function adminNavigate(to, subTo) {
       } catch (fe) {}
     } else if (to === "courses") {
       adminView = "lessons";
-      const data = await adminApi("/api/admin/modules").catch(() => ({ modules: [] }));
-      adminData.modules = data.modules || [];
+      const [coursesRes, modulesRes] = await Promise.all([
+        adminApi("/api/admin/courses").catch(() => ({ courses: [] })),
+        adminApi("/api/admin/modules").catch(() => ({ modules: [] }))
+      ]);
+      adminData.courses = (coursesRes.courses && coursesRes.courses.length) ? coursesRes.courses : (state.courses || []);
+      adminData.modules = modulesRes.modules || [];
     } else if (to === "students") {
       adminView = "students";
       const data = await adminApi("/api/admin/students").catch(() => ({ students: [] }));
@@ -12176,25 +12173,194 @@ function renderAdminLibraryMaterialsView() {
   `;
 }
 
-// KURSLAR SAHIFASI
+
+function selectAdminCourse(courseId) {
+  haptic("light");
+  adminSelectedCourseId = Number(courseId);
+  renderAdminPanel();
+}
+window.selectAdminCourse = selectAdminCourse;
+
+function deselectAdminCourse() {
+  haptic("light");
+  adminSelectedCourseId = null;
+  renderAdminPanel();
+}
+window.deselectAdminCourse = deselectAdminCourse;
+
+function returnFromAdminLessonEdit() {
+  haptic("light");
+  if (state.is_admin) {
+    openAdminPanel().then(() => {
+      adminNavigate("courses");
+    });
+  } else {
+    closeDetail();
+  }
+}
+window.returnFromAdminLessonEdit = returnFromAdminLessonEdit;
+
+// KURSLAR SAHIFASI (Ierarxik: Kurslar -> Modullar -> Darslar)
 function renderAdminCoursesView() {
+  const courses = (adminData.courses && adminData.courses.length) ? adminData.courses : (state.courses || []);
+  const allModules = adminData.modules || [];
+
+  // 1-BOSQICH: Agar kurs tanlanmagan bo'lsa -> Mavjud Kurslar Ro'yxati
+  if (!adminSelectedCourseId) {
+    return `
+      <div class="admin-courses-page">
+        <div class="admin-section-hero">
+          <div>
+            <div class="admin-hero-title">🎓 Kurslar Boshqaruvi</div>
+            <div class="admin-hero-desc">Modullar va darslarni ko'rish va tahrirlash uchun kerakli kurs ustiga bosing</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="admin-small-btn" onclick="openAddCourseModal()" style="background:var(--accent); color:#fff; border:none; font-weight:700;">➕ Yangi Kurs Yaratish</button>
+            <button class="admin-small-btn" onclick="openEditFreeMiniCourseModal()">✨ "Revit 0 dan" Sozlamalari</button>
+            <button class="admin-small-btn" onclick="goToCourseManagement()">📚 O'quvchi Katalogi →</button>
+          </div>
+        </div>
+
+        <div class="admin-section-header">
+          <div class="admin-section-title">Mavjud Kurslar (${courses.length} ta)</div>
+        </div>
+
+        ${courses.length ? `
+          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+            ${courses.map(c => {
+              const cModules = allModules.filter(m => Number(m.course_id) === Number(c.id));
+              const modCount = c.module_count !== undefined ? c.module_count : cModules.length;
+              const lessonCount = c.lesson_count !== undefined ? c.lesson_count : 0;
+              const isDraft = c.status === 'draft';
+
+              return `
+                <div class="admin-hub-card" style="padding:16px; border-radius:14px; border:1px solid var(--border); background:var(--bg-surface); cursor:pointer; transition:all 0.2s ease;" onclick="selectAdminCourse(${Number(c.id)})">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; gap:12px;">
+                    <div style="display:flex; align-items:flex-start; gap:14px; flex:1;">
+                      <div class="admin-hub-icon-wrap" style="width:48px; height:48px; border-radius:12px; background:rgba(41,121,255,0.12); color:var(--accent); font-size:24px; flex-shrink:0;">
+                        🎓
+                      </div>
+                      <div style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                          <span style="font-size:15px; font-weight:800; color:var(--text-primary);">${escapeHtml(c.title)}</span>
+                          <span class="admin-hub-badge" style="background:${isDraft ? 'rgba(255,149,0,0.15)' : 'rgba(52,199,89,0.15)'}; color:${isDraft ? '#ff9500' : '#34c759'}; font-size:11px;">
+                            ${isDraft ? '📝 Qoralama' : '🟢 Faol'}
+                          </span>
+                        </div>
+                        ${c.subtitle ? `<div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:6px; line-height:1.35;">${escapeHtml(c.subtitle)}</div>` : ''}
+                        <div style="display:flex; gap:12px; font-size:12px; color:var(--text-secondary); flex-wrap:wrap;">
+                          <span>📂 <b>${modCount}</b> ta modul</span>
+                          ${lessonCount ? `<span>🎬 <b>${lessonCount}</b> ta dars</span>` : ''}
+                          <span>💰 <b>${escapeHtml(c.price || 'Pullik')}</b></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;" onclick="event.stopPropagation()">
+                      <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:var(--accent); color:#fff;" onclick="selectAdminCourse(${Number(c.id)})">
+                        📂 Modullarni ochish →
+                      </button>
+                      <div style="display:flex; gap:6px;">
+                        <button class="admin-small-btn" onclick="openEditCourseModal(${Number(c.id)})" title="Kurs sozlamalarini tahrirlash" style="font-size:11px; padding:3px 8px;">
+                          ✏️ Tahrirlash
+                        </button>
+                        <button class="admin-small-btn" onclick="deleteCourseModal(${Number(c.id)})" title="Kursni o'chirish" style="font-size:11px; padding:3px 8px; color:var(--danger);">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        ` : `
+          <div class="empty-box" style="padding:32px 16px; text-align:center;">
+            <div style="font-size:36px; margin-bottom:10px;">🎓</div>
+            <div style="font-weight:750; font-size:15px; margin-bottom:6px;">Hozircha kurslar mavjud emas</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">Platformaga birinchi kursni qo'shing</div>
+            <button class="btn" style="width:auto; display:inline-flex; padding:10px 24px;" onclick="openAddCourseModal()">➕ Yangi Kurs Yaratish</button>
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // 2-BOSQICH: Aniq bitta kurs tanlangan bo'lsa -> Shu kursning modullari va darslari
+  const selectedCourse = courses.find(c => Number(c.id) === Number(adminSelectedCourseId)) || { id: adminSelectedCourseId, title: "Kurs #" + adminSelectedCourseId };
+  const courseModules = allModules.filter(m => Number(m.course_id) === Number(adminSelectedCourseId));
+
   return `
     <div class="admin-courses-page">
+      <div style="margin-bottom:14px;">
+        <button class="admin-small-btn" onclick="deselectAdminCourse()" style="font-size:12px; padding:6px 12px; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); border:1px solid var(--border);">
+          ← Barcha kurslar ro'yxatiga qaytish
+        </button>
+      </div>
+
       <div class="admin-section-hero">
         <div>
-          <div class="admin-hero-title">🎓 INTPRO — Revit Kursi Boshqaruvi</div>
-          <div class="admin-hero-desc">Modullar tuzilishi, darsliklar tartibi, video havolalar va topshiriqlar</div>
+          <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent); margin-bottom:4px;">Tanlangan kurs</div>
+          <div class="admin-hero-title">🎓 ${escapeHtml(selectedCourse.title)}</div>
+          <div class="admin-hero-desc">${courseModules.length} ta modul · Modullar va ularning darslari tuzilmasi</div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="admin-small-btn" onclick="openAddLessonView()">➕ Yangi Dars Qo'shish</button>
-          <button class="admin-small-btn" onclick="goToCourseManagement()" style="background:var(--accent); color:#fff; border:none;">📚 O'quvchi Katalogi →</button>
+          <button class="admin-small-btn" onclick="openAddModuleModal(${Number(adminSelectedCourseId)})" style="background:var(--accent); color:#fff; border:none; font-weight:700;">➕ Yangi Modul Qo'shish</button>
+          <button class="admin-small-btn" onclick="openAddLessonView(null, ${Number(adminSelectedCourseId)})">➕ Yangi Dars Qo'shish</button>
+          <button class="admin-small-btn" onclick="openEditCourseModal(${Number(adminSelectedCourseId)})">✏️ Kursni Tahrirlash</button>
         </div>
       </div>
 
-      ${renderAdminLessons()}
+      ${renderAdminLessonsForCourse(adminSelectedCourseId, courseModules)}
     </div>
   `;
 }
+
+function renderAdminLessonsForCourse(courseId, modules) {
+  return `
+    <div class="admin-section-header">
+      <div class="admin-section-title">Kurs Modullari (${modules.length} ta)</div>
+      <button class="admin-small-btn" onclick="openAddModuleModal(${Number(courseId)})">➕ Modul Qo'shish</button>
+    </div>
+
+    ${modules.length ? modules.map((m, idx) => `
+      <div class="admin-module-card" style="margin-bottom:12px; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:var(--bg-surface);">
+        <div class="admin-module-title" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:14px 16px;" onclick="loadModuleLessonsForAdmin(${Number(m.id)})">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="width:26px; height:26px; border-radius:8px; background:rgba(41,121,255,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;">${idx + 1}</span>
+            <div>
+              <div style="font-weight:750; font-size:14px; color:var(--text-primary);">${escapeHtml(m.title)}</div>
+              <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">
+                ${m.lesson_count !== undefined ? m.lesson_count + ' ta dars' : ''}
+                ${m.description ? ' • ' + escapeHtml(m.description) : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;" onclick="event.stopPropagation()">
+            <button class="admin-small-btn" onclick="openAddLessonView(${Number(m.id)}, ${Number(courseId)})" title="Shu modulga dars qo'shish" style="font-size:11px; padding:3px 8px;">
+              ➕ Dars
+            </button>
+            <button class="admin-small-btn" onclick="openEditModuleModal(${Number(m.id)})" title="Modulni tahrirlash" style="font-size:11px; padding:3px 8px;">
+              ✏️
+            </button>
+            <button class="admin-small-btn" onclick="deleteModuleConfirm(${Number(m.id)})" title="Modulni o'chirish" style="font-size:11px; padding:3px 8px; color:var(--danger);">
+              🗑️
+            </button>
+            <span style="font-size:12px; color:var(--accent); margin-left:4px; cursor:pointer;" onclick="loadModuleLessonsForAdmin(${Number(m.id)})">Darslar ↓</span>
+          </div>
+        </div>
+        <div id="admin-module-lessons-${Number(m.id)}" style="display:none; border-top:1px solid var(--border); padding:10px 14px; background:rgba(0,0,0,0.15);"></div>
+      </div>
+    `).join("") : `
+      <div class="empty-box" style="padding:28px 16px; text-align:center;">
+        <div style="font-size:32px; margin-bottom:8px;">📂</div>
+        <div style="font-weight:750; font-size:14.5px; margin-bottom:6px;">Ushbu kursda hali modullar yo'q</div>
+        <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:14px;">Darslarni joylash uchun avval modul yarating</div>
+        <button class="btn" style="width:auto; display:inline-flex; padding:8px 20px; font-size:13px;" onclick="openAddModuleModal(${Number(courseId)})">➕ Birinchi Modulni Qo'shish</button>
+      </div>
+    `}
+  `;
+}
+
 
 // FOYDALANUVCHILAR SAHIFASI
 function renderAdminStudentsView() {
@@ -13810,36 +13976,56 @@ async function loadModuleLessonsForAdmin(moduleId) {
       return;
     }
 
-    container.innerHTML = lessons.map(l => `
-      <div class="admin-lesson-card">
-        <div class="admin-lesson-info">
-          <span class="admin-lesson-number">#${l.order_index}</span>
-          <div>
-            <div class="admin-lesson-title">${escapeHtml(l.title)}</div>
-            <div class="admin-lesson-meta">
-              ${l.is_free ? "🟢 Namuna dars" : "🔒 Pullik"} · Fayllar: ${l.file_count || 0}
+    container.innerHTML = lessons.map(l => {
+      const hasYt = Boolean(l.youtube_url && l.youtube_url.trim());
+      const hasTg = Boolean(l.telegram_chat_id || l.telegram_file_id);
+      const hasBunny = Boolean(l.bunny_video_id && l.bunny_video_id.trim());
+
+      return `
+        <div class="admin-lesson-card" style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; margin-bottom:8px; border-radius:10px; border:1px solid var(--border); background:var(--bg-surface);">
+          <div class="admin-lesson-info" style="display:flex; align-items:center; gap:10px; flex:1;">
+            <span class="admin-lesson-number" style="font-size:11.5px; font-weight:800; color:var(--text-secondary); width:28px;">#${l.order_index}</span>
+            <div style="flex:1;">
+              <div class="admin-lesson-title" style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">${escapeHtml(l.title)}</div>
+              <div class="admin-lesson-meta" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:11px; color:var(--text-secondary);">
+                <span>${l.is_free ? "🟢 Namuna dars" : "🔒 Pullik"}</span>
+                <span>• Fayllar: ${l.file_count || 0}</span>
+                ${hasYt ? '<span class="admin-hub-badge" style="background:rgba(255,59,48,0.15); color:#ff3b30; font-size:9.5px; padding:1px 5px; border-radius:4px;">YouTube</span>' : ''}
+                ${hasTg ? '<span class="admin-hub-badge" style="background:rgba(0,122,255,0.15); color:#007aff; font-size:9.5px; padding:1px 5px; border-radius:4px;">Telegram</span>' : ''}
+                ${hasBunny ? '<span class="admin-hub-badge" style="background:rgba(255,149,0,0.15); color:#ff9500; font-size:9.5px; padding:1px 5px; border-radius:4px;">Bunny</span>' : ''}
+              </div>
             </div>
           </div>
+          <div class="admin-lesson-actions" style="display:flex; gap:6px;">
+            <button class="admin-small-btn" onclick="openEditLessonView(${Number(l.id)})" title="Tahrirlash" style="font-size:12px; padding:4px 8px;">✏️</button>
+            <button class="admin-small-btn" onclick="deleteAdminLesson(${Number(l.id)}, ${Number(moduleId)})" title="O'chirish" style="font-size:12px; padding:4px 8px; color:var(--danger);">🗑️</button>
+          </div>
         </div>
-        <div class="admin-lesson-actions">
-          <button onclick="openEditLessonView(${Number(l.id)})" title="Tahrirlash">✏️</button>
-          <button onclick="deleteAdminLesson(${Number(l.id)}, ${Number(moduleId)})" title="O'chirish">🗑️</button>
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   } catch (error) {
     container.innerHTML = `<div class="empty-box">${escapeHtml(error.message)}</div>`;
   }
 }
 
-function openAddLessonView(moduleId) {
-  const modules = (courseModulesData && courseModulesData.modules) || [];
+function openAddLessonView(moduleId, courseId) {
+  let allMods = (adminData.modules && adminData.modules.length)
+    ? adminData.modules
+    : ((courseModulesData && courseModulesData.modules) || []);
+
+  const cId = courseId || adminSelectedCourseId;
+  let modules = allMods;
+  if (cId) {
+    const filtered = allMods.filter(m => Number(m.course_id) === Number(cId));
+    if (filtered.length) modules = filtered;
+  }
+
   if (!modules.length) return showAlert("Avval modul mavjud bo'lishi kerak!");
 
   currentView = {
     html: `
       <div class="page">
-        <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+        <div class="back-btn" onclick="returnFromAdminLessonEdit()">← Ortga qaytish</div>
         <div class="page-title">Yangi Dars Qo'shish</div>
 
         <div class="admin-form">
@@ -13950,8 +14136,8 @@ async function submitCreateLesson() {
     });
 
     showToast("Dars muvaffaqiyatli yaratildi!");
-    currentView = null;
-    await reloadCourseModules();
+    returnFromAdminLessonEdit();
+    if (selectedCourseId) await reloadCourseModules();
   } catch (error) {
     showAlert(error.message || "Dars yaratishda xatolik.");
   }
@@ -13997,8 +14183,9 @@ async function openEditLessonView(lessonId) {
     currentView = {
       html: `
         <div class="page">
-          <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
+          <div class="back-btn" onclick="returnFromAdminLessonEdit()">← Ortga qaytish</div>
           <div class="page-title">Darsni tahrirlash</div>
+          <div id="edit-lesson-alert"></div>
 
           <div class="admin-form">
             <div class="apple-field">
@@ -14162,9 +14349,26 @@ async function submitUpdateLesson(lessonId) {
       warning_text: warning || null,
       is_free: isFree
     });
-    showToast("Dars muvaffaqiyatli yangilandi!");
-    currentView = null;
-    await reloadCourseModules();
+    showToast("✅ Dars muvaffaqiyatli saqlandi!");
+    const alertBox = document.getElementById("edit-lesson-alert");
+    if (alertBox) {
+      alertBox.innerHTML = `
+        <div style="background:rgba(52,199,89,0.15); border:1px solid #34c759; color:#34c759; padding:12px 14px; border-radius:12px; font-weight:700; font-size:13.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <span>✅</span>
+          <span>Dars muvaffaqiyatli saqlandi! Bemalol tahrirlashda davom etishingiz yoki "← Ortga qaytish" orqali chiqishingiz mumkin.</span>
+        </div>
+      `;
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    if (selectedCourseId) {
+      await reloadCourseModules();
+    }
+    if (modIdNum && typeof loadModuleLessonsForAdmin === 'function') {
+      const c = document.getElementById(`admin-module-lessons-${modIdNum}`);
+      if (c && c.style.display === "block") {
+        loadModuleLessonsForAdmin(modIdNum);
+      }
+    }
   } catch (error) {
     showAlert(error.message || "Darsni yangilashda xatolik.");
   }
