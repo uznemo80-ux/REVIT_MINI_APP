@@ -146,6 +146,30 @@ bot.start(async function (ctx) {
   }
 });
 
+// Admin shaxsiy chatda botga video yuborsa, uning File ID sini beradi
+bot.on(['message:video', 'message:document'], async function (ctx, next) {
+  try {
+    var senderId = String(ctx.from && ctx.from.id);
+    var isAdminUser = (senderId === String(ADMIN_ID));
+    if (isAdminUser && ctx.chat && ctx.chat.type === 'private') {
+      var v = ctx.message.video || ctx.message.document;
+      if (v && v.file_id) {
+        var mb = v.file_size ? (v.file_size / (1024 * 1024)).toFixed(1) + ' MB' : '';
+        return ctx.reply(
+          `🎬 <b>Video File ID olindi! (${mb})</b>\n\n` +
+          `Ushbu ID ni Mini App'da dars tahrirlash oynasidagi <b>Telegram Video</b> maydoniga qo'yishingiz mumkin:\n\n` +
+          `<code>${v.file_id}</code>\n\n` +
+          `<i>(Nusxalash uchun kod ustiga bir marta bosing)</i>`,
+          { parse_mode: 'HTML' }
+        );
+      }
+    }
+  } catch (err) {
+    console.error('ADMIN VIDEO DM ERROR:', err);
+  }
+  return next();
+});
+
 // ======================================================
 // /APPROVE COMMAND
 // ======================================================

@@ -5083,17 +5083,22 @@ app.post('/api/admin/lesson', requireAdmin, async function (req, res) {
 
     var tgChatId = req.body.telegram_chat_id || null;
     var tgMsgId = req.body.telegram_message_id ? parseInt(req.body.telegram_message_id, 10) : null;
+    var tgFileId = req.body.telegram_file_id || null;
     if (req.body.telegram_url) {
       var parsedTg = parseTelegramVideoSource(req.body.telegram_url);
       if (parsedTg) {
-        tgChatId = parsedTg.chat_id;
-        tgMsgId = parsedTg.message_id;
+        if (parsedTg.file_id) {
+          tgFileId = parsedTg.file_id;
+        } else {
+          tgChatId = parsedTg.chat_id;
+          tgMsgId = parsedTg.message_id;
+        }
       }
     }
 
     var result = await pool.query(
-      'INSERT INTO lessons (module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text, telegram_chat_id, telegram_message_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [Number(moduleId), title.trim(), orderIndex, req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null, tgChatId, tgMsgId]
+      'INSERT INTO lessons (module_id, title, order_index, youtube_url, task_text, is_free, bunny_video_id, warning_text, telegram_chat_id, telegram_message_id, telegram_file_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [Number(moduleId), title.trim(), orderIndex, req.body.youtube_url || null, req.body.task_text || null, Boolean(req.body.is_free), req.body.bunny_video_id || null, req.body.warning_text || null, tgChatId, tgMsgId, tgFileId]
     );
 
     var createdLesson = result.rows[0];
@@ -5157,11 +5162,17 @@ app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res)
       if (req.body.telegram_url && String(req.body.telegram_url).trim()) {
         var parsedTg = parseTelegramVideoSource(req.body.telegram_url);
         if (parsedTg) {
-          if (tgChatId !== parsedTg.chat_id || tgMsgId !== parsedTg.message_id) {
-            tgFileId = null; // Reset cached file_id if source post changed
+          if (parsedTg.file_id) {
+            tgFileId = parsedTg.file_id;
+            tgChatId = null;
+            tgMsgId = null;
+          } else {
+            if (tgChatId !== parsedTg.chat_id || tgMsgId !== parsedTg.message_id) {
+              tgFileId = null; // Reset cached file_id if source post changed
+            }
+            tgChatId = parsedTg.chat_id;
+            tgMsgId = parsedTg.message_id;
           }
-          tgChatId = parsedTg.chat_id;
-          tgMsgId = parsedTg.message_id;
         }
       } else {
         tgChatId = null;
@@ -5169,6 +5180,7 @@ app.post('/api/admin/lesson/:id/update', requireAdmin, async function (req, res)
         tgFileId = null;
       }
     } else {
+      if (req.body.telegram_file_id !== undefined) tgFileId = req.body.telegram_file_id || null;
       if (req.body.telegram_chat_id !== undefined) tgChatId = req.body.telegram_chat_id || null;
       if (req.body.telegram_message_id !== undefined) tgMsgId = req.body.telegram_message_id ? parseInt(req.body.telegram_message_id, 10) : null;
       if (tgChatId !== existing.telegram_chat_id || tgMsgId !== existing.telegram_message_id) {

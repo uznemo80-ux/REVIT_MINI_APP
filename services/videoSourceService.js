@@ -107,6 +107,11 @@ function parseTelegramVideoSource(input) {
     return { chat_id: cid, message_id: parseInt(m[2], 10) };
   }
 
+  // 6. Direct file_id: BAACAgIAAxkBAAI... (min 20 chars without slashes)
+  if (/^[A-Za-z0-9_-]{20,}$/.test(str)) {
+    return { file_id: str };
+  }
+
   return null;
 }
 

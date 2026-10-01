@@ -13976,6 +13976,9 @@ async function openEditLessonView(lessonId) {
         tgDisplayVal = lesson.telegram_chat_id + '/' + lesson.telegram_message_id;
       }
     }
+    if (!tgDisplayVal && lesson.telegram_file_id) {
+      tgDisplayVal = lesson.telegram_file_id;
+    }
     const filesData = await adminApi(`/api/admin/lesson/${Number(lessonId)}/files`);
     const files = filesData.files || [];
     let modules = (courseModulesData && courseModulesData.modules) || [];
@@ -14034,7 +14037,7 @@ async function openEditLessonView(lessonId) {
               <div class="apple-field" style="margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                   <label style="margin-bottom:0;">2. Telegram Video Posti (yopiq/ochiq kanal)</label>
-                  <span style="font-size:11px; color:var(--text-secondary);">${hasTg ? '🟢 Ulangan: ' + escapeHtml(lesson.telegram_chat_id) + ' #' + lesson.telegram_message_id : '⚪ Kiritilmagan'}</span>
+                  <span style="font-size:11px; color:var(--text-secondary);">${hasTg ? ('🟢 Ulangan' + (lesson.telegram_file_id ? ' (Fayl ID)' : ': ' + escapeHtml(lesson.telegram_chat_id) + ' #' + lesson.telegram_message_id)) : '⚪ Kiritilmagan'}</span>
                 </div>
                 <div style="display:flex; gap:8px;">
                   <input id="edit-l-tg" class="apple-input" type="text" value="${escapeHtml(tgDisplayVal)}" placeholder="https://t.me/c/1234567890/123 yoki chat_id:msg_id" style="flex:1;">
