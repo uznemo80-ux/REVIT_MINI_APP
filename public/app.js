@@ -8073,11 +8073,18 @@ function getMaterialSearchCorpus(m) {
     (m.material_type || "") + " " +
     (m.category_name || "") + " " +
     (m.manufacturer_name || "") + " " +
+    (m.manufacturer || "") + " " +
+    (m.brand || "") + " " +
+    (m.country || "") + " " +
+    (m.region || "") + " " +
+    (m.city || "") + " " +
+    (m.application_area || "") + " " +
     (m.usage_area || "") + " " +
     (m.purpose_uz || "") + " " +
     (m.purpose_ru || "") + " " +
     (m.advantages_uz || "") + " " +
     (m.advantages_ru || "") + " " +
+    (m.composition || "") + " " +
     aliasesStr + " " +
     typesStr
   ).toLowerCase();
@@ -8253,7 +8260,7 @@ async function loadMaterialsData(forceReload) {
     }
 
     const listRes = await api("/api/materials/list", {
-      search: "", scope: "all", category_slug: "all", manufacturer_slug: "all", limit: 300, offset: 0
+      search: "", scope: "all", category_slug: "all", manufacturer_slug: "all", limit: 1000, offset: 0
     }).catch(err => {
       console.warn("Materials list fetch error:", err);
       return null;
@@ -10250,22 +10257,100 @@ function renderMaterialDetailPage(detailData) {
                 <span class="lib-mat-spec-val">${escapeHtml(m.composition)}</span>
               </div>
             ` : ""}
+            ${(m.density_kg_m3 && m.density_kg_m3 !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Zichligi (Плотность):</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.density_kg_m3)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.weight_kg && m.weight_kg !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Og‘irligi (Вес):</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.weight_kg)}</span>
+              </div>
+            ` : ""}
+            ${(m.strength && m.strength !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Mustahkamligi (Прочность):</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.strength)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.thermal_conductivity && m.thermal_conductivity !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Issiqlik o‘tkazuvchanligi:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.thermal_conductivity)}</span>
+              </div>
+            ` : ""}
+            ${(m.water_absorption && m.water_absorption !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Suv yutuvchanligi:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.water_absorption)}</span>
+              </div>
+            ` : ""}
+            ${(m.frost_resistance && m.frost_resistance !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Sovuqqa chidamlilik:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.frost_resistance)}</span>
+              </div>
+            ` : ""}
+            ${(m.sound_insulation && m.sound_insulation !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Tovush izolyatsiyasi:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.sound_insulation)}</span>
+              </div>
+            ` : ""}
             ${m.moisture_resistance ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">Namlikka chidamliligi:</span>
                 <span class="lib-mat-spec-val">${escapeHtml(m.moisture_resistance)}</span>
               </div>
             ` : ""}
-            ${m.fire_rating ? `
+            ${(m.fire_resistance || m.fire_rating) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">Yong'in xavfsizlik sinfi:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.fire_rating)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.fire_resistance || m.fire_rating)}</span>
               </div>
             ` : ""}
-            ${m.lifespan ? `
+            ${(m.service_life || m.lifespan) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">Xizmat muddati:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.lifespan)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.service_life || m.lifespan)}</span>
+              </div>
+            ` : ""}
+            ${(m.brand && m.brand !== 'Standart') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Brend:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.brand)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.country && m.country !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Ishlab chiqarilgan davlat:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.country + (m.region && m.region !== 'Не указано' ? ', ' + m.region : ''))}</span>
+              </div>
+            ` : ""}
+            ${(m.suitable_rooms && m.suitable_rooms !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Mos xonalar:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.suitable_rooms)}</span>
+              </div>
+            ` : ""}
+            ${(m.suitable_surfaces && m.suitable_surfaces !== 'Не указано') ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Mos yuzalar:</span>
+                <span class="lib-mat-spec-val">${escapeHtml(m.suitable_surfaces)}</span>
+              </div>
+            ` : ""}
+            ${(m.certificate || m.standards_info) ? `
+              <div class="lib-mat-spec-row">
+                <span class="lib-mat-spec-label">Sertifikat / Standart:</span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(m.certificate || m.standards_info)}</b></span>
+              </div>
+            ` : ""}
+            ${(m.price && m.price !== 'Не указано') ? `
+              <div class="lib-mat-spec-row" style="background:rgba(16,185,129,0.06); padding:6px 8px; border-radius:8px;">
+                <span class="lib-mat-spec-label" style="color:#059669; font-weight:700;">Bozor narxi:</span>
+                <span class="lib-mat-spec-val" style="color:#059669; font-weight:800;">${escapeHtml(m.price)} ${escapeHtml(m.currency || 'UZS')} / ${escapeHtml(m.price_unit || 'm²')}${m.price_region ? ' (' + escapeHtml(m.price_region) + ')' : ''}</span>
               </div>
             ` : ""}
           </div>
@@ -10312,6 +10397,16 @@ function renderMaterialDetailPage(detailData) {
           ${m.mounting_instructions_uz ? `
             <div style="font-size:13.5px; line-height:1.6; color:var(--text-secondary); background:var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding:12px; border-radius:10px; border:1px solid var(--border);">
               ${escapeHtml(m.mounting_instructions_uz)}
+            </div>
+          ` : ""}
+          ${(m.required_tools && m.required_tools !== 'Не указано') ? `
+            <div style="margin-top:10px; font-size:13px; line-height:1.5; color:var(--text-secondary); background:rgba(0,0,0,0.03); padding:10px 12px; border-radius:8px;">
+              <b>🧰 Kerakli asbob-uskunalar:</b> ${escapeHtml(m.required_tools)}
+            </div>
+          ` : ""}
+          ${(m.installation_materials && m.installation_materials !== 'Не указано') ? `
+            <div style="margin-top:8px; font-size:13px; line-height:1.5; color:var(--text-secondary); background:rgba(0,0,0,0.03); padding:10px 12px; border-radius:8px;">
+              <b>📦 Kerakli qo‘shimcha materiallar:</b> ${escapeHtml(m.installation_materials)}
             </div>
           ` : ""}
           ${steps.length ? `

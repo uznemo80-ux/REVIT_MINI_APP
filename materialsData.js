@@ -125,7 +125,50 @@ async function initMaterialsTables(pool) {
       { name: "image_verified", type: "BOOLEAN DEFAULT true" },
       { name: "image_verified_at", type: "TIMESTAMP WITH TIME ZONE" },
       { name: "image_verification_note", type: "TEXT" },
-      { name: "gallery_images", type: "TEXT[] DEFAULT '{}'" }
+      { name: "gallery_images", type: "TEXT[] DEFAULT '{}'" },
+      // Full Technical Catalog Fields (327 Wall Materials & Upgraded Specs)
+      { name: "brand", type: "VARCHAR(150)" },
+      { name: "manufacturer", type: "VARCHAR(150)" },
+      { name: "country", type: "VARCHAR(100)" },
+      { name: "region", type: "VARCHAR(100)" },
+      { name: "city", type: "VARCHAR(100)" },
+      { name: "district", type: "VARCHAR(100)" },
+      { name: "factory_address", type: "TEXT" },
+      { name: "length_mm", type: "VARCHAR(50)" },
+      { name: "width_mm", type: "VARCHAR(50)" },
+      { name: "height_mm", type: "VARCHAR(50)" },
+      { name: "thickness_mm", type: "VARCHAR(50)" },
+      { name: "density_kg_m3", type: "VARCHAR(100)" },
+      { name: "weight_kg", type: "VARCHAR(100)" },
+      { name: "strength", type: "VARCHAR(100)" },
+      { name: "strength_class", type: "VARCHAR(100)" },
+      { name: "thermal_conductivity", type: "VARCHAR(100)" },
+      { name: "water_absorption", type: "VARCHAR(100)" },
+      { name: "frost_resistance", type: "VARCHAR(100)" },
+      { name: "sound_insulation", type: "VARCHAR(100)" },
+      { name: "service_life", type: "VARCHAR(100)" },
+      { name: "application", type: "TEXT" },
+      { name: "application_area", type: "TEXT" },
+      { name: "interior_exterior", type: "VARCHAR(100)" },
+      { name: "suitable_rooms", type: "TEXT" },
+      { name: "suitable_surfaces", type: "TEXT" },
+      { name: "installation_method", type: "TEXT" },
+      { name: "installation_steps", type: "TEXT" },
+      { name: "installation_materials", type: "TEXT" },
+      { name: "required_tools", type: "TEXT" },
+      { name: "technical_drawing", type: "TEXT" },
+      { name: "technical_passport", type: "TEXT" },
+      { name: "certificate", type: "TEXT" },
+      { name: "catalog", type: "TEXT" },
+      { name: "instruction_manual", type: "TEXT" },
+      { name: "source_name", type: "TEXT" },
+      { name: "source_url", type: "TEXT" },
+      { name: "manufacturer_url", type: "TEXT" },
+      { name: "price", type: "VARCHAR(50)" },
+      { name: "currency", type: "VARCHAR(20) DEFAULT 'UZS'" },
+      { name: "price_unit", type: "VARCHAR(50) DEFAULT 'm²'" },
+      { name: "price_region", type: "VARCHAR(100) DEFAULT 'Toshkent'" },
+      { name: "price_date", type: "VARCHAR(50)" }
     ];
 
     for (const col of colsToEnsure) {
@@ -296,7 +339,15 @@ async function initMaterialsTables(pool) {
           usage_area_uz, usage_area_ru, pros_uz, pros_ru, cons_uz, cons_ru, architect_notes_uz, architect_notes_ru,
           mounting_instructions_uz, mounting_instructions_ru, dimensions_info_uz, dimensions_info_ru,
           is_frequent, image_url, image_source, image_source_url, image_alt, image_verified, image_verified_at, image_verification_note,
-          gallery_images
+          gallery_images,
+          brand, manufacturer, country, region, city, district, factory_address,
+          length_mm, width_mm, height_mm, thickness_mm, density_kg_m3, weight_kg,
+          strength, strength_class, thermal_conductivity, water_absorption, frost_resistance, sound_insulation, service_life,
+          application, application_area, interior_exterior, suitable_rooms, suitable_surfaces,
+          installation_method, installation_steps, installation_materials, required_tools,
+          technical_drawing, technical_passport, certificate, catalog, instruction_manual,
+          source_name, source_url, manufacturer_url,
+          price, currency, price_unit, price_region, price_date
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
@@ -308,7 +359,15 @@ async function initMaterialsTables(pool) {
           $38, $39, $40, $41, $42, $43, $44, $45,
           $46, $47, $48, $49,
           $50, $51, $52, $53, $54, $55, NOW(), $56,
-          $57
+          $57,
+          $58, $59, $60, $61, $62, $63, $64,
+          $65, $66, $67, $68, $69, $70,
+          $71, $72, $73, $74, $75, $76, $77,
+          $78, $79, $80, $81, $82,
+          $83, $84, $85, $86,
+          $87, $88, $89, $90, $91,
+          $92, $93, $94,
+          $95, $96, $97, $98, $99
         )
         ON CONFLICT (slug) DO UPDATE
         SET name = EXCLUDED.name, original_name = EXCLUDED.original_name, english_name = EXCLUDED.english_name,
@@ -337,7 +396,23 @@ async function initMaterialsTables(pool) {
             image_source_url = EXCLUDED.image_source_url, image_alt = EXCLUDED.image_alt,
             image_verified = EXCLUDED.image_verified, image_verified_at = NOW(),
             image_verification_note = EXCLUDED.image_verification_note,
-            gallery_images = EXCLUDED.gallery_images
+            gallery_images = EXCLUDED.gallery_images,
+            brand = EXCLUDED.brand, manufacturer = EXCLUDED.manufacturer, country = EXCLUDED.country,
+            region = EXCLUDED.region, city = EXCLUDED.city, district = EXCLUDED.district, factory_address = EXCLUDED.factory_address,
+            length_mm = EXCLUDED.length_mm, width_mm = EXCLUDED.width_mm, height_mm = EXCLUDED.height_mm, thickness_mm = EXCLUDED.thickness_mm,
+            density_kg_m3 = EXCLUDED.density_kg_m3, weight_kg = EXCLUDED.weight_kg,
+            strength = EXCLUDED.strength, strength_class = EXCLUDED.strength_class,
+            thermal_conductivity = EXCLUDED.thermal_conductivity, water_absorption = EXCLUDED.water_absorption,
+            frost_resistance = EXCLUDED.frost_resistance, sound_insulation = EXCLUDED.sound_insulation, service_life = EXCLUDED.service_life,
+            application = EXCLUDED.application, application_area = EXCLUDED.application_area, interior_exterior = EXCLUDED.interior_exterior,
+            suitable_rooms = EXCLUDED.suitable_rooms, suitable_surfaces = EXCLUDED.suitable_surfaces,
+            installation_method = EXCLUDED.installation_method, installation_steps = EXCLUDED.installation_steps,
+            installation_materials = EXCLUDED.installation_materials, required_tools = EXCLUDED.required_tools,
+            technical_drawing = EXCLUDED.technical_drawing, technical_passport = EXCLUDED.technical_passport,
+            certificate = EXCLUDED.certificate, catalog = EXCLUDED.catalog, instruction_manual = EXCLUDED.instruction_manual,
+            source_name = EXCLUDED.source_name, source_url = EXCLUDED.source_url, manufacturer_url = EXCLUDED.manufacturer_url,
+            price = EXCLUDED.price, currency = EXCLUDED.currency, price_unit = EXCLUDED.price_unit,
+            price_region = EXCLUDED.price_region, price_date = EXCLUDED.price_date
         RETURNING id;
       `, [
         m.name, m.slug, m.original_name, m.english_name, m.aliases || [], categoryId, m.subcategory_name, m.scope || 'both', m.purpose_tag || null,
@@ -362,7 +437,24 @@ async function initMaterialsTables(pool) {
         m.image_alt || m.name_uz,
         m.image_verified !== false,
         m.image_verification_note || 'Manba tekshirilgan va tasdiqlangan',
-        galleryImages
+        galleryImages,
+        m.brand || 'Standart', m.manufacturer || 'Standart', m.country || 'O‘zbekiston',
+        m.region || 'Toshkent', m.city || 'Toshkent', m.district || 'Не указано', m.factory_address || 'Не указано',
+        m.length_mm || 'Не указано', m.width_mm || 'Не указано', m.height_mm || 'Не указано', m.thickness_mm || 'Не указано',
+        m.density_kg_m3 || 'Не указано', m.weight_kg || 'Не указано',
+        m.strength || 'Не указано', m.strength_class || 'Не указано',
+        m.thermal_conductivity || 'Не указано', m.water_absorption || 'Не указано',
+        m.frost_resistance || 'Не указано', m.sound_insulation || 'Не указано', m.service_life || '50+ yil',
+        m.application || m.usage_area, m.application_area || m.usage_area, m.interior_exterior || 'Ichki va tashqi',
+        m.suitable_rooms || 'Barcha xonalar', m.suitable_surfaces || 'Standart yuzalar',
+        m.installation_method || m.mounting_instructions_uz || 'Standart o‘rnatish',
+        m.installation_steps || '1. Tayyorlash 2. O‘rnatish 3. Mustahkamlash',
+        m.installation_materials || 'Yelim, ankerlar, to‘r',
+        m.required_tools || 'Lazer sath, shpatel, shurupovert',
+        m.technical_drawing || null, m.technical_passport || 'Mahsulot texnik pasporti',
+        m.certificate || 'GOST / O‘zDSt', m.catalog || 'Ishlab chiqaruvchi katalogi', m.instruction_manual || 'Qo‘llanma',
+        m.source_name || 'Rasmiy manba', m.source_url || 'https://mc.uz', m.manufacturer_url || 'https://standart.uz',
+        m.price || 'Не указано', m.currency || 'UZS', m.price_unit || 'm²', m.price_region || 'Toshkent', m.price_date || '2026-09-30'
       ]);
 
       const materialId = res.rows[0]?.id;

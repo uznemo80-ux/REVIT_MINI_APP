@@ -7937,7 +7937,7 @@ app.all('/api/materials/list', async function (req, res) {
     var filterFire = Boolean(b.filter_fire === true || b.filter_fire === 'true');
     var status = (b.status || 'published').trim();
     var sort = b.sort || 'newest';
-    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 100, 1), 300);
+    var limit = Math.min(Math.max(parseInt(b.limit, 10) || 100, 1), 1000);
     var offset = Math.max(parseInt(b.offset, 10) || 0, 0);
 
     var whereClauses = [];
@@ -8422,7 +8422,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
   try {
     var b = req.body || {};
     var id = parseInt(b.id, 10) || null;
-    var name = (b.name || '').trim();
+    var name = (b.name || b.title || '').trim();
     var nameUz = (b.name_uz || name).trim();
     var nameRu = (b.name_ru || b.original_name || name).trim();
     var slug = (b.slug || (nameUz || name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')).trim();
@@ -8518,8 +8518,9 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
             architect_notes_uz = $29, architect_notes_ru = $30, mounting_instructions_uz = $31, mounting_instructions_ru = $32,
             dimensions_info_uz = $33, dimensions_info_ru = $34, is_frequent = $35,
             image_url = $36, image_source = $37, image_source_url = $38, image_alt = $39, image_verified = $40, image_verification_note = $41,
-            last_verified_at = NOW(), updated_at = NOW()
-        WHERE id = $42
+            last_verified_at = NOW(), updated_at = NOW(),
+            gallery_images = $42
+        WHERE id = $43
       `, [
         nameUz || name, slug, originalName || nameRu, englishName, aliases,
         categoryId, subcategoryName, manufacturerId, productCode,
@@ -8550,7 +8551,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
           architect_notes_uz, architect_notes_ru, mounting_instructions_uz, mounting_instructions_ru,
           dimensions_info_uz, dimensions_info_ru, is_frequent,
           image_url, image_source, image_source_url, image_alt, image_verified, image_verification_note,
-          last_verified_at, created_at, updated_at
+          gallery_images, last_verified_at, created_at, updated_at
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
@@ -8560,7 +8561,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
           $29, $30, $31, $32,
           $33, $34, $35,
           $36, $37, $38, $39, $40, $41,
-          NOW(), NOW(), NOW()
+          $42, NOW(), NOW(), NOW()
         )
         RETURNING id
       `, [
@@ -8570,7 +8571,7 @@ app.post('/api/admin/materials/save', requireAdmin, async function (req, res) {
         usageAreaUz, usageAreaRu, prosUz, prosRu, consUz, consRu,
         notesUz, notesRu, mountUz, mountRu,
         dimUz, dimRu, isFrequent,
-        imageUrl, imageSource, imageSourceUrl, imageAlt, imageVerified, imageVerificationNote
+        imageUrl, imageSource, imageSourceUrl, imageAlt, imageVerified, imageVerificationNote, galleryImages
       ]);
       materialId = insRes.rows[0].id;
 
