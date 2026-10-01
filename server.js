@@ -28,6 +28,8 @@ var resolveTelegramFileId = telegramStreamService.resolveTelegramFileId;
 var getTelegramFileStreamUrl = telegramStreamService.getTelegramFileStreamUrl;
 var proxyStreamRange = telegramStreamService.proxyStreamRange;
 
+var analyticsService = require('./services/analyticsService');
+
 var app = express();
 
 // ======================================================
@@ -276,6 +278,8 @@ var pool = new Pool({
 pool.on('error', function (error) {
   console.error('DATABASE POOL ERROR:', error);
 });
+
+analyticsService.init(pool);
 
 // Xavfsiz avto-migratsiya (agar jadvallar yoki ustunlar yo'q bo'lsa avtomatik yaratiladi)
 const MODULE2_TEST_SEED = [
@@ -4299,6 +4303,48 @@ app.post('/api/admin/analytics/history', requireAdmin, async function (req, res)
   }
 });
 
+// ======================================================
+// ADVANCED ANALYTICS DASHBOARD API
+// ======================================================
+
+app.post('/api/analytics/track', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ error: 'Autentifikatsiya talab etiladi' });
+    var { event_type, category, content_id, metadata, duration_seconds } = req.body;
+    if (event_type) {
+      await analyticsService.trackEvent(user.id, event_type, category, content_id, metadata, duration_seconds);
+    }
+    return res.json({ ok: true });
+  } catch (e) {
+    return res.json({ ok: false });
+  }
+});
+
+app.post('/api/admin/analytics/dashboard', requireAdmin, async function (req, res) {
+  try {
+    var data = await analyticsService.getDashboardData(req.body || {});
+    return res.json(data);
+  } catch (error) {
+    console.error('ANALYTICS DASHBOARD ERROR:', error);
+    return res.status(500).json({ error: 'Analytics ma\'lumotlarini olishda xatolik: ' + error.message });
+  }
+});
+
+app.all(['/api/admin/analytics/export'], requireAdmin, async function (req, res) {
+  try {
+    var params = Object.assign({}, req.query, req.body);
+    var csvData = await analyticsService.generateCsvExport(params);
+    var fileName = 'yoshuzbekk_analytics_' + (params.period || 'report') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + fileName + '"');
+    return res.send(csvData);
+  } catch (error) {
+    console.error('ANALYTICS EXPORT ERROR:', error);
+    return res.status(500).json({ error: 'Eksport qilishda xatolik yuz berdi' });
+  }
+});
+
 app.post('/api/admin/student/:id/live-dossier', requireAdmin, async function (req, res) {
   try {
     var userId = parseInt(req.params.id);
@@ -4319,6 +4365,13 @@ app.post('/api/admin/student/:id/live-dossier', requireAdmin, async function (re
       ORDER BY mr.attempted_at DESC
     `, [userId]);
 
+    var [booksRes, matsRes, sourcesRes, savedBooksRes] = await Promise.all([
+      pool.query('SELECT COUNT(DISTINCT book_id)::int AS c FROM reading_progress WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
+      pool.query('SELECT COUNT(DISTINCT material_id)::int AS c FROM material_view_log WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
+      pool.query('SELECT COUNT(DISTINCT resource_id)::int AS c FROM library_views WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] })),
+      pool.query('SELECT COUNT(*)::int AS c FROM saved_books WHERE user_id = $1', [userId]).catch(() => ({ rows: [{ c: 0 }] }))
+    ]);
+
     return res.json({
       ok: true,
       student: {
@@ -4332,6 +4385,10 @@ app.post('/api/admin/student/:id/live-dossier', requireAdmin, async function (re
         created_at: user.created_at,
         watched_lessons: progRes.rows[0].watched || 0,
         total_lessons: totalLessRes.rows[0].total || 0,
+        books_read_count: booksRes.rows[0].c || 0,
+        materials_viewed_count: matsRes.rows[0].c || 0,
+        sources_viewed_count: sourcesRes.rows[0].c || 0,
+        saved_books_count: savedBooksRes.rows[0].c || 0,
         activity: activity,
         tests: testsRes.rows
       }

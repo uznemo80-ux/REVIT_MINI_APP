@@ -5858,6 +5858,7 @@ async function resumeLastLesson() {
 async function openLesson(id) {
   try {
     haptic("light");
+    trackAnalyticsEvent('lesson_opened', 'lesson', id);
     currentView = {
       html: `
         <div class="lesson-loading">
@@ -8694,6 +8695,11 @@ let libraryV2SavedBookIds = new Set();
 
 async function openBookReader(bookIdOrObj, initialPage) {
   haptic("light");
+  if (typeof bookIdOrObj === 'number' || (typeof bookIdOrObj === 'string' && !isNaN(bookIdOrObj))) {
+    trackAnalyticsEvent('book_opened', 'book', Number(bookIdOrObj));
+  } else if (bookIdOrObj && bookIdOrObj.id) {
+    trackAnalyticsEvent('book_opened', 'book', Number(bookIdOrObj.id));
+  }
 
   lastPdfReturnView = currentView;
   lastPdfReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
@@ -9712,6 +9718,7 @@ async function openSourceDetail(resId) {
 
 async function openMaterialKnowledgeDetail(matId) {
   haptic("light");
+  trackAnalyticsEvent('material_opened', 'material', matId);
   lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
   showToast("🧱 Material ma'lumotlari yuklanmoqda...");
@@ -11449,6 +11456,15 @@ let adminView = "dashboard";
 let adminNavPath = ["root"]; // ['root'], ['stats'], ['library'], ['library', 'books'], ['library', 'sources'], etc.
 let adminTasksActiveTab = "practice"; // "practice" or "tests"
 let adminSelectedCourseId = null;
+let adminAnalyticsDashboardState = {
+  period: '7days',
+  startDate: '',
+  endDate: '',
+  granularity: 'auto',
+  activeMetric: 'all', // 'all', 'new_users', 'lesson_views', 'book_reads', 'material_views'
+  deepDiveTab: 'lessons', // 'lessons', 'books', 'materials', 'sources'
+  loading: false
+};
 let adminData = {
   stats: null,
   activeUsers: [],
@@ -11526,13 +11542,23 @@ async function adminNavigate(to, subTo) {
   try {
     if (to === "stats") {
       adminView = "dashboard";
-      const [liveData, historyData] = await Promise.all([
+      const [liveData, historyData, dashboardData] = await Promise.all([
         adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
-        adminApi("/api/admin/analytics/history", { period: adminData.analyticsPeriod || "7days" }).catch(() => ({ summary: {}, daily: [] }))
+        adminApi("/api/admin/analytics/history", { period: adminAnalyticsDashboardState.period || "7days" }).catch(() => ({ summary: {}, daily: [] })),
+        adminApi("/api/admin/analytics/dashboard", {
+          period: adminAnalyticsDashboardState.period || "7days",
+          start_date: adminAnalyticsDashboardState.startDate || undefined,
+          end_date: adminAnalyticsDashboardState.endDate || undefined,
+          granularity: adminAnalyticsDashboardState.granularity || undefined
+        }).catch(err => {
+          console.warn("Analytics master dashboard fetch warning:", err.message);
+          return null;
+        })
       ]);
       adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
       adminData.activeUsers = liveData.active_users || [];
       adminData.analyticsHistory = historyData || { summary: {}, daily: [] };
+      adminData.analyticsDashboard = dashboardData;
       startAdminLivePolling();
     } else {
       stopAdminLivePolling();
@@ -11835,7 +11861,30 @@ function renderAdminRootMenu() {
   `;
 }
 
-// 2. STATISTIKA SAHIFASI (2.1 - 2.4 TALABLAR)
+
+// ======================================================
+// TELEMETRY & EVENT TRACKING
+// ======================================================
+async function trackAnalyticsEvent(eventType, category = 'general', contentId = null, metadata = {}, durationSeconds = 0) {
+  try {
+    if (!state.user && !tgUser) return;
+    await api('/api/analytics/track', {
+      event_type: eventType,
+      category,
+      content_id: contentId ? Number(contentId) : null,
+      metadata,
+      duration_seconds: Number(durationSeconds) || 0
+    });
+  } catch (e) {
+    // Non-blocking telemetry
+  }
+}
+window.trackAnalyticsEvent = trackAnalyticsEvent;
+
+// ======================================================
+// 2. MASTER ANALYTICS DASHBOARD
+// ======================================================
+
 function renderAdminStatsView() {
   const s = adminData.stats || {};
   const activeUsers = adminData.activeUsers || [];
@@ -11844,88 +11893,684 @@ function renderAdminStatsView() {
   const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
   const allMats = (adminMaterialsState && adminMaterialsState.materials) || DEFAULT_MATERIALS || [];
 
-  const totalRegistered = s.total_students || allStudents.length || 0;
-  const activeToday = s.today_active || 0;
-  const onlineNow = s.online_now || activeUsers.length || 0;
-  const todayNewUsers = s.today_new_users || adminData.analyticsHistory?.summary?.new_users || 0;
-  const paidStudents = s.paid_students || allStudents.filter(st => st.has_access || st.access_state === "ACTIVE").length || 0;
-  const expiredStudents = s.expired_students || allStudents.filter(st => st.access_state === "EXPIRED" || (!st.has_access && st.access_until && new Date(st.access_until) <= new Date())).length || 0;
-  const bannedStudents = s.blocked_students || allStudents.filter(st => st.restriction_status === "permanent" || st.restriction_status === "temporary").length || 0;
+  const dash = adminData.analyticsDashboard || null;
+  const kpi = dash?.kpi || null;
+  const timeSeries = dash?.time_series || null;
+  const seriesData = timeSeries?.data || [];
+  const seriesSummary = timeSeries?.summary || {};
+  const categories = dash?.categories || [];
+  const weekdays = dash?.weekdays?.data || [];
+  const peakDay = dash?.weekdays?.peak_day || 'Dushanba';
+  const hourly = dash?.hourly?.data || [];
+  const peakHour = dash?.hourly?.peak_hour || '20:00';
+  const heatmap = dash?.heatmap || [];
+  const deepDives = dash?.deep_dives || {};
+  const retention = dash?.retention || { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 };
+  const topStudents = dash?.top_students || [];
 
-  const totalBooks = allBooks.length;
-  const totalSources = allRes.filter(r => r.section_slug === 'sources' || r.type === 'source' || r.type === 'normative').length;
-  const totalMaterials = allMats.length;
-  const totalSavedBooks = allBooks.reduce((sum, b) => sum + Number(b.saved_count || 0), 0);
-  const totalBookViews = allBooks.reduce((sum, b) => sum + Number(b.view_count || 0), 0);
+  const period = adminAnalyticsDashboardState.period || '7days';
+  const customStart = adminAnalyticsDashboardState.startDate || '';
+  const customEnd = adminAnalyticsDashboardState.endDate || '';
+  const granularity = adminAnalyticsDashboardState.granularity || 'auto';
+  const activeMetric = adminAnalyticsDashboardState.activeMetric || 'all';
+  const deepDiveTab = adminAnalyticsDashboardState.deepDiveTab || 'lessons';
+
+  // Fallbacks from stats if dashboard not yet loaded
+  const totalUsers = kpi?.users?.total ?? (s.total_students || allStudents.length || 0);
+  const paidUsers = kpi?.users?.paid ?? (s.paid_students || 0);
+  const newToday = kpi?.users?.new_today ?? (s.today_new_users || 0);
+  const newThisWeek = kpi?.users?.new_this_week ?? (s.week_new_users || 0);
+  const newThisMonth = kpi?.users?.new_this_month ?? (s.month_new_users || 0);
+  const activeInPeriod = kpi?.users?.active_in_period ?? (s.today_active || 0);
+  const activeToday = kpi?.users?.active_today ?? (s.today_active || 0);
+  const inactiveUsers = kpi?.users?.inactive ?? Math.max(0, totalUsers - activeInPeriod);
+
+  const todayLessonViewers = kpi?.content_today?.lesson_viewers ?? (s.today_lesson_views || 0);
+  const todayBookReaders = kpi?.content_today?.book_readers ?? 0;
+  const todayMaterialViewers = kpi?.content_today?.material_viewers ?? 0;
+  const todaySourceUsers = kpi?.content_today?.source_users ?? 0;
+
+  const newGrowthPct = kpi?.users?.new_growth_pct ?? 0;
+  const activeGrowthPct = kpi?.users?.active_growth_pct ?? 0;
 
   return `
-    <div class="admin-stats-page">
-      <div class="admin-section-hero">
+    <style id="admin-analytics-modern-css">
+      .analytics-dashboard-page {
+        animation: fadeIn 0.25s ease-out;
+      }
+      .analytics-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .analytics-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .analytics-kpi-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .analytics-kpi-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .analytics-kpi-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .analytics-kpi-badge {
+        font-size: 11px;
+        font-weight: 750;
+        padding: 2px 7px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .analytics-kpi-badge.up {
+        background: rgba(52, 199, 89, 0.15);
+        color: #34c759;
+      }
+      .analytics-kpi-badge.down {
+        background: rgba(255, 59, 48, 0.15);
+        color: #ff3b30;
+      }
+      .analytics-kpi-badge.neutral {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-secondary);
+      }
+      .analytics-kpi-value {
+        font-size: 26px;
+        font-weight: 850;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+        line-height: 1.15;
+        margin-bottom: 4px;
+      }
+      .analytics-kpi-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+      .analytics-kpi-sub {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .analytics-toolbar {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .analytics-chip-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+      .analytics-chip {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .analytics-chip:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+      }
+      .analytics-chip.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(41, 121, 255, 0.3);
+      }
+      .analytics-heatmap-grid {
+        display: grid;
+        grid-template-columns: 75px repeat(24, 1fr);
+        gap: 4px;
+        align-items: center;
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
+      .analytics-heatmap-cell {
+        aspect-ratio: 1;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: transform 0.12s ease;
+      }
+      .analytics-heatmap-cell:hover {
+        transform: scale(1.3);
+        z-index: 10;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+      }
+      .analytics-heat-0 { background: rgba(255, 255, 255, 0.04); }
+      .analytics-heat-1 { background: rgba(41, 121, 255, 0.25); }
+      .analytics-heat-2 { background: rgba(41, 121, 255, 0.50); }
+      .analytics-heat-3 { background: rgba(41, 121, 255, 0.75); }
+      .analytics-heat-4 { background: #2979ff; }
+      .analytics-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      .analytics-table th {
+        text-align: left;
+        padding: 10px 12px;
+        color: var(--text-secondary);
+        font-weight: 700;
+        border-bottom: 1px solid var(--border);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .analytics-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+      }
+      .analytics-table tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      @media (max-width: 768px) {
+        .analytics-kpi-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .analytics-two-col {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    </style>
+
+    <div class="admin-stats-page analytics-dashboard-page" id="admin-analytics-dashboard-wrap">
+      
+      <!-- HERO HEADER -->
+      <div class="admin-section-hero" style="margin-bottom:18px;">
         <div>
-          <div class="admin-hero-title">📊 Platforma Statistikasi</div>
-          <div class="admin-hero-desc">Real-time faollik, foydalanuvchilar oqimi va tahliliy ko'rsatkichlar</div>
+          <div class="admin-hero-title">📊 Analytics Dashboard</div>
+          <div class="admin-hero-desc">Platformaning to'liq ko'rsatkichlari, o'sish dinamikasi va auditoriya tahlili</div>
         </div>
-        <div style="font-size:12px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:5px;">
-          <span class="live-pulse-dot"></span> Jonli Tizim
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div style="font-size:12px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:5px; margin-right:4px;">
+            <span class="live-pulse-dot"></span> Jonli Tizim
+          </div>
+          <button class="admin-small-btn" onclick="exportAdminAnalyticsCsv()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06);">
+            📥 CSV Eksport
+          </button>
+          <button class="admin-small-btn" onclick="refreshAdminAnalyticsDashboard()" style="display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:none;">
+            🔄 Yangilash
+          </button>
         </div>
       </div>
 
-      <!-- 2.1. UMUMIY STATISTIKA -->
+      <!-- 1. VAQT FILTRI VA GRANULYARLIK TOOLBARI -->
+      <div class="analytics-toolbar">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="font-weight:750; font-size:13px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+            <span>📅</span> Vaqt Oralig'i:
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11.5px; color:var(--text-secondary);">Granulyarlik:</span>
+            <select id="analytics-granularity-select" class="apple-input" style="padding:4px 8px; font-size:11.5px; width:auto; height:32px; border-radius:8px;" onchange="refreshAdminAnalyticsDashboard({ granularity: this.value })">
+              <option value="auto" ${granularity === 'auto' ? 'selected' : ''}>Avtomatik moslashuv</option>
+              <option value="yearly" ${granularity === 'yearly' ? 'selected' : ''}>Yillik</option>
+              <option value="monthly" ${granularity === 'monthly' ? 'selected' : ''}>Oylik</option>
+              <option value="weekly" ${granularity === 'weekly' ? 'selected' : ''}>Haftalik</option>
+              <option value="daily" ${granularity === 'daily' ? 'selected' : ''}>Kunlik</option>
+              <option value="hourly" ${granularity === 'hourly' ? 'selected' : ''}>Soatlik</option>
+              <option value="minutely" ${granularity === 'minutely' ? 'selected' : ''}>Minutlik (5 daqiqa)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="analytics-chip-group">
+          <button class="analytics-chip ${period === 'today' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'today' })">Bugun</button>
+          <button class="analytics-chip ${period === 'yesterday' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'yesterday' })">Kecha</button>
+          <button class="analytics-chip ${period === '7days' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '7days' })">Oxirgi 7 kun</button>
+          <button class="analytics-chip ${period === '30days' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '30days' })">Oxirgi 30 kun</button>
+          <button class="analytics-chip ${period === 'this_month' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'this_month' })">Shu oy</button>
+          <button class="analytics-chip ${period === 'last_month' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'last_month' })">O'tgan oy</button>
+          <button class="analytics-chip ${period === '3months' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '3months' })">Oxirgi 3 oy</button>
+          <button class="analytics-chip ${period === '6months' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '6months' })">Oxirgi 6 oy</button>
+          <button class="analytics-chip ${period === 'this_year' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'this_year' })">Shu yil</button>
+          <button class="analytics-chip ${period === 'last_year' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'last_year' })">O'tgan yil</button>
+          <button class="analytics-chip ${period === 'custom' ? 'active' : ''}" onclick="toggleAnalyticsCustomRange()">📅 Tanlangan oraliq</button>
+        </div>
+
+        <!-- CUSTOM RANGE INPUTS -->
+        <div id="analytics-custom-range-box" style="display:${period === 'custom' ? 'flex' : 'none'}; gap:8px; align-items:center; flex-wrap:wrap; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; color:var(--text-secondary);">Dan:</span>
+            <input type="date" id="analytics-start-date" class="apple-input" style="padding:5px 8px; font-size:12px; width:auto;" value="${escapeHtml(customStart)}">
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; color:var(--text-secondary);">Gacha:</span>
+            <input type="date" id="analytics-end-date" class="apple-input" style="padding:5px 8px; font-size:12px; width:auto;" value="${escapeHtml(customEnd)}">
+          </div>
+          <button class="admin-small-btn" onclick="applyAnalyticsCustomRange()" style="background:var(--accent); color:#fff; border:none; padding:6px 12px; font-size:12px;">
+            Qo'llash
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. YUQORI KPI KARTALAR (FOYDALANUVCHILAR) -->
+      <div style="margin-bottom:12px;">
+        <div class="admin-section-title" style="margin-bottom:10px;">👥 Foydalanuvchilar Ko'rsatkichlari</div>
+        <div class="analytics-kpi-grid">
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(41,121,255,0.12); color:#2979ff;">👥</div>
+              <span class="analytics-kpi-badge ${newGrowthPct >= 0 ? 'up' : 'down'}">
+                ${newGrowthPct >= 0 ? '↑ +' : '↓ '}${newGrowthPct}%
+              </span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value">${totalUsers}</div>
+              <div class="analytics-kpi-label">Jami O'quvchilar</div>
+              <div class="analytics-kpi-sub">Bazada ro'yxatdan o'tganlar</div>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">⚡</div>
+              <span class="analytics-kpi-badge ${activeGrowthPct >= 0 ? 'up' : 'down'}">
+                ${activeGrowthPct >= 0 ? '↑ +' : '↓ '}${activeGrowthPct}%
+              </span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value" style="color:#10b981;">${activeInPeriod}</div>
+              <div class="analytics-kpi-label">Davrdagi Faol O'quvchilar</div>
+              <div class="analytics-kpi-sub">Tanlangan vaqtda kirganlar</div>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(139,92,246,0.12); color:#8b5cf6;">🆕</div>
+              <span class="analytics-kpi-badge neutral">Bugun</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value" style="color:#8b5cf6;">${newToday}</div>
+              <div class="analytics-kpi-label">Bugun Qo'shilganlar</div>
+              <div class="analytics-kpi-sub">Haftada: +${newThisWeek} • Oyda: +${newThisMonth}</div>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card" style="cursor:pointer;" onclick="adminNavigate('students')">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(255,149,0,0.12); color:#ff9500;">💳</div>
+              <span class="analytics-kpi-badge up">Faol</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value" style="color:#ff9500;">${paidUsers}</div>
+              <div class="analytics-kpi-label">Kurs Obunachilari →</div>
+              <div class="analytics-kpi-sub">Kirish ruxsati faollar</div>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(255,59,48,0.12); color:#ff3b30;">⏳</div>
+              <span class="analytics-kpi-badge neutral">${totalUsers ? Math.round((inactiveUsers / totalUsers) * 100) : 0}%</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value" style="color:var(--text-secondary);">${inactiveUsers}</div>
+              <div class="analytics-kpi-label">Nofaol O'quvchilar</div>
+              <div class="analytics-kpi-sub">Davrda kirmagan a'zolar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. KONTENT FAOLLIGI (BUGUNGI REAL-TIME KO'RSATKICHLAR) -->
       <div style="margin-bottom:20px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">2.1. Umumiy Statistika</div>
-        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">👥</div>
-            <div class="admin-stat-value">${totalRegistered}</div>
-            <div class="admin-stat-label">Jami O'quvchilar</div>
+        <div class="admin-section-title" style="margin-bottom:10px;">⚡ Bugungi Kontent Faolligi (Real-Time)</div>
+        <div class="analytics-kpi-grid">
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(0,122,255,0.12); color:#007aff;">🎬</div>
+              <span class="analytics-kpi-badge up">Bugun</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value">${todayLessonViewers}</div>
+              <div class="analytics-kpi-label">Bugun Dars Ko'rganlar</div>
+              <div class="analytics-kpi-sub">O'quvchi tomonidan ochilgan</div>
+            </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">📅</div>
-            <div class="admin-stat-value" style="color:#10b981;">${activeToday}</div>
-            <div class="admin-stat-label">Bugun Faol</div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(255,149,0,0.12); color:#ff9500;">📖</div>
+              <span class="analytics-kpi-badge up">Bugun</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value">${todayBookReaders}</div>
+              <div class="analytics-kpi-label">Bugun Kitob O'qiganlar</div>
+              <div class="analytics-kpi-sub">Kitob mutolaa qilganlar</div>
+            </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">⚡</div>
-            <div class="admin-stat-value" style="color:#007aff;">${onlineNow}</div>
-            <div class="admin-stat-label">Hozir Online</div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(52,199,89,0.12); color:#34c759;">🧱</div>
+              <span class="analytics-kpi-badge up">Bugun</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value">${todayMaterialViewers}</div>
+              <div class="analytics-kpi-label">Bugun Material Ko'rganlar</div>
+              <div class="analytics-kpi-sub">Qurilish bazasidan foydalanish</div>
+            </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">🆕</div>
-            <div class="admin-stat-value" style="color:#8b5cf6;">${todayNewUsers}</div>
-            <div class="admin-stat-label">Bugun Yangi A'zolar</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
-            <div class="admin-stat-icon">💳</div>
-            <div class="admin-stat-value" style="color:#10b981;">${paidStudents}</div>
-            <div class="admin-stat-label">Kursga Egasi (Faol) →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
-            <div class="admin-stat-icon">⏳</div>
-            <div class="admin-stat-value" style="color:#ff9500;">${expiredStudents}</div>
-            <div class="admin-stat-label">Access Tugaganlar →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('students')">
-            <div class="admin-stat-icon">🚫</div>
-            <div class="admin-stat-value" style="color:#ff3b30;">${bannedStudents}</div>
-            <div class="admin-stat-label">Bloklanganlar →</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">🎬</div>
-            <div class="admin-stat-value">${s.today_lesson_views || 0}</div>
-            <div class="admin-stat-label">Bugun Dars Ko'rish</div>
+
+          <div class="analytics-kpi-card">
+            <div class="analytics-kpi-top">
+              <div class="analytics-kpi-icon" style="background:rgba(175,82,222,0.12); color:#af52de;">📐</div>
+              <span class="analytics-kpi-badge up">Bugun</span>
+            </div>
+            <div>
+              <div class="analytics-kpi-value">${todaySourceUsers}</div>
+              <div class="analytics-kpi-label">Bugun Manba Ishlatganlar</div>
+              <div class="analytics-kpi-sub">Revit andozalari / fayllar</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 2.2. HOZIR ONLINE FOYDALANUVCHILAR -->
+      <!-- 4. O'QUVCHILAR QO'SHILISH DINAMIKASI VA FAOLLIK GRAFIGI -->
+      <div class="analytics-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="font-size:15px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>📈</span> Faollik va Yangi O'quvchilar Dinamikasi
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+              Vaqt kesimida foydalanuvchilar oqimi va platformadan foydalanish tendensiyasi
+            </div>
+          </div>
+
+          <!-- SUMMARY NUMBERS -->
+          <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:var(--text-muted);">Jami faollik:</div>
+              <div style="font-size:16px; font-weight:850; color:var(--text-primary);">${seriesSummary.total_activity || 0}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:var(--text-muted);">O'rtacha:</div>
+              <div style="font-size:16px; font-weight:850; color:#007aff;">${seriesSummary.average_activity || 0}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:var(--text-muted);">Peak nuqta:</div>
+              <div style="font-size:16px; font-weight:850; color:#10b981;">${seriesSummary.peak_value || 0} (${escapeHtml(seriesSummary.peak_label || '-')})</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:var(--text-muted);">O'sish:</div>
+              <div style="font-size:16px; font-weight:850; color:${(seriesSummary.growth_pct || 0) >= 0 ? '#10b981' : '#ff3b30'};">
+                ${(seriesSummary.growth_pct || 0) >= 0 ? '+' : ''}${seriesSummary.growth_pct || 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- METRIC FILTER BUTTONS -->
+        <div style="display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px;">
+          <button class="analytics-chip ${activeMetric === 'all' ? 'active' : ''}" onclick="setAnalyticsMetric('all')">Hammasi</button>
+          <button class="analytics-chip ${activeMetric === 'new_users' ? 'active' : ''}" onclick="setAnalyticsMetric('new_users')">👥 Yangi o'quvchilar</button>
+          <button class="analytics-chip ${activeMetric === 'lesson_views' ? 'active' : ''}" onclick="setAnalyticsMetric('lesson_views')">🎬 Dars ko'rishlar</button>
+          <button class="analytics-chip ${activeMetric === 'book_reads' ? 'active' : ''}" onclick="setAnalyticsMetric('book_reads')">📖 Kitob o'qishlar</button>
+          <button class="analytics-chip ${activeMetric === 'material_views' ? 'active' : ''}" onclick="setAnalyticsMetric('material_views')">🧱 Materiallar</button>
+        </div>
+
+        <!-- SVG LINE / AREA CHART -->
+        <div style="width:100%; overflow-x:auto;">
+          ${renderAnalyticsSvgLineChart(seriesData, activeMetric)}
+        </div>
+      </div>
+
+      <!-- 5. FOYDALANUVCHILARNING FAOLLIK TARKIBI (USER ACTIVITY BREAKDOWN) -->
+      <div class="analytics-card">
+        <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+          <span>🎯</span> Foydalanuvchilar Faolligi Tarkibi
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+          O'quvchilarning darslar, kitoblar, materiallar va manbalar orasidagi vaqt va harakat ulushi
+        </div>
+
+        ${renderAnalyticsCompositionHtml(categories)}
+      </div>
+
+      <!-- 6. HAFTA KUNLARI VA 24 SOATLIK FAOLLIK (2 USTUNLI GRID) -->
+      <div class="analytics-two-col" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-bottom:20px;">
+        <!-- HAFTANING ENG FAOL KUNLARI -->
+        <div class="analytics-card" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <div style="font-weight:750; font-size:14px; color:var(--text-primary);">📅 Haftaning Eng Faol Kunlari</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Dushanba — Yakshanba faollik taqsimoti</div>
+            </div>
+            <span class="admin-hub-badge" style="background:rgba(255,149,0,0.15); color:#ff9500; font-size:11px;">
+              🔥 Peak: ${escapeHtml(peakDay)}
+            </span>
+          </div>
+
+          ${renderAnalyticsWeekdayBarChart(weekdays)}
+        </div>
+
+        <!-- 24 SOATLIK FAOLLIK -->
+        <div class="analytics-card" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <div style="font-weight:750; font-size:14px; color:var(--text-primary);">⏰ 24 Soatlik Faollik (Kun Davomida)</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">00:00 dan 23:00 gacha soatlar kesimi</div>
+            </div>
+            <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-size:11px;">
+              ⭐ Peak: ${escapeHtml(peakHour)}
+            </span>
+          </div>
+
+          ${renderAnalyticsHourlyBarChart(hourly)}
+        </div>
+      </div>
+
+      <!-- 7. HAFTA KUNI X SOAT ACTIVITY HEATMAP -->
+      <div class="analytics-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-weight:750; font-size:14px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>🔥</span> Faollik Issiqlik Xaritasi (Activity Heatmap)
+            </div>
+            <div style="font-size:11.5px; color:var(--text-secondary);">Haftaning har bir kuni va har bir soatidagi intensivlik</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted);">
+            <span>Kam</span>
+            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(255,255,255,0.06);"></span>
+            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.25);"></span>
+            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.50);"></span>
+            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.75);"></span>
+            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#2979ff;"></span>
+            <span>Ko'p</span>
+          </div>
+        </div>
+
+        ${renderAnalyticsHeatmapHtml(heatmap)}
+      </div>
+
+      <!-- 8. KONTENT BO'YICHA CHUQUR TAHLIL (DEEP DIVES) -->
+      <div class="analytics-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>📚</span> Kontent Bo'yicha Chuqur Tahlil
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">Darslar, kitoblar, materiallar va manbalarning o'qilishi va samaradorligi</div>
+          </div>
+
+          <div style="display:flex; gap:6px;">
+            <button class="analytics-chip ${deepDiveTab === 'lessons' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('lessons')">🎬 Darslar</button>
+            <button class="analytics-chip ${deepDiveTab === 'books' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('books')">📖 Kitoblar</button>
+            <button class="analytics-chip ${deepDiveTab === 'materials' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('materials')">🧱 Materiallar</button>
+            <button class="analytics-chip ${deepDiveTab === 'sources' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('sources')">📐 Manbalar</button>
+          </div>
+        </div>
+
+        ${renderAnalyticsDeepDivesHtml(deepDives, deepDiveTab)}
+      </div>
+
+      <!-- 9. USER RETENTION / QAYTA KELISH -->
+      <div class="analytics-card">
+        <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+          <span>🔄</span> O'quvchilarning Qayta Kelish Ko'rsatkichi (Retention)
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+          Yangi a'zolarning platformaga 1, 7 va 30 kundan keyin qaytib kelish foizlari
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 1 Retention</span>
+              <span class="admin-hub-badge" style="background:rgba(52,199,89,0.15); color:#34c759;">1-kundan keyin</span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
+              ${retention.day_1_pct || 0}%
+            </div>
+            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
+              <div style="width:${Math.min(100, retention.day_1_pct || 0)}%; height:100%; background:#34c759; border-radius:3px;"></div>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 7 Retention</span>
+              <span class="admin-hub-badge" style="background:rgba(0,122,255,0.15); color:#007aff;">7-kundan keyin</span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
+              ${retention.day_7_pct || 0}%
+            </div>
+            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
+              <div style="width:${Math.min(100, retention.day_7_pct || 0)}%; height:100%; background:#007aff; border-radius:3px;"></div>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 30 Retention</span>
+              <span class="admin-hub-badge" style="background:rgba(175,82,222,0.15); color:#af52de;">30-kundan keyin</span>
+            </div>
+            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
+              ${retention.day_30_pct || 0}%
+            </div>
+            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
+              <div style="width:${Math.min(100, retention.day_30_pct || 0)}%; height:100%; background:#af52de; border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10. ENG FAOL O'QUVCHILAR JADVALI (TOP ACTIVE STUDENTS) -->
+      <div class="analytics-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>🏆</span> Eng Faol O'quvchilar Reytingi
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">
+              Darslar, kitoblar, materiallar va manbalardagi umumiy faollik ko'rsatkichi bo'yicha saralangan
+            </div>
+          </div>
+          <button class="admin-small-btn" onclick="adminNavigate('students')">
+            Barcha o'quvchilar →
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th>O'quvchi</th>
+                <th>Darslar</th>
+                <th>Kitoblar</th>
+                <th>Materiallar</th>
+                <th>Manbalar</th>
+                <th>Umumiy Ball</th>
+                <th>Oxirgi Faollik</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topStudents.length ? topStudents.map((st, idx) => {
+                const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
+                const username = st.username ? "@" + st.username : ("ID: " + st.telegram_id);
+                return `
+                  <tr style="cursor:pointer;" onclick="openAdminStudentLiveDossier(${Number(st.id)})" title="O'quvchi dosyesini ochish">
+                    <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
+                    <td>
+                      <div style="font-weight:750; color:var(--text-primary);">${escapeHtml(fullName)}</div>
+                      <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(username)}</div>
+                    </td>
+                    <td><span style="font-weight:700; color:#007aff;">${st.watched_lessons}</span> dars</td>
+                    <td><span style="font-weight:700; color:#ff9500;">${st.read_books}</span> kitob</td>
+                    <td><span style="font-weight:700; color:#34c759;">${st.viewed_materials}</span> material</td>
+                    <td><span style="font-weight:700; color:#af52de;">${st.used_sources}</span> manba</td>
+                    <td>
+                      <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-weight:800;">
+                        ⭐ ${st.total_activity_score}
+                      </span>
+                    </td>
+                    <td style="font-size:11.5px; color:var(--text-secondary);">
+                      ${st.last_seen_at ? formatRelativeTime(st.last_seen_at) : 'Yaqinda'}
+                    </td>
+                  </tr>
+                `;
+              }).join("") : `
+                <tr>
+                  <td colspan="8" style="text-align:center; padding:24px; color:var(--text-secondary);">
+                    Faol o'quvchilar ma'lumotlari topilmadi.
+                  </td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 11. HOZIR ONLINE FOYDALANUVCHILAR (MAVJUD BLOK) -->
       <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div>
             <div style="font-weight:750; font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>⚡</span> 2.2. Hozir Online Foydalanuvchilar
+              <span>⚡</span> Hozir Online Foydalanuvchilar
               <span id="admin-live-users-count" class="admin-hub-badge" style="background:rgba(16,185,129,0.12); color:#10b981;">${activeUsers.length} ta faol</span>
             </div>
-            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Mini App ichida faol foydalanuvchilar ro'yxati</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Mini App ichidagi real-time foydalanuvchilar</div>
           </div>
           <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
             <span class="live-pulse-dot"></span> Jonli
@@ -11937,71 +12582,528 @@ function renderAdminStatsView() {
         </div>
       </div>
 
-      <!-- 2.3. KURS STATISTIKASI -->
-      <div style="margin-bottom:20px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">2.3. Kurs Statistikasi (INTPRO)</div>
-        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin-bottom:14px;">
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
-            <div class="admin-stat-icon">🎓</div>
-            <div class="admin-stat-value">${paidStudents}</div>
-            <div class="admin-stat-label">Faol Kurs Accessi →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\'ragan')">
-            <div class="admin-stat-icon">🆕</div>
-            <div class="admin-stat-value" style="color:#007aff;">${s.pending_new || 0}</div>
-            <div class="admin-stat-label">Yangi So'rovlar →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\'ragan')">
-            <div class="admin-stat-icon">🔄</div>
-            <div class="admin-stat-value" style="color:#ff9500;">${s.pending_renewal || 0}</div>
-            <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">👁️</div>
-            <div class="admin-stat-value">${s.total_lesson_views || 0}</div>
-            <div class="admin-stat-label">Jami Dars Ko'rishlar</div>
-          </div>
-        </div>
+    </div>
+  `;
+}
 
-        <div id="admin-analytics-section">
-          ${renderAdminAnalyticsSectionHtml()}
-        </div>
+// -------------------------------------------------------------
+// SVG LINE & AREA CHART GENERATOR
+// -------------------------------------------------------------
+function renderAnalyticsSvgLineChart(data, metric) {
+  if (!data || !data.length) {
+    return `<div class="empty-box" style="padding:40px 16px; text-align:center;">Ushbu davr uchun grafik ma'lumotlari mavjud emas.</div>`;
+  }
+
+  const width = 800;
+  const height = 240;
+  const padLeft = 45;
+  const padRight = 20;
+  const padTop = 20;
+  const padBottom = 35;
+
+  const plotW = width - padLeft - padRight;
+  const plotH = height - padTop - padBottom;
+
+  // Extract points based on selected metric
+  const points = data.map((d, i) => {
+    let val = 0;
+    if (metric === 'new_users') val = d.new_users || 0;
+    else if (metric === 'lesson_views') val = d.lesson_views || 0;
+    else if (metric === 'book_reads') val = d.book_reads || 0;
+    else if (metric === 'material_views') val = d.material_views || 0;
+    else val = d.total_activity || 0;
+
+    return { val, label: d.label, raw: d };
+  });
+
+  const maxVal = Math.max(1, ...points.map(p => p.val));
+  const minVal = 0;
+
+  // Compute X and Y
+  const coords = points.map((p, i) => {
+    const x = padLeft + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
+    const y = padTop + plotH - ((p.val - minVal) / (maxVal - minVal)) * plotH;
+    return { x, y, val: p.val, label: p.label };
+  });
+
+  // Build SVG Path
+  let pathD = `M ${coords[0].x} ${coords[0].y}`;
+  for (let i = 1; i < coords.length; i++) {
+    const prev = coords[i - 1];
+    const curr = coords[i];
+    const cpX = (prev.x + curr.x) / 2;
+    pathD += ` C ${cpX} ${prev.y}, ${cpX} ${curr.y}, ${curr.x} ${curr.y}`;
+  }
+
+  // Area path
+  const areaD = `${pathD} L ${coords[coords.length - 1].x} ${padTop + plotH} L ${coords[0].x} ${padTop + plotH} Z`;
+
+  // Grid Lines
+  const gridSteps = 4;
+  let gridHtml = '';
+  for (let s = 0; s <= gridSteps; s++) {
+    const gY = padTop + (s / gridSteps) * plotH;
+    const gVal = Math.round(maxVal - (s / gridSteps) * maxVal);
+    gridHtml += `
+      <line x1="${padLeft}" y1="${gY}" x2="${width - padRight}" y2="${gY}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+      <text x="${padLeft - 8}" y="${gY + 4}" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="end">${gVal}</text>
+    `;
+  }
+
+  // X Labels (sample if too many)
+  let xLabelsHtml = '';
+  const stepLabel = Math.max(1, Math.ceil(points.length / 10));
+  coords.forEach((c, idx) => {
+    if (idx % stepLabel === 0 || idx === coords.length - 1) {
+      xLabelsHtml += `
+        <text x="${c.x}" y="${height - 10}" fill="rgba(255,255,255,0.5)" font-size="10.5" text-anchor="middle">${escapeHtml(c.label)}</text>
+      `;
+    }
+  });
+
+  // Data Dots
+  const dotsHtml = coords.map((c, idx) => `
+    <circle cx="${c.x}" cy="${c.y}" r="4" fill="#007aff" stroke="#fff" stroke-width="1.5" style="cursor:pointer; transition:transform 0.1s ease;" data-label="${escapeHtml(c.label)}" data-val="${c.val}">
+      <title>${escapeHtml(c.label)}: ${c.val}</title>
+    </circle>
+  `).join('');
+
+  return `
+    <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; overflow:visible;" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="analyticsLineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#007aff" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#007aff" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      
+      <!-- Grid -->
+      ${gridHtml}
+
+      <!-- Area -->
+      <path d="${areaD}" fill="url(#analyticsLineGrad)" />
+
+      <!-- Line -->
+      <path d="${pathD}" fill="none" stroke="#007aff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+      <!-- Dots -->
+      ${dotsHtml}
+
+      <!-- X Axis Labels -->
+      ${xLabelsHtml}
+    </svg>
+  `;
+}
+
+// -------------------------------------------------------------
+// FAOL KUNLAR BAR CHART GENERATOR
+// -------------------------------------------------------------
+function renderAnalyticsWeekdayBarChart(weekdays) {
+  if (!weekdays || !weekdays.length) {
+    return `<div class="empty-box" style="padding:24px 12px; font-size:12px;">Ma'lumot mavjud emas</div>`;
+  }
+  const max = Math.max(1, ...weekdays.map(w => w.total_activity));
+
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:8px;">
+      ${weekdays.map(w => {
+        const heightPct = Math.max(8, Math.round((w.total_activity / max) * 100));
+        const isPeak = w.total_activity === max && max > 0;
+        return `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${w.name}: ${w.total_activity} ta faollik (${w.lesson_views} dars, ${w.book_reads} kitob, ${w.material_views} material)">
+            <div style="font-size:10px; font-weight:750; color:${isPeak ? '#ff9500' : 'var(--text-muted)'}; margin-bottom:4px;">
+              ${w.total_activity}
+            </div>
+            <div style="width:100%; max-width:24px; height:${heightPct}%; background:${isPeak ? '#ff9500' : 'rgba(41,121,255,0.45)'}; border-radius:6px 6px 2px 2px; transition:all 0.2s ease;"></div>
+            <div style="font-size:11px; font-weight:700; color:${isPeak ? 'var(--text-primary)' : 'var(--text-secondary)'}; margin-top:6px;">
+              ${w.name.slice(0, 2)}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// -------------------------------------------------------------
+// 24 SOATLIK BAR CHART GENERATOR
+// -------------------------------------------------------------
+function renderAnalyticsHourlyBarChart(hourly) {
+  if (!hourly || !hourly.length) {
+    return `<div class="empty-box" style="padding:24px 12px; font-size:12px;">Ma'lumot mavjud emas</div>`;
+  }
+  const max = Math.max(1, ...hourly.map(h => h.total_activity));
+
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:2px;">
+      ${hourly.map((h, i) => {
+        const heightPct = Math.max(6, Math.round((h.total_activity / max) * 100));
+        const isPeak = h.total_activity === max && max > 0;
+        const showLabel = i % 4 === 0 || i === 23;
+        return `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${h.label}: ${h.total_activity} ta harakat">
+            <div style="width:100%; height:${heightPct}%; background:${isPeak ? '#2979ff' : 'rgba(255,255,255,0.12)'}; border-radius:3px 3px 1px 1px; transition:all 0.2s ease;"></div>
+            <div style="font-size:9.5px; color:var(--text-muted); margin-top:6px; height:14px;">
+              ${showLabel ? h.hour : ''}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// -------------------------------------------------------------
+// HEATMAP GENERATOR
+// -------------------------------------------------------------
+function renderAnalyticsHeatmapHtml(heatmap) {
+  if (!heatmap || !heatmap.length) {
+    return `<div class="empty-box" style="padding:24px 12px;">Heatmap ma'lumotlari mavjud emas</div>`;
+  }
+
+  const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
+  let html = `<div class="analytics-heatmap-grid">`;
+
+  // Header row for hours
+  html += `<div></div>`;
+  for (let h = 0; h < 24; h++) {
+    html += `<div style="font-size:9.5px; text-align:center; color:var(--text-muted);">${h}</div>`;
+  }
+
+  // Rows for days
+  for (let d = 1; d <= 7; d++) {
+    const dayName = days[d - 1];
+    html += `<div style="font-size:11px; font-weight:700; color:var(--text-secondary);">${dayName.slice(0, 2)}</div>`;
+    for (let h = 0; h < 24; h++) {
+      const cell = heatmap.find(c => c.day === d && c.hour === h) || { count: 0, intensity: 0 };
+      html += `
+        <div class="analytics-heatmap-cell analytics-heat-${cell.intensity}" title="${dayName} ${h < 10 ? '0' : ''}${h}:00 — ${cell.count} ta faollik"></div>
+      `;
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// -------------------------------------------------------------
+// ACTIVITY COMPOSITION / DONUT BREAKDOWN
+// -------------------------------------------------------------
+function renderAnalyticsCompositionHtml(categories) {
+  if (!categories || !categories.length) {
+    return `<div class="empty-box">Kategoriyalar ma'lumotlari yuklanmoqda...</div>`;
+  }
+
+  return `
+    <div>
+      <!-- Multi-segment Progress Bar -->
+      <div style="display:flex; height:14px; border-radius:7px; overflow:hidden; margin-bottom:16px; background:rgba(255,255,255,0.06);">
+        ${categories.map(c => `
+          <div style="width:${c.share_pct}%; background:${c.color};" title="${escapeHtml(c.name)}: ${c.share_pct}%"></div>
+        `).join("")}
       </div>
 
-      <!-- 2.4. KUTUBXONA STATISTIKASI -->
-      <div style="margin-bottom:20px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">2.4. Kutubxona Statistikasi</div>
-        <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'books')">
-            <div class="admin-stat-icon">📚</div>
-            <div class="admin-stat-value">${totalBooks}</div>
-            <div class="admin-stat-label">Jami Kitoblar →</div>
+      <!-- Categories Cards Grid -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+        ${categories.map(c => `
+          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:13px; font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                <span>${c.icon}</span> ${escapeHtml(c.name)}
+              </span>
+              <span class="admin-hub-badge" style="background:${c.color}22; color:${c.color}; font-weight:800;">
+                ${c.share_pct}%
+              </span>
+            </div>
+            <div style="font-size:20px; font-weight:850; color:var(--text-primary); margin-bottom:2px;">
+              ${c.actions} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">harakat</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted);">
+              Taxminiy vaqt: ~${Math.round(c.est_minutes / 60)} soat (${c.est_minutes} daqiqa)
+            </div>
           </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'sources')">
-            <div class="admin-stat-icon">📐</div>
-            <div class="admin-stat-value">${totalSources}</div>
-            <div class="admin-stat-label">Jami Manbalar →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="adminNavigate('library', 'materials')">
-            <div class="admin-stat-icon">🧱</div>
-            <div class="admin-stat-value">${totalMaterials}</div>
-            <div class="admin-stat-label">Jami Materiallar →</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">♥</div>
-            <div class="admin-stat-value" style="color:#ff334b;">${totalSavedBooks}</div>
-            <div class="admin-stat-label">Saqlangan Kitoblar</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">👁️</div>
-            <div class="admin-stat-value">${totalBookViews}</div>
-            <div class="admin-stat-label">Kitoblar Ko'rilishi</div>
-          </div>
-        </div>
+        `).join("")}
       </div>
     </div>
   `;
 }
+
+// -------------------------------------------------------------
+// DEEP DIVES TABS (DARSLAR, KITOBLAR, MATERIALLAR, MANBALAR)
+// -------------------------------------------------------------
+function renderAnalyticsDeepDivesHtml(deepDives, tab) {
+  if (tab === 'lessons') {
+    const top = deepDives.lessons?.top_lessons || [];
+    const least = deepDives.lessons?.least_lessons || [];
+    return `
+      <div>
+        <div style="font-weight:750; font-size:13.5px; color:var(--text-primary); margin-bottom:10px;">
+          🎬 Eng Ko'p Ko'rilgan Darslar (Top 15)
+        </div>
+        <div style="overflow-x:auto; margin-bottom:20px;">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th>Dars Nomi</th>
+                <th>Modul & Kurs</th>
+                <th>Ko'rishlar</th>
+                <th>Unique O'quvchilar</th>
+                <th>Yakunlash Darajasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${top.length ? top.map((l, idx) => `
+                <tr>
+                  <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
+                  <td style="font-weight:700; color:var(--text-primary);">${escapeHtml(l.title)}</td>
+                  <td style="font-size:11.5px; color:var(--text-secondary);">${escapeHtml(l.module_title || '')} (${escapeHtml(l.course_title || 'Revit')})</td>
+                  <td style="font-weight:800; color:#007aff;">${l.view_count}</td>
+                  <td>${l.unique_viewers} ta</td>
+                  <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <div style="flex:1; max-width:80px; background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
+                        <div style="width:${Math.min(100, l.completion_rate)}%; height:100%; background:#10b981; border-radius:3px;"></div>
+                      </div>
+                      <span style="font-size:11px; font-weight:700;">${l.completion_rate}%</span>
+                    </div>
+                  </td>
+                </tr>
+              `).join("") : `<tr><td colspan="6" style="text-align:center; padding:16px;">Ma'lumot mavjud emas</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+        ${least.length ? `
+          <div style="font-weight:750; font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+            ⚠️ Diqqat talab darslar (Kam ko'rilganlar):
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            ${least.map(l => `
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:11.5px;">
+                <b>#${l.order_index}</b> ${escapeHtml(l.title)}: <span style="color:#ff9500; font-weight:700;">${l.view_count || 0} ta</span>
+              </div>
+            `).join("")}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  if (tab === 'books') {
+    const books = deepDives.books?.top_books || [];
+    return `
+      <div style="overflow-x:auto;">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th>Kitob Nomi</th>
+              <th>Muallif</th>
+              <th>Kategoriya</th>
+              <th>Ochilishlar</th>
+              <th>Unique O'quvchilar</th>
+              <th>Saqlanganlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${books.length ? books.map((b, idx) => `
+              <tr>
+                <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
+                <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(b.title)}</td>
+                <td style="font-size:11.5px; color:var(--text-secondary);">${escapeHtml(b.author || '-')}</td>
+                <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(b.category || 'Revit')}</span></td>
+                <td style="font-weight:800; color:#ff9500;">${b.view_count}</td>
+                <td>${b.unique_readers} ta</td>
+                <td style="color:#ff334b; font-weight:750;">♥ ${b.saved_count}</td>
+              </tr>
+            `).join("") : `<tr><td colspan="7" style="text-align:center; padding:16px;">Kitoblar ma'lumotlari mavjud emas</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  if (tab === 'materials') {
+    const mats = deepDives.materials?.top_materials || [];
+    const cats = deepDives.materials?.categories || [];
+    return `
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
+          <div style="font-weight:750; font-size:13.5px; color:var(--text-primary);">
+            🧱 Eng Ko'p Ko'rilgan Materiallar
+          </div>
+        </div>
+
+        <div style="overflow-x:auto; margin-bottom:18px;">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th>Material Nomi</th>
+                <th>Kategoriya</th>
+                <th>Ko'rishlar</th>
+                <th>Layklar</th>
+                <th>Saqlanganlar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${mats.length ? mats.map((m, idx) => `
+                <tr>
+                  <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
+                  <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(m.name_uz || 'Material')}</td>
+                  <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(m.category || 'Boshqa')}</span></td>
+                  <td style="font-weight:800; color:#34c759;">${m.view_count || 0}</td>
+                  <td style="color:#ff2d55;">♥ ${m.like_count || 0}</td>
+                  <td style="color:#ff9500;">⭐ ${m.save_count || 0}</td>
+                </tr>
+              `).join("") : `<tr><td colspan="6" style="text-align:center; padding:16px;">Materiallar ma'lumotlari mavjud emas</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+        ${cats.length ? `
+          <div style="font-weight:750; font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+            Kategoriyalar bo'yicha taqsimot:
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            ${cats.map(c => `
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:12px;">
+                ${escapeHtml(c.category)}: <b>${c.total_views}</b> ko'rish (${c.item_count} ta mahsulot)
+              </div>
+            `).join("")}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // tab === 'sources'
+  const sources = deepDives.sources?.top_sources || [];
+  return `
+    <div style="overflow-x:auto;">
+      <table class="analytics-table">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>Manba Nomi</th>
+            <th>Kategoriya</th>
+            <th>Ko'rishlar</th>
+            <th>Yuklab Olishlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sources.length ? sources.map((s, idx) => `
+            <tr>
+              <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
+              <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(s.title)}</td>
+              <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(s.category || 'Manba')}</span></td>
+              <td style="font-weight:800; color:#af52de;">${s.view_count || 0}</td>
+              <td style="font-weight:750; color:#10b981;">📥 ${s.download_count || 0} ta</td>
+            </tr>
+          `).join("") : `<tr><td colspan="5" style="text-align:center; padding:16px;">Manbalar ma'lumotlari mavjud emas</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// -------------------------------------------------------------
+// EVENT HANDLERS & FILTERS
+// -------------------------------------------------------------
+async function refreshAdminAnalyticsDashboard(opts = {}) {
+  haptic("light");
+  if (opts.period !== undefined) adminAnalyticsDashboardState.period = opts.period;
+  if (opts.startDate !== undefined) adminAnalyticsDashboardState.startDate = opts.startDate;
+  if (opts.endDate !== undefined) adminAnalyticsDashboardState.endDate = opts.endDate;
+  if (opts.granularity !== undefined) adminAnalyticsDashboardState.granularity = opts.granularity;
+  if (opts.metric !== undefined) adminAnalyticsDashboardState.activeMetric = opts.metric;
+
+  adminAnalyticsDashboardState.loading = true;
+  try {
+    const data = await adminApi("/api/admin/analytics/dashboard", {
+      period: adminAnalyticsDashboardState.period,
+      start_date: adminAnalyticsDashboardState.startDate || undefined,
+      end_date: adminAnalyticsDashboardState.endDate || undefined,
+      granularity: adminAnalyticsDashboardState.granularity || undefined
+    });
+    adminData.analyticsDashboard = data;
+  } catch (err) {
+    showAlert("Analytics yuklashda xatolik: " + err.message);
+  } finally {
+    adminAnalyticsDashboardState.loading = false;
+    renderAdminPanel();
+  }
+}
+window.refreshAdminAnalyticsDashboard = refreshAdminAnalyticsDashboard;
+
+function setAnalyticsMetric(metric) {
+  haptic("light");
+  adminAnalyticsDashboardState.activeMetric = metric;
+  renderAdminPanel();
+}
+window.setAnalyticsMetric = setAnalyticsMetric;
+
+function setAnalyticsDeepDiveTab(tab) {
+  haptic("light");
+  adminAnalyticsDashboardState.deepDiveTab = tab;
+  renderAdminPanel();
+}
+window.setAnalyticsDeepDiveTab = setAnalyticsDeepDiveTab;
+
+function toggleAnalyticsCustomRange() {
+  haptic("light");
+  adminAnalyticsDashboardState.period = 'custom';
+  const box = document.getElementById("analytics-custom-range-box");
+  if (box) {
+    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+  } else {
+    renderAdminPanel();
+  }
+}
+window.toggleAnalyticsCustomRange = toggleAnalyticsCustomRange;
+
+function applyAnalyticsCustomRange() {
+  const sDate = document.getElementById("analytics-start-date")?.value;
+  const eDate = document.getElementById("analytics-end-date")?.value;
+  if (!sDate || !eDate) {
+    return showAlert("Boshlanish va tugash sanasini tanlang!");
+  }
+  refreshAdminAnalyticsDashboard({
+    period: 'custom',
+    startDate: sDate,
+    endDate: eDate
+  });
+}
+window.applyAnalyticsCustomRange = applyAnalyticsCustomRange;
+
+async function exportAdminAnalyticsCsv() {
+  haptic("medium");
+  try {
+    const period = adminAnalyticsDashboardState.period || '7days';
+    const sDate = adminAnalyticsDashboardState.startDate || '';
+    const eDate = adminAnalyticsDashboardState.endDate || '';
+    const gran = adminAnalyticsDashboardState.granularity || 'auto';
+
+    let url = `/api/admin/analytics/export?period=${encodeURIComponent(period)}&granularity=${encodeURIComponent(gran)}`;
+    if (sDate && eDate) {
+      url += `&start_date=${encodeURIComponent(sDate)}&end_date=${encodeURIComponent(eDate)}`;
+    }
+
+    // Trigger direct file download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `yoshuzbekk_analytics_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("✅ CSV hisoboti yuklab olindi!");
+  } catch (err) {
+    showAlert("Eksport qilishda xato: " + err.message);
+  }
+}
+window.exportAdminAnalyticsCsv = exportAdminAnalyticsCsv;
+
 
 // 3. KUTUBXONA BOSH HUB SAHIFASI
 function renderAdminLibraryHubView() {
@@ -13117,9 +14219,25 @@ async function openAdminStudentLiveDossier(userId) {
               </div>
               <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
                 <div style="font-size:11px; color:var(--text-muted);">Ko'rilgan darslar:</div>
-                <div style="font-size:12.5px; font-weight:700; color:var(--accent);">
+                <div style="font-size:12.5px; font-weight:700; color:#007aff;">
                   ${st.watched_lessons} / ${st.total_lessons}
                 </div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">O'qilgan kitoblar:</div>
+                <div style="font-size:12.5px; font-weight:700; color:#ff9500;">${st.books_read_count || 0} ta kitob</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Ko'rilgan materiallar:</div>
+                <div style="font-size:12.5px; font-weight:700; color:#34c759;">${st.materials_viewed_count || 0} ta</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Ishlatilgan manbalar:</div>
+                <div style="font-size:12.5px; font-weight:700; color:#af52de;">${st.sources_viewed_count || 0} ta</div>
+              </div>
+              <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="font-size:11px; color:var(--text-muted);">Saqlangan kitoblar:</div>
+                <div style="font-size:12.5px; font-weight:700; color:#ff334b;">♥ ${st.saved_books_count || 0} ta</div>
               </div>
             </div>
 
