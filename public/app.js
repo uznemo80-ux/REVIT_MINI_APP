@@ -6722,12 +6722,64 @@ function closeMaterialDetail() {
 
 
 // ------------------------------------------------------
+// ------------------------------------------------------
 // MANBALAR: dastur (Revit / 3ds Max / AutoCAD) va format (RVT / RFA / RTE ...) filtri
 // ------------------------------------------------------
 let librarySourceSoftware = "Barchasi";
 let librarySourceFormat = "Barchasi";
+let librarySourceCategory = "Barchasi";
+let sourcesPanelOpen = false;
 const SOURCE_SOFTWARE_ORDER = ["Revit", "3ds Max", "AutoCAD", "Boshqa"];
 const SOURCE_FORMAT_OPTIONS = ["RVT", "RFA", "RTE", "RFT", "DWG", "DWT", "MAX", "SKP", "FBX", "INSTALLER", "KUTUBXONA", "ZIP", "BOSHQA"];
+
+// ANIMATSIYALI PLACEHOLDER (MANBALAR)
+const SOURCE_PH_WORDS = [
+  "Revit Family",
+  "DWG",
+  "RFA",
+  "RVT",
+  "BIM",
+  "Material",
+  "Texture",
+  "CAD",
+  "Shablon",
+  "Katalog"
+];
+let _srcPhIdx = 0, _srcPhText = "", _srcPhPhase = "typing", _srcPhTimer = null;
+
+function ensureSourcesPlaceholderTicker() {
+  if (_srcPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("src-ph-word");
+    const inp = document.getElementById("lib-src-search-input");
+    if (!el || document.hidden || (inp && inp.value)) { _srcPhTimer = setTimeout(step, 400); return; }
+    const word = SOURCE_PH_WORDS[_srcPhIdx % SOURCE_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) { _srcPhText = word; el.textContent = word; _srcPhIdx++; _srcPhTimer = setTimeout(step, 2400); return; }
+    if (_srcPhPhase === "typing") {
+      _srcPhText = word.slice(0, _srcPhText.length + 1); delay = 85 + Math.random() * 60;
+      if (_srcPhText.length >= word.length) { _srcPhPhase = "hold"; delay = 1500; }
+    } else if (_srcPhPhase === "hold") { _srcPhPhase = "deleting"; delay = 60; }
+    else {
+      _srcPhText = _srcPhText.slice(0, -1); delay = 38;
+      if (!_srcPhText.length) { _srcPhPhase = "typing"; _srcPhIdx++; delay = 320; }
+    }
+    el.textContent = _srcPhText;
+    _srcPhTimer = setTimeout(step, delay);
+  };
+  _srcPhTimer = setTimeout(step, 250);
+}
+
+function toggleSourcesPanel() {
+  haptic("light");
+  sourcesPanelOpen = !sourcesPanelOpen;
+  render();
+}
+
+function clearSourcesSearch() {
+  setLibrarySectionSearch("");
+}
 
 function sourceFormatLabel(f) {
   const k = String(f || "").toUpperCase();
@@ -6753,6 +6805,9 @@ function getFilteredSources() {
   if (librarySourceFormat !== "Barchasi") {
     list = list.filter(s => String(s.file_format || "").toUpperCase() === librarySourceFormat);
   }
+  if (librarySourceCategory !== "Barchasi") {
+    list = list.filter(s => (s.category || "") === librarySourceCategory);
+  }
   if (search) {
     list = list.filter(s =>
       (s.title && s.title.toLowerCase().includes(search)) ||
@@ -6765,49 +6820,129 @@ function getFilteredSources() {
   return list;
 }
 
-function renderSourcesFiltersHtml() {
+function renderSourcesPanelInnerHtml() {
   const all = getAllSources();
   const softwares = SOURCE_SOFTWARE_ORDER.filter(sw => all.some(s => (s.software || "Revit") === sw));
   const inSw = librarySourceSoftware === "Barchasi" ? all : all.filter(s => (s.software || "Revit") === librarySourceSoftware);
   const fmts = [...new Set(inSw.map(s => String(s.file_format || "").toUpperCase()).filter(Boolean))];
-  const chip = (label, active, fn, arg) =>
-    `<div class="chip ${active ? "active" : ""}" onclick="${fn}('${escapeJsString(arg)}')">${escapeHtml(label)}</div>`;
-  const row1 = ["Barchasi", ...softwares].map(sw => chip(sw, librarySourceSoftware === sw, "setLibrarySourceSoftware", sw)).join("");
-  const row2 = fmts.length ? ["Barchasi", ...fmts].map(f => chip(f === "Barchasi" ? "Barcha formatlar" : sourceFormatLabel(f), librarySourceFormat === f, "setLibrarySourceFormat", f)).join("") : "";
+  const distinctCats = [...new Set(all.map(s => s.category).filter(Boolean))];
+
   return `
-    <div class="category-chips lib-chips-row lib-src-chip-row">${row1}</div>
-    ${row2 ? `<div class="category-chips lib-chips-row lib-src-chip-row lib-src-chip-row-2">${row2}</div>` : ""}
-    <div class="lib-src-count">${getFilteredSources().length} ta manba</div>
+    <div class="mcat-panel-title">Dastur bo‘yicha</div>
+    <div class="mcat-panel-grid" style="margin-bottom:14px;">
+      ${["Barchasi", ...softwares].map(sw => `
+        <button type="button" class="mcat-chip ${librarySourceSoftware === sw ? 'active' : ''}" onclick="setLibrarySourceSoftware('${escapeJsString(sw)}')">
+          ${escapeHtml(sw)}
+        </button>
+      `).join('')}
+    </div>
+
+    ${fmts.length ? `
+      <div class="mcat-panel-title">Fayl formati bo‘yicha</div>
+      <div class="mcat-panel-grid" style="margin-bottom:14px;">
+        ${["Barchasi", ...fmts].map(f => `
+          <button type="button" class="mcat-chip ${librarySourceFormat === f ? 'active' : ''}" onclick="setLibrarySourceFormat('${escapeJsString(f)}')">
+            ${escapeHtml(f === 'Barchasi' ? 'Barchasi' : sourceFormatLabel(f))}
+          </button>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    ${distinctCats.length ? `
+      <div class="mcat-panel-title">Kategoriya bo‘yicha</div>
+      <div class="mcat-panel-grid">
+        ${["Barchasi", ...distinctCats].map(cat => `
+          <button type="button" class="mcat-chip ${librarySourceCategory === cat ? 'active' : ''}" onclick="setLibrarySourceCategory('${escapeJsString(cat)}')">
+            ${escapeHtml(cat)}
+          </button>
+        `).join('')}
+      </div>
+    ` : ''}
   `;
+}
+
+function renderSourcesActiveFilterHtml() {
+  const pills = [];
+  if (librarySourceSoftware !== "Barchasi") {
+    pills.push({ label: librarySourceSoftware, clear: "setLibrarySourceSoftware('Barchasi')" });
+  }
+  if (librarySourceFormat !== "Barchasi") {
+    pills.push({ label: sourceFormatLabel(librarySourceFormat), clear: "setLibrarySourceFormat('Barchasi')" });
+  }
+  if (librarySourceCategory !== "Barchasi") {
+    pills.push({ label: librarySourceCategory, clear: "setLibrarySourceCategory('Barchasi')" });
+  }
+  if (!pills.length) return "";
+  return `
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+      ${pills.map(p => `
+        <div class="mcat-active-chip">
+          <span class="mcat-active-label">${escapeHtml(p.label)}</span>
+          <button type="button" class="mcat-active-x" onclick="${p.clear}" aria-label="Filtrni tozalash">✕</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderPopularSourcesCardsHtml() {
+  const all = getAllSources();
+  const popular = all.slice(0, 8);
+  return popular.map(s => {
+    const cover = formatImageUrl(s.preview_image_url || "");
+    const ext = (s.file_format ? sourceFormatLabel(s.file_format) : "") || "FAYL";
+    return `
+      <div class="src-pop-card" onclick="openSourceDetail(${Number(s.id)})">
+        <div class="src-pop-cover">
+          ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `
+            <div style="font-size:24px; opacity:0.4;">📦</div>
+          `}
+          <span class="src-pop-badge">.${escapeHtml(ext)}</span>
+        </div>
+        <div class="src-pop-body">
+          <div class="src-pop-title">${escapeHtml(s.title)}</div>
+          <div class="src-pop-cat">${escapeHtml(s.category || s.software || "Revit")}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderSourcesGridInnerHtml() {
   const list = getFilteredSources();
   return list.length ? list.map(renderSourceCardHtml).join("") : `
-    <div class="empty-box" style="grid-column: 1 / -1;">
-      Bu filtr bo‘yicha manba topilmadi. Boshqa dastur yoki formatni tanlang.
+    <div class="mcat-empty" style="grid-column: 1 / -1;">
+      <div class="mcat-empty-ico">🔍</div>
+      <div class="mcat-empty-title">Manba topilmadi</div>
+      <div class="mcat-empty-sub">Boshqa so‘z, dastur yoki format tanlab ko‘ring</div>
+      <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="clearSourcesSearch(); setLibrarySourceSoftware('Barchasi'); setLibrarySourceFormat('Barchasi'); setLibrarySourceCategory('Barchasi');">
+        Barcha manbalarni ko‘rish
+      </button>
     </div>
   `;
 }
 
 function updateSourcesUiInPlace() {
-  const f = document.getElementById("lib-src-filters");
-  if (f) f.innerHTML = renderSourcesFiltersHtml();
-  const g = document.getElementById("lib-section-list-container");
-  if (g) g.innerHTML = renderSourcesGridInnerHtml();
+  render();
 }
 
 function setLibrarySourceSoftware(sw) {
   haptic("light");
   librarySourceSoftware = sw;
   librarySourceFormat = "Barchasi";
-  updateSourcesUiInPlace();
+  render();
 }
 
 function setLibrarySourceFormat(f) {
   haptic("light");
   librarySourceFormat = f;
-  updateSourcesUiInPlace();
+  render();
+}
+
+function setLibrarySourceCategory(cat) {
+  haptic("light");
+  librarySourceCategory = cat;
+  render();
 }
 
 function setLibrarySectionCategory(cat) {
@@ -7786,31 +7921,72 @@ function renderBookCardHtml(book) {
 // 3. MANBALAR EKRANI (Sources Screen — File Types Focus)
 // ------------------------------------------------------
 function renderSourcesSectionHtml() {
+  ensureSourcesPlaceholderTicker();
+  const search = (librarySectionSearchQuery || "").trim();
+  const hasActiveFilters = librarySourceSoftware !== "Barchasi" || librarySourceFormat !== "Barchasi" || librarySourceCategory !== "Barchasi";
+  const filteredList = getFilteredSources();
+
   return `
     <div class="page lib-container lib-page-enter">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
-      <div class="lib-section-title-wrap">
-        <h2 class="lib-page-title">Manbalar va Shablonlar</h2>
-        <p class="lib-page-desc">Revit modellari (.rvt, .rfa), shablonlar (.rte), 3ds Max va AutoCAD fayllari</p>
+      <div class="mcat-head" style="margin-bottom:14px;">
+        <h2 class="mcat-title">Manbalar va Shablonlar</h2>
+        <p class="mcat-sub">Revit modellari (.rvt, .rfa), shablonlar (.rte), 3ds Max va AutoCAD fayllari</p>
       </div>
 
-      <!-- SEARCH -->
-      <div class="lib-filter-bar">
-        <div class="lib-search-input-wrap" style="width:100%;">
-          <span class="lib-search-icon">${libIcons.search('lib-search-svg', 16)}</span>
-          <input type="text"
-                 class="apple-input lib-search-field"
-                 placeholder="Masalan: divan, shablon, RFA..."
-                 value="${escapeHtml(librarySectionSearchQuery)}"
-                 oninput="setLibrarySectionSearch(this.value)">
+      <!-- SEARCH BAR -->
+      <div class="mcat-search" style="margin-bottom:12px;">
+        <span class="mcat-search-ico">🔍</span>
+        <input id="lib-src-search-input"
+               type="text"
+               class="mcat-input"
+               autocomplete="off"
+               autocorrect="off"
+               spellcheck="false"
+               value="${escapeHtml(librarySectionSearchQuery)}"
+               oninput="setLibrarySectionSearch(this.value)" />
+        <span id="src-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
+          Masalan: <strong id="src-ph-word"></strong>
+        </span>
+        ${search ? `
+          <button type="button" class="mcat-clear-btn" onclick="clearSourcesSearch()" aria-label="Tozalash">✕</button>
+        ` : ''}
+      </div>
+
+      <!-- KATEGORIYALAR BO‘YICHA SARALASH TRIGGER -->
+      <div class="mcat-filter-wrap" style="margin-bottom:8px;">
+        <button id="src-panel-btn"
+                type="button"
+                class="mcat-filter-btn ${sourcesPanelOpen ? 'active' : ''}"
+                onclick="toggleSourcesPanel()">
+          <span>${sourcesPanelOpen ? '✕ Filtrni yopish' : '≡ Kategoriyalar bo‘yicha saralash ▾'}</span>
+        </button>
+      </div>
+
+      <!-- COLLAPSIBLE FILTER PANEL -->
+      <div id="src-panel" class="mcat-panel ${sourcesPanelOpen ? 'open' : ''}">
+        ${renderSourcesPanelInnerHtml()}
+      </div>
+
+      <!-- ACTIVE FILTER PILLS -->
+      ${renderSourcesActiveFilterHtml()}
+
+      <!-- POPULAR SHELF (Faqat qidiruv va filtrsiz holatda ko'rsatiladi) -->
+      ${!search && !hasActiveFilters ? `
+        <div class="mcat-section-title" style="margin-top:18px;">Ko‘p ishlatilgan manbalar</div>
+        <div class="mcat-hscroll">
+          ${renderPopularSourcesCardsHtml()}
         </div>
-      </div>
+      ` : ''}
 
-      <!-- DASTUR VA FORMAT FILTRI -->
-      <div id="lib-src-filters">${renderSourcesFiltersHtml()}</div>
+      <!-- BARCHA ELEMENTLAR SECTION TITLE -->
+      <div class="mcat-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; margin-bottom:12px;">
+        <span>Barcha manbalar</span>
+        <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${filteredList.length} ta manba</span>
+      </div>
 
       <!-- MANBALAR GRIDI -->
       <div id="lib-section-list-container" class="lib-sources-grid">
@@ -7825,16 +8001,25 @@ function renderSourceCardHtml(source) {
   const version = source.version || "";
   const size = formatFileSizeUz(source.file_size);
   const ext = (source.file_format ? sourceFormatLabel(source.file_format) : "") || "FAYL";
+  const isBookmarked = libraryV2Bookmarks && libraryV2Bookmarks.has(Number(source.id));
 
   return `
     <div class="lib-source-card" onclick="openSourceDetail(${Number(source.id)})">
-      <div class="lib-source-thumb-wrap">
+      <div class="lib-source-thumb-wrap" style="position:relative;">
         ${cover ? `<img src="${escapeHtml(cover)}" class="lib-source-thumb" onerror="handleImageError(this)" alt="" />` : `
           <div class="lib-source-thumb-placeholder">
             ${libIcons.sources('lib-source-svg', 32)}
             <span style="font-size:10px; margin-top:4px; font-weight:700;">.${escapeHtml(ext)}</span>
           </div>
         `}
+        <button type="button"
+                id="lib-bm-btn-${Number(source.id)}"
+                class="proc-action-btn ${isBookmarked ? 'active' : ''}"
+                style="position:absolute; top:8px; right:8px; z-index:2; padding:4px 6px; font-size:11px;"
+                onclick="toggleLibraryBookmark(${Number(source.id)}, event)"
+                title="${isBookmarked ? 'Saqlangan' : 'Saqlash'}">
+          <span>${isBookmarked ? '♥' : '♡'}</span>
+        </button>
       </div>
       <div class="lib-source-content">
         <div>
@@ -23273,16 +23458,17 @@ window.handleTgStreamFallback = function(videoEl) {
 // ============================================================================
 
 let normativesState = {
-  activeTab: 'cases', // 'cases' (Nima kerak?) | 'docs' (Normativlar bazasi)
+  activeTab: 'docs', // 'docs' (Normativlar bazasi) | 'cases' (Nima kerak?)
+  panelOpen: false,
   documents: [],
   cases: [],
   categories: [
     "Barchasi",
-    "Qurilish uchun kerakli hujjatlar",
     "Loyihalash",
+    "Turar joy va jamoat binolari",
     "Konstruksiya",
-    "O‘lchamlar va standartlar",
     "Yong‘in xavfsizligi",
+    "O‘lchamlar va standartlar",
     "Qurilish materiallari",
     "Smeta va qurilish iqtisodiyoti",
     "Shaharsozlik",
@@ -23301,6 +23487,114 @@ let normativesState = {
   selectedCase: null,
   activeStepIndex: 0
 };
+
+// NORMATIVLARNI SAQLASH (BOOKMARK / SAVE)
+let normativesSavedIds = new Set();
+try {
+  const rawSaved = localStorage.getItem("yosh_saved_normatives");
+  if (rawSaved) normativesSavedIds = new Set(JSON.parse(rawSaved));
+} catch (e) {}
+
+function isNormativeSaved(id) {
+  return normativesSavedIds.has(Number(id));
+}
+
+function toggleNormativeSave(id, e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const numId = Number(id);
+  if (normativesSavedIds.has(numId)) {
+    normativesSavedIds.delete(numId);
+    showToast("Normativ saqlanganlardan olindi");
+  } else {
+    normativesSavedIds.add(numId);
+    showToast("Normativ saqlandi 🔖");
+  }
+  try {
+    localStorage.setItem("yosh_saved_normatives", JSON.stringify([...normativesSavedIds]));
+  } catch (e) {}
+  render();
+}
+
+// ANIMATSIYALI PLACEHOLDER (YOZUV EFFEKTI)
+const NORMATIVE_PH_WORDS = [
+  "SHNQ 2.08.01",
+  "QMQ",
+  "Yong‘in xavfsizligi",
+  "Evakuatsiya",
+  "Turar joy",
+  "Zilzilabardoshlik",
+  "Shift balandligi",
+  "O‘z DSt / GOST"
+];
+let _normPhIdx = 0, _normPhText = "", _normPhPhase = "typing", _normPhTimer = null;
+
+function ensureNormativesPlaceholderTicker() {
+  if (_normPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("norm-ph-word");
+    const inp = document.getElementById("lib-norm-search-input");
+    if (!el || document.hidden || (inp && inp.value)) { _normPhTimer = setTimeout(step, 400); return; }
+    const word = NORMATIVE_PH_WORDS[_normPhIdx % NORMATIVE_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) { _normPhText = word; el.textContent = word; _normPhIdx++; _normPhTimer = setTimeout(step, 2400); return; }
+    if (_normPhPhase === "typing") {
+      _normPhText = word.slice(0, _normPhText.length + 1); delay = 85 + Math.random() * 60;
+      if (_normPhText.length >= word.length) { _normPhPhase = "hold"; delay = 1500; }
+    } else if (_normPhPhase === "hold") { _normPhPhase = "deleting"; delay = 60; }
+    else {
+      _normPhText = _normPhText.slice(0, -1); delay = 38;
+      if (!_normPhText.length) { _normPhPhase = "typing"; _normPhIdx++; delay = 320; }
+    }
+    el.textContent = _normPhText;
+    _normPhTimer = setTimeout(step, delay);
+  };
+  _normPhTimer = setTimeout(step, 250);
+}
+
+function toggleNormativesPanel() {
+  haptic("light");
+  normativesState.panelOpen = !normativesState.panelOpen;
+  render();
+}
+
+function renderNormativesPanelInnerHtml() {
+  const cats = normativesState.categories;
+  return `
+    <div class="mcat-panel-title">Kategoriyani tanlang</div>
+    <div class="mcat-panel-grid">
+      ${cats.map(cat => {
+        const active = normativesState.selectedCategory === cat;
+        return `
+          <button type="button" class="mcat-chip ${active ? 'active' : ''}" onclick="setNormativesCategory('${escapeJsString(cat)}')">
+            ${escapeHtml(cat)}
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderPopularNormativesCardsHtml() {
+  const docs = normativesState.documents || [];
+  const popularDocs = docs.filter(d => {
+    const num = (d.document_number || "").toUpperCase();
+    return num.includes("2.08.01") || num.includes("2.01.05") || num.includes("2.01.02") || num.includes("2.01.03") || num.includes("2.08.02") || num.includes("2.07.01");
+  });
+  const list = popularDocs.length >= 3 ? popularDocs : docs.slice(0, 6);
+
+  return list.map(d => `
+    <div class="norm-pop-card" onclick="openNormativeDocDetail(${Number(d.id)})">
+      <div class="norm-pop-top">
+        <span class="norm-pop-num">${escapeHtml(d.document_number || 'SHNQ')}</span>
+        ${renderNormativeStatusBadge(d.status || 'AMALDA')}
+      </div>
+      <div class="norm-pop-title">${escapeHtml(d.title)}</div>
+      <div class="norm-pop-cat">${escapeHtml(d.category || d.document_type || 'Normativ')}</div>
+    </div>
+  `).join('');
+}
 
 // DATA LOADER
 async function loadNormativesData() {
@@ -23385,6 +23679,7 @@ function renderNormativesSectionHtml() {
   if (!normativesState.loaded && !normativesState.loading) {
     loadNormativesData();
   }
+  ensureNormativesPlaceholderTicker();
 
   if (normativesState.loading && !normativesState.loaded) {
     return `
@@ -23404,65 +23699,79 @@ function renderNormativesSectionHtml() {
   const activeTab = normativesState.activeTab;
   const searchQuery = normativesState.searchQuery;
   const selectedCat = normativesState.selectedCategory;
+  const open = !!normativesState.panelOpen;
 
   return `
-    <div class="page lib-container lib-page-enter normatives-page">
+    <div class="page lib-container lib-page-enter normatives-page mcat">
       <!-- TOP NAVIGATION BAR -->
       <div class="lib-back-nav" onclick="closeLibrarySection()">
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
-      <!-- HERO HEAD -->
-      <div class="norm-hero-head">
-        <div class="norm-hero-icon">📋</div>
-        <div>
-          <h1 class="norm-hero-title">Normativlar va amaliy yechimlar</h1>
-          <p class="norm-hero-subtitle">
-            O‘zbekiston SHNQ, QMQ va davlat standartlari hamda arxitektor, loyihachi va quruvchilar uchun qonuniy yo‘l xaritalari.
-          </p>
+      <!-- 1. HERO HEAD -->
+      <div class="mcat-head">
+        <h1 class="mcat-title">Normativlar</h1>
+        <p class="mcat-sub">Arxitektura, qurilish, loyihalash va muhandislik uchun kerakli normativ hujjatlar va standartlar.</p>
+      </div>
+
+      <!-- 2. SEARCH BAR WITH ANIMATED PLACEHOLDER -->
+      <div class="mcat-search">
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+        <input id="lib-norm-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
+               value="${escapeHtml(searchQuery)}" oninput="setNormativesSearch(this.value)" />
+        <div class="mcat-ph" aria-hidden="true">
+          <span>Normativ qidiring...</span> <span class="mcat-ph-word" id="norm-ph-word">${escapeHtml(_normPhText)}</span>
+        </div>
+        <span id="norm-search-clear">${searchQuery ? `<button class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ""}</span>
+      </div>
+
+      <!-- 3. KATEGORIYALAR BO'YICHA SARALASH TUGMASI -->
+      <button type="button" id="norm-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${selectedCat !== "Barchasi" ? "has-filter" : ""}" onclick="toggleNormativesPanel()">
+        <span class="mcat-filter-left">
+          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          Kategoriyalar bo‘yicha saralash
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <!-- 4. KATEGORIYALAR PANELLI -->
+      <div id="norm-panel" class="mcat-panel ${open ? "open" : ""}">
+        <div class="mcat-panel-clip">
+          <div class="mcat-panel-inner" id="norm-panel-inner">
+            ${renderNormativesPanelInnerHtml()}
+          </div>
         </div>
       </div>
 
-      <!-- SUB-NAVIGATION SEGMENTED CONTROL -->
-      <div class="norm-segmented-control">
-        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
-          💡 Nima kerak? (Amaliy vaziyatlar)
-        </button>
+      <!-- 5. ACTIVE CATEGORY FILTER CHIP -->
+      ${selectedCat && selectedCat !== "Barchasi" ? `
+        <div class="mcat-active-chip" style="margin-top:12px;">
+          <span class="mcat-active-label">${escapeHtml(selectedCat)}</span>
+          <button type="button" class="mcat-active-x" onclick="setNormativesCategory('Barchasi')" aria-label="Filtrni tozalash">✕</button>
+        </div>
+      ` : ""}
+
+      <!-- 6. KO'P ISHLATILADIGAN NORMATIVLAR (POPULAR HORIZONTAL SHELF) -->
+      ${!searchQuery && selectedCat === "Barchasi" ? `
+        <div class="mcat-section-head" style="margin-top: 18px;">
+          <h2 class="mcat-h2">Ko‘p ishlatiladigan normativlar</h2>
+        </div>
+        <div class="mcat-hscroll">
+          ${renderPopularNormativesCardsHtml()}
+        </div>
+      ` : ""}
+
+      <!-- 7. SUB-NAVIGATION SEGMENTED CONTROL -->
+      <div class="norm-segmented-control" style="margin-top: 22px; margin-bottom: 16px;">
         <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
           📑 Normativlar bazasi (${normativesState.documents.length})
         </button>
+        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
+          💡 Nima kerak? (Amaliy vaziyatlar)
+        </button>
       </div>
 
-      <!-- SEARCH BAR -->
-      <div class="norm-search-wrap">
-        <span class="norm-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
-        <input 
-          type="text" 
-          class="norm-search-input" 
-          placeholder="Hujjat raqami (SHNQ 2.08.01), mavzu, poydevor, yong'in, zinapoya..." 
-          value="${escapeHtml(searchQuery)}" 
-          oninput="setNormativesSearch(this.value)" 
-        />
-        ${searchQuery ? `<button class="norm-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ''}
-      </div>
-
-      <!-- 12 CATEGORIES HORIZONTAL CHIPS SCROLL -->
-      <div class="norm-categories-scroll">
-        ${normativesState.categories.map(cat => {
-          const isActive = selectedCat === cat;
-          return `
-            <button 
-              type="button" 
-              class="norm-cat-chip ${isActive ? 'active' : ''}" 
-              onclick="setNormativesCategory('${escapeJsString(cat)}')"
-            >
-              ${escapeHtml(cat)}
-            </button>
-          `;
-        }).join('')}
-      </div>
-
-      <!-- CONTENT SWITCHER -->
+      <!-- 8. CONTENT SWITCHER -->
       <div class="norm-tab-content">
         ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : renderNormativeDocsTabHtml()}
       </div>
@@ -23630,12 +23939,18 @@ function renderNormativeDocsTabHtml() {
         ${list.map(doc => {
           const docNum = doc.document_number || "Normativ";
           const status = doc.status || "AMALDA";
+          const isSaved = isNormativeSaved(doc.id);
           const dateStr = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : (doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "");
           return `
             <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
               <div class="norm-doc-header">
-                <div class="norm-doc-num-tag">${escapeHtml(docNum)}</div>
-                ${renderNormativeStatusBadge(status)}
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <div class="norm-doc-num-tag">${escapeHtml(docNum)}</div>
+                  ${renderNormativeStatusBadge(status)}
+                </div>
+                <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:11px;" onclick="toggleNormativeSave(${Number(doc.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
+                  <span>${isSaved ? '🔖' : '♡'}</span>
+                </button>
               </div>
               <h3 class="norm-doc-title">${escapeHtml(doc.title)}</h3>
               ${doc.application_scope ? `<div class="norm-doc-scope">🎯 ${escapeHtml(doc.application_scope)}</div>` : ''}
@@ -23694,6 +24009,7 @@ function closeNormativeDocDetail() {
 function renderNormativeDocDetailPage(doc, linkedCases) {
   const status = doc.status || "AMALDA";
   const docNum = doc.document_number || "Normativ";
+  const isSaved = isNormativeSaved(doc.id);
   const adoptedDate = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : "—";
   const effectiveDate = doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "—";
   const verifiedDate = doc.last_verified_at ? new Date(doc.last_verified_at).toLocaleDateString('uz-UZ') : "01.10.2026";
@@ -23703,9 +24019,12 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
   return `
     <div class="page lib-container norm-detail-page">
       <!-- TOP NAVIGATION BAR -->
-      <div class="lib-detail-top-bar" style="margin-bottom: 14px;">
+      <div class="lib-detail-top-bar" style="margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center;">
         <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeNormativeDocDetail()">
           ${libIcons.back('lib-back-svg', 16)} Normativlar ro‘yxati
+        </button>
+        <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" onclick="toggleNormativeSave(${Number(doc.id)}, event)">
+          <span>${isSaved ? '🔖 Saqlangan' : '🔖 Saqlash'}</span>
         </button>
       </div>
 
@@ -23867,6 +24186,11 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
           <button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(doc.pdf_url)}')">
             📥 PDF Hujjatni yuklab olish
           </button>
+        ` : ''}
+        ${(!doc.official_source_url && !doc.pdf_url) ? `
+          <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:12px; background:var(--bg-surface); border-radius:12px; border:1px solid var(--border); width:100%;">
+            Rasmiy me'yoriy talablar yuqoridagi bo‘limlarda to‘liq keltirilgan.
+          </div>
         ` : ''}
       </div>
     </div>
@@ -24466,6 +24790,8 @@ const processState = {
   activeCategorySlug: null,
   searchQuery: "",
   activeFilter: "all",
+  panelOpen: false,
+  hubFilter: "all",
   currentView: "categories", // 'categories' | 'category_detail' | 'item_detail'
   activeItemDetail: null,
   viewedIds: new Set(),
@@ -24473,6 +24799,249 @@ const processState = {
   completedChecklists: {}, // { [itemId]: [0, 1] }
   stats: { total: 220, viewed: 0 }
 };
+
+// ANIMATSIYALI PLACEHOLDER (JARAYON)
+const PROCESS_PH_WORDS = [
+  "Elektr montaj",
+  "Devorni tayyorlash",
+  "Santexnika",
+  "Gipsokarton",
+  "Bo‘yash",
+  "Pol yotqizish",
+  "Mebel rejasi",
+  "Yoritish",
+  "O‘lchov olish",
+  "3D vizualizatsiya"
+];
+let _procPhIdx = 0, _procPhText = "", _procPhPhase = "typing", _procPhTimer = null;
+
+function ensureProcessPlaceholderTicker() {
+  if (_procPhTimer) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = () => {
+    const el = document.getElementById("proc-ph-word");
+    const inp = document.getElementById("proc-hub-search-input");
+    if (!el || document.hidden || (inp && inp.value)) { _procPhTimer = setTimeout(step, 400); return; }
+    const word = PROCESS_PH_WORDS[_procPhIdx % PROCESS_PH_WORDS.length];
+    let delay = 90;
+    if (reduce) { _procPhText = word; el.textContent = word; _procPhIdx++; _procPhTimer = setTimeout(step, 2400); return; }
+    if (_procPhPhase === "typing") {
+      _procPhText = word.slice(0, _procPhText.length + 1); delay = 85 + Math.random() * 60;
+      if (_procPhText.length >= word.length) { _procPhPhase = "hold"; delay = 1500; }
+    } else if (_procPhPhase === "hold") { _procPhPhase = "deleting"; delay = 60; }
+    else {
+      _procPhText = _procPhText.slice(0, -1); delay = 38;
+      if (!_procPhText.length) { _procPhPhase = "typing"; _procPhIdx++; delay = 320; }
+    }
+    el.textContent = _procPhText;
+    _procPhTimer = setTimeout(step, delay);
+  };
+  _procPhTimer = setTimeout(step, 250);
+}
+
+function toggleProcessPanel() {
+  haptic("light");
+  processState.panelOpen = !processState.panelOpen;
+  render();
+}
+
+function clearProcessSearch() {
+  processState.searchQuery = "";
+  render();
+}
+
+function setProcessHubFilter(f) {
+  haptic("light");
+  processState.hubFilter = f || "all";
+  render();
+}
+
+function renderProcessPanelInnerHtml() {
+  const hubOptions = [
+    { id: "all", label: "Barchasi" },
+    { id: "remont", label: "🔨 Remont jarayoni (23 bosqich)" },
+    { id: "design", label: "🎨 Interyer dizayn (9 bosqich)" },
+    { id: "rabochka", label: "📐 Ishchi loyiha / Rabochka (21 varaq)" }
+  ];
+
+  return `
+    <div class="mcat-panel-title">Yo‘nalish bo‘yicha</div>
+    <div class="mcat-panel-grid" style="margin-bottom:14px;">
+      ${hubOptions.map(opt => `
+        <button type="button" class="mcat-chip ${processState.hubFilter === opt.id ? 'active' : ''}" onclick="setProcessHubFilter('${opt.id}')">
+          ${escapeHtml(opt.label)}
+        </button>
+      `).join('')}
+    </div>
+
+    ${processState.categories && processState.categories.length ? `
+      <div class="mcat-panel-title">Remont bosqichlari bo‘yicha to‘g‘ridan-to‘g‘ri o‘tish</div>
+      <div class="mcat-panel-grid">
+        ${processState.categories.map(c => `
+          <button type="button" class="mcat-chip" onclick="setProcessHub('remont'); setProcessCategory('${escapeJsString(c.slug)}');">
+            ${escapeHtml(c.icon || '⚡')} ${escapeHtml(c.code)} — ${escapeHtml(c.title)}
+          </button>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderProcessActiveFilterHtml() {
+  if (!processState.hubFilter || processState.hubFilter === "all") return "";
+  const labelMap = {
+    remont: "🔨 Remont jarayoni",
+    design: "🎨 Interyer dizayn",
+    rabochka: "📐 Ishchi loyiha (Rabochka)"
+  };
+  return `
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+      <div class="mcat-active-chip">
+        <span class="mcat-active-label">${escapeHtml(labelMap[processState.hubFilter] || processState.hubFilter)}</span>
+        <button type="button" class="mcat-active-x" onclick="setProcessHubFilter('all')" aria-label="Filtrni tozalash">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderPopularProcessCardsHtml() {
+  const items = processState.items || [];
+  const remontPicks = [
+    items.find(i => (i.slug || '').includes('kalit') || (i.title || '').toLowerCase().includes('kalit')),
+    items.find(i => (i.slug || '').includes('santexnika') || (i.title || '').toLowerCase().includes('quvur')),
+    items.find(i => (i.slug || '').includes('suvoq') || (i.title || '').toLowerCase().includes('suvoq')),
+    items.find(i => (i.slug || '').includes('plitka') || (i.title || '').toLowerCase().includes('keramogranit'))
+  ].filter(Boolean);
+
+  const designPicks = (processState.designSteps || []).slice(0, 2);
+  const rabochkaPicks = (processState.rabochkaSteps || []).slice(0, 2);
+
+  const cards = [];
+
+  remontPicks.forEach(it => {
+    cards.push(`
+      <div class="proc-pop-card" onclick="openProcessItemDetail(${Number(it.id)})">
+        <div class="proc-pop-top">
+          <span class="proc-pop-num">${escapeHtml(it.category_code || '01')}</span>
+          <span class="proc-pop-hub">REMONT</span>
+        </div>
+        <div class="proc-pop-body">
+          <div class="proc-pop-title">${escapeHtml(it.title)}</div>
+          <div class="proc-pop-cat">${escapeHtml(it.category_title || 'Remont')}</div>
+        </div>
+      </div>
+    `);
+  });
+
+  designPicks.forEach(st => {
+    cards.push(`
+      <div class="proc-pop-card" onclick="openDesignStepDetail('${escapeJsString(st.slug)}')">
+        <div class="proc-pop-top">
+          <span class="proc-pop-num">${escapeHtml(st.step_number)}</span>
+          <span class="proc-pop-hub" style="color:#c4b5fd;">DIZAYN</span>
+        </div>
+        <div class="proc-pop-body">
+          <div class="proc-pop-title">${escapeHtml(st.title)}</div>
+          <div class="proc-pop-cat">Interyer dizayn</div>
+        </div>
+      </div>
+    `);
+  });
+
+  rabochkaPicks.forEach(rb => {
+    cards.push(`
+      <div class="proc-pop-card" onclick="openRabochkaStepDetail('${escapeJsString(rb.slug)}')">
+        <div class="proc-pop-top">
+          <span class="proc-pop-num">${escapeHtml(rb.step_number)}</span>
+          <span class="proc-pop-hub" style="color:#67e8f9;">RABOCHKA</span>
+        </div>
+        <div class="proc-pop-body">
+          <div class="proc-pop-title">${escapeHtml(rb.title)}</div>
+          <div class="proc-pop-cat">Ishchi chizma</div>
+        </div>
+      </div>
+    `);
+  });
+
+  return cards.join('');
+}
+
+function renderProcessSearchResultsHtml() {
+  const q = (processState.searchQuery || "").toLowerCase().trim();
+  if (!q) return "";
+
+  const matchingItems = (processState.items || []).filter(it =>
+    (it.title || "").toLowerCase().includes(q) ||
+    (it.short_description || "").toLowerCase().includes(q) ||
+    (it.category_title || "").toLowerCase().includes(q)
+  );
+
+  const matchingDesign = (processState.designSteps || []).filter(st =>
+    (st.title || "").toLowerCase().includes(q) ||
+    (st.lead || "").toLowerCase().includes(q) ||
+    (st.purpose || "").toLowerCase().includes(q)
+  );
+
+  const matchingRabochka = (processState.rabochkaSteps || []).filter(rb =>
+    (rb.title || "").toLowerCase().includes(q) ||
+    (rb.lead || "").toLowerCase().includes(q) ||
+    (rb.content_summary || "").toLowerCase().includes(q)
+  );
+
+  const total = matchingItems.length + matchingDesign.length + matchingRabochka.length;
+
+  if (total === 0) {
+    return `
+      <div class="mcat-empty" style="margin-top:20px;">
+        <div class="mcat-empty-ico">🔍</div>
+        <div class="mcat-empty-title">Jarayon topilmadi</div>
+        <div class="mcat-empty-sub">Boshqa so‘z bilan qidirib ko‘ring (masalan: elektr, suvoq, plitka, o‘lchov)</div>
+        <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="clearProcessSearch()">
+          Qidiruvni tozalash
+        </button>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin-top:18px;">
+      <div class="mcat-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span>Qidiruv natijalari</span>
+        <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${total} ta jarayon</span>
+      </div>
+
+      <div class="proc-items-list">
+        ${matchingDesign.map(st => `
+          <div class="proc-item-card" onclick="openDesignStepDetail('${escapeJsString(st.slug)}')">
+            <div class="proc-item-num" style="background: rgba(139, 92, 246, 0.12); color: #a78bfa;">${st.step_number}</div>
+            <div class="proc-item-body">
+              <div class="proc-item-title-row">
+                <h4 class="proc-item-title">${escapeHtml(st.title)}</h4>
+                <span class="lib-file-badge" style="background:rgba(139, 92, 246, 0.15); color:#c4b5fd;">DIZAYN</span>
+              </div>
+              <p class="proc-item-short">${escapeHtml(st.lead || '')}</p>
+            </div>
+          </div>
+        `).join('')}
+
+        ${matchingRabochka.map(rb => `
+          <div class="proc-item-card" onclick="openRabochkaStepDetail('${escapeJsString(rb.slug)}')">
+            <div class="proc-item-num" style="background: rgba(6, 182, 212, 0.12); color: #22d3ee;">${rb.step_number}</div>
+            <div class="proc-item-body">
+              <div class="proc-item-title-row">
+                <h4 class="proc-item-title">${escapeHtml(rb.title)}</h4>
+                <span class="lib-file-badge" style="background:rgba(6, 182, 212, 0.15); color:#67e8f9;">RABOCHKA</span>
+              </div>
+              <p class="proc-item-short">${escapeHtml(rb.lead || '')}</p>
+            </div>
+          </div>
+        `).join('')}
+
+        ${matchingItems.map((it, idx) => renderProcessItemRowHtml(it, idx)).join('')}
+      </div>
+    </div>
+  `;
+}
 
 async function loadProcessData() {
   processState.loading = true;
@@ -24532,6 +25101,7 @@ function setProcessHub(hubId) {
 
 function openDesignStepDetail(slugOrNum) {
   haptic("light");
+  processState.activeHub = 'design';
   const s = String(slugOrNum).toLowerCase().trim();
   const step = (processState.designSteps || []).find(st => st.slug === s || String(st.step_number) === s);
   if (step) {
@@ -24564,6 +25134,7 @@ function navigateDesignStep(delta) {
 
 function openRabochkaStepDetail(slugOrNum) {
   haptic("light");
+  processState.activeHub = 'rabochka';
   const s = String(slugOrNum).toLowerCase().trim();
   const step = (processState.rabochkaSteps || []).find(st => st.slug === s || String(st.step_number) === s);
   if (step) {
@@ -24629,6 +25200,7 @@ function closeProcessCategoryDetail() {
 
 async function openProcessItemDetail(idOrSlug) {
   haptic("light");
+  processState.activeHub = 'remont';
   const localItem = (processState.items || []).find(i => String(i.id) === String(idOrSlug) || i.slug === String(idOrSlug));
   processState.activeItemDetail = localItem || null;
   processState.currentView = "item_detail";
@@ -24804,65 +25376,131 @@ function renderProcessSectionHtml() {
 }
 
 function renderProcessHubLandingHtml() {
+  ensureProcessPlaceholderTicker();
+  const search = (processState.searchQuery || "").trim();
+  const filter = processState.hubFilter || "all";
+
+  // Filter the hub cards if user selected a stream filter
+  const showRemont = filter === "all" || filter === "remont";
+  const showDesign = filter === "all" || filter === "design";
+  const showRabochka = filter === "all" || filter === "rabochka";
+
   return `
     <div class="page lib-container lib-page-enter proc-page">
       <div class="lib-back-nav" onclick="closeLibrarySection()">
         ${libIcons.back('lib-back-svg', 16)} Kutubxona
       </div>
 
-      <!-- HERO BANNER -->
-      <div class="proc-hero" style="margin-bottom: 22px;">
-        <div class="proc-hero-badge">⚡ Bilimlar Bazasi</div>
-        <h1 class="proc-hero-title">Jarayon</h1>
-        <p class="proc-hero-sub">Interyer dizayn, ishchi loyiha (rabochka) va remont ishlarining bosqichma-bosqich to‘liq yo‘l xaritasi.</p>
+      <!-- MCAT HEAD -->
+      <div class="mcat-head" style="margin-bottom:14px;">
+        <h2 class="mcat-title">Jarayon</h2>
+        <p class="mcat-sub">Interyer dizayn, ishchi loyiha (rabochka) va remont ishlarining bosqichma-bosqich to‘liq yo‘l xaritasi.</p>
       </div>
 
-      <!-- 3 TA ASOSIY BOSQICH KARTALARI -->
-      <div class="proc-hub-grid">
-
-        <!-- CARD 01: REMONT JARAYONI -->
-        <div class="proc-hub-card hub-remont" onclick="setProcessHub('remont')">
-          <div class="proc-hub-top">
-            <span class="proc-hub-number">01</span>
-            <div class="proc-hub-icon-wrap">🔨</div>
-          </div>
-          <h2 class="proc-hub-title">REMONT JARAYONI</h2>
-          <p class="proc-hub-desc">Remont ishlarining boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha bo‘lgan ketma-ketligi.</p>
-          <div class="proc-hub-footer">
-            <span class="proc-hub-pill">23 ta bosqich • 220 ta ish</span>
-            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
-          </div>
-        </div>
-
-        <!-- CARD 02: INTERYER DIZAYN QILISH JARAYONI -->
-        <div class="proc-hub-card hub-design" onclick="setProcessHub('design')">
-          <div class="proc-hub-top">
-            <span class="proc-hub-number">02</span>
-            <div class="proc-hub-icon-wrap">🎨</div>
-          </div>
-          <h2 class="proc-hub-title">INTERYER DIZAYN QILISH JARAYONI</h2>
-          <p class="proc-hub-desc">Interyer g‘oyasidan tayyor dizayn konsepsiyasi va 3D vizualizatsiyagacha bo‘lgan jarayon.</p>
-          <div class="proc-hub-footer">
-            <span class="proc-hub-pill">9 ta asosiy bosqich</span>
-            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
-          </div>
-        </div>
-
-        <!-- CARD 03: INTERYER RABOCHKA QILISH JARAYONI -->
-        <div class="proc-hub-card hub-rabochka" onclick="setProcessHub('rabochka')">
-          <div class="proc-hub-top">
-            <span class="proc-hub-number">03</span>
-            <div class="proc-hub-icon-wrap">📐</div>
-          </div>
-          <h2 class="proc-hub-title">INTERYER RABOCHKA QILISH JARAYONI</h2>
-          <p class="proc-hub-desc">Tasdiqlangan interyer dizaynidan qurilish uchun tayyor ishchi hujjatlar va spetsifikatsiyalargacha bo‘lgan jarayon.</p>
-          <div class="proc-hub-footer">
-            <span class="proc-hub-pill">21 ta varaq / chizma</span>
-            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
-          </div>
-        </div>
-
+      <!-- SEARCH BAR -->
+      <div class="mcat-search" style="margin-bottom:12px;">
+        <span class="mcat-search-ico">🔍</span>
+        <input id="proc-hub-search-input"
+               type="text"
+               class="mcat-input"
+               autocomplete="off"
+               autocorrect="off"
+               spellcheck="false"
+               value="${escapeHtml(processState.searchQuery || '')}"
+               oninput="setProcessSearch(this.value)" />
+        <span id="proc-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
+          Masalan: <strong id="proc-ph-word"></strong>
+        </span>
+        ${search ? `
+          <button type="button" class="mcat-clear-btn" onclick="clearProcessSearch()" aria-label="Tozalash">✕</button>
+        ` : ''}
       </div>
+
+      <!-- KATEGORIYALAR BO‘YICHA SARALASH TRIGGER -->
+      <div class="mcat-filter-wrap" style="margin-bottom:8px;">
+        <button id="proc-panel-btn"
+                type="button"
+                class="mcat-filter-btn ${processState.panelOpen ? 'active' : ''}"
+                onclick="toggleProcessPanel()">
+          <span>${processState.panelOpen ? '✕ Filtrni yopish' : '≡ Kategoriyalar bo‘yicha saralash ▾'}</span>
+        </button>
+      </div>
+
+      <!-- COLLAPSIBLE FILTER PANEL -->
+      <div id="proc-panel" class="mcat-panel ${processState.panelOpen ? 'open' : ''}">
+        ${renderProcessPanelInnerHtml()}
+      </div>
+
+      <!-- ACTIVE FILTER PILLS -->
+      ${renderProcessActiveFilterHtml()}
+
+      <!-- SEARCH NATIJALARI YOKI ASOSIY BOSQICHLAR -->
+      ${search ? `
+        ${renderProcessSearchResultsHtml()}
+      ` : `
+        <!-- POPULAR SHELF (Faqat qidiruvsiz holatda) -->
+        ${filter === "all" ? `
+          <div class="mcat-section-title" style="margin-top:18px;">Ko‘p o‘rganiladigan jarayonlar</div>
+          <div class="mcat-hscroll">
+            ${renderPopularProcessCardsHtml()}
+          </div>
+        ` : ''}
+
+        <!-- 3 TA ASOSIY BOSQICH KARTALARI -->
+        <div class="mcat-section-title" style="margin-top:22px; margin-bottom:12px;">
+          <span>Yo‘nalishlar</span>
+        </div>
+
+        <div class="proc-hub-grid">
+          <!-- CARD 01: REMONT JARAYONI -->
+          ${showRemont ? `
+            <div class="proc-hub-card hub-remont" onclick="setProcessHub('remont')">
+              <div class="proc-hub-top">
+                <span class="proc-hub-number">01</span>
+                <div class="proc-hub-icon-wrap">🔨</div>
+              </div>
+              <h2 class="proc-hub-title">REMONT JARAYONI</h2>
+              <p class="proc-hub-desc">Remont ishlarining boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha bo‘lgan ketma-ketligi.</p>
+              <div class="proc-hub-footer">
+                <span class="proc-hub-pill">23 ta bosqich • 220 ta ish</span>
+                <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- CARD 02: INTERYER DIZAYN QILISH JARAYONI -->
+          ${showDesign ? `
+            <div class="proc-hub-card hub-design" onclick="setProcessHub('design')">
+              <div class="proc-hub-top">
+                <span class="proc-hub-number">02</span>
+                <div class="proc-hub-icon-wrap">🎨</div>
+              </div>
+              <h2 class="proc-hub-title">INTERYER DIZAYN QILISH JARAYONI</h2>
+              <p class="proc-hub-desc">Interyer g‘oyasidan tayyor dizayn konsepsiyasi va 3D vizualizatsiyagacha bo‘lgan jarayon.</p>
+              <div class="proc-hub-footer">
+                <span class="proc-hub-pill">9 ta asosiy bosqich</span>
+                <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- CARD 03: INTERYER RABOCHKA QILISH JARAYONI -->
+          ${showRabochka ? `
+            <div class="proc-hub-card hub-rabochka" onclick="setProcessHub('rabochka')">
+              <div class="proc-hub-top">
+                <span class="proc-hub-number">03</span>
+                <div class="proc-hub-icon-wrap">📐</div>
+              </div>
+              <h2 class="proc-hub-title">INTERYER RABOCHKA QILISH JARAYONI</h2>
+              <p class="proc-hub-desc">Tasdiqlangan interyer dizaynidan qurilish uchun tayyor ishchi hujjatlar va spetsifikatsiyalargacha bo‘lgan jarayon.</p>
+              <div class="proc-hub-footer">
+                <span class="proc-hub-pill">21 ta varaq / chizma</span>
+                <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `}
     </div>
   `;
 }
