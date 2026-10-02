@@ -13157,3 +13157,42 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* MCAT search input & clear btn fixes */
+.mcat-search-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.lib-search-clear-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-surface-elevated, rgba(255,255,255,0.12));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  color: var(--text-secondary, #9ca3af);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 3;
+}
+.lib-search-clear-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+/* Card titles and boundaries */
+.norm-doc-title, .lib-source-title, .proc-item-title {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}

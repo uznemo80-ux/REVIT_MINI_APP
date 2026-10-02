@@ -6676,6 +6676,11 @@ function openLibrarySection(slug) {
       });
     }
   }
+  if (slug === "sources") {
+    if (!sourcesLoaded && !sourcesLoading) {
+      loadSourcesData();
+    }
+  }
   if (slug === "normatives") {
     if (!normativesState.loaded && !normativesState.loading) {
       loadNormativesData();
@@ -6729,8 +6734,33 @@ let librarySourceSoftware = "Barchasi";
 let librarySourceFormat = "Barchasi";
 let librarySourceCategory = "Barchasi";
 let sourcesPanelOpen = false;
+let sourcesLoading = false;
+let sourcesLoaded = false;
+let sourcesList = [];
 const SOURCE_SOFTWARE_ORDER = ["Revit", "3ds Max", "AutoCAD", "Boshqa"];
 const SOURCE_FORMAT_OPTIONS = ["RVT", "RFA", "RTE", "RFT", "DWG", "DWT", "MAX", "SKP", "FBX", "INSTALLER", "KUTUBXONA", "ZIP", "BOSHQA"];
+
+async function loadSourcesData() {
+  if (sourcesLoading) return;
+  sourcesLoading = true;
+  try {
+    const res = await api("/api/library/v2/resources", { section: "sources", limit: 60 });
+    if (res && res.ok && Array.isArray(res.resources) && res.resources.length) {
+      sourcesList = res.resources;
+      res.resources.forEach(r => {
+        if (!libraryV2Resources.some(ex => Number(ex.id) === Number(r.id))) {
+          libraryV2Resources.push(r);
+        }
+      });
+      sourcesLoaded = true;
+    }
+  } catch (e) {
+    console.warn("loadSourcesData error:", e);
+  } finally {
+    sourcesLoading = false;
+    if (libraryActiveSection === "sources") render();
+  }
+}
 
 // ANIMATSIYALI PLACEHOLDER (MANBALAR)
 const SOURCE_PH_WORDS = [
@@ -6790,10 +6820,14 @@ function sourceFormatLabel(f) {
 }
 
 function getAllSources() {
-  return libraryV2Resources.filter(r =>
-    (r.section_slug === "sources" || r.type === "source" || r.type === "family" || r.type === "family_pack" || r.type === "template") &&
-    r.content_url && String(r.content_url).trim()
+  const fromMem = (sourcesList && sourcesList.length) ? sourcesList : [];
+  const fromV2 = (libraryV2Resources || []).filter(r =>
+    r.section_slug === "sources" || r.type === "source" || r.type === "family" || r.type === "family_pack" || r.type === "template"
   );
+  const map = new Map();
+  fromV2.forEach(r => map.set(Number(r.id), r));
+  fromMem.forEach(r => map.set(Number(r.id), r));
+  return Array.from(map.values());
 }
 
 function getFilteredSources() {
@@ -6829,7 +6863,7 @@ function renderSourcesPanelInnerHtml() {
 
   return `
     <div class="mcat-panel-title">Dastur bo‘yicha</div>
-    <div class="mcat-panel-grid" style="margin-bottom:14px;">
+    <div class="mcat-chip-row" style="margin-bottom:14px;">
       ${["Barchasi", ...softwares].map(sw => `
         <button type="button" class="mcat-chip ${librarySourceSoftware === sw ? 'active' : ''}" onclick="setLibrarySourceSoftware('${escapeJsString(sw)}')">
           ${escapeHtml(sw)}
@@ -6839,7 +6873,7 @@ function renderSourcesPanelInnerHtml() {
 
     ${fmts.length ? `
       <div class="mcat-panel-title">Fayl formati bo‘yicha</div>
-      <div class="mcat-panel-grid" style="margin-bottom:14px;">
+      <div class="mcat-chip-row" style="margin-bottom:14px;">
         ${["Barchasi", ...fmts].map(f => `
           <button type="button" class="mcat-chip ${librarySourceFormat === f ? 'active' : ''}" onclick="setLibrarySourceFormat('${escapeJsString(f)}')">
             ${escapeHtml(f === 'Barchasi' ? 'Barchasi' : sourceFormatLabel(f))}
@@ -6850,7 +6884,7 @@ function renderSourcesPanelInnerHtml() {
 
     ${distinctCats.length ? `
       <div class="mcat-panel-title">Kategoriya bo‘yicha</div>
-      <div class="mcat-panel-grid">
+      <div class="mcat-chip-row">
         ${["Barchasi", ...distinctCats].map(cat => `
           <button type="button" class="mcat-chip ${librarySourceCategory === cat ? 'active' : ''}" onclick="setLibrarySourceCategory('${escapeJsString(cat)}')">
             ${escapeHtml(cat)}
@@ -6874,38 +6908,25 @@ function renderSourcesActiveFilterHtml() {
   }
   if (!pills.length) return "";
   return `
-    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
       ${pills.map(p => `
         <div class="mcat-active-chip">
           <span class="mcat-active-label">${escapeHtml(p.label)}</span>
           <button type="button" class="mcat-active-x" onclick="${p.clear}" aria-label="Filtrni tozalash">✕</button>
         </div>
       `).join('')}
+      <button type="button" class="mcat-chip" style="min-height:36px; font-size:12px; border-color:transparent; background:transparent; color:var(--text-secondary);" onclick="clearAllSourcesFilters()">
+        Tozalash
+      </button>
     </div>
   `;
 }
 
-function renderPopularSourcesCardsHtml() {
-  const all = getAllSources();
-  const popular = all.slice(0, 8);
-  return popular.map(s => {
-    const cover = formatImageUrl(s.preview_image_url || "");
-    const ext = (s.file_format ? sourceFormatLabel(s.file_format) : "") || "FAYL";
-    return `
-      <div class="src-pop-card" onclick="openSourceDetail(${Number(s.id)})">
-        <div class="src-pop-cover">
-          ${cover ? `<img src="${escapeHtml(cover)}" onerror="handleImageError(this)" alt="" />` : `
-            <div style="font-size:24px; opacity:0.4;">📦</div>
-          `}
-          <span class="src-pop-badge">.${escapeHtml(ext)}</span>
-        </div>
-        <div class="src-pop-body">
-          <div class="src-pop-title">${escapeHtml(s.title)}</div>
-          <div class="src-pop-cat">${escapeHtml(s.category || s.software || "Revit")}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
+function clearAllSourcesFilters() {
+  librarySourceSoftware = "Barchasi";
+  librarySourceFormat = "Barchasi";
+  librarySourceCategory = "Barchasi";
+  render();
 }
 
 function renderSourcesGridInnerHtml() {
@@ -6915,7 +6936,7 @@ function renderSourcesGridInnerHtml() {
       <div class="mcat-empty-ico">🔍</div>
       <div class="mcat-empty-title">Manba topilmadi</div>
       <div class="mcat-empty-sub">Boshqa so‘z, dastur yoki format tanlab ko‘ring</div>
-      <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="clearSourcesSearch(); setLibrarySourceSoftware('Barchasi'); setLibrarySourceFormat('Barchasi'); setLibrarySourceCategory('Barchasi');">
+      <button type="button" class="mcat-chip" style="margin-top:12px;" onclick="clearSourcesSearch(); clearAllSourcesFilters();">
         Barcha manbalarni ko‘rish
       </button>
     </div>
@@ -6923,7 +6944,29 @@ function renderSourcesGridInnerHtml() {
 }
 
 function updateSourcesUiInPlace() {
-  render();
+  const container = document.getElementById("lib-section-list-container");
+  const countEl = document.querySelector(".mcat-section-title span:last-child");
+  const searchInput = document.getElementById("lib-src-search-input");
+  const clearWrap = searchInput ? searchInput.parentElement : null;
+  const phWrap = document.getElementById("src-ph-wrap");
+  const query = (librarySectionSearchQuery || "").trim();
+
+  if (container) {
+    container.innerHTML = renderSourcesGridInnerHtml();
+    const filteredList = getFilteredSources();
+    if (countEl) countEl.textContent = `${filteredList.length} ta manba`;
+    if (phWrap) phWrap.classList.toggle("hidden", !!query);
+    if (clearWrap) {
+      let clearBtn = clearWrap.querySelector(".lib-search-clear-btn");
+      if (query && !clearBtn) {
+        clearWrap.insertAdjacentHTML("beforeend", `<button type="button" class="lib-search-clear-btn" onclick="clearSourcesSearch()" aria-label="Tozalash">✕</button>`);
+      } else if (!query && clearBtn) {
+        clearBtn.remove();
+      }
+    }
+  } else {
+    render();
+  }
 }
 
 function setLibrarySourceSoftware(sw) {
@@ -7939,20 +7982,21 @@ function renderSourcesSectionHtml() {
 
       <!-- SEARCH BAR -->
       <div class="mcat-search" style="margin-bottom:12px;">
-        <span class="mcat-search-ico">🔍</span>
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
         <input id="lib-src-search-input"
                type="text"
-               class="mcat-input"
+               class="mcat-search-input"
+               placeholder=" "
                autocomplete="off"
                autocorrect="off"
                spellcheck="false"
                value="${escapeHtml(librarySectionSearchQuery)}"
                oninput="setLibrarySectionSearch(this.value)" />
-        <span id="src-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
-          Masalan: <strong id="src-ph-word"></strong>
-        </span>
+        <div id="src-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
+          Masalan: <span id="src-ph-word" class="mcat-ph-word"></span>
+        </div>
         ${search ? `
-          <button type="button" class="mcat-clear-btn" onclick="clearSourcesSearch()" aria-label="Tozalash">✕</button>
+          <button type="button" class="lib-search-clear-btn" onclick="clearSourcesSearch()" aria-label="Tozalash">✕</button>
         ` : ''}
       </div>
 
@@ -7960,30 +8004,30 @@ function renderSourcesSectionHtml() {
       <div class="mcat-filter-wrap" style="margin-bottom:8px;">
         <button id="src-panel-btn"
                 type="button"
-                class="mcat-filter-btn ${sourcesPanelOpen ? 'active' : ''}"
+                class="mcat-filter-btn ${sourcesPanelOpen ? 'open' : ''}"
                 onclick="toggleSourcesPanel()">
-          <span>${sourcesPanelOpen ? '✕ Filtrni yopish' : '≡ Kategoriyalar bo‘yicha saralash ▾'}</span>
+          <span class="mcat-filter-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+            <span>Kategoriyalar bo‘yicha saralash</span>
+          </span>
+          <svg class="mcat-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
       </div>
 
       <!-- COLLAPSIBLE FILTER PANEL -->
       <div id="src-panel" class="mcat-panel ${sourcesPanelOpen ? 'open' : ''}">
-        ${renderSourcesPanelInnerHtml()}
+        <div class="mcat-panel-clip">
+          <div class="mcat-panel-inner">
+            ${renderSourcesPanelInnerHtml()}
+          </div>
+        </div>
       </div>
 
       <!-- ACTIVE FILTER PILLS -->
       ${renderSourcesActiveFilterHtml()}
 
-      <!-- POPULAR SHELF (Faqat qidiruv va filtrsiz holatda ko'rsatiladi) -->
-      ${!search && !hasActiveFilters ? `
-        <div class="mcat-section-title" style="margin-top:18px;">Ko‘p ishlatilgan manbalar</div>
-        <div class="mcat-hscroll">
-          ${renderPopularSourcesCardsHtml()}
-        </div>
-      ` : ''}
-
       <!-- BARCHA ELEMENTLAR SECTION TITLE -->
-      <div class="mcat-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; margin-bottom:12px;">
+      <div class="mcat-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; margin-bottom:12px;">
         <span>Barcha manbalar</span>
         <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${filteredList.length} ta manba</span>
       </div>
@@ -23560,10 +23604,33 @@ function toggleNormativesPanel() {
 }
 
 function renderNormativesPanelInnerHtml() {
-  const cats = normativesState.categories;
+  const cats = normativesState.categories || [];
+  const docTypes = ["all", "SHNQ", "QMQ", "O‘z DSt", "Qaror"];
+  const docTypeLabels = { all: "Barchasi", SHNQ: "SHNQ", QMQ: "QMQ", "O‘z DSt": "O‘z DSt / Standart", Qaror: "Qarorlar" };
+  const statuses = ["all", "AMALDA", "O‘ZGARTIRILGAN", "KUCHINI YO‘QOTGAN"];
+  const statusLabels = { all: "Barchasi", AMALDA: "🟢 AMALDA", "O‘ZGARTIRILGAN": "🟡 O‘ZGARTIRILGAN", "KUCHINI YO‘QOTGAN": "🔴 KUCHINI YO‘QOTGAN" };
+
   return `
-    <div class="mcat-panel-title">Kategoriyani tanlang</div>
-    <div class="mcat-panel-grid">
+    <div class="mcat-panel-title">Hujjat turi</div>
+    <div class="mcat-chip-row" style="margin-bottom:14px;">
+      ${docTypes.map(t => `
+        <button type="button" class="mcat-chip ${(normativesState.selectedDocType || 'all') === t ? 'active' : ''}" onclick="setNormativesDocTypeFilter('${escapeJsString(t)}')">
+          ${escapeHtml(docTypeLabels[t] || t)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="mcat-panel-title">Hujjat holati</div>
+    <div class="mcat-chip-row" style="margin-bottom:14px;">
+      ${statuses.map(s => `
+        <button type="button" class="mcat-chip ${(normativesState.selectedStatus || 'all') === s ? 'active' : ''}" onclick="setNormativesStatusFilter('${escapeJsString(s)}')">
+          ${escapeHtml(statusLabels[s] || s)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="mcat-panel-title">Mavzu / Kategoriya</div>
+    <div class="mcat-chip-row">
       ${cats.map(cat => {
         const active = normativesState.selectedCategory === cat;
         return `
@@ -23576,24 +23643,38 @@ function renderNormativesPanelInnerHtml() {
   `;
 }
 
-function renderPopularNormativesCardsHtml() {
-  const docs = normativesState.documents || [];
-  const popularDocs = docs.filter(d => {
-    const num = (d.document_number || "").toUpperCase();
-    return num.includes("2.08.01") || num.includes("2.01.05") || num.includes("2.01.02") || num.includes("2.01.03") || num.includes("2.08.02") || num.includes("2.07.01");
-  });
-  const list = popularDocs.length >= 3 ? popularDocs : docs.slice(0, 6);
-
-  return list.map(d => `
-    <div class="norm-pop-card" onclick="openNormativeDocDetail(${Number(d.id)})">
-      <div class="norm-pop-top">
-        <span class="norm-pop-num">${escapeHtml(d.document_number || 'SHNQ')}</span>
-        ${renderNormativeStatusBadge(d.status || 'AMALDA')}
-      </div>
-      <div class="norm-pop-title">${escapeHtml(d.title)}</div>
-      <div class="norm-pop-cat">${escapeHtml(d.category || d.document_type || 'Normativ')}</div>
+function renderNormativesActiveFilterHtml() {
+  const pills = [];
+  if (normativesState.selectedDocType && normativesState.selectedDocType !== "all") {
+    pills.push({ label: normativesState.selectedDocType, clear: "setNormativesDocTypeFilter('all')" });
+  }
+  if (normativesState.selectedStatus && normativesState.selectedStatus !== "all") {
+    pills.push({ label: normativesState.selectedStatus, clear: "setNormativesStatusFilter('all')" });
+  }
+  if (normativesState.selectedCategory && normativesState.selectedCategory !== "Barchasi") {
+    pills.push({ label: normativesState.selectedCategory, clear: "setNormativesCategory('Barchasi')" });
+  }
+  if (!pills.length) return "";
+  return `
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+      ${pills.map(p => `
+        <div class="mcat-active-chip">
+          <span class="mcat-active-label">${escapeHtml(p.label)}</span>
+          <button type="button" class="mcat-active-x" onclick="${p.clear}" aria-label="Filtrni tozalash">✕</button>
+        </div>
+      `).join('')}
+      <button type="button" class="mcat-chip" style="min-height:36px; font-size:12px; border-color:transparent; background:transparent; color:var(--text-secondary);" onclick="clearAllNormativesFilters()">
+        Tozalash
+      </button>
     </div>
-  `).join('');
+  `;
+}
+
+function clearAllNormativesFilters() {
+  normativesState.selectedDocType = "all";
+  normativesState.selectedStatus = "all";
+  normativesState.selectedCategory = "Barchasi";
+  render();
 }
 
 // DATA LOADER
@@ -23636,12 +23717,33 @@ function setNormativesCategory(cat) {
 }
 
 function setNormativesSearch(val) {
-  normativesState.searchQuery = (val || "").trim().toLowerCase();
-  render();
+  normativesState.searchQuery = (val || "").toLowerCase();
+  const listEl = document.querySelector(".norm-tab-content");
+  const clearEl = document.getElementById("norm-search-clear");
+  const phWord = document.getElementById("norm-ph-word");
+  const phWrap = phWord ? phWord.closest(".mcat-ph") : null;
+  if (listEl) {
+    if (normativesState.activeTab === "docs") {
+      listEl.innerHTML = renderNormativeDocsTabHtml();
+    } else {
+      listEl.innerHTML = renderNormativeCasesTabHtml();
+    }
+    if (clearEl) {
+      clearEl.innerHTML = normativesState.searchQuery ? `<button type="button" class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : "";
+    }
+    if (phWrap) {
+      phWrap.classList.toggle("hidden", !!normativesState.searchQuery);
+    }
+  } else {
+    render();
+  }
 }
 
 function clearNormativesSearch() {
   normativesState.searchQuery = "";
+  const inp = document.getElementById("lib-norm-search-input");
+  if (inp) inp.value = "";
+  setNormativesSearch("");
   render();
 }
 
@@ -23709,32 +23811,42 @@ function renderNormativesSectionHtml() {
       </div>
 
       <!-- 1. HERO HEAD -->
-      <div class="mcat-head">
+      <div class="mcat-head" style="margin-bottom:12px;">
         <h1 class="mcat-title">Normativlar</h1>
         <p class="mcat-sub">Arxitektura, qurilish, loyihalash va muhandislik uchun kerakli normativ hujjatlar va standartlar.</p>
       </div>
 
       <!-- 2. SEARCH BAR WITH ANIMATED PLACEHOLDER -->
-      <div class="mcat-search">
+      <div class="mcat-search" style="margin-bottom:12px;">
         <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
         <input id="lib-norm-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
                value="${escapeHtml(searchQuery)}" oninput="setNormativesSearch(this.value)" />
         <div class="mcat-ph" aria-hidden="true">
           <span>Normativ qidiring...</span> <span class="mcat-ph-word" id="norm-ph-word">${escapeHtml(_normPhText)}</span>
         </div>
-        <span id="norm-search-clear">${searchQuery ? `<button class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ""}</span>
+        <span id="norm-search-clear">${searchQuery ? `<button type="button" class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ""}</span>
       </div>
 
-      <!-- 3. KATEGORIYALAR BO'YICHA SARALASH TUGMASI -->
-      <button type="button" id="norm-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${selectedCat !== "Barchasi" ? "has-filter" : ""}" onclick="toggleNormativesPanel()">
+      <!-- 3. SUB-NAVIGATION SEGMENTED CONTROL (TABS) -->
+      <div class="norm-segmented-control" style="margin-bottom:12px;">
+        <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
+          📑 Normativlar bazasi (${normativesState.documents.length})
+        </button>
+        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
+          💡 Amaliy vaziyatlar (${normativesState.cases.length})
+        </button>
+      </div>
+
+      <!-- 4. KATEGORIYALAR BO'YICHA SARALASH TUGMASI -->
+      <button type="button" id="norm-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${hasFilter ? "has-filter" : ""}" onclick="toggleNormativesPanel()">
         <span class="mcat-filter-left">
           <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          Kategoriyalar bo‘yicha saralash
+          Kategoriyalar va Filtrlar
         </span>
         <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
       </button>
 
-      <!-- 4. KATEGORIYALAR PANELLI -->
+      <!-- 5. KATEGORIYALAR PANELLI -->
       <div id="norm-panel" class="mcat-panel ${open ? "open" : ""}">
         <div class="mcat-panel-clip">
           <div class="mcat-panel-inner" id="norm-panel-inner">
@@ -23743,36 +23855,13 @@ function renderNormativesSectionHtml() {
         </div>
       </div>
 
-      <!-- 5. ACTIVE CATEGORY FILTER CHIP -->
-      ${selectedCat && selectedCat !== "Barchasi" ? `
-        <div class="mcat-active-chip" style="margin-top:12px;">
-          <span class="mcat-active-label">${escapeHtml(selectedCat)}</span>
-          <button type="button" class="mcat-active-x" onclick="setNormativesCategory('Barchasi')" aria-label="Filtrni tozalash">✕</button>
-        </div>
-      ` : ""}
-
-      <!-- 6. KO'P ISHLATILADIGAN NORMATIVLAR (POPULAR HORIZONTAL SHELF) -->
-      ${!searchQuery && selectedCat === "Barchasi" ? `
-        <div class="mcat-section-head" style="margin-top: 18px;">
-          <h2 class="mcat-h2">Ko‘p ishlatiladigan normativlar</h2>
-        </div>
-        <div class="mcat-hscroll">
-          ${renderPopularNormativesCardsHtml()}
-        </div>
-      ` : ""}
-
-      <!-- 7. SUB-NAVIGATION SEGMENTED CONTROL -->
-      <div class="norm-segmented-control" style="margin-top: 22px; margin-bottom: 16px;">
-        <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
-          📑 Normativlar bazasi (${normativesState.documents.length})
-        </button>
-        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
-          💡 Nima kerak? (Amaliy vaziyatlar)
-        </button>
+      <!-- 6. ACTIVE FILTER CHIPS -->
+      <div id="norm-active-filter">
+        ${renderNormativesActiveFilterHtml()}
       </div>
 
-      <!-- 8. CONTENT SWITCHER -->
-      <div class="norm-tab-content">
+      <!-- 7. CONTENT SWITCHER -->
+      <div class="norm-tab-content" style="margin-top:14px;">
         ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : renderNormativeDocsTabHtml()}
       </div>
     </div>
@@ -23904,25 +23993,6 @@ function renderNormativeDocsTabHtml() {
   }
 
   return `
-    <!-- QUICK TYPE & STATUS FILTER STRIP -->
-    <div class="norm-filter-strip">
-      <div class="norm-filter-row">
-        <span class="norm-filter-label">Turi:</span>
-        <button type="button" class="norm-subchip ${selType === 'all' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('all')">Barchasi</button>
-        <button type="button" class="norm-subchip ${selType === 'SHNQ' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('SHNQ')">SHNQ</button>
-        <button type="button" class="norm-subchip ${selType === 'QMQ' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('QMQ')">QMQ</button>
-        <button type="button" class="norm-subchip ${selType === 'O‘z DSt' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('O‘z DSt')">O‘z DSt / Standart</button>
-        <button type="button" class="norm-subchip ${selType === 'Qaror' ? 'active' : ''}" onclick="setNormativesDocTypeFilter('Qaror')">Qarorlar</button>
-      </div>
-      <div class="norm-filter-row" style="margin-top:6px;">
-        <span class="norm-filter-label">Holati:</span>
-        <button type="button" class="norm-subchip ${selStatus === 'all' ? 'active' : ''}" onclick="setNormativesStatusFilter('all')">Barchasi</button>
-        <button type="button" class="norm-subchip ${selStatus === 'AMALDA' ? 'active' : ''}" onclick="setNormativesStatusFilter('AMALDA')">🟢 AMALDA</button>
-        <button type="button" class="norm-subchip ${selStatus === 'O‘ZGARTIRILGAN' ? 'active' : ''}" onclick="setNormativesStatusFilter('O‘ZGARTIRILGAN')">🟡 O‘ZGARTIRILGAN</button>
-        <button type="button" class="norm-subchip ${selStatus === 'KUCHINI YO‘QOTGAN' ? 'active' : ''}" onclick="setNormativesStatusFilter('KUCHINI YO‘QOTGAN')">🔴 KUCHINI YO‘QOTGAN</button>
-      </div>
-    </div>
-
     ${!list.length ? `
       <div class="norm-empty-state">
         <div style="font-size: 38px; margin-bottom: 8px;">📑</div>
@@ -24865,25 +24935,14 @@ function renderProcessPanelInnerHtml() {
   ];
 
   return `
-    <div class="mcat-panel-title">Yo‘nalish bo‘yicha</div>
-    <div class="mcat-panel-grid" style="margin-bottom:14px;">
+    <div class="mcat-panel-title">Asosiy yo‘nalishlar</div>
+    <div class="mcat-panel-grid">
       ${hubOptions.map(opt => `
         <button type="button" class="mcat-chip ${processState.hubFilter === opt.id ? 'active' : ''}" onclick="setProcessHubFilter('${opt.id}')">
           ${escapeHtml(opt.label)}
         </button>
       `).join('')}
     </div>
-
-    ${processState.categories && processState.categories.length ? `
-      <div class="mcat-panel-title">Remont bosqichlari bo‘yicha to‘g‘ridan-to‘g‘ri o‘tish</div>
-      <div class="mcat-panel-grid">
-        ${processState.categories.map(c => `
-          <button type="button" class="mcat-chip" onclick="setProcessHub('remont'); setProcessCategory('${escapeJsString(c.slug)}');">
-            ${escapeHtml(c.icon || '⚡')} ${escapeHtml(c.code)} — ${escapeHtml(c.title)}
-          </button>
-        `).join('')}
-      </div>
-    ` : ''}
   `;
 }
 
@@ -25258,8 +25317,10 @@ function setProcessSearch(val) {
 
 function clearProcessSearch() {
   processState.searchQuery = "";
-  const inp = document.getElementById("proc-search-input");
-  if (inp) inp.value = "";
+  const inp1 = document.getElementById("proc-search-input");
+  if (inp1) inp1.value = "";
+  const inp2 = document.getElementById("proc-hub-search-input");
+  if (inp2) inp2.value = "";
   render();
 }
 
@@ -25399,20 +25460,21 @@ function renderProcessHubLandingHtml() {
 
       <!-- SEARCH BAR -->
       <div class="mcat-search" style="margin-bottom:12px;">
-        <span class="mcat-search-ico">🔍</span>
+        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
         <input id="proc-hub-search-input"
                type="text"
-               class="mcat-input"
+               class="mcat-search-input"
+               placeholder=" "
                autocomplete="off"
                autocorrect="off"
                spellcheck="false"
                value="${escapeHtml(processState.searchQuery || '')}"
                oninput="setProcessSearch(this.value)" />
-        <span id="proc-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
-          Masalan: <strong id="proc-ph-word"></strong>
-        </span>
+        <div id="proc-ph-wrap" class="mcat-ph ${search ? 'hidden' : ''}">
+          Masalan: <span id="proc-ph-word" class="mcat-ph-word"></span>
+        </div>
         ${search ? `
-          <button type="button" class="mcat-clear-btn" onclick="clearProcessSearch()" aria-label="Tozalash">✕</button>
+          <button type="button" class="lib-search-clear-btn" onclick="clearProcessSearch()" aria-label="Tozalash">✕</button>
         ` : ''}
       </div>
 
@@ -25420,15 +25482,23 @@ function renderProcessHubLandingHtml() {
       <div class="mcat-filter-wrap" style="margin-bottom:8px;">
         <button id="proc-panel-btn"
                 type="button"
-                class="mcat-filter-btn ${processState.panelOpen ? 'active' : ''}"
+                class="mcat-filter-btn ${processState.panelOpen ? 'open' : ''}"
                 onclick="toggleProcessPanel()">
-          <span>${processState.panelOpen ? '✕ Filtrni yopish' : '≡ Kategoriyalar bo‘yicha saralash ▾'}</span>
+          <span class="mcat-filter-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+            <span>Kategoriyalar bo‘yicha saralash</span>
+          </span>
+          <svg class="mcat-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
       </div>
 
       <!-- COLLAPSIBLE FILTER PANEL -->
       <div id="proc-panel" class="mcat-panel ${processState.panelOpen ? 'open' : ''}">
-        ${renderProcessPanelInnerHtml()}
+        <div class="mcat-panel-clip">
+          <div class="mcat-panel-inner">
+            ${renderProcessPanelInnerHtml()}
+          </div>
+        </div>
       </div>
 
       <!-- ACTIVE FILTER PILLS -->
@@ -25438,16 +25508,8 @@ function renderProcessHubLandingHtml() {
       ${search ? `
         ${renderProcessSearchResultsHtml()}
       ` : `
-        <!-- POPULAR SHELF (Faqat qidiruvsiz holatda) -->
-        ${filter === "all" ? `
-          <div class="mcat-section-title" style="margin-top:18px;">Ko‘p o‘rganiladigan jarayonlar</div>
-          <div class="mcat-hscroll">
-            ${renderPopularProcessCardsHtml()}
-          </div>
-        ` : ''}
-
         <!-- 3 TA ASOSIY BOSQICH KARTALARI -->
-        <div class="mcat-section-title" style="margin-top:22px; margin-bottom:12px;">
+        <div class="mcat-section-title" style="margin-top:16px; margin-bottom:12px;">
           <span>Yo‘nalishlar</span>
         </div>
 
