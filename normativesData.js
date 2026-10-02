@@ -646,28 +646,64 @@ async function initNormativesTables(pool) {
       console.warn('case_documents unique index notice:', e.message);
     }
 
-    // 4. Ensure normatives section exists in library_sections
+    // 3b. Orqaga mos migratsiya: admin tahriri himoyasi, havola tekshiruvi natijalari, saqlash/like
+    try {
+      await pool.query(`
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS is_admin_edited BOOLEAN DEFAULT false;
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS pdf_check JSONB;
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS official_check JSONB;
+        ALTER TABLE practical_cases ADD COLUMN IF NOT EXISTS is_admin_edited BOOLEAN DEFAULT false;
+        CREATE TABLE IF NOT EXISTS norm_reactions (
+          user_id INT NOT NULL,
+          item_kind VARCHAR(10) NOT NULL,
+          item_id INT NOT NULL,
+          reaction VARCHAR(10) NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          PRIMARY KEY (user_id, item_kind, item_id, reaction)
+        );
+        CREATE INDEX IF NOT EXISTS idx_norm_reactions_item ON norm_reactions(item_kind, item_id);
+      `);
+    } catch (e) {
+      console.warn('normatives migration notice:', e.message);
+    }
+
+    // 4. Kutubxona bo'limlari: "Normativlar" va "Amaliy yechimlar" alohida bo'lim (admin tahrir qilgan nomlar saqlanadi)
     try {
       await pool.query(`
         INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index, is_active, is_visible)
         VALUES (
           'normatives',
-          'Normativlar va amaliy yechimlar',
-          'SHNQ, QMQ, standartlar va yo''riqnomalar',
+          'Normativlar',
+          'SHNQ, QMQ, standartlar',
           '📋',
-          'Arxitektura, qurilish me''yorlari, SHNQ, QMQ va tayyor vaziyatlar tahlili',
+          'Arxitektura, qurilish va loyihalash uchun normativ hujjatlar va standartlar',
           5,
           true,
           true
         )
-        ON CONFLICT (slug) DO UPDATE SET
-          name = EXCLUDED.name,
-          subtitle = EXCLUDED.subtitle,
-          icon = EXCLUDED.icon,
-          description = EXCLUDED.description,
-          order_index = 5,
-          is_active = true,
-          is_visible = true;
+        ON CONFLICT (slug) DO UPDATE SET is_active = true, is_visible = true;
+      `);
+      // Eski standart nom bo'lsa — bir martalik, buzmasdan yangilanadi (admin o'zgartirgan nom saqlanadi)
+      await pool.query(`
+        UPDATE library_sections
+        SET name = 'Normativlar',
+            subtitle = 'SHNQ, QMQ, standartlar',
+            description = 'Arxitektura, qurilish va loyihalash uchun normativ hujjatlar va standartlar'
+        WHERE slug = 'normatives' AND name = 'Normativlar va amaliy yechimlar';
+      `);
+      await pool.query(`
+        INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index, is_active, is_visible)
+        VALUES (
+          'amaliy_yechimlar',
+          'Amaliy yechimlar',
+          'Vaziyatlar bo''yicha yo''riqnomalar',
+          '🛠️',
+          'Vaziyatlar bo''yicha bosqichma-bosqich yechimlar va ularning normativ asoslari',
+          6,
+          true,
+          true
+        )
+        ON CONFLICT (slug) DO NOTHING;
       `);
     } catch (e) {
       console.warn('normatives library section seed warn:', e.message);
@@ -711,6 +747,7 @@ async function initNormativesTables(pool) {
           tags = EXCLUDED.tags,
           last_verified_at = EXCLUDED.last_verified_at,
           updated_at = NOW()
+        WHERE normative_documents.is_admin_edited IS NOT TRUE
         RETURNING (xmax = 0) AS was_inserted;
       `;
 
@@ -748,13 +785,20 @@ async function initNormativesTables(pool) {
             order_index = EXCLUDED.order_index,
             is_active = true,
             updated_at = NOW()
+          WHERE practical_cases.is_admin_edited IS NOT TRUE
           RETURNING id;
         `, [
           cs.title, cs.slug, cs.icon, cs.category, cs.subtitle, cs.description, cs.target_user,
           JSON.stringify(cs.checklist), cs.order_index
         ]);
 
-        const caseId = ins.rows[0].id;
+        let caseId = ins.rows[0] && ins.rows[0].id;
+        if (!caseId) {
+          // Admin tahrir qilgan vaziyat: seed uni o'zgartirmadi, faqat bog'lanishlar tekshiriladi
+          const ex = await pool.query('SELECT id FROM practical_cases WHERE slug = $1', [cs.slug]);
+          caseId = ex.rows[0] && ex.rows[0].id;
+        }
+        if (!caseId) continue;
         seededCases++;
 
         // 7. Link documents mentioned in checklist
@@ -817,7 +861,8 @@ async function getNormativesList(pool, options = {}) {
     search,
     limit = 100,
     offset = 0,
-    sort = 'newest'
+    sort = 'newest',
+    userId = 0
   } = options;
 
   let conditions = [];
@@ -857,7 +902,7 @@ async function getNormativesList(pool, options = {}) {
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   let orderBy = 'id ASC';
-  if (sort === 'popular') orderBy = 'view_count DESC, id ASC';
+  if (sort === 'popular') orderBy = 'pop_score DESC, id ASC';
   else if (sort === 'number') orderBy = 'document_number ASC';
   else if (sort === 'adopted') orderBy = 'adopted_date DESC NULLS LAST';
   else if (sort === 'newest') orderBy = 'id ASC';
@@ -866,28 +911,40 @@ async function getNormativesList(pool, options = {}) {
   const totalRes = await pool.query(countQuery, values);
   const total = totalRes.rows[0]?.total || 0;
 
+  const uidIdx = idx++;
   const dataQuery = `
-    SELECT
-      id, title, document_number, document_type, category,
-      description, requirements, target_audience, application_scope,
-      status, adopted_date, effective_date, repealed_date,
-      issuing_authority, official_source_url, pdf_url,
-      old_edition_note, new_edition_note, change_date,
-      tags, view_count, last_verified_at, created_at
-    FROM normative_documents
-    ${whereClause}
-    ORDER BY ${orderBy}
+    SELECT * FROM (
+      SELECT
+        d.id, d.title, d.document_number, d.document_type, d.category,
+        d.description, d.requirements, d.target_audience, d.application_scope,
+        d.status, d.adopted_date, d.effective_date, d.repealed_date,
+        d.issuing_authority, d.official_source_url, d.pdf_url,
+        d.old_edition_note, d.new_edition_note, d.change_date,
+        d.tags, d.view_count, d.last_verified_at, d.created_at, d.is_admin_edited,
+        d.pdf_check, d.official_check,
+        COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like'), 0) AS like_count,
+        COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'save'), 0) AS save_count,
+        EXISTS(SELECT 1 FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like' AND r.user_id = $${uidIdx}) AS is_liked,
+        EXISTS(SELECT 1 FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'save' AND r.user_id = $${uidIdx}) AS is_saved,
+        (COALESCE(d.view_count, 0)
+          + 3 * COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like'), 0)
+          + 5 * COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'save'), 0)) AS pop_score
+      FROM normative_documents d
+      ${whereClause.replace(/\b(title|document_number|description|requirements|category|tags|document_type|status)\b/g, 'd.$1')}
+    ) x
+    ORDER BY ${orderBy.replace(/\b(view_count|document_number|adopted_date|id)\b/g, 'x.$1')}
     LIMIT $${idx++} OFFSET $${idx++}
   `;
 
-  values.push(Math.min(limit, 200));
+  values.splice(uidIdx - 1, 0, Number(userId) || 0);
+  values.push(Math.min(limit, 1000));
   values.push(offset);
 
   const res = await pool.query(dataQuery, values);
   return { items: res.rows, documents: res.rows, total, limit, offset };
 }
 
-async function getNormativeDetail(pool, id) {
+async function getNormativeDetail(pool, id, userId) {
   const docRes = await pool.query(`
     SELECT * FROM normative_documents WHERE id = $1
   `, [Number(id)]);
@@ -905,26 +962,37 @@ async function getNormativeDetail(pool, id) {
     ORDER BY pc.order_index ASC
   `, [doc.id]);
 
+  const st = await pool.query(`
+    SELECT
+      COALESCE(SUM((reaction = 'like')::int), 0)::int AS like_count,
+      COALESCE(SUM((reaction = 'save')::int), 0)::int AS save_count,
+      COALESCE(BOOL_OR(reaction = 'like' AND user_id = $2), false) AS is_liked,
+      COALESCE(BOOL_OR(reaction = 'save' AND user_id = $2), false) AS is_saved
+    FROM norm_reactions WHERE item_kind = 'doc' AND item_id = $1
+  `, [doc.id, Number(userId) || 0]).catch(() => ({ rows: [{}] }));
+  Object.assign(doc, st.rows[0] || {});
+
   return { document: doc, cases: casesRes.rows };
 }
 
 async function getPracticalCasesList(pool, options = {}) {
-  const { category, search } = options;
-  let conditions = ['is_active = true'];
-  let values = [];
-  let idx = 1;
+  const { category, search, userId = 0 } = options;
+  let conditions = ['c.is_active = true'];
+  let values = [Number(userId) || 0];
+  let idx = 2;
 
   if (category && category !== 'all' && category !== 'Barchasi') {
-    conditions.push(`category ILIKE $${idx++}`);
+    conditions.push(`c.category ILIKE $${idx++}`);
     values.push(`%${category}%`);
   }
 
   if (search && search.trim()) {
     conditions.push(`(
-      LOWER(title) LIKE $${idx} OR
-      LOWER(description) LIKE $${idx} OR
-      LOWER(subtitle) LIKE $${idx} OR
-      LOWER(category) LIKE $${idx}
+      LOWER(c.title) LIKE $${idx} OR
+      LOWER(c.description) LIKE $${idx} OR
+      LOWER(c.subtitle) LIKE $${idx} OR
+      LOWER(c.category) LIKE $${idx} OR
+      LOWER(c.checklist::text) LIKE $${idx}
     )`);
     values.push(`%${search.trim().toLowerCase()}%`);
     idx++;
@@ -932,15 +1000,25 @@ async function getPracticalCasesList(pool, options = {}) {
 
   const res = await pool.query(`
     SELECT
-      id, title, slug, icon, category, subtitle,
-      description, target_user, checklist, order_index, view_count,
-      jsonb_array_length(COALESCE(checklist, '[]'::jsonb)) AS step_count
-    FROM practical_cases
+      c.id, c.title, c.slug, c.icon, c.category, c.subtitle,
+      c.description, c.target_user, c.checklist, c.order_index, c.view_count, c.created_at,
+      jsonb_array_length(COALESCE(c.checklist, '[]'::jsonb)) AS step_count,
+      COALESCE((SELECT json_agg(json_build_object('id', nd.id, 'document_number', nd.document_number, 'title', nd.title) ORDER BY nd.id)
+                FROM (SELECT DISTINCT document_id FROM case_documents WHERE case_id = c.id) cdx
+                JOIN normative_documents nd ON nd.id = cdx.document_id), '[]'::json) AS related_documents,
+      COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'case' AND r.item_id = c.id AND r.reaction = 'like'), 0) AS like_count,
+      COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'case' AND r.item_id = c.id AND r.reaction = 'save'), 0) AS save_count,
+      EXISTS(SELECT 1 FROM norm_reactions r WHERE r.item_kind = 'case' AND r.item_id = c.id AND r.reaction = 'like' AND r.user_id = $1) AS is_liked,
+      EXISTS(SELECT 1 FROM norm_reactions r WHERE r.item_kind = 'case' AND r.item_id = c.id AND r.reaction = 'save' AND r.user_id = $1) AS is_saved
+    FROM practical_cases c
     WHERE ${conditions.join(' AND ')}
-    ORDER BY order_index ASC, id ASC
+    ORDER BY c.order_index ASC, c.id ASC
   `, values);
 
-  return res.rows;
+  return res.rows.map(function (r) {
+    r.pop_score = (Number(r.view_count) || 0) + 3 * (Number(r.like_count) || 0) + 5 * (Number(r.save_count) || 0);
+    return r;
+  });
 }
 
 async function getPracticalCaseDetail(pool, idOrSlug) {
@@ -973,6 +1051,23 @@ async function getPracticalCaseDetail(pool, idOrSlug) {
   `, [cs.id]);
 
   cs.documents = docsRes.rows;
+
+  // Bosqichlardagi hujjat raqamlari case_documents'da bo'lmasa ham (admin keyin qo'shgan), to'g'ridan-to'g'ri bazadan topiladi
+  let steps = cs.checklist;
+  if (typeof steps === 'string') { try { steps = JSON.parse(steps); } catch (e) { steps = []; } }
+  const known = new Set(cs.documents.map(d => String(d.document_number || '').trim().toLowerCase()));
+  const wanted = [];
+  (Array.isArray(steps) ? steps : []).forEach(st => (st.document_numbers || []).forEach(n => {
+    const k = String(n || '').trim().toLowerCase();
+    if (k && !known.has(k) && !wanted.includes(k)) wanted.push(k);
+  }));
+  if (wanted.length) {
+    const extra = await pool.query(`
+      SELECT id, title, document_number, document_type, status, adopted_date, official_source_url, pdf_url
+      FROM normative_documents WHERE LOWER(TRIM(document_number)) = ANY($1::text[])
+    `, [wanted]).catch(() => ({ rows: [] }));
+    extra.rows.forEach(d => cs.documents.push(Object.assign({ stage_name: null, notes: null, sort_order: 999 }, d)));
+  }
   return cs;
 }
 

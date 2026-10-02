@@ -17,6 +17,7 @@ var initLearningTables = learningModule.initLearningTables;
 var materialsModule = require('./materialsData');
 var initMaterialsTables = materialsModule.initMaterialsTables;
 var normativesModule = require('./normativesData');
+var urlValidator = require('./urlValidator');
 var initNormativesTables = normativesModule.initNormativesTables;
 var getNormativesList = normativesModule.getNormativesList;
 var getNormativeDetail = normativesModule.getNormativeDetail;
@@ -2418,7 +2419,7 @@ app.post('/api/user/language', async function (req, res) {
 
 // Admin: kontent tarjimalarini o'qish/yozish (5 til). Original (uz) maydonlarga tegilmaydi.
 // Kontent tarjimalari uchun i18n JSONB ustunlari (idempotent; jadvallar keyinroq yaratilishi mumkin, shuning uchun qayta uriniladi)
-var I18N_CONTENT_TABLES = ['courses', 'modules', 'lessons', 'library_books', 'library_resources', 'library_sections', 'materials', 'material_categories', 'faqs'];
+var I18N_CONTENT_TABLES = ['courses', 'modules', 'lessons', 'library_books', 'library_resources', 'library_sections', 'materials', 'material_categories', 'faqs', 'normative_documents', 'practical_cases'];
 async function ensureI18nColumns() {
   for (var i = 0; i < I18N_CONTENT_TABLES.length; i++) {
     try { await pool.query("ALTER TABLE IF EXISTS " + I18N_CONTENT_TABLES[i] + " ADD COLUMN IF NOT EXISTS i18n JSONB DEFAULT '{}'::jsonb"); }
@@ -2435,7 +2436,9 @@ var I18N_ENTITIES = {
   resources: { table: 'library_resources', fields: ['title', 'subtitle', 'description', 'category'] },
   sections: { table: 'library_sections', fields: ['name', 'subtitle', 'description'] },
   materials: { table: 'materials', fields: ['name_uz', 'short_description_uz', 'description_uz'] },
-  faqs: { table: 'faqs', fields: ['question', 'answer'] }
+  faqs: { table: 'faqs', fields: ['question', 'answer'] },
+  normatives: { table: 'normative_documents', fields: ['title', 'description', 'requirements', 'target_audience', 'application_scope'] },
+  cases: { table: 'practical_cases', fields: ['title', 'subtitle', 'description'] }
 };
 
 app.post('/api/admin/i18n/get', requireAdmin, async function (req, res) {
@@ -10927,9 +10930,26 @@ app.post('/api/admin/books/:id/toggle-recommend', requireAdmin, async function (
 // NORMATIVLAR VA AMALIY YECHIMLAR API (PUBLIC & ADMIN)
 // ======================================================
 
+async function normOptionalUserId(req) {
+  try {
+    var init = (req.body && req.body.initData) || (req.query && req.query.initData);
+    if (!init) return 0;
+    var u = await getOrCreateUser(init);
+    return u ? u.id : 0;
+  } catch (e) { return 0; }
+}
+
+function decorateNormDoc(d) {
+  var links = urlValidator.buildDocLinks(d, { pdf: d.pdf_check, official: d.official_check });
+  d.links = { pdf: links.pdf, official: links.official, search: links.search };
+  d.link_issues = links.issues;
+  return d;
+}
+
 app.all('/api/normatives/list', async function (req, res) {
   try {
     var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var uid = await normOptionalUserId(req);
     var data = await getNormativesList(pool, {
       category: p.category,
       document_type: p.document_type || p.type,
@@ -10937,9 +10957,10 @@ app.all('/api/normatives/list', async function (req, res) {
       search: p.search || p.q,
       limit: parseInt(p.limit, 10) || 100,
       offset: parseInt(p.offset, 10) || 0,
-      sort: p.sort || 'newest'
+      sort: p.sort || 'newest',
+      userId: uid
     });
-    var items = data.items || [];
+    var items = (data.items || []).map(decorateNormDoc);
     return res.json({
       ok: true,
       items: items,
@@ -10957,9 +10978,10 @@ app.all('/api/normatives/list', async function (req, res) {
 app.all('/api/normatives/detail/:id', async function (req, res) {
   try {
     var id = parseInt(req.params.id, 10);
-    var doc = await getNormativeDetail(pool, id);
+    var uid = await normOptionalUserId(req);
+    var doc = await getNormativeDetail(pool, id, uid);
     if (!doc) return res.status(404).json({ ok: false, error: 'Hujjat topilmadi' });
-    return res.json({ ok: true, document: doc.document, cases: doc.cases || [] });
+    return res.json({ ok: true, document: decorateNormDoc(doc.document), cases: doc.cases || [] });
   } catch (err) {
     console.error('NORMATIVE DETAIL ERROR:', err);
     return res.status(500).json({ ok: false, error: "Hujjat ma'lumotini yuklashda xatolik" });
@@ -10969,14 +10991,37 @@ app.all('/api/normatives/detail/:id', async function (req, res) {
 app.all('/api/normatives/cases', async function (req, res) {
   try {
     var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var uid = await normOptionalUserId(req);
     var cases = await getPracticalCasesList(pool, {
       category: p.category,
-      search: p.search || p.q
+      search: p.search || p.q,
+      userId: uid
     });
     return res.json({ ok: true, cases: cases, items: cases });
   } catch (err) {
     console.error('NORMATIVE CASES LIST ERROR:', err);
     return res.status(500).json({ ok: false, error: 'Amaliy vaziyatlarni yuklashda xatolik', cases: [], items: [] });
+  }
+});
+
+// Like / saqlash (normativ yoki amaliy yechim)
+app.post('/api/normatives/toggle', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya kerak' });
+    var kind = req.body.kind === 'case' ? 'case' : 'doc';
+    var reaction = req.body.reaction === 'save' ? 'save' : 'like';
+    var itemId = parseInt(req.body.id, 10);
+    if (!itemId) return res.status(400).json({ ok: false, error: 'ID kerak' });
+    var ex = await pool.query('SELECT 1 FROM norm_reactions WHERE user_id = $1 AND item_kind = $2 AND item_id = $3 AND reaction = $4', [user.id, kind, itemId, reaction]);
+    var on;
+    if (ex.rows.length) { await pool.query('DELETE FROM norm_reactions WHERE user_id = $1 AND item_kind = $2 AND item_id = $3 AND reaction = $4', [user.id, kind, itemId, reaction]); on = false; }
+    else { await pool.query('INSERT INTO norm_reactions (user_id, item_kind, item_id, reaction) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING', [user.id, kind, itemId, reaction]); on = true; }
+    var c = await pool.query('SELECT COUNT(*)::int AS c FROM norm_reactions WHERE item_kind = $1 AND item_id = $2 AND reaction = $3', [kind, itemId, reaction]);
+    return res.json({ ok: true, active: on, count: c.rows[0].c });
+  } catch (err) {
+    console.error('NORMATIVES TOGGLE ERROR:', err.message);
+    return res.status(500).json({ ok: false, error: 'Saqlashda xatolik' });
   }
 });
 
@@ -11085,6 +11130,25 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
       return res.status(400).json({ ok: false, error: 'Hujjat raqami va nomi kiritilishi shart' });
     }
 
+    // URL tekshiruvi: PDF va rasmiy sayt alohida maydonlar; noto'g'ri havola bazaga tushmaydi
+    var pdfCheck = null, officialCheck = null;
+    if (pdfUrl) {
+      if (!urlValidator.classifyUrl(pdfUrl).valid) return res.status(400).json({ ok: false, field: 'pdf_url', error: "PDF havolasi noto'g'ri (https://... ko'rinishida bo'lishi kerak)." });
+      pdfCheck = await urlValidator.validatePdfUrl(pdfUrl);
+    }
+    if (officialUrl) {
+      if (!urlValidator.classifyUrl(officialUrl).valid) return res.status(400).json({ ok: false, field: 'official_source_url', error: "Rasmiy sayt havolasi noto'g'ri (https://... ko'rinishida bo'lishi kerak)." });
+      officialCheck = await urlValidator.validateSourceUrl(officialUrl);
+    }
+    if (!b.skip_url_check) {
+      if (pdfCheck && (pdfCheck.status === 'not_found' || pdfCheck.status === 'not_pdf')) {
+        return res.status(400).json({ ok: false, field: 'pdf_url', url_check: pdfCheck, can_override: true, error: pdfCheck.status === 'not_pdf' ? "Bu PDF emas: havola " + (pdfCheck.content_type || 'veb-sahifa') + " ga olib boradi. Veb-sahifa bo'lsa, 'Rasmiy sayt' maydoniga kiriting." : "PDF manbasi mavjud emas (404)." });
+      }
+      if (officialCheck && (officialCheck.status === 'not_found' || officialCheck.status === 'dns_error')) {
+        return res.status(400).json({ ok: false, field: 'official_source_url', url_check: officialCheck, can_override: true, error: "URL noto'g'ri yoki manba mavjud emas." });
+      }
+    }
+
     var result;
     if (id) {
       result = await pool.query(`
@@ -11094,13 +11158,15 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
           status = $9, adopted_date = $10, effective_date = $11, repealed_date = $12,
           issuing_authority = $13, official_source_url = $14, pdf_url = $15,
           old_edition_note = $16, new_edition_note = $17, change_date = $18,
-          last_verified_at = NOW(), updated_at = NOW()
+          last_verified_at = NOW(), updated_at = NOW(),
+          is_admin_edited = true, pdf_check = $20::jsonb, official_check = $21::jsonb
         WHERE id = $19
         RETURNING *
       `, [
         title, docNumber, docType, category, description, requirements,
         targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
-        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate, id
+        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate, id,
+        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null
       ]);
     } else {
       result = await pool.query(`
@@ -11109,25 +11175,97 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
           requirements, target_audience, application_scope, status,
           adopted_date, effective_date, repealed_date, issuing_authority,
           official_source_url, pdf_url, old_edition_note, new_edition_note,
-          change_date, last_verified_at
+          change_date, last_verified_at, is_admin_edited, pdf_check, official_check
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13, $14, $15, $16, $17,
-          $18, NOW()
+          $18, NOW(), true, $19::jsonb, $20::jsonb
         )
         RETURNING *
       `, [
         title, docNumber, docType, category, description, requirements,
         targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
-        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate
+        issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate,
+        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null
       ]);
     }
 
-    return res.json({ ok: true, document: result.rows[0], message: id ? 'Hujjat yangilandi' : 'Yangi normativ qo\'shildi' });
+    return res.json({ ok: true, document: result.rows[0], url_warnings: [pdfCheck && pdfCheck.note, officialCheck && officialCheck.note].filter(Boolean), message: id ? 'Hujjat yangilandi' : 'Yangi normativ qo\'shildi' });
   } catch (err) {
     console.error('ADMIN NORMATIVE SAVE ERROR:', err);
     return res.status(500).json({ ok: false, error: err.message || 'Normativni saqlashda xatolik' });
   }
+});
+
+// Admin: bitta URL ni tekshirish (forma ichida)
+app.post('/api/admin/normatives/validate-url', requireAdmin, async function (req, res) {
+  try {
+    var url = String(req.body.url || '').trim();
+    var kind = req.body.kind === 'pdf' ? 'pdf' : 'official';
+    if (!url) return res.json({ ok: true, result: { status: 'missing', ok: false, url: '' } });
+    var r = kind === 'pdf' ? await urlValidator.validatePdfUrl(url) : await urlValidator.validateSourceUrl(url);
+    var msg = '';
+    if (r.status === 'invalid') msg = "URL noto'g'ri formatda.";
+    else if (r.status === 'not_found') msg = "URL noto'g'ri yoki manba mavjud emas (404).";
+    else if (r.status === 'not_pdf') msg = "Bu PDF emas: " + (r.content_type || 'veb-sahifa') + ". Veb-sahifa bo'lsa 'Rasmiy sayt' maydoniga kiriting.";
+    else if (r.status === 'dns_error' || r.status === 'network_error') msg = "Sayt ochilmadi (domen yoki tarmoq xatosi).";
+    else if (r.status === 'timeout') msg = "Sayt javob bermadi (timeout).";
+    else if (r.status === 'blocked') msg = "Sayt so'rovni rad etdi (bot himoyasi). Brauzerda qo'lda tekshiring.";
+    else if (r.status === 'unverifiable') msg = r.note;
+    else if (r.ok) msg = kind === 'pdf' ? 'Haqiqiy PDF ✓' : 'Sahifa ochiladi ✓';
+    else msg = 'Holat: ' + r.status;
+    return res.json({ ok: true, result: r, message: msg });
+  } catch (e) { return res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// Admin: barcha normativlarning PDF / rasmiy sayt havolalarini audit qilish (ma'lumot o'chirilmaydi; faqat natija saqlanadi)
+var normAuditRunning = false;
+app.post('/api/admin/normatives/audit', requireAdmin, async function (req, res) {
+  if (normAuditRunning) return res.status(409).json({ ok: false, error: 'Audit allaqachon bajarilmoqda' });
+  normAuditRunning = true;
+  try {
+    var rows = (await pool.query('SELECT id, document_number, title, pdf_url, official_source_url FROM normative_documents ORDER BY id ASC')).rows;
+    var report = [];
+    var idx = 0;
+    var started = Date.now();
+    async function worker() {
+      while (idx < rows.length && Date.now() - started < 110000) {
+        var d = rows[idx++];
+        var pdfRes = d.pdf_url ? await urlValidator.validatePdfUrl(d.pdf_url) : null;
+        var offRes = d.official_source_url ? await urlValidator.validateSourceUrl(d.official_source_url) : null;
+        try { await pool.query('UPDATE normative_documents SET pdf_check = $1::jsonb, official_check = $2::jsonb WHERE id = $3', [pdfRes ? JSON.stringify(pdfRes) : null, offRes ? JSON.stringify(offRes) : null, d.id]); } catch (e) {}
+        var links = urlValidator.buildDocLinks(d, { pdf: pdfRes, official: offRes });
+        report.push({ id: d.id, document_number: d.document_number, title: d.title, pdf_url: d.pdf_url || null, pdf_status: pdfRes ? pdfRes.status : 'missing', pdf_kind: urlValidator.classifyUrl(d.pdf_url).kind, official_url: d.official_source_url || null, official_status: offRes ? offRes.status : 'missing', official_kind: urlValidator.classifyUrl(d.official_source_url).kind, official_final_url: offRes ? offRes.final_url : '', issues: links.issues, working_pdf: !!links.pdf, working_official: !!links.official });
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    report.sort(function (a, b) { return a.id - b.id; });
+    var cnt = function (f) { return report.filter(f).length; };
+    var summary = {
+      total: rows.length,
+      checked: report.length,
+      pdf: {
+        valid: cnt(function (r) { return r.pdf_status === 'ok'; }),
+        unverifiable_drive_telegram: cnt(function (r) { return r.pdf_status === 'unverifiable'; }),
+        not_a_pdf: cnt(function (r) { return r.pdf_status === 'not_pdf'; }),
+        broken: cnt(function (r) { return ['not_found', 'invalid', 'dns_error', 'network_error', 'timeout', 'too_many_redirects', 'blocked'].indexOf(r.pdf_status) !== -1 || /^http_/.test(r.pdf_status); }),
+        missing: cnt(function (r) { return r.pdf_status === 'missing'; }),
+        search_page_in_pdf_field: cnt(function (r) { return r.pdf_kind === 'search'; })
+      },
+      official: {
+        valid: cnt(function (r) { return r.official_status === 'ok'; }),
+        generic_home_page: cnt(function (r) { return r.official_kind === 'home'; }),
+        search_page: cnt(function (r) { return r.official_kind === 'search'; }),
+        broken: cnt(function (r) { return ['not_found', 'invalid', 'dns_error', 'network_error', 'timeout', 'too_many_redirects'].indexOf(r.official_status) !== -1 || /^http_/.test(r.official_status); }),
+        blocked_by_site: cnt(function (r) { return r.official_status === 'blocked'; }),
+        missing: cnt(function (r) { return r.official_status === 'missing'; })
+      }
+    };
+    return res.json({ ok: true, summary: summary, report: report });
+  } catch (e) {
+    console.error('NORMATIVES AUDIT ERROR:', e);
+    return res.status(500).json({ ok: false, error: e.message });
+  } finally { normAuditRunning = false; }
 });
 
 app.post('/api/admin/normatives/delete/:id', requireAdmin, async function (req, res) {
@@ -11147,7 +11285,7 @@ app.post('/api/admin/normatives/case/save', requireAdmin, async function (req, r
     var b = req.body || {};
     var id = parseInt(b.id, 10) || null;
     var title = (b.title || '').trim();
-    var slug = (b.slug || title.toLowerCase().replace(/[^a-z0-9]/g, '-')).trim();
+    var slug = String(b.slug || title).normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || ('yechim-' + Date.now().toString(36));
     var icon = (b.icon || '🏠').trim();
     var category = (b.category || 'construction_docs').trim();
     var subtitle = (b.subtitle || '').trim();
@@ -11163,7 +11301,7 @@ app.post('/api/admin/normatives/case/save', requireAdmin, async function (req, r
         UPDATE practical_cases SET
           title = $1, slug = $2, icon = $3, category = $4,
           subtitle = $5, description = $6, target_user = $7,
-          checklist = $8::jsonb, updated_at = NOW()
+          checklist = $8::jsonb, updated_at = NOW(), is_admin_edited = true
         WHERE id = $9
         RETURNING *
       `, [title, slug, icon, category, subtitle, description, targetUser, checklist, id]);

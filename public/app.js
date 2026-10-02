@@ -24240,9 +24240,13 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
   const isSaved = isNormativeSaved(doc.id);
   const adoptedDate = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : "—";
   const effectiveDate = doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "—";
-  const verifiedDate = doc.last_verified_at ? new Date(doc.last_verified_at).toLocaleDateString('uz-UZ') : "01.10.2026";
-  const authority = doc.issuing_authority || "O‘zbekiston Respublikasi Qurilish va uy-joy kommunal xo‘jaligi vazirligi";
-  const hasAmendedInfo = doc.previous_edition || doc.new_edition || doc.amendment_date || status === "O‘ZGARTIRILGAN" || status === "KUCHINI YO‘QOTGAN";
+  const nrmL = doc.links || nrmFallbackLinks(doc);
+  const verifiedDate = (nrmL.official && nrmL.official.verified && doc.official_check && doc.official_check.checked_at) ? new Date(doc.official_check.checked_at).toLocaleDateString('uz-UZ') : "";
+  const authority = (doc.issuing_authority || "").trim();
+  const oldEdition = doc.old_edition_note || doc.previous_edition || "";
+  const newEdition = doc.new_edition_note || doc.new_edition || "";
+  const changeDate = doc.change_date || doc.amendment_date || "";
+  const hasAmendedInfo = oldEdition || newEdition || changeDate || status === "O‘ZGARTIRILGAN" || status === "KUCHINI YO‘QOTGAN";
 
   return `
     <div class="page lib-container norm-detail-page">
@@ -24264,13 +24268,9 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
         </div>
 
         <h1 class="norm-detail-title">${escapeHtml(doc.title)}</h1>
-        <div class="norm-detail-cat-row">
-          <span>🏛 ${escapeHtml(authority)}</span>
-        </div>
+        ${authority ? `<div class="norm-detail-cat-row"><span>🏛 ${escapeHtml(authority)}</span></div>` : ""}
 
-        <div class="norm-verified-pill">
-          ✓ Rasmiy manbadan tekshirilgan • ${verifiedDate}
-        </div>
+        ${verifiedDate ? `<div class="norm-verified-pill">✓ Rasmiy havola tekshirilgan • ${verifiedDate}</div>` : ""}
       </div>
 
       <!-- 1. NIMA UCHUN KERAK -->
@@ -24341,10 +24341,10 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
             <span class="norm-meta-key">Kuchga kirgan sana:</span>
             <span class="norm-meta-val">${escapeHtml(effectiveDate)}</span>
           </div>
-          <div class="norm-meta-row">
+            ${authority ? `          <div class="norm-meta-row">
             <span class="norm-meta-key">Qabul qilgan organ:</span>
             <span class="norm-meta-val">${escapeHtml(authority)}</span>
-          </div>
+          </div>` : ""}
           <div class="norm-meta-row">
             <span class="norm-meta-key">Kategoriya:</span>
             <span class="norm-meta-val">${escapeHtml(doc.category || "Umumiy")}</span>
@@ -24360,22 +24360,22 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
             <h2 class="norm-card-title">${status === 'KUCHINI YO‘QOTGAN' ? 'Bekor qilinganlik holati' : 'O‘zgartirishlar tarixi'}</h2>
           </div>
           <div class="norm-meta-table">
-            ${doc.previous_edition ? `
+            ${oldEdition ? `
               <div class="norm-meta-row">
                 <span class="norm-meta-key">Eski tahrir:</span>
-                <span class="norm-meta-val">${escapeHtml(doc.previous_edition)}</span>
+                <span class="norm-meta-val">${escapeHtml(oldEdition)}</span>
               </div>
             ` : ''}
-            ${doc.new_edition ? `
+            ${newEdition ? `
               <div class="norm-meta-row">
                 <span class="norm-meta-key">Yangi tahrir / O‘rniga:</span>
-                <span class="norm-meta-val" style="font-weight:700; color:#10b981;">${escapeHtml(doc.new_edition)}</span>
+                <span class="norm-meta-val" style="font-weight:700; color:#10b981;">${escapeHtml(newEdition)}</span>
               </div>
             ` : ''}
-            ${doc.amendment_date ? `
+            ${changeDate ? `
               <div class="norm-meta-row">
                 <span class="norm-meta-key">O‘zgartirilgan sana:</span>
-                <span class="norm-meta-val">${escapeHtml(new Date(doc.amendment_date).toLocaleDateString('uz-UZ'))}</span>
+                <span class="norm-meta-val">${escapeHtml(new Date(changeDate).toLocaleDateString('uz-UZ'))}</span>
               </div>
             ` : ''}
           </div>
@@ -24403,24 +24403,8 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
         </div>
       ` : ''}
 
-      <!-- 7. ACTION BUTTONS (LEXUZ & PDF) -->
-      <div class="norm-action-buttons-wrap">
-        ${doc.official_source_url ? `
-          <button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(doc.official_source_url)}')">
-            🌐 LexUZ rasmiy manbasi ↗
-          </button>
-        ` : ''}
-        ${doc.pdf_url ? `
-          <button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(doc.pdf_url)}')">
-            📥 PDF Hujjatni yuklab olish
-          </button>
-        ` : ''}
-        ${(!doc.official_source_url && !doc.pdf_url) ? `
-          <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:12px; background:var(--bg-surface); border-radius:12px; border:1px solid var(--border); width:100%;">
-            Rasmiy me'yoriy talablar yuqoridagi bo‘limlarda to‘liq keltirilgan.
-          </div>
-        ` : ''}
-      </div>
+      <!-- 7. MANBA: rasmiy sayt va PDF alohida, faqat haqiqiy havolalar -->
+      ${nrmSourceBlockHtml(doc)}
     </div>
   `;
 }
@@ -24580,6 +24564,7 @@ function renderAdminNormativesCMS() {
           <button class="btn btn-secondary" onclick="openAdminCaseEditModal(null)">
             + Yangi Keys
           </button>
+          <button class="btn btn-secondary" onclick="runNormativesAudit()">🔍 Havolalar auditi</button>
         </div>
       </div>
 
@@ -24787,29 +24772,42 @@ function openAdminNormativeEditModal(docId) {
             </div>
             <div>
               <label class="label">Qabul qilgan organ</label>
-              <input type="text" id="norm-form-auth" class="input" value="${escapeHtml((doc && doc.issuing_authority) || 'Qurilish vazirligi')}" />
+              <input type="text" id="norm-form-auth" class="input" value="${escapeHtml((doc && doc.issuing_authority) || '')}" placeholder="Masalan: Qurilish va uy-joy kommunal xo‘jaligi vazirligi" />
             </div>
           </div>
 
           <div class="form-group" style="margin-bottom:12px;">
-            <label class="label">Rasmiy manba (LexUZ URL)</label>
-            <input type="url" id="norm-form-lexurl" class="input" value="${escapeHtml((doc && doc.official_source_url) || '')}" placeholder="https://lex.uz/docs/..." />
+            <label class="label">Rasmiy sayt (veb-sahifa, masalan Lex.uz hujjat sahifasi)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="url" id="norm-form-lexurl" class="input" style="flex:1;" value="${escapeHtml((doc && doc.official_source_url) || '')}" placeholder="https://lex.uz/docs/..." />
+              <button type="button" class="btn btn-secondary" onclick="adminCheckNormUrl('official')">Tekshirish</button>
+            </div>
+            <div id="norm-check-official" style="font-size:12px; margin-top:4px;"></div>
           </div>
 
           <div class="form-group" style="margin-bottom:12px;">
-            <label class="label">PDF Hujjat URL</label>
-            <input type="url" id="norm-form-pdfurl" class="input" value="${escapeHtml((doc && doc.pdf_url) || '')}" placeholder="https://..." />
+            <label class="label">PDF fayl havolasi (faqat to‘g‘ridan-to‘g‘ri PDF; veb-sahifa emas)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="url" id="norm-form-pdfurl" class="input" style="flex:1;" value="${escapeHtml((doc && doc.pdf_url) || '')}" placeholder="https://.../hujjat.pdf" />
+              <button type="button" class="btn btn-secondary" onclick="adminCheckNormUrl('pdf')">Tekshirish</button>
+            </div>
+            <div id="norm-check-pdf" style="font-size:12px; margin-top:4px;"></div>
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
             <div>
               <label class="label">Eski tahrir (agar o'zgargan bo'lsa)</label>
-              <input type="text" id="norm-form-old-edit" class="input" value="${escapeHtml((doc && doc.previous_edition) || '')}" placeholder="SHNQ 2.08.01-19" />
+              <input type="text" id="norm-form-old-edit" class="input" value="${escapeHtml((doc && (doc.old_edition_note || doc.previous_edition)) || '')}" placeholder="SHNQ 2.08.01-19" />
             </div>
             <div>
               <label class="label">Yangi tahrir / O‘rniga</label>
-              <input type="text" id="norm-form-new-edit" class="input" value="${escapeHtml((doc && doc.new_edition) || '')}" placeholder="SHNQ 2.08.01-24" />
+              <input type="text" id="norm-form-new-edit" class="input" value="${escapeHtml((doc && (doc.new_edition_note || doc.new_edition)) || '')}" placeholder="SHNQ 2.08.01-24" />
             </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="label">O‘zgartirilgan sana</label>
+            <input type="date" id="norm-form-changedate" class="input" value="${doc && doc.change_date ? String(doc.change_date).split('T')[0] : ''}" />
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
@@ -24842,12 +24840,22 @@ async function handleSaveNormativeDoc(e, docId) {
     issuing_authority: document.getElementById('norm-form-auth').value.trim(),
     official_source_url: document.getElementById('norm-form-lexurl').value.trim(),
     pdf_url: document.getElementById('norm-form-pdfurl').value.trim(),
-    previous_edition: document.getElementById('norm-form-old-edit').value.trim(),
-    new_edition: document.getElementById('norm-form-new-edit').value.trim()
+    old_edition_note: document.getElementById('norm-form-old-edit').value.trim(),
+    new_edition_note: document.getElementById('norm-form-new-edit').value.trim(),
+    change_date: (document.getElementById('norm-form-changedate') || {}).value || null
   };
 
   try {
     const res = await adminApi('/api/admin/normatives/save', payload);
+    if (res && !res.ok && res.can_override) {
+      showConfirm("Havola tekshiruvi", (res.error || "Havola muammosi") + " Baribir saqlansinmi?", "Baribir saqlash", async () => {
+        const res2 = await adminApi('/api/admin/normatives/save', Object.assign({}, payload, { skip_url_check: true }));
+        if (res2 && res2.ok) { showToast("✓ Saqlandi (havola tekshiruvidan o‘tmagan)"); closeAdminModal(); await reloadAdminNormatives(); }
+        else showAlert((res2 && res2.error) || "Saqlashda xatolik.");
+      });
+      return;
+    }
+    if (res && res.ok && Array.isArray(res.url_warnings) && res.url_warnings.length) showAlert("Saqlandi. Eslatma: " + res.url_warnings.join(" "));
     if (res && res.ok) {
       showToast("✓ Normativ muvaffaqiyatli saqlandi!");
       closeAdminModal();
@@ -26747,4 +26755,94 @@ async function handleAdminProcessCatSubmit(e, catId) {
   } catch (err) {
     showAlert("Saqlashda xatolik");
   }
+}
+
+// ============================================================================
+// NORMATIVLAR: PDF / rasmiy sayt havolalari (server `links` ni hisoblaydi; eski serverda zaxira)
+// ============================================================================
+function nrmFallbackLinks(doc) {
+  const pdf = String(doc.pdf_url || "").trim(), off = String(doc.official_source_url || "").trim();
+  const isUrl = u => /^https?:\/\//i.test(u);
+  const out = { pdf: null, official: null, search: null };
+  if (isUrl(pdf) && (/\.pdf(\?|#|$)/i.test(pdf) || /drive\.google\.com|t\.me\//i.test(pdf))) out.pdf = { url: pdf, kind: "pdf", verified: false };
+  if (isUrl(off) && !/^https?:\/\/[^/]+\/?$/i.test(off) && !/[?&](q|query|search|number)=/i.test(off)) out.official = { url: off, label: "Rasmiy sayt", verified: false };
+  return out;
+}
+
+function openNormPdf(url) {
+  if (!url) return;
+  haptic("light");
+  try {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg && typeof tg.downloadFile === "function" && typeof tg.isVersionAtLeast === "function" && tg.isVersionAtLeast("8.0") && /\.pdf(\?|#|$)/i.test(url)) {
+      const name = decodeURIComponent((url.split("?")[0].split("/").pop() || "hujjat.pdf"));
+      tg.downloadFile({ url, file_name: name.toLowerCase().endsWith(".pdf") ? name : name + ".pdf" }, ok => { if (!ok) safeOpenExternal(url); });
+      return;
+    }
+  } catch (e) { console.warn("downloadFile fallback:", e); }
+  safeOpenExternal(url);
+}
+
+function nrmSourceBlockHtml(doc) {
+  const L = doc.links || nrmFallbackLinks(doc);
+  const btns = [];
+  if (L.official) btns.push(`<button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">🌐 ${escapeHtml(L.official.label || "Rasmiy sayt")} ↗</button>`);
+  if (L.pdf) btns.push(`<button type="button" class="norm-secondary-btn" onclick="openNormPdf('${escapeJsString(L.pdf.url)}')">📥 PDF yuklab olish</button>`);
+  else btns.push(`<div class="nrm-nopdf">📄 PDF mavjud emas</div>`);
+  if (L.search && !L.official) btns.push(`<button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(L.search.url)}')">🔎 ${escapeHtml(L.search.host || "Sayt")} qidiruvida ochish ↗</button>`);
+  const issues = (state && state.is_admin && Array.isArray(doc.link_issues) && doc.link_issues.length)
+    ? `<div class="nrm-admin-issues">${doc.link_issues.map(i => `⚠️ <b>${escapeHtml(i.field)}</b>: ${escapeHtml(i.text)}`).join("<br>")}</div>` : "";
+  return `<div class="norm-card-block"><div class="norm-card-header"><span class="norm-card-icon">🔗</span><h2 class="norm-card-title">Manba</h2></div><div class="norm-action-buttons-wrap" style="margin-top:0;">${btns.join("")}</div>${issues}</div>`;
+}
+
+async function reloadAdminNormatives() {
+  try {
+    const [listRes, statsRes] = await Promise.all([api("/api/normatives/list", { limit: 1000 }), api("/api/normatives/stats")]);
+    adminData.normativesList = (listRes && (listRes.documents || listRes.items)) || [];
+    adminData.normativesStats = (statsRes && statsRes.stats) || {};
+    normativesState.documents = adminData.normativesList;
+    renderAdminPanel();
+  } catch (e) { console.warn("reloadAdminNormatives:", e); }
+}
+
+async function adminCheckNormUrl(kind) {
+  const input = document.getElementById(kind === "pdf" ? "norm-form-pdfurl" : "norm-form-lexurl");
+  const out = document.getElementById(kind === "pdf" ? "norm-check-pdf" : "norm-check-official");
+  if (!input || !out) return;
+  const url = input.value.trim();
+  if (!url) { out.style.color = "var(--text-secondary)"; out.textContent = "Havola kiritilmagan"; return; }
+  out.style.color = "var(--text-secondary)"; out.textContent = "Tekshirilmoqda...";
+  try {
+    const res = await adminApi("/api/admin/normatives/validate-url", { url, kind });
+    const r = (res && res.result) || {};
+    out.style.color = r.ok ? "#10b981" : "#ef4444";
+    out.textContent = (res && res.message) || "Tekshirib bo‘lmadi";
+    if (r.redirected && r.final_url) out.textContent += " → " + r.final_url;
+  } catch (e) { out.style.color = "#ef4444"; out.textContent = "Tekshirishda xatolik"; }
+}
+
+async function runNormativesAudit() {
+  haptic("medium");
+  showToast("🔍 Havolalar tekshirilmoqda (1–2 daqiqa)...");
+  try {
+    const res = await adminApi("/api/admin/normatives/audit", {});
+    if (!res || !res.ok) return showAlert((res && res.error) || "Audit bajarilmadi.");
+    const s = res.summary, bad = (res.report || []).filter(r => (r.issues || []).length);
+    showAppModalHtml(`
+      <div class="modal-overlay active" onclick="if(event.target===this) closeAdminModal();">
+        <div class="modal-card" style="max-width:560px; max-height:88vh; overflow-y:auto;" onclick="event.stopPropagation()">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h2 style="font-size:18px; font-weight:800;">🔍 Havolalar auditi</h2><button class="modal-close-btn" onclick="closeAdminModal()">✕</button>
+          </div>
+          <div style="font-size:13px; line-height:1.7;">
+            <b>Jami:</b> ${s.total} (tekshirildi: ${s.checked})<br>
+            <b>PDF</b> — haqiqiy: ${s.pdf.valid}, Drive/Telegram (tekshirib bo‘lmaydi): ${s.pdf.unverifiable_drive_telegram}, PDF emas: ${s.pdf.not_a_pdf}, ishlamaydi: ${s.pdf.broken}, kiritilmagan: ${s.pdf.missing}, qidiruv sahifasi: ${s.pdf.search_page_in_pdf_field}<br>
+            <b>Rasmiy sayt</b> — ishlaydi: ${s.official.valid}, bosh sahifa xolos: ${s.official.generic_home_page}, qidiruv sahifasi: ${s.official.search_page}, ishlamaydi: ${s.official.broken}, sayt rad etdi (bot himoyasi): ${s.official.blocked_by_site}, kiritilmagan: ${s.official.missing}
+          </div>
+          ${bad.length ? `<div style="margin-top:12px; font-weight:700; font-size:14px;">Muammoli yozuvlar (${bad.length}) — hech narsa o‘chirilmadi:</div>
+          ${bad.map(r => `<div style="margin-top:8px; padding:8px 10px; border-radius:10px; background:var(--bg-surface-elevated); font-size:12.5px;"><b>${escapeHtml(r.document_number)}</b> — ${escapeHtml(r.title)}<br>${r.issues.map(i => "⚠️ " + escapeHtml(i.field) + ": " + escapeHtml(i.text)).join("<br>")}</div>`).join("")}` : `<div style="margin-top:12px;">Muammoli havola topilmadi ✓</div>`}
+        </div>
+      </div>`);
+    await reloadAdminNormatives();
+  } catch (e) { console.error("AUDIT ERROR:", e); showAlert("Audit bajarilmadi. Qayta urinib ko‘ring."); }
 }
