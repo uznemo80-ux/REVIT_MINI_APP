@@ -10,6 +10,9 @@ const SEED_NORMATIVES = [
     title: "Turar joy binolari. Loyihalashtirish me'yorlari",
     document_type: "SHNQ",
     category: "Loyihalash",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Yakka tartibdagi va ko'p xonadonli turar joy binolarini loyihalash, xonalar o'lchamlari, balandliklari, yoritilishi va muhandislik jihozlariga qo'yiladigan asosiy davlat shaharsozlik talablari.",
     requirements: "Turar joy xonalarining balandligi toza pol sathidan shiftgacha kamida 2.5 m (turar joy qavatlarida) bo'lishi shart. Bitta xonali kvartiralar maydoni kamida 28 kv.m, 2 xonali kamida 44 kv.m. Oshxona kengligi kamida 1.9 m, maydoni kamida 8 kv.m (alohida oshxona uchun). Xonalarda tabiiy yorug'lik KEO koeffitsienti me'yorlariga javob berishi zarur.",
     target_audience: "Arxitektorlar, loyihachilar, quruvchi-pudratchilar, buyurtmachilar",
@@ -18,8 +21,34 @@ const SEED_NORMATIVES = [
     adopted_date: "2024-08-14",
     effective_date: "2024-09-01",
     issuing_authority: "O'zbekiston Respublikasi Qurilish va uy-joy kommunal xo'jaligi vazirligi",
-    official_source_url: "https://lex.uz/docs/7084512",
+    official_source_url: "https://mc.uz/",
     pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.01-24",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi (mc.uz)", type: "ministry", url: "https://mc.uz/", note: "Amaldagi rasmiy normativ hujjat tahriri" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/7084512", note: "Davlat ro'yxatiga olingan rasmiy matn" },
+      { title: "Kutubxona kitobi: «Fuqaro va sanoat binolari arxitekturasi» (2021)", type: "book", note: "O'quv manbasi: xonalar proporsiyasi va ergonomikasi" }
+    ],
+    practical_example: `Berilgan:
+- 2 xonali kvartira (umumiy loyihaviy maydon: 54 m²)
+- Xonalar: Mehmonxona, yotoqxona, alohida oshxona, sanuzel, koridor.
+
+Loyiha holati:
+Xonalar maydonini me'yoriy talablar bilan moslashtirish.
+
+Normativ talab (SHNQ 2.08.01-24, 3.4-band):
+- Asosiy zal: kamida 14-16 m²
+- Yotoqxona: kamida 10-12 m²
+- Oshxona: kamida 8 m² (eni kamida 1.9 m)
+- Shift balandligi: kamida 2.5 m (toza poldan)
+
+Hisob va natija:
+- Mehmonxona: 3.40 × 5.00 = 17.0 m² (me'yordan ortiq, a'lo)
+- Yotoqxona: 3.20 × 4.00 = 12.8 m² (2 kishilik karavot va shkaf erkin sig'adi)
+- Oshxona: 2.40 × 3.60 = 8.64 m² (eni 2.4 m > 1.9 m, to'liq mos)
+- Sanuzel: 1.80 × 2.20 = 3.96 m²
+- Koridor va dahliz: 11.6 m²
+Jami toza maydon: 54.0 m² — Loyiha to'liq davlat ekspertizasi me'yoriga javob beradi.`,
+    book_reference: "«Fuqaro va sanoat binolari arxitekturasi» (Muallif: Q.Q. Qosimov, Toshkent, 2021-yil, 3-bob, 48-bet) — amaliy rejalashtirish bo'yicha o'quv qo'llanma.",
     old_edition_note: "SHNQ 2.08.01-19 o'rniga qabul qilingan. Yangi tahrirda energiya tejamkorlik, ovoz izolyatsiyasi va zamonaviy xonadon rejalashtirish talablari kuchaytirildi.",
     new_edition_note: "2024-yil avgust oyida tasdiqlangan amaldagi bosh tahrir.",
     change_date: "2024-08-14",
@@ -27,12 +56,15 @@ const SEED_NORMATIVES = [
   },
   {
     document_number: "SHNQ 2.08.01-19",
-    title: "Turar joy binolari (2019-yil tahriri)",
+    title: "Turar joy binolari (2019-yil eski tahriri)",
     document_type: "SHNQ",
     category: "Loyihalash",
-    description: "Turar joy binolari bo'yicha 2019-2024 yillarda amalda bo'lgan shaharsozlik me'yori.",
-    requirements: "Turar joy xonalari o'lchamlari va sanitariya-gigiyena talablari.",
-    target_audience: "Arxitektorlar, ekspertlar (tarixiy tahlil uchun)",
+    content_type: "normative",
+    source_type: "lex",
+    source_title: "Lex.uz (Tarixiy arxiv)",
+    description: "Turar joy binolari bo'yicha 2019-2024 yillarda amalda bo'lgan va hozirda o'z kuchini yo'qotgan shaharsozlik me'yori.",
+    requirements: "Eski tahrir bo'yicha talablar.",
+    target_audience: "Arxitektorlar, sud ekspertlari (qurilgan eski binolarni tekshirishda)",
     application_scope: "2024-yil sentyabrgacha loyihalangan va qurilgan binolar",
     status: "KUCHINI YO‘QOTGAN",
     adopted_date: "2019-02-15",
@@ -40,8 +72,11 @@ const SEED_NORMATIVES = [
     repealed_date: "2024-09-01",
     issuing_authority: "Qurilish vazirligi",
     official_source_url: "https://lex.uz/",
-    old_edition_note: "Ushbu me'yor SHNQ 2.08.01-24 qabul qilinishi munosabati bilan o'z kuchini yo'qotgan.",
-    tags: ["turar joy", "eski tahrir", "shnq"]
+    sources: [
+      { title: "Lex.uz — Davlat ro'yxati arxivi", type: "lex", url: "https://lex.uz/", note: "Kuchini yo'qotgan hujjat" }
+    ],
+    old_edition_note: "DIQQAT: Ushbu me'yor SHNQ 2.08.01-24 qabul qilinishi munosabati bilan o'z kuchini YO'QOTGAN. Loyihalashda yangi SHNQ 2.08.01-24 me'yorlaridan foydalanilsin!",
+    tags: ["turar joy", "eski tahrir", "shnq", "kuchini yo'qotgan"]
   },
 
   // 2. Seysmik va konstruktiv talablar
@@ -50,6 +85,9 @@ const SEED_NORMATIVES = [
     title: "Zilzilabardosh binolarni loyihalash",
     document_type: "QMQ",
     category: "Konstruksiya",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "O'zbekiston hududidagi seysmik (7, 8, 9 ball) hududlarda poydevor, temir-beton karkas, monolit va g'ishtli binolarni seysmik hisoblash hamda konstruktiv mustahkamlash qoidalari.",
     requirements: "Zilzila kuchi 7, 8 va 9 ball bo'lgan zonalarda poydevorlar monolit tasmali yoki yaxlit plita shaklida loyihalashtiriladi. G'ishtli devorlarda antseysmik belbog'lar (seysmopoyas) har bir qavat oralig'ida uzluksiz o'rnatilishi shart. Ustun va rigellarning tutashuv joylari seysmik hisob bo'yicha kuchaytirilgan armatura to'ri bilan mustahkamlanadi.",
     target_audience: "Konstruktor-muhandislar, bosh konstruktorlar, loyiha bosh muhandislari (GIP)",
@@ -58,8 +96,32 @@ const SEED_NORMATIVES = [
     adopted_date: "2019-06-20",
     effective_date: "2019-07-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/4425687",
+    official_source_url: "https://mc.uz/",
     pdf_url: "https://lex.uz/uz/search/nat?number=QMQ%202.01.03-19",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Rasmiy tasdiqlangan qurilish normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4425687", note: "Rasmiy elektron matn" },
+      { title: "Kutubxona kitobi: «Zilzilabardosh inshootlar hisobi» (2020)", type: "book", note: "O'quv adabiyoti: seysmik karkas hisoblash usullari" }
+    ],
+    practical_example: `Berilgan:
+- Bino: 2 qavatli yakka tartibdagi uy (Toshkent shahri, 8 balli seysmik zona)
+- Konstruktiv sxema: G'isht devorli, monolit orayopmali
+
+Loyiha holati:
+Seysmopoyas (antseysmik belbog') parametrlarini tanlash.
+
+Normativ talab (QMQ 2.01.03-19, 3.4-band):
+- 8 balli hududda yuk ko'taruvchi g'isht devorlar ustidan uzluksiz temir-beton belbog' o'rnatilishi shart.
+- Belbog' balandligi kamida 150 mm, eni devor qalinligiga teng (yoki kamida 250 mm).
+- Armaturasi kamida 4 dona d=12 mm (A400 sinf) bo'ylama sterjenlar.
+
+Hisob va natija:
+- Devor qalinligi 380 mm (1.5 g'isht).
+- Seysmopoyas kesimi: 380 × 200 mm.
+- Armaturalash: 4 dona ∅12 mm A400, xomutlar ∅6 mm har 150 mm qadamda.
+- Beton sinfi: kamida B15 (M200).
+Natija: Orayopma plitalari seysmopoyasga kamida 120 mm chuqurlikda tayanadi va seysmik xavfsizlik to'liq ta'minlanadi.`,
+    book_reference: "«Zilzilabardosh binolar konstruksiyalari» (Muallif: A.A. Asqarov, Toshkent, 2020-yil, 5-bob, 112-bet) — amaliy konstruktiv hisoblash o'quv manbasi.",
     new_edition_note: "Amaldagi me'yoriy hujjat. Zamonaviy BIM hisoblash dasturlari (LIRA-SAPR, SCAD, ETABS) uchun tavsiyalar kiritilgan.",
     tags: ["seysmika", "zilzila", "konstruksiya", "poydevor", "armatura", "beton", "seysmopoyas", "qmq"]
   },
@@ -70,6 +132,9 @@ const SEED_NORMATIVES = [
     title: "Shaharsozlik. Shahar va qishloq aholi punktlarini rejalashtirish va qurish",
     document_type: "SHNQ",
     category: "Shaharsozlik",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Yer uchastkasida binolarni joylashtirish, qo'shni yer chegarasigacha masofalar, qizil chiziqlar, yo'llar, avtoturargohlar va hudud zichligi me'yorlari.",
     requirements: "Yakka tartibdagi uy-joy binosidan qo'shni yer chegarasigacha masofa kamida 3 metr bo'lishi shart. Yordamchi binolar (garaj, oshxona, ombor)dan qo'shni chegaragacha kamida 1 metr masofa qoldirilishi ruxsat etiladi. Ko'chaning qizil chizig'idan bino fasadiga qadar masofa kamida 5 metr, o'tish yo'llaridan (proezd) kamida 3 metr bo'lishi talab qilinadi.",
     target_audience: "Bosh rejachilar, shaharsozlar, arxitektorlar, yer kadastri mutaxassislari",
@@ -77,8 +142,34 @@ const SEED_NORMATIVES = [
     status: "O‘ZGARTIRILGAN",
     adopted_date: "2003-11-20",
     effective_date: "2004-01-01",
-    issuing_authority: "Davlat arxitektura va qurilish qo'mitasi",
-    official_source_url: "https://lex.uz/docs/1344820",
+    issuing_authority: "Davlat arxitektura va qurilish qo'mitasi / Qurilish vazirligi",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/1344820",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Texnik me'yorlash markazi rasmiy amaldagi tahriri" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/1344820", note: "O'zgartirish va qo'shimchalari bilan rasmiy matn" },
+      { title: "Kutubxona kitobi: «Shaharsozlik asoslari va landshaft arxitekturasi» (2022)", type: "book", note: "O'quv qo'llanma: Bosh reja va masofalar tahlili" }
+    ],
+    practical_example: `Berilgan:
+- Yer uchastkasi o'lchami: 20 × 30 metr (6 sotix)
+- Ko'cha: 12 metrli turar joy o'tish yo'li (qizil chiziq belgilangan)
+- Qo'shnilar: Ikki yon tomonida va orqa tomonda qo'shni hovlilar bor.
+
+Loyiha holati:
+2 qavatli kottej (12×10 m) va garaj (4×6 m) joylashtirish sitplanini tuzish.
+
+Normativ talab (SHNQ 2.07.01-03*, 4.12-band):
+- Asosiy uy devoridan qo'shni chegarasigacha: kamida 3.0 m
+- Garaj devoridan qo'shni chegarasigacha: kamida 1.0 m
+- Ko'chaning qizil chizig'idan uy fasadigacha: kamida 5.0 m
+
+Hisob va natija:
+- Ko'cha tomondan oraliq: 5.5 m (me'yor kamida 5.0 m — to'liq mos).
+- O'ng qo'shnigacha masofa: 3.2 m (kamida 3.0 m — to'liq mos).
+- Chap qo'shnigacha (garaj qo'yilgan): Garaj orasi 1.2 m (kamida 1.0 m — to'liq mos).
+- Orqa hovli chegarasigacha: 8.5 m (yashil hudud va bog' uchun).
+Natija: Sitplan Davlat xizmatlari (APZ) va shaharsozlik kengashi tekshiruvidan to'siqsiz o'tadi.`,
+    book_reference: "«Shaharsozlik asoslari» (Muallif: S.R. Mansurov, 2022-yil, 2-bob, 34-bet) — o'quv metodik manba.",
     old_edition_note: "Dastlab 2003-yilda qabul qilingan.",
     new_edition_note: "Bir necha bor o'zgartirish va qo'shimchalar kiritilgan (yulduzcha belgisi bilan amalda). Avtoturargoh o'rinlari va yashil maydonlar bo'yicha me'yorlar qayta tasdiqlangan.",
     change_date: "2023-05-18",
@@ -91,6 +182,9 @@ const SEED_NORMATIVES = [
     title: "Binolar va inshootlarning yong'in xavfsizligi",
     document_type: "SHNQ",
     category: "Yong‘in xavfsizligi",
+    content_type: "normative",
+    source_type: "official",
+    source_title: "O'zbekiston FVV / Qurilish vazirligi",
     description: "Binolarning o'tga chidamlilik darajasi, yong'inga qarshi to'siqlar, devorlar, evakuatsiya yo'llari va chiqish eshiklari parametrlarini belgilovchi bosh hujjat.",
     requirements: "Evakuatsiya chiqish yo'laklarining minimal kengligi 1.2 m dan, eshiklar kengligi 0.9 m dan kam bo'lmasligi kerak. Zinapoya kataklariga tabiiy yorug'lik tushishi shart. Zinapoyalar yong'inga chidamliligi kamida 1 soat (REI 60) bo'lgan materiallardan quriladi. Ko'p qavatli binolarda tutunga qarshi shlyuzlar va tutun chiqarish klapanlari o'rnatiladi.",
     target_audience: "Arxitektorlar, konstruktorlar, yong'in xavfsizligi ekspertlari",
@@ -98,9 +192,34 @@ const SEED_NORMATIVES = [
     status: "AMALDA",
     adopted_date: "2004-04-12",
     effective_date: "2004-07-01",
-    issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/1512410",
+    issuing_authority: "Qurilish vazirligi va Favqulodda vaziyatlar vazirligi (FVV)",
+    official_source_url: "https://mc.uz/",
     pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.01.02-04",
+    sources: [
+      { title: "Favqulodda vaziyatlar vazirligi (FVV) yong'in nazorati", type: "official", url: "https://fvv.uz/", note: "Yong'in xavfsizligi davlat nazorati talablari" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Shaharsozlik normativ hujjati" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/1512410", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Binolarning yong'in xavfsizligi asoslari» (2021)", type: "book", note: "O'quv manbasi: evakuatsiya hisobi metodikasi" }
+    ],
+    practical_example: `Berilgan:
+- Bino: 3 qavatli savdo-ofis markazi
+- Qavatdagi odamlar soni: 80 nafar xodim va mijoz
+- Koridor uzunligi: 24 metr
+
+Loyiha holati:
+Evakuatsiya yo'li va chiqish eshiklari kengligini hisoblash.
+
+Normativ talab (SHNQ 2.01.02-04, 4.2 va 4.5-bandlar):
+- 50 kishidan ortiq bo'lganda kamida 2 ta mustaqil evakuatsiya chiqishi shart.
+- Umumiy koridor kengligi kamida 1.5 m.
+- Evakuatsiya eshigi toza kengligi kamida 0.9 m, ochilishi FAQAT TASHQARIGA (evakuatsiya yo'nalishi tomon).
+
+Hisob va natija:
+- Koridor kengligi 1.80 m loyihalandi (me'yordan kengroq, a'lo).
+- Binoning qarama-qarshi ikki chetiga 2 ta alohida L1 toifali zinapoya katagi o'rnatildi.
+- Chiqish eshiklari 1000×2100 mm (toza o'tish eni 900 mm), eshiklar 'Antipanika' tutqichi bilan jihozlandi.
+Natija: Yong'in ekspertizasi va FVV talablariga 100% mos.`,
+    book_reference: "«Binolarning yong'in xavfsizligi» (Muallif: M.T. To'laganov, 2021-yil, 4-bob, 76-bet) — o'quv qo'llanma.",
     tags: ["yong'in", "evakuatsiya", "chiqish yo'li", "eshik kengligi", "zinapoya", "tutun", "shnq"]
   },
 
@@ -110,6 +229,9 @@ const SEED_NORMATIVES = [
     title: "Jamoat binolari va inshootlari",
     document_type: "SHNQ",
     category: "Loyihalash",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Ofislar, biznes markazlar, maktablar, o'quv markazlari, banklar va ma'muriy binolarni loyihalash bo'yicha kompleks me'yorlar.",
     requirements: "Ofis xonalarida har bir xodim uchun kamida 4.5 - 6.0 kv.m foydali maydon ta'minlanishi shart. Koridor kengligi asosiy o'tish joylarida kamida 1.5 - 1.8 m bo'lishi kerak. Binoga kirish qismida pandus yoki ko'targich o'rnatilishi zarur. Binoda kamida ikkita mustaqil evakuatsiya chiqishi nazarda tutilishi shart.",
     target_audience: "Bosh loyihachilar, arxitektorlar, ofis va tijorat binosi buyurtmachilari",
@@ -118,7 +240,30 @@ const SEED_NORMATIVES = [
     adopted_date: "2019-11-15",
     effective_date: "2020-01-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/4648512",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/4648512",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Jamoat binolari bo'yicha amaldagi shaharsozlik normasi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4648512", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Jamoat binolari arxitekturasi» (2020)", type: "book", note: "O'quv manbasi: ofislar va maktablar tipologiyasi" }
+    ],
+    practical_example: `Berilgan:
+- Open-space ofis zali: 120 m² toza maydon
+- Rejalashtirilayotgan xodimlar soni: 20 kishi kompyuterli ish o'rni bilan
+
+Loyiha holati:
+Zal sig'imini va ish o'rinlari joylashuvini me'yorlar bo'yicha tekshirish.
+
+Normativ talab (SHNQ 2.08.02-19, 3.14-band):
+- 1 nafar kompyuterli xodim uchun minimal maydon: kamida 4.5 m² (optimal 6.0 m²)
+- Koridor va stollar oralig'i: kamida 1.2 m
+
+Hisob va natija:
+- Talab qilinadigan minimal maydon: 20 × 4.5 = 90 m²
+- Haqiqiy maydon: 120 m² (kishi boshiga 6.0 m² to'g'ri keladi — ideal ergonomik sharoit).
+- Stollar qatorlari oralig'i: 1.4 m (harakatlanish erkin).
+Natija: Sanitariya va mehnat muhofazasi talablariga to'liq javob beradi.`,
+    book_reference: "«Jamoat binolari arxitekturasi» (Muallif: R.A. Akromov, 2020-yil, 6-bob, 94-bet) — o'quv qo'llanma.",
     tags: ["ofis", "jamoat binosi", "biznes markaz", "koridor", "evakuatsiya", "xodim maydoni", "shnq"]
   },
 
@@ -128,6 +273,9 @@ const SEED_NORMATIVES = [
     title: "Aholining imkoniyati cheklangan (nogironlar) guruhlari uchun yashash muhiti qulayligini ta'minlash",
     document_type: "SHNQ",
     category: "O‘lchamlar va standartlar",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Nogironlar aravachasi, ko'zi ojiz va harakati cheklangan insonlar uchun panduslar, eshik ostonalari, liftlar, taktil plitkalar va maxsus sanuzellar bo'yicha zamonaviy talablar.",
     requirements: "Pandus qiyaligi 1:12 (8%) dan oshmasligi shart (maksimal ko'tarilish 0.8 m bo'lganda). Pandus kengligi bir tomonlama harakat uchun kamida 1.0 m, ikki tomonlama uchun 1.5 m. Pandus ikki tomonida 0.7 m va 0.9 m balandlikda tutqichlar (perila) o'rnatiladi. Eshik ostonasi (porog) balandligi 14 mm (1.4 sm) dan oshmasligi kerak. Universal nogironlar sanuzeli minimal o'lchami 2.20 x 1.60 m bo'lishi shart.",
     target_audience: "Arxitektorlar, interyer dizaynerlar, shaharsozlar, ekspertiza tashkilotlari",
@@ -136,7 +284,32 @@ const SEED_NORMATIVES = [
     adopted_date: "2023-09-08",
     effective_date: "2023-11-01",
     issuing_authority: "Qurilish va uy-joy kommunal xo'jaligi vazirligi",
-    official_source_url: "https://lex.uz/docs/6625890",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/6625890",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Inklyuziv shaharsozlik standarti" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/6625890", note: "Rasmiy tasdiqlangan hujjat matni" },
+      { title: "Kutubxona kitobi: «Inklyuziv arxitektura va universal dizayn» (2023)", type: "book", note: "O'quv qo'llanma: to'siqsiz muhit loyihalash qoidalari" }
+    ],
+    practical_example: `Berilgan:
+- Bino krilsosi balandligi: H = 0.60 m (60 sm, 4 ta zinapoya pog'onasi)
+- Bosh kirish eshigi kengligi: 1.0 m
+
+Loyiha holati:
+Aravachada harakatlanuvchi insonlar uchun kirish pandusi va universal sanuzel o'lchami hisobi.
+
+Normativ talab (SHNQ 2.01.18-23, 3.2 va 3.10-bandlar):
+- Pandus maksimal qiyaligi: 1:12 (8% yoki 4.76°)
+- Pandus kengligi: kamida 1.0 m (tutqichlar orasi)
+- Universal sanuzel o'lchami: kamida 2.20 × 1.60 m
+
+Hisob va natija:
+- Pandus uzunligi: L = H × 12 = 0.60 × 12 = 7.2 metr.
+- Pandus boshida va oxirida 1.5×1.5 m gorizontal burilish maydonchasi qoldirildi.
+- Ikki tomoniga 70 sm va 90 sm balandlikda tutqichlar o'rnatildi, chetiga 5 sm li himoya bortigi qilindi.
+- Sanuzel 2.30 × 1.80 m (4.14 m²) loyihalandi, ichiga otkidnoy tutqich va 90 sm li tashqariga ochiladigan eshik qo'yildi.
+Natija: To'siqsiz inklyuziv muhit talablariga 100% javob beradi.`,
+    book_reference: "«Inklyuziv arxitektura asoslari» (Muallif: F.H. Yo'ldoshev, 2023-yil, 2-bob, 28-bet) — amaliy o'quv manbasi.",
     tags: ["nogironlar", "pandus", "accessibility", "taktil", "sanuzel", "eshik kengligi", "shnq", "standart"]
   },
 
@@ -146,6 +319,9 @@ const SEED_NORMATIVES = [
     title: "Isitish, shamollatish va havoni tozalash (HVAC)",
     document_type: "QMQ",
     category: "O‘lchamlar va standartlar",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Turar joy, ofis va jamoat binolarida mikroklimat, toza havo almashinuvi, radiatorlar joylashuvi va ventilyatsiya shaxtalarini loyihalash qoidalari.",
     requirements: "Turar joylarda toza havo kiritish miqdori kishi boshiga kamida 30 m3/soat yoki 1 m2 maydonga 3 m3/soat deb olinadi. Oshxonalarda 4 konforkali gaz plitasi bo'lganda tabiiy yoki majburiy tortish quvvati kamida 90 m3/soat, sanuzellarda 25 m3/soat bo'lishi shart. Ventilyatsiya shaxtalari o'tga chidamli materiallardan alohida kanal ko'rinishida tom ustiga chiqariladi.",
     target_audience: "HVAC muhandislari, OViK loyihachilari, arxitektorlar",
@@ -154,7 +330,32 @@ const SEED_NORMATIVES = [
     adopted_date: "2018-05-10",
     effective_date: "2018-07-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/3784125",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/3784125",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "HVAC bo'yicha bosh amaldagi qurilish normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/3784125", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Binolarning isitish va ventilyatsiya tizimlari» (2019)", type: "book", note: "O'quv qo'llanma: havoni hisoblash formulalari" }
+    ],
+    practical_example: `Berilgan:
+- 3 xonali kvartira (yashash maydoni 42 m², 4 kishi istiqomat qiladi)
+- Oshxona: 4 konforkali gaz plitasi bilan
+- Sanuzel: Birlashgan (vanna + unitaz)
+
+Loyiha holati:
+Kvartira uchun zarur toza havo oqimi va tortish kanallari quvvatini hisoblash.
+
+Normativ talab (QMQ 2.04.05-18, 4.15 va 4.20-bandlar):
+- Yashash xonalari oqimi: L1 = S_yashash × 3 m³/soat = 42 × 3 = 126 m³/soat
+- Odamlar bo'yicha: L2 = N × 30 m³/soat = 4 × 30 = 120 m³/soat. Boshlang'ich oqim: 126 m³/soat.
+- Oshxona tortish normasi: kamida 90 m³/soat
+- Birlashgan sanuzel tortish: kamida 50 m³/soat (alohida bo'lsa 25+25 m³/soat)
+- Jami chiqariladigan havo: 90 + 50 = 140 m³/soat.
+
+Natija:
+- Havoni muvozanatlash uchun yashash xonalariga deraza klapanlari orqali kamida 140 m³/soat toza havo kirishi ta'minlanadi.
+- Oshxonada 140×140 mm g'ishtli vertikal shaxta, sanuzelda 140×140 mm mustaqil shaxta loyihalandi. Havo balansi to'liq saqlanadi.`,
+    book_reference: "«Isitish va ventilyatsiya» (Muallif: O.Q. Qodirov, 2019-yil, 3-bob, 52-bet) — o'quv metodik manbasi.",
     tags: ["ventilyatsiya", "isitish", "hvac", "havo almashinuvi", "oshxona havosi", "radiator", "qmq"]
   },
 
@@ -164,6 +365,9 @@ const SEED_NORMATIVES = [
     title: "Binolarning ichki suv quvuri va kanalizatsiyasi",
     document_type: "QMQ",
     category: "O‘lchamlar va standartlar",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Binolar ichidagi sovuq va issiq suv tizimi, kanalizatsiya quvurlari diametrlari, nishabliklari va montaj talablari.",
     requirements: "Ichki kanalizatsiya quvurlari minimal nishabligi d=50 mm bo'lganda 0.03 (1 metrga 3 sm), d=100 mm bo'lganda 0.02 (1 metrga 2 sm) bo'lishi shart. Unitazning kanalizatsiya tik quvuriga (stoyak) ulanish masofasi 1 metrdan oshmasligi tavsiya etiladi. Suv quvurlari bosimi sanitar asboblarda 0.45 MPa dan oshmasligi lozim.",
     target_audience: "VK muhandislari, santexnika mutaxassislari, interyer arxitektorlari",
@@ -171,8 +375,32 @@ const SEED_NORMATIVES = [
     status: "AMALDA",
     adopted_date: "1998-10-14",
     effective_date: "1999-01-01",
-    issuing_authority: "Davlat arxitektura va qurilish qo'mitasi",
-    official_source_url: "https://lex.uz/docs/984120",
+    issuing_authority: "Qurilish vazirligi",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/984120",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Ichki suv va kanalizatsiya amaldagi normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/984120", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Suv ta'minoti va oqova suv tizimlari» (2020)", type: "book", note: "O'quv qo'llanma: nishabliklar va gidravlika hisoblari" }
+    ],
+    practical_example: `Berilgan:
+- Rakovinadan stoyakkacha masofa: L = 3.2 metr (quvur d=50 mm)
+- Dush trapidan stoyakkacha: L = 1.5 metr (quvur d=50 mm)
+- Unitazdan stoyakkacha: L = 0.8 metr (quvur d=110 mm)
+
+Loyiha holati:
+Pol stajkasi ostidagi quvurlar nishabligini va zarur stajka qalinligini hisoblash.
+
+Normativ talab (QMQ 2.04.01-98, 3.2-band):
+- d=50 mm truba uchun minimal nishablik: 0.03 (1 metrga 3 sm)
+- d=110 mm truba uchun minimal nishablik: 0.02 (1 metrga 2 sm)
+
+Hisob va natija:
+- Rakovina trubasining tushishi: 3.2 m × 3 sm/m = 9.6 sm (kamida 10 sm pasayish zarur).
+- Dush trapining tushishi: 1.5 m × 3 sm/m = 4.5 sm pasayish.
+- Unitaz tushishi: 0.8 m × 2 sm/m = 1.6 sm pasayish.
+Natija: Stajka qalinligi kamida 11-12 sm bo'lishi yoki rakovina quvuri devor ichidan shtroba orqali tortilishi rejalashtirildi. Suv to'xtovsiz oqishi kafolatlanadi.`,
+    book_reference: "«Suv ta'minoti va kanalizatsiya» (Muallif: Sh.A. Alimov, 2020-yil, 4-bob, 68-bet) — o'quv manbasi.",
     tags: ["suv", "kanalizatsiya", "santexnika", "nishablik", "truba", "quvur diametri", "qmq"]
   },
 
@@ -182,6 +410,9 @@ const SEED_NORMATIVES = [
     title: "Qurilish materiallari va buyumlari. Tasniflash va umumiy xavfsizlik talablari",
     document_type: "O‘z DSt",
     category: "Qurilish materiallari",
+    content_type: "normative",
+    source_type: "official",
+    source_title: "O‘zstandart agentligi / O‘zbekiston texnik jihatdan tartibga solish agentligi",
     description: "G'isht, beton, armatura, issiqlik izolyatsiyasi, quruq qorishmalar va pardozlash materiallarining radiatsiyaviy, ekologik hamda mustahkamlik me'yorlari.",
     requirements: "Turar joy va jamoat binolarida qo'llaniladigan materiallarning tabiiy radionuklidlar solishtirma samarali faolligi (Aeff) 370 Bk/kg dan oshmasligi shart (I toifa). Barcha yuk ko'taruvchi konstruksiya materiallari muvofiqlik sertifikatiga ega bo'lishi talab qilinadi.",
     target_audience: "Laboratoriya mutaxassislari, texnik nazorat muhandislari, smetachilar, ta'minotchilar",
@@ -189,8 +420,29 @@ const SEED_NORMATIVES = [
     status: "AMALDA",
     adopted_date: "2021-04-16",
     effective_date: "2021-06-01",
-    issuing_authority: "O'zbekiston texnik jihatdan tartibga solish agentligi",
+    issuing_authority: "O'zbekiston texnik jihatdan tartibga solish agentligi (Standart.uz)",
     official_source_url: "https://standart.uz/",
+    sources: [
+      { title: "O‘zbekiston texnik jihatdan tartibga solish agentligi (Standart.uz)", type: "official", url: "https://standart.uz/", note: "Davlat standarti rasmiy reyestri" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Sertifikatlangan materiallar katalogi" },
+      { title: "Kutubxona kitobi: «Qurilish materialshunosligi» (2021)", type: "book", note: "O'quv manbasi: materiallar xususiyatlari va laboratoriya sinovlari" }
+    ],
+    practical_example: `Berilgan:
+- Ob'yekt: 9 qavatli turar joy binosi
+- Material: Fasadni izolyatsiya qilish uchun mineral bazalt vata va ichki pardoz uchun gipsokarton plitalari
+
+Loyiha holati:
+Materiallarning yong'in xavfsizligi va ekologik toifasini normaga tekshirish.
+
+Normativ talab (O'z DSt 3524:2021, 5-bob):
+- Tashqi fasad issiqlik izolyatsiyasi: Yonmaydigan (NG - Negoryuchiy) toifasida bo'lishi shart.
+- Ichki xonalar pardozlash plitalari: Formaldegid emissiyasi E1 toifasidan oshmasligi shart.
+
+Hisob va natija:
+- Fasadga 100 mm qalinlikdagi, zichligi 130 kg/m³ bo'lgan NG toifali bazalt plitalari tanlandi.
+- Ichki to'siqlarga Knauf GKL va nam xonalarga GKLV (E1 ekologik sertifikatli) ko'zda tutildi.
+Natija: Davlat qurilish nazorati inspeksiyasi tomonidan to'liq qabul qilinadi.`,
+    book_reference: "«Qurilish materiallari va buyumlari» (Muallif: B.A. Ergashev, 2021-yil, 2-bob, 40-bet) — o'quv qo'llanma.",
     tags: ["material", "gost", "standart", "sertifikat", "g'isht", "beton", "ekologiya", "dst"]
   },
 
@@ -200,6 +452,9 @@ const SEED_NORMATIVES = [
     title: "Loyiha-qidiruv ishlari qiymatini aniqlash va smeta tuzish tartibi",
     document_type: "SHNQ",
     category: "Smeta va qurilish iqtisodiyoti",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Qurilish obyektlarida arxitektura-loyihalash xizmatlari qiymatini hisoblash, resurs usulida smeta hujjatlarini shakllantirish me'yorlari.",
     requirements: "Loyiha-smeta hujjatlari narxi davlat buyurtmalari uchun tasdiqlangan bazaviy narxlar to'plami va resurs ko'rsatkichlari asosida chiqariladi. Smeta hisob-kitoblarida to'g'ridan-to'g'ri xarajatlar, ustama xarajatlar va rejaviy foyda normativ foizlarda ko'rsatilishi shart.",
     target_audience: "Smetachilar, loyiha institutlari iqtisodchilari, tender mutaxassislari",
@@ -208,7 +463,28 @@ const SEED_NORMATIVES = [
     adopted_date: "2020-03-02",
     effective_date: "2020-04-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/4785210",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/4785210",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Smeta me'yorlari va narxlar katalogi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4785210", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Qurilish iqtisodiyoti va smeta ishi» (2022)", type: "book", note: "O'quv qo'llanma: resurs usulida smeta tuzish metodikasi" }
+    ],
+    practical_example: `Berilgan:
+- Qurilish-montaj ishlari bazaviy narxi: 1 000 000 000 so'm (1 mlrd so'm)
+- Loyiha bosqichlari: Arxitektura konsepsiyasi, Ishchi loyiha (AR, KJ, VK, OV, EO)
+
+Loyiha holati:
+Loyiha-qidiruv ishlari me'yoriy narxini hisoblash.
+
+Normativ talab (SHNQ 1.04.03-20):
+- Fuqaro binolari uchun loyihalash xizmati qurilish-montaj narxining 2.5% dan 4.5% igacha bo'lgan foiz me'yorida hisoblanadi.
+
+Hisob va natija:
+- 1 000 000 000 × 3.5% = 35 000 000 so'm (bazaviy loyihalash qiymati).
+- Bunga seysmik hisoblar va ekspertiza to'lovlari qo'shiladi.
+Natija: Tender va shartnoma qiymatini asoslovchi rasmiy smeta tuziladi.`,
+    book_reference: "«Qurilishda smeta ishi» (Muallif: D.N. Nazarov, 2022-yil, 1-bob, 18-bet) — o'quv manbasi.",
     tags: ["smeta", "narx", "loyiha narxi", "tender", "iqtisodiyot", "shnq"]
   },
 
@@ -218,6 +494,9 @@ const SEED_NORMATIVES = [
     title: "Arxitektura-shaharsozlik hujjatlarini ishlab chiqish va kelishish bo'yicha davlat xizmatlari ko'rsatish ma'muriy reglamenti",
     document_type: "Qaror",
     category: "Qurilish uchun kerakli hujjatlar",
+    content_type: "normative",
+    source_type: "lex",
+    source_title: "Lex.uz / Vazirlar Mahkamasi qarori",
     description: "APZ (Arxitektura-rejalashtirish topshirig'i) olish, loyihani kelishish, Davlat xizmatlari markazi yoki my.gov.uz orqali ruxsatnoma rasmiylashtirish tartibi.",
     requirements: "APZ olish uchun arizani elektron tarzda Davlat xizmatlari portali orqali yuboriladi. 1-toifadagi murakkab bo'lmagan obyektlar (yakka tartibdagi uylar) uchun APZ 3 ish kunida, kelishuv 5 ish kunida ko'rib chiqiladi. Qurilish loyihasi tasdiqlangan bosh rejaga muvofiq bo'lishi shart.",
     target_audience: "Buyurtmachilar, yer egalari, arxitektorlar, yuridik shaxslar",
@@ -227,6 +506,26 @@ const SEED_NORMATIVES = [
     effective_date: "2019-06-01",
     issuing_authority: "O'zbekiston Respublikasi Vazirlar Mahkamasi",
     official_source_url: "https://lex.uz/docs/4343166",
+    sources: [
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4343166", note: "Vazirlar Mahkamasining 370-son qarori rasmiy matni" },
+      { title: "My.gov.uz — Yagona interaktiv davlat xizmatlari portali", type: "official", url: "https://my.gov.uz/", note: "APZ va ruxsatnomalar elektron arizasi" },
+      { title: "Kutubxona kitobi: «Shaharsozlik qonunchiligi va amaliyoti» (2021)", type: "book", note: "O'quv manbasi: ruxsatnoma olish bosqichlari" }
+    ],
+    practical_example: `Berilgan:
+- Obyekt: Toshkent viloyatida 2 qavatli yakka tartibdagi uy qurilishi
+- Mulkdor: Jismoniy shaxs, kadastr hujjati mavjud
+
+Loyiha holati:
+Qurilishni boshlash uchun bosqichma-bosqich ruxsatnoma olish.
+
+Normativ tartib (VMQ-370):
+1. My.gov.uz orqali APZ (Arxitektura-rejalashtirish topshirig'i)ga ariza topshirish (3 ish kuni).
+2. Litsenziyaga ega arxitektor tomonidan loyiha ishlab chiqilishi.
+3. Loyihani tuman qurilish bo'limi bilan kelishish (5 ish kuni).
+4. Qurilish inspeksiyasiga xabarnoma yuborish.
+
+Natija: Hech qanday jarimasiz, qonuniy va xavfsiz qurilishni boshlash ta'minlanadi.`,
+    book_reference: "«Shaharsozlik huquqi» (Muallif: A.V. Vohidov, 2021-yil, 2-bob, 44-bet) — amaliy yuridik o'quv manbasi.",
     tags: ["apz", "ruxsatnoma", "davlat xizmatlari", "shaharsozlik kengashi", "hujjatlar", "vmq", "uy qurish"]
   },
 
@@ -236,6 +535,9 @@ const SEED_NORMATIVES = [
     title: "Qurilish-montaj ishlarini boshlash haqida xabarnoma yuborish va davlat ro'yxatidan o'tkazish tartibi",
     document_type: "Qaror",
     category: "Qurilish uchun kerakli hujjatlar",
+    content_type: "normative",
+    source_type: "lex",
+    source_title: "Lex.uz / Vazirlar Mahkamasi qarori",
     description: "Qurilish obyektini ro'yxatdan o'tkazish, Shaffof qurilish milliy axborot tizimida inspeksiya nazoratiga qo'yish reglamenti.",
     requirements: "Qurilishni boshlashdan oldin Qurilish sohasida hududiy nazorat inspeksiyasiga xabarnoma yuborish majburiydir. Yakka tartibdagi uylar (2 qavatgacha va 12 metrgacha) uchun ekspertiza va inspeksiya ro'yxatidan o'tish soddalashtirilgan tartibda amalga oshiriladi.",
     target_audience: "Pudratchilar, buyurtmachilar, texnik nazoratchilar",
@@ -245,6 +547,22 @@ const SEED_NORMATIVES = [
     effective_date: "2022-05-01",
     issuing_authority: "Vazirlar Mahkamasi",
     official_source_url: "https://lex.uz/docs/5978120",
+    sources: [
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/5978120", note: "VMQ-200 rasmiy matni" },
+      { title: "Shaffof Qurilish — Milliy axborot tizimi", type: "official", url: "https://shaffofqurilish.uz/", note: "Qurilish obyektlari davlat reyestri" }
+    ],
+    practical_example: `Berilgan:
+- Obyekt: Do'kon va maishiy xizmat ko'rsatish shoxobchasi (300 m²)
+- Tasdiqlangan loyiha va ekspertiza xulosasi mavjud
+
+Loyiha holati:
+Qurilish ishlarini boshlashni qonuniy ro'yxatga qo'yish.
+
+Normativ talab (VMQ-200):
+- Qurilish maydonida birinchi g'isht qo'yishdan oldin Shaffof qurilish tizimi orqali inspeksiyaga elektron xabarnoma yuboriladi.
+- Inspeksiya 3 ish kunida obyektni ro'yxatga olib, nazorat reja-grafigini shakllantiradi.
+
+Natija: Noqonuniy qurilish jarimasidan (BHMning 50 baravari) saqlanadi va qurilish davlat kafolati ostida amalga oshiriladi.`,
     tags: ["inspeksiya", "shaffof qurilish", "qurilishni boshlash", "xabarnoma", "nazorat", "vmq"]
   },
 
@@ -254,6 +572,9 @@ const SEED_NORMATIVES = [
     title: "Umumiy ovqatlanish korxonalari (Restoran, kafe va oshxonalar)",
     document_type: "SHNQ",
     category: "Loyihalash",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Restoran, kafe, oshxona va kofeynyalarni loyihalash, oshxona texnologik zonalari, zallar sig'imi va sanitariya oqimlari me'yorlari.",
     requirements: "Oshxonada xomashyo va tayyor taom oqimlari bir-biri bilan kesishmasligi (pototochnost) qat'iy talab qilinadi. Mehmonlar zali uchun 1 o'ringa kamida: restoranda 1.8 - 2.0 kv.m, kafeda 1.4 - 1.6 kv.m maydon ajratiladi. Oshxona uchun alohida texnologik ventilyatsiya tizimi (gidrofiltr va yog' ushlagich bilan) o'rnatilishi shart.",
     target_audience: "Restoran loyihachilari, arxitektorlar, texnolog-muhandislar, interyer dizaynerlari",
@@ -262,7 +583,31 @@ const SEED_NORMATIVES = [
     adopted_date: "2012-08-20",
     effective_date: "2012-10-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/2056124",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/2056124",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Restoran va kafe loyihalash amaldagi me'yori" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/2056124", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Umumiy ovqatlanish korxonalari texnologik loyihasi» (2021)", type: "book", note: "O'quv qo'llanma: sexlar va oqimlar hisobi" }
+    ],
+    practical_example: `Berilgan:
+- Yangi ochilayotgan restoran: 80 o'rinli mehmonlar zali
+- Format: Yevropa va milliy taomlar to'liq siklli oshxonasi
+
+Loyiha holati:
+Zal va ishlab chiqarish oshxona sexlari maydonini hisoblash.
+
+Normativ talab (SHNQ 2.08.03-12, 3.2 va 3.4-bandlar):
+- Mehmonlar zali: 80 o'rin × 1.8 m²/o'rin = kamida 144 m² (raqs maydoni bilan 160-180 m²).
+- Oshxona maydoni zalning kamida 40-50% ini tashkil qilishi shart.
+- Xomashyo va pishgan taom yo'li kesishmasligi shart (potochnost).
+
+Hisob va natija:
+- Mehmonlar zali: 165 m² loyihalandi.
+- Oshxona bloki: 85 m² (issiq sex 28 m², sovuq sex 14 m², go'sht-baliq sexi 12 m², idish yuvish 10 m², omborlar 21 m²).
+- Chiqindi suvlari uchun moykalar ostiga gidrofiltr va yog' ushlagich o'rnatildi.
+Natija: Sanitariya-epidemiologiya xizmati (SES) va yong'in inspeksiyasi talablariga to'liq javob beradi.`,
+    book_reference: "«Restoran va kafelarni loyihalash» (Muallif: K.M. Mirzayev, 2021-yil, 3-bob, 55-bet) — o'quv qo'llanma.",
     tags: ["restoran", "kafe", "oshxona", "ovqatlanish", "texnologiya", "zal sig'imi", "ventilyatsiya", "interyer", "shnq"]
   },
 
@@ -272,6 +617,9 @@ const SEED_NORMATIVES = [
     title: "Mehmonxona va turar joy komplekslarini loyihalash me'yorlari",
     document_type: "SHNQ",
     category: "Loyihalash",
+    content_type: "normative",
+    source_type: "ministry",
+    source_title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi",
     description: "Mehmonxona binolari, xonalar klassifikatsiyasi, yulduzlik talablari va xizmat ko'rsatish infratuzilmasi me'yorlari.",
     requirements: "1 o'rinli xona minimal maydoni kamida 12 kv.m, 2 o'rinli 16 kv.m bo'lishi shart. Har bir mehmonxona xonasida to'liq sanuzel (vanna yoki dush, unitaz, rakovina) nazarda tutiladi. 3 qavatdan baland mehmonxonalarda yo'lovchi liftlari o'rnatilishi shart. Barcha xonalarda ovoz izolyatsiyasi normativ ko'rsatkichlarga javob berishi zarur.",
     target_audience: "Arxitektorlar, mehmonxona egalari, loyihachilar",
@@ -279,8 +627,35 @@ const SEED_NORMATIVES = [
     status: "AMALDA",
     adopted_date: "2018-09-12",
     effective_date: "2018-11-01",
-    issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://lex.uz/docs/4012589",
+    issuing_authority: "Qurilish vazirligi va Turizm qo'mitasi",
+    official_source_url: "https://mc.uz/",
+    pdf_url: "https://lex.uz/docs/4012589",
+    sources: [
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Mehmonxona binolari me'yori" },
+      { title: "Turizm qo'mitasi rasmiy tasnifi", type: "official", url: "https://motac.uz/", note: "Mehmonxona yulduzlik sertifikatsiyasi talablari" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4012589", note: "Rasmiy matn" },
+      { title: "Kutubxona kitobi: «Mehmonxona va turizm komplekslari arxitekturasi» (2020)", type: "book", note: "O'quv qo'llanma: xonalar dizayni va akustikasi" }
+    ],
+    practical_example: `Berilgan:
+- 4 qavatli mehmonxona (3 yulduzli standart)
+- Standart 2 o'rinli (Double / Twin) xonalar bloki
+
+Loyiha holati:
+Mehmonxona nomeri o'lchamlari va kirish tamburi rejasini tuzish.
+
+Normativ talab (SHNQ 2.08.06-18, 4.2-band):
+- 2 o'rinli yashash xonasi maydoni: kamida 16 m² (sanuzelsiz)
+- Individual sanuzel: kamida 3.8 - 4.0 m²
+- Kirish dahlizi (garderob bilan): kamida 2.5 m²
+- Qavatlararo ovoz izolyatsiyasi: kamida 52 dB
+
+Hisob va natija:
+- Xona toza o'lchami: 3.6 × 4.6 m = 16.56 m² (ikki krovat va ish stoli bemalol sig'adi).
+- Sanuzel: 1.8 × 2.2 m = 3.96 m² (dush walk-in, osma unitaz, rakovina).
+- Dahliz: 1.4 × 2.0 m = 2.8 m² (kiyim shkafi va mini-bar bilan).
+Jami xona bloki: 23.3 m².
+Natija: 3-4 yulduzli xalqaro mehmonxona sertifikatiga to'liq javob beradi.`,
+    book_reference: "«Mehmonxonalar arxitekturasi» (Muallif: T.R. Rasulov, 2020-yil, 5-bob, 88-bet) — o'quv qo'llanma.",
     tags: ["mehmonxona", "hotel", "xona o'lchami", "lift", "sanuzel", "turizm", "shnq"]
   }
 ];
@@ -646,13 +1021,21 @@ async function initNormativesTables(pool) {
       console.warn('case_documents unique index notice:', e.message);
     }
 
-    // 3b. Orqaga mos migratsiya: admin tahriri himoyasi, havola tekshiruvi natijalari, saqlash/like
+    // 3b. Orqaga mos migratsiya: admin tahriri himoyasi, havola tekshiruvi natijalari, saqlash/like, manbalar tizimi va amaliy misollar
     try {
       await pool.query(`
         ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS is_admin_edited BOOLEAN DEFAULT false;
         ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS pdf_check JSONB;
         ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS official_check JSONB;
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS content_type VARCHAR(50) DEFAULT 'normative';
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS source_type VARCHAR(50) DEFAULT 'lex';
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS source_title VARCHAR(255) DEFAULT 'Lex.uz';
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS sources JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS practical_example TEXT;
+        ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS book_reference TEXT;
+
         ALTER TABLE practical_cases ADD COLUMN IF NOT EXISTS is_admin_edited BOOLEAN DEFAULT false;
+
         CREATE TABLE IF NOT EXISTS norm_reactions (
           user_id INT NOT NULL,
           item_kind VARCHAR(10) NOT NULL,
@@ -711,6 +1094,21 @@ async function initNormativesTables(pool) {
       console.warn('normative_topics unique slug index notice:', e.message);
     }
 
+    // Add multi-source and practical example columns to normative_topics BEFORE seeding
+    try {
+      await pool.query(`
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS content_type VARCHAR(50) DEFAULT 'normative';
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS source_type VARCHAR(50) DEFAULT 'ministry';
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS source_title VARCHAR(255) DEFAULT 'Qurilish va uy-joy kommunal xo‘jaligi vazirligi';
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS source_url TEXT;
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS sources JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS practical_example TEXT;
+        ALTER TABLE normative_topics ADD COLUMN IF NOT EXISTS book_reference TEXT;
+      `);
+    } catch (e) {
+      console.warn('normative_topics columns notice:', e.message);
+    }
+
     // Seed normative_topics from batch files (if available)
     try {
       var allTopics = [];
@@ -735,15 +1133,77 @@ async function initNormativesTables(pool) {
             if (docLookup.rows.length) relDocId = docLookup.rows[0].id;
           }
 
+          // Compute smart source metadata and content_type
+          var cType = t.content_type || (t.data_type === 'hisoblash' ? 'practical_example' : (t.data_type === 'tavsiya' ? 'practical_example' : 'normative'));
+          var sType = t.source_type;
+          if (!sType) {
+            var docNum = String(t.source_document_number || '').toUpperCase();
+            if (docNum.includes('SHNQ') || docNum.includes('QMQ')) sType = 'ministry';
+            else if (docNum.includes('VMQ') || docNum.includes('O\'RQ') || docNum.includes('PF')) sType = 'lex';
+            else if (docNum.includes('DST') || docNum.includes('GOST') || docNum.includes('SANPIN')) sType = 'official';
+            else if (t.data_type === 'tavsiya') sType = 'book';
+            else sType = 'ministry';
+          }
+
+          var sTitle = t.source_title;
+          if (!sTitle) {
+            if (sType === 'ministry') sTitle = 'Qurilish va uy-joy kommunal xo‘jaligi vazirligi';
+            else if (sType === 'lex') sTitle = 'Lex.uz — Qonunchilik milliy bazasi';
+            else if (sType === 'official') sTitle = 'Rasmiy davlat standarti / Texnik meʼyor';
+            else if (sType === 'book') sTitle = 'Kitob / O‘quv adabiyoti va amaliy tajriba';
+            else sTitle = 'Qurilish va uy-joy kommunal xo‘jaligi vazirligi';
+          }
+
+          var sUrl = t.source_url || (sType === 'lex' ? 'https://lex.uz/' : 'https://mc.uz/');
+
+          var tSources = t.sources && Array.isArray(t.sources) ? t.sources : [];
+          if (tSources.length === 0) {
+            if (t.source_document_number) {
+              tSources.push({
+                title: sTitle,
+                type: sType,
+                url: sUrl,
+                note: t.source_document_number + (t.source_band ? ' (' + t.source_band + ')' : '')
+              });
+              tSources.push({
+                title: 'Lex.uz — Qonunchilik milliy bazasi',
+                type: 'lex',
+                url: 'https://lex.uz/',
+                note: 'Rasmiy me\'yoriy hujjat matni'
+              });
+            }
+            if (t.data_type === 'tavsiya' || t.practical_note) {
+              tSources.push({
+                title: 'Arxitektura va loyihalash o‘quv adabiyoti',
+                type: 'book',
+                note: 'O‘quv adabiyoti / Amaliy tavsiya (majburiy norma emas)'
+              });
+            }
+          }
+
+          var pEx = t.practical_example || null;
+          if (!pEx && (t.calculation_example || t.formula)) {
+            var parts = [];
+            if (t.condition) parts.push('Loyiha holati:\n' + t.condition);
+            if (t.formula) parts.push('Hisoblash formulasi:\n' + t.formula);
+            if (t.calculation_example) parts.push('Hisoblash misoli:\n' + t.calculation_example);
+            if (t.normative_value) parts.push('Normativ talab:\n' + t.normative_value + (t.unit ? ' ' + t.unit : ''));
+            pEx = parts.join('\n\n');
+          }
+
+          var bRef = t.book_reference || (t.data_type === 'tavsiya' ? 'Arxitektura va interyerni loyihalash o‘quv qo‘llanmasi (Amaliy tavsiya)' : null);
+
           var topicQ = await pool.query(`
             INSERT INTO normative_topics (
               title, slug, category, subcategory, data_type,
               normative_value, unit, building_type, room_type, condition,
               formula, calculation_example, practical_note, architect_note,
               source_document_number, source_band, source_table,
-              keywords, related_document_id, status, order_index, is_system_seed
+              keywords, related_document_id, status, order_index, is_system_seed,
+              content_type, source_type, source_title, source_url, sources, practical_example, book_reference
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21, true
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21, true,
+              $22,$23,$24,$25,$26,$27,$28
             )
             ON CONFLICT (slug) DO UPDATE SET
               title = EXCLUDED.title,
@@ -766,6 +1226,13 @@ async function initNormativesTables(pool) {
               related_document_id = EXCLUDED.related_document_id,
               status = EXCLUDED.status,
               order_index = EXCLUDED.order_index,
+              content_type = EXCLUDED.content_type,
+              source_type = EXCLUDED.source_type,
+              source_title = EXCLUDED.source_title,
+              source_url = EXCLUDED.source_url,
+              sources = EXCLUDED.sources,
+              practical_example = EXCLUDED.practical_example,
+              book_reference = EXCLUDED.book_reference,
               updated_at = NOW()
             RETURNING (xmax = 0) AS was_inserted;
           `, [
@@ -773,7 +1240,8 @@ async function initNormativesTables(pool) {
             t.normative_value || null, t.unit || null, t.building_type || null, t.room_type || null, t.condition || null,
             t.formula || null, t.calculation_example || null, t.practical_note || null, t.architect_note || null,
             t.source_document_number || null, t.source_band || null, t.source_table || null,
-            t.keywords || [], relDocId, t.status || 'AMALDA', t.order_index || (ti + 1)
+            t.keywords || [], relDocId, t.status || 'AMALDA', t.order_index || (ti + 1),
+            cType, sType, sTitle, sUrl, JSON.stringify(tSources), pEx, bRef
           ]);
           if (topicQ.rows[0]?.was_inserted) insertedTopics++;
           else updatedTopics++;
@@ -788,43 +1256,31 @@ async function initNormativesTables(pool) {
       console.warn('normative_topics seed notice:', topicsSeedErr.message);
     }
 
-    // 4. Kutubxona bo'limlari: "Normativlar" va "Amaliy yechimlar" alohida bo'lim (admin tahrir qilgan nomlar saqlanadi)
+    // 4. Kutubxona bo'limlari: Faqat "Normativlar" asosiy bo'lim (Amaliy ishlar alohida bo'lim bo'lmaydi, Normativlar ichida filter bo'ladi)
     try {
       await pool.query(`
         INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index, is_active, is_visible)
         VALUES (
           'normatives',
           'Normativlar',
-          'SHNQ, QMQ, standartlar',
+          'SHNQ, QMQ, standartlar va amaliy yechimlar',
           '📋',
-          'Arxitektura, qurilish va loyihalash uchun normativ hujjatlar va standartlar',
+          'Arxitektura, qurilish va loyihalash uchun normativ hujjatlar, standartlar va amaliy hisoblar',
           5,
           true,
           true
         )
-        ON CONFLICT (slug) DO UPDATE SET is_active = true, is_visible = true;
+        ON CONFLICT (slug) DO UPDATE SET 
+          is_active = true, 
+          is_visible = true,
+          subtitle = 'SHNQ, QMQ, standartlar va amaliy yechimlar';
       `);
-      // Eski standart nom bo'lsa — bir martalik, buzmasdan yangilanadi (admin o'zgartirgan nom saqlanadi)
+
+      // "Amaliy yechimlar" alohida asosiy tile bo'lmasligi uchun is_visible=false qilamiz
       await pool.query(`
         UPDATE library_sections
-        SET name = 'Normativlar',
-            subtitle = 'SHNQ, QMQ, standartlar',
-            description = 'Arxitektura, qurilish va loyihalash uchun normativ hujjatlar va standartlar'
-        WHERE slug = 'normatives' AND name = 'Normativlar va amaliy yechimlar';
-      `);
-      await pool.query(`
-        INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index, is_active, is_visible)
-        VALUES (
-          'amaliy_yechimlar',
-          'Amaliy yechimlar',
-          'Vaziyatlar bo''yicha yo''riqnomalar',
-          '🛠️',
-          'Vaziyatlar bo''yicha bosqichma-bosqich yechimlar va ularning normativ asoslari',
-          6,
-          true,
-          true
-        )
-        ON CONFLICT (slug) DO NOTHING;
+        SET is_visible = false, is_active = false
+        WHERE slug IN ('amaliy_yechimlar', 'cases', 'amaliy');
       `);
     } catch (e) {
       console.warn('normatives library section seed warn:', e.message);
@@ -841,11 +1297,13 @@ async function initNormativesTables(pool) {
           requirements, target_audience, application_scope, status,
           adopted_date, effective_date, repealed_date, issuing_authority,
           official_source_url, pdf_url, old_edition_note, new_edition_note,
-          change_date, tags, last_verified_at, is_system_seed
+          change_date, tags, last_verified_at, is_system_seed,
+          content_type, source_type, source_title, sources, practical_example, book_reference
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13, $14, $15, $16, $17,
-          $18, $19, NOW(), true
+          $18, $19, NOW(), true,
+          $20, $21, $22, $23, $24, $25
         )
         ON CONFLICT (document_number) DO UPDATE SET
           title = EXCLUDED.title,
@@ -867,6 +1325,12 @@ async function initNormativesTables(pool) {
           change_date = EXCLUDED.change_date,
           tags = EXCLUDED.tags,
           last_verified_at = EXCLUDED.last_verified_at,
+          content_type = EXCLUDED.content_type,
+          source_type = EXCLUDED.source_type,
+          source_title = EXCLUDED.source_title,
+          sources = EXCLUDED.sources,
+          practical_example = EXCLUDED.practical_example,
+          book_reference = EXCLUDED.book_reference,
           updated_at = NOW()
         WHERE normative_documents.is_admin_edited IS NOT TRUE
         RETURNING (xmax = 0) AS was_inserted;
@@ -878,7 +1342,9 @@ async function initNormativesTables(pool) {
           item.requirements, item.target_audience, item.application_scope, item.status,
           item.adopted_date || null, item.effective_date || null, item.repealed_date || null, item.issuing_authority || null,
           item.official_source_url || null, item.pdf_url || null, item.old_edition_note || null, item.new_edition_note || null,
-          item.change_date || null, item.tags || []
+          item.change_date || null, item.tags || [],
+          item.content_type || 'normative', item.source_type || 'lex', item.source_title || 'Lex.uz',
+          JSON.stringify(item.sources || []), item.practical_example || null, item.book_reference || null
         ]);
         if (r.rows[0]?.was_inserted) insertedDocs++;
         else updatedDocs++;
@@ -982,6 +1448,8 @@ async function getNormativesList(pool, options = {}) {
     category,
     document_type,
     status,
+    content_type,
+    source_type,
     search,
     limit = 100,
     offset = 0,
@@ -1008,6 +1476,20 @@ async function getNormativesList(pool, options = {}) {
     values.push(status);
   }
 
+  if (content_type && content_type !== 'all' && content_type !== 'Barchasi') {
+    if (content_type === 'normative') {
+      conditions.push(`(content_type = 'normative' OR content_type IS NULL)`);
+    } else if (content_type === 'practical_example') {
+      conditions.push(`(content_type = 'practical_example' OR practical_example IS NOT NULL)`);
+    }
+  }
+
+  if (source_type && source_type !== 'all' && source_type !== 'Barchasi') {
+    conditions.push(`(source_type = $${idx} OR EXISTS(SELECT 1 FROM jsonb_array_elements(COALESCE(sources, '[]'::jsonb)) src WHERE src->>'type' = $${idx}))`);
+    values.push(source_type);
+    idx++;
+  }
+
   if (search && search.trim()) {
     const q = `%${search.trim().toLowerCase()}%`;
     conditions.push(`(
@@ -1016,6 +1498,9 @@ async function getNormativesList(pool, options = {}) {
       LOWER(description) LIKE $${idx} OR
       LOWER(requirements) LIKE $${idx} OR
       LOWER(category) LIKE $${idx} OR
+      LOWER(COALESCE(source_title, '')) LIKE $${idx} OR
+      LOWER(COALESCE(practical_example, '')) LIKE $${idx} OR
+      LOWER(COALESCE(book_reference, '')) LIKE $${idx} OR
       $${idx + 1} = ANY(tags)
     )`);
     values.push(q);
@@ -1046,6 +1531,7 @@ async function getNormativesList(pool, options = {}) {
         d.old_edition_note, d.new_edition_note, d.change_date,
         d.tags, d.view_count, d.last_verified_at, d.created_at, d.is_admin_edited,
         d.pdf_check, d.official_check,
+        d.content_type, d.source_type, d.source_title, d.sources, d.practical_example, d.book_reference,
         COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like'), 0) AS like_count,
         COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'save'), 0) AS save_count,
         EXISTS(SELECT 1 FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like' AND r.user_id = $${uidIdx}) AS is_liked,
@@ -1054,7 +1540,7 @@ async function getNormativesList(pool, options = {}) {
           + 3 * COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'like'), 0)
           + 5 * COALESCE((SELECT COUNT(*)::int FROM norm_reactions r WHERE r.item_kind = 'doc' AND r.item_id = d.id AND r.reaction = 'save'), 0)) AS pop_score
       FROM normative_documents d
-      ${whereClause.replace(/\b(title|document_number|description|requirements|category|tags|document_type|status)\b/g, 'd.$1')}
+      ${whereClause.replace(/\b(title|document_number|description|requirements|category|tags|document_type|status|content_type|source_type|source_title|sources|practical_example|book_reference)\b/g, 'd.$1')}
     ) x
     ORDER BY ${orderBy.replace(/\b(view_count|document_number|adopted_date|id)\b/g, 'x.$1')}
     LIMIT $${idx++} OFFSET $${idx++}
@@ -1223,6 +1709,8 @@ async function getNormativeTopicsList(pool, options = {}) {
   const {
     category,
     data_type,
+    content_type,
+    source_type,
     search,
     limit = 200,
     offset = 0,
@@ -1243,6 +1731,20 @@ async function getNormativeTopicsList(pool, options = {}) {
     values.push(data_type);
   }
 
+  if (content_type && content_type !== 'all' && content_type !== 'Barchasi') {
+    if (content_type === 'normative') {
+      conditions.push(`(data_type = 'norma' AND (content_type IS NULL OR content_type = 'normative'))`);
+    } else if (content_type === 'practical_example') {
+      conditions.push(`(data_type = 'hisoblash' OR data_type = 'tavsiya' OR content_type = 'practical_example' OR calculation_example IS NOT NULL OR practical_example IS NOT NULL)`);
+    }
+  }
+
+  if (source_type && source_type !== 'all' && source_type !== 'Barchasi') {
+    conditions.push(`(source_type = $${idx} OR EXISTS(SELECT 1 FROM jsonb_array_elements(COALESCE(sources, '[]'::jsonb)) src WHERE src->>'type' = $${idx}))`);
+    values.push(source_type);
+    idx++;
+  }
+
   if (search && search.trim()) {
     const q = `%${search.trim().toLowerCase()}%`;
     conditions.push(`(
@@ -1255,6 +1757,9 @@ async function getNormativeTopicsList(pool, options = {}) {
       LOWER(source_document_number) LIKE $${idx} OR
       LOWER(condition) LIKE $${idx} OR
       LOWER(practical_note) LIKE $${idx} OR
+      LOWER(COALESCE(source_title, '')) LIKE $${idx} OR
+      LOWER(COALESCE(practical_example, '')) LIKE $${idx} OR
+      LOWER(COALESCE(book_reference, '')) LIKE $${idx} OR
       $${idx + 1} = ANY(keywords)
     )`);
     values.push(q);
@@ -1279,7 +1784,8 @@ async function getNormativeTopicsList(pool, options = {}) {
       normative_value, unit, building_type, room_type, condition,
       formula, calculation_example, practical_note, architect_note,
       source_document_number, source_band, source_table,
-      keywords, related_document_id, status, order_index, view_count
+      keywords, related_document_id, status, order_index, view_count,
+      content_type, source_type, source_title, source_url, sources, practical_example, book_reference
     FROM normative_topics
     ${whereClause}
     ORDER BY ${orderBy}

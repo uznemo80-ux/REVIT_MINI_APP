@@ -10957,6 +10957,8 @@ app.all('/api/normatives/list', async function (req, res) {
       category: p.category,
       document_type: p.document_type || p.type,
       status: p.status,
+      content_type: p.content_type,
+      source_type: p.source_type,
       search: p.search || p.q,
       limit: parseInt(p.limit, 10) || 100,
       offset: parseInt(p.offset, 10) || 0,
@@ -11128,6 +11130,12 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
     var oldEdition = (b.old_edition_note || '').trim();
     var newEdition = (b.new_edition_note || '').trim();
     var changeDate = b.change_date || null;
+    var contentType = (b.content_type || 'normative').trim();
+    var sourceType = (b.source_type || 'lex').trim();
+    var sourceTitle = (b.source_title || 'Lex.uz').trim();
+    var sources = b.sources ? (typeof b.sources === 'string' ? b.sources : JSON.stringify(b.sources)) : '[]';
+    var practicalExample = (b.practical_example || '').trim() || null;
+    var bookReference = (b.book_reference || '').trim() || null;
 
     if (!title || !docNumber) {
       return res.status(400).json({ ok: false, error: 'Hujjat raqami va nomi kiritilishi shart' });
@@ -11169,7 +11177,8 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
         title, docNumber, docType, category, description, requirements,
         targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
         issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate, id,
-        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null
+        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null,
+        contentType, sourceType, sourceTitle, sources, practicalExample, bookReference
       ]);
     } else {
       result = await pool.query(`
@@ -11178,7 +11187,8 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
           requirements, target_audience, application_scope, status,
           adopted_date, effective_date, repealed_date, issuing_authority,
           official_source_url, pdf_url, old_edition_note, new_edition_note,
-          change_date, last_verified_at, is_admin_edited, pdf_check, official_check
+          change_date, last_verified_at, is_admin_edited, pdf_check, official_check,
+          content_type, source_type, source_title, sources, practical_example, book_reference
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13, $14, $15, $16, $17,
@@ -11189,7 +11199,8 @@ app.post('/api/admin/normatives/save', requireAdmin, async function (req, res) {
         title, docNumber, docType, category, description, requirements,
         targetAudience, applicationScope, status, adoptedDate, effectiveDate, repealedDate,
         issuingAuthority, officialUrl, pdfUrl, oldEdition, newEdition, changeDate,
-        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null
+        pdfCheck ? JSON.stringify(pdfCheck) : null, officialCheck ? JSON.stringify(officialCheck) : null,
+        contentType, sourceType, sourceTitle, sources, practicalExample, bookReference
       ]);
     }
 
@@ -11346,6 +11357,8 @@ app.all('/api/normatives/topics', async function (req, res) {
     var data = await getNormativeTopicsList(pool, {
       category: p.category,
       data_type: p.data_type || p.type,
+      content_type: p.content_type,
+      source_type: p.source_type,
       search: p.search || p.q,
       limit: parseInt(p.limit, 10) || 200,
       offset: parseInt(p.offset, 10) || 0,

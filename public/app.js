@@ -6996,6 +6996,14 @@ function renderSourcesPanelInnerHtml() {
 
 function renderSourcesActiveFilterHtml() {
   const pills = [];
+  if (normativesState.selectedContentType && normativesState.selectedContentType !== "all") {
+    const cLabels = { normative: "📑 Faqat normativlar", practical_example: "💡 Faqat amaliy misollar" };
+    pills.push({ label: cLabels[normativesState.selectedContentType] || normativesState.selectedContentType, clear: "setNormativesContentType('all')" });
+  }
+  if (normativesState.selectedSourceType && normativesState.selectedSourceType !== "all") {
+    const sLabels = { lex: "🏛 Lex.uz", ministry: "🏗 Qurilish vazirligi", official: "📜 Rasmiy standartlar", book: "📚 Kitoblar / O‘quv" };
+    pills.push({ label: sLabels[normativesState.selectedSourceType] || normativesState.selectedSourceType, clear: "setNormativesSourceType('all')" });
+  }
   if (librarySourceSoftware !== "Barchasi") {
     pills.push({ label: librarySourceSoftware, clear: "setLibrarySourceSoftware('Barchasi')" });
   }
@@ -7275,7 +7283,7 @@ function renderGenericSectionHtml(slug) {
 // 1. KUTUBXONA HOME (Apple-like 4 Plitka + So'nggi + Tavsiya)
 // ------------------------------------------------------
 function renderTasksHomeHtml() {
-  const sections = librarySections.filter(s => s.is_active !== false);
+  const sections = librarySections.filter(s => s.is_active !== false && s.is_visible !== false && s.slug !== 'amaliy_yechimlar' && s.slug !== 'cases' && s.slug !== 'practical_cases' && s.slug !== 'amaliy');
   const recentList = libraryV2RecentList || [];
   // Faqat admin "tavsiya" qilib belgilagan resurslar ko'rsatiladi (avtomatik to'ldirish yo'q)
   const recommendedList = (libraryV2RecommendedList || []).filter(r => (r.content_url && String(r.content_url).trim()) || r.type === "test" || r.type === "quiz" || r.content_data);
@@ -23651,6 +23659,8 @@ var normativesState = {
   searchQuery: "",
   selectedStatus: "all",
   selectedDocType: "all",
+  selectedContentType: "all", // all | normative | practical_example
+  selectedSourceType: "all", // all | lex | ministry | official | book
   loading: false,
   loaded: false,
   error: null,
@@ -23880,6 +23890,8 @@ function renderNormativesActiveFilterHtml() {
 }
 
 function clearAllNormativesFilters() {
+  normativesState.selectedContentType = "all";
+  normativesState.selectedSourceType = "all";
   normativesState.selectedDocType = "all";
   normativesState.selectedStatus = "all";
   normativesState.selectedCategory = "Barchasi";
@@ -23992,6 +24004,33 @@ function setNormativesDocTypeFilter(docType) {
 }
 
 // STATUS BADGE HELPER
+
+function renderNormativeSourceBadge(type, title) {
+  const t = String(type || "ministry").toLowerCase();
+  if (t === "lex") {
+    return '<span class="norm-status-pill" style="background:rgba(99,102,241,0.12); color:#818cf8; border:1px solid rgba(99,102,241,0.25); font-weight:600; font-size:10px;"><span class="norm-dot" style="background:#818cf8;"></span>🏛 Lex.uz</span>';
+  } else if (t === "ministry") {
+    return '<span class="norm-status-pill" style="background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.25); font-weight:600; font-size:10px;"><span class="norm-dot" style="background:#34d399;"></span>🏗 Qurilish vazirligi</span>';
+  } else if (t === "official") {
+    return '<span class="norm-status-pill" style="background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.25); font-weight:600; font-size:10px;"><span class="norm-dot" style="background:#fbbf24;"></span>📜 Rasmiy standart</span>';
+  } else if (t === "book") {
+    return '<span class="norm-status-pill" style="background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.25); font-weight:600; font-size:10px;"><span class="norm-dot" style="background:#c084fc;"></span>📚 Kitob / O‘quv</span>';
+  }
+  return '';
+}
+
+function setNormativesContentType(type) {
+  haptic("light");
+  normativesState.selectedContentType = type;
+  render();
+}
+
+function setNormativesSourceType(type) {
+  haptic("light");
+  normativesState.selectedSourceType = type;
+  render();
+}
+
 function renderNormativeStatusBadge(status) {
   const st = String(status || "AMALDA").toUpperCase();
   if (st === "AMALDA") {
@@ -24080,16 +24119,48 @@ function renderNormativesSectionHtml() {
         <span id="norm-search-clear">${searchQuery ? `<button type="button" class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ""}</span>
       </div>
 
-      <!-- 3. SUB-NAVIGATION SEGMENTED CONTROL (TABS) -->
-      <div class="norm-segmented-control" style="margin-bottom:12px;">
-        <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
-          📑 Normativlar (${normativesState.documents.length})
+      <!-- 3a. ASOSIY FILTER / YO'NALISH: Barchasi | Normativlar | Amaliy misollar -->
+      <div class="norm-segmented-control" style="margin-bottom:8px;">
+        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'all' ? 'active' : ''}" onclick="setNormativesContentType('all')">
+          📋 Barchasi
         </button>
-        <button type="button" class="norm-seg-btn ${activeTab === 'topics' ? 'active' : ''}" onclick="setNormativesTab('topics')">
+        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'normative' ? 'active' : ''}" onclick="setNormativesContentType('normative')">
+          📑 Normativlar
+        </button>
+        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'practical_example' ? 'active' : ''}" onclick="setNormativesContentType('practical_example')">
+          💡 Amaliy misollar
+        </button>
+      </div>
+
+      <!-- 3b. MANBA FILTRI (LEX.UZ, QURILISH VAZIRLIGI, RASMIY STANDART, KITOBLAR) -->
+      <div class="norm-source-filter-row" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;">
+        <button type="button" class="mcat-chip ${(!normativesState.selectedSourceType || normativesState.selectedSourceType === 'all') ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('all')">
+          Barcha manbalar
+        </button>
+        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'lex' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('lex')">
+          🏛 Lex.uz
+        </button>
+        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'ministry' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('ministry')">
+          🏗 Qurilish vazirligi
+        </button>
+        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'official' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('official')">
+          📜 Rasmiy standartlar
+        </button>
+        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'book' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('book')">
+          📚 Kitoblar / O‘quv
+        </button>
+      </div>
+
+      <!-- 3c. TURLAR BO'YICHA ICHKI BO'LIMLAR (Ma'lumotnoma 200 ta, Hujjatlar 14 ta, Vaziyatlar 6 ta) -->
+      <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--border, rgba(255,255,255,0.08)); padding-bottom:8px;">
+        <button type="button" class="norm-subtab-btn ${activeTab === 'topics' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'topics' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'topics' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('topics')">
           📋 Ma'lumotnoma (${normativesState.topics.length})
         </button>
-        <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
-          💡 Amaliy (${normativesState.cases.length})
+        <button type="button" class="norm-subtab-btn ${activeTab === 'docs' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'docs' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'docs' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('docs')">
+          📑 Normativ kodekslar (${normativesState.documents.length})
+        </button>
+        <button type="button" class="norm-subtab-btn ${activeTab === 'cases' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'cases' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'cases' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('cases')">
+          💡 Loyiha yo'riqnomalari (${normativesState.cases.length})
         </button>
       </div>
 
@@ -24208,6 +24279,25 @@ function renderNormativeDocsTabHtml() {
 
   let list = normativesState.documents || [];
 
+  // Filter content type
+  if (normativesState.selectedContentType === 'normative') {
+    list = list.filter(d => (d.content_type || 'normative') === 'normative');
+  } else if (normativesState.selectedContentType === 'practical_example') {
+    list = list.filter(d => d.content_type === 'practical_example' || (d.practical_example && d.practical_example.trim()));
+  }
+
+  // Filter source type
+  if (normativesState.selectedSourceType && normativesState.selectedSourceType !== 'all') {
+    const sType = normativesState.selectedSourceType;
+    list = list.filter(d => {
+      if ((d.source_type || '').toLowerCase() === sType) return true;
+      if (sType === 'book' && d.book_reference) return true;
+      if (sType === 'ministry' && ((d.document_type || '').includes('SHNQ') || (d.document_type || '').includes('QMQ') || (d.document_number || '').includes('SHNQ') || (d.document_number || '').includes('QMQ'))) return true;
+      if (Array.isArray(d.sources) && d.sources.some(s => (s.type || '').toLowerCase() === sType)) return true;
+      return false;
+    });
+  }
+
   // Filter category
   if (selCat && selCat !== "Barchasi") {
     if (selCat === "SHNQ") {
@@ -24270,9 +24360,10 @@ function renderNormativeDocsTabHtml() {
           return `
             <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
               <div class="norm-doc-header">
-                <div style="display:flex; align-items:center; gap:6px;">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                   <div class="norm-doc-num-tag">${escapeHtml(docNum)}</div>
                   ${renderNormativeStatusBadge(status)}
+                  ${renderNormativeSourceBadge(doc.source_type, doc.source_title)}
                 </div>
                 <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:11px;" onclick="toggleNormativeSave(${Number(doc.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
                   <span>${isSaved ? '🔖' : '♡'}</span>
@@ -24344,6 +24435,25 @@ function renderNormativeTopicsTabHtml() {
 
   let list = normativesState.topics || [];
 
+  // Filter content type (normativ vs amaliy misol)
+  if (normativesState.selectedContentType === 'normative') {
+    list = list.filter(t => (t.data_type || '').toLowerCase() === 'norma');
+  } else if (normativesState.selectedContentType === 'practical_example') {
+    list = list.filter(t => (t.data_type || '').toLowerCase() === 'hisoblash' || (t.data_type || '').toLowerCase() === 'tavsiya' || t.calculation_example || t.practical_example || t.formula);
+  }
+
+  // Filter source type (lex, ministry, official, book)
+  if (normativesState.selectedSourceType && normativesState.selectedSourceType !== 'all') {
+    const sType = normativesState.selectedSourceType;
+    list = list.filter(t => {
+      if ((t.source_type || '').toLowerCase() === sType) return true;
+      if (sType === 'book' && ((t.data_type || '').toLowerCase() === 'tavsiya' || t.book_reference)) return true;
+      if (sType === 'ministry' && ((t.source_document_number || '').includes('SHNQ') || (t.source_document_number || '').includes('QMQ'))) return true;
+      if (Array.isArray(t.sources) && t.sources.some(s => (s.type || '').toLowerCase() === sType)) return true;
+      return false;
+    });
+  }
+
   // Filter category
   if (selCat && selCat !== "Barchasi") {
     list = list.filter(t => (t.category || "").toLowerCase() === selCat.toLowerCase());
@@ -24410,6 +24520,7 @@ function renderNormativeTopicsTabHtml() {
             <div class="norm-doc-header">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 ${renderNormativeTopicTypeBadge(topic.data_type)}
+                ${renderNormativeSourceBadge(topic.source_type || 'ministry', topic.source_title)}
                 <span class="norm-doc-cat" style="font-size:11px; background:var(--bg-surface-secondary, rgba(255,255,255,0.06)); padding:2px 7px; border-radius:6px;">
                   ${escapeHtml(topic.category || "")}
                 </span>
@@ -24612,6 +24723,53 @@ function renderNormativeTopicDetailPage(topic, relatedDocument, relatedTopics) {
         </div>
       ` : ''}
 
+      <!-- 4b. MULTI-SOURCES VA O'QUV MANBASI -->
+      ${topic.book_reference ? `
+        <div class="norm-card-block" style="border-left:3px solid #a855f7; background:rgba(168,85,247,0.03);">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">📚</span>
+            <h2 class="norm-card-title" style="color:#c084fc;">Kitob / O‘quv adabiyoti manbasi</h2>
+          </div>
+          <div class="norm-card-content">
+            <div style="font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:4px;">
+              ${escapeHtml(topic.book_reference)}
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">
+              ⚠️ <b>Eslatma:</b> Kitobdan olingan amaliy ma'lumot arxitektura tavsiyasi hisoblanadi, majburiy davlat standarti emas.
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${Array.isArray(topic.sources) && topic.sources.length ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">🏛</span>
+            <h2 class="norm-card-title">Tasdiqlangan Manbalar (${topic.sources.length} ta)</h2>
+          </div>
+          <div class="norm-card-content">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${topic.sources.map(s => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--bg-surface-secondary, rgba(255,255,255,0.04)); border-radius:8px; border:1px solid var(--border, rgba(255,255,255,0.06));">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    ${renderNormativeSourceBadge(s.type, s.title)}
+                    <div>
+                      <div style="font-size:13px; font-weight:600; color:var(--text-primary);">${escapeHtml(s.title || "Manba")}</div>
+                      ${s.note ? `<div style="font-size:11px; color:var(--text-secondary);">${escapeHtml(s.note)}</div>` : ''}
+                    </div>
+                  </div>
+                  ${s.url ? `
+                    <button type="button" class="btn" style="padding:4px 10px; font-size:11px;" onclick="safeOpenExternal('${escapeJsString(s.url)}')">
+                      Ochish ↗
+                    </button>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
       <!-- 5. BOG'LANGAN NORMATIV HUJJAT (AGAR BAZADA MAVJUD BO'LSA) -->
       ${relatedDocument ? `
         <div class="norm-card-block">
@@ -24761,6 +24919,67 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
           ${escapeHtml(doc.requirements || "Loyiha hujjatlari ushbu normativda ko‘rsatilgan xavfsizlik, o‘lcham va konstruktiv talablarga to‘liq javob berishi shart.")}
         </div>
       </div>
+
+      <!-- 2b. AMALIY LOYIHALASH MISOLI (BERILGAN, LOYIHA HOLATI, HISOB, NATIJA) -->
+      ${doc.practical_example ? `
+        <div class="norm-card-block" style="border-left:3px solid #10b981; background:rgba(16,185,129,0.03);">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">💡</span>
+            <h2 class="norm-card-title" style="color:#10b981;">Amaliy Loyihalash Misoli va Hisob-kitob</h2>
+          </div>
+          <div class="norm-card-content formatted-text" style="white-space:pre-line; font-size:13px; line-height:1.6; color:var(--text-primary);">
+            ${escapeHtml(doc.practical_example)}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 2c. KITOB / O'QUV MANBASI (AMALIY TAVSIYA, MAJBURIY NORMA EMAS) -->
+      ${doc.book_reference ? `
+        <div class="norm-card-block" style="border-left:3px solid #a855f7; background:rgba(168,85,247,0.03);">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">📚</span>
+            <h2 class="norm-card-title" style="color:#c084fc;">Kitob / O‘quv adabiyoti tavsiyasi</h2>
+          </div>
+          <div class="norm-card-content">
+            <div style="font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:6px;">
+              ${escapeHtml(doc.book_reference)}
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); line-height:1.45;">
+              ⚠️ <b>Muhim eslatma:</b> Ushbu manba arxitektura va loyihalash o‘quv adabiyotidan olingan bo‘lib, amaliy tavsiya hisoblanadi. U davlat me'yoriy hujjati (SHNQ/QMQ) darajasidagi majburiy norma emas.
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 2d. MULTI-SOURCES: KO'P MANBALAR TIZIMI -->
+      ${Array.isArray(doc.sources) && doc.sources.length ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">🏛</span>
+            <h2 class="norm-card-title">Rasmiy Manbalar va Asoslar (${doc.sources.length} ta manba)</h2>
+          </div>
+          <div class="norm-card-content">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${doc.sources.map(s => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--bg-surface-secondary, rgba(255,255,255,0.04)); border-radius:8px; border:1px solid var(--border, rgba(255,255,255,0.06));">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    ${renderNormativeSourceBadge(s.type, s.title)}
+                    <div>
+                      <div style="font-size:13px; font-weight:600; color:var(--text-primary);">${escapeHtml(s.title || "Manba")}</div>
+                      ${s.note ? `<div style="font-size:11px; color:var(--text-secondary);">${escapeHtml(s.note)}</div>` : ''}
+                    </div>
+                  </div>
+                  ${s.url ? `
+                    <button type="button" class="btn" style="padding:4px 10px; font-size:11px;" onclick="safeOpenExternal('${escapeJsString(s.url)}')">
+                      Ochish ↗
+                    </button>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      ` : ''}
 
       <!-- 3. KIM UCHUN & QAYSI HOLATDA -->
       <div class="norm-two-col-grid">
