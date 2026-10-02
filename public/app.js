@@ -8157,11 +8157,10 @@ function setMaterialsLang(lang) {
   }
   if (currentView && currentView.type === "material_detail" && activeMaterialDetail) {
     currentView.html = renderMaterialDetailPage(activeMaterialDetail);
-    render();
-  } else if (libraryActiveSection === "materials") {
+  } else {
     filterMaterialsLocally();
-    render();
   }
+  render();
 }
 
 const MAT_I18N = {
@@ -8536,45 +8535,25 @@ function matT(key) {
 
 function renderMaterialsLangSelectorHtml() {
   const cur = getMaterialsLang();
-  const flagMap = { ru: "🇷🇺 RU", uz: "🇺🇿 UZ", en: "🇬🇧 EN" };
   return `
-    <div class="mcat-lang-picker" style="position:relative; display:inline-block;">
-      <button type="button" class="mcat-lang-btn" onclick="toggleMaterialsLangDropdown(event)" style="display:inline-flex; align-items:center; gap:5px; padding:4px 9px; font-size:12px; font-weight:750; border-radius:16px; border:1px solid var(--border, rgba(0,0,0,0.12)); background:var(--bg-surface-elevated, #fff); color:var(--text-primary, #111); cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05); user-select:none;">
-        <span>${flagMap[cur] || "🇷🇺 RU"}</span>
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
-      </button>
-      <div id="mcat-lang-menu" class="mcat-lang-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:1000; background:var(--bg-surface-elevated, #fff); border:1px solid var(--border, rgba(0,0,0,0.12)); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); min-width:132px; overflow:hidden; padding:4px;">
-        <button type="button" class="mcat-lang-opt ${cur === 'ru' ? 'active' : ''}" onclick="selectMaterialsLang('ru')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'ru' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'ru' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
-          <span>🇷🇺</span> Русский ${cur === 'ru' ? '✓' : ''}
-        </button>
-        <button type="button" class="mcat-lang-opt ${cur === 'uz' ? 'active' : ''}" onclick="selectMaterialsLang('uz')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'uz' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'uz' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
-          <span>🇺🇿</span> O‘zbek ${cur === 'uz' ? '✓' : ''}
-        </button>
-        <button type="button" class="mcat-lang-opt ${cur === 'en' ? 'active' : ''}" onclick="selectMaterialsLang('en')" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; font-size:12.5px; font-weight:650; border:none; background:${cur === 'en' ? 'rgba(0,122,255,0.08)' : 'transparent'}; color:${cur === 'en' ? '#007aff' : 'var(--text-primary, #222)'}; border-radius:8px; cursor:pointer; text-align:left;">
-          <span>🇬🇧</span> English ${cur === 'en' ? '✓' : ''}
-        </button>
+    <div class="mcat-lang-picker" title="Tilni tanlash / Выбор языка">
+      <div class="mcat-lang-pill">
+        <span class="mcat-lang-globe">🌐</span>
+        <span class="mcat-lang-code">${cur.toUpperCase()}</span>
+        <svg class="mcat-lang-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
       </div>
+      <select class="mcat-lang-select-overlay" onchange="setMaterialsLang(this.value)" aria-label="Tilni tanlash / Выбрать язык">
+        <option value="ru" ${cur === 'ru' ? 'selected' : ''}>🇷🇺 Русский (RU)</option>
+        <option value="uz" ${cur === 'uz' ? 'selected' : ''}>🇺🇿 O‘zbekcha (UZ)</option>
+        <option value="en" ${cur === 'en' ? 'selected' : ''}>🇬🇧 English (EN)</option>
+      </select>
     </div>
   `;
 }
 
-function toggleMaterialsLangDropdown(e) {
-  if (e) e.stopPropagation();
-  const m = document.getElementById("mcat-lang-menu");
-  if (!m) return;
-  m.style.display = m.style.display === "block" ? "none" : "block";
-}
-
 function selectMaterialsLang(lang) {
-  const m = document.getElementById("mcat-lang-menu");
-  if (m) m.style.display = "none";
   setMaterialsLang(lang);
 }
-
-document.addEventListener("click", () => {
-  const m = document.getElementById("mcat-lang-menu");
-  if (m) m.style.display = "none";
-});
 
 const SUBCAT_I18N = {
   'Devor bloklari': { ru: 'Стеновые блоки', uz: 'Devor bloklari', en: 'Wall Blocks' },
