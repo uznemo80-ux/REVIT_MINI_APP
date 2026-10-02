@@ -8129,9 +8129,15 @@ function matchMaterialSearch(m, search) {
 // ======================================================
 
 function getMaterialsLang() {
+  if (typeof materialsState !== "undefined" && materialsState && (materialsState.currentLang === "ru" || materialsState.currentLang === "uz" || materialsState.currentLang === "en")) {
+    return materialsState.currentLang;
+  }
   try {
-    const l = localStorage.getItem("materials_lang") || localStorage.getItem("yosh_lang");
-    if (l === "ru" || l === "uz" || l === "en") return l;
+    const l = localStorage.getItem("materials_lang");
+    if (l === "ru" || l === "uz" || l === "en") {
+      if (typeof materialsState !== "undefined" && materialsState) materialsState.currentLang = l;
+      return l;
+    }
   } catch (e) {}
   return "ru"; // Russian default as requested
 }
@@ -8150,6 +8156,7 @@ function setMaterialsLang(lang) {
     currentView.html = renderMaterialDetailPage(activeMaterialDetail);
     render();
   } else if (libraryActiveSection === "materials") {
+    filterMaterialsLocally();
     render();
   }
 }
@@ -8602,6 +8609,14 @@ function getMaterialDimensions(m, lang) {
   if (lang === "en") return m.dimensions_info_en || m.dimensions_info || m.dimensions_info_uz || "";
   if (lang === "ru") return m.dimensions_info_ru || m.dimensions_info || m.dimensions_info_uz || "";
   return m.dimensions_info_uz || m.dimensions_info || "";
+}
+
+function getLocalizedGroupName(g, lang) {
+  if (!g) return "";
+  lang = lang || getMaterialsLang();
+  if (lang === "ru") return g.name_ru || g.name;
+  if (lang === "en") return g.name_en || g.name_ru || g.name;
+  return g.name_uz || g.name;
 }
 
 const MATERIAL_GROUPS = [
@@ -9073,6 +9088,8 @@ function renderMaterialActiveFilterHtml() {
   const g = getMaterialGroupsWithCounts().find(x => x.id === grpId) || MATERIAL_GROUPS.find(x => x.id === grpId);
   const subs = getGroupSubcategories(grpId);
   const activeSub = materialsState.selectedSubcategory || "all";
+  const lang = getMaterialsLang();
+  const getSubTitle = (name) => (SUBCAT_I18N[name] && SUBCAT_I18N[name][lang]) ? SUBCAT_I18N[name][lang] : name;
   return `
     <div class="mcat-active">
       <div class="mcat-active-chip">
@@ -9084,7 +9101,7 @@ function renderMaterialActiveFilterHtml() {
     ${subs.length ? `
       <div class="mcat-sub-row">
         <button type="button" class="mcat-chip ${activeSub === "all" ? "active" : ""}" onclick="setMaterialSubcategory('all')">${escapeHtml(matT('all'))}</button>
-        ${subs.map(s => `<button type="button" class="mcat-chip ${activeSub.toLowerCase() === s.name.toLowerCase() ? "active" : ""}" onclick="setMaterialSubcategory('${escapeJsString(s.name)}')">${escapeHtml(s.name)} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
+        ${subs.map(s => `<button type="button" class="mcat-chip ${activeSub.toLowerCase() === s.name.toLowerCase() ? "active" : ""}" onclick="setMaterialSubcategory('${escapeJsString(s.name)}')">${escapeHtml(getSubTitle(s.name))} <span class="mcat-chip-n">${s.n}</span></button>`).join("")}
       </div>
     ` : ""}
   `;

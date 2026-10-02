@@ -367,6 +367,14 @@ async function initMaterialsTables(pool) {
     mfgRows.rows.forEach(r => { mfgMap[r.slug] = r.id; });
 
     // --- SEED MATERIALS & RELATIONS ---
+    // Fast path: skip heavy seed loop if catalog is already populated
+    const countRes = await pool.query('SELECT COUNT(*)::int AS cnt FROM materials').catch(() => ({ rows: [{ cnt: 0 }] }));
+    const currentCount = countRes.rows[0]?.cnt || 0;
+    if (currentCount >= SEED_MATERIALS.length && process.env.FORCE_SEED_MATERIALS !== 'true') {
+      console.log(`[Materials] Database already seeded with ${currentCount} materials. Skipping heavy boot upsert.`);
+      return;
+    }
+
     for (const m of SEED_MATERIALS) {
       const categoryId = catMap[m.category_slug] || null;
       const manufacturerId = mfgMap[m.manufacturer_slug] || null;
