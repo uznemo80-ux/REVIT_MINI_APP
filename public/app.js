@@ -7936,6 +7936,9 @@ function renderTestCardHtml(test) {
 let materialsState = {
   loaded: false,
   loading: false,
+  currentViewTab: "catalog", // 'catalog' | 'liked' | 'saved'
+  savedFilterCategory: "all",
+  savedFilterModalOpen: false,
   categories: [],
   manufacturers: [],
   allMaterials: [],
@@ -8253,7 +8256,22 @@ const MAT_I18N = {
     spec_cert: "Сертификат / Стандарт",
     spec_price: "Рыночная цена",
     tools_label: "Инструменты для монтажа",
-    materials_label: "Сопутствующие материалы"
+    materials_label: "Сопутствующие материалы",
+    liked_tab_title: "Like",
+    saved_tab_title: "Сохранённые",
+    liked_title: "Понравившиеся материалы",
+    saved_title: "Сохранённые материалы",
+    liked_empty_title: "Вы еще не добавили материалы в понравившиеся",
+    liked_empty_sub: "Нажмите на сердечко ♡ на карточке любого материала, чтобы добавить его сюда.",
+    saved_empty_title: "У вас пока нет сохранённых материалов",
+    saved_empty_sub: "Нажмите на значок 🔖 закладки на карточке, чтобы сохранить материал.",
+    filter_empty_title: "В этой категории нет сохранённых материалов",
+    filter_empty_sub: "Попробуйте выбрать другую категорию или сбросить фильтр.",
+    filter_btn: "Фильтр",
+    clear_filter: "Сбросить фильтр",
+    browse_catalog: "Перейти в каталог",
+    items_count: "материалов",
+    save_error: "Не удалось сохранить, попробуйте снова"
   },
   uz: {
     lang_name: "O‘zbek",
@@ -8346,7 +8364,22 @@ const MAT_I18N = {
     spec_cert: "Sertifikat / Standart",
     spec_price: "Bozor narxi",
     tools_label: "Kerakli asbob-uskunalar",
-    materials_label: "Kerakli qo‘shimcha materiallar"
+    materials_label: "Kerakli qo‘shimcha materiallar",
+    liked_tab_title: "Like",
+    saved_tab_title: "Saqlanganlar",
+    liked_title: "Yoqtirilgan materiallar",
+    saved_title: "Saqlangan materiallar",
+    liked_empty_title: "Siz hali hech qanday materialni Like qilmagansiz",
+    liked_empty_sub: "Katalogdagi istalgan material kartasidagi ♡ tugmasini bosib, uni shu yerga saqlang.",
+    saved_empty_title: "Sizda hozircha saqlangan mahsulotlar yo‘q",
+    saved_empty_sub: "Material kartasidagi 🔖 saqlash tugmasini bosib, uni shaxsiy ro‘yxatingizga qo‘shing.",
+    filter_empty_title: "Bu kategoriyada saqlangan mahsulot topilmadi",
+    filter_empty_sub: "Boshqa kategoriyani tanlang yoki filtrni tozalang.",
+    filter_btn: "Filtrlash",
+    clear_filter: "Filtrni tozalash",
+    browse_catalog: "Katalogga o‘tish",
+    items_count: "ta mahsulot",
+    save_error: "Saqlab bo‘lmadi, qayta urinib ko‘ring"
   },
   en: {
     lang_name: "English",
@@ -8439,9 +8472,61 @@ const MAT_I18N = {
     spec_cert: "Certificate / Standard",
     spec_price: "Market price",
     tools_label: "Installation tools",
-    materials_label: "Additional materials"
+    materials_label: "Additional materials",
+    liked_tab_title: "Like",
+    saved_tab_title: "Saved",
+    liked_title: "Liked Materials",
+    saved_title: "Saved Materials",
+    liked_empty_title: "You haven't liked any materials yet",
+    liked_empty_sub: "Tap the ♡ heart icon on any material card to save it here.",
+    saved_empty_title: "You don't have any saved materials yet",
+    saved_empty_sub: "Tap the 🔖 bookmark icon on any material card to add it to your list.",
+    filter_empty_title: "No saved materials found in this category",
+    filter_empty_sub: "Try selecting another category or clear the filter.",
+    filter_btn: "Filter",
+    clear_filter: "Clear filter",
+    browse_catalog: "Browse Catalog",
+    items_count: "items",
+    save_error: "Could not save, please try again"
   }
 };
+
+const DETAIL_VAL_I18N = {
+  'Standart (quruq xonalar)': { ru: 'Стандартная (для сухих помещений)', uz: 'Standart (quruq xonalar)', en: 'Standard (dry rooms)' },
+  '50+ yil': { ru: '50+ лет', uz: '50+ yil', en: '50+ years' },
+  '30+ yil': { ru: '30+ лет', uz: '30+ yil', en: '30+ years' },
+  '25+ yil': { ru: '25+ лет', uz: '25+ yil', en: '25+ years' },
+  '20+ yil': { ru: '20+ лет', uz: '20+ yil', en: '20+ years' },
+  '100+ yil': { ru: '100+ лет', uz: '100+ yil', en: '100+ years' },
+  'O‘zbekiston, Buxoro viloyati': { ru: 'Узбекистан, Бухарская область', uz: 'O‘zbekiston, Buxoro viloyati', en: 'Uzbekistan, Bukhara region' },
+  'O‘zbekiston': { ru: 'Узбекистан', uz: 'O‘zbekiston', en: 'Uzbekistan' },
+  'Toshkent': { ru: 'Ташкент', uz: 'Toshkent', en: 'Tashkent' },
+  'dona': { ru: 'шт.', uz: 'dona', en: 'pcs' },
+  'Ichki va tashqi': { ru: 'Внутреннее и наружное', uz: 'Ichki va tashqi', en: 'Interior & exterior' },
+  'Barcha xonalar': { ru: 'Все помещения', uz: 'Barcha xonalar', en: 'All rooms' },
+  'Standart yuzalar': { ru: 'Стандартные основания', uz: 'Standart yuzalar', en: 'Standard substrates' }
+};
+
+function localizeDetailValue(val, lang) {
+  if (!val || typeof val !== 'string') return val || '';
+  lang = lang || getMaterialsLang();
+  if (DETAIL_VAL_I18N[val] && DETAIL_VAL_I18N[val][lang]) {
+    return DETAIL_VAL_I18N[val][lang];
+  }
+  return val;
+}
+
+function getMaterialField(m, field, lang) {
+  if (!m) return "";
+  lang = lang || getMaterialsLang();
+  if (lang === "ru") {
+    return m[field + "_ru"] || m[field] || "";
+  }
+  if (lang === "en") {
+    return m[field + "_en"] || m[field + "_ru"] || m[field] || "";
+  }
+  return m[field + "_uz"] || m[field] || "";
+}
 
 function matT(key) {
   const lang = getMaterialsLang();
@@ -8804,6 +8889,10 @@ function updateMaterialsUiInPlace() {
     if (libraryActiveSection === "materials") render();
     return;
   }
+  if (materialsState.currentViewTab === "liked" || materialsState.currentViewTab === "saved") {
+    render();
+    return;
+  }
   const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   set("mat-panel-inner", renderMaterialPanelInnerHtml());
   set("mat-active-filter", renderMaterialActiveFilterHtml());
@@ -8928,6 +9017,27 @@ function _matPatch(id, key, on, delta) {
     const c = el.querySelector(".mcat-count");
     if (c && m) c.textContent = (m[key] || 0) > 0 ? m[key] : "";
   });
+
+  // Update header badges
+  const likeBadge = document.getElementById("mcat-like-badge");
+  if (likeBadge) {
+    const lCount = materialsState.likedIds ? materialsState.likedIds.size : 0;
+    likeBadge.textContent = lCount > 0 ? lCount : "";
+    likeBadge.style.display = lCount > 0 ? "inline-flex" : "none";
+  }
+  const saveBadge = document.getElementById("mcat-save-badge");
+  if (saveBadge) {
+    const sCount = materialsState.savedIds ? materialsState.savedIds.size : 0;
+    saveBadge.textContent = sCount > 0 ? sCount : "";
+    saveBadge.style.display = sCount > 0 ? "inline-flex" : "none";
+  }
+
+  // Reactive instant removal if user is currently viewing Liked or Saved tab
+  if ((materialsState.currentViewTab === "liked" && key === "like_count" && !on) ||
+      (materialsState.currentViewTab === "saved" && key === "save_count" && !on)) {
+    updateMaterialsUiInPlace();
+  }
+
   return m;
 }
 
@@ -8974,7 +9084,11 @@ function matReactionButtonHtml(id, kind, small) {
 }
 
 // ---- Animatsiyali placeholder: harflab yozilib, keyin o‘chib, keyingi so‘zga o‘tadi ----
-const MAT_PH_WORDS = ["Gipsokarton", "Profil", "Keramogranit", "Laminat", "Bo‘yoq", "Plitka", "Eshik", "Oyna"];
+const MAT_PH_WORDS_I18N = {
+  ru: ["Ламинат", "Гипсокартон", "Профиль", "Керамогранит", "Краска", "Плитка", "Двери", "Стекло"],
+  uz: ["Laminat", "Gipsokarton", "Profil", "Keramogranit", "Bo‘yoq", "Plitka", "Eshik", "Oyna"],
+  en: ["Laminate", "Drywall", "Profile", "Porcelain tile", "Paint", "Tile", "Doors", "Glass"]
+};
 let _matPhIdx = 0;
 let _matPhText = "";
 let _matPhPhase = "typing"; // typing -> hold -> deleting
@@ -8988,12 +9102,14 @@ function ensureMaterialPlaceholderTicker() {
     const inp = document.getElementById("lib-materials-search-input");
     // Sahifa yopilgan bo'lsa, tekshiruvni sekinlashtirib kutamiz
     if (!el || document.hidden || (inp && inp.value)) { _matPhTimer = setTimeout(step, 400); return; }
-    const word = MAT_PH_WORDS[_matPhIdx % MAT_PH_WORDS.length];
+    const curMatLang = getMaterialsLang();
+    const wordList = MAT_PH_WORDS_I18N[curMatLang] || MAT_PH_WORDS_I18N.ru;
+    const word = wordList[_matPhIdx % wordList.length];
     let delay = 90;
     if (reduce) {
       _matPhText = word;
       el.textContent = word;
-      _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
+      _matPhIdx = (_matPhIdx + 1) % wordList.length;
       _matPhTimer = setTimeout(step, 2400);
       return;
     }
@@ -9009,7 +9125,7 @@ function ensureMaterialPlaceholderTicker() {
       delay = 38;
       if (!_matPhText.length) {
         _matPhPhase = "typing";
-        _matPhIdx = (_matPhIdx + 1) % MAT_PH_WORDS.length;
+        _matPhIdx = (_matPhIdx + 1) % wordList.length;
         delay = 320;
       }
     }
@@ -9204,6 +9320,182 @@ function renderMaterialCatalogHtml() {
   `).join("");
 }
 
+
+function setMaterialsViewTab(tab) {
+  haptic("light");
+  if (tab !== "catalog" && tab !== "liked" && tab !== "saved") tab = "catalog";
+  // If tapping already active tab (e.g. liked or saved), toggle back to catalog
+  if (materialsState.currentViewTab === tab && tab !== "catalog") {
+    materialsState.currentViewTab = "catalog";
+  } else {
+    materialsState.currentViewTab = tab;
+  }
+  materialsState.savedFilterModalOpen = false;
+  render();
+  window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+}
+
+function setSavedCategoryFilter(catId) {
+  haptic("light");
+  materialsState.savedFilterCategory = catId || "all";
+  materialsState.savedFilterModalOpen = false;
+  updateMaterialsUiInPlace();
+}
+
+function toggleSavedFilterModal(open) {
+  haptic("light");
+  if (typeof open === "boolean") {
+    materialsState.savedFilterModalOpen = open;
+  } else {
+    materialsState.savedFilterModalOpen = !materialsState.savedFilterModalOpen;
+  }
+  const modal = document.getElementById("mcat-saved-filter-modal");
+  if (modal) {
+    modal.style.display = materialsState.savedFilterModalOpen ? "flex" : "none";
+  }
+}
+
+function renderMaterialLikedViewHtml() {
+  const lang = getMaterialsLang();
+  const likedMaterials = (materialsState.allMaterials || []).filter(m => materialsState.likedIds && materialsState.likedIds.has(Number(m.id)));
+  const count = likedMaterials.length;
+
+  return `
+    <div class="mcat-special-view">
+      <div class="mcat-special-header" style="margin-bottom:14px;">
+        <h2 class="mcat-h2" style="font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span style="color:#ef4444;">♥</span> ${escapeHtml(matT('liked_title'))}
+          <span class="mcat-h2-n" style="font-size:14px;">${count}</span>
+        </h2>
+        <p class="mcat-sub" style="margin:2px 0 0 0;">${count} ${escapeHtml(matT('items_count'))}</p>
+      </div>
+
+      ${count === 0 ? `
+        <div class="mcat-empty" style="padding:60px 20px; text-align:center;">
+          <div class="mcat-empty-ico" style="font-size:46px; color:#ef4444; margin-bottom:8px;">♡</div>
+          <div class="mcat-empty-title" style="font-size:16px; font-weight:750; margin-bottom:4px;">${escapeHtml(matT('liked_empty_title'))}</div>
+          <div class="mcat-empty-sub" style="font-size:13px; color:var(--text-muted); max-width:320px; margin:0 auto 16px auto;">${escapeHtml(matT('liked_empty_sub'))}</div>
+          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:#fff; border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
+            ${escapeHtml(matT('browse_catalog'))}
+          </button>
+        </div>
+      ` : `
+        <div class="mcat-grid">${likedMaterials.map(renderMaterialCardHtml).join("")}</div>
+      `}
+    </div>
+  `;
+}
+
+function renderMaterialSavedViewHtml() {
+  const lang = getMaterialsLang();
+  const savedMaterials = (materialsState.allMaterials || []).filter(m => materialsState.savedIds && materialsState.savedIds.has(Number(m.id)));
+  
+  // Extract categories dynamically that strictly exist among saved materials
+  const catMap = new Map();
+  savedMaterials.forEach(m => {
+    const g = getMaterialGroup(m);
+    if (!catMap.has(g.id)) {
+      catMap.set(g.id, { id: g.id, icon: g.icon || "🧱", name: getLocalizedGroupName(g, lang), count: 0 });
+    }
+    catMap.get(g.id).count++;
+  });
+  const dynamicCategories = Array.from(catMap.values()).sort((a, b) => b.count - a.count);
+
+  const activeCatId = materialsState.savedFilterCategory || "all";
+  let filteredSaved = savedMaterials;
+  if (activeCatId !== "all") {
+    filteredSaved = savedMaterials.filter(m => getMaterialGroup(m).id === activeCatId);
+  }
+
+  const activeCatObj = dynamicCategories.find(c => c.id === activeCatId);
+  const activeCatName = activeCatObj ? activeCatObj.name : "";
+
+  return `
+    <div class="mcat-special-view">
+      <div class="mcat-special-header" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+        <div>
+          <h2 class="mcat-h2" style="font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;">
+            <span>🔖</span> ${escapeHtml(matT('saved_title'))}
+            <span class="mcat-h2-n" style="font-size:14px;">${filteredSaved.length}${activeCatId !== "all" ? ` / ${savedMaterials.length}` : ""}</span>
+          </h2>
+          <p class="mcat-sub" style="margin:2px 0 0 0;">${filteredSaved.length} ${escapeHtml(matT('items_count'))}</p>
+        </div>
+
+        ${savedMaterials.length > 0 ? `
+          <div style="position:relative;">
+            <button type="button" class="mcat-saved-filter-trigger" style="padding:6px 14px; font-size:13px; font-weight:700; border-radius:18px; border:1px solid var(--border, rgba(255,255,255,0.15)); background:var(--bg-surface-elevated, rgba(255,255,255,0.08)); color:var(--text-primary); cursor:pointer; display:inline-flex; align-items:center; gap:6px; user-select:none;" onclick="toggleSavedFilterModal()">
+              <span>⚡ ${escapeHtml(matT('filter_btn'))}</span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+            </button>
+          </div>
+        ` : ""}
+      </div>
+
+      <!-- Active category chip -->
+      ${activeCatId !== "all" && activeCatObj ? `
+        <div style="margin-bottom:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div class="mcat-active-chip" style="display:inline-flex; align-items:center; gap:6px; background:rgba(0,122,255,0.12); color:#007aff; border:1px solid rgba(0,122,255,0.3); padding:5px 12px; border-radius:16px; font-size:12.5px; font-weight:700;">
+            <span>${escapeHtml(activeCatObj.icon)} ${escapeHtml(activeCatName)}</span>
+            <button type="button" class="mcat-active-x" style="background:none; border:none; color:#007aff; cursor:pointer; font-size:14px; font-weight:800; padding:0 2px;" onclick="setSavedCategoryFilter('all')">×</button>
+          </div>
+          <button type="button" style="background:none; border:none; color:var(--text-muted, #888); font-size:12px; cursor:pointer; text-decoration:underline;" onclick="setSavedCategoryFilter('all')">
+            ${escapeHtml(matT('clear_filter'))}
+          </button>
+        </div>
+      ` : ""}
+
+      ${savedMaterials.length === 0 ? `
+        <div class="mcat-empty" style="padding:60px 20px; text-align:center;">
+          <div class="mcat-empty-ico" style="font-size:46px; margin-bottom:8px;">🔖</div>
+          <div class="mcat-empty-title" style="font-size:16px; font-weight:750; margin-bottom:4px;">${escapeHtml(matT('saved_empty_title'))}</div>
+          <div class="mcat-empty-sub" style="font-size:13px; color:var(--text-muted); max-width:320px; margin:0 auto 16px auto;">${escapeHtml(matT('saved_empty_sub'))}</div>
+          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:#fff; border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
+            ${escapeHtml(matT('browse_catalog'))}
+          </button>
+        </div>
+      ` : (filteredSaved.length === 0 ? `
+        <div class="mcat-empty" style="padding:50px 20px; text-align:center;">
+          <div class="mcat-empty-ico" style="font-size:40px; margin-bottom:8px;">🔍</div>
+          <div class="mcat-empty-title" style="font-size:15.5px; font-weight:750; margin-bottom:4px;">${escapeHtml(matT('filter_empty_title'))}</div>
+          <div class="mcat-empty-sub" style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">${escapeHtml(matT('filter_empty_sub'))}</div>
+          <button type="button" class="lib-page-btn" style="background:rgba(255,255,255,0.08); color:var(--text-primary); border-radius:18px; padding:8px 18px; font-weight:700; border:1px solid var(--border); cursor:pointer;" onclick="setSavedCategoryFilter('all')">
+            ${escapeHtml(matT('all_chip'))} (${savedMaterials.length})
+          </button>
+        </div>
+      ` : `
+        <div class="mcat-grid">${filteredSaved.map(renderMaterialCardHtml).join("")}</div>
+      `)}
+
+      <!-- Saved Categories Filter Modal / Bottom Sheet -->
+      <div id="mcat-saved-filter-modal" class="mcat-modal-backdrop" style="display:${materialsState.savedFilterModalOpen ? 'flex' : 'none'}; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); align-items:flex-end; justify-content:center;" onclick="if(event.target===this) toggleSavedFilterModal(false)">
+        <div class="mcat-filter-sheet" style="width:100%; max-width:480px; max-height:85vh; background:var(--bg-surface-elevated, #1c1c1e); border-top-left-radius:24px; border-top-right-radius:24px; padding:20px; box-shadow:0 -10px 40px rgba(0,0,0,0.5); overflow-y:auto; border-top:1px solid var(--border, rgba(255,255,255,0.1));" onclick="event.stopPropagation()">
+          <div style="width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,0.25); margin:0 auto 16px auto;"></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <h3 style="margin:0; font-size:17px; font-weight:800; color:var(--text-primary);">${escapeHtml(matT('filter_btn'))}</h3>
+            <button type="button" style="background:none; border:none; font-size:18px; color:var(--text-muted); cursor:pointer; padding:4px 8px;" onclick="toggleSavedFilterModal(false)">✕</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" class="mcat-filter-sheet-opt ${activeCatId === 'all' ? 'active' : ''}" style="display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-radius:12px; border:none; background:${activeCatId === 'all' ? 'rgba(0,122,255,0.14)' : 'rgba(255,255,255,0.04)'}; color:${activeCatId === 'all' ? '#007aff' : 'var(--text-primary)'}; font-size:14px; font-weight:700; cursor:pointer; text-align:left;" onclick="setSavedCategoryFilter('all')">
+              <span style="display:inline-flex; align-items:center; gap:8px;">
+                <span>🌐</span> ${escapeHtml(matT('all_chip'))}
+              </span>
+              <span style="font-size:12px; opacity:0.75;">${savedMaterials.length} ${activeCatId === 'all' ? '✓' : ''}</span>
+            </button>
+            ${dynamicCategories.map(c => `
+              <button type="button" class="mcat-filter-sheet-opt ${activeCatId === c.id ? 'active' : ''}" style="display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-radius:12px; border:none; background:${activeCatId === c.id ? 'rgba(0,122,255,0.14)' : 'rgba(255,255,255,0.04)'}; color:${activeCatId === c.id ? '#007aff' : 'var(--text-primary)'}; font-size:14px; font-weight:700; cursor:pointer; text-align:left;" onclick="setSavedCategoryFilter('${escapeJsString(c.id)}')">
+                <span style="display:inline-flex; align-items:center; gap:8px;">
+                  <span>${escapeHtml(c.icon)}</span> ${escapeHtml(c.name)}
+                </span>
+                <span style="font-size:12px; opacity:0.75;">${c.count} ${activeCatId === c.id ? '✓' : ''}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderMaterialsSectionHtml() {
   if (!materialsState.loaded && !materialsState.loading) {
     loadMaterialsData().then(() => {
@@ -9230,43 +9522,63 @@ function renderMaterialsSectionHtml() {
   const search = materialsState.searchQuery || "";
   const open = !!materialsState.panelOpen;
 
+  const isSpecialTab = materialsState.currentViewTab === 'liked' || materialsState.currentViewTab === 'saved';
+  const lCount = materialsState.likedIds ? materialsState.likedIds.size : 0;
+  const sCount = materialsState.savedIds ? materialsState.savedIds.size : 0;
+
   return `
     <div class="page lib-container lib-page-enter lib-materials-v2-container mcat">
-      <div class="lib-materials-header-nav" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;">
-        <div class="lib-back-nav" style="margin-bottom:0;" onclick="closeLibrarySection()">
-          ${libIcons.back('lib-back-svg', 16)} ${escapeHtml(matT('back_lib_text') || 'Библиотека')}
+      <div class="lib-materials-header-nav" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <div class="lib-back-nav" style="margin-bottom:0;" onclick="${isSpecialTab ? 'setMaterialsViewTab(\'catalog\')' : 'closeLibrarySection()'}">
+          ${libIcons.back('lib-back-svg', 16)} ${escapeHtml(isSpecialTab ? matT('back_catalog') : (matT('back_lib_text') || 'Библиотека'))}
         </div>
-        ${renderMaterialsLangSelectorHtml()}
+        <div class="mcat-top-nav-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+          ${renderMaterialsLangSelectorHtml()}
+          <button type="button" class="mcat-nav-tab-btn ${materialsState.currentViewTab === 'liked' ? 'active' : ''}" onclick="setMaterialsViewTab('liked')">
+            <span class="mcat-nav-tab-ico" style="color:${materialsState.currentViewTab === 'liked' ? '#fff' : (lCount > 0 ? '#ef4444' : 'inherit')}">${lCount > 0 ? '♥' : '♡'}</span>
+            <span class="mcat-nav-tab-text">${escapeHtml(matT('liked_tab_title'))}</span>
+            <span id="mcat-like-badge" class="mcat-nav-tab-badge" style="display:${lCount > 0 ? 'inline-flex' : 'none'};">${lCount}</span>
+          </button>
+          <button type="button" class="mcat-nav-tab-btn ${materialsState.currentViewTab === 'saved' ? 'active' : ''}" onclick="setMaterialsViewTab('saved')">
+            <span class="mcat-nav-tab-ico">🔖</span>
+            <span class="mcat-nav-tab-text">${escapeHtml(matT('saved_tab_title'))}</span>
+            <span id="mcat-save-badge" class="mcat-nav-tab-badge" style="display:${sCount > 0 ? 'inline-flex' : 'none'};">${sCount}</span>
+          </button>
+        </div>
       </div>
 
-      <div class="mcat-head">
-        <h1 class="mcat-title">${escapeHtml(matT('materials_catalog_title'))}</h1>
-        <p class="mcat-sub">${escapeHtml(matT('materials_catalog_sub'))}</p>
-      </div>
+      ${materialsState.currentViewTab === 'liked' ? renderMaterialLikedViewHtml() : (
+        materialsState.currentViewTab === 'saved' ? renderMaterialSavedViewHtml() : `
+          <div class="mcat-head">
+            <h1 class="mcat-title">${escapeHtml(matT('materials_catalog_title'))}</h1>
+            <p class="mcat-sub">${escapeHtml(matT('materials_catalog_sub'))}</p>
+          </div>
 
-      <div class="mcat-search">
-        <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
-        <input id="lib-materials-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
-               value="${escapeHtml(search)}" oninput="setMaterialSearch(this.value)" />
-        <div class="mcat-ph" aria-hidden="true"><span>${escapeHtml(matT('search_short'))}</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
-        <span id="lib-search-clear-wrap">${search ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : ""}</span>
-      </div>
+          <div class="mcat-search">
+            <span class="mcat-search-icon">${libIcons.search('lib-search-svg', 18)}</span>
+            <input id="lib-materials-search-input" type="text" class="mcat-search-input" placeholder=" " autocomplete="off" autocapitalize="off" enterkeyhint="search"
+                   value="${escapeHtml(search)}" oninput="setMaterialSearch(this.value)" />
+            <div class="mcat-ph" aria-hidden="true"><span>${escapeHtml(matT('search_short'))}</span> <span class="mcat-ph-word" id="mat-ph-word">${escapeHtml(_matPhText)}</span></div>
+            <span id="lib-search-clear-wrap">${search ? `<button class="lib-search-clear-btn" onclick="clearMaterialSearch()">✕</button>` : ""}</span>
+          </div>
 
-      <button type="button" id="mat-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${(materialsState.selectedGroup || "all") !== "all" ? "has-filter" : ""}" onclick="toggleMaterialPanel()">
-        <span class="mcat-filter-left">
-          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          ${escapeHtml(matT('filter_by_cats') || matT('categories_title'))}
-        </span>
-        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
+          <button type="button" id="mat-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${(materialsState.selectedGroup || "all") !== "all" ? "has-filter" : ""}" onclick="toggleMaterialPanel()">
+            <span class="mcat-filter-left">
+              <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+              ${escapeHtml(matT('filter_by_cats') || matT('categories_title'))}
+            </span>
+            <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
 
-      <div id="mat-panel" class="mcat-panel ${open ? "open" : ""}">
-        <div class="mcat-panel-clip"><div class="mcat-panel-inner" id="mat-panel-inner">${renderMaterialPanelInnerHtml()}</div></div>
-      </div>
+          <div id="mat-panel" class="mcat-panel ${open ? "open" : ""}">
+            <div class="mcat-panel-clip"><div class="mcat-panel-inner" id="mat-panel-inner">${renderMaterialPanelInnerHtml()}</div></div>
+          </div>
 
-      <div id="mat-active-filter">${renderMaterialActiveFilterHtml()}</div>
-      <div id="mat-popular-wrap">${renderMaterialPopularHtml()}</div>
-      <div id="mat-catalog-wrap">${renderMaterialCatalogHtml()}</div>
+          <div id="mat-active-filter">${renderMaterialActiveFilterHtml()}</div>
+          <div id="mat-popular-wrap">${renderMaterialPopularHtml()}</div>
+          <div id="mat-catalog-wrap">${renderMaterialCatalogHtml()}</div>
+        `
+      )}
     </div>
   `;
 }
@@ -10786,16 +11098,16 @@ function renderMaterialDetailPage(detailData) {
                 <span class="lib-mat-spec-val"><b>${escapeHtml(getMaterialDimensions(m, lang))}</b></span>
               </div>
             ` : ""}
-            ${m.thicknesses ? `
+            ${(m.thicknesses_ru || m.thicknesses) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_thickness'))}:</span>
-                <span class="lib-mat-spec-val"><b>${escapeHtml(m.thicknesses)}</b></span>
+                <span class="lib-mat-spec-val"><b>${escapeHtml(localizeDetailValue(getMaterialField(m, 'thicknesses', lang), lang))}</b></span>
               </div>
             ` : ""}
-            ${m.composition ? `
+            ${(m.composition_ru || m.composition) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_composition'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.composition)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'composition', lang), lang))}</span>
               </div>
             ` : ""}
             ${(m.density_kg_m3 && m.density_kg_m3 !== 'Не указано') ? `
@@ -10840,10 +11152,10 @@ function renderMaterialDetailPage(detailData) {
                 <span class="lib-mat-spec-val">${escapeHtml(m.sound_insulation)}</span>
               </div>
             ` : ""}
-            ${m.moisture_resistance ? `
+            ${(m.moisture_resistance_ru || m.moisture_resistance) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_moisture'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.moisture_resistance)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'moisture_resistance', lang), lang))}</span>
               </div>
             ` : ""}
             ${(m.fire_resistance || m.fire_rating) ? `
@@ -10852,10 +11164,10 @@ function renderMaterialDetailPage(detailData) {
                 <span class="lib-mat-spec-val">${escapeHtml(m.fire_resistance || m.fire_rating)}</span>
               </div>
             ` : ""}
-            ${(m.service_life || m.lifespan) ? `
+            ${(m.service_life_ru || m.service_life || m.lifespan) ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_service_life'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.service_life || m.lifespan)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'service_life', lang) || getMaterialField(m, 'lifespan', lang), lang))}</span>
               </div>
             ` : ""}
             ${(m.brand && m.brand !== 'Standart') ? `
@@ -10867,19 +11179,19 @@ function renderMaterialDetailPage(detailData) {
             ${(m.country && m.country !== 'Не указано') ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_country'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.country + (m.region && m.region !== 'Не указано' ? ', ' + m.region : ''))}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'country', lang), lang) + (m.region && m.region !== 'Не указано' ? ', ' + localizeDetailValue(getMaterialField(m, 'region', lang), lang) : ''))}</span>
               </div>
             ` : ""}
             ${(m.suitable_rooms && m.suitable_rooms !== 'Не указано') ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_rooms'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.suitable_rooms)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'suitable_rooms', lang), lang))}</span>
               </div>
             ` : ""}
             ${(m.suitable_surfaces && m.suitable_surfaces !== 'Не указано') ? `
               <div class="lib-mat-spec-row">
                 <span class="lib-mat-spec-label">${escapeHtml(matT('spec_surfaces'))}:</span>
-                <span class="lib-mat-spec-val">${escapeHtml(m.suitable_surfaces)}</span>
+                <span class="lib-mat-spec-val">${escapeHtml(localizeDetailValue(getMaterialField(m, 'suitable_surfaces', lang), lang))}</span>
               </div>
             ` : ""}
             ${(m.wear_class && m.wear_class !== 'Не указано') ? `
@@ -10945,7 +11257,7 @@ function renderMaterialDetailPage(detailData) {
             ${(m.price && m.price !== 'Не указано') ? `
               <div class="lib-mat-spec-row" style="background:rgba(16,185,129,0.06); padding:6px 8px; border-radius:8px;">
                 <span class="lib-mat-spec-label" style="color:#059669; font-weight:700;">${escapeHtml(matT('spec_price'))}:</span>
-                <span class="lib-mat-spec-val" style="color:#059669; font-weight:800;">${escapeHtml(m.price)} ${escapeHtml(m.currency || 'UZS')} / ${escapeHtml(m.price_unit || 'm²')}${m.price_region ? ' (' + escapeHtml(m.price_region) + ')' : ''}</span>
+                <span class="lib-mat-spec-val" style="color:#059669; font-weight:800;">${escapeHtml(m.price)} ${escapeHtml(m.currency || 'UZS')} / ${escapeHtml(localizeDetailValue(m.price_unit || 'm²', lang))}${m.price_region ? ' (' + escapeHtml(localizeDetailValue(m.price_region, lang)) + ')' : ''}</span>
               </div>
             ` : ""}
           </div>
@@ -11029,9 +11341,15 @@ function renderMaterialDetailPage(detailData) {
               <div class="lib-mat-source-row">
                 <div class="lib-mat-source-info">
                   <span class="lib-mat-source-status-badge ${s.http_status === 200 ? 'status-ok' : ''}">
-                    ${s.http_status === 200 ? '✓ 200 OK' : '🔗 Rasmiy'}
+                    ${s.http_status === 200 ? '✓ 200 OK' : (lang === 'ru' ? '🔗 Официальный' : (lang === 'en' ? '🔗 Official' : '🔗 Rasmiy'))}
                   </span>
-                  <div class="lib-mat-source-title">${escapeHtml(s.title)}</div>
+                  ${(() => {
+    let sTitle = s.title;
+    if (lang === 'ru') {
+      sTitle = s.title_ru || s.title.replace(/Texnik Ma'lumotlar Sahifasi/gi, 'Официальный технический лист').replace(/Rasmiy/gi, 'Официальный');
+    }
+    return `<div class="lib-mat-source-title">${escapeHtml(sTitle)}</div>`;
+  })()}
                   <div class="lib-mat-source-url">${escapeHtml(s.url)}</div>
                 </div>
                 <button type="button" class="lib-mat-source-open-btn" onclick="safeOpenExternal('${escapeJsString(s.url)}')">

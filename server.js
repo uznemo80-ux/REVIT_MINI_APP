@@ -7876,6 +7876,55 @@ async function toggleMatFlag(req, res, table) {
 app.post('/api/materials/toggle-like', function (req, res) { return toggleMatFlag(req, res, 'material_likes'); });
 app.post('/api/materials/toggle-save', function (req, res) { return toggleMatFlag(req, res, 'material_saves'); });
 
+app.all('/api/materials/liked', async function (req, res) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya kerak' });
+    var q = `
+      SELECT m.*, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
+      FROM material_likes ml
+      JOIN materials m ON m.id = ml.material_id
+      LEFT JOIN material_categories c ON c.id = m.category_id
+      WHERE ml.user_id = $1
+      ORDER BY ml.created_at DESC
+    `;
+    var result = await pool.query(q, [user.id]);
+    return res.json({ ok: true, materials: result.rows, total: result.rows.length });
+  } catch (err) {
+    console.error('GET LIKED MATERIALS ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.all('/api/materials/saved', async function (req, res) {
+  try {
+    await ensureMatStats();
+    var user = await matUserFromReq(req);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya kerak' });
+    var category = (req.query.category || (req.body && req.body.category) || '').trim();
+    var params = [user.id];
+    var whereCategory = '';
+    if (category && category !== 'all') {
+      params.push(category);
+      whereCategory = 'AND (c.slug = $2 OR m.category_slug = $2 OR c.name = $2)';
+    }
+    var q = `
+      SELECT m.*, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
+      FROM material_saves ms
+      JOIN materials m ON m.id = ms.material_id
+      LEFT JOIN material_categories c ON c.id = m.category_id
+      WHERE ms.user_id = $1 ${whereCategory}
+      ORDER BY ms.created_at DESC
+    `;
+    var result = await pool.query(q, params);
+    return res.json({ ok: true, materials: result.rows, total: result.rows.length });
+  } catch (err) {
+    console.error('GET SAVED MATERIALS ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // 1. Kategoriyalar va ishlab chiqaruvchilar ro'yxati (GET & POST)
 app.all('/api/materials/categories', async function (req, res) {
   try {
