@@ -5025,7 +5025,9 @@ function isCourseFreeCheck(c) {
 function getFilteredCoursesList() {
   const rawCourses = Array.isArray(state.courses) ? state.courses : [];
   // Qoralama (draft) kurslar faqat adminga ko'rinadi! O'quvchilarga ko'rsatilmaydi!
-  const allCourses = state.is_admin ? rawCourses : rawCourses.filter(c => c.status === 'active');
+  const allCourses = state.is_admin
+    ? rawCourses
+    : rawCourses.filter(c => c.status === 'active' || c.status === 'published' || c.status === 'in_progress');
 
   const q = courseSearchQuery.trim().toLowerCase();
   return allCourses.filter(c => {
@@ -5046,7 +5048,13 @@ function renderCourseCardsListHtml() {
     const coverSrc = formatImageUrl(course.cover_url);
     const retrySrc = getDriveFallbackUrl(course.cover_url);
     return `
-    <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})" style="cursor:pointer; position:relative;">
+    ${(() => {
+      const isPub = course.status === 'active' || course.status === 'published';
+      const isInProg = course.status === 'in_progress';
+      const cardClickAction = isInProg && !state.is_admin ? "showToast('⏳ Ushbu kurs hozir tayyorlanmoqda.');" : `openCourseCatalog(${Number(course.id)})`;
+      return `
+    <div class="course-card ${isInProg ? 'course-card-in-progress' : ''}" onclick="${cardClickAction}" style="cursor:pointer; position:relative;">`;
+    })()}
       ${state.is_admin ? `
         <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
           <button class="admin-small-btn" style="padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.6);" onclick="event.stopPropagation(); openEditCourseModal(${Number(course.id)})">✏️ Tahrirlash</button>
@@ -5063,9 +5071,17 @@ function renderCourseCardsListHtml() {
       </div>
       <div class="course-body">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div class="tag ${course.status === 'active' ? 'passed' : ''}" style="${course.status !== 'active' && state.is_admin ? 'background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3);' : ''}">
-            ${course.status === 'active' ? 'Faol Kurs' : (/marafon|stream|\b7\s*kun/i.test(course.title || '') ? '🔥 Marafon' : (state.is_admin ? '🔒 Hali chiqmadi (Qoralama)' : 'Mavjud Kurs'))}
-          </div>
+          ${(() => {
+            const isPub = course.status === 'active' || course.status === 'published';
+            const isInProg = course.status === 'in_progress';
+            if (isInProg) {
+              return '<div class="tag" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-weight:700;">🟡 Jarayonda</div>';
+            }
+            if (isPub) {
+              return '<div class="tag passed" style="font-weight:700;">🚀 Sotuvda</div>';
+            }
+            return '<div class="tag" style="background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3); font-weight:700;">🔒 Qoralama</div>';
+          })()}
           <div style="font-weight:750; color:var(--accent); font-size:15px;">
             ${course.is_discount_active && course.discount_price ? `
               <span style="color:var(--danger);">${escapeHtml(course.discount_price)}</span>
@@ -5085,6 +5101,13 @@ function renderCourseCardsListHtml() {
           ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
         </div>
         ${(() => {
+          const isPub = course.status === 'active' || course.status === 'published';
+          const isInProg = course.status === 'in_progress';
+          if (isInProg && !state.is_admin) {
+            return `<button class="btn secondary" style="margin-bottom:0; padding:10px 16px; opacity:0.95; cursor:default; background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-weight:700;" onclick="event.stopPropagation(); showToast('⏳ Ushbu kurs hozir tayyorlanmoqda.');">
+              ⏳ Jarayonda (Tayyorlanmoqda)
+            </button>`;
+          }
           const isFree = isCourseFreeCheck(course);
           const hasAccess = Boolean(state.has_access || state.is_admin || isFree);
           if (hasAccess) {
@@ -5226,15 +5249,19 @@ function openAddCourseModal() {
               O'quvchilar chala darslarni ko'rib qolmasligi uchun sukut bo'yicha yopiq turadi.
             </div>
             <input type="hidden" id="c-status" value="draft">
-            <div class="status-slide-toggle" id="modal-c-status-toggle" data-status="draft" onclick="handleFormStatusClick(event, 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+            <div class="status-slide-toggle-3" id="modal-c-status-toggle" data-status="draft">
               <div class="status-slide-pill"></div>
               <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setFormStatus('draft', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
-                <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
-                <span class="status-slide-opt-desc">Qoralama (yopiq)</span>
+                <span class="status-slide-opt-title">🔒 Qoralama</span>
+                <span class="status-slide-opt-desc">Yopiq</span>
               </button>
-              <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setFormStatus('active', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
-                <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
-                <span class="status-slide-opt-desc">Barchaga ochiq</span>
+              <button type="button" class="status-slide-opt" data-val="in_progress" onclick="event.stopPropagation(); setFormStatus('in_progress', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+                <span class="status-slide-opt-title">🟡 Jarayonda</span>
+                <span class="status-slide-opt-desc">Karta ko'rinadi</span>
+              </button>
+              <button type="button" class="status-slide-opt" data-val="published" onclick="event.stopPropagation(); setFormStatus('published', 'c-status', 'modal-c-status-toggle', 'modal-c-status-badge')">
+                <span class="status-slide-opt-title">🚀 Ommaga</span>
+                <span class="status-slide-opt-desc">Sotuvda</span>
               </button>
             </div>
           </div>
@@ -5358,23 +5385,27 @@ async function openEditCourseModal(id) {
           <div class="apple-field" style="margin-top:14px; margin-bottom:18px;">
             <label style="font-weight:750; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <span>Kurs holati (O'quvchilarga ko'rinishi)</span>
-              <span id="modal-ec-status-badge" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
-                ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali chiqmadi (Qoralama)'}
+              <span id="modal-ec-status-badge" class="course-status-badge ${course.status === 'published' || course.status === 'active' ? 'active' : (course.status === 'in_progress' ? 'in_progress' : 'draft')}">
+                ${course.status === 'published' || course.status === 'active' ? '🚀 Ommaga chiqarish' : (course.status === 'in_progress' ? '🟡 Jarayonda' : '🔒 Qoralama')}
               </span>
             </label>
             <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; line-height:1.4;">
-              O'quvchilarga ko'rinish holatini o'ngga yoki chapga o'tkazib boshqaring.
+              3 bosqichli boshqaruv: Qoralama (yopiq) → Jarayonda (o'quvchiga faqat karta ko'rinadi) → Ommaga chiqarish (darslar ro‘yxati ochiq va sotuvda).
             </div>
             <input type="hidden" id="ec-status" value="${course.status || 'draft'}">
-            <div class="status-slide-toggle" id="modal-ec-status-toggle" data-status="${course.status || 'draft'}" onclick="handleFormStatusClick(event, 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+            <div class="status-slide-toggle-3" id="modal-ec-status-toggle" data-status="${course.status || 'draft'}">
               <div class="status-slide-pill"></div>
               <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setFormStatus('draft', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
-                <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
-                <span class="status-slide-opt-desc">Qoralama (yopiq)</span>
+                <span class="status-slide-opt-title">🔒 Qoralama</span>
+                <span class="status-slide-opt-desc">Yopiq</span>
               </button>
-              <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setFormStatus('active', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
-                <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
-                <span class="status-slide-opt-desc">Barchaga ochiq</span>
+              <button type="button" class="status-slide-opt" data-val="in_progress" onclick="event.stopPropagation(); setFormStatus('in_progress', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+                <span class="status-slide-opt-title">🟡 Jarayonda</span>
+                <span class="status-slide-opt-desc">Karta ochiq</span>
+              </button>
+              <button type="button" class="status-slide-opt" data-val="published" onclick="event.stopPropagation(); setFormStatus('published', 'ec-status', 'modal-ec-status-toggle', 'modal-ec-status-badge')">
+                <span class="status-slide-opt-title">🚀 Ommaga</span>
+                <span class="status-slide-opt-desc">Sotuvda</span>
               </button>
             </div>
           </div>
@@ -5450,24 +5481,39 @@ async function setCourseStatus(courseId, newStatus) {
   ].filter(Boolean);
   toggles.forEach(t => t.setAttribute("data-status", newStatus));
 
+  let bClass = 'draft';
+  let bText = '🔒 Qoralama';
+  let bHint = "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi (Qoralama).";
+  let cardClass = 'draft-mode';
+
+  if (newStatus === 'published' || newStatus === 'active') {
+    bClass = 'active';
+    bText = '🚀 Ommaga chiqarilgan (Sotuvda)';
+    bHint = "Ushbu kurs barcha o‘quvchilarga ko‘rinmoqda, preview va darslar ro‘yxati ochiq va sotuvga chiqarilgan.";
+    cardClass = 'active-mode';
+  } else if (newStatus === 'in_progress') {
+    bClass = 'in_progress';
+    bText = '🟡 Jarayonda (Tayyorlanmoqda)';
+    bHint = "Ushbu kurs o‘quvchilarga faqat karta sifatida ko‘rinadi, lekin ichiga kirish yopiq («Ushbu kurs hozir tayyorlanmoqda»).";
+    cardClass = 'in-progress-mode';
+  }
+
   const badges = [
     document.getElementById(`course-status-badge-${courseId}`),
     document.getElementById(`course-status-badge-btm-${courseId}`)
   ].filter(Boolean);
   badges.forEach(b => {
-    b.className = `course-status-badge ${newStatus === 'active' ? 'active' : 'draft'}`;
-    b.innerHTML = newStatus === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)';
+    b.className = `course-status-badge ${bClass}`;
+    b.innerHTML = bText;
   });
 
   const cardEl = document.getElementById(`course-status-card-${courseId}`);
   if (cardEl) {
-    cardEl.className = `course-status-card ${newStatus === 'active' ? 'active-mode' : 'draft-mode'}`;
+    cardEl.className = `course-status-card ${cardClass}`;
   }
   const hintEl = document.getElementById(`course-status-hint-${courseId}`);
   if (hintEl) {
-    hintEl.textContent = newStatus === 'active'
-      ? "Ushbu kurs hozir barcha o‘quvchilarga ko‘rinmoqda va sotuvga chiqarilgan."
-      : "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi. Modullar va darslarni to‘ldirib bo‘lgach, o‘ngga surib sotuvga chiqarishingiz mumkin.";
+    hintEl.textContent = bHint;
   }
 
   try {
@@ -5507,8 +5553,17 @@ function setFormStatus(status, inputId, toggleId, badgeId) {
   if (toggle) toggle.setAttribute("data-status", status);
   const badge = document.getElementById(badgeId);
   if (badge) {
-    badge.className = `course-status-badge ${status === 'active' ? 'active' : 'draft'}`;
-    badge.innerHTML = status === 'active' ? '🚀 Sotuvga chiqish' : '🔒 Hali chiqmadi';
+    let bClass = 'draft';
+    let bText = '🔒 Qoralama';
+    if (status === 'published' || status === 'active') {
+      bClass = 'active';
+      bText = '🚀 Ommaga chiqarish (Sotuvda)';
+    } else if (status === 'in_progress') {
+      bClass = 'in_progress';
+      bText = '🟡 Jarayonda (Tayyorlanmoqda)';
+    }
+    badge.className = `course-status-badge ${bClass}`;
+    badge.innerHTML = bText;
   }
 }
 
@@ -5530,6 +5585,17 @@ function goToCourseManagement() {
 
 async function openCourseCatalog(courseId) {
   haptic("light");
+  const _checkCourse = (state.courses || []).find(c => Number(c.id) === Number(courseId));
+  if (_checkCourse && !state.is_admin) {
+    if (_checkCourse.status === 'in_progress') {
+      showToast("⏳ Ushbu kurs hozir tayyorlanmoqda.");
+      return;
+    }
+    if (_checkCourse.status === 'draft') {
+      showToast("🔒 Ushbu kurs hozircha yopiq.");
+      return;
+    }
+  }
   if (Number(courseId) !== Number(selectedCourseId)) {
     expandedModuleIds = new Set();
   }
@@ -5692,29 +5758,35 @@ function renderCourseModules() {
       })()}
 
       ${state.is_admin ? `
-        <div id="course-status-card-${course.id}" class="course-status-card ${course.status === 'active' ? 'active-mode' : 'draft-mode'}">
+        <div id="course-status-card-${course.id}" class="course-status-card ${course.status === 'published' || course.status === 'active' ? 'active-mode' : (course.status === 'in_progress' ? 'in-progress-mode' : 'draft-mode')}">
           <div class="course-status-header">
             <div class="course-status-title">
               <span>📡 Kurs Ko'rinishi (Status)</span>
             </div>
-            <div id="course-status-badge-${course.id}" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
-              ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)'}
+            <div id="course-status-badge-${course.id}" class="course-status-badge ${course.status === 'published' || course.status === 'active' ? 'active' : (course.status === 'in_progress' ? 'in_progress' : 'draft')}">
+              ${course.status === 'published' || course.status === 'active' ? '🚀 Ommaga chiqarilgan (Sotuvda)' : (course.status === 'in_progress' ? '🟡 Jarayonda (Tayyorlanmoqda)' : '🔒 Qoralama (Yopiq)')}
             </div>
           </div>
           <div id="course-status-hint-${course.id}" class="course-status-hint">
-            ${course.status === 'active'
-              ? "Ushbu kurs hozir barcha o‘quvchilarga ko‘rinmoqda va sotuvga chiqarilgan."
-              : "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi. Modullar va darslarni to‘ldirib bo‘lgach, o‘ngga surib sotuvga chiqarishingiz mumkin."}
+            ${course.status === 'published' || course.status === 'active'
+              ? "Ushbu kurs barcha o‘quvchilarga ko‘rinmoqda, preview va darslar ro‘yxati ochiq va sotuvga chiqarilgan."
+              : (course.status === 'in_progress'
+                  ? "Ushbu kurs o‘quvchilarga faqat karta sifatida ko‘rinadi, lekin ichiga kirish yopiq («Ushbu kurs hozir tayyorlanmoqda»)."
+                  : "Ushbu kurs hozircha o‘quvchilarga ko‘rinmaydi (Qoralama).")}
           </div>
-          <div class="status-slide-toggle" id="course-status-toggle-${course.id}" data-status="${course.status || 'draft'}" onclick="handleCourseStatusClick(event, ${Number(course.id)})">
+          <div class="status-slide-toggle-3" id="course-status-toggle-${course.id}" data-status="${course.status || 'draft'}">
             <div class="status-slide-pill"></div>
             <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'draft')">
-              <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
-              <span class="status-slide-opt-desc">O'quvchilarga yopiq</span>
+              <span class="status-slide-opt-title">🔒 Qoralama</span>
+              <span class="status-slide-opt-desc">Yopiq</span>
             </button>
-            <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'active')">
-              <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
-              <span class="status-slide-opt-desc">Barchaga ochiq</span>
+            <button type="button" class="status-slide-opt" data-val="in_progress" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'in_progress')">
+              <span class="status-slide-opt-title">🟡 Jarayonda</span>
+              <span class="status-slide-opt-desc">Karta ochiq</span>
+            </button>
+            <button type="button" class="status-slide-opt" data-val="published" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'published')">
+              <span class="status-slide-opt-title">🚀 Ommaga</span>
+              <span class="status-slide-opt-desc">Sotuvda</span>
             </button>
           </div>
         </div>
@@ -5821,19 +5893,23 @@ function renderCourseModules() {
           <div class="course-status-title">
             <span>⚙️ Pastki boshqaruv: Kursni sotuvga chiqarish</span>
           </div>
-          <div id="course-status-badge-btm-${course.id}" class="course-status-badge ${course.status === 'active' ? 'active' : 'draft'}">
-            ${course.status === 'active' ? '🚀 Sotuvda (Ommaviy)' : '🔒 Hali Chiqmadi (Qoralama)'}
+          <div id="course-status-badge-btm-${course.id}" class="course-status-badge ${course.status === 'published' || course.status === 'active' ? 'active' : (course.status === 'in_progress' ? 'in_progress' : 'draft')}">
+            ${course.status === 'published' || course.status === 'active' ? '🚀 Ommaga chiqarilgan (Sotuvda)' : (course.status === 'in_progress' ? '🟡 Jarayonda' : '🔒 Qoralama (Yopiq)')}
           </div>
         </div>
-        <div class="status-slide-toggle" id="course-status-toggle-btm-${course.id}" data-status="${course.status || 'draft'}" onclick="handleCourseStatusClick(event, ${Number(course.id)})">
+        <div class="status-slide-toggle-3" id="course-status-toggle-btm-${course.id}" data-status="${course.status || 'draft'}">
           <div class="status-slide-pill"></div>
           <button type="button" class="status-slide-opt" data-val="draft" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'draft')">
-            <span class="status-slide-opt-title">🔒 Hali chiqmadi</span>
-            <span class="status-slide-opt-desc">Qoralama (o‘quvchilarga yopiq)</span>
+            <span class="status-slide-opt-title">🔒 Qoralama</span>
+            <span class="status-slide-opt-desc">Yopiq</span>
           </button>
-          <button type="button" class="status-slide-opt" data-val="active" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'active')">
-            <span class="status-slide-opt-title">🚀 Sotuvga chiqish</span>
-            <span class="status-slide-opt-desc">Faol (barchaga ochiq)</span>
+          <button type="button" class="status-slide-opt" data-val="in_progress" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'in_progress')">
+            <span class="status-slide-opt-title">🟡 Jarayonda</span>
+            <span class="status-slide-opt-desc">Karta ko'rinadi</span>
+          </button>
+          <button type="button" class="status-slide-opt" data-val="published" onclick="event.stopPropagation(); setCourseStatus(${Number(course.id)}, 'published')">
+            <span class="status-slide-opt-title">🚀 Ommaga chiqarish</span>
+            <span class="status-slide-opt-desc">Sotuvda</span>
           </button>
         </div>
       </div>

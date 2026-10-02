@@ -21,11 +21,11 @@ const SEED_NORMATIVES = [
     adopted_date: "2024-08-14",
     effective_date: "2024-09-01",
     issuing_authority: "O'zbekiston Respublikasi Qurilish va uy-joy kommunal xo'jaligi vazirligi",
-    official_source_url: "https://mc.uz/",
+    official_source_url: "https://mc.uz/oz",
     pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.01-24",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi (mc.uz)", type: "ministry", url: "https://mc.uz/", note: "Amaldagi rasmiy normativ hujjat tahriri" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/7084512", note: "Davlat ro'yxatiga olingan rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi (mc.uz)", type: "ministry", url: "https://mc.uz/oz", note: "Amaldagi rasmiy normativ hujjat tahriri" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.01-24", note: "Davlat ro'yxatiga olingan rasmiy matn" },
       { title: "Kutubxona kitobi: «Fuqaro va sanoat binolari arxitekturasi» (2021)", type: "book", note: "O'quv manbasi: xonalar proporsiyasi va ergonomikasi" }
     ],
     practical_example: `Berilgan:
@@ -96,11 +96,11 @@ Jami toza maydon: 54.0 m² — Loyiha to'liq davlat ekspertizasi me'yoriga javob
     adopted_date: "2019-06-20",
     effective_date: "2019-07-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
+    official_source_url: "https://mc.uz/oz",
     pdf_url: "https://lex.uz/uz/search/nat?number=QMQ%202.01.03-19",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Rasmiy tasdiqlangan qurilish normativi" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4425687", note: "Rasmiy elektron matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Rasmiy tasdiqlangan qurilish normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=QMQ%202.01.03-19", note: "Rasmiy elektron matn" },
       { title: "Kutubxona kitobi: «Zilzilabardosh inshootlar hisobi» (2020)", type: "book", note: "O'quv adabiyoti: seysmik karkas hisoblash usullari" }
     ],
     practical_example: `Berilgan:
@@ -143,11 +143,11 @@ Natija: Orayopma plitalari seysmopoyasga kamida 120 mm chuqurlikda tayanadi va s
     adopted_date: "2003-11-20",
     effective_date: "2004-01-01",
     issuing_authority: "Davlat arxitektura va qurilish qo'mitasi / Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/1344820",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.07.01-03",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Texnik me'yorlash markazi rasmiy amaldagi tahriri" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/1344820", note: "O'zgartirish va qo'shimchalari bilan rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Texnik me'yorlash markazi rasmiy amaldagi tahriri" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.07.01-03", note: "O'zgartirish va qo'shimchalari bilan rasmiy matn" },
       { title: "Kutubxona kitobi: «Shaharsozlik asoslari va landshaft arxitekturasi» (2022)", type: "book", note: "O'quv qo'llanma: Bosh reja va masofalar tahlili" }
     ],
     practical_example: `Berilgan:
@@ -193,12 +193,12 @@ Natija: Sitplan Davlat xizmatlari (APZ) va shaharsozlik kengashi tekshiruvidan t
     adopted_date: "2004-04-12",
     effective_date: "2004-07-01",
     issuing_authority: "Qurilish vazirligi va Favqulodda vaziyatlar vazirligi (FVV)",
-    official_source_url: "https://mc.uz/",
+    official_source_url: "https://mc.uz/oz",
     pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.01.02-04",
     sources: [
       { title: "Favqulodda vaziyatlar vazirligi (FVV) yong'in nazorati", type: "official", url: "https://fvv.uz/", note: "Yong'in xavfsizligi davlat nazorati talablari" },
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Shaharsozlik normativ hujjati" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/1512410", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Shaharsozlik normativ hujjati" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.01.02-04", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Binolarning yong'in xavfsizligi asoslari» (2021)", type: "book", note: "O'quv manbasi: evakuatsiya hisobi metodikasi" }
     ],
     practical_example: `Berilgan:
@@ -240,11 +240,11 @@ Natija: Yong'in ekspertizasi va FVV talablariga 100% mos.`,
     adopted_date: "2019-11-15",
     effective_date: "2020-01-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/4648512",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.02-19",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Jamoat binolari bo'yicha amaldagi shaharsozlik normasi" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4648512", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Jamoat binolari bo'yicha amaldagi shaharsozlik normasi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.02-19", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Jamoat binolari arxitekturasi» (2020)", type: "book", note: "O'quv manbasi: ofislar va maktablar tipologiyasi" }
     ],
     practical_example: `Berilgan:
@@ -284,11 +284,11 @@ Natija: Sanitariya va mehnat muhofazasi talablariga to'liq javob beradi.`,
     adopted_date: "2023-09-08",
     effective_date: "2023-11-01",
     issuing_authority: "Qurilish va uy-joy kommunal xo'jaligi vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/6625890",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.01.18-23",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Inklyuziv shaharsozlik standarti" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/6625890", note: "Rasmiy tasdiqlangan hujjat matni" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Inklyuziv shaharsozlik standarti" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.01.18-23", note: "Rasmiy tasdiqlangan hujjat matni" },
       { title: "Kutubxona kitobi: «Inklyuziv arxitektura va universal dizayn» (2023)", type: "book", note: "O'quv qo'llanma: to'siqsiz muhit loyihalash qoidalari" }
     ],
     practical_example: `Berilgan:
@@ -330,11 +330,11 @@ Natija: To'siqsiz inklyuziv muhit talablariga 100% javob beradi.`,
     adopted_date: "2018-05-10",
     effective_date: "2018-07-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/3784125",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=QMQ%202.04.05-18",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "HVAC bo'yicha bosh amaldagi qurilish normativi" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/3784125", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "HVAC bo'yicha bosh amaldagi qurilish normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=QMQ%202.04.05-18", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Binolarning isitish va ventilyatsiya tizimlari» (2019)", type: "book", note: "O'quv qo'llanma: havoni hisoblash formulalari" }
     ],
     practical_example: `Berilgan:
@@ -376,11 +376,11 @@ Natija:
     adopted_date: "1998-10-14",
     effective_date: "1999-01-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/984120",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=QMQ%202.04.01-98",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Ichki suv va kanalizatsiya amaldagi normativi" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/984120", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Ichki suv va kanalizatsiya amaldagi normativi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=QMQ%202.04.01-98", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Suv ta'minoti va oqova suv tizimlari» (2020)", type: "book", note: "O'quv qo'llanma: nishabliklar va gidravlika hisoblari" }
     ],
     practical_example: `Berilgan:
@@ -424,7 +424,7 @@ Natija: Stajka qalinligi kamida 11-12 sm bo'lishi yoki rakovina quvuri devor ich
     official_source_url: "https://standart.uz/",
     sources: [
       { title: "O‘zbekiston texnik jihatdan tartibga solish agentligi (Standart.uz)", type: "official", url: "https://standart.uz/", note: "Davlat standarti rasmiy reyestri" },
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Sertifikatlangan materiallar katalogi" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Sertifikatlangan materiallar katalogi" },
       { title: "Kutubxona kitobi: «Qurilish materialshunosligi» (2021)", type: "book", note: "O'quv manbasi: materiallar xususiyatlari va laboratoriya sinovlari" }
     ],
     practical_example: `Berilgan:
@@ -463,11 +463,11 @@ Natija: Davlat qurilish nazorati inspeksiyasi tomonidan to'liq qabul qilinadi.`,
     adopted_date: "2020-03-02",
     effective_date: "2020-04-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/4785210",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%201.04.03-20",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Smeta me'yorlari va narxlar katalogi" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4785210", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Smeta me'yorlari va narxlar katalogi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%201.04.03-20", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Qurilish iqtisodiyoti va smeta ishi» (2022)", type: "book", note: "O'quv qo'llanma: resurs usulida smeta tuzish metodikasi" }
     ],
     practical_example: `Berilgan:
@@ -505,10 +505,11 @@ Natija: Tender va shartnoma qiymatini asoslovchi rasmiy smeta tuziladi.`,
     adopted_date: "2019-05-18",
     effective_date: "2019-06-01",
     issuing_authority: "O'zbekiston Respublikasi Vazirlar Mahkamasi",
-    official_source_url: "https://lex.uz/docs/4343166",
+    official_source_url: "https://my.gov.uz/uz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=370",
     sources: [
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4343166", note: "Vazirlar Mahkamasining 370-son qarori rasmiy matni" },
-      { title: "My.gov.uz — Yagona interaktiv davlat xizmatlari portali", type: "official", url: "https://my.gov.uz/", note: "APZ va ruxsatnomalar elektron arizasi" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=370", note: "Vazirlar Mahkamasining 370-son qarori rasmiy matni" },
+      { title: "My.gov.uz — Yagona interaktiv davlat xizmatlari portali", type: "official", url: "https://my.gov.uz/uz", note: "APZ va ruxsatnomalar elektron arizasi" },
       { title: "Kutubxona kitobi: «Shaharsozlik qonunchiligi va amaliyoti» (2021)", type: "book", note: "O'quv manbasi: ruxsatnoma olish bosqichlari" }
     ],
     practical_example: `Berilgan:
@@ -546,10 +547,11 @@ Natija: Hech qanday jarimasiz, qonuniy va xavfsiz qurilishni boshlash ta'minlana
     adopted_date: "2022-04-20",
     effective_date: "2022-05-01",
     issuing_authority: "Vazirlar Mahkamasi",
-    official_source_url: "https://lex.uz/docs/5978120",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=200",
     sources: [
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/5978120", note: "VMQ-200 rasmiy matni" },
-      { title: "Shaffof Qurilish — Milliy axborot tizimi", type: "official", url: "https://shaffofqurilish.uz/", note: "Qurilish obyektlari davlat reyestri" }
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=200", note: "VMQ-200 rasmiy matni" },
+      { title: "Shaffof Qurilish — Milliy axborot tizimi", type: "official", url: "https://mc.uz/oz", note: "Qurilish obyektlari davlat reyestri" }
     ],
     practical_example: `Berilgan:
 - Obyekt: Do'kon va maishiy xizmat ko'rsatish shoxobchasi (300 m²)
@@ -583,11 +585,11 @@ Natija: Noqonuniy qurilish jarimasidan (BHMning 50 baravari) saqlanadi va qurili
     adopted_date: "2012-08-20",
     effective_date: "2012-10-01",
     issuing_authority: "Qurilish vazirligi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/2056124",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.03-12",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Restoran va kafe loyihalash amaldagi me'yori" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/2056124", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Restoran va kafe loyihalash amaldagi me'yori" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.03-12", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Umumiy ovqatlanish korxonalari texnologik loyihasi» (2021)", type: "book", note: "O'quv qo'llanma: sexlar va oqimlar hisobi" }
     ],
     practical_example: `Berilgan:
@@ -628,12 +630,12 @@ Natija: Sanitariya-epidemiologiya xizmati (SES) va yong'in inspeksiyasi talablar
     adopted_date: "2018-09-12",
     effective_date: "2018-11-01",
     issuing_authority: "Qurilish vazirligi va Turizm qo'mitasi",
-    official_source_url: "https://mc.uz/",
-    pdf_url: "https://lex.uz/docs/4012589",
+    official_source_url: "https://mc.uz/oz",
+    pdf_url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.06-18",
     sources: [
-      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/", note: "Mehmonxona binolari me'yori" },
-      { title: "Turizm qo'mitasi rasmiy tasnifi", type: "official", url: "https://motac.uz/", note: "Mehmonxona yulduzlik sertifikatsiyasi talablari" },
-      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/docs/4012589", note: "Rasmiy matn" },
+      { title: "Qurilish va uy-joy kommunal xo‘jaligi vazirligi", type: "ministry", url: "https://mc.uz/oz", note: "Mehmonxona binolari me'yori" },
+      { title: "Turizm qo'mitasi rasmiy tasnifi", type: "official", url: "https://gov.uz/oz/tourism", note: "Mehmonxona yulduzlik sertifikatsiyasi talablari" },
+      { title: "Lex.uz — Qonunchilik milliy bazasi", type: "lex", url: "https://lex.uz/uz/search/nat?number=SHNQ%202.08.06-18", note: "Rasmiy matn" },
       { title: "Kutubxona kitobi: «Mehmonxona va turizm komplekslari arxitekturasi» (2020)", type: "book", note: "O'quv qo'llanma: xonalar dizayni va akustikasi" }
     ],
     practical_example: `Berilgan:

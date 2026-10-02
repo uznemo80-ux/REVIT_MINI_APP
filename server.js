@@ -2556,7 +2556,7 @@ app.post('/api/content', async function (req, res) {
     try {
       var coursesQuery = isAdminUser
         ? 'SELECT * FROM courses ORDER BY order_index ASC, id ASC'
-        : "SELECT * FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC";
+        : "SELECT * FROM courses WHERE status IN ('active', 'published', 'in_progress') ORDER BY order_index ASC, id ASC";
       var coursesRes = await pool.query(coursesQuery);
       courses = coursesRes.rows.map(function (c) {
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
@@ -2573,7 +2573,9 @@ app.post('/api/content', async function (req, res) {
       console.warn('COURSES QUERY WARNING:', cErr.message);
     }
 
-    var activeCourseIds = courses.map(function (c) { return c.id; });
+    var activeCourseIds = courses.filter(function (c) {
+      return isAdminUser || c.status === 'active' || c.status === 'published';
+    }).map(function (c) { return c.id; });
     var activeCourseMap = new Map();
     courses.forEach(function (c) { activeCourseMap.set(c.id, c); });
 
@@ -2761,8 +2763,17 @@ app.post('/api/course/:id/modules', async function (req, res) {
     var adminUser = await getAdminByTelegramId(user.telegram_id);
     var isAdmin = Boolean(isMainAdminUser || adminUser);
 
-    if (course.status !== 'active' && !isAdmin) {
-      return res.status(403).json({ error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq (Qoralama holatida)." });
+    var isCoursePublished = course.status === 'active' || course.status === 'published';
+    if (!isAdmin) {
+      if (course.status === 'draft') {
+        return res.status(403).json({ error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq (Qoralama holatida)." });
+      }
+      if (course.status === 'in_progress') {
+        return res.status(403).json({ error: 'in_progress', message: "Ushbu kurs hozir tayyorlanmoqda." });
+      }
+      if (!isCoursePublished) {
+        return res.status(403).json({ error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq." });
+      }
     }
 
     var isFreeCourse = isFreeCourseRecord(course);
@@ -2971,9 +2982,15 @@ app.post('/api/lesson/:id', async function (req, res) {
     var adminUser = await getAdminByTelegramId(user.telegram_id);
     var isAdmin = Boolean(isMainAdminUser || adminUser);
 
-    // 1. Qoralama (draft) kurs tekshiruvi: faqat adminga ochiq
-    if (courseData && courseData.status !== 'active' && !isAdmin) {
-      return res.status(403).json({ error: 'draft', message: "Ushbu dars tegishli bo'lgan kurs hozircha qoralama holatida." });
+    // 1. Qoralama (draft) va Jarayonda (in_progress) kurs tekshiruvi: faqat adminga ochiq
+    var isParentPublished = courseData && (courseData.status === 'active' || courseData.status === 'published');
+    if (!isAdmin && courseData) {
+      if (courseData.status === 'in_progress') {
+        return res.status(403).json({ error: 'in_progress', message: "Ushbu kurs hozir tayyorlanmoqda." });
+      }
+      if (courseData.status === 'draft' || !isParentPublished) {
+        return res.status(403).json({ error: 'draft', message: "Ushbu dars tegishli bo'lgan kurs hozircha qoralama holatida." });
+      }
     }
 
     var isFreeCourse = isFreeCourseRecord(courseData);
@@ -5792,7 +5809,9 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var releaseDate = String(req.body.release_date || 'Qoralama').trim();
     var coverUrl = formatDirectImageUrl(String(req.body.cover_url || '').trim());
     var status = String(req.body.status || 'draft').trim();
-    if (status !== 'active' && status !== 'draft') status = 'draft';
+    if (status === 'published' || status === 'active') status = 'published';
+    else if (status === 'in_progress') status = 'in_progress';
+    else status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
@@ -5824,7 +5843,9 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     var releaseDate = String(req.body.release_date || '').trim();
     var coverUrl = formatDirectImageUrl(String(req.body.cover_url || '').trim());
     var status = String(req.body.status || 'draft').trim();
-    if (status !== 'active' && status !== 'draft') status = 'draft';
+    if (status === 'published' || status === 'active') status = 'published';
+    else if (status === 'in_progress') status = 'in_progress';
+    else status = 'draft';
     var categories = Array.isArray(req.body.categories) && req.body.categories.length
       ? req.body.categories.map(function (c) { return String(c).trim(); }).filter(Boolean)
       : ['Boshqa'];
@@ -5850,9 +5871,9 @@ app.post('/api/admin/courses/:id/status', requireAdmin, async function (req, res
   try {
     var courseId = Number(req.params.id);
     var status = String(req.body.status || 'draft').trim();
-    if (status !== 'active' && status !== 'draft') {
-      status = 'draft';
-    }
+    if (status === 'published' || status === 'active') status = 'published';
+    else if (status === 'in_progress') status = 'in_progress';
+    else status = 'draft';
     var result = await pool.query(
       'UPDATE courses SET status = $1 WHERE id = $2 RETURNING *',
       [status, courseId]
