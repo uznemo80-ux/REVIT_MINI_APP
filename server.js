@@ -24,6 +24,9 @@ var getNormativeDetail = normativesModule.getNormativeDetail;
 var getPracticalCasesList = normativesModule.getPracticalCasesList;
 var getPracticalCaseDetail = normativesModule.getPracticalCaseDetail;
 var getNormativesStats = normativesModule.getNormativesStats;
+var getNormativeTopicsList = normativesModule.getNormativeTopicsList;
+var getNormativeTopicDetail = normativesModule.getNormativeTopicDetail;
+var getNormativeTopicCategories = normativesModule.getNormativeTopicCategories;
 var processModule = require('./processData');
 var initProcessDatabase = processModule.initProcessDatabase;
 var getProcessCategories = processModule.getProcessCategories;
@@ -11330,6 +11333,62 @@ app.post('/api/admin/normatives/case/delete/:id', requireAdmin, async function (
   } catch (err) {
     console.error('ADMIN CASE DELETE ERROR:', err);
     return res.status(500).json({ ok: false, error: 'O\'chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// NORMATIVE TOPICS (ME'YORIY MA'LUMOTNOMA) API
+// ======================================================
+
+app.all('/api/normatives/topics', async function (req, res) {
+  try {
+    var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var data = await getNormativeTopicsList(pool, {
+      category: p.category,
+      data_type: p.data_type || p.type,
+      search: p.search || p.q,
+      limit: parseInt(p.limit, 10) || 200,
+      offset: parseInt(p.offset, 10) || 0,
+      sort: p.sort || 'order'
+    });
+    return res.json({
+      ok: true,
+      items: data.items,
+      total: data.total,
+      categories: data.categories,
+      limit: data.limit,
+      offset: data.offset
+    });
+  } catch (err) {
+    console.error('NORMATIVE TOPICS LIST ERROR:', err);
+    return res.status(500).json({ ok: false, error: "Me'yoriy mavzularni yuklashda xatolik", items: [], categories: [] });
+  }
+});
+
+app.all('/api/normatives/topics/:id', async function (req, res) {
+  try {
+    var idOrSlug = req.params.id;
+    var result = await getNormativeTopicDetail(pool, idOrSlug);
+    if (!result) return res.status(404).json({ ok: false, error: 'Mavzu topilmadi' });
+    return res.json({
+      ok: true,
+      topic: result.topic,
+      relatedDocument: result.relatedDocument,
+      relatedTopics: result.relatedTopics
+    });
+  } catch (err) {
+    console.error('NORMATIVE TOPIC DETAIL ERROR:', err);
+    return res.status(500).json({ ok: false, error: "Mavzu ma'lumotini yuklashda xatolik" });
+  }
+});
+
+app.all('/api/normatives/topic-categories', async function (req, res) {
+  try {
+    var categories = await getNormativeTopicCategories(pool);
+    return res.json({ ok: true, categories: categories });
+  } catch (err) {
+    console.error('NORMATIVE TOPIC CATEGORIES ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Kategoriyalarni yuklashda xatolik', categories: [] });
   }
 });
 

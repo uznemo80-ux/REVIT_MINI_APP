@@ -667,6 +667,127 @@ async function initNormativesTables(pool) {
       console.warn('normatives migration notice:', e.message);
     }
 
+    // 3c. Create normative_topics table (Me'yoriy ma'lumotnoma — per-topic reference entries)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS normative_topics (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        slug VARCHAR(200) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        subcategory VARCHAR(200),
+        data_type VARCHAR(20) NOT NULL DEFAULT 'norma',
+        normative_value VARCHAR(500),
+        unit VARCHAR(100),
+        building_type VARCHAR(200),
+        room_type VARCHAR(200),
+        condition TEXT,
+        formula TEXT,
+        calculation_example TEXT,
+        practical_note TEXT,
+        architect_note TEXT,
+        source_document_number VARCHAR(100),
+        source_band VARCHAR(200),
+        source_table VARCHAR(200),
+        keywords TEXT[] DEFAULT '{}',
+        related_document_id INT,
+        status VARCHAR(50) DEFAULT 'AMALDA',
+        order_index INT DEFAULT 0,
+        view_count INT DEFAULT 0,
+        is_system_seed BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_norm_topics_cat ON normative_topics(category);
+      CREATE INDEX IF NOT EXISTS idx_norm_topics_type ON normative_topics(data_type);
+      CREATE INDEX IF NOT EXISTS idx_norm_topics_status ON normative_topics(status);
+    `);
+
+    // Ensure unique slug on normative_topics
+    try {
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_norm_topics_slug_uq ON normative_topics(slug);
+      `);
+    } catch (e) {
+      console.warn('normative_topics unique slug index notice:', e.message);
+    }
+
+    // Seed normative_topics from batch files (if available)
+    try {
+      var allTopics = [];
+      try { allTopics = allTopics.concat(require('./seedTopicsBatch1').SEED_TOPICS_BATCH1 || []); } catch(e) {}
+      try { allTopics = allTopics.concat(require('./seedTopicsBatch2').SEED_TOPICS_BATCH2 || []); } catch(e) {}
+      try { allTopics = allTopics.concat(require('./seedTopicsBatch3').SEED_TOPICS_BATCH3 || []); } catch(e) {}
+      try { allTopics = allTopics.concat(require('./seedTopicsBatch4').SEED_TOPICS_BATCH4 || []); } catch(e) {}
+
+      var insertedTopics = 0;
+      var updatedTopics = 0;
+      for (var ti = 0; ti < allTopics.length; ti++) {
+        var t = allTopics[ti];
+        if (!t || !t.slug || !t.title) continue;
+        try {
+          // Link to normative_documents if source_document_number matches
+          var relDocId = null;
+          if (t.source_document_number) {
+            var docLookup = await pool.query(
+              'SELECT id FROM normative_documents WHERE document_number ILIKE $1 LIMIT 1',
+              [t.source_document_number.trim()]
+            );
+            if (docLookup.rows.length) relDocId = docLookup.rows[0].id;
+          }
+
+          var topicQ = await pool.query(`
+            INSERT INTO normative_topics (
+              title, slug, category, subcategory, data_type,
+              normative_value, unit, building_type, room_type, condition,
+              formula, calculation_example, practical_note, architect_note,
+              source_document_number, source_band, source_table,
+              keywords, related_document_id, status, order_index, is_system_seed
+            ) VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21, true
+            )
+            ON CONFLICT (slug) DO UPDATE SET
+              title = EXCLUDED.title,
+              category = EXCLUDED.category,
+              subcategory = EXCLUDED.subcategory,
+              data_type = EXCLUDED.data_type,
+              normative_value = EXCLUDED.normative_value,
+              unit = EXCLUDED.unit,
+              building_type = EXCLUDED.building_type,
+              room_type = EXCLUDED.room_type,
+              condition = EXCLUDED.condition,
+              formula = EXCLUDED.formula,
+              calculation_example = EXCLUDED.calculation_example,
+              practical_note = EXCLUDED.practical_note,
+              architect_note = EXCLUDED.architect_note,
+              source_document_number = EXCLUDED.source_document_number,
+              source_band = EXCLUDED.source_band,
+              source_table = EXCLUDED.source_table,
+              keywords = EXCLUDED.keywords,
+              related_document_id = EXCLUDED.related_document_id,
+              status = EXCLUDED.status,
+              order_index = EXCLUDED.order_index,
+              updated_at = NOW()
+            RETURNING (xmax = 0) AS was_inserted;
+          `, [
+            t.title, t.slug, t.category, t.subcategory || null, t.data_type || 'norma',
+            t.normative_value || null, t.unit || null, t.building_type || null, t.room_type || null, t.condition || null,
+            t.formula || null, t.calculation_example || null, t.practical_note || null, t.architect_note || null,
+            t.source_document_number || null, t.source_band || null, t.source_table || null,
+            t.keywords || [], relDocId, t.status || 'AMALDA', t.order_index || (ti + 1)
+          ]);
+          if (topicQ.rows[0]?.was_inserted) insertedTopics++;
+          else updatedTopics++;
+        } catch (topicErr) {
+          console.error('Error upserting topic ' + t.slug + ':', topicErr.message);
+        }
+      }
+      if (allTopics.length > 0) {
+        console.log('📋 NORMATIVE TOPICS: ' + allTopics.length + ' total (inserted: ' + insertedTopics + ', updated: ' + updatedTopics + ')');
+      }
+    } catch (topicsSeedErr) {
+      console.warn('normative_topics seed notice:', topicsSeedErr.message);
+    }
+
     // 4. Kutubxona bo'limlari: "Normativlar" va "Amaliy yechimlar" alohida bo'lim (admin tahrir qilgan nomlar saqlanadi)
     try {
       await pool.query(`
@@ -831,10 +952,11 @@ async function initNormativesTables(pool) {
     }
 
     // 8. FINAL DIAGNOSTIC & LOG REPORT
-    const [cntDocs, cntCases, cntLinks] = await Promise.all([
+    const [cntDocs, cntCases, cntLinks, cntTopics] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS cnt FROM normative_documents'),
       pool.query('SELECT COUNT(*)::int AS cnt FROM practical_cases'),
-      pool.query('SELECT COUNT(*)::int AS cnt FROM case_documents')
+      pool.query('SELECT COUNT(*)::int AS cnt FROM case_documents'),
+      pool.query('SELECT COUNT(*)::int AS cnt FROM normative_topics').catch(() => ({ rows: [{ cnt: 0 }] }))
     ]);
 
     console.log('==================================================');
@@ -842,7 +964,9 @@ async function initNormativesTables(pool) {
     console.log(`- normative_documents: ${cntDocs.rows[0]?.cnt || 0} records (inserted: ${insertedDocs}, updated: ${updatedDocs})`);
     console.log(`- practical_cases: ${cntCases.rows[0]?.cnt || 0} records (seeded: ${seededCases})`);
     console.log(`- case_documents: ${cntLinks.rows[0]?.cnt || 0} links`);
+    console.log(`- normative_topics: ${cntTopics.rows[0]?.cnt || 0} topics`);
     console.log('==================================================');
+
 
   } catch (err) {
     console.error('ERROR INITIALIZING NORMATIVES TABLES:', err);
@@ -1091,6 +1215,139 @@ async function getNormativesStats(pool) {
   };
 }
 
+// ======================================================
+// NORMATIVE TOPICS (ME'YORIY MA'LUMOTNOMA) QUERIES
+// ======================================================
+
+async function getNormativeTopicsList(pool, options = {}) {
+  const {
+    category,
+    data_type,
+    search,
+    limit = 200,
+    offset = 0,
+    sort = 'order'
+  } = options;
+
+  let conditions = [];
+  let values = [];
+  let idx = 1;
+
+  if (category && category !== 'all' && category !== 'Barchasi') {
+    conditions.push(`category = $${idx++}`);
+    values.push(category);
+  }
+
+  if (data_type && data_type !== 'all' && data_type !== 'Barchasi') {
+    conditions.push(`data_type = $${idx++}`);
+    values.push(data_type);
+  }
+
+  if (search && search.trim()) {
+    const q = `%${search.trim().toLowerCase()}%`;
+    conditions.push(`(
+      LOWER(title) LIKE $${idx} OR
+      LOWER(category) LIKE $${idx} OR
+      LOWER(subcategory) LIKE $${idx} OR
+      LOWER(normative_value) LIKE $${idx} OR
+      LOWER(room_type) LIKE $${idx} OR
+      LOWER(building_type) LIKE $${idx} OR
+      LOWER(source_document_number) LIKE $${idx} OR
+      LOWER(condition) LIKE $${idx} OR
+      LOWER(practical_note) LIKE $${idx} OR
+      $${idx + 1} = ANY(keywords)
+    )`);
+    values.push(q);
+    values.push(search.trim().toLowerCase());
+    idx += 2;
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  let orderBy = 'order_index ASC, id ASC';
+  if (sort === 'popular') orderBy = 'view_count DESC, id ASC';
+  else if (sort === 'title') orderBy = 'title ASC';
+  else if (sort === 'newest') orderBy = 'id DESC';
+
+  const countQuery = `SELECT COUNT(*)::int AS total FROM normative_topics ${whereClause}`;
+  const totalRes = await pool.query(countQuery, values);
+  const total = totalRes.rows[0]?.total || 0;
+
+  const dataQuery = `
+    SELECT
+      id, title, slug, category, subcategory, data_type,
+      normative_value, unit, building_type, room_type, condition,
+      formula, calculation_example, practical_note, architect_note,
+      source_document_number, source_band, source_table,
+      keywords, related_document_id, status, order_index, view_count
+    FROM normative_topics
+    ${whereClause}
+    ORDER BY ${orderBy}
+    LIMIT $${idx++} OFFSET $${idx++}
+  `;
+
+  values.push(Math.min(limit, 500));
+  values.push(offset);
+
+  const res = await pool.query(dataQuery, values);
+
+  // Get unique categories for filter UI
+  const catsRes = await pool.query(
+    'SELECT DISTINCT category FROM normative_topics ORDER BY category ASC'
+  );
+  const categories = catsRes.rows.map(r => r.category);
+
+  return { items: res.rows, total, limit, offset, categories };
+}
+
+async function getNormativeTopicDetail(pool, idOrSlug) {
+  let query = 'SELECT * FROM normative_topics WHERE ';
+  let param;
+  if (isNaN(Number(idOrSlug))) {
+    query += 'slug = $1';
+    param = idOrSlug;
+  } else {
+    query += 'id = $1';
+    param = Number(idOrSlug);
+  }
+
+  const topicRes = await pool.query(query, [param]);
+  if (!topicRes.rows.length) return null;
+  const topic = topicRes.rows[0];
+
+  // Increment view count
+  pool.query('UPDATE normative_topics SET view_count = view_count + 1 WHERE id = $1', [topic.id]).catch(() => {});
+
+  // If has related_document_id, fetch linked document
+  let relatedDocument = null;
+  if (topic.related_document_id) {
+    const relRes = await pool.query(
+      'SELECT id, title, document_number, document_type, status, official_source_url, pdf_url FROM normative_documents WHERE id = $1',
+      [topic.related_document_id]
+    );
+    if (relRes.rows.length) relatedDocument = relRes.rows[0];
+  }
+
+  // Find related topics in the same category (up to 6)
+  const relatedTopics = await pool.query(
+    'SELECT id, title, slug, data_type, normative_value, unit FROM normative_topics WHERE category = $1 AND id != $2 ORDER BY order_index ASC LIMIT 6',
+    [topic.category, topic.id]
+  );
+
+  return { topic, relatedDocument, relatedTopics: relatedTopics.rows };
+}
+
+async function getNormativeTopicCategories(pool) {
+  const res = await pool.query(`
+    SELECT category, COUNT(*)::int AS count, 
+           array_agg(DISTINCT data_type) AS data_types
+    FROM normative_topics 
+    GROUP BY category 
+    ORDER BY MIN(order_index) ASC
+  `);
+  return res.rows;
+}
+
 module.exports = {
   SEED_NORMATIVES,
   SEED_PRACTICAL_CASES,
@@ -1099,5 +1356,8 @@ module.exports = {
   getNormativeDetail,
   getPracticalCasesList,
   getPracticalCaseDetail,
-  getNormativesStats
+  getNormativesStats,
+  getNormativeTopicsList,
+  getNormativeTopicDetail,
+  getNormativeTopicCategories
 };

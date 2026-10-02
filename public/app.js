@@ -23656,7 +23656,15 @@ var normativesState = {
   error: null,
   selectedDoc: null,
   selectedCase: null,
-  activeStepIndex: 0
+  activeStepIndex: 0,
+  // Me'yoriy ma'lumotnoma (topics) tab
+  topics: [],
+  topicsLoaded: false,
+  topicsLoading: false,
+  topicsCategories: [],
+  selectedTopicCategory: "Barchasi",
+  selectedTopicType: "all",
+  selectedTopic: null
 };
 
 // NORMATIVLARNI SAQLASH (BOOKMARK / SAVE)
@@ -23732,6 +23740,55 @@ function toggleNormativesPanel() {
 }
 
 function renderNormativesPanelInnerHtml() {
+  if (normativesState.activeTab === "topics") {
+    const topicTypes = [
+      { id: "all", label: "Barchasi" },
+      { id: "norma", label: "🔴 Majburiy norma" },
+      { id: "hisoblash", label: "🟡 Hisoblash usuli" },
+      { id: "tavsiya", label: "🔵 Amaliy tavsiya" }
+    ];
+    const defaultTopicCats = [
+      "Barchasi",
+      "Xonalar va maydonlar",
+      "Inson va sig'im me'yorlari",
+      "Ventilyatsiya va havo almashinuvi",
+      "O'lchash va hisoblash usullari",
+      "Eshiklar va ochilish joylari",
+      "Derazalar va tabiiy yorug'lik",
+      "Zinalar va vertikal aloqa",
+      "Pandus va inklyuziv loyihalash",
+      "Sanuzel va ho'l zonalar",
+      "Oshxona loyihalash me'yorlari",
+      "Interyer me'yorlari va amaliy tavsiyalar"
+    ];
+    const cats = (normativesState.topicsCategories && normativesState.topicsCategories.length) 
+      ? ["Barchasi", ...normativesState.topicsCategories.filter(c => c !== "Barchasi")] 
+      : defaultTopicCats;
+
+    return `
+      <div class="mcat-panel-title">Ma'lumot turi</div>
+      <div class="mcat-chip-row" style="margin-bottom:14px;">
+        ${topicTypes.map(t => `
+          <button type="button" class="mcat-chip ${(normativesState.selectedTopicType || 'all') === t.id ? 'active' : ''}" onclick="setNormativesTopicTypeFilter('${escapeJsString(t.id)}')">
+            ${escapeHtml(t.label)}
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="mcat-panel-title">Kategoriya (${cats.length - 1} ta yo'nalish)</div>
+      <div class="mcat-chip-row">
+        ${cats.map(cat => {
+          const active = (normativesState.selectedTopicCategory || "Barchasi") === cat;
+          return `
+            <button type="button" class="mcat-chip ${active ? 'active' : ''}" onclick="setNormativesTopicCategory('${escapeJsString(cat)}')">
+              ${escapeHtml(cat)}
+            </button>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
   const cats = normativesState.categories || [];
   const docTypes = ["all", "SHNQ", "QMQ", "O‘z DSt", "Qaror"];
   const docTypeLabels = { all: "Barchasi", SHNQ: "SHNQ", QMQ: "QMQ", "O‘z DSt": "O‘z DSt / Standart", Qaror: "Qarorlar" };
@@ -23771,17 +23828,41 @@ function renderNormativesPanelInnerHtml() {
   `;
 }
 
+function setNormativesTopicTypeFilter(type) {
+  haptic("light");
+  normativesState.selectedTopicType = type;
+  render();
+}
+
+function setNormativesTopicCategory(cat) {
+  haptic("light");
+  normativesState.selectedTopicCategory = cat;
+  render();
+}
+
 function renderNormativesActiveFilterHtml() {
   const pills = [];
-  if (normativesState.selectedDocType && normativesState.selectedDocType !== "all") {
-    pills.push({ label: normativesState.selectedDocType, clear: "setNormativesDocTypeFilter('all')" });
+
+  if (normativesState.activeTab === "topics") {
+    if (normativesState.selectedTopicType && normativesState.selectedTopicType !== "all") {
+      const typeNames = { norma: "🔴 Norma", hisoblash: "🟡 Hisoblash", tavsiya: "🔵 Tavsiya" };
+      pills.push({ label: typeNames[normativesState.selectedTopicType] || normativesState.selectedTopicType, clear: "setNormativesTopicTypeFilter('all')" });
+    }
+    if (normativesState.selectedTopicCategory && normativesState.selectedTopicCategory !== "Barchasi") {
+      pills.push({ label: normativesState.selectedTopicCategory, clear: "setNormativesTopicCategory('Barchasi')" });
+    }
+  } else {
+    if (normativesState.selectedDocType && normativesState.selectedDocType !== "all") {
+      pills.push({ label: normativesState.selectedDocType, clear: "setNormativesDocTypeFilter('all')" });
+    }
+    if (normativesState.selectedStatus && normativesState.selectedStatus !== "all") {
+      pills.push({ label: normativesState.selectedStatus, clear: "setNormativesStatusFilter('all')" });
+    }
+    if (normativesState.selectedCategory && normativesState.selectedCategory !== "Barchasi") {
+      pills.push({ label: normativesState.selectedCategory, clear: "setNormativesCategory('Barchasi')" });
+    }
   }
-  if (normativesState.selectedStatus && normativesState.selectedStatus !== "all") {
-    pills.push({ label: normativesState.selectedStatus, clear: "setNormativesStatusFilter('all')" });
-  }
-  if (normativesState.selectedCategory && normativesState.selectedCategory !== "Barchasi") {
-    pills.push({ label: normativesState.selectedCategory, clear: "setNormativesCategory('Barchasi')" });
-  }
+
   if (!pills.length) return "";
   return `
     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
@@ -23802,6 +23883,8 @@ function clearAllNormativesFilters() {
   normativesState.selectedDocType = "all";
   normativesState.selectedStatus = "all";
   normativesState.selectedCategory = "Barchasi";
+  normativesState.selectedTopicType = "all";
+  normativesState.selectedTopicCategory = "Barchasi";
   render();
 }
 
@@ -23811,7 +23894,7 @@ async function loadNormativesData() {
   normativesState.loading = true;
   normativesState.error = null;
   try {
-    const [docsRes, casesRes] = await Promise.all([
+    const [docsRes, casesRes, topicsRes] = await Promise.all([
       api('/api/normatives/list', { limit: 150 }).catch(err => {
         console.error("LOAD NORMATIVES LIST ERROR:", err);
         return { documents: [] };
@@ -23819,6 +23902,10 @@ async function loadNormativesData() {
       api('/api/normatives/cases').catch(err => {
         console.error("LOAD NORMATIVES CASES ERROR:", err);
         return { cases: [] };
+      }),
+      api('/api/normatives/topics', { limit: 300 }).catch(err => {
+        console.error("LOAD NORMATIVES TOPICS ERROR:", err);
+        return { items: [], categories: [] };
       })
     ]);
 
@@ -23827,6 +23914,12 @@ async function loadNormativesData() {
 
     const cases = (casesRes && (casesRes.cases || casesRes.items)) || [];
     normativesState.cases = Array.isArray(cases) ? cases : [];
+
+    const topics = (topicsRes && topicsRes.items) || [];
+    normativesState.topics = Array.isArray(topics) ? topics : [];
+    normativesState.topicsCategories = (topicsRes && topicsRes.categories) || [];
+    normativesState.topicsLoaded = true;
+
     normativesState.loaded = true;
   } catch (err) {
     console.error("LOAD NORMATIVES ERROR:", err);
@@ -23862,6 +23955,8 @@ function setNormativesSearch(val) {
   if (listEl) {
     if (normativesState.activeTab === "docs") {
       listEl.innerHTML = renderNormativeDocsTabHtml();
+    } else if (normativesState.activeTab === "topics") {
+      listEl.innerHTML = renderNormativeTopicsTabHtml();
     } else {
       listEl.innerHTML = renderNormativeCasesTabHtml();
     }
@@ -23988,10 +24083,13 @@ function renderNormativesSectionHtml() {
       <!-- 3. SUB-NAVIGATION SEGMENTED CONTROL (TABS) -->
       <div class="norm-segmented-control" style="margin-bottom:12px;">
         <button type="button" class="norm-seg-btn ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
-          📑 Normativlar bazasi (${normativesState.documents.length})
+          📑 Normativlar (${normativesState.documents.length})
+        </button>
+        <button type="button" class="norm-seg-btn ${activeTab === 'topics' ? 'active' : ''}" onclick="setNormativesTab('topics')">
+          📋 Ma'lumotnoma (${normativesState.topics.length})
         </button>
         <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
-          💡 Amaliy yechimlar (${normativesState.cases.length})
+          💡 Amaliy (${normativesState.cases.length})
         </button>
       </div>
 
@@ -24020,7 +24118,7 @@ function renderNormativesSectionHtml() {
 
       <!-- 7. CONTENT SWITCHER -->
       <div class="norm-tab-content" style="margin-top:14px;">
-        ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : renderNormativeDocsTabHtml()}
+        ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : (activeTab === 'topics' ? renderNormativeTopicsTabHtml() : renderNormativeDocsTabHtml())}
       </div>
     </div>
   `;
@@ -24194,6 +24292,375 @@ function renderNormativeDocsTabHtml() {
         }).join('')}
       </div>
     `}
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 2b. ME'YORIY MA'LUMOTNOMA (TOPICS REFERENCE DATABASE) TAB
+// ----------------------------------------------------------------------------
+
+let normativeTopicsSavedIds = new Set();
+try {
+  const rawSavedTopics = localStorage.getItem("yosh_saved_normative_topics");
+  if (rawSavedTopics) normativeTopicsSavedIds = new Set(JSON.parse(rawSavedTopics));
+} catch (e) {}
+
+function isNormativeTopicSaved(id) {
+  return normativeTopicsSavedIds.has(Number(id));
+}
+
+function toggleNormativeTopicSave(id, e) {
+  if (e) e.stopPropagation();
+  haptic("light");
+  const numId = Number(id);
+  if (normativeTopicsSavedIds.has(numId)) {
+    normativeTopicsSavedIds.delete(numId);
+    showToast("Mavzu saqlanganlardan olindi");
+  } else {
+    normativeTopicsSavedIds.add(numId);
+    showToast("Mavzu saqlandi 🔖");
+  }
+  try {
+    localStorage.setItem("yosh_saved_normative_topics", JSON.stringify([...normativeTopicsSavedIds]));
+  } catch (e) {}
+  render();
+}
+
+function renderNormativeTopicTypeBadge(type) {
+  const t = String(type || "norma").toLowerCase();
+  if (t === "norma") {
+    return `<span class="norm-status-pill" style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.28); font-weight:700;"><span class="norm-dot" style="background:#ef4444;"></span>NORMA</span>`;
+  } else if (t === "hisoblash") {
+    return `<span class="norm-status-pill" style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.28); font-weight:700;"><span class="norm-dot" style="background:#f59e0b;"></span>HISOBLASH</span>`;
+  } else {
+    return `<span class="norm-status-pill" style="background:rgba(59,130,246,0.12); color:#3b82f6; border:1px solid rgba(59,130,246,0.28); font-weight:700;"><span class="norm-dot" style="background:#3b82f6;"></span>TAVSIYA</span>`;
+  }
+}
+
+function renderNormativeTopicsTabHtml() {
+  const query = (normativesState.searchQuery || "").trim().toLowerCase();
+  const selCat = normativesState.selectedTopicCategory || "Barchasi";
+  const selType = normativesState.selectedTopicType || "all";
+
+  let list = normativesState.topics || [];
+
+  // Filter category
+  if (selCat && selCat !== "Barchasi") {
+    list = list.filter(t => (t.category || "").toLowerCase() === selCat.toLowerCase());
+  }
+
+  // Filter data type (norma, hisoblash, tavsiya)
+  if (selType && selType !== "all") {
+    list = list.filter(t => (t.data_type || "").toLowerCase() === selType.toLowerCase());
+  }
+
+  // Filter query
+  if (query) {
+    list = list.filter(t => {
+      const title = (t.title || "").toLowerCase();
+      const cat = (t.category || "").toLowerCase();
+      const val = (t.normative_value || "").toLowerCase();
+      const doc = (t.source_document_number || "").toLowerCase();
+      const note = (t.practical_note || "").toLowerCase();
+      const room = (t.room_type || "").toLowerCase();
+      const kw = Array.isArray(t.keywords) ? t.keywords.join(" ").toLowerCase() : "";
+      return title.includes(query) || cat.includes(query) || val.includes(query) || doc.includes(query) || note.includes(query) || room.includes(query) || kw.includes(query);
+    });
+  }
+
+  if (!list.length) {
+    return `
+      <div class="norm-empty-state">
+        <div style="font-size: 38px; margin-bottom: 8px;">📋</div>
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">Me'yoriy mavzu topilmadi</div>
+        <div style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 14px;">
+          Qidiruv so'zini o'zgartiring yoki filtrlarni tozalang.
+        </div>
+        <button class="norm-empty-reset-btn" onclick="clearNormativesSearch(); setNormativesTopicCategory('Barchasi'); setNormativesTopicTypeFilter('all');">
+          Barcha mavzularni ko'rish (200 ta)
+        </button>
+      </div>
+    `;
+  }
+
+  return `
+    <!-- TOPICS STATS & QUICK FILTER ROW -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:0 2px;">
+      <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">
+        Ko'rsatilmoqda: <span style="color:var(--text-primary); font-weight:700;">${list.length}</span> ta me'yoriy yechim
+      </div>
+      <div style="display:flex; gap:6px;">
+        <span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.1); color:#ef4444; font-weight:600;">🔴 Norma</span>
+        <span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(245,158,11,0.1); color:#f59e0b; font-weight:600;">🟡 Hisob</span>
+        <span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(59,130,246,0.1); color:#3b82f6; font-weight:600;">🔵 Tavsiya</span>
+      </div>
+    </div>
+
+    <!-- TOPICS GRID -->
+    <div class="norm-docs-grid">
+      ${list.map(topic => {
+        const isSaved = isNormativeTopicSaved(topic.id);
+        const val = topic.normative_value || "";
+        const unit = topic.unit || "";
+        const sourceDoc = topic.source_document_number || "";
+        const band = topic.source_band || "";
+
+        return `
+          <div class="norm-doc-card norm-topic-card" onclick="openNormativeTopicDetail(${Number(topic.id)})" style="cursor:pointer;">
+            <div class="norm-doc-header">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                ${renderNormativeTopicTypeBadge(topic.data_type)}
+                <span class="norm-doc-cat" style="font-size:11px; background:var(--bg-surface-secondary, rgba(255,255,255,0.06)); padding:2px 7px; border-radius:6px;">
+                  ${escapeHtml(topic.category || "")}
+                </span>
+              </div>
+              <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:11px;" onclick="toggleNormativeTopicSave(${Number(topic.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
+                <span>${isSaved ? '🔖' : '♡'}</span>
+              </button>
+            </div>
+
+            <h3 class="norm-doc-title" style="font-size:15px; font-weight:700; line-height:1.35; margin:8px 0 6px;">
+              ${escapeHtml(topic.title)}
+            </h3>
+
+            <!-- HIGHLIGHTED NORMATIVE VALUE BOX -->
+            ${val ? `
+              <div style="background:var(--bg-surface-secondary, rgba(255,255,255,0.04)); border:1px solid var(--border, rgba(255,255,255,0.08)); border-radius:8px; padding:8px 12px; margin:8px 0; display:flex; align-items:baseline; justify-content:space-between;">
+                <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Normativ talab:</span>
+                <span style="font-size:16px; font-weight:800; color:var(--accent, #6366f1); letter-spacing:-0.2px;">
+                  ${escapeHtml(val)} ${unit ? `<span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${escapeHtml(unit)}</span>` : ''}
+                </span>
+              </div>
+            ` : ''}
+
+            ${topic.room_type ? `
+              <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+                🚪 <span style="color:var(--text-primary); font-weight:500;">${escapeHtml(topic.room_type)}</span>
+                ${topic.building_type ? ` • ${escapeHtml(topic.building_type)}` : ''}
+              </div>
+            ` : ''}
+
+            <div class="norm-doc-footer" style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border, rgba(255,255,255,0.06));">
+              <div class="norm-doc-meta">
+                ${sourceDoc ? `
+                  <span style="font-size:11px; font-weight:600; color:var(--text-secondary);">
+                    📜 ${escapeHtml(sourceDoc)} ${band ? `<span style="opacity:0.8;">(${escapeHtml(band)})</span>` : ''}
+                  </span>
+                ` : `<span style="font-size:11px; color:var(--text-secondary);">Amaliy me'moriy me'yor</span>`}
+              </div>
+              <span class="norm-doc-action" style="font-size:12px;">Ko'rish ›</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ----------------------------------------------------------------------------
+// 2c. NORMATIVE TOPIC FULL DETAIL PAGE
+// ----------------------------------------------------------------------------
+
+async function openNormativeTopicDetail(topicId) {
+  haptic("light");
+  lastDetailReturnScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  showToast("📋 Me'yoriy ma'lumotnoma yuklanmoqda...");
+
+  try {
+    const res = await api(`/api/normatives/topics/${Number(topicId)}`);
+    if (!res || !res.ok || !res.topic) {
+      return showAlert("Mavzu ma'lumotlari topilmadi.");
+    }
+
+    normativesState.selectedTopic = res.topic;
+    currentView = {
+      type: "normative_topic_detail",
+      html: renderNormativeTopicDetailPage(res.topic, res.relatedDocument, res.relatedTopics || [])
+    };
+    render();
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } catch (err) {
+    console.error("OPEN NORMATIVE TOPIC DETAIL ERROR:", err);
+    showAlert("Mavzuni ochishda xatolik yuz berdi.");
+  }
+}
+
+function closeNormativeTopicDetail() {
+  haptic("light");
+  currentView = null;
+  normativesState.selectedTopic = null;
+  activeTab = "tasks";
+  libraryActiveSection = "normatives";
+  render();
+  window.scrollTo({ top: lastDetailReturnScroll || 0, behavior: "auto" });
+}
+
+function renderNormativeTopicDetailPage(topic, relatedDocument, relatedTopics) {
+  const isSaved = isNormativeTopicSaved(topic.id);
+  const val = topic.normative_value || "";
+  const unit = topic.unit || "";
+  const sourceDoc = topic.source_document_number || "";
+  const band = topic.source_band || "";
+  const table = topic.source_table || "";
+
+  return `
+    <div class="page lib-container norm-detail-page">
+      <!-- TOP NAVIGATION BAR -->
+      <div class="lib-detail-top-bar" style="margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="lib-back-nav" style="margin:0; background:none; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" onclick="closeNormativeTopicDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Me'yoriy ma'lumotnoma
+        </button>
+        <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" onclick="toggleNormativeTopicSave(${Number(topic.id)}, event)">
+          <span>${isSaved ? '🔖 Saqlangan' : '🔖 Saqlash'}</span>
+        </button>
+      </div>
+
+      <!-- HERO HEAD -->
+      <div class="norm-detail-hero">
+        <div class="norm-detail-badge-row" style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          ${renderNormativeTopicTypeBadge(topic.data_type)}
+          <span class="norm-doc-pill-big" style="background:var(--bg-surface-secondary);">${escapeHtml(topic.category || "Me'yoriy")}</span>
+        </div>
+
+        <h1 class="norm-detail-title" style="font-size:20px; font-weight:800; line-height:1.3; margin-bottom:8px;">
+          ${escapeHtml(topic.title)}
+        </h1>
+
+        <div class="norm-detail-cat-row" style="font-size:13px; color:var(--text-secondary); display:flex; flex-wrap:wrap; gap:12px;">
+          ${topic.room_type ? `<span>🚪 <b>Xona:</b> ${escapeHtml(topic.room_type)}</span>` : ''}
+          ${topic.building_type ? `<span>🏢 <b>Bino:</b> ${escapeHtml(topic.building_type)}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- 1. BIG NORMATIVE VALUE CALLOUT CARD -->
+      <div class="norm-card-block" style="background:linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.04) 100%); border:1px solid rgba(99,102,241,0.25);">
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent, #6366f1); margin-bottom:6px;">
+          🎯 Rasmiy Normativ Qiymat
+        </div>
+        <div style="font-size:28px; font-weight:900; color:var(--text-primary); letter-spacing:-0.5px; margin-bottom:6px;">
+          ${escapeHtml(val)} ${unit ? `<span style="font-size:18px; font-weight:700; color:var(--text-secondary);">${escapeHtml(unit)}</span>` : ''}
+        </div>
+        ${sourceDoc ? `
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+            📜 Manba: <b style="color:var(--text-primary);">${escapeHtml(sourceDoc)}</b> ${band ? `• ${escapeHtml(band)}` : ''} ${table ? `• ${escapeHtml(table)}` : ''}
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- 2. SHART VA QO'LLANISH SOHASI -->
+      ${topic.condition ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">📌</span>
+            <h2 class="norm-card-title">Qo'llanish sharti va qoidasi</h2>
+          </div>
+          <div class="norm-card-content formatted-text">
+            ${escapeHtml(topic.condition)}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 3. FORMULA VA HISOBLASH MISOLLARI (AGAR BOR BO'LSA) -->
+      ${(topic.formula || topic.calculation_example) ? `
+        <div class="norm-card-block" style="border-left:3px solid #f59e0b;">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">📐</span>
+            <h2 class="norm-card-title">Hisoblash formulasi va amaliy misol</h2>
+          </div>
+          <div class="norm-card-content">
+            ${topic.formula ? `
+              <div style="background:var(--bg-surface-secondary, rgba(0,0,0,0.25)); padding:10px 14px; border-radius:8px; font-family:monospace; font-size:14px; color:#f59e0b; font-weight:700; margin-bottom:10px;">
+                ${escapeHtml(topic.formula)}
+              </div>
+            ` : ''}
+            ${topic.calculation_example ? `
+              <div style="font-size:13px; line-height:1.55; color:var(--text-primary);">
+                <b>Amaliy hisoblash:</b><br/>
+                ${escapeHtml(topic.calculation_example)}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 4. AMALIY IZOH VA ARXITEKTOR UCHUN ESLATMA -->
+      ${(topic.practical_note || topic.architect_note) ? `
+        <div class="norm-two-col-grid">
+          ${topic.practical_note ? `
+            <div class="norm-card-block" style="margin:0;">
+              <div class="norm-card-header">
+                <span class="norm-card-icon">💡</span>
+                <h2 class="norm-card-title">Amaliy izoh</h2>
+              </div>
+              <div class="norm-card-content" style="font-size:13px; line-height:1.5;">
+                ${escapeHtml(topic.practical_note)}
+              </div>
+            </div>
+          ` : ''}
+
+          ${topic.architect_note ? `
+            <div class="norm-card-block" style="margin:0; border-left:3px solid var(--accent, #6366f1);">
+              <div class="norm-card-header">
+                <span class="norm-card-icon">📐</span>
+                <h2 class="norm-card-title">Arxitektor uchun eslatma</h2>
+              </div>
+              <div class="norm-card-content" style="font-size:13px; line-height:1.5;">
+                ${escapeHtml(topic.architect_note)}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      <!-- 5. BOG'LANGAN NORMATIV HUJJAT (AGAR BAZADA MAVJUD BO'LSA) -->
+      ${relatedDocument ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">🏛</span>
+            <h2 class="norm-card-title">Rasmiy normativ hujjat</h2>
+          </div>
+          <div class="norm-card-content" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--accent);">${escapeHtml(relatedDocument.document_number)}</div>
+              <div style="font-size:13px; color:var(--text-primary); margin-top:2px;">${escapeHtml(relatedDocument.title)}</div>
+            </div>
+            <button type="button" class="btn" style="padding:6px 12px; font-size:12px;" onclick="closeNormativeTopicDetail(); openNormativeDocDetail(${Number(relatedDocument.id)});">
+              Hujjatni ochish ›
+            </button>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 6. SHU KATEGORIYADAGI BOSHQA MAVZULAR -->
+      ${Array.isArray(relatedTopics) && relatedTopics.length ? `
+        <div class="norm-card-block">
+          <div class="norm-card-header">
+            <span class="norm-card-icon">⚡</span>
+            <h2 class="norm-card-title">Shu mavzudagi boshqa me'yorlar (${escapeHtml(topic.category)})</h2>
+          </div>
+          <div class="norm-linked-cases-list">
+            ${relatedTopics.map(rt => `
+              <div class="norm-linked-case-item" onclick="openNormativeTopicDetail(${Number(rt.id)})" style="cursor:pointer;">
+                <div>
+                  <div style="font-weight:700; font-size:13px; color:var(--text-primary);">${escapeHtml(rt.title)}</div>
+                  <div style="font-size:12px; color:var(--accent); font-weight:600; margin-top:2px;">
+                    ${escapeHtml(rt.normative_value || "")} ${escapeHtml(rt.unit || "")}
+                  </div>
+                </div>
+                <span class="norm-case-chevron">›</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 7. BACK BUTTON WRAP -->
+      <div style="margin-top:20px; text-align:center;">
+        <button type="button" class="btn" style="width:100%; max-width:320px; margin:0 auto;" onclick="closeNormativeTopicDetail()">
+          ← Me'yoriy ma'lumotnomaga qaytish
+        </button>
+      </div>
+    </div>
   `;
 }
 
