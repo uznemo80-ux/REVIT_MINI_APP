@@ -6646,6 +6646,7 @@ async function loadLibraryV2Data(force = false) {
     if (activeTab === "tasks" && !currentView) {
       render();
     }
+    preloadLibrarySubsections();
   } catch (err) {
     console.error("LOAD LIBRARY V2 ERROR:", err);
   } finally {
@@ -6657,8 +6658,54 @@ async function loadLibraryV2Data(force = false) {
 // KUTUBXONA NAVIGATION & ROUTING
 // ======================================================
 
+function stopAllLibraryTickers() {
+  stopMaterialCardRotationTicker();
+  if (typeof _normPhTimer !== 'undefined' && _normPhTimer) { clearTimeout(_normPhTimer); _normPhTimer = null; }
+  if (typeof _procPhTimer !== 'undefined' && _procPhTimer) { clearTimeout(_procPhTimer); _procPhTimer = null; }
+  if (typeof _srcPhTimer !== 'undefined' && _srcPhTimer) { clearTimeout(_srcPhTimer); _srcPhTimer = null; }
+  if (typeof _bkPhTimer !== 'undefined' && _bkPhTimer) { clearTimeout(_bkPhTimer); _bkPhTimer = null; }
+  if (typeof _matPhTimer !== 'undefined' && _matPhTimer) { clearTimeout(_matPhTimer); _matPhTimer = null; }
+}
+
+let _libraryPreloadStarted = false;
+function preloadLibrarySubsections() {
+  if (_libraryPreloadStarted) return;
+  _libraryPreloadStarted = true;
+  const runner = () => {
+    // 1. Normativlar (kichik hajm, tez keladi)
+    if (typeof normativesState !== 'undefined' && !normativesState.loaded && !normativesState.loading) {
+      loadNormativesData();
+    }
+    // 2. Jarayon (5 ta API)
+    setTimeout(() => {
+      if (typeof processState !== 'undefined' && !processState.loaded && !processState.loading) {
+        loadProcessData();
+      }
+    }, 150);
+    // 3. Manbalar
+    setTimeout(() => {
+      if (typeof sourcesLoaded !== 'undefined' && !sourcesLoaded && !sourcesLoading) {
+        loadSourcesData();
+      }
+    }, 300);
+    // 4. Materiallar
+    setTimeout(() => {
+      if (typeof materialsState !== 'undefined' && !materialsState.loaded && !materialsState.loading) {
+        loadMaterialsData();
+      }
+    }, 450);
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(runner, { timeout: 1500 });
+  } else {
+    setTimeout(runner, 250);
+  }
+}
+
 function openLibrarySection(slug) {
   haptic("light");
+  stopAllLibraryTickers();
   libraryActiveSection = slug;
   librarySectionSearchQuery = "";
   librarySectionSelectedCategory = "Barchasi";
@@ -6697,7 +6744,7 @@ function openLibrarySection(slug) {
 
 function closeLibrarySection() {
   haptic("light");
-  stopMaterialCardRotationTicker();
+  stopAllLibraryTickers();
   currentView = null;
   activeMaterialDetail = null;
   libraryActiveSection = null;
@@ -6783,7 +6830,8 @@ function ensureSourcesPlaceholderTicker() {
   const step = () => {
     const el = document.getElementById("src-ph-word");
     const inp = document.getElementById("lib-src-search-input");
-    if (!el || document.hidden || (inp && inp.value)) { _srcPhTimer = setTimeout(step, 400); return; }
+    if (!el) { _srcPhTimer = null; return; }
+    if (document.hidden || (inp && inp.value)) { _srcPhTimer = setTimeout(step, 1000); return; }
     const word = SOURCE_PH_WORDS[_srcPhIdx % SOURCE_PH_WORDS.length];
     let delay = 90;
     if (reduce) { _srcPhText = word; el.textContent = word; _srcPhIdx++; _srcPhTimer = setTimeout(step, 2400); return; }
@@ -7571,7 +7619,8 @@ function ensureBooksPlaceholderTicker() {
   const step = () => {
     const el = document.getElementById("bk-ph-word");
     const inp = document.getElementById("lib-books-search-input");
-    if (!el || document.hidden || (inp && inp.value)) { _bkPhTimer = setTimeout(step, 400); return; }
+    if (!el) { _bkPhTimer = null; return; }
+    if (document.hidden || (inp && inp.value)) { _bkPhTimer = setTimeout(step, 1000); return; }
     const word = BOOK_PH_WORDS[_bkPhIdx % BOOK_PH_WORDS.length];
     let delay = 90;
     if (reduce) { _bkPhText = word; el.textContent = word; _bkPhIdx++; _bkPhTimer = setTimeout(step, 2400); return; }
@@ -9326,8 +9375,8 @@ function ensureMaterialPlaceholderTicker() {
   const step = () => {
     const el = document.getElementById("mat-ph-word");
     const inp = document.getElementById("lib-materials-search-input");
-    // Sahifa yopilgan bo'lsa, tekshiruvni sekinlashtirib kutamiz
-    if (!el || document.hidden || (inp && inp.value)) { _matPhTimer = setTimeout(step, 400); return; }
+    if (!el) { _matPhTimer = null; return; }
+    if (document.hidden || (inp && inp.value)) { _matPhTimer = setTimeout(step, 1000); return; }
     const curMatLang = getMaterialsLang();
     const wordList = MAT_PH_WORDS_I18N[curMatLang] || MAT_PH_WORDS_I18N.ru;
     const word = wordList[_matPhIdx % wordList.length];
@@ -9522,7 +9571,19 @@ function renderMaterialCatalogHtml() {
   }
 
   if (flat) {
-    return head + `<div class="mcat-grid">${mats.map(renderMaterialCardHtml).join("")}</div>`;
+    const limit = materialsState.displayLimit || 36;
+    const displayMats = mats.slice(0, limit);
+    const hasMore = mats.length > displayMats.length;
+    return head + `
+      <div class="mcat-grid">${displayMats.map(renderMaterialCardHtml).join("")}</div>
+      ${hasMore ? `
+        <div style="text-align:center; padding:18px 0 10px;">
+          <button type="button" class="mcat-chip" style="padding:10px 24px; font-weight:700; font-size:13px;" onclick="loadMoreMaterials()">
+            Yana ko‘rsatish (${mats.length - displayMats.length} ta qoldi)
+          </button>
+        </div>
+      ` : ''}
+    `;
   }
 
   const byGroup = new Map();
@@ -9535,15 +9596,32 @@ function renderMaterialCatalogHtml() {
   MATERIAL_GROUPS.forEach(g => { if (byGroup.has(g.id)) ordered.push(byGroup.get(g.id)); });
   byGroup.forEach((v, id) => { if (!MATERIAL_GROUPS.some(x => x.id === id)) ordered.push(v); });
 
-  return head + ordered.map(({ g, items }) => `
-    <section class="mcat-group-section">
-      <div class="mcat-group-head">
-        <div class="mcat-group-title"><span>${escapeHtml(g.icon || "🧱")}</span> ${escapeHtml(getLocalizedGroupName(g))} <span class="mcat-h2-n">${items.length}</span></div>
-        <button type="button" class="mcat-link" onclick="setMaterialGroup('${escapeJsString(g.id)}')">${escapeHtml(matT('all'))} ›</button>
-      </div>
-      <div class="mcat-grid">${items.map(renderMaterialCardHtml).join("")}</div>
-    </section>
-  `).join("");
+  return head + ordered.map(({ g, items }) => {
+    const previewItems = items.slice(0, 6);
+    const hasMoreInGroup = items.length > 6;
+    return `
+      <section class="mcat-group-section">
+        <div class="mcat-group-head">
+          <div class="mcat-group-title"><span>${escapeHtml(g.icon || "🧱")}</span> ${escapeHtml(getLocalizedGroupName(g))} <span class="mcat-h2-n">${items.length}</span></div>
+          <button type="button" class="mcat-link" onclick="setMaterialGroup('${escapeJsString(g.id)}')">${escapeHtml(matT('all'))} (${items.length}) ›</button>
+        </div>
+        <div class="mcat-grid">${previewItems.map(renderMaterialCardHtml).join("")}</div>
+        ${hasMoreInGroup ? `
+          <div style="text-align:center; margin-top:8px;">
+            <button type="button" class="mcat-chip" style="min-height:34px; font-size:12px; color:var(--text-secondary);" onclick="setMaterialGroup('${escapeJsString(g.id)}')">
+              ${escapeHtml(getLocalizedGroupName(g))} — barcha ${items.length} ta materialni ko‘rish →
+            </button>
+          </div>
+        ` : ''}
+      </section>
+    `;
+  }).join("");
+}
+
+function loadMoreMaterials() {
+  haptic("light");
+  materialsState.displayLimit = (materialsState.displayLimit || 36) + 36;
+  updateMaterialsUiInPlace();
 }
 
 
@@ -22496,13 +22574,16 @@ function setTab(id, event) {
   }
   if (id === "tasks") {
     loadLibraryV2Data();
+    preloadLibrarySubsections();
   }
   sendHeartbeat({ current_tab: id });
 }
 
 // Chegirma muddati uchun jonli sanoq (har soniyada barcha .discount-countdown elementlarini yangilaydi)
 setInterval(() => {
-  document.querySelectorAll(".discount-countdown").forEach(el => {
+  const countEls = document.querySelectorAll(".discount-countdown");
+  if (!countEls.length) return;
+  countEls.forEach(el => {
     const until = el.dataset.until ? new Date(el.dataset.until) : null;
     if (!until || isNaN(until.getTime())) return;
     const diff = until.getTime() - Date.now();
@@ -23579,7 +23660,8 @@ function ensureNormativesPlaceholderTicker() {
   const step = () => {
     const el = document.getElementById("norm-ph-word");
     const inp = document.getElementById("lib-norm-search-input");
-    if (!el || document.hidden || (inp && inp.value)) { _normPhTimer = setTimeout(step, 400); return; }
+    if (!el) { _normPhTimer = null; return; }
+    if (document.hidden || (inp && inp.value)) { _normPhTimer = setTimeout(step, 1000); return; }
     const word = NORMATIVE_PH_WORDS[_normPhIdx % NORMATIVE_PH_WORDS.length];
     let delay = 90;
     if (reduce) { _normPhText = word; el.textContent = word; _normPhIdx++; _normPhTimer = setTimeout(step, 2400); return; }
@@ -24891,7 +24973,8 @@ function ensureProcessPlaceholderTicker() {
   const step = () => {
     const el = document.getElementById("proc-ph-word");
     const inp = document.getElementById("proc-hub-search-input");
-    if (!el || document.hidden || (inp && inp.value)) { _procPhTimer = setTimeout(step, 400); return; }
+    if (!el) { _procPhTimer = null; return; }
+    if (document.hidden || (inp && inp.value)) { _procPhTimer = setTimeout(step, 1000); return; }
     const word = PROCESS_PH_WORDS[_procPhIdx % PROCESS_PH_WORDS.length];
     let delay = 90;
     if (reduce) { _procPhText = word; el.textContent = word; _procPhIdx++; _procPhTimer = setTimeout(step, 2400); return; }
