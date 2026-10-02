@@ -766,7 +766,8 @@ let librarySections = [
   { id: 2, slug: 'sources', name: 'Manbalar', icon: '📦', description: 'Revit oilalari (.rfa), shablonlar (.rte), DWG chizmalar va 3D parametrlar', is_active: true, order_index: 2 },
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
   { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
-  { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 }
+  { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 },
+  { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 }
 ];
 let libraryActiveSection = null; // null: Home (4 tiles + recent + recommended) | 'books' | 'sources' | 'tests' | 'materials'
 let libraryV2Resources = [];
@@ -6680,6 +6681,11 @@ function openLibrarySection(slug) {
       loadNormativesData();
     }
   }
+  if (slug === "process") {
+    if (!processState.loaded && !processState.loading) {
+      loadProcessData();
+    }
+  }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
@@ -6691,6 +6697,12 @@ function closeLibrarySection() {
   activeMaterialDetail = null;
   libraryActiveSection = null;
   librarySectionSearchQuery = "";
+  if (typeof processState !== 'undefined' && processState) {
+    processState.currentView = 'categories';
+    processState.activeCategoryId = null;
+    processState.activeCategorySlug = null;
+    processState.activeItemDetail = null;
+  }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
@@ -6952,6 +6964,8 @@ function renderTasks() {
     content = renderMaterialsSectionHtml();
   } else if (libraryActiveSection === "normatives") {
     content = renderNormativesSectionHtml();
+  } else if (libraryActiveSection === "process") {
+    content = renderProcessSectionHtml();
   } else if (libraryActiveSection) {
     content = renderGenericSectionHtml(libraryActiveSection);
   } else {
@@ -6978,6 +6992,7 @@ function renderTasksHomeHtml() {
       case "tests": return libIcons.tests("lib-sec-svg", 22);
       case "materials": return libIcons.materials("lib-sec-svg", 22);
       case "normatives": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+      case "process": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
       default: return libIcons.sources("lib-sec-svg", 22);
     }
   }
@@ -17945,6 +17960,7 @@ function renderAdminLibrarySubTabContent(subTab) {
   if (subTab === "sources") return renderAdminLibrarySectionResources('sources', 'Manbalar / Fayllar');
   if (subTab === "tests") return renderAdminLibrarySectionResources('tests', 'Test va Vazifalar');
   if (subTab === "materials") return renderAdminMaterialsCMS();
+  if (subTab === "process") return renderAdminProcessCMS();
   if (subTab === "resources_v2") return renderAdminLibraryV2Resources();
   if (subTab === "sections") return renderAdminLibrarySections();
   if (subTab === "categories") return renderAdminLibraryCategories();
@@ -18012,6 +18028,9 @@ function renderAdminLibrary() {
           </div>
           <div class="chip ${subTab === "materials" ? "active" : ""}" data-subtab="materials" onclick="setAdminLibraryTab('materials', event)" style="font-size:12px; padding:4px 10px;">
             🧱 Materiallar (${mats.length})
+          </div>
+          <div class="chip ${subTab === "process" ? "active" : ""}" data-subtab="process" onclick="setAdminLibraryTab('process', event)" style="font-size:12px; padding:4px 10px;">
+            ⚡ Jarayonlar (${(adminData.processItems || []).length || (processState.items || []).length || 220})
           </div>
           <div class="chip ${subTab === "resources_v2" ? "active" : ""}" data-subtab="resources_v2" onclick="setAdminLibraryTab('resources_v2', event)" style="font-size:12px; padding:4px 10px; ${subTab !== "resources_v2" ? "background:rgba(255,59,48,0.12); color:#ff3b30; font-weight:700;" : ""}" title="Kitoblar/Manbalar/Testlar/Materiallar bo'limlariga to'g'ri kelmagan barcha resurslar shu yerda ko'rinadi">
             📄 Barcha resurslar (${(adminData.libraryV2Resources || libraryV2Resources || []).length})
@@ -24423,3 +24442,981 @@ function closeAdminModal() {
   if (m) m.remove();
 }
 
+
+
+// ======================================================
+// JARAYON (INTERYER VA REMONT BOSQICHLARI) FRONTEND ENGINE
+// 23 Kategoriya, 220 ta batafsil bilim kartalari, qidiruv va progress
+// ======================================================
+
+const processState = {
+  loaded: false,
+  loading: false,
+  categories: [],
+  items: [],
+  activeCategoryId: null,
+  activeCategorySlug: null,
+  searchQuery: "",
+  activeFilter: "all",
+  currentView: "categories", // 'categories' | 'category_detail' | 'item_detail'
+  activeItemDetail: null,
+  viewedIds: new Set(),
+  savedIds: new Set(),
+  completedChecklists: {}, // { [itemId]: [0, 1] }
+  stats: { total: 220, viewed: 0 }
+};
+
+async function loadProcessData() {
+  processState.loading = true;
+  try {
+    const [catsRes, itemsRes, progRes] = await Promise.all([
+      api("/api/process/categories").catch(() => ({ categories: [] })),
+      api("/api/process/items", { limit: 400 }).catch(() => ({ items: [] })),
+      api("/api/process/user-progress").catch(() => ({ viewed_ids: [], saved_ids: [], checklists: {} }))
+    ]);
+
+    if (catsRes && Array.isArray(catsRes.categories) && catsRes.categories.length) {
+      processState.categories = catsRes.categories;
+    }
+    if (itemsRes && Array.isArray(itemsRes.items) && itemsRes.items.length) {
+      processState.items = itemsRes.items;
+      processState.stats.total = itemsRes.items.length;
+    }
+    if (progRes) {
+      processState.viewedIds = new Set(progRes.viewed_ids || []);
+      processState.savedIds = new Set(progRes.saved_ids || []);
+      processState.completedChecklists = progRes.checklists || {};
+      processState.stats.viewed = processState.viewedIds.size;
+    }
+    processState.loaded = true;
+  } catch (err) {
+    console.error("LOAD PROCESS DATA ERROR:", err);
+  } finally {
+    processState.loading = false;
+    if (libraryActiveSection === "process") {
+      render();
+    }
+  }
+}
+
+function setProcessView(view) {
+  haptic("light");
+  processState.currentView = view || "categories";
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setProcessCategory(catSlugOrId) {
+  haptic("light");
+  const cat = (processState.categories || []).find(c => c.slug === String(catSlugOrId) || Number(c.id) === Number(catSlugOrId));
+  if (cat) {
+    processState.activeCategoryId = cat.id;
+    processState.activeCategorySlug = cat.slug;
+  } else {
+    processState.activeCategoryId = null;
+    processState.activeCategorySlug = String(catSlugOrId);
+  }
+  processState.currentView = "category_detail";
+  processState.searchQuery = "";
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeProcessCategoryDetail() {
+  haptic("light");
+  processState.activeCategoryId = null;
+  processState.activeCategorySlug = null;
+  processState.currentView = "categories";
+  processState.searchQuery = "";
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function openProcessItemDetail(idOrSlug) {
+  haptic("light");
+  const localItem = (processState.items || []).find(i => String(i.id) === String(idOrSlug) || i.slug === String(idOrSlug));
+  processState.activeItemDetail = localItem || null;
+  processState.currentView = "item_detail";
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Mark as viewed
+  const itemId = localItem ? Number(localItem.id) : Number(idOrSlug);
+  if (itemId && !processState.viewedIds.has(itemId)) {
+    processState.viewedIds.add(itemId);
+    processState.stats.viewed = processState.viewedIds.size;
+    api("/api/process/mark-viewed", { item_id: itemId }).catch(() => {});
+  }
+
+  // Fetch full detail if needed
+  try {
+    const res = await api(`/api/process/items/${idOrSlug}`);
+    if (res && res.ok && res.item) {
+      processState.activeItemDetail = res.item;
+      if (processState.currentView === "item_detail") {
+        render();
+      }
+    }
+  } catch (e) {
+    console.warn("fetch item detail err:", e);
+  }
+}
+
+function closeProcessItemDetail() {
+  haptic("light");
+  if (processState.activeCategorySlug) {
+    processState.currentView = "category_detail";
+  } else {
+    processState.currentView = "categories";
+  }
+  processState.activeItemDetail = null;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setProcessFilter(filterName) {
+  haptic("light");
+  processState.activeFilter = filterName || "all";
+  render();
+}
+
+let _procSearchTimer = null;
+function setProcessSearch(val) {
+  clearTimeout(_procSearchTimer);
+  _procSearchTimer = setTimeout(() => {
+    processState.searchQuery = (val || "").trim();
+    render();
+  }, 100);
+}
+
+function clearProcessSearch() {
+  processState.searchQuery = "";
+  const inp = document.getElementById("proc-search-input");
+  if (inp) inp.value = "";
+  render();
+}
+
+async function toggleProcessItemSave(itemId) {
+  haptic("light");
+  itemId = Number(itemId);
+  const wasSaved = processState.savedIds.has(itemId);
+  if (wasSaved) {
+    processState.savedIds.delete(itemId);
+  } else {
+    processState.savedIds.add(itemId);
+  }
+  render();
+
+  try {
+    const res = await api("/api/process/toggle-save", { item_id: itemId });
+    if (!res || !res.ok) throw new Error("Save fail");
+    showToast(wasSaved ? "Saqlanganlardan olib tashlandi" : "✓ Saqlandi");
+  } catch (e) {
+    if (wasSaved) processState.savedIds.add(itemId);
+    else processState.savedIds.delete(itemId);
+    render();
+    showToast("Saqlab bo‘lmadi, qayta urinib ko‘ring");
+  }
+}
+
+async function toggleProcessChecklist(itemId, checkIdx) {
+  haptic("medium");
+  itemId = Number(itemId);
+  checkIdx = Number(checkIdx);
+
+  if (!processState.completedChecklists[itemId]) {
+    processState.completedChecklists[itemId] = [];
+  }
+  const arr = processState.completedChecklists[itemId];
+  const pos = arr.indexOf(checkIdx);
+  if (pos > -1) {
+    arr.splice(pos, 1);
+  } else {
+    arr.push(checkIdx);
+  }
+
+  // Update in place for zero lag
+  const chkBox = document.getElementById(`proc-chk-${itemId}-${checkIdx}`);
+  if (chkBox) {
+    const isNowChecked = arr.includes(checkIdx);
+    chkBox.classList.toggle("checked", isNowChecked);
+    const row = chkBox.closest(".proc-checklist-row");
+    if (row) row.classList.toggle("done", isNowChecked);
+  }
+
+  try {
+    await api("/api/process/toggle-checklist", { item_id: itemId, index: checkIdx });
+  } catch (e) {
+    console.warn("toggle checklist error:", e);
+  }
+}
+
+// ------------------------------------------------------
+// RENDERERS
+// ------------------------------------------------------
+
+function renderProcessSectionHtml() {
+  if (!processState.loaded && !processState.loading) {
+    loadProcessData();
+  }
+
+  if (processState.loading && !processState.loaded) {
+    return `
+      <div class="page lib-container lib-page-enter">
+        <div class="lib-back-nav" onclick="closeLibrarySection()">
+          ${libIcons.back('lib-back-svg', 16)} Kutubxona
+        </div>
+        <div style="padding: 70px 20px; text-align: center;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Jarayon bilimlar bazasi yuklanmoqda...</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">23 bosqich va 220 ta texnik jarayon</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (processState.currentView === "item_detail" && processState.activeItemDetail) {
+    return renderProcessItemDetailHtml(processState.activeItemDetail);
+  }
+
+  if (processState.currentView === "category_detail" && processState.activeCategorySlug) {
+    return renderProcessCategoryDetailHtml();
+  }
+
+  return renderProcessCategoriesViewHtml();
+}
+
+function renderProcessCategoriesViewHtml() {
+  const categories = processState.categories || [];
+  const items = processState.items || [];
+  const search = (processState.searchQuery || "").toLowerCase();
+  const filter = processState.activeFilter || "all";
+
+  // Filter chips
+  const FILTER_CHIPS = [
+    { id: "all", label: "Barchasi" },
+    { id: "Loyihalash", label: "📐 Loyihalash" },
+    { id: "Demontaj", label: "🔨 Demontaj" },
+    { id: "Qurilish", label: "🧱 Qurilish" },
+    { id: "Elektr", label: "⚡ Elektr" },
+    { id: "Santexnika", label: "🚰 Santexnika" },
+    { id: "HVAC", label: "❄️ Klimat" },
+    { id: "Pol", label: "🪵 Pol" },
+    { id: "Devor", label: "🧱 Devor" },
+    { id: "Shift", label: "🏛️ Shift" },
+    { id: "Plitka", label: "🟧 Plitka" },
+    { id: "Bo‘yoq", label: "🎨 Bo‘yoq" },
+    { id: "Mebel", label: "🍳 Mebel" },
+    { id: "Dekor", label: "🖼️ Dekor" },
+    { id: "Sifat nazorati", label: "🔍 Nazorat" },
+    { id: "Topshirish", label: "🔑 Topshirish" }
+  ];
+
+  // If search is active, show search results across all items directly!
+  let isSearching = search.length > 0;
+  let matchingItems = [];
+  if (isSearching) {
+    matchingItems = items.filter(it => 
+      (it.title || "").toLowerCase().includes(search) ||
+      (it.short_description || "").toLowerCase().includes(search) ||
+      (it.category_title || "").toLowerCase().includes(search)
+    );
+  }
+
+  // Filtered categories
+  let filteredCats = categories;
+  if (filter !== "all") {
+    filteredCats = categories.filter(c => c.filter === filter);
+  }
+
+  const viewedCount = processState.viewedIds.size;
+  const totalCount = items.length || 220;
+  const progressPercent = Math.min(100, Math.round((viewedCount / (totalCount || 1)) * 100));
+
+  return `
+    <div class="page lib-container lib-page-enter proc-page">
+      <!-- TOP NAV -->
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>
+
+      <!-- HERO -->
+      <div class="proc-hero">
+        <div class="proc-hero-badge">⚡ Bilimlar Bazasi</div>
+        <h1 class="proc-hero-title">Jarayon</h1>
+        <p class="proc-hero-sub">Interyer va remont ishlarining bosqichma-bosqich professional yo‘l xaritasi.</p>
+        
+        <!-- PROGRESS BAR -->
+        <div class="proc-progress-box">
+          <div class="proc-progress-meta">
+            <span class="proc-progress-label">O‘rganish progressi</span>
+            <span class="proc-progress-count"><strong>${viewedCount}</strong> / ${totalCount} mavzu ko‘rildi (${progressPercent}%)</span>
+          </div>
+          <div class="proc-progress-track">
+            <div class="proc-progress-fill" style="width: ${progressPercent}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH BAR -->
+      <div class="proc-search-wrap">
+        <span class="proc-search-ico">${libIcons.search('lib-search-svg', 18)}</span>
+        <input 
+          id="proc-search-input"
+          type="text" 
+          class="proc-search-input" 
+          placeholder="Jarayon yoki mavzuni qidiring (masalan: kalit, rozetka, suvoq, plitka)..." 
+          value="${escapeHtml(processState.searchQuery || '')}"
+          oninput="setProcessSearch(this.value)"
+        />
+        ${search ? `<button type="button" class="proc-search-clear" onclick="clearProcessSearch()">✕</button>` : ''}
+      </div>
+
+      ${!isSearching ? `
+        <!-- FILTER CHIPS -->
+        <div class="proc-filter-row">
+          ${FILTER_CHIPS.map(ch => `
+            <button type="button" class="proc-filter-chip ${filter === ch.id ? 'active' : ''}" onclick="setProcessFilter('${ch.id}')">
+              ${escapeHtml(ch.label)}
+            </button>
+          `).join('')}
+        </div>
+
+        <!-- CATEGORIES GRID (23 BOSQICH) -->
+        <div class="proc-cat-grid">
+          ${filteredCats.map(c => {
+            const catItems = items.filter(it => it.category_slug === c.slug || it.category_id === c.id);
+            const catViewed = catItems.filter(it => processState.viewedIds.has(Number(it.id))).length;
+            const count = catItems.length || c.items_count || 0;
+            return `
+              <div class="proc-cat-card" onclick="setProcessCategory('${escapeJsString(c.slug)}')">
+                <div class="proc-cat-icon-wrap">
+                  <span class="proc-cat-icon">${escapeHtml(c.icon || '⚡')}</span>
+                  <span class="proc-cat-code">${escapeHtml(c.code)}</span>
+                </div>
+                <div class="proc-cat-info">
+                  <div class="proc-cat-header-row">
+                    <h3 class="proc-cat-title">${escapeHtml(c.title)}</h3>
+                    <span class="proc-cat-count-badge">${count} ta ish</span>
+                  </div>
+                  <p class="proc-cat-desc">${escapeHtml(c.description || '')}</p>
+                  <div class="proc-cat-footer">
+                    <div class="proc-cat-progress">
+                      <span class="proc-cat-prog-txt">${catViewed} / ${count} o‘rganildi</span>
+                      <div class="proc-cat-mini-bar"><div class="proc-cat-mini-fill" style="width:${count ? (catViewed/count*100) : 0}%;"></div></div>
+                    </div>
+                    <span class="proc-cat-arrow">Ko‘rish ›</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <!-- LIVE SEARCH RESULTS VIEW -->
+        <div class="proc-search-results">
+          <div class="proc-results-header">
+            Qidiruv natijalari: <strong>${matchingItems.length} ta</strong> mavzu topildi
+          </div>
+          ${matchingItems.length === 0 ? `
+            <div class="proc-empty" style="text-align:center; padding:50px 20px;">
+              <div style="font-size:42px; margin-bottom:8px;">🔍</div>
+              <div style="font-weight:750; font-size:16px;">Hech qanday jarayon topilmadi</div>
+              <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Boshqa so‘z bilan qidirib ko‘ring</div>
+            </div>
+          ` : `
+            <div class="proc-items-list">
+              ${matchingItems.map((it, idx) => renderProcessItemRowHtml(it, idx)).join('')}
+            </div>
+          `}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderProcessCategoryDetailHtml() {
+  const catSlug = processState.activeCategorySlug;
+  const cat = (processState.categories || []).find(c => c.slug === catSlug || Number(c.id) === Number(processState.activeCategoryId)) || {
+    title: "Bosqich jarayonlari",
+    code: "00",
+    icon: "⚡",
+    description: ""
+  };
+
+  const allItems = processState.items || [];
+  let catItems = allItems.filter(it => it.category_slug === catSlug || it.category_id === cat.id);
+  
+  const search = (processState.searchQuery || "").toLowerCase();
+  if (search) {
+    catItems = catItems.filter(it => 
+      (it.title || "").toLowerCase().includes(search) ||
+      (it.short_description || "").toLowerCase().includes(search)
+    );
+  }
+
+  const viewedInCat = catItems.filter(it => processState.viewedIds.has(Number(it.id))).length;
+
+  return `
+    <div class="page lib-container lib-page-enter proc-page">
+      <!-- TOP NAV -->
+      <div class="lib-back-nav" onclick="closeProcessCategoryDetail()">
+        ${libIcons.back('lib-back-svg', 16)} Barcha bosqichlar
+      </div>
+
+      <!-- CATEGORY BANNER -->
+      <div class="proc-cat-banner">
+        <div class="proc-banner-top">
+          <span class="proc-banner-icon">${escapeHtml(cat.icon || '⚡')}</span>
+          <span class="proc-banner-code">BOSQICH ${escapeHtml(cat.code)}</span>
+          <span class="proc-banner-count">${catItems.length} ta jarayon</span>
+        </div>
+        <h1 class="proc-banner-title">${escapeHtml(cat.title)}</h1>
+        <p class="proc-banner-desc">${escapeHtml(cat.description || '')}</p>
+        <div class="proc-banner-progress">
+          <span>O‘rganildi: <strong>${viewedInCat}</strong> / ${catItems.length}</span>
+          <div class="proc-cat-mini-bar" style="max-width:140px; margin-left:auto;"><div class="proc-cat-mini-fill" style="width:${catItems.length ? (viewedInCat/catItems.length*100) : 0}%;"></div></div>
+        </div>
+      </div>
+
+      <!-- SEARCH WITHIN CATEGORY -->
+      <div class="proc-search-wrap" style="margin-bottom:14px;">
+        <span class="proc-search-ico">${libIcons.search('lib-search-svg', 18)}</span>
+        <input 
+          id="proc-search-input"
+          type="text" 
+          class="proc-search-input" 
+          placeholder="Ushbu bosqich ichidan qidirish..." 
+          value="${escapeHtml(processState.searchQuery || '')}"
+          oninput="setProcessSearch(this.value)"
+        />
+        ${search ? `<button type="button" class="proc-search-clear" onclick="clearProcessSearch()">✕</button>` : ''}
+      </div>
+
+      <!-- ITEMS LIST -->
+      <div class="proc-items-list">
+        ${catItems.map((it, idx) => renderProcessItemRowHtml(it, idx)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderProcessItemRowHtml(it, idx) {
+  const isViewed = processState.viewedIds.has(Number(it.id));
+  const isSaved = processState.savedIds.has(Number(it.id));
+  const completedChecks = (processState.completedChecklists[it.id] || []).length;
+  const totalChecks = Array.isArray(it.checklist) ? it.checklist.length : 0;
+
+  return `
+    <div class="proc-item-card ${isViewed ? 'viewed' : ''}" onclick="openProcessItemDetail('${escapeJsString(it.slug || it.id)}')">
+      <div class="proc-item-num">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="proc-item-body">
+        <div class="proc-item-title-row">
+          <h4 class="proc-item-title">${escapeHtml(it.title)}</h4>
+          <div class="proc-item-badges">
+            ${isSaved ? '<span class="proc-badge-saved" title="Saqlangan">🔖</span>' : ''}
+            ${isViewed ? '<span class="proc-badge-viewed">✓ Ko‘rildi</span>' : ''}
+          </div>
+        </div>
+        <p class="proc-item-short">${escapeHtml(it.short_description || '')}</p>
+        <div class="proc-item-meta-footer">
+          ${it.category_title ? `<span class="proc-meta-cat">${escapeHtml(it.category_icon || '⚡')} ${escapeHtml(it.category_title)}</span>` : ''}
+          ${totalChecks > 0 ? `<span class="proc-meta-chk">☑ ${completedChecks}/${totalChecks} tekshirildi</span>` : ''}
+          <span class="proc-meta-more">Batafsil ›</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProcessItemDetailHtml(it) {
+  const isSaved = processState.savedIds.has(Number(it.id));
+  const isViewed = processState.viewedIds.has(Number(it.id));
+  const completedIdxs = processState.completedChecklists[it.id] || [];
+
+  const steps = Array.isArray(it.step_by_step) ? it.step_by_step : [];
+  const rules = Array.isArray(it.rules) ? it.rules : [];
+  const mistakes = Array.isArray(it.common_mistakes) ? it.common_mistakes : [];
+  const materials = Array.isArray(it.materials) ? it.materials : [];
+  const tools = Array.isArray(it.tools) ? it.tools : [];
+  const checklist = Array.isArray(it.checklist) ? it.checklist : [];
+  const related = Array.isArray(it.related_topics) ? it.related_topics : [];
+
+  return `
+    <div class="page lib-container lib-page-enter proc-page proc-detail-page">
+      <!-- TOP NAV -->
+      <div class="lib-materials-header-nav" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div class="lib-back-nav" style="margin-bottom:0;" onclick="closeProcessItemDetail()">
+          ${libIcons.back('lib-back-svg', 16)} ${escapeHtml(it.category_title || 'Bosqichlar')}
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" onclick="toggleProcessItemSave(${Number(it.id)})" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
+            <span>${isSaved ? '🔖 Saqlangan' : '🔖 Saqlash'}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DETAIL HEAD -->
+      <div class="proc-detail-head">
+        <div class="proc-detail-tag">
+          <span>${escapeHtml(it.category_icon || '⚡')} ${escapeHtml(it.category_title || '')}</span>
+          <span>•</span>
+          <span>BOSQICH ${escapeHtml(it.category_code || '00')}</span>
+        </div>
+        <h1 class="proc-detail-title">${escapeHtml(it.title)}</h1>
+        <p class="proc-detail-lead">${escapeHtml(it.short_description || '')}</p>
+      </div>
+
+      <!-- KNOWLEDGE SECTIONS -->
+      <div class="proc-detail-content">
+
+        <!-- 1. MAQSAD VA AHAMIYATI -->
+        ${it.purpose ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🎯 Bu ish nima uchun kerak?</h3>
+            <div class="proc-sec-body proc-text-box">
+              ${escapeHtml(it.purpose)}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 2. QACHON BAJARILADI VA OLDINDAN TAYYORGARLIK -->
+        <div class="proc-grid-two">
+          ${it.when_to_do ? `
+            <div class="proc-mini-card">
+              <div class="proc-mini-ico">⏱️</div>
+              <div class="proc-mini-content">
+                <div class="proc-mini-label">Qachon bajariladi?</div>
+                <div class="proc-mini-val">${escapeHtml(it.when_to_do)}</div>
+              </div>
+            </div>
+          ` : ''}
+          ${it.before_start ? `
+            <div class="proc-mini-card">
+              <div class="proc-mini-ico">⚠️</div>
+              <div class="proc-mini-content">
+                <div class="proc-mini-label">Ishni boshlashdan oldin</div>
+                <div class="proc-mini-val">${escapeHtml(it.before_start)}</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- 3. BOSQICHMA-BOSQICH KETMA-KETLIK -->
+        ${steps.length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🔢 Bosqichma-bosqich ketma-ketlik</h3>
+            <div class="proc-steps-timeline">
+              ${steps.map((st, i) => `
+                <div class="proc-step-row">
+                  <div class="proc-step-idx">${i + 1}</div>
+                  <div class="proc-step-txt">${escapeHtml(st)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 4. QOIDALAR VA ME'YORLAR -->
+        ${rules.length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">📐 Asosiy qoidalar va me'yorlar</h3>
+            <ul class="proc-rules-list">
+              ${rules.map(r => `
+                <li>
+                  <span class="proc-rule-bullet">✓</span>
+                  <span>${escapeHtml(r)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </section>
+        ` : ''}
+
+        <!-- 5. MUHIM JIHATLAR -->
+        ${it.important_notes ? `
+          <div class="proc-alert-box tip">
+            <div class="proc-alert-icon">💡</div>
+            <div class="proc-alert-body">
+              <div class="proc-alert-title">Muhim tavsiya (Arxitektor va Usta qaydi)</div>
+              <div class="proc-alert-text">${escapeHtml(it.important_notes)}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 6. KO'P UCHRAYDIGAN XATOLAR -->
+        ${mistakes.length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title" style="color:#ef4444;">❌ Ko‘p uchraydigan xatolar</h3>
+            <div class="proc-mistakes-grid">
+              ${mistakes.map(m => `
+                <div class="proc-mistake-card">
+                  <span class="proc-mistake-ico">⚠️</span>
+                  <span class="proc-mistake-txt">${escapeHtml(m)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 7. SIFAT NAZORATI -->
+        ${it.quality_control ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🛡️ Sifat nazorati va qabul qilish (QA/QC)</h3>
+            <div class="proc-sec-body proc-text-box" style="border-left: 3px solid #10b981;">
+              ${escapeHtml(it.quality_control)}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 8. MATERIALLAR VA ASBOBLAR -->
+        ${(materials.length || tools.length) ? `
+          <div class="proc-grid-two">
+            ${materials.length ? `
+              <div class="proc-tag-card">
+                <div class="proc-tag-title">📦 Kerakli materiallar</div>
+                <div class="proc-chips-wrap">
+                  ${materials.map(mat => `<span class="proc-chip">${escapeHtml(mat)}</span>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+            ${tools.length ? `
+              <div class="proc-tag-card">
+                <div class="proc-tag-title">🧰 Kerakli asbob-uskunalar</div>
+                <div class="proc-chips-wrap">
+                  ${tools.map(t => `<span class="proc-chip">${escapeHtml(t)}</span>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        <!-- 9. INTERAKTIV NAZORAT CHECKLISTI -->
+        ${checklist.length ? `
+          <section class="proc-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 class="proc-sec-title" style="margin-bottom:0;">☑️ Nazorat checklisti</h3>
+              <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">
+                ${completedIdxs.length} / ${checklist.length} bajarildi
+              </span>
+            </div>
+            <div class="proc-checklist-container">
+              ${checklist.map((chk, i) => {
+                const text = typeof chk === 'string' ? chk : chk.text;
+                const isChecked = completedIdxs.includes(i);
+                return `
+                  <div class="proc-checklist-row ${isChecked ? 'done' : ''}" onclick="toggleProcessChecklist(${Number(it.id)}, ${i})">
+                    <div id="proc-chk-${it.id}-${i}" class="proc-checkbox ${isChecked ? 'checked' : ''}">
+                      ${isChecked ? '✓' : ''}
+                    </div>
+                    <div class="proc-check-text">${escapeHtml(text)}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 10. BOG'LIQ MAVZULAR -->
+        ${related.length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🔄 Bog‘liq mavzular</h3>
+            <div class="proc-related-wrap">
+              ${related.map(rel => {
+                return `<button type="button" class="proc-related-btn" onclick="openProcessItemDetail('${escapeJsString(rel)}')">${escapeHtml(rel)} ›</button>`;
+              }).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+      </div>
+    </div>
+  `;
+}
+
+// ------------------------------------------------------
+// ADMIN CMS UCHUN BOSHQRUV BO'LIMI
+// ------------------------------------------------------
+
+function renderAdminProcessCMS() {
+  const items = processState.items || [];
+  const categories = processState.categories || [];
+
+  return `
+    <div class="admin-process-cms">
+      <div class="admin-section-hero" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div class="admin-hero-title">⚡ Jarayonlar CMS</div>
+          <div class="admin-hero-desc">23 bosqich va 220 ta qurilish-remont bilim kartalari boshqaruvi</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" onclick="openAdminProcessItemModal(null)">
+            + Yangi Jarayon
+          </button>
+          <button class="btn btn-secondary" onclick="openAdminProcessCatModal(null)">
+            + Kategoriya
+          </button>
+        </div>
+      </div>
+
+      <!-- STATS TILES -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin: 14px 0;">
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:var(--text-secondary);">Jami Bosqichlar</div>
+          <div style="font-size:20px; font-weight:800; color:var(--accent);">${categories.length}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#10b981;">Jami Jarayonlar</div>
+          <div style="font-size:20px; font-weight:800; color:#10b981;">${items.length}</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; margin:0;">
+          <div style="font-size:11px; color:#8b5cf6;">O‘rganilganlar</div>
+          <div style="font-size:20px; font-weight:800; color:#8b5cf6;">${processState.viewedIds.size}</div>
+        </div>
+      </div>
+
+      <!-- PROCESS ITEMS TABLE -->
+      <div style="margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="font-size:15px; font-weight:750; margin:0;">Barcha Jarayonlar Ro'yxati (${items.length})</h3>
+        </div>
+        <div style="overflow-x:auto; background:var(--bg-surface); border:1px solid var(--border); border-radius:14px;">
+          <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border); background:rgba(0,0,0,0.02);">
+                <th style="padding:10px 12px; width:45px;">№</th>
+                <th style="padding:10px 12px;">Nomi</th>
+                <th style="padding:10px 12px;">Bosqich</th>
+                <th style="padding:10px 12px; width:90px; text-align:right;">Amallar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.slice(0, 100).map((it, idx) => `
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:10px 12px; font-weight:700; opacity:0.6;">${idx + 1}</td>
+                  <td style="padding:10px 12px;">
+                    <div style="font-weight:750; color:var(--text-primary);">${escapeHtml(it.title)}</div>
+                    <div style="font-size:11.5px; color:var(--text-secondary); max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(it.short_description || '')}</div>
+                  </td>
+                  <td style="padding:10px 12px; white-space:nowrap;">
+                    <span style="font-size:11px; padding:3px 7px; border-radius:6px; background:rgba(0,122,255,0.1); color:#007aff; font-weight:700;">
+                      ${escapeHtml(it.category_code || '')} ${escapeHtml(it.category_title || '')}
+                    </span>
+                  </td>
+                  <td style="padding:10px 12px; text-align:right; white-space:nowrap;">
+                    <button class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:11px;" onclick="openAdminProcessItemModal(${Number(it.id)})">✏️</button>
+                    <button class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:11px; color:#ef4444;" onclick="deleteAdminProcessItem(${Number(it.id)})">🗑️</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${items.length > 100 ? `<div style="padding:10px; text-align:center; font-size:12px; color:var(--text-secondary);">Dastlabki 100 ta jarayon ko'rsatildi (Jami ${items.length} ta).</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openAdminProcessItemModal(itemId) {
+  const item = itemId ? (processState.items || []).find(i => Number(i.id) === Number(itemId)) : null;
+  const categories = processState.categories || [];
+
+  const html = `
+    <div class="apple-modal-overlay" onclick="closeAdminModal()">
+      <div class="apple-modal" style="max-width:580px; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+        <div class="apple-modal-header">
+          <div class="apple-modal-title">${item ? 'Jarayonni Tahrirlash' : 'Yangi Jarayon Qo‘shish'}</div>
+          <button class="apple-modal-close" onclick="closeAdminModal()">✕</button>
+        </div>
+        <form id="admin-proc-form" onsubmit="handleAdminProcessSubmit(event, ${item ? item.id : 'null'})" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700;">Nomi *</label>
+            <input id="proc-f-title" class="apple-input" type="text" required value="${item ? escapeHtml(item.title) : ''}" style="width:100%; margin-top:4px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Bosqich (Kategoriya) *</label>
+            <select id="proc-f-cat" class="apple-input" style="width:100%; margin-top:4px;">
+              ${categories.map(c => `
+                <option value="${c.slug}" ${item && (item.category_slug === c.slug || item.category_id === c.id) ? 'selected' : ''}>
+                  ${c.code} — ${c.title}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Qisqacha tavsif *</label>
+            <textarea id="proc-f-short" class="apple-input" rows="2" style="width:100%; margin-top:4px;">${item ? escapeHtml(item.short_description || '') : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Bu ish nima uchun kerak? (Maqsad)</label>
+            <textarea id="proc-f-purpose" class="apple-input" rows="3" style="width:100%; margin-top:4px;">${item ? escapeHtml(item.purpose || '') : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Bosqichma-bosqich ketma-ketlik (har bir qadam yangi qatorda)</label>
+            <textarea id="proc-f-steps" class="apple-input" rows="4" style="width:100%; margin-top:4px;">${item && Array.isArray(item.step_by_step) ? escapeHtml(item.step_by_step.join('\n')) : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Asosiy qoidalar (har biri yangi qatorda)</label>
+            <textarea id="proc-f-rules" class="apple-input" rows="3" style="width:100%; margin-top:4px;">${item && Array.isArray(item.rules) ? escapeHtml(item.rules.join('\n')) : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Muhim tavsiya (Arxitektor va Usta qaydi)</label>
+            <textarea id="proc-f-notes" class="apple-input" rows="2" style="width:100%; margin-top:4px;">${item ? escapeHtml(item.important_notes || '') : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Ko‘p uchraydigan xatolar (har biri yangi qatorda)</label>
+            <textarea id="proc-f-mistakes" class="apple-input" rows="3" style="width:100%; margin-top:4px;">${item && Array.isArray(item.common_mistakes) ? escapeHtml(item.common_mistakes.join('\n')) : ''}</textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Sifat nazorati (QA/QC mezonlari)</label>
+            <textarea id="proc-f-qc" class="apple-input" rows="2" style="width:100%; margin-top:4px;">${item ? escapeHtml(item.quality_control || '') : ''}</textarea>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  showAppModalHtml(html);
+}
+
+async function handleAdminProcessSubmit(e, itemId) {
+  e.preventDefault();
+  const form = e.target;
+  const title = document.getElementById("proc-f-title").value.trim();
+  const catSlug = document.getElementById("proc-f-cat").value;
+  const short_description = document.getElementById("proc-f-short").value.trim();
+  const purpose = document.getElementById("proc-f-purpose").value.trim();
+  const stepsRaw = document.getElementById("proc-f-steps").value.trim();
+  const rulesRaw = document.getElementById("proc-f-rules").value.trim();
+  const notes = document.getElementById("proc-f-notes").value.trim();
+  const mistakesRaw = document.getElementById("proc-f-mistakes").value.trim();
+  const qc = document.getElementById("proc-f-qc").value.trim();
+
+  const step_by_step = stepsRaw ? stepsRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+  const rules = rulesRaw ? rulesRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+  const common_mistakes = mistakesRaw ? mistakesRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+  const cat = (processState.categories || []).find(c => c.slug === catSlug) || {};
+
+  const payload = {
+    id: itemId ? Number(itemId) : undefined,
+    title,
+    category_slug: catSlug,
+    category_id: cat.id,
+    category_code: cat.code,
+    category_title: cat.title,
+    category_icon: cat.icon,
+    slug: itemId ? undefined : `${cat.code || '00'}-${title.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-')}`,
+    short_description,
+    purpose,
+    step_by_step,
+    rules,
+    important_notes: notes,
+    common_mistakes,
+    quality_control: qc,
+    is_published: true
+  };
+
+  try {
+    const res = await api("/api/admin/process/item/save", payload);
+    if (res && res.ok) {
+      showToast("✓ Jarayon saqlandi");
+      closeAdminModal();
+      await loadProcessData();
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "Saqlashda xatolik");
+    }
+  } catch (err) {
+    showAlert("Saqlashda xatolik");
+  }
+}
+
+async function deleteAdminProcessItem(itemId) {
+  if (!confirm("Ushbu jarayonni o‘chirmoqchimisiz?")) return;
+  try {
+    const res = await api(`/api/admin/process/item/delete/${Number(itemId)}`, {});
+    if (res && res.ok) {
+      showToast("✓ Jarayon o‘chirildi");
+      await loadProcessData();
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "O‘chirishda xatolik");
+    }
+  } catch (e) {
+    showAlert("O‘chirishda xatolik");
+  }
+}
+
+function openAdminProcessCatModal(catId) {
+  const cat = catId ? (processState.categories || []).find(c => Number(c.id) === Number(catId)) : null;
+
+  const html = `
+    <div class="apple-modal-overlay" onclick="closeAdminModal()">
+      <div class="apple-modal" style="max-width:440px;" onclick="event.stopPropagation()">
+        <div class="apple-modal-header">
+          <div class="apple-modal-title">${cat ? 'Kategoriyani Tahrirlash' : 'Yangi Bosqich (Kategoriya)'}</div>
+          <button class="apple-modal-close" onclick="closeAdminModal()">✕</button>
+        </div>
+        <form onsubmit="handleAdminProcessCatSubmit(event, ${cat ? cat.id : 'null'})" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700;">Kodi (masalan: 24) *</label>
+            <input id="proc-cat-f-code" class="apple-input" type="text" required value="${cat ? escapeHtml(cat.code) : ''}" style="width:100%; margin-top:4px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Nomi *</label>
+            <input id="proc-cat-f-title" class="apple-input" type="text" required value="${cat ? escapeHtml(cat.title) : ''}" style="width:100%; margin-top:4px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Emoji / Icon *</label>
+            <input id="proc-cat-f-icon" class="apple-input" type="text" required value="${cat ? escapeHtml(cat.icon) : '⚡'}" style="width:100%; margin-top:4px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700;">Tavsif</label>
+            <textarea id="proc-cat-f-desc" class="apple-input" rows="2" style="width:100%; margin-top:4px;">${cat ? escapeHtml(cat.description || '') : ''}</textarea>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  showAppModalHtml(html);
+}
+
+async function handleAdminProcessCatSubmit(e, catId) {
+  e.preventDefault();
+  const code = document.getElementById("proc-cat-f-code").value.trim();
+  const title = document.getElementById("proc-cat-f-title").value.trim();
+  const icon = document.getElementById("proc-cat-f-icon").value.trim();
+  const desc = document.getElementById("proc-cat-f-desc").value.trim();
+
+  const payload = {
+    id: catId ? Number(catId) : undefined,
+    code,
+    title,
+    icon,
+    description: desc,
+    slug: catId ? undefined : `${code}-${title.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-')}`,
+    is_active: true
+  };
+
+  try {
+    const res = await api("/api/admin/process/category/save", payload);
+    if (res && res.ok) {
+      showToast("✓ Kategoriya saqlandi");
+      closeAdminModal();
+      await loadProcessData();
+      renderAdminPanel();
+    } else {
+      showAlert((res && res.error) || "Saqlashda xatolik");
+    }
+  } catch (err) {
+    showAlert("Saqlashda xatolik");
+  }
+}

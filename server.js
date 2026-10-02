@@ -23,6 +23,16 @@ var getNormativeDetail = normativesModule.getNormativeDetail;
 var getPracticalCasesList = normativesModule.getPracticalCasesList;
 var getPracticalCaseDetail = normativesModule.getPracticalCaseDetail;
 var getNormativesStats = normativesModule.getNormativesStats;
+var processModule = require('./processData');
+var initProcessDatabase = processModule.initProcessDatabase;
+var getProcessCategories = processModule.getProcessCategories;
+var getProcessCategory = processModule.getProcessCategory;
+var getProcessItems = processModule.getProcessItems;
+var getProcessItemDetail = processModule.getProcessItemDetail;
+var saveProcessCategory = processModule.saveProcessCategory;
+var deleteProcessCategory = processModule.deleteProcessCategory;
+var saveProcessItem = processModule.saveProcessItem;
+var deleteProcessItem = processModule.deleteProcessItem;
 
 var videoSourceService = require('./services/videoSourceService');
 var signVideoToken = videoSourceService.signVideoToken;
@@ -1295,7 +1305,9 @@ async function ensureLibraryV2Tables() {
         ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
         ('sources', 'Manbalar', 'RVT, RFA, DWG va boshqa fayllar', '📦', 'Revit oilalari, shablonlar, chizmalar va 3D modellar', 2),
         ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
-        ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4)
+        ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4),
+        ('normatives', 'Normativlar va amaliy yechimlar', 'SHNQ, QMQ va standartlar', '📋', 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', 5),
+        ('process', 'Jarayon', 'Interyer va remont bosqichlari', '⚡', 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', 6)
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
           subtitle = EXCLUDED.subtitle,
@@ -1834,6 +1846,7 @@ ensureLibraryV2Tables();
 initLearningTables(pool);
 initMaterialsTables(pool);
 initNormativesTables(pool);
+initProcessDatabase(pool);
 
 // ======================================================
 // USER RESTRICTIONS (BAN & RESTRICTION SYSTEM)
@@ -11177,6 +11190,207 @@ app.post('/api/admin/normatives/case/delete/:id', requireAdmin, async function (
   } catch (err) {
     console.error('ADMIN CASE DELETE ERROR:', err);
     return res.status(500).json({ ok: false, error: 'O\'chirishda xatolik' });
+  }
+});
+
+// ======================================================
+// JARAYON (INTERYER VA REMONT BOSQICHLARI) API
+// ======================================================
+
+app.all(['/api/process/categories'], async function (req, res) {
+  try {
+    var cats = await getProcessCategories(pool);
+    return res.json({ ok: true, categories: cats });
+  } catch (err) {
+    console.error('PROCESS CATEGORIES ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Kategoriyalarni yuklashda xatolik', categories: [] });
+  }
+});
+
+app.all(['/api/process/categories/:id'], async function (req, res) {
+  try {
+    var cat = await getProcessCategory(pool, req.params.id);
+    if (!cat) return res.status(404).json({ ok: false, error: 'Kategoriya topilmadi' });
+    return res.json({ ok: true, category: cat });
+  } catch (err) {
+    console.error('PROCESS CATEGORY DETAIL ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/items'], async function (req, res) {
+  try {
+    var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var items = await getProcessItems(pool, {
+      category_id: p.category_id,
+      category_slug: p.category_slug,
+      search: p.search || p.q,
+      limit: parseInt(p.limit, 10) || 300,
+      offset: parseInt(p.offset, 10) || 0
+    });
+    return res.json({ ok: true, items: items, total: items.length });
+  } catch (err) {
+    console.error('PROCESS ITEMS ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Jarayonlarni yuklashda xatolik', items: [] });
+  }
+});
+
+app.all(['/api/process/items/:id'], async function (req, res) {
+  try {
+    var item = await getProcessItemDetail(pool, req.params.id);
+    if (!item) return res.status(404).json({ ok: false, error: 'Jarayon topilmadi' });
+    return res.json({ ok: true, item: item });
+  } catch (err) {
+    console.error('PROCESS ITEM DETAIL ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/user-progress'], async function (req, res) {
+  try {
+    var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
+    var user = null;
+    if (p.initData) user = await getOrCreateUser(p.initData);
+    if (!user) {
+      return res.json({ ok: true, viewed_ids: [], saved_ids: [], checklists: {} });
+    }
+    var rows = [];
+    if (pool && typeof pool.query === 'function') {
+      try {
+        var r = await pool.query('SELECT item_id, is_viewed, is_saved, completed_checklist FROM user_process_activity WHERE user_id = $1', [user.id]);
+        rows = r.rows || [];
+      } catch (e) {}
+    }
+    var viewed = [];
+    var saved = [];
+    var checklists = {};
+    rows.forEach(function (rw) {
+      if (rw.is_viewed) viewed.push(rw.item_id);
+      if (rw.is_saved) saved.push(rw.item_id);
+      if (rw.completed_checklist) checklists[rw.item_id] = rw.completed_checklist;
+    });
+    return res.json({ ok: true, viewed_ids: viewed, saved_ids: saved, checklists: checklists });
+  } catch (err) {
+    console.error('PROCESS PROGRESS ERROR:', err);
+    return res.json({ ok: true, viewed_ids: [], saved_ids: [], checklists: {} });
+  }
+});
+
+app.post('/api/process/mark-viewed', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    var itemId = parseInt(req.body.item_id, 10);
+    if (!itemId) return res.status(400).json({ ok: false, error: 'item_id kerak' });
+    if (user && pool && typeof pool.query === 'function') {
+      await pool.query(`
+        INSERT INTO user_process_activity (user_id, item_id, is_viewed, updated_at)
+        VALUES ($1, $2, true, NOW())
+        ON CONFLICT (user_id, item_id) DO UPDATE SET is_viewed = true, updated_at = NOW()
+      `, [user.id, itemId]);
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.json({ ok: true });
+  }
+});
+
+app.post('/api/process/toggle-save', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya talab qilinadi' });
+    var itemId = parseInt(req.body.item_id, 10);
+    if (!itemId) return res.status(400).json({ ok: false, error: 'item_id kerak' });
+    var isSaved = false;
+    if (pool && typeof pool.query === 'function') {
+      var cur = await pool.query('SELECT is_saved FROM user_process_activity WHERE user_id = $1 AND item_id = $2', [user.id, itemId]);
+      if (cur.rows && cur.rows.length) {
+        isSaved = !cur.rows[0].is_saved;
+        await pool.query('UPDATE user_process_activity SET is_saved = $1, updated_at = NOW() WHERE user_id = $2 AND item_id = $3', [isSaved, user.id, itemId]);
+      } else {
+        isSaved = true;
+        await pool.query('INSERT INTO user_process_activity (user_id, item_id, is_saved, updated_at) VALUES ($1, $2, true, NOW())', [user.id, itemId]);
+      }
+    }
+    return res.json({ ok: true, is_saved: isSaved });
+  } catch (err) {
+    console.error('PROCESS TOGGLE SAVE ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'Saqlashda xatolik' });
+  }
+});
+
+app.post('/api/process/toggle-checklist', async function (req, res) {
+  try {
+    var user = await getOrCreateUser(req.body.initData);
+    var itemId = parseInt(req.body.item_id, 10);
+    var checklistIdx = parseInt(req.body.index, 10);
+    if (!itemId || isNaN(checklistIdx)) return res.status(400).json({ ok: false, error: 'item_id va index kerak' });
+    var completed = [];
+    if (user && pool && typeof pool.query === 'function') {
+      var cur = await pool.query('SELECT completed_checklist FROM user_process_activity WHERE user_id = $1 AND item_id = $2', [user.id, itemId]);
+      if (cur.rows && cur.rows.length && cur.rows[0].completed_checklist) {
+        completed = Array.isArray(cur.rows[0].completed_checklist) ? cur.rows[0].completed_checklist : [];
+      }
+      var idxInArr = completed.indexOf(checklistIdx);
+      if (idxInArr > -1) {
+        completed.splice(idxInArr, 1);
+      } else {
+        completed.push(checklistIdx);
+      }
+      await pool.query(`
+        INSERT INTO user_process_activity (user_id, item_id, completed_checklist, updated_at)
+        VALUES ($1, $2, $3::jsonb, NOW())
+        ON CONFLICT (user_id, item_id) DO UPDATE SET completed_checklist = $3::jsonb, updated_at = NOW()
+      `, [user.id, itemId, JSON.stringify(completed)]);
+    }
+    return res.json({ ok: true, completed: completed });
+  } catch (err) {
+    console.error('PROCESS TOGGLE CHECKLIST ERROR:', err);
+    return res.json({ ok: true, completed: [] });
+  }
+});
+
+// Admin endpoints
+app.post('/api/admin/process/category/save', requireAdmin, async function (req, res) {
+  try {
+    var data = req.body || {};
+    var saved = await saveProcessCategory(pool, data);
+    return res.json({ ok: true, category: saved });
+  } catch (err) {
+    console.error('ADMIN PROCESS CAT SAVE ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message || 'Xatolik' });
+  }
+});
+
+app.post('/api/admin/process/category/delete/:id', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    await deleteProcessCategory(pool, id);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('ADMIN PROCESS CAT DELETE ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'O‘chirishda xatolik' });
+  }
+});
+
+app.post('/api/admin/process/item/save', requireAdmin, async function (req, res) {
+  try {
+    var data = req.body || {};
+    var saved = await saveProcessItem(pool, data);
+    return res.json({ ok: true, item: saved });
+  } catch (err) {
+    console.error('ADMIN PROCESS ITEM SAVE ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message || 'Xatolik' });
+  }
+});
+
+app.post('/api/admin/process/item/delete/:id', requireAdmin, async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    await deleteProcessItem(pool, id);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('ADMIN PROCESS ITEM DELETE ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'O‘chirishda xatolik' });
   }
 });
 
