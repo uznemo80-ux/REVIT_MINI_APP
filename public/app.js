@@ -9578,29 +9578,7 @@ function getPopularMaterials() {
 }
 
 function renderMaterialPopularHtml() {
-  const filtering = (materialsState.selectedGroup || "all") !== "all" || (materialsState.searchQuery || "").trim();
-  if (filtering) return "";
-  const pop = getPopularMaterials();
-  if (!pop.length) return "";
-  return `
-    <div class="mcat-section-head"><h2 class="mcat-h2">${escapeHtml(matT('popular_section'))}</h2></div>
-    <div class="mcat-hscroll">
-      ${pop.map(m => {
-        const title = getMaterialTitle(m);
-        const img = formatImageUrl(m.image_url || m.cover_image || "");
-        const g = getMaterialGroup(m);
-        return `
-          <div class="mcat-pop-card" onclick="openMaterialKnowledgeDetail(${Number(m.id)})">
-            <div class="mcat-pop-img">
-              <span class="mcat-ph-emoji">${escapeHtml(g.icon || "🧱")}</span>
-              ${img ? `<img src="${escapeHtml(img)}" loading="lazy" decoding="async" alt="${escapeHtml(title)}" onerror="this.style.display='none';" />` : ""}
-            </div>
-            <div class="mcat-pop-name">${escapeHtml(title)}</div>
-            <div class="mcat-pop-cat">${escapeHtml(getLocalizedGroupName(g))}</div>
-          </div>`;
-      }).join("")}
-    </div>
-  `;
+  return "";
 }
 
 function renderMaterialCatalogHtml() {
