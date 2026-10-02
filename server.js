@@ -33,6 +33,8 @@ var saveProcessCategory = processModule.saveProcessCategory;
 var deleteProcessCategory = processModule.deleteProcessCategory;
 var saveProcessItem = processModule.saveProcessItem;
 var deleteProcessItem = processModule.deleteProcessItem;
+var designProcessModule = require('./designProcessData');
+var rabochkaProcessModule = require('./rabochkaProcessData');
 
 var videoSourceService = require('./services/videoSourceService');
 var signVideoToken = videoSourceService.signVideoToken;
@@ -11196,6 +11198,84 @@ app.post('/api/admin/normatives/case/delete/:id', requireAdmin, async function (
 // ======================================================
 // JARAYON (INTERYER VA REMONT BOSQICHLARI) API
 // ======================================================
+
+app.all(['/api/process/hubs'], async function (req, res) {
+  try {
+    return res.json({
+      ok: true,
+      hubs: [
+        {
+          id: 'remont',
+          title: 'REMONT JARAYONI',
+          subtitle: 'Boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha',
+          description: 'Remont ishlarining boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha bo‘lgan ketma-ketligi.',
+          badge: '23 ta bosqich • 220 ta texnik jarayon',
+          icon: 'hammer-outline'
+        },
+        {
+          id: 'design',
+          title: 'INTERYER DIZAYN QILISH JARAYONI',
+          subtitle: 'G‘oyadan 3D vizualizatsiyagacha',
+          description: 'Interyer g‘oyasidan tayyor dizayn konsepsiyasi va 3D vizualizatsiyagacha bo‘lgan jarayon.',
+          badge: '9 ta asosiy bosqich',
+          icon: 'color-palette-outline'
+        },
+        {
+          id: 'rabochka',
+          title: 'INTERYER RABOCHKA QILISH JARAYONI',
+          subtitle: 'Tasdiqlangan dizayndan ishchi chizmalargacha',
+          description: 'Tasdiqlangan interyer dizaynidan qurilish uchun tayyor ishchi hujjatlar va spetsifikatsiyalargacha bo‘lgan jarayon.',
+          badge: '21 ta varaq / chizma',
+          icon: 'document-text-outline'
+        }
+      ]
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/design/steps'], async function (req, res) {
+  try {
+    return res.json({
+      ok: true,
+      steps: designProcessModule.getDesignSteps()
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/design/steps/:id'], async function (req, res) {
+  try {
+    var step = designProcessModule.getDesignStep(req.params.id);
+    if (!step) return res.status(404).json({ ok: false, error: 'Dizayn bosqichi topilmadi' });
+    return res.json({ ok: true, step: step });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/rabochka/steps'], async function (req, res) {
+  try {
+    return res.json({
+      ok: true,
+      steps: rabochkaProcessModule.getRabochkaSteps()
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
+
+app.all(['/api/process/rabochka/steps/:id'], async function (req, res) {
+  try {
+    var step = rabochkaProcessModule.getRabochkaStep(req.params.id);
+    if (!step) return res.status(404).json({ ok: false, error: 'Rabochka bosqichi topilmadi' });
+    return res.json({ ok: true, step: step });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'Xatolik yuz berdi' });
+  }
+});
 
 app.all(['/api/process/categories'], async function (req, res) {
   try {

@@ -6698,10 +6698,13 @@ function closeLibrarySection() {
   libraryActiveSection = null;
   librarySectionSearchQuery = "";
   if (typeof processState !== 'undefined' && processState) {
+    processState.activeHub = 'hub';
     processState.currentView = 'categories';
     processState.activeCategoryId = null;
     processState.activeCategorySlug = null;
     processState.activeItemDetail = null;
+    processState.activeDesignStep = null;
+    processState.activeRabochkaStep = null;
   }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -24452,8 +24455,13 @@ function closeAdminModal() {
 const processState = {
   loaded: false,
   loading: false,
+  activeHub: 'hub', // 'hub' | 'remont' | 'design' | 'rabochka'
   categories: [],
   items: [],
+  designSteps: [],
+  activeDesignStep: null,
+  rabochkaSteps: [],
+  activeRabochkaStep: null,
   activeCategoryId: null,
   activeCategorySlug: null,
   searchQuery: "",
@@ -24469,10 +24477,12 @@ const processState = {
 async function loadProcessData() {
   processState.loading = true;
   try {
-    const [catsRes, itemsRes, progRes] = await Promise.all([
+    const [catsRes, itemsRes, progRes, designRes, rabochkaRes] = await Promise.all([
       api("/api/process/categories").catch(() => ({ categories: [] })),
       api("/api/process/items", { limit: 400 }).catch(() => ({ items: [] })),
-      api("/api/process/user-progress").catch(() => ({ viewed_ids: [], saved_ids: [], checklists: {} }))
+      api("/api/process/user-progress").catch(() => ({ viewed_ids: [], saved_ids: [], checklists: {} })),
+      api("/api/process/design/steps").catch(() => ({ steps: [] })),
+      api("/api/process/rabochka/steps").catch(() => ({ steps: [] }))
     ]);
 
     if (catsRes && Array.isArray(catsRes.categories) && catsRes.categories.length) {
@@ -24488,6 +24498,12 @@ async function loadProcessData() {
       processState.completedChecklists = progRes.checklists || {};
       processState.stats.viewed = processState.viewedIds.size;
     }
+    if (designRes && Array.isArray(designRes.steps) && designRes.steps.length) {
+      processState.designSteps = designRes.steps;
+    }
+    if (rabochkaRes && Array.isArray(rabochkaRes.steps) && rabochkaRes.steps.length) {
+      processState.rabochkaSteps = rabochkaRes.steps;
+    }
     processState.loaded = true;
   } catch (err) {
     console.error("LOAD PROCESS DATA ERROR:", err);
@@ -24496,6 +24512,85 @@ async function loadProcessData() {
     if (libraryActiveSection === "process") {
       render();
     }
+  }
+}
+
+function setProcessHub(hubId) {
+  haptic("light");
+  processState.activeHub = hubId || 'hub';
+  if (hubId === 'hub') {
+    processState.activeDesignStep = null;
+    processState.activeRabochkaStep = null;
+    processState.currentView = 'categories';
+    processState.activeCategoryId = null;
+    processState.activeCategorySlug = null;
+    processState.activeItemDetail = null;
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function openDesignStepDetail(slugOrNum) {
+  haptic("light");
+  const s = String(slugOrNum).toLowerCase().trim();
+  const step = (processState.designSteps || []).find(st => st.slug === s || String(st.step_number) === s);
+  if (step) {
+    processState.activeDesignStep = step;
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function closeDesignStepDetail() {
+  haptic("light");
+  processState.activeDesignStep = null;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function navigateDesignStep(delta) {
+  haptic("light");
+  const steps = processState.designSteps || [];
+  if (!processState.activeDesignStep || !steps.length) return;
+  const currentIdx = steps.findIndex(st => st.slug === processState.activeDesignStep.slug);
+  if (currentIdx === -1) return;
+  const nextIdx = currentIdx + delta;
+  if (nextIdx >= 0 && nextIdx < steps.length) {
+    processState.activeDesignStep = steps[nextIdx];
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function openRabochkaStepDetail(slugOrNum) {
+  haptic("light");
+  const s = String(slugOrNum).toLowerCase().trim();
+  const step = (processState.rabochkaSteps || []).find(st => st.slug === s || String(st.step_number) === s);
+  if (step) {
+    processState.activeRabochkaStep = step;
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function closeRabochkaStepDetail() {
+  haptic("light");
+  processState.activeRabochkaStep = null;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function navigateRabochkaStep(delta) {
+  haptic("light");
+  const steps = processState.rabochkaSteps || [];
+  if (!processState.activeRabochkaStep || !steps.length) return;
+  const currentIdx = steps.findIndex(st => st.slug === processState.activeRabochkaStep.slug);
+  if (currentIdx === -1) return;
+  const nextIdx = currentIdx + delta;
+  if (nextIdx >= 0 && nextIdx < steps.length) {
+    processState.activeRabochkaStep = steps[nextIdx];
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 
@@ -24669,12 +24764,34 @@ function renderProcessSectionHtml() {
         <div style="padding: 70px 20px; text-align: center;">
           <div class="spinner" style="margin: 0 auto 16px;"></div>
           <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 6px;">Jarayon bilimlar bazasi yuklanmoqda...</div>
-          <div style="font-size: 13px; color: var(--text-secondary);">23 bosqich va 220 ta texnik jarayon</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">Remont, Interyer dizayn va Ishchi loyiha bosqichlari</div>
         </div>
       </div>
     `;
   }
 
+  // 1. HUB LANDING VIEW
+  if (!processState.activeHub || processState.activeHub === 'hub') {
+    return renderProcessHubLandingHtml();
+  }
+
+  // 2. INTERYER DIZAYN PROCESS
+  if (processState.activeHub === 'design') {
+    if (processState.activeDesignStep) {
+      return renderDesignStepDetailHtml(processState.activeDesignStep);
+    }
+    return renderDesignProcessListHtml();
+  }
+
+  // 3. INTERYER RABOCHKA PROCESS
+  if (processState.activeHub === 'rabochka') {
+    if (processState.activeRabochkaStep) {
+      return renderRabochkaStepDetailHtml(processState.activeRabochkaStep);
+    }
+    return renderRabochkaProcessListHtml();
+  }
+
+  // 4. REMONT JARAYONI (100% MAVJUD ARXITEKTURA VA MALUMOTLAR SAQLANGAN)
   if (processState.currentView === "item_detail" && processState.activeItemDetail) {
     return renderProcessItemDetailHtml(processState.activeItemDetail);
   }
@@ -24684,6 +24801,358 @@ function renderProcessSectionHtml() {
   }
 
   return renderProcessCategoriesViewHtml();
+}
+
+function renderProcessHubLandingHtml() {
+  return `
+    <div class="page lib-container lib-page-enter proc-page">
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>
+
+      <!-- HERO BANNER -->
+      <div class="proc-hero" style="margin-bottom: 22px;">
+        <div class="proc-hero-badge">⚡ Bilimlar Bazasi</div>
+        <h1 class="proc-hero-title">Jarayon</h1>
+        <p class="proc-hero-sub">Interyer dizayn, ishchi loyiha (rabochka) va remont ishlarining bosqichma-bosqich to‘liq yo‘l xaritasi.</p>
+      </div>
+
+      <!-- 3 TA ASOSIY BOSQICH KARTALARI -->
+      <div class="proc-hub-grid">
+
+        <!-- CARD 01: REMONT JARAYONI -->
+        <div class="proc-hub-card hub-remont" onclick="setProcessHub('remont')">
+          <div class="proc-hub-top">
+            <span class="proc-hub-number">01</span>
+            <div class="proc-hub-icon-wrap">🔨</div>
+          </div>
+          <h2 class="proc-hub-title">REMONT JARAYONI</h2>
+          <p class="proc-hub-desc">Remont ishlarining boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha bo‘lgan ketma-ketligi.</p>
+          <div class="proc-hub-footer">
+            <span class="proc-hub-pill">23 ta bosqich • 220 ta ish</span>
+            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+          </div>
+        </div>
+
+        <!-- CARD 02: INTERYER DIZAYN QILISH JARAYONI -->
+        <div class="proc-hub-card hub-design" onclick="setProcessHub('design')">
+          <div class="proc-hub-top">
+            <span class="proc-hub-number">02</span>
+            <div class="proc-hub-icon-wrap">🎨</div>
+          </div>
+          <h2 class="proc-hub-title">INTERYER DIZAYN QILISH JARAYONI</h2>
+          <p class="proc-hub-desc">Interyer g‘oyasidan tayyor dizayn konsepsiyasi va 3D vizualizatsiyagacha bo‘lgan jarayon.</p>
+          <div class="proc-hub-footer">
+            <span class="proc-hub-pill">9 ta asosiy bosqich</span>
+            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+          </div>
+        </div>
+
+        <!-- CARD 03: INTERYER RABOCHKA QILISH JARAYONI -->
+        <div class="proc-hub-card hub-rabochka" onclick="setProcessHub('rabochka')">
+          <div class="proc-hub-top">
+            <span class="proc-hub-number">03</span>
+            <div class="proc-hub-icon-wrap">📐</div>
+          </div>
+          <h2 class="proc-hub-title">INTERYER RABOCHKA QILISH JARAYONI</h2>
+          <p class="proc-hub-desc">Tasdiqlangan interyer dizaynidan qurilish uchun tayyor ishchi hujjatlar va spetsifikatsiyalargacha bo‘lgan jarayon.</p>
+          <div class="proc-hub-footer">
+            <span class="proc-hub-pill">21 ta varaq / chizma</span>
+            <button type="button" class="proc-hub-btn">Ko‘rish <span>→</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+function renderDesignProcessListHtml() {
+  const steps = processState.designSteps || [];
+  return `
+    <div class="page lib-container lib-page-enter proc-page">
+      <div class="lib-back-nav" onclick="setProcessHub('hub')">
+        ${libIcons.back('lib-back-svg', 16)} Jarayon turlari
+      </div>
+
+      <div class="proc-cat-banner" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(99, 102, 241, 0.08) 100%); border-color: rgba(139, 92, 246, 0.25);">
+        <div class="proc-banner-top">
+          <div class="proc-banner-icon" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd;">🎨</div>
+          <span class="proc-banner-code" style="color: #c4b5fd; background: rgba(139, 92, 246, 0.2);">9 BOSQICH</span>
+        </div>
+        <h1 class="proc-banner-title">Interyer dizayn qilish jarayoni</h1>
+        <p class="proc-banner-desc">Mijoz talablari va texnik topshiriqdan tortib, 3D vizualizatsiya hamda ishchi chizmalarga tayyorlashgacha bo‘lgan professional ketma-ketlik.</p>
+      </div>
+
+      <div class="proc-items-list" style="margin-top: 18px;">
+        ${steps.map((st) => `
+          <div class="proc-item-card" onclick="openDesignStepDetail('${escapeJsString(st.slug)}')">
+            <div class="proc-item-num" style="background: rgba(139, 92, 246, 0.12); color: #a78bfa;">${st.step_number}</div>
+            <div class="proc-item-body">
+              <div class="proc-item-title-row">
+                <h4 class="proc-item-title">${escapeHtml(st.title)}</h4>
+              </div>
+              <p class="proc-item-short">${escapeHtml(st.lead || '')}</p>
+              <div class="proc-item-meta-footer">
+                <span class="proc-meta-cat">📋 ${(st.sections || []).length} ta mavzu</span>
+                <span class="proc-meta-chk">🎯 Amaliy qo‘llanma</span>
+                <span class="proc-meta-more">Batafsil ›</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderDesignStepDetailHtml(st) {
+  const steps = processState.designSteps || [];
+  const currentIdx = steps.findIndex(s => s.slug === st.slug);
+  const prevStep = currentIdx > 0 ? steps[currentIdx - 1] : null;
+  const nextStep = currentIdx >= 0 && currentIdx < steps.length - 1 ? steps[currentIdx + 1] : null;
+
+  return `
+    <div class="page lib-container lib-page-enter proc-page proc-detail-page">
+      <!-- TOP NAV -->
+      <div class="lib-materials-header-nav" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div class="lib-back-nav" style="margin-bottom:0;" onclick="closeDesignStepDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Dizayn bosqichlari
+        </div>
+      </div>
+
+      <!-- DETAIL HEAD -->
+      <div class="proc-detail-head" style="border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+        <div class="proc-detail-tag">
+          <span style="color:#c4b5fd;">🎨 INTERYER DIZAYN</span>
+          <span>•</span>
+          <span style="background: rgba(139, 92, 246, 0.15); color: #c4b5fd; padding: 2px 8px; border-radius: 6px;">BOSQICH ${escapeHtml(st.step_number)} / 09</span>
+        </div>
+        <h1 class="proc-detail-title">${escapeHtml(st.title)}</h1>
+        <p class="proc-detail-lead">${escapeHtml(st.lead || '')}</p>
+      </div>
+
+      <!-- KNOWLEDGE SECTIONS -->
+      <div class="proc-detail-content">
+
+        <!-- 1. MAQSAD VA AHAMIYATI -->
+        ${st.purpose ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🎯 Bosqichning asosiy maqsadi</h3>
+            <div class="proc-sec-body proc-text-box">
+              ${escapeHtml(st.purpose)}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 2. QACHON BAJARILADI -->
+        ${st.when_to_do ? `
+          <div class="proc-mini-card" style="margin-bottom: 16px;">
+            <div class="proc-mini-ico">⏱️</div>
+            <div class="proc-mini-content">
+              <div class="proc-mini-label">Qachon amalga oshiriladi?</div>
+              <div class="proc-mini-val">${escapeHtml(st.when_to_do)}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 3. STRUKTURA VA TARKIBIY SEKSIYALAR -->
+        ${(st.sections || []).map(sec => `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">${sec.icon ? sec.icon + ' ' : '📌 '}${escapeHtml(sec.heading)}</h3>
+            <ul class="proc-rules-list">
+              ${(sec.items || []).map(it => `
+                <li>
+                  <span class="proc-rule-bullet" style="color:#8b5cf6;">•</span>
+                  <span>${escapeHtml(it)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </section>
+        `).join('')}
+
+        <!-- 4. KO'P UCHRAYDIGAN XATOLAR -->
+        ${(st.mistakes || []).length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title" style="color:#ef4444;">❌ Ko‘p uchraydigan xatolar</h3>
+            <div class="proc-mistakes-grid">
+              ${st.mistakes.map(m => `
+                <div class="proc-mistake-card">
+                  <span class="proc-mistake-ico">⚠️</span>
+                  <span class="proc-mistake-txt">${escapeHtml(m)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 5. OLDINGI / KEYINGI NAVIGATION -->
+        <div class="proc-nav-row">
+          ${prevStep ? `
+            <button type="button" class="proc-nav-btn" onclick="openDesignStepDetail('${escapeJsString(prevStep.slug)}')">
+              ← ${escapeHtml(prevStep.short_title || prevStep.title)}
+            </button>
+          ` : `<div></div>`}
+          ${nextStep ? `
+            <button type="button" class="proc-nav-btn primary" onclick="openDesignStepDetail('${escapeJsString(nextStep.slug)}')">
+              ${escapeHtml(nextStep.short_title || nextStep.title)} →
+            </button>
+          ` : `
+            <button type="button" class="proc-nav-btn primary" onclick="setProcessHub('rabochka')">
+              Rabochka jarayoniga o‘tish →
+            </button>
+          `}
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+function renderRabochkaProcessListHtml() {
+  const steps = processState.rabochkaSteps || [];
+  return `
+    <div class="page lib-container lib-page-enter proc-page">
+      <div class="lib-back-nav" onclick="setProcessHub('hub')">
+        ${libIcons.back('lib-back-svg', 16)} Jarayon turlari
+      </div>
+
+      <div class="proc-cat-banner" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.16) 0%, rgba(37, 99, 235, 0.08) 100%); border-color: rgba(59, 130, 246, 0.25);">
+        <div class="proc-banner-top">
+          <div class="proc-banner-icon" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">📐</div>
+          <span class="proc-banner-code" style="color: #93c5fd; background: rgba(59, 130, 246, 0.2);">21 VARAQ / CHIZMA</span>
+        </div>
+        <h1 class="proc-banner-title">Interyer rabochka qilish jarayoni</h1>
+        <p class="proc-banner-desc">Qurilish va ta'mirlash uchun zarur bo‘lgan barcha ishchi chizmalar, reja va spetsifikatsiyalarning standart tartibi.</p>
+      </div>
+
+      <div class="proc-items-list" style="margin-top: 18px;">
+        ${steps.map((st) => `
+          <div class="proc-item-card" onclick="openRabochkaStepDetail('${escapeJsString(st.slug)}')">
+            <div class="proc-item-num" style="background: rgba(59, 130, 246, 0.12); color: #60a5fa;">${st.step_number}</div>
+            <div class="proc-item-body">
+              <div class="proc-item-title-row">
+                <h4 class="proc-item-title">${escapeHtml(st.title)}</h4>
+              </div>
+              <p class="proc-item-short">${escapeHtml(st.lead || '')}</p>
+              <div class="proc-item-meta-footer">
+                <span class="proc-meta-cat">📄 ${(st.sheets || []).length} ta chizma bandi</span>
+                <span class="proc-meta-chk">📏 ${(st.rules || []).length} ta qoida</span>
+                <span class="proc-meta-more">Batafsil ›</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderRabochkaStepDetailHtml(st) {
+  const steps = processState.rabochkaSteps || [];
+  const currentIdx = steps.findIndex(s => s.slug === st.slug);
+  const prevStep = currentIdx > 0 ? steps[currentIdx - 1] : null;
+  const nextStep = currentIdx >= 0 && currentIdx < steps.length - 1 ? steps[currentIdx + 1] : null;
+
+  return `
+    <div class="page lib-container lib-page-enter proc-page proc-detail-page">
+      <!-- TOP NAV -->
+      <div class="lib-materials-header-nav" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div class="lib-back-nav" style="margin-bottom:0;" onclick="closeRabochkaStepDetail()">
+          ${libIcons.back('lib-back-svg', 16)} Rabochka bosqichlari
+        </div>
+      </div>
+
+      <!-- DETAIL HEAD -->
+      <div class="proc-detail-head" style="border-bottom: 1px solid rgba(59, 130, 246, 0.2);">
+        <div class="proc-detail-tag">
+          <span style="color:#93c5fd;">📐 ISHCHI HUJJATLAR</span>
+          <span>•</span>
+          <span style="background: rgba(59, 130, 246, 0.15); color: #93c5fd; padding: 2px 8px; border-radius: 6px;">VARAQ ${escapeHtml(st.step_number)} / 21</span>
+        </div>
+        <h1 class="proc-detail-title">${escapeHtml(st.title)}</h1>
+        <p class="proc-detail-lead">${escapeHtml(st.lead || '')}</p>
+      </div>
+
+      <!-- KNOWLEDGE SECTIONS -->
+      <div class="proc-detail-content">
+
+        <!-- 1. MAZMUNI VA AHAMIYATI -->
+        ${st.content_summary ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">🎯 Varaqning maqsadi va ahamiyati</h3>
+            <div class="proc-sec-body proc-text-box">
+              ${escapeHtml(st.content_summary)}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 2. CHIZMA / ALBOM TARKIBI -->
+        ${(st.sheets || []).length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">📋 Chizmada ko‘rsatilishi shart bo‘lgan ma'lumotlar</h3>
+            <ul class="proc-rules-list">
+              ${st.sheets.map(sh => `
+                <li>
+                  <span class="proc-rule-bullet" style="color:#3b82f6;">✓</span>
+                  <span>${escapeHtml(sh)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </section>
+        ` : ''}
+
+        <!-- 3. TEXNIK QOIDALAR VA ME'YORLAR -->
+        ${(st.rules || []).length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title">📐 Texnik qoidalar va standartlar</h3>
+            <ul class="proc-rules-list">
+              ${st.rules.map(r => `
+                <li>
+                  <span class="proc-rule-bullet" style="color:#10b981;">⚡</span>
+                  <span>${escapeHtml(r)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </section>
+        ` : ''}
+
+        <!-- 4. QA/QC CHECKLIST (Agar mavjud bo'lsa) -->
+        ${(st.checklist_items || st.qa_checklist || []).length ? `
+          <section class="proc-section">
+            <h3 class="proc-sec-title" style="color:#10b981;">🛡️ 14 bandlik sifat nazorati (QA/QC Checklist)</h3>
+            <div class="proc-checklist-container">
+              ${(st.checklist_items || st.qa_checklist || []).map((chk) => `
+                <div class="proc-checklist-row done">
+                  <div class="proc-checkbox checked">✓</div>
+                  <div class="proc-check-text">${escapeHtml(chk)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- 5. OLDINGI / KEYINGI NAVIGATION -->
+        <div class="proc-nav-row">
+          ${prevStep ? `
+            <button type="button" class="proc-nav-btn" onclick="openRabochkaStepDetail('${escapeJsString(prevStep.slug)}')">
+              ← ${escapeHtml(prevStep.title)}
+            </button>
+          ` : `<div></div>`}
+          ${nextStep ? `
+            <button type="button" class="proc-nav-btn primary" onclick="openRabochkaStepDetail('${escapeJsString(nextStep.slug)}')">
+              ${escapeHtml(nextStep.title)} →
+            </button>
+          ` : `
+            <button type="button" class="proc-nav-btn primary" onclick="setProcessHub('hub')">
+              Jarayon bosh sahifasiga qaytish ✓
+            </button>
+          `}
+        </div>
+
+      </div>
+    </div>
+  `;
 }
 
 function renderProcessCategoriesViewHtml() {
@@ -24736,15 +25205,15 @@ function renderProcessCategoriesViewHtml() {
   return `
     <div class="page lib-container lib-page-enter proc-page">
       <!-- TOP NAV -->
-      <div class="lib-back-nav" onclick="closeLibrarySection()">
-        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      <div class="lib-back-nav" onclick="setProcessHub('hub')">
+        ${libIcons.back('lib-back-svg', 16)} Jarayon turlari
       </div>
 
       <!-- HERO -->
       <div class="proc-hero">
-        <div class="proc-hero-badge">⚡ Bilimlar Bazasi</div>
-        <h1 class="proc-hero-title">Jarayon</h1>
-        <p class="proc-hero-sub">Interyer va remont ishlarining bosqichma-bosqich professional yo‘l xaritasi.</p>
+        <div class="proc-hero-badge">⚡ REMONT BOSQICHLARI</div>
+        <h1 class="proc-hero-title">Remont jarayoni</h1>
+        <p class="proc-hero-sub">Remont ishlarining boshlang‘ich tayyorgarlikdan yakuniy topshirishgacha bo‘lgan ketma-ketligi.</p>
         
         <!-- PROGRESS BAR -->
         <div class="proc-progress-box">

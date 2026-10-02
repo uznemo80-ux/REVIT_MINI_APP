@@ -12812,3 +12812,163 @@ body {
   color: #007aff;
   transform: translateY(-1px);
 }
+
+/* ====================================================== */
+/* PROCESS HUB & MULTI-CATEGORY SELECTION STYLES          */
+/* ====================================================== */
+
+.proc-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+@media (min-width: 768px) {
+  .proc-hub-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+.proc-hub-card {
+  position: relative;
+  background: var(--bg-surface, #1e1e24);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.proc-hub-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.proc-hub-card:active {
+  transform: scale(0.98);
+}
+.proc-hub-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.proc-hub-number {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary, #94a3b8);
+}
+.proc-hub-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+}
+.proc-hub-card.hub-remont .proc-hub-icon-wrap {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+.proc-hub-card.hub-design .proc-hub-icon-wrap {
+  background: rgba(139, 92, 246, 0.12);
+  color: #a78bfa;
+}
+.proc-hub-card.hub-rabochka .proc-hub-icon-wrap {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+.proc-hub-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #ffffff);
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+.proc-hub-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, #a1a1aa);
+  margin-bottom: 18px;
+  flex-grow: 1;
+}
+.proc-hub-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.proc-hub-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+}
+.proc-hub-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #ffffff);
+  transition: all 0.2s ease;
+}
+.proc-hub-card:hover .proc-hub-btn {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+/* Oldingi / Keyingi navigatsiya qatori */
+.proc-nav-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.proc-nav-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.proc-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.proc-nav-btn.primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+.proc-nav-btn.primary:hover {
+  background: #2563eb;
+}
