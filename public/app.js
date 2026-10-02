@@ -7311,6 +7311,315 @@ function setLibrarySelectedCourse(courseId) {
   render();
 }
 
+// ======================================================
+// MOBILE TOUCH & SCROLL GESTURE SEPARATION
+// Prevents tap triggers and card scaling during vertical scrolling
+// ======================================================
+(function initTouchScrollGuard() {
+  if (typeof window === "undefined") return;
+  let touchStartY = 0;
+  let touchStartX = 0;
+  let isScrolling = false;
+  let scrollTimeout = null;
+
+  window.addEventListener('touchstart', function(e) {
+    if (e.touches && e.touches[0]) {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function(e) {
+    if (!e.touches || !e.touches[0]) return;
+    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+
+    if (dy > 7 || dx > 7) {
+      if (!isScrolling) {
+        isScrolling = true;
+        document.body.classList.add('is-scrolling');
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(function() {
+        isScrolling = false;
+        document.body.classList.remove('is-scrolling');
+      }, 140);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', function() {
+    if (isScrolling) {
+      setTimeout(function() {
+        isScrolling = false;
+        document.body.classList.remove('is-scrolling');
+      }, 100);
+    }
+  }, { passive: true });
+
+  window.addEventListener('scroll', function() {
+    if (!document.body.classList.contains('is-scrolling')) {
+      document.body.classList.add('is-scrolling');
+    }
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(function() {
+      document.body.classList.remove('is-scrolling');
+      isScrolling = false;
+    }, 140);
+  }, { passive: true });
+})();
+
+// ======================================================
+// UNIVERSAL KUTUBXONA REACTIONS (LIKES & SAVES)
+// Works for Books, Materials, Normatives, Sources, Tests, Processes
+// ======================================================
+var universalReactionsState = {
+  loaded: false,
+  loading: false,
+  liked: { book: [], material: [], normative: [], resource: [], test: [], process: [] },
+  saved: { book: [], material: [], normative: [], resource: [], test: [], process: [] }
+};
+
+async function loadUniversalReactions() {
+  if (universalReactionsState.loading) return;
+  universalReactionsState.loading = true;
+  try {
+    const res = await api('/api/library/reactions/my-state');
+    if (res && res.ok) {
+      if (res.liked) universalReactionsState.liked = Object.assign(universalReactionsState.liked, res.liked);
+      if (res.saved) universalReactionsState.saved = Object.assign(universalReactionsState.saved, res.saved);
+      universalReactionsState.loaded = true;
+    }
+  } catch (err) {
+    console.warn('loadUniversalReactions error:', err);
+  } finally {
+    universalReactionsState.loading = false;
+  }
+}
+
+function isUniversalItemLiked(contentType, contentId) {
+  const list = (universalReactionsState.liked && universalReactionsState.liked[contentType]) || [];
+  return list.includes(String(contentId));
+}
+
+function isUniversalItemSaved(contentType, contentId) {
+  const list = (universalReactionsState.saved && universalReactionsState.saved[contentType]) || [];
+  return list.includes(String(contentId));
+}
+
+async function toggleUniversalReaction(contentType, contentId, actionType, meta, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  haptic('light');
+
+  const cType = String(contentType).toLowerCase();
+  const cId = String(contentId);
+  const aType = String(actionType).toLowerCase();
+  meta = meta || {};
+
+  const target = aType === 'like' ? universalReactionsState.liked : universalReactionsState.saved;
+  if (!target[cType]) target[cType] = [];
+  const idx = target[cType].indexOf(cId);
+  const willBeActive = idx === -1;
+
+  if (willBeActive) {
+    target[cType].push(cId);
+  } else {
+    target[cType].splice(idx, 1);
+  }
+
+  // Update button in-place without screen reload or flickering
+  const btn = e && (e.currentTarget || e.target);
+  if (btn) {
+    const buttonEl = btn.closest('button') || btn;
+    buttonEl.classList.toggle('active', willBeActive);
+    const iconSpan = buttonEl.querySelector('.react-icon') || buttonEl.querySelector('span');
+    if (iconSpan) {
+      if (aType === 'like') iconSpan.textContent = willBeActive ? '♥' : '♡';
+      else iconSpan.textContent = willBeActive ? '🔖' : '☆';
+    }
+  }
+
+  showToast(willBeActive ? (aType === 'like' ? 'Yoqtirildi ♥' : 'Saqlandi 🔖') : (aType === 'like' ? 'Yoqtirish bekor qilindi' : 'Saqlanganlardan olindi'));
+
+  try {
+    const res = await api('/api/library/reactions/toggle', {
+      content_type: cType,
+      content_id: cId,
+      action_type: aType,
+      title: meta.title || '',
+      subtitle: meta.subtitle || '',
+      image_url: meta.image_url || '',
+      category: meta.category || ''
+    });
+
+    if (res && res.ok) {
+      if (res.active && !target[cType].includes(cId)) target[cType].push(cId);
+      if (!res.active && target[cType].includes(cId)) {
+        const i = target[cType].indexOf(cId);
+        if (i !== -1) target[cType].splice(i, 1);
+      }
+    }
+  } catch (err) {
+    console.error('toggleUniversalReaction error:', err);
+  }
+}
+window.toggleUniversalReaction = toggleUniversalReaction;
+window.isUniversalItemLiked = isUniversalItemLiked;
+window.isUniversalItemSaved = isUniversalItemSaved;
+
+var universalHubSelectedSubtab = 'all';
+var universalHubItemsCache = [];
+var universalHubLoading = false;
+
+async function loadUniversalHubItems(actionType, contentType) {
+  universalHubLoading = true;
+  try {
+    const res = await api(`/api/library/reactions/list?action_type=${encodeURIComponent(actionType)}&content_type=${encodeURIComponent(contentType || 'all')}`);
+    universalHubItemsCache = (res && res.ok && Array.isArray(res.items)) ? res.items : [];
+  } catch (err) {
+    console.error('loadUniversalHubItems error:', err);
+    universalHubItemsCache = [];
+  } finally {
+    universalHubLoading = false;
+    const listEl = document.getElementById('lib-universal-reactions-list');
+    if (listEl) {
+      listEl.innerHTML = renderUniversalReactionsListHtml(actionType);
+    }
+  }
+}
+
+function setUniversalHubSubtab(subtab, actionType) {
+  haptic('light');
+  universalHubSelectedSubtab = subtab;
+  const pillBtns = document.querySelectorAll('.lib-reactions-pill');
+  pillBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-subtab') === subtab);
+  });
+  loadUniversalHubItems(actionType, subtab);
+}
+
+function renderUniversalReactionsListHtml(actionType) {
+  if (universalHubLoading) {
+    return `
+      <div style="padding: 40px 20px; text-align: center;">
+        <div class="spinner" style="margin: 0 auto 12px;"></div>
+        <div style="font-size: 13px; color: var(--text-secondary);">Yuklanmoqda...</div>
+      </div>
+    `;
+  }
+
+  if (!universalHubItemsCache || !universalHubItemsCache.length) {
+    const emptyTitle = actionType === 'like' ? 'Hozircha hech narsa yoqtirilmagan' : 'Hozircha hech narsa saqlanmagan';
+    const emptyDesc = actionType === 'like' 
+      ? 'Kutubxona bo‘limlaridagi kitoblar, materiallar yoki normativlarni yoqtirish uchun ♥ tugmasini bosing.'
+      : 'Kutubxona bo‘limlaridagi materiallar va normativlarni keyinroq o‘qish uchun 🔖 tugmasini bosing.';
+    return `
+      <div class="proc-empty-box" style="text-align: center; padding: 48px 16px;">
+        <div style="font-size: 38px; margin-bottom: 12px;">${actionType === 'like' ? '🤍' : '📑'}</div>
+        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary, #fff); margin-bottom: 8px;">${emptyTitle}</div>
+        <p style="font-size: 13px; color: var(--text-secondary, #9ca3af); max-width: 320px; margin: 0 auto 16px;">${emptyDesc}</p>
+        <button type="button" class="btn" onclick="closeLibrarySection()" style="max-width: 200px; margin: 0 auto;">Kutubxonaga qaytish</button>
+      </div>
+    `;
+  }
+
+  const typeLabels = {
+    book: '📚 Kitob',
+    material: '🧱 Material',
+    normative: '📋 Normativ',
+    resource: '🏛 Manba',
+    test: '🧠 Test',
+    process: '⚡ Jarayon'
+  };
+
+  return universalHubItemsCache.map(item => {
+    const typeLabel = typeLabels[item.content_type] || item.content_type;
+    return `
+      <div class="lib-react-item-card" onclick="openUniversalItem('${escapeJsString(item.content_type)}', '${escapeJsString(item.content_id)}')">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="lib-react-item-type">${escapeHtml(typeLabel)}</span>
+              ${item.category ? `<span style="font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">• ${escapeHtml(item.category)}</span>` : ''}
+            </div>
+            <div style="font-size:14px; font-weight:700; color:var(--text-primary); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              ${escapeHtml(item.title || ('# ' + item.content_id))}
+            </div>
+            ${item.subtitle ? `<div style="font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.subtitle)}</div>` : ''}
+          </div>
+        </div>
+        <button type="button" class="lib-react-action-btn active ${actionType === 'save' ? 'save-btn' : ''}" onclick="toggleUniversalReaction('${escapeJsString(item.content_type)}', '${escapeJsString(item.content_id)}', '${actionType}', {}, event)" title="Olib tashlash">
+          ${actionType === 'like' ? '♥' : '🔖'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function openUniversalItem(contentType, contentId) {
+  haptic('light');
+  if (contentType === 'material') {
+    openMaterialDetail(contentId);
+  } else if (contentType === 'normative') {
+    openNormativeTopicDetail(contentId);
+  } else if (contentType === 'book') {
+    openBookReader(contentId);
+  } else if (contentType === 'process') {
+    if (typeof openProcessItemDetail === 'function') openProcessItemDetail(contentId);
+  } else {
+    showToast("Resurs ochilmoqda...");
+  }
+}
+window.openUniversalItem = openUniversalItem;
+window.setUniversalHubSubtab = setUniversalHubSubtab;
+
+function renderLibraryUniversalReactionsSectionHtml(actionType) {
+  if (!universalReactionsState.loaded && !universalReactionsState.loading) {
+    loadUniversalReactions();
+  }
+  loadUniversalHubItems(actionType, universalHubSelectedSubtab);
+
+  const title = actionType === 'like' ? 'Yoqtirganlar' : 'Saqlanganlar';
+  const subtitle = actionType === 'like' 
+    ? 'Sizga yoqqan kitoblar, qurilish materiallari va normativlar'
+    : 'Keyinroq o‘qish va foydalanish uchun belgilangan normativlar va manbalar';
+
+  const subtabs = [
+    { id: 'all', label: 'Barchasi' },
+    { id: 'book', label: '📚 Kitoblar' },
+    { id: 'material', label: '🧱 Materiallar' },
+    { id: 'normative', label: '📋 Normativlar' },
+    { id: 'resource', label: '🏛 Manbalar' },
+    { id: 'process', label: '⚡ Jarayon' }
+  ];
+
+  return `
+    <div class="page lib-container lib-page-enter">
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>
+
+      <div class="lib-reactions-header">
+        <h1 class="lib-main-title" style="display:flex; align-items:center; gap:8px;">
+          <span>${actionType === 'like' ? '♥' : '🔖'}</span> ${title}
+        </h1>
+        <p class="lib-main-subtitle">${subtitle}</p>
+      </div>
+
+      <div class="lib-reactions-pills">
+        ${subtabs.map(tab => `
+          <button type="button" class="lib-reactions-pill ${universalHubSelectedSubtab === tab.id ? 'active' : ''}" data-subtab="${tab.id}" onclick="setUniversalHubSubtab('${tab.id}', '${actionType}')">
+            ${tab.label}
+          </button>
+        `).join('')}
+      </div>
+
+      <div id="lib-universal-reactions-list">
+        ${renderUniversalReactionsListHtml(actionType)}
+      </div>
+    </div>
+  `;
+}
+
 // ASOSIY KUTUBXONA VIEW ROUTER
 function renderTasks() {
   if (!libraryV2HasLoaded && !libraryV2Loading) {
@@ -7330,6 +7639,10 @@ function renderTasks() {
     content = renderNormativesSectionHtml();
   } else if (libraryActiveSection === "process") {
     content = renderProcessSectionHtml();
+  } else if (libraryActiveSection === "liked") {
+    content = renderLibraryUniversalReactionsSectionHtml("like");
+  } else if (libraryActiveSection === "saved") {
+    content = renderLibraryUniversalReactionsSectionHtml("save");
   } else if (libraryActiveSection) {
     content = renderGenericSectionHtml(libraryActiveSection);
   } else {
@@ -7392,6 +7705,16 @@ function renderTasksHomeHtml() {
         <p class="lib-main-subtitle">
           Arxitektura, Revit va qurilish uchun bilimlar bazasi
         </p>
+
+        <!-- UNIVERSAL LIKES & SAVES QUICK ACCESS -->
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button type="button" class="btn" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.22); border-radius:14px; padding:10px 14px; font-weight:700; font-size:13px; cursor:pointer;" onclick="openLibrarySection('liked')">
+            <span>♥</span> Yoqtirganlar
+          </button>
+          <button type="button" class="btn" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:rgba(245,158,11,0.1); color:#fbbf24; border:1px solid rgba(245,158,11,0.22); border-radius:14px; padding:10px 14px; font-weight:700; font-size:13px; cursor:pointer;" onclick="openLibrarySection('saved')">
+            <span>🔖</span> Saqlanganlar
+          </button>
+        </div>
       </div>
 
       <!-- 4 ASOSIY VIZUAL BO'LIMLAR (2x2 MOBILE / 4-COL DESKTOP) -->
@@ -15694,29 +16017,83 @@ function applyAnalyticsCustomRange() {
 }
 window.applyAnalyticsCustomRange = applyAnalyticsCustomRange;
 
+let isExportingAnalyticsCsv = false;
 async function exportAdminAnalyticsCsv() {
+  if (isExportingAnalyticsCsv) return;
   haptic("medium");
+  const btn = document.querySelector('button[onclick="exportAdminAnalyticsCsv()"]');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Eksport qilinmoqda...';
+  }
+  isExportingAnalyticsCsv = true;
+
   try {
     const period = adminAnalyticsDashboardState.period || '7days';
     const sDate = adminAnalyticsDashboardState.startDate || '';
     const eDate = adminAnalyticsDashboardState.endDate || '';
     const gran = adminAnalyticsDashboardState.granularity || 'auto';
 
-    let url = `/api/admin/analytics/export?period=${encodeURIComponent(period)}&granularity=${encodeURIComponent(gran)}`;
-    if (sDate && eDate) {
-      url += `&start_date=${encodeURIComponent(sDate)}&end_date=${encodeURIComponent(eDate)}`;
+    const payload = {
+      initData: getTelegramInitData(),
+      period: period,
+      granularity: gran,
+      start_date: sDate,
+      end_date: eDate
+    };
+
+    const res = await fetch('/api/admin/analytics/export', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-telegram-init-data': getTelegramInitData()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || ('Server xatosi: ' + res.status));
     }
 
-    // Trigger direct file download
+    const blob = await res.blob();
+    const fileName = `yoshuzbekk_analytics_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    // Try standard Blob download
+    const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `yoshuzbekk_analytics_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.href = blobUrl;
+    a.download = fileName;
+    a.style.display = "none";
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    showToast("✅ CSV hisoboti yuklab olindi!");
+    setTimeout(() => {
+      try {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (e) {}
+    }, 2000);
+
+    // If Telegram WebApp provides downloadFile API
+    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.downloadFile === 'function') {
+      try {
+        window.Telegram.WebApp.downloadFile({ url: blobUrl, file_name: fileName });
+      } catch (tgDlErr) {
+        console.warn('Telegram downloadFile fallback:', tgDlErr);
+      }
+    }
+
+    showToast("✅ CSV hisoboti muvaffaqiyatli yuklab olindi!");
   } catch (err) {
-    showAlert("Eksport qilishda xato: " + err.message);
+    console.error('CSV Export Error:', err);
+    showAlert("Eksport qilishda xato: " + (err.message || 'Xatolik yuz berdi'));
+  } finally {
+    isExportingAnalyticsCsv = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
 }
 window.exportAdminAnalyticsCsv = exportAdminAnalyticsCsv;
@@ -23765,20 +24142,35 @@ function isNormativeSaved(id) {
 }
 
 function toggleNormativeSave(id, e) {
-  if (e) e.stopPropagation();
+  if (e && e.stopPropagation) e.stopPropagation();
   haptic("light");
   const numId = Number(id);
-  if (normativesSavedIds.has(numId)) {
-    normativesSavedIds.delete(numId);
-    showToast("Normativ saqlanganlardan olindi");
-  } else {
+  const willBeSaved = !normativesSavedIds.has(numId);
+  if (willBeSaved) {
     normativesSavedIds.add(numId);
     showToast("Normativ saqlandi 🔖");
+  } else {
+    normativesSavedIds.delete(numId);
+    showToast("Normativ saqlanganlardan olindi");
   }
   try {
     localStorage.setItem("yosh_saved_normatives", JSON.stringify([...normativesSavedIds]));
-  } catch (e) {}
-  render();
+  } catch (err) {}
+
+  if (e) {
+    const btn = (e.currentTarget || e.target).closest('button');
+    if (btn) {
+      btn.classList.toggle('active', willBeSaved);
+      const iconSpan = btn.querySelector('.react-icon') || btn.querySelector('span');
+      if (iconSpan) iconSpan.textContent = willBeSaved ? '🔖' : '☆';
+    }
+  }
+
+  const doc = (normativesState.documents || []).find(d => Number(d.id) === numId);
+  toggleUniversalReaction('normative', String(id), 'save', {
+    title: doc ? (doc.code + ' ' + doc.title) : ('Normativ #' + id),
+    category: doc ? doc.category : ''
+  }, null);
 }
 
 // ANIMATSIYALI PLACEHOLDER (YOZUV EFFEKTI)
@@ -23819,97 +24211,181 @@ function ensureNormativesPlaceholderTicker() {
   _normPhTimer = setTimeout(step, 250);
 }
 
-function toggleNormativesPanel() {
-  haptic("light");
-  normativesState.panelOpen = !normativesState.panelOpen;
-  render();
+function getNormativesActiveFilterCount() {
+  let count = 0;
+  if (normativesState.activeTab === 'topics') {
+    if (normativesState.selectedTopicCategory && normativesState.selectedTopicCategory !== 'Barchasi') count++;
+    if (normativesState.selectedTopicType && normativesState.selectedTopicType !== 'all') count++;
+  } else {
+    if (normativesState.selectedCategory && normativesState.selectedCategory !== 'Barchasi') count++;
+    if (normativesState.selectedDocType && normativesState.selectedDocType !== 'all') count++;
+  }
+  if (normativesState.selectedSourceType && normativesState.selectedSourceType !== 'all') count++;
+  if (normativesState.selectedStatus && normativesState.selectedStatus !== 'all') count++;
+  return count;
 }
 
-function renderNormativesPanelInnerHtml() {
-  if (normativesState.activeTab === "topics") {
-    const topicTypes = [
-      { id: "all", label: "Barchasi" },
-      { id: "norma", label: "🔴 Majburiy norma" },
-      { id: "hisoblash", label: "🟡 Hisoblash usuli" },
-      { id: "tavsiya", label: "🔵 Amaliy tavsiya" }
-    ];
-    const defaultTopicCats = [
-      "Barchasi",
-      "Xonalar va maydonlar",
-      "Inson va sig'im me'yorlari",
-      "Ventilyatsiya va havo almashinuvi",
-      "O'lchash va hisoblash usullari",
-      "Eshiklar va ochilish joylari",
-      "Derazalar va tabiiy yorug'lik",
-      "Zinalar va vertikal aloqa",
-      "Pandus va inklyuziv loyihalash",
-      "Sanuzel va ho'l zonalar",
-      "Oshxona loyihalash me'yorlari",
-      "Interyer me'yorlari va amaliy tavsiyalar"
-    ];
-    const cats = (normativesState.topicsCategories && normativesState.topicsCategories.length) 
-      ? ["Barchasi", ...normativesState.topicsCategories.filter(c => c !== "Barchasi")] 
-      : defaultTopicCats;
+function openNormativesFilterModal() {
+  haptic('light');
+  let modalEl = document.getElementById('normatives-filter-modal');
+  if (!modalEl) {
+    const wrap = document.createElement('div');
+    wrap.id = 'normatives-filter-modal-wrap';
+    wrap.innerHTML = renderNormativesFilterModalHtml();
+    document.body.appendChild(wrap);
+    modalEl = document.getElementById('normatives-filter-modal');
+  } else {
+    modalEl.outerHTML = renderNormativesFilterModalHtml();
+    modalEl = document.getElementById('normatives-filter-modal');
+  }
+  setTimeout(() => {
+    if (modalEl) modalEl.classList.add('open');
+  }, 10);
+}
+window.openNormativesFilterModal = openNormativesFilterModal;
 
-    return `
-      <div class="mcat-panel-title">Ma'lumot turi</div>
-      <div class="mcat-chip-row" style="margin-bottom:14px;">
-        ${topicTypes.map(t => `
-          <button type="button" class="mcat-chip ${(normativesState.selectedTopicType || 'all') === t.id ? 'active' : ''}" onclick="setNormativesTopicTypeFilter('${escapeJsString(t.id)}')">
-            ${escapeHtml(t.label)}
-          </button>
-        `).join('')}
-      </div>
+function closeNormativesFilterModal() {
+  const modalEl = document.getElementById('normatives-filter-modal');
+  if (modalEl) {
+    modalEl.classList.remove('open');
+    setTimeout(() => {
+      try {
+        const wrap = document.getElementById('normatives-filter-modal-wrap');
+        if (wrap) wrap.remove();
+        else modalEl.remove();
+      } catch (e) {}
+    }, 250);
+  }
+}
+window.closeNormativesFilterModal = closeNormativesFilterModal;
 
-      <div class="mcat-panel-title">Kategoriya (${cats.length - 1} ta yo'nalish)</div>
-      <div class="mcat-chip-row">
-        ${cats.map(cat => {
-          const active = (normativesState.selectedTopicCategory || "Barchasi") === cat;
-          return `
-            <button type="button" class="mcat-chip ${active ? 'active' : ''}" onclick="setNormativesTopicCategory('${escapeJsString(cat)}')">
-              ${escapeHtml(cat)}
-            </button>
-          `;
-        }).join('')}
-      </div>
-    `;
+function applyNormativesFiltersFromModal() {
+  haptic('medium');
+  const catEl = document.getElementById('norm-filter-category-select');
+  const typeEl = document.getElementById('norm-filter-type-select');
+  const srcEl = document.getElementById('norm-filter-source-select');
+  const statusEl = document.getElementById('norm-filter-status-select');
+
+  if (catEl) {
+    if (normativesState.activeTab === 'topics') normativesState.selectedTopicCategory = catEl.value;
+    else normativesState.selectedCategory = catEl.value;
+  }
+  if (typeEl) {
+    if (normativesState.activeTab === 'topics') normativesState.selectedTopicType = typeEl.value;
+    else normativesState.selectedDocType = typeEl.value;
+  }
+  if (srcEl) {
+    normativesState.selectedSourceType = srcEl.value;
+  }
+  if (statusEl) {
+    normativesState.selectedStatus = statusEl.value;
   }
 
-  const cats = normativesState.categories || [];
-  const docTypes = ["all", "SHNQ", "QMQ", "O‘z DSt", "Qaror"];
-  const docTypeLabels = { all: "Barchasi", SHNQ: "SHNQ", QMQ: "QMQ", "O‘z DSt": "O‘z DSt / Standart", Qaror: "Qarorlar" };
-  const statuses = ["all", "AMALDA", "O‘ZGARTIRILGAN", "KUCHINI YO‘QOTGAN"];
-  const statusLabels = { all: "Barchasi", AMALDA: "🟢 AMALDA", "O‘ZGARTIRILGAN": "🟡 O‘ZGARTIRILGAN", "KUCHINI YO‘QOTGAN": "🔴 KUCHINI YO‘QOTGAN" };
+  closeNormativesFilterModal();
+  render();
+}
+window.applyNormativesFiltersFromModal = applyNormativesFiltersFromModal;
+
+function resetNormativesFiltersFromModal() {
+  haptic('light');
+  clearAllNormativesFilters();
+  closeNormativesFilterModal();
+}
+window.resetNormativesFiltersFromModal = resetNormativesFiltersFromModal;
+
+function renderNormativesFilterModalHtml() {
+  const isTopics = normativesState.activeTab === 'topics';
+  const defaultCats = [
+    "Barchasi",
+    "Xonalar va maydonlar",
+    "Inson va sig'im me'yorlari",
+    "Ventilyatsiya va havo almashinuvi",
+    "O'lchash va hisoblash usullari",
+    "Eshiklar va ochilish joylari",
+    "Derazalar va tabiiy yorug'lik",
+    "Zinalar va vertikal aloqa",
+    "Pandus va inklyuziv loyihalash",
+    "Sanuzel va ho'l zonalar",
+    "Oshxona loyihalash me'yorlari",
+    "Interyer me'yorlari va amaliy tavsiyalar"
+  ];
+  const topicCats = (normativesState.topicsCategories && normativesState.topicsCategories.length) 
+    ? ["Barchasi", ...normativesState.topicsCategories.filter(c => c !== "Barchasi")] 
+    : defaultCats;
+  const docCats = normativesState.categories || defaultCats;
+  const cats = isTopics ? topicCats : docCats;
+  const curCat = isTopics ? (normativesState.selectedTopicCategory || "Barchasi") : (normativesState.selectedCategory || "Barchasi");
+
+  const curType = isTopics ? (normativesState.selectedTopicType || "all") : (normativesState.selectedDocType || "all");
+  const curSrc = normativesState.selectedSourceType || "all";
+  const curStatus = normativesState.selectedStatus || "all";
 
   return `
-    <div class="mcat-panel-title">Hujjat turi</div>
-    <div class="mcat-chip-row" style="margin-bottom:14px;">
-      ${docTypes.map(t => `
-        <button type="button" class="mcat-chip ${(normativesState.selectedDocType || 'all') === t ? 'active' : ''}" onclick="setNormativesDocTypeFilter('${escapeJsString(t)}')">
-          ${escapeHtml(docTypeLabels[t] || t)}
-        </button>
-      `).join('')}
-    </div>
+    <div id="normatives-filter-modal" class="norm-filter-overlay" onclick="if(event.target===this)closeNormativesFilterModal()">
+      <div class="norm-filter-sheet">
+        <div class="norm-filter-sheet-header">
+          <div class="norm-filter-sheet-title">
+            <span>⚡</span> Normativlarni saralash
+          </div>
+          <button type="button" class="norm-filter-sheet-close" onclick="closeNormativesFilterModal()">✕</button>
+        </div>
 
-    <div class="mcat-panel-title">Hujjat holati</div>
-    <div class="mcat-chip-row" style="margin-bottom:14px;">
-      ${statuses.map(s => `
-        <button type="button" class="mcat-chip ${(normativesState.selectedStatus || 'all') === s ? 'active' : ''}" onclick="setNormativesStatusFilter('${escapeJsString(s)}')">
-          ${escapeHtml(statusLabels[s] || s)}
-        </button>
-      `).join('')}
-    </div>
+        <!-- 1. KATEGORIYA -->
+        <div class="norm-filter-group">
+          <label>Kategoriya / Yo‘nalish</label>
+          <select id="norm-filter-category-select" class="norm-filter-dropdown">
+            ${cats.map(c => `<option value="${escapeHtml(c)}" ${curCat === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+          </select>
+        </div>
 
-    <div class="mcat-panel-title">Mavzu / Kategoriya</div>
-    <div class="mcat-chip-row">
-      ${cats.map(cat => {
-        const active = normativesState.selectedCategory === cat;
-        return `
-          <button type="button" class="mcat-chip ${active ? 'active' : ''}" onclick="setNormativesCategory('${escapeJsString(cat)}')">
-            ${escapeHtml(cat)}
-          </button>
-        `;
-      }).join('')}
+        <!-- 2. MA'LUMOT / HUJJAT TURI -->
+        <div class="norm-filter-group">
+          <label>${isTopics ? "Ma'lumot turi" : "Hujjat turi"}</label>
+          <select id="norm-filter-type-select" class="norm-filter-dropdown">
+            ${isTopics ? `
+              <option value="all" ${curType === 'all' ? 'selected' : ''}>Barchasi</option>
+              <option value="norma" ${curType === 'norma' ? 'selected' : ''}>🔴 Majburiy norma</option>
+              <option value="hisoblash" ${curType === 'hisoblash' ? 'selected' : ''}>🟡 Hisoblash usuli</option>
+              <option value="tavsiya" ${curType === 'tavsiya' ? 'selected' : ''}>🔵 Amaliy tavsiya</option>
+            ` : `
+              <option value="all" ${curType === 'all' ? 'selected' : ''}>Barchasi</option>
+              <option value="SHNQ" ${curType === 'SHNQ' ? 'selected' : ''}>SHNQ</option>
+              <option value="QMQ" ${curType === 'QMQ' ? 'selected' : ''}>QMQ</option>
+              <option value="O‘z DSt" ${curType === 'O‘z DSt' ? 'selected' : ''}>O‘z DSt / Standart</option>
+              <option value="Qaror" ${curType === 'Qaror' ? 'selected' : ''}>Qarorlar</option>
+            `}
+          </select>
+        </div>
+
+        <!-- 3. MANBA -->
+        <div class="norm-filter-group">
+          <label>Manba</label>
+          <select id="norm-filter-source-select" class="norm-filter-dropdown">
+            <option value="all" ${curSrc === 'all' ? 'selected' : ''}>Barcha manbalar</option>
+            <option value="lex" ${curSrc === 'lex' ? 'selected' : ''}>🏛 Lex.uz (Qonunchilik)</option>
+            <option value="ministry" ${curSrc === 'ministry' ? 'selected' : ''}>🏗 Qurilish va uy-joy kommunal xo‘jaligi vazirligi</option>
+            <option value="official" ${curSrc === 'official' ? 'selected' : ''}>📜 Rasmiy standartlar (O‘z DSt / GOST)</option>
+            <option value="book" ${curSrc === 'book' ? 'selected' : ''}>📚 Kitoblar / O‘quv manbasi</option>
+          </select>
+        </div>
+
+        <!-- 4. HOLATI -->
+        <div class="norm-filter-group">
+          <label>Hujjat holati</label>
+          <select id="norm-filter-status-select" class="norm-filter-dropdown">
+            <option value="all" ${curStatus === 'all' ? 'selected' : ''}>Barchasi</option>
+            <option value="AMALDA" ${curStatus === 'AMALDA' ? 'selected' : ''}>🟢 AMALDA</option>
+            <option value="O‘ZGARTIRILGAN" ${curStatus === 'O‘ZGARTIRILGAN' ? 'selected' : ''}>🟡 O‘ZGARTIRILGAN</option>
+            <option value="KUCHINI YO‘QOTGAN" ${curStatus === 'KUCHINI YO‘QOTGAN' ? 'selected' : ''}>🔴 KUCHINI YO‘QOTGAN</option>
+          </select>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="norm-filter-sheet-actions">
+          <button type="button" class="norm-filter-btn-reset" onclick="resetNormativesFiltersFromModal()">Tozalash</button>
+          <button type="button" class="norm-filter-btn-apply" onclick="applyNormativesFiltersFromModal()">Qo‘llash</button>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -23928,8 +24404,9 @@ function setNormativesTopicCategory(cat) {
 
 function renderNormativesActiveFilterHtml() {
   const pills = [];
+  const isTopics = normativesState.activeTab === "topics";
 
-  if (normativesState.activeTab === "topics") {
+  if (isTopics) {
     if (normativesState.selectedTopicType && normativesState.selectedTopicType !== "all") {
       const typeNames = { norma: "🔴 Norma", hisoblash: "🟡 Hisoblash", tavsiya: "🔵 Tavsiya" };
       pills.push({ label: typeNames[normativesState.selectedTopicType] || normativesState.selectedTopicType, clear: "setNormativesTopicTypeFilter('all')" });
@@ -23941,24 +24418,30 @@ function renderNormativesActiveFilterHtml() {
     if (normativesState.selectedDocType && normativesState.selectedDocType !== "all") {
       pills.push({ label: normativesState.selectedDocType, clear: "setNormativesDocTypeFilter('all')" });
     }
-    if (normativesState.selectedStatus && normativesState.selectedStatus !== "all") {
-      pills.push({ label: normativesState.selectedStatus, clear: "setNormativesStatusFilter('all')" });
-    }
     if (normativesState.selectedCategory && normativesState.selectedCategory !== "Barchasi") {
       pills.push({ label: normativesState.selectedCategory, clear: "setNormativesCategory('Barchasi')" });
     }
   }
 
+  if (normativesState.selectedSourceType && normativesState.selectedSourceType !== "all") {
+    const srcNames = { lex: "🏛 Lex.uz", ministry: "🏗 Vazirlik", official: "📜 Rasmiy standart", book: "📚 Kitob" };
+    pills.push({ label: srcNames[normativesState.selectedSourceType] || normativesState.selectedSourceType, clear: "setNormativesSourceType('all')" });
+  }
+
+  if (normativesState.selectedStatus && normativesState.selectedStatus !== "all") {
+    pills.push({ label: normativesState.selectedStatus, clear: "setNormativesStatusFilter('all')" });
+  }
+
   if (!pills.length) return "";
   return `
-    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:12px;">
       ${pills.map(p => `
-        <div class="mcat-active-chip">
-          <span class="mcat-active-label">${escapeHtml(p.label)}</span>
-          <button type="button" class="mcat-active-x" onclick="${p.clear}" aria-label="Filtrni tozalash">✕</button>
+        <div class="mcat-active-chip" style="display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25); border-radius:12px; padding:3px 8px; font-size:11.5px; color:#818cf8;">
+          <span>${escapeHtml(p.label)}</span>
+          <button type="button" style="background:none; border:none; color:#818cf8; font-size:12px; cursor:pointer; padding:0 2px;" onclick="${p.clear}">✕</button>
         </div>
       `).join('')}
-      <button type="button" class="mcat-chip" style="min-height:36px; font-size:12px; border-color:transparent; background:transparent; color:var(--text-secondary);" onclick="clearAllNormativesFilters()">
+      <button type="button" style="background:transparent; border:none; color:var(--text-secondary); font-size:11.5px; cursor:pointer; padding:4px 6px;" onclick="clearAllNormativesFilters()">
         Tozalash
       </button>
     </div>
@@ -24079,8 +24562,6 @@ function setNormativesDocTypeFilter(docType) {
   render();
 }
 
-// STATUS BADGE HELPER
-
 function renderNormativeSourceBadge(type, title) {
   const t = String(type || "ministry").toLowerCase();
   if (t === "lex") {
@@ -24167,9 +24648,7 @@ function renderNormativesSectionHtml() {
 
   const activeTab = normativesState.activeTab;
   const searchQuery = normativesState.searchQuery;
-  const selectedCat = normativesState.selectedCategory;
-  const open = !!normativesState.panelOpen;
-  const hasFilter = (selectedCat && selectedCat !== "Barchasi") || (normativesState.selectedStatus && normativesState.selectedStatus !== "all") || (normativesState.selectedDocType && normativesState.selectedDocType !== "all");
+  const activeFilterCount = getNormativesActiveFilterCount();
 
   return `
     <div class="page lib-container lib-page-enter normatives-page mcat">
@@ -24195,76 +24674,31 @@ function renderNormativesSectionHtml() {
         <span id="norm-search-clear">${searchQuery ? `<button type="button" class="lib-search-clear-btn" onclick="clearNormativesSearch()">✕</button>` : ""}</span>
       </div>
 
-      <!-- 3a. ASOSIY FILTER / YO'NALISH: Barchasi | Normativlar | Amaliy misollar -->
-      <div class="norm-segmented-control" style="margin-bottom:8px;">
-        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'all' ? 'active' : ''}" onclick="setNormativesContentType('all')">
-          📋 Barchasi
-        </button>
-        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'normative' ? 'active' : ''}" onclick="setNormativesContentType('normative')">
-          📑 Normativlar
-        </button>
-        <button type="button" class="norm-seg-btn ${normativesState.selectedContentType === 'practical_example' ? 'active' : ''}" onclick="setNormativesContentType('practical_example')">
-          💡 Amaliy misollar
-        </button>
-      </div>
-
-      <!-- 3b. MANBA FILTRI (LEX.UZ, QURILISH VAZIRLIGI, RASMIY STANDART, KITOBLAR) -->
-      <div class="norm-source-filter-row" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;">
-        <button type="button" class="mcat-chip ${(!normativesState.selectedSourceType || normativesState.selectedSourceType === 'all') ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('all')">
-          Barcha manbalar
-        </button>
-        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'lex' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('lex')">
-          🏛 Lex.uz
-        </button>
-        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'ministry' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('ministry')">
-          🏗 Qurilish vazirligi
-        </button>
-        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'official' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('official')">
-          📜 Rasmiy standartlar
-        </button>
-        <button type="button" class="mcat-chip ${normativesState.selectedSourceType === 'book' ? 'active' : ''}" style="white-space:nowrap; padding:4px 10px; font-size:12px; min-height:30px;" onclick="setNormativesSourceType('book')">
-          📚 Kitoblar / O‘quv
-        </button>
-      </div>
-
-      <!-- 3c. TURLAR BO'YICHA ICHKI BO'LIMLAR (Ma'lumotnoma 200 ta, Hujjatlar 14 ta, Vaziyatlar 6 ta) -->
-      <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--border, rgba(255,255,255,0.08)); padding-bottom:8px;">
-        <button type="button" class="norm-subtab-btn ${activeTab === 'topics' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'topics' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'topics' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('topics')">
-          📋 Ma'lumotnoma (${normativesState.topics.length})
-        </button>
-        <button type="button" class="norm-subtab-btn ${activeTab === 'docs' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'docs' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'docs' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('docs')">
-          📑 Normativ kodekslar (${normativesState.documents.length})
-        </button>
-        <button type="button" class="norm-subtab-btn ${activeTab === 'cases' ? 'active' : ''}" style="background:none; border:none; color:${activeTab === 'cases' ? 'var(--accent, #6366f1)' : 'var(--text-secondary)'}; font-weight:${activeTab === 'cases' ? '700' : '500'}; font-size:13px; cursor:pointer; padding:4px 8px;" onclick="setNormativesTab('cases')">
-          💡 Loyiha yo'riqnomalari (${normativesState.cases.length})
-        </button>
-      </div>
-
-      <!-- 4. KATEGORIYALAR BO'YICHA SARALASH TUGMASI -->
-      <button type="button" id="norm-panel-btn" class="mcat-filter-btn ${open ? "open" : ""} ${hasFilter ? "has-filter" : ""}" onclick="toggleNormativesPanel()">
-        <span class="mcat-filter-left">
-          <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-ico-stroke"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          Kategoriyalar va Filtrlar
-        </span>
-        <svg viewBox="0 0 24 24" width="18" height="18" class="mcat-chevron mcat-ico-stroke"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-
-      <!-- 5. KATEGORIYALAR PANELLI -->
-      <div id="norm-panel" class="mcat-panel ${open ? "open" : ""}">
-        <div class="mcat-panel-clip">
-          <div class="mcat-panel-inner" id="norm-panel-inner">
-            ${renderNormativesPanelInnerHtml()}
-          </div>
+      <!-- 3. CLEAN COMPACT TOPBAR: SUBTABS + [ ⚡ FILTRLASH ] BUTTON -->
+      <div class="norm-clean-topbar">
+        <div class="norm-subtabs-row">
+          <button type="button" class="norm-clean-subtab ${activeTab === 'topics' ? 'active' : ''}" onclick="setNormativesTab('topics')">
+            📋 Me'yorlar (${normativesState.topics.length})
+          </button>
+          <button type="button" class="norm-clean-subtab ${activeTab === 'docs' ? 'active' : ''}" onclick="setNormativesTab('docs')">
+            📑 Hujjatlar (${normativesState.documents.length})
+          </button>
+          <button type="button" class="norm-clean-subtab ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
+            💡 Yo'riqnomalar (${normativesState.cases.length})
+          </button>
         </div>
+
+        <button type="button" class="norm-filter-trigger-btn ${activeFilterCount > 0 ? 'has-active' : ''}" onclick="openNormativesFilterModal()">
+          <span>⚡</span> Filtrlash
+          ${activeFilterCount > 0 ? `<span class="norm-filter-count-badge">${activeFilterCount}</span>` : ''}
+        </button>
       </div>
 
-      <!-- 6. ACTIVE FILTER CHIPS -->
-      <div id="norm-active-filter">
-        ${renderNormativesActiveFilterHtml()}
-      </div>
+      <!-- 4. ACTIVE FILTER BADGES ROW (Only shown if filters are applied) -->
+      ${renderNormativesActiveFilterHtml()}
 
-      <!-- 7. CONTENT SWITCHER -->
-      <div class="norm-tab-content" style="margin-top:14px;">
+      <!-- 5. CONTENT SWITCHER -->
+      <div class="norm-tab-content" style="margin-top:10px;">
         ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : (activeTab === 'topics' ? renderNormativeTopicsTabHtml() : renderNormativeDocsTabHtml())}
       </div>
     </div>
@@ -24431,7 +24865,8 @@ function renderNormativeDocsTabHtml() {
         ${list.map(doc => {
           const docNum = doc.document_number || "Normativ";
           const status = doc.status || "AMALDA";
-          const isSaved = isNormativeSaved(doc.id);
+          const isSaved = isNormativeSaved(doc.id) || isUniversalItemSaved('normative', doc.id);
+          const isLiked = isUniversalItemLiked('normative', doc.id);
           const dateStr = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : (doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "");
           return `
             <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
@@ -24441,9 +24876,14 @@ function renderNormativeDocsTabHtml() {
                   ${renderNormativeStatusBadge(status)}
                   ${renderNormativeSourceBadge(doc.source_type, doc.source_title)}
                 </div>
-                <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:11px;" onclick="toggleNormativeSave(${Number(doc.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
-                  <span>${isSaved ? '🔖' : '♡'}</span>
-                </button>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <button type="button" class="proc-action-btn ${isLiked ? 'active' : ''}" style="padding:4px 8px; font-size:12px;" onclick="toggleUniversalReaction('normative', '${doc.id}', 'like', { title: '${escapeJsString(docNum + ' ' + (doc.title || ''))}', category: '${escapeJsString(doc.category || '')}' }, event)" title="${isLiked ? 'Yoqtirilgan' : 'Yoqtirish'}">
+                    <span class="react-icon" style="color:${isLiked ? '#ef4444' : 'inherit'};">${isLiked ? '♥' : '♡'}</span>
+                  </button>
+                  <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:12px;" onclick="toggleNormativeSave(${Number(doc.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
+                    <span class="react-icon" style="color:${isSaved ? '#f59e0b' : 'inherit'};">${isSaved ? '🔖' : '☆'}</span>
+                  </button>
+                </div>
               </div>
               <h3 class="norm-doc-title">${escapeHtml(doc.title)}</h3>
               ${doc.application_scope ? `<div class="norm-doc-scope">🎯 ${escapeHtml(doc.application_scope)}</div>` : ''}
@@ -24477,20 +24917,46 @@ function isNormativeTopicSaved(id) {
 }
 
 function toggleNormativeTopicSave(id, e) {
-  if (e) e.stopPropagation();
+  if (e && e.stopPropagation) e.stopPropagation();
   haptic("light");
   const numId = Number(id);
-  if (normativeTopicsSavedIds.has(numId)) {
-    normativeTopicsSavedIds.delete(numId);
-    showToast("Mavzu saqlanganlardan olindi");
-  } else {
+  const willBeSaved = !normativeTopicsSavedIds.has(numId);
+  if (willBeSaved) {
     normativeTopicsSavedIds.add(numId);
     showToast("Mavzu saqlandi 🔖");
+  } else {
+    normativeTopicsSavedIds.delete(numId);
+    showToast("Mavzu saqlanganlardan olindi");
   }
   try {
     localStorage.setItem("yosh_saved_normative_topics", JSON.stringify([...normativeTopicsSavedIds]));
-  } catch (e) {}
-  render();
+  } catch (err) {}
+
+  if (e) {
+    const btn = (e.currentTarget || e.target).closest('button');
+    if (btn) {
+      btn.classList.toggle('active', willBeSaved);
+      const iconSpan = btn.querySelector('.react-icon') || btn.querySelector('span');
+      if (iconSpan) iconSpan.textContent = willBeSaved ? '🔖' : '☆';
+    }
+  }
+
+  const t = (normativesState.topics || []).find(x => Number(x.id) === numId);
+  toggleUniversalReaction('normative', String(id), 'save', {
+    title: t ? t.title : ('Mavzu #' + id),
+    category: t ? t.category : ''
+  }, null);
+}
+
+function toggleNormativeTopicLike(id, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  haptic("light");
+  const numId = Number(id);
+  const t = (normativesState.topics || []).find(x => Number(x.id) === numId);
+  toggleUniversalReaction('normative', String(id), 'like', {
+    title: t ? t.title : ('Mavzu #' + id),
+    category: t ? t.category : ''
+  }, e);
 }
 
 function renderNormativeTopicTypeBadge(type) {
@@ -24585,7 +25051,8 @@ function renderNormativeTopicsTabHtml() {
     <!-- TOPICS GRID -->
     <div class="norm-docs-grid">
       ${list.map(topic => {
-        const isSaved = isNormativeTopicSaved(topic.id);
+        const isSaved = isNormativeTopicSaved(topic.id) || isUniversalItemSaved('normative', topic.id);
+        const isLiked = isUniversalItemLiked('normative', topic.id);
         const val = topic.normative_value || "";
         const unit = topic.unit || "";
         const sourceDoc = topic.source_document_number || "";
@@ -24601,9 +25068,14 @@ function renderNormativeTopicsTabHtml() {
                   ${escapeHtml(topic.category || "")}
                 </span>
               </div>
-              <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:11px;" onclick="toggleNormativeTopicSave(${Number(topic.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
-                <span>${isSaved ? '🔖' : '♡'}</span>
-              </button>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <button type="button" class="proc-action-btn ${isLiked ? 'active' : ''}" style="padding:4px 8px; font-size:12px;" onclick="toggleNormativeTopicLike(${Number(topic.id)}, event)" title="${isLiked ? 'Yoqtirilgan' : 'Yoqtirish'}">
+                  <span class="react-icon" style="color:${isLiked ? '#ef4444' : 'inherit'};">${isLiked ? '♥' : '♡'}</span>
+                </button>
+                <button type="button" class="proc-action-btn ${isSaved ? 'active' : ''}" style="padding:4px 8px; font-size:12px;" onclick="toggleNormativeTopicSave(${Number(topic.id)}, event)" title="${isSaved ? 'Saqlangan' : 'Saqlash'}">
+                  <span class="react-icon" style="color:${isSaved ? '#f59e0b' : 'inherit'};">${isSaved ? '🔖' : '☆'}</span>
+                </button>
+              </div>
             </div>
 
             <h3 class="norm-doc-title" style="font-size:15px; font-weight:700; line-height:1.35; margin:8px 0 6px;">

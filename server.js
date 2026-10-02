@@ -2232,7 +2232,7 @@ async function enforceNotRestricted(user, res) {
 
 async function requireAdmin(req, res, next) {
   try {
-    var initData = (req.body && req.body.initData) || req.headers['x-telegram-init-data'];
+    var initData = (req.body && req.body.initData) || (req.query && req.query.initData) || req.headers['x-telegram-init-data'];
     if (!initData) {
       return res.status(401).json({ error: 'Telegram initData yuborilmagan' });
     }
@@ -7963,6 +7963,201 @@ app.all('/api/materials/saved', async function (req, res) {
     return res.json({ ok: true, materials: result.rows, total: result.rows.length });
   } catch (err) {
     console.error('GET SAVED MATERIALS ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ======================================================
+// UNIVERSAL KUTUBXONA REACTIONS (LIKES & SAVES)
+// Kitoblar, Manbalar, Testlar, Materiallar, Normativlar, Jarayonlar
+// ======================================================
+var reactionsTableReady = null;
+function ensureUniversalReactions() {
+  if (!reactionsTableReady) {
+    reactionsTableReady = (async function () {
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS library_user_reactions (
+            id SERIAL PRIMARY KEY,
+            user_id INT NOT NULL,
+            content_type VARCHAR(32) NOT NULL,
+            content_id VARCHAR(64) NOT NULL,
+            action_type VARCHAR(16) NOT NULL,
+            title TEXT,
+            subtitle TEXT,
+            image_url TEXT,
+            category TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT uq_lib_user_reaction UNIQUE (user_id, content_type, content_id, action_type)
+          );
+          CREATE INDEX IF NOT EXISTS idx_lib_user_reactions_user ON library_user_reactions (user_id, action_type);
+        `);
+      } catch (e) {
+        console.warn('ensureUniversalReactions:', e.message);
+        reactionsTableReady = null;
+      }
+    })();
+  }
+  return reactionsTableReady;
+}
+
+async function universalUserFromReq(req) {
+  try {
+    var initData = (req.body && req.body.initData) || (req.query && req.query.initData) || req.headers['x-telegram-init-data'];
+    return await getOrCreateUser(initData);
+  } catch (e) {
+    return null;
+  }
+}
+
+app.post('/api/library/reactions/toggle', async function (req, res) {
+  try {
+    await ensureUniversalReactions();
+    var user = await universalUserFromReq(req);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya talab qilinadi' });
+
+    var { content_type, content_id, action_type, title, subtitle, image_url, category } = req.body || {};
+    if (!content_type || !content_id || !action_type) {
+      return res.status(400).json({ ok: false, error: 'content_type, content_id va action_type majburiy' });
+    }
+    action_type = String(action_type).toLowerCase();
+    content_type = String(content_type).toLowerCase();
+    var cid = String(content_id);
+
+    var existing = await pool.query(
+      'SELECT id FROM library_user_reactions WHERE user_id = $1 AND content_type = $2 AND content_id = $3 AND action_type = $4',
+      [user.id, content_type, cid, action_type]
+    );
+
+    var active = false;
+    if (existing.rows.length) {
+      await pool.query(
+        'DELETE FROM library_user_reactions WHERE user_id = $1 AND content_type = $2 AND content_id = $3 AND action_type = $4',
+        [user.id, content_type, cid, action_type]
+      );
+      active = false;
+    } else {
+      await pool.query(
+        `INSERT INTO library_user_reactions (user_id, content_type, content_id, action_type, title, subtitle, image_url, category)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (user_id, content_type, content_id, action_type) DO UPDATE
+         SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, image_url = EXCLUDED.image_url, category = EXCLUDED.category`,
+        [user.id, content_type, cid, action_type, title || null, subtitle || null, image_url || null, category || null]
+      );
+      active = true;
+    }
+
+    // Bidirectional sync with legacy tables so nothing breaks
+    var intId = parseInt(cid, 10);
+    if (content_type === 'material' && !isNaN(intId)) {
+      var table = action_type === 'like' ? 'material_likes' : 'material_saves';
+      if (active) {
+        await pool.query(`INSERT INTO ${table} (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [user.id, intId]).catch(() => {});
+      } else {
+        await pool.query(`DELETE FROM ${table} WHERE user_id = $1 AND material_id = $2`, [user.id, intId]).catch(() => {});
+      }
+    } else if (content_type === 'book' && !isNaN(intId)) {
+      if (action_type === 'like') {
+        if (active) await pool.query('INSERT INTO book_likes (user_id, book_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, intId]).catch(() => {});
+        else await pool.query('DELETE FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, intId]).catch(() => {});
+      } else {
+        if (active) await pool.query('INSERT INTO saved_books (user_id, book_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, intId]).catch(() => {});
+        else await pool.query('DELETE FROM saved_books WHERE user_id = $1 AND book_id = $2', [user.id, intId]).catch(() => {});
+      }
+    } else if (content_type === 'resource' && !isNaN(intId) && action_type === 'save') {
+      if (active) await pool.query('INSERT INTO library_bookmarks (user_id, resource_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [user.id, intId]).catch(() => {});
+      else await pool.query('DELETE FROM library_bookmarks WHERE user_id = $1 AND resource_id = $2', [user.id, intId]).catch(() => {});
+    }
+
+    var countRes = await pool.query(
+      'SELECT COUNT(*)::int AS count FROM library_user_reactions WHERE content_type = $1 AND content_id = $2 AND action_type = $3',
+      [content_type, cid, action_type]
+    );
+
+    return res.json({ ok: true, active, count: countRes.rows[0]?.count || 0 });
+  } catch (err) {
+    console.error('TOGGLE UNIVERSAL REACTION ERROR:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.all('/api/library/reactions/my-state', async function (req, res) {
+  try {
+    await ensureUniversalReactions();
+    var user = await universalUserFromReq(req);
+    if (!user) {
+      return res.json({
+        ok: true,
+        liked: { book: [], material: [], normative: [], resource: [], test: [], process: [] },
+        saved: { book: [], material: [], normative: [], resource: [], test: [], process: [] }
+      });
+    }
+
+    var rRes = await pool.query('SELECT content_type, content_id, action_type FROM library_user_reactions WHERE user_id = $1', [user.id]);
+    var liked = { book: [], material: [], normative: [], resource: [], test: [], process: [] };
+    var saved = { book: [], material: [], normative: [], resource: [], test: [], process: [] };
+
+    rRes.rows.forEach(function (r) {
+      var target = r.action_type === 'like' ? liked : saved;
+      if (!target[r.content_type]) target[r.content_type] = [];
+      target[r.content_type].push(r.content_id);
+    });
+
+    try {
+      var [matL, matS, bkL, bkS, resS] = await Promise.all([
+        pool.query('SELECT material_id FROM material_likes WHERE user_id = $1', [user.id]).catch(() => ({ rows: [] })),
+        pool.query('SELECT material_id FROM material_saves WHERE user_id = $1', [user.id]).catch(() => ({ rows: [] })),
+        pool.query('SELECT book_id FROM book_likes WHERE user_id = $1', [user.id]).catch(() => ({ rows: [] })),
+        pool.query('SELECT book_id FROM saved_books WHERE user_id = $1', [user.id]).catch(() => ({ rows: [] })),
+        pool.query('SELECT resource_id FROM library_bookmarks WHERE user_id = $1', [user.id]).catch(() => ({ rows: [] }))
+      ]);
+
+      matL.rows.forEach(function(r) { var s = String(r.material_id); if (!liked.material.includes(s)) liked.material.push(s); });
+      matS.rows.forEach(function(r) { var s = String(r.material_id); if (!saved.material.includes(s)) saved.material.push(s); });
+      bkL.rows.forEach(function(r) { var s = String(r.book_id); if (!liked.book.includes(s)) liked.book.push(s); });
+      bkS.rows.forEach(function(r) { var s = String(r.book_id); if (!saved.book.includes(s)) saved.book.push(s); });
+      resS.rows.forEach(function(r) { var s = String(r.resource_id); if (!saved.resource.includes(s)) saved.resource.push(s); });
+    } catch (legErr) {
+      console.warn('Legacy reactions merge warning:', legErr.message);
+    }
+
+    return res.json({ ok: true, liked, saved });
+  } catch (err) {
+    console.error('UNIVERSAL REACTIONS MY-STATE ERROR:', err);
+    return res.json({
+      ok: true,
+      liked: { book: [], material: [], normative: [], resource: [], test: [], process: [] },
+      saved: { book: [], material: [], normative: [], resource: [], test: [], process: [] }
+    });
+  }
+});
+
+app.all('/api/library/reactions/list', async function (req, res) {
+  try {
+    await ensureUniversalReactions();
+    var user = await universalUserFromReq(req);
+    if (!user) return res.status(401).json({ ok: false, error: 'Avtorizatsiya talab qilinadi' });
+
+    var action_type = (req.query.action_type || (req.body && req.body.action_type) || 'save').toLowerCase();
+    var content_type = (req.query.content_type || (req.body && req.body.content_type) || 'all').toLowerCase();
+
+    var params = [user.id, action_type];
+    var whereType = '';
+    if (content_type && content_type !== 'all') {
+      params.push(content_type);
+      whereType = 'AND content_type = $3';
+    }
+
+    var rRes = await pool.query(
+      `SELECT * FROM library_user_reactions
+       WHERE user_id = $1 AND action_type = $2 ${whereType}
+       ORDER BY created_at DESC`,
+      params
+    );
+
+    return res.json({ ok: true, items: rRes.rows, total: rRes.rows.length });
+  } catch (err) {
+    console.error('UNIVERSAL REACTIONS LIST ERROR:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });

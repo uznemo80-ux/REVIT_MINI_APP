@@ -551,22 +551,22 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
     });
 
     const hasRealSessions = totalSessions > 0;
-    const mobUsers = hasRealSessions ? (summaryMap['mobile']?.users_count || 0) : Math.round(totalUsers * 0.72);
-    const deskUsers = hasRealSessions ? (summaryMap['desktop']?.users_count || 0) : Math.round(totalUsers * 0.25);
-    const tabUsers = hasRealSessions ? (summaryMap['tablet']?.users_count || 0) : Math.max(0, totalUsers - mobUsers - deskUsers);
+    const mobUsers = summaryMap['mobile']?.users_count || 0;
+    const deskUsers = summaryMap['desktop']?.users_count || 0;
+    const tabUsers = summaryMap['tablet']?.users_count || 0;
 
-    const mobActive = hasRealSessions ? (summaryMap['mobile']?.active_count || 0) : Math.round(mobUsers * 0.35);
-    const deskActive = hasRealSessions ? (summaryMap['desktop']?.active_count || 0) : Math.round(deskUsers * 0.40);
-    const tabActive = hasRealSessions ? (summaryMap['tablet']?.active_count || 0) : Math.round(tabUsers * 0.20);
+    const mobActive = summaryMap['mobile']?.active_count || 0;
+    const deskActive = summaryMap['desktop']?.active_count || 0;
+    const tabActive = summaryMap['tablet']?.active_count || 0;
 
-    const mobSessions = hasRealSessions ? (summaryMap['mobile']?.sessions_count || 0) : Math.round(totalUsers * 3.8);
-    const deskSessions = hasRealSessions ? (summaryMap['desktop']?.sessions_count || 0) : Math.round(totalUsers * 1.5);
-    const tabSessions = hasRealSessions ? (summaryMap['tablet']?.sessions_count || 0) : Math.round(totalUsers * 0.2);
-    const effectiveTotalSessions = mobSessions + deskSessions + tabSessions || 1;
+    const mobSessions = summaryMap['mobile']?.sessions_count || 0;
+    const deskSessions = summaryMap['desktop']?.sessions_count || 0;
+    const tabSessions = summaryMap['tablet']?.sessions_count || 0;
+    const effectiveTotalSessions = mobSessions + deskSessions + tabSessions;
 
-    const mobPct = Math.round((mobSessions / effectiveTotalSessions) * 100);
-    const deskPct = Math.round((deskSessions / effectiveTotalSessions) * 100);
-    const tabPct = Math.max(0, 100 - mobPct - deskPct);
+    const mobPct = effectiveTotalSessions > 0 ? Math.round((mobSessions / effectiveTotalSessions) * 100) : 0;
+    const deskPct = effectiveTotalSessions > 0 ? Math.round((deskSessions / effectiveTotalSessions) * 100) : 0;
+    const tabPct = effectiveTotalSessions > 0 ? Math.max(0, 100 - mobPct - deskPct) : 0;
 
     // Process OS Distribution
     let distribution = [];
@@ -598,35 +598,16 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
           color
         };
       });
-    } else {
-      distribution = [
-        { os: 'Android', name: 'Android', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.54), sessions: Math.round(effectiveTotalSessions * 0.54), users_count: Math.round(totalUsers * 0.54), users: Math.round(totalUsers * 0.54), count: Math.round(totalUsers * 0.54), percentage: 54.0, pct: 54.0, color: '#10b981' },
-        { os: 'iOS (iPhone)', name: 'iPhone / iOS', icon: '🍎', sessions_count: Math.round(effectiveTotalSessions * 0.22), sessions: Math.round(effectiveTotalSessions * 0.22), users_count: Math.round(totalUsers * 0.22), users: Math.round(totalUsers * 0.22), count: Math.round(totalUsers * 0.22), percentage: 22.0, pct: 22.0, color: '#007aff' },
-        { os: 'Windows', name: 'Windows', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.18), sessions: Math.round(effectiveTotalSessions * 0.18), users_count: Math.round(totalUsers * 0.18), users: Math.round(totalUsers * 0.18), count: Math.round(totalUsers * 0.18), percentage: 18.0, pct: 18.0, color: '#00b0ff' },
-        { os: 'macOS', name: 'macOS', icon: '💻', sessions_count: Math.round(effectiveTotalSessions * 0.04), sessions: Math.round(effectiveTotalSessions * 0.04), users_count: Math.round(totalUsers * 0.04), users: Math.round(totalUsers * 0.04), count: Math.round(totalUsers * 0.04), percentage: 4.0, pct: 4.0, color: '#ff9500' },
-        { os: 'iPad / Tablet', name: 'iPad / Tablet', icon: '📱', sessions_count: Math.round(effectiveTotalSessions * 0.02), sessions: Math.round(effectiveTotalSessions * 0.02), users_count: Math.round(totalUsers * 0.02), users: Math.round(totalUsers * 0.02), count: Math.round(totalUsers * 0.02), percentage: 2.0, pct: 2.0, color: '#af52de' }
-      ];
     }
 
     // Process Content Matrix
-    let contentMatrix = matrixRes.rows || [];
-    if (!contentMatrix.length) {
-      contentMatrix = [
-        { device: 'Android', icon: '📱', lessons: 520, books: 180, materials: 240, sources: 90, total: 1030 },
-        { device: 'iPhone / iOS', icon: '🍎', lessons: 210, books: 120, materials: 150, sources: 65, total: 545 },
-        { device: 'Windows', icon: '💻', lessons: 340, books: 210, materials: 190, sources: 140, total: 880 },
-        { device: 'macOS', icon: '💻', lessons: 70, books: 45, materials: 30, sources: 25, total: 170 },
-        { device: 'iPad / Tablet', icon: '📱', lessons: 45, books: 28, materials: 22, sources: 12, total: 107 }
-      ];
-    } else {
-      contentMatrix = contentMatrix.map(m => {
-        let icon = '📱';
-        if (m.device === 'Windows' || m.device === 'macOS' || m.device === 'Linux') icon = '💻';
-        else if (m.device === 'iOS' || m.device === 'iPhone') icon = '🍎';
-        else if (m.device === 'iPad / Tablet' || m.device === 'iPadOS' || m.device === 'Tablet') icon = '📱';
-        return { ...m, icon };
-      });
-    }
+    let contentMatrix = (matrixRes.rows || []).map(m => {
+      let icon = '📱';
+      if (m.device === 'Windows' || m.device === 'macOS' || m.device === 'Linux') icon = '💻';
+      else if (m.device === 'iOS' || m.device === 'iPhone') icon = '🍎';
+      else if (m.device === 'iPad / Tablet' || m.device === 'iPadOS' || m.device === 'Tablet') icon = '📱';
+      return { ...m, icon };
+    });
 
     // Process Peak Hours
     const mobileHours = new Array(24).fill(0);
@@ -641,12 +622,6 @@ async function getDeviceAnalytics(periodDates, granularity, pool) {
         else if (r.device_type === 'tablet') tabletHours[h] = r.actions;
       }
     });
-
-    if (!hasRealSessions) {
-      [1, 1, 0, 0, 0, 1, 3, 7, 12, 18, 22, 25, 28, 24, 26, 30, 35, 42, 58, 72, 85, 80, 52, 24].forEach((v, i) => { mobileHours[i] = v; });
-      [0, 0, 0, 0, 0, 0, 1, 4, 15, 32, 45, 48, 42, 38, 35, 32, 28, 22, 18, 16, 12, 8, 4, 1].forEach((v, i) => { desktopHours[i] = v; });
-      [0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 5, 4, 4, 5, 6, 8, 12, 15, 14, 10, 5, 2].forEach((v, i) => { tabletHours[i] = v; });
-    }
 
     return {
       summary: {
@@ -1349,30 +1324,101 @@ async function generateCsvExport(params = {}) {
   const rows = [];
 
   // Header summary
-  rows.push(['YOSHUZBEKK ACADEMY — ANALYTICS HISOBOTI']);
-  rows.push(['Davr:', data.period, 'Granulyarlik:', data.granularity]);
+  rows.push(['YOSHUZBEKK ACADEMY — ANALYTICS VA O‘QUVCHILAR HISOBOTI']);
+  rows.push(['Davr:', data.period || 'N/A', 'Granulyarlik:', data.granularity || 'N/A']);
   rows.push(['Hisobot yaratilgan sana:', new Date().toLocaleString('uz-UZ')]);
   rows.push([]);
 
-  // KPIs
+  // 1. Full registered students roster (Barcha ro'yxatdan o'tgan o'quvchilar ro'yxati)
+  try {
+    const studentsRes = await pool.query(`
+      SELECT 
+        u.id,
+        COALESCE(u.first_name, '') AS first_name,
+        COALESCE(u.last_name, '') AS last_name,
+        COALESCE(u.username, '') AS username,
+        COALESCE(u.phone_number, '') AS phone_number,
+        u.telegram_id,
+        u.created_at,
+        CASE
+          WHEN u.access_until > NOW() THEN 'Aktiv obuna'
+          WHEN u.has_access = true THEN 'Ruxsat berilgan'
+          ELSE 'Cheklangan'
+        END AS access_status,
+        u.access_until,
+        COALESCE(u.last_activity_at, ua.last_seen_at) AS last_activity,
+        CASE
+          WHEN u.access_until > NOW() THEN 'Aktiv kursant'
+          ELSE 'Foydalanuvchi'
+        END AS status
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, MAX(last_seen_at) AS last_seen_at 
+        FROM user_activity 
+        GROUP BY user_id
+      ) ua ON ua.user_id = u.id
+      ORDER BY u.id ASC
+    `);
+
+    rows.push(['--- RO‘YXATDAN O‘TGAN BARCHA O‘QUVCHILAR RO‘YXATI ---']);
+    rows.push([
+      'ID',
+      'Ism',
+      'Familiya',
+      'Username',
+      'Telefon raqami',
+      'Telegram ID',
+      'Ro‘yxatdan o‘tgan sana',
+      'Kursga kirish holati',
+      'Access tugash sanasi',
+      'Oxirgi faollik',
+      'Status'
+    ]);
+
+    (studentsRes.rows || []).forEach(st => {
+      const regDate = st.created_at ? new Date(st.created_at).toLocaleString('uz-UZ') : '-';
+      const accessDate = st.access_until ? new Date(st.access_until).toLocaleString('uz-UZ') : '-';
+      const lastAct = st.last_activity ? new Date(st.last_activity).toLocaleString('uz-UZ') : '-';
+      rows.push([
+        st.id,
+        st.first_name || '-',
+        st.last_name || '-',
+        st.username ? '@' + st.username : '-',
+        st.phone_number || '-',
+        st.telegram_id || '-',
+        regDate,
+        st.access_status || 'Cheklangan',
+        accessDate,
+        lastAct,
+        st.status || 'Foydalanuvchi'
+      ]);
+    });
+    rows.push([]);
+  } catch (err) {
+    console.error('CSV Student roster query error:', err);
+    rows.push(['O‘quvchilar ro‘yxatini yuklashda xatolik yuz berdi']);
+    rows.push([]);
+  }
+
+  // 2. KPIs
   rows.push(['--- UMUMIY KO‘RSATKICHLAR (KPI) ---']);
   rows.push(['Ko‘rsatkich', 'Qiymat']);
-  rows.push(['Jami o‘quvchilar', data.kpi.users.total]);
-  rows.push(['Faol kurs obunachilari', data.kpi.users.paid]);
-  rows.push(['Tanlangan davrda yangi qo‘shilganlar', data.kpi.users.new_in_period]);
-  rows.push(['Yangi a’zolar o‘sishi (%)', data.kpi.users.new_growth_pct + '%']);
-  rows.push(['Tanlangan davrda faol o‘quvchilar', data.kpi.users.active_in_period]);
-  rows.push(['Bugun faol o‘quvchilar', data.kpi.users.active_today]);
-  rows.push(['Nofaol o‘quvchilar', data.kpi.users.inactive]);
+  rows.push(['Jami o‘quvchilar', data?.kpi?.users?.total ?? 0]);
+  rows.push(['Faol kurs obunachilari', data?.kpi?.users?.paid ?? 0]);
+  rows.push(['Tanlangan davrda yangi qo‘shilganlar', data?.kpi?.users?.new_in_period ?? 0]);
+  rows.push(['Yangi a’zolar o‘sishi (%)', (data?.kpi?.users?.new_growth_pct ?? 0) + '%']);
+  rows.push(['Tanlangan davrda faol o‘quvchilar', data?.kpi?.users?.active_in_period ?? 0]);
+  rows.push(['Bugun faol o‘quvchilar', data?.kpi?.users?.active_today ?? 0]);
+  rows.push(['Nofaol o‘quvchilar', data?.kpi?.users?.inactive ?? 0]);
   rows.push([]);
 
-  // Device Analytics
-  if (data.devices) {
+  // 3. Device Analytics
+  if (data.devices && data.devices.summary) {
     rows.push(['--- QURILMALAR (DEVICE ANALYTICS) ---']);
     rows.push(['Qurilma turi', 'Userlar', 'Ulush (%)', 'Faol userlar', 'Sessionlar']);
-    rows.push(['Mobil (Mobile)', data.devices.summary.mobile.users, data.devices.summary.mobile.pct + '%', data.devices.summary.mobile.active, data.devices.summary.mobile.sessions]);
-    rows.push(['Kompyuter (Desktop)', data.devices.summary.desktop.users, data.devices.summary.desktop.pct + '%', data.devices.summary.desktop.active, data.devices.summary.desktop.sessions]);
-    rows.push(['Planshet (Tablet)', data.devices.summary.tablet.users, data.devices.summary.tablet.pct + '%', data.devices.summary.tablet.active, data.devices.summary.tablet.sessions]);
+    rows.push(['Mobil (Mobile)', data.devices.summary.mobile?.users ?? 0, (data.devices.summary.mobile?.pct ?? 0) + '%', data.devices.summary.mobile?.active ?? 0, data.devices.summary.mobile?.sessions ?? 0]);
+    rows.push(['Kompyuter (Desktop)', data.devices.summary.desktop?.users ?? 0, (data.devices.summary.desktop?.pct ?? 0) + '%', data.devices.summary.desktop?.active ?? 0, data.devices.summary.desktop?.sessions ?? 0]);
+    rows.push(['Planshet (Tablet)', data.devices.summary.tablet?.users ?? 0, (data.devices.summary.tablet?.pct ?? 0) + '%', data.devices.summary.tablet?.active ?? 0, data.devices.summary.tablet?.sessions ?? 0]);
     rows.push([]);
 
     rows.push(['--- OPERATSION TIZIMLAR TAQSIMOTI ---']);
@@ -1390,55 +1436,65 @@ async function generateCsvExport(params = {}) {
     rows.push([]);
   }
 
-  // Time-series breakdown
-  rows.push(['--- VAQT BO‘YICHA DINAMIKA ---']);
-  rows.push(['Sana / Vaqt', 'Yangi A’zolar', 'Dars Ko‘rishlar', 'Kitob O‘qishlar', 'Materiallar', 'Manbalar', 'Jami Faollik']);
-  data.time_series.data.forEach(pt => {
-    rows.push([
-      pt.label,
-      pt.new_users,
-      pt.lesson_views,
-      pt.book_reads,
-      pt.material_views,
-      pt.source_views,
-      pt.total_activity
-    ]);
-  });
-  rows.push([]);
+  // 4. Time-series breakdown
+  if (data.time_series && Array.isArray(data.time_series.data)) {
+    rows.push(['--- VAQT BO‘YICHA DINAMIKA ---']);
+    rows.push(['Sana / Vaqt', 'Yangi A’zolar', 'Dars Ko‘rishlar', 'Kitob O‘qishlar', 'Materiallar', 'Manbalar', 'Jami Faollik']);
+    data.time_series.data.forEach(pt => {
+      rows.push([
+        pt.label,
+        pt.new_users,
+        pt.lesson_views,
+        pt.book_reads,
+        pt.material_views,
+        pt.source_views,
+        pt.total_activity
+      ]);
+    });
+    rows.push([]);
+  }
 
-  // Weekdays
-  rows.push(['--- HAFTA KUNLARI BO‘YICHA FAOLLIK ---']);
-  rows.push(['Hafta kuni', 'Faol O‘quvchilar', 'Darslar', 'Kitoblar', 'Materiallar', 'Jami Faollik']);
-  data.weekdays.data.forEach(w => {
-    rows.push([w.name, w.active_users, w.lesson_views, w.book_reads, w.material_views, w.total_activity]);
-  });
-  rows.push([]);
+  // 5. Weekdays
+  if (data.weekdays && Array.isArray(data.weekdays.data)) {
+    rows.push(['--- HAFTA KUNLARI BO‘YICHA FAOLLIK ---']);
+    rows.push(['Hafta kuni', 'Faol O‘quvchilar', 'Darslar', 'Kitoblar', 'Materiallar', 'Jami Faollik']);
+    data.weekdays.data.forEach(w => {
+      rows.push([w.name, w.active_users, w.lesson_views, w.book_reads, w.material_views, w.total_activity]);
+    });
+    rows.push([]);
+  }
 
-  // Top lessons
-  rows.push(['--- ENG KO‘P KO‘RILGAN DARSLAR ---']);
-  rows.push(['#', 'Dars nomi', 'Modul', 'Ko‘rishlar soni', 'Unique o‘quvchilar', 'Yakunlash darajasi (%)']);
-  data.deep_dives.lessons.top_lessons.forEach(l => {
-    rows.push([l.order_index, l.title, l.module_title, l.view_count, l.unique_viewers, l.completion_rate + '%']);
-  });
-  rows.push([]);
+  // 6. Top lessons
+  if (data.deep_dives?.lessons?.top_lessons) {
+    rows.push(['--- ENG KO‘P KO‘RILGAN DARSLAR ---']);
+    rows.push(['#', 'Dars nomi', 'Modul', 'Ko‘rishlar soni', 'Unique o‘quvchilar', 'Yakunlash darajasi (%)']);
+    data.deep_dives.lessons.top_lessons.forEach(l => {
+      rows.push([l.order_index, l.title, l.module_title, l.view_count, l.unique_viewers, l.completion_rate + '%']);
+    });
+    rows.push([]);
+  }
 
-  // Top books
-  rows.push(['--- ENG KO‘P O‘QILGAN KITOBLAR ---']);
-  rows.push(['ID', 'Kitob nomi', 'Muallif', 'Kategoriya', 'Ko‘rishlar', 'O‘quvchilar', 'Saqlanganlar']);
-  data.deep_dives.books.top_books.forEach(b => {
-    rows.push([b.id, b.title, b.author, b.category, b.view_count, b.unique_readers, b.saved_count]);
-  });
-  rows.push([]);
+  // 7. Top books
+  if (data.deep_dives?.books?.top_books) {
+    rows.push(['--- ENG KO‘P O‘QILGAN KITOBLAR ---']);
+    rows.push(['ID', 'Kitob nomi', 'Muallif', 'Kategoriya', 'Ko‘rishlar', 'O‘quvchilar', 'Saqlanganlar']);
+    data.deep_dives.books.top_books.forEach(b => {
+      rows.push([b.id, b.title, b.author, b.category, b.view_count, b.unique_readers, b.saved_count]);
+    });
+    rows.push([]);
+  }
 
-  // Top active students
-  rows.push(['--- ENG FAOL O‘QUVCHILAR ---']);
-  rows.push(['ID', 'F.I.SH', 'Username', 'Telegram ID', 'Darslar', 'Kitoblar', 'Materiallar', 'Manbalar', 'Umumiy Ball']);
-  data.top_students.forEach(st => {
-    const fullName = [st.first_name, st.last_name].filter(Boolean).join(' ') || 'Noma’lum';
-    rows.push([st.id, fullName, st.username ? '@' + st.username : '-', st.telegram_id, st.watched_lessons, st.read_books, st.viewed_materials, st.used_sources, st.total_activity_score]);
-  });
+  // 8. Top active students
+  if (Array.isArray(data.top_students)) {
+    rows.push(['--- ENG FAOL O‘QUVCHILAR ---']);
+    rows.push(['ID', 'F.I.SH', 'Username', 'Telegram ID', 'Darslar', 'Kitoblar', 'Materiallar', 'Manbalar', 'Umumiy Ball']);
+    data.top_students.forEach(st => {
+      const fullName = [st.first_name, st.last_name].filter(Boolean).join(' ') || 'Noma’lum';
+      rows.push([st.id, fullName, st.username ? '@' + st.username : '-', st.telegram_id, st.watched_lessons, st.read_books, st.viewed_materials, st.used_sources, st.total_activity_score]);
+    });
+  }
 
-  // Format into CSV with UTF-8 BOM
+  // Format into CSV with UTF-8 BOM (\uFEFF) so Excel on Windows handles Uzbek characters properly
   const csvContent = '\uFEFF' + rows.map(r => r.map(escapeCsvField).join(',')).join('\r\n');
   return csvContent;
 }
