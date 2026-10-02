@@ -270,6 +270,45 @@ window.updateHScrollArrows = updateHScrollArrows;
       document.documentElement.classList.remove('is-desktop-device');
     }
   }, { passive: true });
+
+  // Mobile Tap vs Scroll Gesture Guard:
+  // If user scrolls/swipes (movement > 8px), do not trigger accidental clicks or navigation!
+  let touchStartPos = { x: 0, y: 0 };
+  let isScrollingTouch = false;
+  let lastTouchEndTime = 0;
+
+  window.addEventListener('touchstart', function(e) {
+    if (e.touches && e.touches.length === 1) {
+      touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      isScrollingTouch = false;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function(e) {
+    if (e.touches && e.touches.length === 1) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartPos.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartPos.y);
+      if (Math.hypot(dx, dy) > 8) {
+        isScrollingTouch = true;
+      }
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', function() {
+    lastTouchEndTime = Date.now();
+  }, { passive: true });
+
+  // Intercept click on capture phase if the gesture was a scroll/swipe
+  window.addEventListener('click', function(e) {
+    if (isScrollingTouch && (Date.now() - lastTouchEndTime < 400)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      isScrollingTouch = false;
+      return false;
+    }
+    isScrollingTouch = false;
+  }, true);
 })();
 
 const initData = tg.initData || "";
@@ -770,6 +809,8 @@ let librarySections = [
   { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 }
 ];
 let libraryActiveSection = null; // null: Home (4 tiles + recent + recommended) | 'books' | 'sources' | 'tests' | 'materials'
+var normativesState; // Hoisted declaration to prevent TDZ ReferenceErrors
+var processState;    // Hoisted declaration to prevent TDZ ReferenceErrors
 let libraryV2Resources = [];
 let libraryV2Categories = [];
 let libraryV2RecommendedList = [];
@@ -6728,8 +6769,18 @@ function openLibrarySection(slug) {
       loadSourcesData();
     }
   }
-  if (slug === "normatives") {
-    if (!normativesState.loaded && !normativesState.loading) {
+  if (slug === "normatives" || slug === "cases" || slug === "practical_cases" || slug === "amaliy_yechimlar" || slug === "amaliy") {
+    libraryActiveSection = "normatives";
+    if (slug === "cases" || slug === "practical_cases" || slug === "amaliy_yechimlar" || slug === "amaliy") {
+      if (typeof normativesState !== 'undefined' && normativesState) {
+        normativesState.activeTab = "cases";
+      }
+    } else if (slug === "normatives") {
+      if (typeof normativesState !== 'undefined' && normativesState) {
+        normativesState.activeTab = "docs";
+      }
+    }
+    if (typeof normativesState !== 'undefined' && !normativesState.loaded && !normativesState.loading) {
       loadNormativesData();
     }
   }
@@ -7191,7 +7242,7 @@ function renderTasks() {
     content = renderTestsSectionHtml();
   } else if (libraryActiveSection === "materials") {
     content = renderMaterialsSectionHtml();
-  } else if (libraryActiveSection === "normatives") {
+  } else if (libraryActiveSection === "normatives" || libraryActiveSection === "cases" || libraryActiveSection === "practical_cases" || libraryActiveSection === "amaliy_yechimlar" || libraryActiveSection === "amaliy") {
     content = renderNormativesSectionHtml();
   } else if (libraryActiveSection === "process") {
     content = renderProcessSectionHtml();
@@ -7202,6 +7253,22 @@ function renderTasks() {
   }
 
   return `<div class="lib-scope">${content}</div>`;
+}
+
+function renderGenericSectionHtml(slug) {
+  return `
+    <div class="lib-section-wrap page lib-container" style="padding:16px;">
+      <div class="lib-back-nav" onclick="closeLibrarySection()">
+        ${libIcons.back('lib-back-svg', 16)} Kutubxona
+      </div>
+      <div class="proc-empty-box" style="text-align:center;padding:48px 16px;">
+        <div style="font-size:36px;margin-bottom:12px;">📂</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text-primary,#fff);">Hozircha ma'lumot mavjud emas</div>
+        <p style="font-size:13px;color:var(--text-secondary,#9ca3af);max-width:320px;margin:0 auto 16px;">Ushbu bo‘lim tez orada yangilanadi.</p>
+        <button type="button" class="btn" onclick="closeLibrarySection()" style="max-width:200px;margin:0 auto;">Kutubxonaga qaytish</button>
+      </div>
+    </div>
+  `;
 }
 
 // ------------------------------------------------------
@@ -23582,7 +23649,7 @@ window.handleTgStreamFallback = function(videoEl) {
 // 📋 NORMATIVLAR VA AMALIY YECHIMLAR (SHNQ / QMQ / STANDARTLAR & CASES)
 // ============================================================================
 
-let normativesState = {
+var normativesState = {
   activeTab: 'docs', // 'docs' (Normativlar bazasi) | 'cases' (Nima kerak?)
   panelOpen: false,
   documents: [],
@@ -23608,6 +23675,7 @@ let normativesState = {
   selectedDocType: "all",
   loading: false,
   loaded: false,
+  error: null,
   selectedDoc: null,
   selectedCase: null,
   activeStepIndex: 0
@@ -23763,10 +23831,17 @@ function clearAllNormativesFilters() {
 async function loadNormativesData() {
   if (normativesState.loading) return;
   normativesState.loading = true;
+  normativesState.error = null;
   try {
     const [docsRes, casesRes] = await Promise.all([
-      api('/api/normatives/list', { limit: 150 }),
-      api('/api/normatives/cases')
+      api('/api/normatives/list', { limit: 150 }).catch(err => {
+        console.error("LOAD NORMATIVES LIST ERROR:", err);
+        return { documents: [] };
+      }),
+      api('/api/normatives/cases').catch(err => {
+        console.error("LOAD NORMATIVES CASES ERROR:", err);
+        return { cases: [] };
+      })
     ]);
 
     const docs = (docsRes && (docsRes.documents || docsRes.items)) || [];
@@ -23777,9 +23852,11 @@ async function loadNormativesData() {
     normativesState.loaded = true;
   } catch (err) {
     console.error("LOAD NORMATIVES ERROR:", err);
+    normativesState.error = err.message || "Ma'lumotlarni yuklashda xatolik";
+    normativesState.loaded = true;
   } finally {
     normativesState.loading = false;
-    if (libraryActiveSection === "normatives") {
+    if (libraryActiveSection === "normatives" || libraryActiveSection === "cases") {
       render();
     }
   }
@@ -23880,10 +23957,31 @@ function renderNormativesSectionHtml() {
     `;
   }
 
+  if (normativesState.error && normativesState.documents.length === 0 && normativesState.cases.length === 0) {
+    return `
+      <div class="page lib-container lib-page-enter">
+        <div class="lib-back-nav" onclick="closeLibrarySection()">
+          ${libIcons.back('lib-back-svg', 16)} Kutubxona
+        </div>
+        <div class="proc-empty-box" style="text-align: center; padding: 60px 20px;">
+          <div style="font-size: 38px; margin-bottom: 12px;">⚠️</div>
+          <div style="font-weight: 700; font-size: 16px; color: var(--text-primary, #fff); margin-bottom: 8px;">Ma'lumotlarni yuklashda xatolik yuz berdi.</div>
+          <div style="font-size: 13px; color: var(--text-secondary, #9ca3af); max-width: 300px; margin: 0 auto 20px;">
+            Internet aloqasini tekshiring yoki qayta urinib ko'ring.
+          </div>
+          <button type="button" class="btn" onclick="normativesState.loaded=false;loadNormativesData();" style="max-width: 200px; margin: 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            🔄 Qayta urinish
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   const activeTab = normativesState.activeTab;
   const searchQuery = normativesState.searchQuery;
   const selectedCat = normativesState.selectedCategory;
   const open = !!normativesState.panelOpen;
+  const hasFilter = (selectedCat && selectedCat !== "Barchasi") || (normativesState.selectedStatus && normativesState.selectedStatus !== "all") || (normativesState.selectedDocType && normativesState.selectedDocType !== "all");
 
   return `
     <div class="page lib-container lib-page-enter normatives-page mcat">
@@ -23915,7 +24013,7 @@ function renderNormativesSectionHtml() {
           📑 Normativlar bazasi (${normativesState.documents.length})
         </button>
         <button type="button" class="norm-seg-btn ${activeTab === 'cases' ? 'active' : ''}" onclick="setNormativesTab('cases')">
-          💡 Amaliy vaziyatlar (${normativesState.cases.length})
+          💡 Amaliy yechimlar (${normativesState.cases.length})
         </button>
       </div>
 
@@ -24928,7 +25026,7 @@ function closeAdminModal() {
 // 23 Kategoriya, 220 ta batafsil bilim kartalari, qidiruv va progress
 // ======================================================
 
-const processState = {
+var processState = {
   loaded: false,
   loading: false,
   activeHub: 'hub', // 'hub' | 'remont' | 'design' | 'rabochka'

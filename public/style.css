@@ -10363,6 +10363,16 @@ button, a, input, select, textarea,
   .lib-material-card:hover,
   .lib-material-card-v2:hover,
   .library-v2-card:hover,
+  .norm-doc-card:hover,
+  .norm-case-card:hover,
+  .norm-step-item:hover,
+  .norm-related-card:hover,
+  .proc-hub-card:hover,
+  .proc-cat-card:hover,
+  .proc-item-card:hover,
+  .proc-design-step-card:hover,
+  .proc-rabochka-step-card:hover,
+  .proc-detail-ref-card:hover,
   .mcat-card:hover,
   .bk-card:hover,
   .mcat-pop-card:hover,
@@ -10421,6 +10431,49 @@ button, a, input, select, textarea,
     background-color: inherit;
     border-color: inherit;
   }
+
+  /* Touch container scroll behavior */
+  .norm-docs-grid,
+  .norm-cases-grid,
+  .proc-hub-grid,
+  .proc-cat-grid,
+  .proc-items-list {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Explicit class-based override for all mobile touch environments */
+html.is-touch-device .norm-doc-card:hover,
+html.is-touch-device .norm-case-card:hover,
+html.is-touch-device .norm-step-item:hover,
+html.is-touch-device .norm-related-card:hover,
+html.is-touch-device .proc-hub-card:hover,
+html.is-touch-device .proc-cat-card:hover,
+html.is-touch-device .proc-item-card:hover,
+html.is-touch-device .proc-design-step-card:hover,
+html.is-touch-device .proc-rabochka-step-card:hover,
+html.is-touch-device .proc-detail-ref-card:hover,
+html.is-touch-device .lib-book-card:hover,
+html.is-touch-device .lib-source-card:hover,
+html.is-touch-device .lib-test-card:hover,
+html.is-touch-device .lib-material-card:hover,
+html.is-touch-device .lib-material-card-v2:hover,
+html.is-touch-device .library-v2-card:hover,
+html.is-touch-device .library-tile-card:hover {
+  transform: none !important;
+  box-shadow: inherit !important;
+  filter: none !important;
+}
+
+html.is-touch-device .norm-docs-grid,
+html.is-touch-device .norm-cases-grid,
+html.is-touch-device .proc-hub-grid,
+html.is-touch-device .proc-cat-grid,
+html.is-touch-device .proc-items-list {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
 
   /* B. Fast, tactile tap response on press (:active) with 100-140ms recovery */
 
@@ -11303,10 +11356,12 @@ body {
   flex-direction: column;
 }
 
-.norm-case-card:hover {
-  background: var(--bg-surface-elevated, #1c1c24);
-  border-color: rgba(255,255,255,0.15);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .norm-case-card:hover {
+    background: var(--bg-surface-elevated, #1c1c24);
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+  }
 }
 
 .norm-case-card:active {
@@ -11386,10 +11441,12 @@ body {
   flex-direction: column;
 }
 
-.norm-doc-card:hover {
-  background: var(--bg-surface-elevated, #1c1c24);
-  border-color: rgba(255,255,255,0.15);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .norm-doc-card:hover {
+    background: var(--bg-surface-elevated, #1c1c24);
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+  }
 }
 
 .norm-doc-card:active {
@@ -12234,11 +12291,12 @@ body {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-}
-.proc-cat-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(0, 122, 255, 0.4);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+@media (hover: hover) and (pointer: fine) {
+  .proc-cat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 122, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+  }
 }
 .proc-cat-card:active {
   transform: scale(0.98);
@@ -12414,9 +12472,11 @@ body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.proc-item-card:hover {
-  border-color: rgba(0, 122, 255, 0.4);
-  transform: translateX(2px);
+@media (hover: hover) and (pointer: fine) {
+  .proc-item-card:hover {
+    border-color: rgba(0, 122, 255, 0.4);
+    transform: translateX(2px);
+  }
 }
 .proc-item-card:active {
   transform: scale(0.99);
@@ -12843,10 +12903,12 @@ body {
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
-.proc-hub-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .proc-hub-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  }
 }
 .proc-hub-card:active {
   transform: scale(0.98);
@@ -12930,9 +12992,11 @@ body {
   color: var(--text-primary, #ffffff);
   transition: all 0.2s ease;
 }
-.proc-hub-card:hover .proc-hub-btn {
-  background: #3b82f6;
-  color: #ffffff;
+@media (hover: hover) and (pointer: fine) {
+  .proc-hub-card:hover .proc-hub-btn {
+    background: #3b82f6;
+    color: #ffffff;
+  }
 }
 
 /* Oldingi / Keyingi navigatsiya qatori */
