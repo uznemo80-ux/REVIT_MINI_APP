@@ -661,7 +661,11 @@ let librarySections = [
   { id: 1, slug: 'books', name: 'Kitoblar', icon: '📚', description: 'Revit, BIM, arxitektura va interyer elektron kitoblari hamda ShNQ normativlari', is_active: true, order_index: 1 },
   { id: 2, slug: 'sources', name: 'Manbalar', icon: '📦', description: 'Revit oilalari (.rfa), shablonlar (.rte), DWG chizmalar va 3D parametrlar', is_active: true, order_index: 2 },
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
-  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 }
+  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
+  // Equipment — backend API alohida modulli (equipmentApi.js).
+  // Bu qator FAQAT DB'da equipment hali yo'q bo'lganda ishlatiladi
+  // (loadLibraryV2Data server javobini olgach bu ro'yxatni almashtiradi).
+  { id: 5, slug: 'equipment', name: 'Jihozlar', icon: '⚙️', description: "Arxitekt va loyihachilar uchun texnik jihozlar ma'lumotlar bazasi", is_active: true, order_index: 5 }
 ];
 let libraryActiveSection = null; // null: Home (4 tiles + recent + recommended) | 'books' | 'sources' | 'tests' | 'materials'
 let libraryV2Resources = [];
@@ -6553,6 +6557,11 @@ function openLibrarySection(slug) {
         if (libraryActiveSection === "materials") render();
       });
     }
+  // Equipment — init() FAQAT section ochilganda chaqiriladi.
+  // Har render() da emas — aks holda yangi state/listener yaratilib qoladi.
+  if (slug === "equipment" && typeof equipmentUi !== "undefined") {
+    equipmentUi.init({ rerender: () => { if (libraryActiveSection === "equipment") render(); } });
+  }
   }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -6563,6 +6572,10 @@ function closeLibrarySection() {
   currentView = null;
   activeMaterialDetail = null;
   libraryActiveSection = null;
+  // Equipment ichki holatini tozalaymiz (keyingi ochilish toza bo'ladi)
+  if (typeof equipmentUi !== "undefined") {
+    window.dispatchEvent(new Event("equipmentUi:reset"));
+  }
   librarySectionSearchQuery = "";
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -6822,12 +6835,26 @@ function renderTasks() {
   } else if (libraryActiveSection === "tests") {
     content = renderTestsSectionHtml();
   } else if (libraryActiveSection === "materials") {
+  } else if (libraryActiveSection === "equipment") {
+    // Equipment — alohida modul (public/equipmentUi.js).
+    // U o'z CSS scope'ini (.equipment-*) va o'z state'ini oladi.
+    // init() har render'da emas, FAQAT section ochilganda chaqiriladi.
+    if (typeof equipmentUi !== "undefined") {
+      content = equipmentUi.isDetailOpen() ? equipmentUi.renderDetail()
+             : equipmentUi.isListOpen()   ? equipmentUi.renderList()
+             : equipmentUi.renderHome();
+    } else {
+      content = `<div class="lib-scope"><div class="empty-box">Equipment moduli yuklanmagan</div></div>`;
+    }
     content = renderMaterialsSectionHtml();
   } else if (libraryActiveSection) {
     content = renderGenericSectionHtml(libraryActiveSection);
   } else {
     content = renderTasksHomeHtml();
   }
+  // Equipment o'z CSS klasslarini (.equipment-scope) ishlatadi —
+  // lib-scope qatlami unga kerak emas (ikki qatlam overflow buzadi).
+  if (libraryActiveSection === "equipment") return content;
 
   return `<div class="lib-scope">${content}</div>`;
 }

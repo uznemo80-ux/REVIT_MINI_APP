@@ -1268,7 +1268,9 @@ async function ensureLibraryV2Tables() {
         ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
         ('sources', 'Manbalar', 'RVT, RFA, DWG va boshqa fayllar', '📦', 'Revit oilalari, shablonlar, chizmalar va 3D modellar', 2),
         ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
-        ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4)
+        ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4),
+        -- Equipment (Jihozlar) — alohida backend modul (equipmentApi.js)
+        ('equipment', 'Jihozlar', 'Texnik jihozlar katalogi', '⚙️', 'Arxitekt va loyihachilar uchun texnik jihozlar ma''lumotlar bazasi', 5)
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
           subtitle = EXCLUDED.subtitle,
@@ -10210,6 +10212,20 @@ app.get('/api/health', async function (req, res) {
 });
 
 // ======================================================
+// ======================================================
+// EQUIPMENT (JIHOZLAR) API MOUNT
+// ======================================================
+// Alohida modul (equipmentApi.js) — mavjud endpointlarni tegimaydi.
+// Joylashuv: /api/health dan keyin, app.listen() dan OLDIN
+// (Express route'lar server tinglanishidan oldin ro'yxatga olinishi kerak).
+var mountEquipmentApi = require('./equipmentApi');
+try {
+  mountEquipmentApi(app, { pool: pool, requireAdmin: requireAdmin, getOrCreateUser: getOrCreateUser });
+  console.log('  [OK] Equipment API mount qilindi (/api/equipment/*)');
+} catch (equipmentMountError) {
+  console.error('  [ERROR] Equipment API mount qilinmadi:', equipmentMountError.message);
+}
+
 // SERVER START
 // ======================================================
 
@@ -10219,3 +10235,4 @@ app.listen(PORT, function () {
   console.log('Admin Telegram ID: ' + ADMIN_TELEGRAM_ID);
   console.log('==========================================');
 });
+
