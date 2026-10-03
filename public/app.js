@@ -4627,7 +4627,7 @@ function renderHome() {
   // 2-TALAB: Faqat admin belgilagan va faol (active) kurslarni chiqarish
   const availableCourses = state.is_admin
     ? (state.courses || [])
-    : (state.courses || []).filter(c => c.status === 'active');
+    : (state.courses || []).filter(c => c.status === 'active' || c.status === 'published' || c.status === 'in_progress');
   const featuredCourses = availableCourses.filter(c => c.show_on_home);
   const coursesToShow = featuredCourses.length > 0 ? featuredCourses : availableCourses.slice(0, 1);
 
@@ -4729,8 +4729,9 @@ function renderHome() {
       ${coursesToShow.map(course => {
         const coverSrc = formatImageUrl(course.cover_url);
         const retrySrc = getDriveFallbackUrl(course.cover_url);
+        const homeInProg = course.status === 'in_progress' && !state.is_admin;
         return `
-        <div class="course-card" onclick="openCourseCatalog(${Number(course.id)})">
+        <div class="course-card" onclick="${homeInProg ? "showToast('⏳ Ushbu kurs hozir tayyorlanmoqda.');" : `openCourseCatalog(${Number(course.id)})`}">
           <div class="course-card-header">
             ${coverSrc ? `<img src="${escapeHtml(coverSrc)}" data-retry="${escapeHtml(retrySrc)}" onerror="handleImageError(this)" style="width:100%; height:100%; object-fit:cover;" />` : ""}
             <div class="course-banner-text" style="${coverSrc ? 'background:rgba(0,0,0,0.5);' : ''}">
@@ -4738,6 +4739,7 @@ function renderHome() {
               <p>${escapeHtml(course.subtitle || '')}</p>
             </div>
           </div>
+          ${homeInProg ? `<div class="course-body"><div class="tag" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-weight:700; margin-bottom:8px;">🟡 Jarayonda</div><div style="font-size:13px; color:var(--text-secondary);">Ushbu kurs hozir tayyorlanmoqda.</div></div>` : `
           <div class="course-body">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div class="course-title" style="margin-bottom:0;">${escapeHtml(course.title)}</div>
@@ -4758,6 +4760,7 @@ function renderHome() {
               </button>
             </div>
           </div>
+          `}
         </div>
       `;
       }).join("") || `<div class="empty-box">Hozircha kurslar mavjud emas.</div>`}
@@ -5314,7 +5317,7 @@ async function submitCreateCourse() {
       cover_url: cover,
       status: status
     });
-    showToast(status === "active" ? "Yangi kurs sotuvda yaratildi!" : "Yangi kurs qoralamada saqlandi (o‘quvchilarga ko‘rinmaydi)!");
+    showToast(status === "active" || status === "published" ? "Yangi kurs ommaga chiqarildi!" : (status === "in_progress" ? "Yangi kurs “Jarayonda” holatida saqlandi (faqat karta ko‘rinadi)." : "Yangi kurs qoralamada saqlandi (o‘quvchilarga ko‘rinmaydi)!"));
     closeDetail();
     loadContent();
   } catch (err) {
@@ -5841,7 +5844,7 @@ function renderCourseModules() {
                   <span>${escapeHtml(lesson.title)}</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                  ${lesson.is_free ? `<span class="free-badge">Namuna</span>` : ""}
+                  ${lesson.is_free ? `<span class="free-badge">Bepul namuna</span>` : (!lesson.available && !state.is_admin ? `<span class="paid-lesson-chip">🔒 Pullik dars</span>` : "")}
                   ${state.is_admin ? `<button class="admin-small-btn" style="padding:3px 7px; font-size:10.5px;" onclick="event.stopPropagation(); openEditLessonView(${Number(lesson.id)})">✏️</button>` : ""}
                 </div>
               </div>

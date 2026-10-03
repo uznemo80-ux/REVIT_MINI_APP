@@ -2085,6 +2085,57 @@ function hasAccess(user) {
   return acc.is_active;
 }
 
+// ======================================================
+// KURS NASHR HOLATI: published ('published' yoki eski 'active') | in_progress | draft
+// ======================================================
+function courseStatusKind(raw) {
+  var v = String(raw == null ? '' : raw).trim().toLowerCase();
+  if (v === 'active' || v === 'published' || v === 'publish') return 'published';
+  if (v === 'in_progress' || v === 'in-progress' || v === 'inprogress' || v === 'progress') return 'in_progress';
+  return 'draft';
+}
+
+// O'quvchi uchun: faqat published kurs ichiga (modul/dars/test/vazifa) kiriladi. Admin — hamma holatda.
+function denyCourseByStatus(res, course, isAdmin) {
+  if (!course || isAdmin) return false;
+  var kind = courseStatusKind(course.status);
+  if (kind === 'published') return false;
+  if (kind === 'in_progress') {
+    res.status(403).json({ ok: false, error: 'in_progress', course_status: 'in_progress', message: 'Ushbu kurs hozir tayyorlanmoqda.' });
+  } else {
+    res.status(403).json({ ok: false, error: 'draft', message: "Ushbu kurs hozircha o'quvchilarga yopiq." });
+  }
+  return true;
+}
+
+// "Jarayonda" kurs uchun o'quvchiga faqat kartochka ma'lumotlari beriladi (narx, modul/dars soni, tafsilotlar yuborilmaydi)
+var IN_PROGRESS_PUBLIC_FIELDS = ['id', 'title', 'subtitle', 'cover_url', 'category', 'categories', 'order_index', 'show_on_home'];
+function sanitizeInProgressCourse(c) {
+  var out = {};
+  IN_PROGRESS_PUBLIC_FIELDS.forEach(function (k) { if (c[k] !== undefined) out[k] = c[k]; });
+  out.status = 'in_progress';
+  out.publication_status = 'in_progress';
+  out.is_in_progress = true;
+  out.is_free = false;
+  return out;
+}
+
+async function isAdminUserObject(user) {
+  if (!user) return false;
+  if (String(user.telegram_id) === String(ADMIN_TELEGRAM_ID)) return true;
+  var adm = await getAdminByTelegramId(user.telegram_id);
+  return Boolean(adm);
+}
+
+async function getCourseByLessonId(lessonId) {
+  var r = await pool.query('SELECT c.* FROM lessons l JOIN modules m ON m.id = l.module_id LEFT JOIN courses c ON c.id = m.course_id WHERE l.id = $1 LIMIT 1', [Number(lessonId)]);
+  return r.rows[0] && r.rows[0].id ? r.rows[0] : null;
+}
+async function getCourseByModuleId(moduleId) {
+  var r = await pool.query('SELECT c.* FROM modules m LEFT JOIN courses c ON c.id = m.course_id WHERE m.id = $1 LIMIT 1', [Number(moduleId)]);
+  return r.rows[0] && r.rows[0].id ? r.rows[0] : null;
+}
+
 // Hech qachon kirish huquqi berilmagan (hali to'lov qilmagan / yangi) foydalanuvchimi?
 // Bunday foydalanuvchiga 1-modul bepul namuna sifatida ochiq bo'ladi.
 // Lekin agar admin avval ruxsat berib, keyin bekor qilgan/tugatgan bo'lsa (access_until mavjud, lekin o'tgan),
@@ -2561,6 +2612,11 @@ app.post('/api/content', async function (req, res) {
         : "SELECT * FROM courses WHERE status IN ('active', 'published', 'in_progress') ORDER BY order_index ASC, id ASC";
       var coursesRes = await pool.query(coursesQuery);
       courses = coursesRes.rows.map(function (c) {
+        if (!isAdminUser && courseStatusKind(c.status) === 'in_progress') {
+          var basic = sanitizeInProgressCourse(c);
+          basic.cover_url = formatDirectImageUrl(c.cover_url);
+          return basic;
+        }
         var isDiscountActive = Boolean(c.discount_price) && c.discount_until && new Date(c.discount_until) > new Date();
         var isFree = isFreeCourseRecord(c);
         return Object.assign({}, c, {
@@ -2568,7 +2624,8 @@ app.post('/api/content', async function (req, res) {
           is_discount_active: isDiscountActive,
           is_free: isFree,
           original_price: c.price,
-          display_price: isDiscountActive ? c.discount_price : c.price
+          display_price: isDiscountActive ? c.discount_price : c.price,
+          publication_status: courseStatusKind(c.status)
         });
       });
     } catch (cErr) {
@@ -2576,7 +2633,7 @@ app.post('/api/content', async function (req, res) {
     }
 
     var activeCourseIds = courses.filter(function (c) {
-      return isAdminUser || c.status === 'active' || c.status === 'published';
+      return isAdminUser || courseStatusKind(c.status) === 'published';
     }).map(function (c) { return c.id; });
     var activeCourseMap = new Map();
     courses.forEach(function (c) { activeCourseMap.set(c.id, c); });
@@ -2623,7 +2680,7 @@ app.post('/api/content', async function (req, res) {
         if (watched) watchedCount++;
         return {
           id: lesson.id, title: lesson.title, is_free: Boolean(lesson.is_free),
-          task_text: lesson.task_text, available: available, watched: watched
+          task_text: available ? lesson.task_text : null, available: available, watched: watched
         };
       });
 
@@ -2637,8 +2694,8 @@ app.post('/api/content', async function (req, res) {
     var lastLesson = null;
     try {
       var lastLessonResult = await pool.query(
-        'SELECT p.lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title, c.id AS course_id, c.title AS course_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id LEFT JOIN courses c ON c.id = m.course_id WHERE p.user_id = $1 AND p.watched = true ORDER BY p.id DESC LIMIT 1',
-        [user.id]
+        'SELECT p.lesson_id, l.title AS lesson_title, l.order_index AS lesson_order, m.id AS module_id, m.title AS module_title, c.id AS course_id, c.title AS course_title FROM progress p JOIN lessons l ON l.id = p.lesson_id JOIN modules m ON m.id = l.module_id LEFT JOIN courses c ON c.id = m.course_id WHERE p.user_id = $1 AND p.watched = true AND ($2::boolean = true OR c.status IN (\'active\', \'published\')) ORDER BY p.id DESC LIMIT 1',
+        [user.id, isAdminUser]
       );
       lastLesson = lastLessonResult.rows[0] || null;
     } catch (llError) {
@@ -2902,7 +2959,7 @@ app.post('/api/course/:id/modules', async function (req, res) {
         if (watched) watchedCount++;
         return {
           id: lesson.id, title: lesson.title, is_free: Boolean(lesson.is_free),
-          task_text: lesson.task_text, available: available, watched: watched
+          task_text: available ? lesson.task_text : null, available: available, watched: watched
         };
       });
 
@@ -3327,6 +3384,8 @@ app.post('/api/practice/:lessonId/submit', async function (req, res) {
     var lesson = lessonResult.rows[0];
     if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
 
+    if (denyCourseByStatus(res, await getCourseByLessonId(lessonId), await isAdminUserObject(user))) return;
+
     var result = await pool.query(
       `INSERT INTO practice_submissions (lesson_id, user_id, submission_url, comment, status, admin_comment, submitted_at, reviewed_at)
        VALUES ($1, $2, $3, $4, 'submitted', NULL, NOW(), NULL)
@@ -3504,6 +3563,7 @@ app.post('/api/lesson/:id/question', async function (req, res) {
     if (!questionText) {
       return res.status(400).json({ error: 'Savol matni kiritilishi shart' });
     }
+    if (denyCourseByStatus(res, await getCourseByLessonId(lessonId), isAdmin)) return;
 
     var lessonRes = await pool.query(
       `SELECT l.id, l.title AS lesson_title, m.title AS module_title, c.title AS course_title
@@ -3714,6 +3774,7 @@ app.post('/api/progress/mark', async function (req, res) {
 
     var lessonId = req.body.lesson_id;
     if (!lessonId) return res.status(400).json({ error: 'lesson_id majburiy' });
+    if (denyCourseByStatus(res, await getCourseByLessonId(lessonId), await isAdminUserObject(user))) return;
 
     await pool.query(
       'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
@@ -3738,6 +3799,7 @@ app.post('/api/module/:id/test', async function (req, res) {
     if (await enforceNotRestricted(user, res)) return;
 
     var isMainAdminForTest = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    if (denyCourseByStatus(res, await getCourseByModuleId(req.params.id), await isAdminUserObject(user))) return;
     if (!hasAccess(user) && !isMainAdminForTest) {
       return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
     }
@@ -3784,6 +3846,7 @@ app.post('/api/module/:id/submit', async function (req, res) {
     if (await enforceNotRestricted(user, res)) return;
 
     var isMainAdminForSubmit = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
+    if (denyCourseByStatus(res, await getCourseByModuleId(req.params.id), await isAdminUserObject(user))) return;
     if (!hasAccess(user) && !isMainAdminForSubmit) {
       return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
     }
@@ -5896,7 +5959,7 @@ app.post('/api/admin/courses/:id/status', requireAdmin, async function (req, res
     if (!result.rows[0]) {
       return res.status(404).json({ error: 'Kurs topilmadi' });
     }
-    return res.json({ ok: true, course: result.rows[0] });
+    return res.json({ ok: true, course: Object.assign({}, result.rows[0], { publication_status: courseStatusKind(result.rows[0].status) }) });
   } catch (error) {
     console.error('UPDATE COURSE STATUS ERROR:', error);
     return res.status(500).json({ error: 'Kurs holatini o‘zgartirishda xato' });
@@ -7074,7 +7137,7 @@ app.post('/api/library/v2/recommended', async function (req, res) {
 // Kurslar ro'yxati (Test filter dropdown uchun)
 app.all(['/api/library/v2/courses'], async function (req, res) {
   try {
-    var result = await pool.query("SELECT id, title FROM courses WHERE status = 'active' ORDER BY order_index ASC, id ASC");
+    var result = await pool.query("SELECT id, title FROM courses WHERE status IN ('active', 'published') ORDER BY order_index ASC, id ASC");
     return res.json({ ok: true, courses: result.rows });
   } catch (err) {
     console.error('LIBRARY COURSES ERROR:', err.message);

@@ -13688,4 +13688,4 @@ body.is-scrolling * {
 .lib-react-action-btn.active.save-btn {
   color: #f59e0b;
 }
-
+.paid-lesson-chip { font-size: 10.5px; font-weight: 700; color: var(--text-secondary); background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
