@@ -806,9 +806,14 @@ let librarySections = [
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
   { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
   { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 },
-  { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 }
+  { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 },
+  // Equipment (Jihozlar) — alohida backend modul (equipmentApi.js) va
+  // frontend modul (public/equipmentUi.js). Bu qator FAQAT DB'da equipment
+  // hali yo'q bo'lganda ishlatiladi (loadLibraryV2Data server javobini olgach
+  // bu ro'yxatni almashtiradi).
+  { id: 7, slug: 'equipment', name: 'Jihozlar', icon: '⚙️', subtitle: 'Texnik jihozlar katalogi', description: "Arxitekt va loyihachilar uchun texnik jihozlar ma'lumotlar bazasi", is_active: true, order_index: 7 }
 ];
-let libraryActiveSection = null; // null: Home (4 tiles + recent + recommended) | 'books' | 'sources' | 'tests' | 'materials'
+let libraryActiveSection = null; // null: Home | 'books' | 'sources' | 'tests' | 'materials' | 'normatives' | 'process' | 'equipment' | 'liked' | 'saved'
 var normativesState; // Hoisted declaration to prevent TDZ ReferenceErrors
 var processState;    // Hoisted declaration to prevent TDZ ReferenceErrors
 let libraryV2Resources = [];
@@ -6845,6 +6850,12 @@ function openLibrarySection(slug) {
       loadSourcesData();
     }
   }
+  // Equipment (Jihozlar) — alohida modul. init() FAQAT shu yerda chaqiriladi
+  // (har render() da emas — aks holda yangi state/listener yaratilib qoladi).
+  // Boshqa hech bir branchga tegilmaydi.
+  if (slug === "equipment" && typeof equipmentUi !== "undefined") {
+    equipmentUi.init({ rerender: () => { if (libraryActiveSection === "equipment") render(); } });
+  }
   if (slug === "normatives" || slug === "cases" || slug === "practical_cases" || slug === "amaliy_yechimlar" || slug === "amaliy") {
     libraryActiveSection = "normatives";
     if (slug === "cases" || slug === "practical_cases" || slug === "amaliy_yechimlar" || slug === "amaliy") {
@@ -6884,6 +6895,11 @@ function closeLibrarySection() {
     processState.activeItemDetail = null;
     processState.activeDesignStep = null;
     processState.activeRabochkaStep = null;
+  }
+  // Equipment ichki holatini tozalaymiz (keyingi ochilish toza bo'ladi).
+  // processState ga tegilmaydi — Equipment alohida modul.
+  if (typeof equipmentUi !== "undefined") {
+    window.dispatchEvent(new Event("equipmentUi:reset"));
   }
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -7643,12 +7659,30 @@ function renderTasks() {
     content = renderLibraryUniversalReactionsSectionHtml("like");
   } else if (libraryActiveSection === "saved") {
     content = renderLibraryUniversalReactionsSectionHtml("save");
+  } else if (libraryActiveSection === "equipment") {
+    // Equipment (Jihozlar) — alohida modul (public/equipmentUi.js).
+    // U o'z CSS scope'ini (.equipment-scope) va o'z state'ini oladi.
+    // init() har render'da emas, FAQAT openLibrarySection da chaqiriladi.
+    if (typeof equipmentUi !== "undefined") {
+      content = equipmentUi.isDetailOpen() ? equipmentUi.renderDetail()
+             : equipmentUi.isListOpen()   ? equipmentUi.renderList()
+             : equipmentUi.renderHome();
+    } else {
+      content = `<div class="lib-section-wrap page lib-container" style="padding:16px">
+        <div class="lib-back-nav" onclick="closeLibrarySection()">← Kutubxona</div>
+        <div class="empty-box">Equipment moduli yuklanmagan</div>
+      </div>`;
+    }
   } else if (libraryActiveSection) {
     content = renderGenericSectionHtml(libraryActiveSection);
   } else {
     content = renderTasksHomeHtml();
   }
 
+  // Equipment o'z CSS klasslarini (.equipment-scope) ishlatadi va o'z
+  // safe-area/overflow qoidalariga ega — lib-scope qatlami ulansa
+  // ikki qatlam overflow yoki mobil padding muammosi chiqadi.
+  if (libraryActiveSection === "equipment") return content;
   return `<div class="lib-scope">${content}</div>`;
 }
 
@@ -7686,6 +7720,8 @@ function renderTasksHomeHtml() {
       case "materials": return libIcons.materials("lib-sec-svg", 22);
       case "normatives": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
       case "process": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
+      // Equipment (Jihozlar) — soat/gear + o'lcham chizig'i. Manbalar ikonkasiga TUSHMAYDI.
+      case "equipment": return `<svg class="lib-sec-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path><circle cx="15" cy="15" r="2.5"></circle></svg>`;
       default: return libIcons.sources("lib-sec-svg", 22);
     }
   }
@@ -13565,6 +13601,7 @@ let adminAnalyticsDashboardState = {
   error: null
 };
 let adminData = {
+  equipmentStats: null,   // Equipment (Jihozlar) admin statistikasi
   stats: null,
   activeUsers: [],
   analyticsHistory: null,
@@ -13749,6 +13786,18 @@ async function adminNavigate(to, subTo) {
       adminView = "admins";
       const data = await adminApi("/api/admin/admins").catch(() => ({ admins: [] }));
       adminData.admins = data.admins || [];
+    } else if (to === "equipment") {
+      adminView = "equipment";
+      try {
+        if (typeof equipmentAdminUi !== "undefined") {
+          equipmentAdminUi.reset();
+          await equipmentAdminUi.load(true);
+        }
+        const st = await api('/api/admin/equipment/stats', {}).catch(() => ({ ok: false }));
+        if (st && st.ok) adminData.equipmentStats = st;
+      } catch (eqErr) {
+        console.warn("Equipment admin load error:", eqErr);
+      }
     } else if (to === "normatives") {
       adminView = "normatives";
       try {
@@ -14010,6 +14059,21 @@ function renderAdminRootMenu() {
               8. Adminlar / Xavfsizlik
             </div>
             <div class="admin-hub-desc">Adminlar tizimi, rollar, taqiqlar va tizim xavfsizligi</div>
+          </div>
+          <div class="admin-hub-chevron">→</div>
+        </div>
+
+        <!-- 10. JIHOZLAR (EQUIPMENT) -->
+        <div class="admin-hub-card" onclick="adminNavigate('equipment')">
+          <div class="admin-hub-icon-wrap" style="background:rgba(52,211,153,0.12); color:#34d399;">
+            ⚙️
+          </div>
+          <div class="admin-hub-text">
+            <div class="admin-hub-title">
+              10. Jihozlar (Equipment)
+              <span class="admin-hub-badge">${(adminData.equipmentStats && adminData.equipmentStats.total) || 0} jihoz</span>
+            </div>
+            <div class="admin-hub-desc">Texnik jihozlar katalogi — draft/published boshqaruvi, rasmiy manbalar va validatsiya</div>
           </div>
           <div class="admin-hub-chevron">→</div>
         </div>
@@ -16759,6 +16823,12 @@ function renderAdminPanel() {
     bodyHtml = renderAdminAdminsView();
   } else if (currentLevel === "normatives") {
     bodyHtml = renderAdminNormativesCMS();
+  } else if (currentLevel === "equipment") {
+    // Equipment (Jihozlar) — alohida modul (public/equipmentAdminUi.js).
+    // O'z .eqa-* CSS scope'ini oladi; admin-page qatlami unga tegilmaydi.
+    bodyHtml = (typeof equipmentAdminUi !== "undefined")
+      ? equipmentAdminUi.render()
+      : `<div class="empty-box">Equipment admin moduli yuklanmagan</div>`;
   } else {
     bodyHtml = renderAdminRootMenu();
   }

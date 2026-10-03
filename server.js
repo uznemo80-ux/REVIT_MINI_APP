@@ -1305,7 +1305,7 @@ async function ensureLibraryV2Tables() {
       await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_order ON library_sections(order_index)');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_library_sections_slug ON library_sections(slug)');
 
-      // Seed default 4 sections
+      // Seed default sections (books, sources, tests, materials, normatives, process, equipment)
       await pool.query(`
         INSERT INTO library_sections (slug, name, subtitle, icon, description, order_index) VALUES
         ('books', 'Kitoblar', 'Kitoblar va o''quv qo''llanmalar', '📚', 'Arxitektura, BIM, interyer va qurilish bo''yicha professional adabiyotlar', 1),
@@ -1313,7 +1313,9 @@ async function ensureLibraryV2Tables() {
         ('tests', 'Testlar', 'Bilimingizni tekshiring', '✓', 'Kurs va darslar bo''yicha interaktiv sinov testlari', 3),
         ('materials', 'Materiallar', 'Qurilish materiallari haqida', '🧱', 'Qurilish va pardozlash materiallari ensiklopediyasi', 4),
         ('normatives', 'Normativlar va amaliy yechimlar', 'SHNQ, QMQ va standartlar', '📋', 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', 5),
-        ('process', 'Jarayon', 'Interyer va remont bosqichlari', '⚡', 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', 6)
+        ('process', 'Jarayon', 'Interyer va remont bosqichlari', '⚡', 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', 6),
+        -- Equipment (Jihozlar) — alohida backend modul (equipmentApi.js)
+        ('equipment', 'Jihozlar', 'Texnik jihozlar katalogi', '⚙️', 'Arxitekt va loyihachilar uchun texnik jihozlar ma''lumotlar bazasi', 7)
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
           subtitle = EXCLUDED.subtitle,
@@ -7239,13 +7241,20 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
       savedCount = countRes.rows[0].count || 0;
       var rpRes = await pool.query('SELECT page_number FROM reading_progress WHERE user_id = $1 AND book_id = $2', [user.id, bookId]);
       if (rpRes.rows.length) lastPage = rpRes.rows[0].page_number || 1;
-    } catch (bmErr) {}
-    var isLiked = false, likeCount = 0, readCount = 0;
-    try {
-      await ensureBookLikes();
-      isLiked = (await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId])).rows.length > 0;
-      likeCount = (await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId])).rows[0].c;
-      readCount = (await pool.query('SELECT COUNT(*)::int AS c FROM reading_progress WHERE book_id = $1', [bookId])).rows[0].c;
+    } catch (bmErr) {}
+
+    var isLiked = false, likeCount = 0, readCount = 0;
+
+    try {
+
+      await ensureBookLikes();
+
+      isLiked = (await pool.query('SELECT 1 FROM book_likes WHERE user_id = $1 AND book_id = $2', [user.id, bookId])).rows.length > 0;
+
+      likeCount = (await pool.query('SELECT COUNT(*)::int AS c FROM book_likes WHERE book_id = $1', [bookId])).rows[0].c;
+
+      readCount = (await pool.query('SELECT COUNT(*)::int AS c FROM reading_progress WHERE book_id = $1', [bookId])).rows[0].c;
+
     } catch (lkErr) {}
 
     var whatLearn = [];
@@ -11930,6 +11939,20 @@ app.get('/api/health', async function (req, res) {
     });
   }
 });
+
+// ======================================================
+// EQUIPMENT (JIHOZLAR) API MOUNT
+// ======================================================
+// Alohida modul (equipmentApi.js) — mavjud endpointlarni tegimaydi.
+// Joylashuv: /api/health dan keyin, app.listen() dan OLDIN
+// (Express route'lar server tinglanishidan oldin ro'yxatga olinishi kerak).
+var mountEquipmentApi = require('./equipmentApi');
+try {
+  mountEquipmentApi(app, { pool: pool, requireAdmin: requireAdmin, getOrCreateUser: getOrCreateUser });
+  console.log('  [OK] Equipment API mount qilindi (/api/equipment/*)');
+} catch (equipmentMountError) {
+  console.error('  [ERROR] Equipment API mount qilinmadi:', equipmentMountError.message);
+}
 
 // ======================================================
 // SERVER START

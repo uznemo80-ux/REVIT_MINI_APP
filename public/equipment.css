@@ -1,0 +1,1020 @@
+/* ======================================================
+   YOSHUZBEKK — EQUIPMENT (JIHOZLAR) UI
+   ======================================================
+   Scoped: barcha selector .equipment-* prefiksi bilan.
+   Mavjud CSS ga tegilmaydi. Mavjud :root o'zgaruvchilarini
+   (--bg-surface, --text-primary, --accent ...) ishlatadi —
+   shu sabab dark/light mavzu avtomatik mos keladi.
+
+   Apple/Swiss minimal: oq fon (mavzu orqali), toza
+   tipografiya, yumshoq radius, juda kam border.
+   ====================================================== */
+
+/* ---------- KONTEYNER ---------- */
+/* --- Overflow guard -------------------------------------------------
+   Telegram Mini App mobil viewportda gorizontal scroll chiqmasligi
+   uchun. Faqat .equipment-* ichida — body/html ga tegilmaydi.       */
+.equipment-scope,
+.equipment-scope *,
+.equipment-scope *::before,
+.equipment-scope *::after {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.equipment-scope {
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
+  /* AGENTS.md #25 — top inset (Telegram status bar), bottom inset (nav area) */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  min-height: 100%;
+}
+/* Grid/flex bolalar kichraytirilishi (min-width:0) — shrinkni bo'sh qoldirmaslik */
+.equipment-container,
+.equipment-cat-grid,
+.equipment-grid,
+.equipment-card,
+.equipment-cat-card,
+.equipment-spec-table,
+.equipment-dim-grid,
+.equipment-list-row { min-width: 0; }
+/* Uzun so'z / URL / model kodi chetga chiqmasin */
+.equipment-scope h1,
+.equipment-scope h2,
+.equipment-scope p,
+.equipment-scope span,
+.equipment-scope div {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* Rasmlar konteynerdan chiqmasin */
+.equipment-scope img { max-width: 100%; height: auto; }
+
+.equipment-scope {
+  padding: 0 0 40px;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.equipment-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  /* AGENTS.md #25 SAFE AREA — Telegram Mini App top/bottom inset */
+  padding: 0 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.equipment-page-enter {
+  animation: equipmentFadeUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes equipmentFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- HEADER ---------- */
+.equipment-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  padding: 14px 0 12px;
+}
+
+.equipment-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.equipment-back-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.equipment-back-btn:active { transform: scale(0.92); background: var(--bg-surface-hover); }
+
+.equipment-title-wrap { flex: 1; min-width: 0; }
+
+.equipment-title {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equipment-subtitle {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- SEARCH ---------- */
+.equipment-search-wrap {
+  margin-top: 12px;
+  position: relative;
+}
+
+.equipment-search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 38px 0 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.equipment-search-input::placeholder { color: var(--text-muted); }
+.equipment-search-input:focus {
+  border-color: var(--border-focus);
+  background: var(--bg-surface);
+}
+
+.equipment-search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.equipment-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-hover);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.equipment-search-clear.visible { display: flex; }
+
+/* ---------- FILTER CHIPS ---------- */
+.equipment-filters-bar {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 12px 0 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.equipment-filters-bar::-webkit-scrollbar { display: none; }
+
+.equipment-filter-chip {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.equipment-filter-chip:active { transform: scale(0.95); }
+
+.equipment-filter-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.equipment-filter-chip .eq-chip-count {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ---------- KATEGORIYA GRID ---------- */
+.equipment-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.equipment-cat-card {
+  position: relative;
+  padding: 16px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  overflow: hidden;
+}
+.equipment-cat-card:active {
+  transform: scale(0.975);
+  border-color: var(--border-focus);
+  background: var(--bg-surface-elevated);
+}
+
+.equipment-cat-icon {
+  font-size: 26px;
+  line-height: 1;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.equipment-cat-name {
+  font-size: 14.5px;
+  font-weight: 620;
+  color: var(--text-primary);
+  margin: 0 0 3px;
+  letter-spacing: -0.01em;
+}
+
+.equipment-cat-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.equipment-cat-meta {
+  margin-top: 9px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.equipment-cat-badge {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-full);
+  padding: 3px 8px;
+}
+
+/* ---------- CARD GRID (responsive) ---------- */
+.equipment-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 11px;
+  margin-top: 14px;
+}
+
+/* ---------- CARD ---------- */
+.equipment-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+.equipment-card:active {
+  transform: scale(0.985);
+  border-color: var(--border-focus);
+}
+
+.equipment-card-img-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equipment-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Rasm yo'q / broken — layout buzilmaydi */
+.equipment-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-align: center;
+  padding: 4px;
+}
+.equipment-img-placeholder .eq-ph-icon { font-size: 22px; opacity: 0.35; }
+
+.equipment-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.equipment-card-brand {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equipment-card-name {
+  font-size: 14px;
+  font-weight: 580;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  line-height: 1.32;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.equipment-card-model {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin: 0 0 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equipment-card-specs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.equipment-spec-pill {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-xs);
+  padding: 2.5px 7px;
+  white-space: nowrap;
+}
+
+/* ---------- CARD ACTIONS ---------- */
+.equipment-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.equipment-action-btn {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: transform 0.1s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.equipment-action-btn:active { transform: scale(0.9); }
+.equipment-action-btn.busy { opacity: 0.45; pointer-events: none; }
+
+.equipment-action-btn.liked {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.equipment-action-btn.saved {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.equipment-action-btn .eq-count {
+  font-size: 11px;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- SKELETON ---------- */
+.equipment-skeleton-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+}
+
+.equipment-skel {
+  background: linear-gradient(90deg,
+    var(--bg-surface-elevated) 25%,
+    var(--bg-surface-hover) 50%,
+    var(--bg-surface-elevated) 75%);
+  background-size: 200% 100%;
+  animation: equipmentShimmer 1.3s ease-in-out infinite;
+  border-radius: var(--radius-xs);
+}
+
+@keyframes equipmentShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.equipment-skel-img { width: 96px; height: 96px; min-width: 96px; border-radius: var(--radius-md); }
+.equipment-skel-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 3px; }
+.equipment-skel-line { height: 11px; }
+.equipment-skel-line.w70 { width: 70%; }
+.equipment-skel-line.w45 { width: 45%; }
+.equipment-skel-line.w90 { width: 90%; }
+
+/* ---------- EMPTY / ERROR ---------- */
+.equipment-empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.equipment-empty-icon { font-size: 42px; opacity: 0.3; margin-bottom: 12px; }
+
+.equipment-empty-title {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+
+.equipment-empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.equipment-retry-btn {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.equipment-retry-btn:active { transform: scale(0.94); }
+
+/* ---------- LOAD MORE ---------- */
+.equipment-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 8px;
+}
+
+.equipment-load-more {
+  height: 42px;
+  padding: 0 26px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 550;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+.equipment-load-more:active { transform: scale(0.96); border-color: var(--border-focus); }
+.equipment-load-more:disabled { opacity: 0.45; pointer-events: none; }
+
+/* ---------- DETAIL ---------- */
+.equipment-detail-cover {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  margin-bottom: 16px;
+}
+.equipment-detail-cover img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* ---------- GALLERY ---------- */
+.equipment-gallery {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.equipment-gallery-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+}
+.equipment-gallery-track::-webkit-scrollbar { display: none; }
+
+.equipment-gallery-item {
+  flex: 0 0 auto;
+  width: 78%;
+  scroll-snap-align: center;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  cursor: zoom-in;
+}
+.equipment-gallery-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.equipment-gallery-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+.equipment-gallery-dot {
+  width: 5px; height: 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.42);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.equipment-gallery-dot.active { width: 16px; background: #fff; }
+
+/* Lightbox */
+.equipment-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: equipmentFadeIn 0.2s ease;
+}
+@keyframes equipmentFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.equipment-lightbox img {
+  max-width: 94vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: var(--radius-xs);
+}
+
+.equipment-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- DETAIL META ---------- */
+.equipment-detail-brand {
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+
+.equipment-detail-name {
+  font-size: 21px;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+
+.equipment-detail-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.equipment-chip {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.equipment-detail-desc {
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+}
+
+/* ---------- SECTIONS ---------- */
+.equipment-section {
+  margin-bottom: 22px;
+}
+
+.equipment-section-title {
+  font-size: 12px;
+  font-weight: 640;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ---------- DIMENSIONS ---------- */
+.equipment-dim-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.equipment-dim-cell {
+  padding: 11px 8px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  text-align: center;
+}
+.equipment-dim-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.equipment-dim-value {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.equipment-dim-unit { font-size: 10px; color: var(--text-muted); margin-left: 1px; }
+
+/* ---------- SPEC TABLE (dynamic) ---------- */
+.equipment-spec-table {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.equipment-spec-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+.equipment-spec-row:last-child { border-bottom: none; }
+
+.equipment-spec-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.equipment-spec-value {
+  flex: 0 0 auto;
+  max-width: 58%;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.equipment-spec-value .eq-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+
+/* NULL qiymat — "Ishlab chiqaruvchi tomonidan ko'rsatilmagan" */
+.equipment-spec-value.not-specified {
+  font-weight: 400;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------- ARXITEKT TAVSIYASI (alohida blok) ---------- */
+.equipment-arch-block {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--warning-soft, rgba(255,171,0,0.3));
+  background: var(--warning-soft, rgba(255,171,0,0.07));
+  padding: 11px 13px;
+  margin-bottom: 8px;
+}
+
+.equipment-arch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warning);
+  margin-bottom: 6px;
+}
+
+.equipment-arch-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.equipment-regular-note {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  margin-bottom: 7px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ---------- LIST ROW (connections / sources / docs) ---------- */
+.equipment-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  margin-bottom: 7px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.1s ease;
+}
+.equipment-list-row:active { transform: scale(0.985); }
+
+.equipment-list-icon {
+  width: 30px; height: 30px;
+  min-width: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.equipment-list-body { flex: 1; min-width: 0; }
+.equipment-list-title {
+  font-size: 13px;
+  font-weight: 580;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.equipment-list-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.equipment-list-arrow { color: var(--text-muted); font-size: 14px; }
+
+/* ---------- ADVANTAGES / LIMITATIONS ---------- */
+.equipment-al-list { margin: 0; padding: 0; list-style: none; }
+
+.equipment-al-item {
+  display: flex;
+  gap: 9px;
+  padding: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+}
+.equipment-al-item:last-child { border-bottom: none; }
+.equipment-al-icon { font-size: 13px; flex: 0 0 auto; margin-top: 1px; }
+.equipment-al-item.adv .equipment-al-icon { color: var(--success); }
+.equipment-al-item.lim .equipment-al-icon { color: var(--warning); }
+
+/* ---------- DETAIL ACTIONS (sticky) ---------- */
+.equipment-detail-actions {
+  display: flex;
+  gap: 9px;
+  padding: 14px 0 8px;
+}
+
+.equipment-detail-action {
+  flex: 1;
+  height: 46px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: transform 0.1s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.equipment-detail-action:active { transform: scale(0.96); }
+.equipment-detail-action.busy { opacity: 0.5; pointer-events: none; }
+.equipment-detail-action.liked { color: var(--danger); border-color: var(--danger); }
+.equipment-detail-action.saved { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- RESPONSIVE ---------- */
+@media (min-width: 640px) {
+  .equipment-cat-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .equipment-grid { grid-template-columns: repeat(2, 1fr); gap: 13px; }
+  .equipment-container { padding: 0 20px; }
+  .equipment-detail-name { font-size: 24px; }
+}
+
+@media (min-width: 960px) {
+  .equipment-cat-grid { grid-template-columns: repeat(4, 1fr); }
+  .equipment-grid { grid-template-columns: repeat(3, 1fr); }
+  .equipment-dim-grid { grid-template-columns: repeat(4, 1fr); }
+  /* safe-area larni saqlab, faqat yon chekkalarni kengaytiramiz */
+  .equipment-container {
+    padding: 0 24px;
+    padding-left: max(24px, env(safe-area-inset-left, 0px));
+    padding-right: max(24px, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* AGENTS.md #24 — Desktop (>1024px) alohida layout.
+   Mobile layoutni kattalashtirib qo'yamiz — balki kengaytiramiz. */
+@media (min-width: 1024px) {
+  .equipment-cat-grid { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .equipment-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .equipment-dim-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  /* Desktopda matn qatori juda uzun bo'lmasin (AGENTS.md #19) */
+  .equipment-detail-name,
+  .equipment-detail-desc { max-width: 72ch; }
+  .equipment-spec-table { max-width: 860px; }
+  .equipment-detail-cover img { max-height: 460px; object-fit: contain; }
+}
+
+@media (max-width: 380px) {
+  .equipment-cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .equipment-card-img-wrap { width: 80px; height: 80px; min-width: 80px; }
+  .equipment-detail-name { font-size: 19px; }
+  .equipment-dim-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Touch-friendly: barcha tap target >= 38px */
+@media (pointer: coarse) {
+  /* Telegram Mini App — touch target kamida 44x44 px (WCAG 2.5.5) */
+  .equipment-action-btn { min-width: 44px; height: 44px; }
+  .equipment-filter-chip { height: 44px; padding-left: 16px; padding-right: 16px; }
+  .equipment-cat-card { min-height: 44px; }
+  .equipment-cat-icon { min-width: 44px; min-height: 44px; }
+  .equipment-load-more { min-height: 48px; }
+  .equipment-retry-btn { min-height: 48px; }
+  .equipment-detail-action { min-height: 50px; }
+  .equipment-back-btn { min-width: 44px; height: 44px; }
+  .equipment-search-clear { min-width: 44px; height: 44px; }
+  .equipment-lightbox-close { min-width: 44px; height: 44px; }
+  .equipment-gallery-dot { width: 8px; height: 8px; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .equipment-page-enter,
+  .equipment-skel,
+  .equipment-lightbox { animation: none; }
+  .equipment-card,
+  .equipment-cat-card,
+  .equipment-action-btn,
+  .equipment-detail-action { transition: none; }
+}
+/* ======================================================
+   RTL (Arab tili) — faqat Equipment skope ichida
+   ======================================================
+   Loyihaning rtl.css umumiy RTL qoidalarini qo'llaydi, lekin
+   Equipment layout (flex/grid, snap gallery, sticky dots) o'ziga xos.
+   Bu qoidalar faqat html[lang="ar"] da Equipment elementlariga ta'sir qiladi. */
+html[lang="ar"] .equipment-scope { direction: rtl; }
+
+/* Matn va ikonka tartbi */
+html[lang="ar"] .equipment-back-btn { transform: scaleX(-1); }
+html[lang="ar"] .equipment-gallery { direction: ltr; }   /* swipe yo'nalishi LTR bo'lib qoladi */
+html[lang="ar"] .equipment-gallery-dots { direction: rtl; }
+html[lang="ar"] .equipment-search-clear { transform: scaleX(-1); }
+
+/* Flex qatorlar: icon o'ngda, matn chapda bo'lishi kerak */
+html[lang="ar"] .equipment-list-row,
+html[lang="ar"] .equipment-card-body,
+html[lang="ar"] .equipment-card-actions,
+html[lang="ar"] .equipment-detail-actions,
+html[lang="ar"] .equipment-spec-row,
+html[lang="ar"] .equipment-dim-cell,
+html[lang="ar"] .equipment-arch-block { direction: rtl; }
+
+/* Grid kolonkalari RTL da o'ngdan chapga tartiblanadi (browser avtomatik) */
+
+/* Chiqib ketishni oldini olish — RTL da chegaradan chiqish tezroq bo'ladi */
+html[lang="ar"] .equipment-title-wrap,
+html[lang="ar"] .equipment-card-body > div:first-child,
+html[lang="ar"] .equipment-list-body { min-width: 0; overflow-wrap: anywhere; }
+
+/* Transform (scaleX) qo'llangan elementlarga RTL da qarshi */
+html[lang="ar"] .equipment-search-wrap input,
+html[lang="ar"] .equipment-search-wrap { direction: rtl; }
+html[lang="ar"] .equipment-empty { text-align: center; }
+
+/* Tap target va joylashuv o'zgarmasin */
+html[lang="ar"] .equipment-cat-grid,
+html[lang="ar"] .equipment-grid,
+html[lang="ar"] .equipment-dim-grid { direction: rtl; }
+
+/* Lightbox */
+html[lang="ar"] .equipment-lightbox { direction: rtl; }
