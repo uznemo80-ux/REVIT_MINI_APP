@@ -4156,6 +4156,16 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
       SELECT COUNT(*)::int AS today_tests FROM module_results WHERE attempted_at >= CURRENT_DATE
     `);
 
+    var todayBookReadersResult = await pool.query(`
+      SELECT COUNT(DISTINCT user_id)::int AS today_book_readers FROM reading_progress WHERE updated_at >= CURRENT_DATE
+    `).catch(() => ({ rows: [{ today_book_readers: 0 }] }));
+    var todayMaterialViewersResult = await pool.query(`
+      SELECT COUNT(DISTINCT user_id)::int AS today_material_viewers FROM material_view_log WHERE viewed_on >= CURRENT_DATE
+    `).catch(() => ({ rows: [{ today_material_viewers: 0 }] }));
+    var todaySourceUsersResult = await pool.query(`
+      SELECT COUNT(DISTINCT user_id)::int AS today_source_users FROM library_views WHERE viewed_at >= CURRENT_DATE
+    `).catch(() => ({ rows: [{ today_source_users: 0 }] }));
+
     return res.json({
       ok: true,
       stats: {
@@ -4172,7 +4182,10 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
         testing_now: la.testing_now || 0,
         today_active: Math.max(la.today_active || 0, la.online_now || 0),
         today_lesson_views: todayProgressResult.rows[0]?.today_views || 0,
-        today_test_attempts: todayTestsResult.rows[0]?.today_tests || 0
+        today_test_attempts: todayTestsResult.rows[0]?.today_tests || 0,
+        today_book_readers: todayBookReadersResult.rows[0]?.today_book_readers || 0,
+        today_material_viewers: todayMaterialViewersResult.rows[0]?.today_material_viewers || 0,
+        today_source_users: todaySourceUsersResult.rows[0]?.today_source_users || 0
       }
     });
   } catch (error) {

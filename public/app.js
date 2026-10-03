@@ -13644,9 +13644,12 @@ async function adminNavigate(to, subTo) {
       // If we don't have analytics dashboard data yet, synthesize fallback immediately so user NEVER sees stuck screen
       if (!adminData.analyticsDashboard) {
         adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
+        if (adminData.analyticsDashboard && adminData.analyticsDashboard.error) {
+          adminAnalyticsDashboardState.error = adminData.analyticsDashboard.error_message || 'Statistika yuklanmadi';
+        }
       }
       adminAnalyticsDashboardState.loading = true;
-      adminAnalyticsDashboardState.error = null;
+      if (!adminAnalyticsDashboardState.error) adminAnalyticsDashboardState.error = null;
       renderAdminPanel();
 
       const fetchTimeout = (prom, ms) => {
@@ -13685,13 +13688,14 @@ async function adminNavigate(to, subTo) {
           adminAnalyticsDashboardState.error = null;
         } else if (!adminData.analyticsDashboard) {
           adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-          adminAnalyticsDashboardState.error = null;
+          adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
         }
         startAdminLivePolling();
       } catch (statsErr) {
         console.warn("stats navigate error:", statsErr);
         if (!adminData.analyticsDashboard) {
           adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
+          adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
         }
       } finally {
         adminAnalyticsDashboardState.loading = false;
@@ -14058,20 +14062,36 @@ window.trackAnalyticsEvent = trackAnalyticsEvent;
 // ======================================================
 
 function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
-  const totalUsers = s.total_students || (adminData.students ? adminData.students.length : 0) || 120;
+  // Fallback: faqat real stats API'dan kelgan ma'lumotlarni ishlat.
+  // Agar stats bo'sh bo'lsa, xato xabarisini ko'rsat.
+  const totalUsers = s.total_students || (adminData.students ? adminData.students.length : 0);
   const paidUsers = s.paid_students || 0;
   const newToday = s.today_new_users || 0;
-  const newThisWeek = s.week_new_users || Math.round(newToday * 4);
-  const newThisMonth = s.month_new_users || Math.round(newToday * 12);
-  const activeToday = s.today_active || (adminData.activeUsers ? adminData.activeUsers.length : 0) || 15;
-  const activeInPeriod = s.week_active || Math.max(activeToday, Math.round(totalUsers * 0.45));
-  const inactiveUsers = Math.max(0, totalUsers - activeInPeriod);
-
+  const activeToday = s.today_active || 0;
   const todayLessonViews = s.today_lesson_views || 0;
-  const totalLessonViews = s.total_lesson_views || 0;
-  const totalBookReads = s.total_books_read || 0;
+  const todayBookReaders = s.today_book_readers || 0;
+  const todayMaterialViewers = s.today_material_viewers || 0;
+  const todaySourceUsers = s.today_source_users || 0;
 
-  // Synthesize clean 7-day time series if daily history is available
+  // Agar hech qanday stats ma'lumoti yo'q bo'lsa, xato xabarisini qaytar
+  if (!totalUsers && !todayLessonViews && !activeToday) {
+    return {
+      error: true,
+      error_message: 'Statistika ma\'lumotlarini olishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.',
+      kpi: null,
+      time_series: null,
+      categories: [],
+      weekdays: { data: [], peak_day: '-' },
+      hourly: { data: [], peak_hour: '-' },
+      heatmap: [],
+      deep_dives: { lessons: [], books: [], materials: [], sources: [] },
+      retention: { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 },
+      devices: null,
+      top_students: []
+    };
+  }
+
+  // Real stats asosida minimal dashboard qur
   const dailyHistory = (history && Array.isArray(history.daily)) ? history.daily : [];
   const seriesData = [];
   const now = new Date();
@@ -14081,23 +14101,17 @@ function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
     const dateStr = d.toISOString().slice(0, 10);
     const dayLabel = `${d.getDate()}-${monthNames[d.getMonth()]}`;
     const hItem = dailyHistory.find(h => h.date === dateStr || h.label === dateStr) || {};
-    const dayViews = hItem.views || Math.max(1, Math.round(todayLessonViews * 0.8));
-    const dayUsers = hItem.new_users || Math.max(0, Math.round(newToday * 0.8));
     seriesData.push({
       raw_date: dateStr,
       label: dayLabel,
-      new_users: dayUsers,
-      lesson_views: dayViews,
-      book_reads: Math.round(dayViews * 0.3),
-      material_views: Math.round(dayViews * 0.4),
-      source_views: Math.round(dayViews * 0.2),
-      total_activity: dayViews + Math.round(dayViews * 0.9)
+      new_users: hItem.new_users || 0,
+      lesson_views: hItem.views || 0,
+      book_reads: hItem.book_reads || 0,
+      material_views: hItem.material_views || 0,
+      source_views: hItem.source_views || 0,
+      total_activity: (hItem.views || 0) + (hItem.new_users || 0)
     });
   }
-
-  const mobUsers = Math.round(totalUsers * 0.72);
-  const deskUsers = Math.round(totalUsers * 0.25);
-  const tabUsers = Math.max(0, totalUsers - mobUsers - deskUsers);
 
   return {
     period: '7days',
@@ -14106,32 +14120,32 @@ function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
       users: {
         total: totalUsers,
         paid: paidUsers,
-        new_in_period: Math.max(newToday, Math.round(totalUsers * 0.12)),
+        new_in_period: newToday,
         new_today: newToday,
-        new_this_week: newThisWeek,
-        new_this_month: newThisMonth,
-        new_growth_pct: 12,
-        active_in_period: activeInPeriod,
+        new_this_week: s.week_new_users || 0,
+        new_this_month: s.month_new_users || 0,
+        new_growth_pct: 0,
+        active_in_period: activeToday,
         active_today: activeToday,
-        active_growth_pct: 8,
-        inactive: inactiveUsers
+        active_growth_pct: 0,
+        inactive: Math.max(0, totalUsers - activeToday)
       },
       content_today: {
-        lesson_viewers: Math.round(todayLessonViews * 0.75),
+        lesson_viewers: todayLessonViews,
         lesson_views: todayLessonViews,
-        book_readers: s.today_book_readers || 0,
-        material_viewers: s.today_material_viewers || 0,
-        source_users: s.today_source_users || 0
+        book_readers: todayBookReaders,
+        material_viewers: todayMaterialViewers,
+        source_users: todaySourceUsers
       },
       content_period: {
-        lesson_views: Math.max(todayLessonViews * 6, totalLessonViews),
-        lesson_growth_pct: 15,
-        book_reads: Math.max(10, totalBookReads),
-        book_growth_pct: 5,
-        material_views: 45,
-        material_growth_pct: 10,
-        source_views: 28,
-        source_growth_pct: 8
+        lesson_views: todayLessonViews,
+        lesson_growth_pct: 0,
+        book_reads: todayBookReaders,
+        book_growth_pct: 0,
+        material_views: todayMaterialViewers,
+        material_growth_pct: 0,
+        source_views: todaySourceUsers,
+        source_growth_pct: 0
       }
     },
     time_series: {
@@ -14144,41 +14158,11 @@ function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
       }
     },
     categories: [
-      { key: 'lesson', label: 'Darslar', count: Math.max(todayLessonViews * 6, 120), percentage: 55, color: '#2979ff' },
-      { key: 'material', label: 'Materiallar', count: 45, percentage: 22, color: '#10b981' },
-      { key: 'book', label: 'Kitoblar', count: Math.max(10, totalBookReads), percentage: 15, color: '#f59e0b' },
-      { key: 'source', label: 'Manbalar', count: 28, percentage: 8, color: '#8b5cf6' }
+      { key: 'lesson', label: 'Darslar', count: todayLessonViews, percentage: 100, color: '#2979ff' }
     ],
-    weekdays: {
-      data: [
-        { dow: 1, name: 'Dushanba', short_name: 'Du', total_activity: 140, pct: 18 },
-        { dow: 2, name: 'Seshanba', short_name: 'Se', total_activity: 165, pct: 21 },
-        { dow: 3, name: 'Chorshanba', short_name: 'Ch', total_activity: 130, pct: 16 },
-        { dow: 4, name: 'Payshanba', short_name: 'Pa', total_activity: 125, pct: 15 },
-        { dow: 5, name: 'Juma', short_name: 'Ju', total_activity: 95, pct: 12 },
-        { dow: 6, name: 'Shanba', short_name: 'Sh', total_activity: 80, pct: 10 },
-        { dow: 7, name: 'Yakshanba', short_name: 'Ya', total_activity: 65, pct: 8 }
-      ],
-      peak_day: 'Seshanba'
-    },
-    hourly: {
-      data: Array.from({ length: 24 }, (_, h) => ({
-        hour: h,
-        label: `${String(h).padStart(2, '0')}:00`,
-        active_users: h >= 18 && h <= 22 ? 25 : (h >= 9 && h <= 17 ? 12 : 2),
-        total_activity: h >= 18 && h <= 22 ? 45 : (h >= 9 && h <= 17 ? 20 : 3)
-      })),
-      peak_hour: '21:00'
-    },
-    heatmap: Array.from({ length: 7 }, (_, d) =>
-      Array.from({ length: 24 }, (_, h) => {
-        let level = 0;
-        if (h >= 19 && h <= 22) level = (d < 5 ? 4 : 2);
-        else if (h >= 10 && h <= 17) level = (d < 5 ? 2 : 1);
-        else if (h >= 7 && h <= 9) level = 1;
-        return { day: d + 1, hour: h, count: level * 8, intensity: level };
-      })
-    ).flat(),
+    weekdays: { data: [], peak_day: '-' },
+    hourly: { data: [], peak_hour: '-' },
+    heatmap: [],
     deep_dives: {
       lessons: [],
       books: (adminData.libraryBooks || []).slice(0, 8).map(b => ({
@@ -14186,25 +14170,25 @@ function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
         title: b.title,
         author: b.author || 'Muallif',
         category: (b.categories && b.categories[0]) || 'Boshqa',
-        view_count: b.view_count || 12,
-        unique_readers: 8,
-        saved_count: 5
+        view_count: b.view_count || 0,
+        unique_readers: 0,
+        saved_count: 0
       })),
       materials: ((adminMaterialsState && adminMaterialsState.materials) || []).slice(0, 8).map(m => ({
         id: m.id,
         name_uz: m.name_uz || m.name,
         category: m.subcategory_name || 'Material',
-        view_count: m.view_count || 15,
-        like_count: 6,
-        save_count: 4
+        view_count: m.view_count || 0,
+        like_count: 0,
+        save_count: 0
       })),
       materials_categories: [],
       sources: (adminData.libraryV2Resources || []).slice(0, 8).map(r => ({
         id: r.id,
         title: r.title,
         category: r.category || 'Manba',
-        view_count: r.view_count || 10,
-        download_count: r.download_count || 4
+        view_count: r.view_count || 0,
+        download_count: r.download_count || 0
       }))
     },
     top_students: (adminData.students || []).slice(0, 10).map(u => ({
@@ -14214,45 +14198,14 @@ function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
       username: u.username,
       telegram_id: u.telegram_id,
       access_until: u.access_until,
-      watched_lessons: 5,
-      read_books: 2,
-      viewed_materials: 3,
-      used_sources: 1,
-      total_activity_score: 22
+      watched_lessons: 0,
+      read_books: 0,
+      viewed_materials: 0,
+      used_sources: 0,
+      total_activity_score: 0
     })),
-    retention: {
-      day_1_pct: 68.5,
-      day_7_pct: 42.0,
-      day_30_pct: 28.5
-    },
-    devices: {
-      summary: {
-        mobile: { users: mobUsers, active: Math.round(mobUsers * 0.35), sessions: mobUsers * 3, pct: 72 },
-        desktop: { users: deskUsers, active: Math.round(deskUsers * 0.40), sessions: deskUsers * 2, pct: 25 },
-        tablet: { users: tabUsers, active: Math.round(tabUsers * 0.20), sessions: tabUsers, pct: 3 },
-        total_sessions: (mobUsers * 3) + (deskUsers * 2) + tabUsers
-      },
-      distribution: [
-        { os: 'Android', name: 'Android', icon: '📱', sessions_count: Math.round(mobUsers * 2.2), users_count: Math.round(mobUsers * 0.75), percentage: 54.0, pct: 54.0, color: '#10b981' },
-        { os: 'iOS (iPhone)', name: 'iPhone / iOS', icon: '🍎', sessions_count: Math.round(mobUsers * 0.8), users_count: Math.round(mobUsers * 0.25), percentage: 22.0, pct: 22.0, color: '#007aff' },
-        { os: 'Windows', name: 'Windows', icon: '💻', sessions_count: Math.round(deskUsers * 1.8), users_count: deskUsers, percentage: 18.0, pct: 18.0, color: '#00b0ff' },
-        { os: 'macOS', name: 'macOS', icon: '💻', sessions_count: Math.round(deskUsers * 0.2), users_count: Math.round(deskUsers * 0.15), percentage: 4.0, pct: 4.0, color: '#ff9500' },
-        { os: 'iPad / Tablet', name: 'iPad / Tablet', icon: '📱', sessions_count: tabUsers, users_count: tabUsers, percentage: 2.0, pct: 2.0, color: '#af52de' }
-      ],
-      time_series: [],
-      content_matrix: [
-        { device: 'Android', icon: '📱', lessons: 520, books: 180, materials: 240, sources: 90, total: 1030 },
-        { device: 'iPhone / iOS', icon: '🍎', lessons: 210, books: 120, materials: 150, sources: 65, total: 545 },
-        { device: 'Windows', icon: '💻', lessons: 340, books: 210, materials: 190, sources: 140, total: 880 },
-        { device: 'macOS', icon: '💻', lessons: 70, books: 45, materials: 30, sources: 25, total: 170 },
-        { device: 'iPad / Tablet', icon: '📱', lessons: 45, books: 28, materials: 22, sources: 12, total: 107 }
-      ],
-      peak_hours: {
-        mobile: { peak: '20:00 - 22:00', label: 'Kechki payt' },
-        desktop: { peak: '10:00 - 13:00', label: 'Ish vaqti' },
-        tablet: { peak: '19:00 - 21:00', label: 'Dam olish' }
-      }
-    }
+    retention: { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 },
+    devices: null
   };
 }
 
@@ -14371,6 +14324,20 @@ function renderAdminStatsView() {
   if (!dash) {
     dash = buildFallbackAnalyticsDashboard(s, adminData.analyticsHistory);
     adminData.analyticsDashboard = dash;
+  }
+
+  // Agar dashboard xato bo'lsa, xato xabarisini ko'rsat
+  if (dash && dash.error) {
+    return `
+      <div class="analytics-dashboard-page" style="padding: 20px; text-align: center;">
+        <div class="analytics-card" style="padding: 40px 20px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+          <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Statistika yuklanmadi</div>
+          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">${dash.error_message || 'Ma\'lumotlarni olishda xatolik yuz berdi.'}</div>
+          <button onclick="refreshAdminAnalyticsDashboard()" style="padding: 12px 24px; border: none; border-radius: 10px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;">Qayta yuklash</button>
+        </div>
+      </div>
+    `;
   }
   const kpi = dash?.kpi || null;
   const timeSeries = dash?.time_series || null;
@@ -15963,12 +15930,13 @@ async function refreshAdminAnalyticsDashboard(opts = {}) {
       adminAnalyticsDashboardState.error = null;
     } else if (!adminData.analyticsDashboard) {
       adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-      adminAnalyticsDashboardState.error = null;
+      adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
     }
   } catch (err) {
     console.warn("Analytics refresh xatosi:", err);
     if (!adminData.analyticsDashboard) {
       adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
+      adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
     }
   } finally {
     adminAnalyticsDashboardState.loading = false;
@@ -16043,12 +16011,8 @@ async function exportAdminAnalyticsCsv() {
       end_date: eDate
     };
 
-    const res = await fetch('/api/admin/analytics/export', {
+    const res = await adminApi('/api/admin/analytics/export', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-telegram-init-data': getTelegramInitData()
-      },
       body: JSON.stringify(payload)
     });
 
