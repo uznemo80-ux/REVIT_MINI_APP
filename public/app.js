@@ -1074,11 +1074,43 @@ function initHeartbeat() {
   });
 }
 
+// Admin statistikasi uchun: foydalanuvchi hozir qaysi bo'limda (faqat real holat; taxmin yo'q)
+function getActivitySection() {
+  try {
+    if (typeof currentBookReaderId !== "undefined" && currentBookReaderId) return "books";
+    if (activeTab === "lessons") return "lessons";
+    if (activeTab === "tasks") {
+      switch (libraryActiveSection) {
+        case "books": return "books";
+        case "materials": return "materials";
+        case "normatives": return "normatives";
+        case "sources": return "sources";
+        case "tests": return "tests";
+        case "process": return "process";
+        case "equipment": return "equipment";
+        case null:
+        case undefined: return "library";
+        default: return "library";
+      }
+    }
+    if (activeTab === "chat" || activeTab === "profile" || activeTab === "home") return activeTab;
+  } catch (e) {}
+  return "other";
+}
+
+// Bo'lim almashganda heartbeat'ni darhol yuborish (holat yangilangandan keyin)
+let _touchActivityTimer = null;
+function touchActivity() {
+  clearTimeout(_touchActivityTimer);
+  _touchActivityTimer = setTimeout(() => { if (typeof sendHeartbeat === "function") sendHeartbeat(); }, 500);
+}
+
 async function sendHeartbeat(extra = {}) {
   if (!initData) return;
   const dev = getClientDeviceInfo();
   const payload = {
     current_tab: activeTab || "home",
+    current_section: getActivitySection(),
     status: extra.status || liveActivityState.status,
     lesson_id: liveActivityState.lesson_id,
     lesson_title: liveActivityState.lesson_title,
@@ -6830,6 +6862,7 @@ function preloadLibrarySubsections() {
 
 function openLibrarySection(slug) {
   haptic("light");
+  touchActivity();
   stopAllLibraryTickers();
   libraryActiveSection = slug;
   librarySectionSearchQuery = "";
@@ -6885,6 +6918,7 @@ function openLibrarySection(slug) {
 
 function closeLibrarySection() {
   haptic("light");
+  touchActivity();
   stopAllLibraryTickers();
   currentView = null;
   activeMaterialDetail = null;
@@ -10627,6 +10661,7 @@ let libraryV2SavedBookIds = new Set();
 
 async function openBookReader(bookIdOrObj, initialPage) {
   haptic("light");
+  touchActivity();
   if (typeof bookIdOrObj === 'number' || (typeof bookIdOrObj === 'string' && !isNaN(bookIdOrObj))) {
     trackAnalyticsEvent('book_opened', 'book', Number(bookIdOrObj));
   } else if (bookIdOrObj && bookIdOrObj.id) {
@@ -11407,6 +11442,7 @@ function retryMinimalReader() {
 
 function closeBookReader() {
   haptic("light");
+  touchActivity();
   if (window._readerLoadTimeout) {
     clearTimeout(window._readerLoadTimeout);
     window._readerLoadTimeout = null;
@@ -13593,16 +13629,7 @@ let adminView = "dashboard";
 let adminNavPath = ["root"]; // ['root'], ['stats'], ['library'], ['library', 'books'], ['library', 'sources'], etc.
 let adminTasksActiveTab = "practice"; // "practice" or "tests"
 let adminSelectedCourseId = null;
-let adminAnalyticsDashboardState = {
-  period: '7days',
-  startDate: '',
-  endDate: '',
-  granularity: 'auto',
-  activeMetric: 'all', // 'all', 'new_users', 'lesson_views', 'book_reads', 'material_views'
-  deepDiveTab: 'lessons', // 'lessons', 'books', 'materials', 'sources'
-  loading: false,
-  error: null
-};
+
 let adminData = {
   equipmentStats: null,   // Equipment (Jihozlar) admin statistikasi
   stats: null,
@@ -13681,66 +13708,9 @@ async function adminNavigate(to, subTo) {
   try {
     if (to === "stats") {
       adminView = "dashboard";
-      // If we don't have analytics dashboard data yet, synthesize fallback immediately so user NEVER sees stuck screen
-      if (!adminData.analyticsDashboard) {
-        adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-        if (adminData.analyticsDashboard && adminData.analyticsDashboard.error) {
-          adminAnalyticsDashboardState.error = adminData.analyticsDashboard.error_message || 'Statistika yuklanmadi';
-        }
-      }
-      adminAnalyticsDashboardState.loading = true;
-      if (!adminAnalyticsDashboardState.error) adminAnalyticsDashboardState.error = null;
-      renderAdminPanel();
-
-      const fetchTimeout = (prom, ms) => {
-        let t;
-        const toProm = new Promise((resolve) => {
-          t = setTimeout(() => resolve(null), ms);
-        });
-        return Promise.race([
-          prom.then(res => { clearTimeout(t); return res; }).catch(() => { clearTimeout(t); return null; }),
-          toProm
-        ]);
-      };
-
-      try {
-        const [liveData, historyData, dashboardData] = await Promise.all([
-          fetchTimeout(adminApi("/api/admin/live-activity"), 3000),
-          fetchTimeout(adminApi("/api/admin/analytics/history", { period: adminAnalyticsDashboardState.period || "7days" }), 3000),
-          fetchTimeout(adminApi("/api/admin/analytics/dashboard", {
-            period: adminAnalyticsDashboardState.period || "7days",
-            start_date: adminAnalyticsDashboardState.startDate || undefined,
-            end_date: adminAnalyticsDashboardState.endDate || undefined,
-            granularity: adminAnalyticsDashboardState.granularity || undefined
-          }), 3500)
-        ]);
-
-        if (liveData && liveData.stats) {
-          adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
-          adminData.activeUsers = liveData.active_users || [];
-        }
-        if (historyData) {
-          adminData.analyticsHistory = historyData;
-        }
-
-        if (dashboardData) {
-          adminData.analyticsDashboard = dashboardData;
-          adminAnalyticsDashboardState.error = null;
-        } else if (!adminData.analyticsDashboard) {
-          adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-          adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
-        }
-        startAdminLivePolling();
-      } catch (statsErr) {
-        console.warn("stats navigate error:", statsErr);
-        if (!adminData.analyticsDashboard) {
-          adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-          adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
-        }
-      } finally {
-        adminAnalyticsDashboardState.loading = false;
-        renderAdminPanel();
-      }
+      stxRender();
+      loadAdminStats({ chart: false });
+      startAdminLivePolling();
       return;
     } else {
       stopAdminLivePolling();
@@ -14128,2006 +14098,343 @@ window.trackAnalyticsEvent = trackAnalyticsEvent;
 // 2. MASTER ANALYTICS DASHBOARD SKELETON & ERROR HANDLERS
 // ======================================================
 
-function buildFallbackAnalyticsDashboard(s = {}, history = {}) {
-  // Fallback: faqat real stats API'dan kelgan ma'lumotlarni ishlat.
-  // Agar stats bo'sh bo'lsa, xato xabarisini ko'rsat.
-  const totalUsers = s.total_students || (adminData.students ? adminData.students.length : 0);
-  const paidUsers = s.paid_students || 0;
-  const newToday = s.today_new_users || 0;
-  const activeToday = s.today_active || 0;
-  const todayLessonViews = s.today_lesson_views || 0;
-  const todayBookReaders = s.today_book_readers || 0;
-  const todayMaterialViewers = s.today_material_viewers || 0;
-  const todaySourceUsers = s.today_source_users || 0;
-
-  // Agar hech qanday stats ma'lumoti yo'q bo'lsa, xato xabarisini qaytar
-  if (!totalUsers && !todayLessonViews && !activeToday) {
-    return {
-      error: true,
-      error_message: 'Statistika ma\'lumotlarini olishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.',
-      kpi: null,
-      time_series: null,
-      categories: [],
-      weekdays: { data: [], peak_day: '-' },
-      hourly: { data: [], peak_hour: '-' },
-      heatmap: [],
-      deep_dives: { lessons: [], books: [], materials: [], sources: [] },
-      retention: { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 },
-      devices: null,
-      top_students: []
-    };
-  }
-
-  // Real stats asosida minimal dashboard qur
-  const dailyHistory = (history && Array.isArray(history.daily)) ? history.daily : [];
-  const seriesData = [];
-  const now = new Date();
-  const monthNames = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86400000);
-    const dateStr = d.toISOString().slice(0, 10);
-    const dayLabel = `${d.getDate()}-${monthNames[d.getMonth()]}`;
-    const hItem = dailyHistory.find(h => h.date === dateStr || h.label === dateStr) || {};
-    seriesData.push({
-      raw_date: dateStr,
-      label: dayLabel,
-      new_users: hItem.new_users || 0,
-      lesson_views: hItem.views || 0,
-      book_reads: hItem.book_reads || 0,
-      material_views: hItem.material_views || 0,
-      source_views: hItem.source_views || 0,
-      total_activity: (hItem.views || 0) + (hItem.new_users || 0)
-    });
-  }
-
-  return {
-    period: '7days',
-    granularity: 'daily',
-    kpi: {
-      users: {
-        total: totalUsers,
-        paid: paidUsers,
-        new_in_period: newToday,
-        new_today: newToday,
-        new_this_week: s.week_new_users || 0,
-        new_this_month: s.month_new_users || 0,
-        new_growth_pct: 0,
-        active_in_period: activeToday,
-        active_today: activeToday,
-        active_growth_pct: 0,
-        inactive: Math.max(0, totalUsers - activeToday)
-      },
-      content_today: {
-        lesson_viewers: todayLessonViews,
-        lesson_views: todayLessonViews,
-        book_readers: todayBookReaders,
-        material_viewers: todayMaterialViewers,
-        source_users: todaySourceUsers
-      },
-      content_period: {
-        lesson_views: todayLessonViews,
-        lesson_growth_pct: 0,
-        book_reads: todayBookReaders,
-        book_growth_pct: 0,
-        material_views: todayMaterialViewers,
-        material_growth_pct: 0,
-        source_views: todaySourceUsers,
-        source_growth_pct: 0
-      }
-    },
-    time_series: {
-      granularity: 'daily',
-      data: seriesData,
-      summary: {
-        total_new_users: seriesData.reduce((acc, x) => acc + x.new_users, 0),
-        total_actions: seriesData.reduce((acc, x) => acc + x.total_activity, 0),
-        peak_point: { label: seriesData[seriesData.length - 1]?.label || '-', value: seriesData[seriesData.length - 1]?.total_activity || 0 }
-      }
-    },
-    categories: [
-      { key: 'lesson', label: 'Darslar', count: todayLessonViews, percentage: 100, color: '#2979ff' }
-    ],
-    weekdays: { data: [], peak_day: '-' },
-    hourly: { data: [], peak_hour: '-' },
-    heatmap: [],
-    deep_dives: {
-      lessons: [],
-      books: (adminData.libraryBooks || []).slice(0, 8).map(b => ({
-        id: b.id,
-        title: b.title,
-        author: b.author || 'Muallif',
-        category: (b.categories && b.categories[0]) || 'Boshqa',
-        view_count: b.view_count || 0,
-        unique_readers: 0,
-        saved_count: 0
-      })),
-      materials: ((adminMaterialsState && adminMaterialsState.materials) || []).slice(0, 8).map(m => ({
-        id: m.id,
-        name_uz: m.name_uz || m.name,
-        category: m.subcategory_name || 'Material',
-        view_count: m.view_count || 0,
-        like_count: 0,
-        save_count: 0
-      })),
-      materials_categories: [],
-      sources: (adminData.libraryV2Resources || []).slice(0, 8).map(r => ({
-        id: r.id,
-        title: r.title,
-        category: r.category || 'Manba',
-        view_count: r.view_count || 0,
-        download_count: r.download_count || 0
-      }))
-    },
-    top_students: (adminData.students || []).slice(0, 10).map(u => ({
-      id: u.id,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      username: u.username,
-      telegram_id: u.telegram_id,
-      access_until: u.access_until,
-      watched_lessons: 0,
-      read_books: 0,
-      viewed_materials: 0,
-      used_sources: 0,
-      total_activity_score: 0
-    })),
-    retention: { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 },
-    devices: null
-  };
-}
-
-function renderAdminStatsSkeletonHtml() {
-  return `
-    <div class="admin-stats-page analytics-dashboard-page" id="admin-analytics-dashboard-wrap">
-      <!-- HERO HEADER SKELETON -->
-      <div class="admin-section-hero" style="margin-bottom:18px;">
-        <div>
-          <div class="admin-hero-title">📊 Analytics Dashboard</div>
-          <div class="admin-hero-desc">Platformaning to'liq ko'rsatkichlari yuklanmoqda...</div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
-            <div class="spinner-inline" style="width:14px; height:14px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-            Yuklanmoqda...
-          </div>
-        </div>
-      </div>
-
-      <!-- SKELETON TOOLBAR -->
-      <div class="analytics-toolbar">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="analytics-skeleton" style="width:140px; height:20px; border-radius:6px;"></div>
-          <div class="analytics-skeleton" style="width:160px; height:32px; border-radius:8px;"></div>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
-          <div class="analytics-skeleton" style="width:75px; height:30px; border-radius:8px;"></div>
-          <div class="analytics-skeleton" style="width:75px; height:30px; border-radius:8px;"></div>
-          <div class="analytics-skeleton" style="width:95px; height:30px; border-radius:8px;"></div>
-          <div class="analytics-skeleton" style="width:105px; height:30px; border-radius:8px;"></div>
-          <div class="analytics-skeleton" style="width:80px; height:30px; border-radius:8px;"></div>
-          <div class="analytics-skeleton" style="width:80px; height:30px; border-radius:8px;"></div>
-        </div>
-      </div>
-
-      <!-- SKELETON KPI CARDS -->
-      <div style="margin-bottom:20px;">
-        <div class="analytics-skeleton" style="width:180px; height:18px; margin-bottom:12px; border-radius:4px;"></div>
-        <div class="analytics-kpi-grid">
-          ${[1, 2, 3, 4, 5, 6].map(() => `
-            <div class="analytics-kpi-card" style="min-height:120px;">
-              <div class="analytics-kpi-top">
-                <div class="analytics-skeleton" style="width:36px; height:36px; border-radius:10px;"></div>
-                <div class="analytics-skeleton" style="width:45px; height:18px; border-radius:6px;"></div>
-              </div>
-              <div class="analytics-skeleton" style="width:80px; height:28px; border-radius:6px; margin:8px 0 4px 0;"></div>
-              <div class="analytics-skeleton" style="width:110px; height:14px; border-radius:4px;"></div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- SKELETON CHART CARD -->
-      <div class="analytics-card" style="min-height:280px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
-          <div class="analytics-skeleton" style="width:220px; height:22px; border-radius:6px;"></div>
-          <div class="analytics-skeleton" style="width:100px; height:28px; border-radius:8px;"></div>
-        </div>
-        <div class="analytics-skeleton" style="width:100%; height:200px; border-radius:10px;"></div>
-      </div>
-
-      <!-- SKELETON DEVICE STATS -->
-      <div class="analytics-card" style="min-height:200px;">
-        <div class="analytics-skeleton" style="width:200px; height:20px; margin-bottom:14px; border-radius:6px;"></div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
-          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
-          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
-          <div class="analytics-skeleton" style="height:100px; border-radius:12px;"></div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderAdminStatsErrorHtml(errMsg) {
-  return `
-    <div class="admin-stats-page analytics-dashboard-page" style="padding:24px 16px; max-width:680px; margin:0 auto; text-align:center;">
-      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:18px; padding:32px 24px; box-shadow:0 8px 30px rgba(0,0,0,0.15);">
-        <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,59,48,0.12); color:#ff3b30; font-size:28px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
-          ⚠️
-        </div>
-        <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:8px;">
-          Statistika ma'lumotlarini yuklashda xatolik
-        </div>
-        <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:24px; max-width:440px; margin-left:auto; margin-right:auto;">
-          ${escapeHtml(errMsg || "Serverdan statistik ko'rsatkichlarni olishda uzilish yuz berdi. Internet aloqasini tekshiring yoki qayta urinib ko'ring.")}
-        </div>
-        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-          <button class="btn" onclick="refreshAdminAnalyticsDashboard()" style="min-width:160px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--accent); color:#fff; border-radius:12px; font-weight:700;">
-            🔄 Qayta yuklash
-          </button>
-          <button class="btn btn-secondary" onclick="adminNavigate('root')" style="min-width:140px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px;">
-            Ortga qaytish
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 // ======================================================
 // 2. MASTER ANALYTICS DASHBOARD
 // ======================================================
 
-function renderAdminStatsView() {
-  const s = adminData.stats || {};
-  const activeUsers = adminData.activeUsers || [];
-  const allStudents = adminData.students || [];
-  const allBooks = adminData.libraryBooks || [];
-  const allRes = adminData.libraryV2Resources || libraryV2Resources || [];
-  const allMats = (adminMaterialsState && adminMaterialsState.materials) || DEFAULT_MATERIALS || [];
+// ======================================================
+// ADMIN → STATISTIKA (sodda ko'rinish)
+// Asosiy ko'rsatkichlar → Hozir platformada → Faollik (3/7/30 kun)
+// Manba: /api/admin/stats/overview va /api/admin/stats/live (real heartbeat va kunlik faollik)
+// ======================================================
+const STX_SECTIONS = [
+  { key: "lessons",    label: "Darslar",     icon: "🎬", cls: "stx-c-lessons" },
+  { key: "books",      label: "Kitoblar",    icon: "📚", cls: "stx-c-books" },
+  { key: "materials",  label: "Materiallar", icon: "🧱", cls: "stx-c-materials" },
+  { key: "normatives", label: "Normativlar", icon: "📋", cls: "stx-c-normatives" },
+  { key: "sources",    label: "Manbalar",    icon: "📦", cls: "stx-c-sources" },
+  { key: "other",      label: "Boshqa",      icon: "🧭", cls: "stx-c-other" }
+];
+const STX_SERIES = [
+  { key: "visitors",       label: "Kirganlar",       color: "#3b82f6" },
+  { key: "lesson_viewers", label: "Dars ko‘rganlar", color: "#34c759" },
+  { key: "book_readers",   label: "Kitob o‘qiganlar", color: "#f59e0b" }
+];
+const STX_MONTHS = ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avg", "sen", "okt", "noy", "dek"];
+const STX_WEEKDAYS = ["Yak", "Dush", "Sesh", "Chor", "Pay", "Jum", "Shan"];
 
-  let dash = adminData.analyticsDashboard || null;
+const stxState = {
+  days: 7,
+  loading: true,        // birinchi yuklash
+  chartLoading: false,  // davr almashganda
+  error: null,
+  data: null,
+  hidden: new Set(),    // yashirilgan chiziqlar
+  selectedDay: null,
+  showUsers: false,
+  reqId: 0,
+  pollTimer: null,
+  lastLiveAt: null,
+  animated: false
+};
 
-  if (!dash) {
-    dash = buildFallbackAnalyticsDashboard(s, adminData.analyticsHistory);
-    adminData.analyticsDashboard = dash;
+function stxNum(n) { return new Intl.NumberFormat("ru-RU").format(Number(n) || 0).replace(/\u00a0/g, " "); }
+function stxFmtDay(iso, withWeekday) {
+  const d = new Date(iso + "T00:00:00");
+  const base = d.getDate() + " " + STX_MONTHS[d.getMonth()];
+  return withWeekday ? STX_WEEKDAYS[d.getDay()] + ", " + base : base;
+}
+function stxClock(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
+}
+
+async function loadAdminStats(opts) {
+  opts = opts || {};
+  const first = !stxState.data;
+  const id = ++stxState.reqId;
+  if (first) { stxState.loading = true; stxState.error = null; }
+  else if (opts.chart) { stxState.chartLoading = true; }
+  stxRender();
+  try {
+    const res = await adminApi("/api/admin/stats/overview", { days: stxState.days });
+    if (id !== stxState.reqId) return;               // eskirgan javob yangi ma'lumot bilan aralashmasin
+    if (!res || res.ok === false) throw new Error((res && res.error) || "Statistikani yuklashda xatolik yuz berdi.");
+    stxState.data = res;
+    stxState.error = null;
+    stxState.lastLiveAt = res.generated_at;
+    if (!stxState.selectedDay || !(res.series || []).some(s => s.day === stxState.selectedDay)) stxState.selectedDay = null;
+  } catch (e) {
+    if (id !== stxState.reqId) return;
+    console.error("STATISTIKA YUKLASH XATOSI:", e);
+    stxState.error = (e && e.message && !/fetch|network/i.test(e.message)) ? e.message : "Statistikani yuklashda xatolik yuz berdi.";
+  } finally {
+    if (id === stxState.reqId) { stxState.loading = false; stxState.chartLoading = false; stxRender(); }
   }
+}
 
-  // Agar dashboard xato bo'lsa, xato xabarisini ko'rsat
-  if (dash && dash.error) {
+function stxRender() {
+  const el = document.getElementById("stx-root");
+  if (!el) { if (adminView === "dashboard") renderAdminPanel(); return; }
+  el.innerHTML = stxInnerHtml();
+  stxPaintBars();
+}
+
+function stxSetPeriod(days) {
+  if (stxState.days === days && !stxState.error) return;
+  haptic("light");
+  stxState.days = days;
+  stxState.selectedDay = null;
+  loadAdminStats({ chart: true });
+}
+
+function stxToggleSeries(key) {
+  haptic("light");
+  if (stxState.hidden.has(key)) stxState.hidden.delete(key);
+  else if (stxState.hidden.size < STX_SERIES.length - 1) stxState.hidden.add(key);   // kamida bitta chiziq qoladi
+  stxRender();
+}
+function stxSelectDay(day) { stxState.selectedDay = stxState.selectedDay === day ? null : day; stxRender(); }
+function stxToggleUsers() { haptic("light"); stxState.showUsers = !stxState.showUsers; stxRender(); }
+function stxOpenUser(userId) { if (typeof openAdminStudentLiveDossier === "function") openAdminStudentLiveDossier(userId); }
+
+// ---- jonli yangilash (faqat raqamlar; sahifa qayta yuklanmaydi) ----
+function startAdminLivePolling() {
+  stopAdminLivePolling();
+  stxState.pollTimer = setInterval(async () => {
+    if (document.hidden || adminView !== "dashboard" || !stxState.data) return;
+    try {
+      const res = await adminApi("/api/admin/stats/live");
+      if (!res || res.ok === false || !stxState.data) return;
+      stxState.data.live = res.live;
+      stxState.data.live_users = res.live_users;
+      stxState.data.today = res.today;
+      stxState.lastLiveAt = res.generated_at;
+      stxUpdateLiveInPlace();
+    } catch (e) { /* keyingi urinishda qayta */ }
+  }, 10000);
+}
+function stopAdminLivePolling() {
+  if (stxState.pollTimer) { clearInterval(stxState.pollTimer); stxState.pollTimer = null; }
+}
+
+function stxUpdateLiveInPlace() {
+  const root = document.getElementById("stx-root");
+  if (!root || !stxState.data) return;
+  const d = stxState.data;
+  const set = (id, val) => { const e = document.getElementById(id); if (e && e.textContent !== String(val)) { e.textContent = val; e.classList.remove("stx-bump"); void e.offsetWidth; e.classList.add("stx-bump"); } };
+  set("stx-v-online", stxNum(d.live.online));
+  set("stx-v-lessons", stxNum(d.live.lessons));
+  set("stx-v-books", stxNum(d.live.books));
+  set("stx-v-others", stxNum((d.live.materials || 0) + (d.live.normatives || 0) + (d.live.sources || 0) + (d.live.other || 0)));
+  set("stx-v-today", stxNum(d.today.active));
+  set("stx-v-online-big", stxNum(d.live.online));
+  const upd = document.getElementById("stx-updated"); if (upd) upd.textContent = "Yangilandi " + stxClock(stxState.lastLiveAt);
+  stxUpdateBarsInPlace(d.live);
+  const users = document.getElementById("stx-users"); if (users) users.innerHTML = stxUsersHtml(d.live_users);
+}
+
+function stxPaintBars() {
+  const fills = document.querySelectorAll(".stx-bar-fill[data-w]");
+  if (!fills.length) return;
+  requestAnimationFrame(() => {
+    fills.forEach(b => { b.style.width = b.getAttribute("data-w") + "%"; });
+    stxState.animated = true;
+  });
+}
+
+// Polling: mavjud satrlarni joyida yangilaymiz (qayta chizmasdan — silliq o'tish)
+function stxUpdateBarsInPlace(live) {
+  const max = Math.max(1, ...STX_SECTIONS.map(s => Number(live[s.key]) || 0));
+  STX_SECTIONS.forEach(s => {
+    const row = document.querySelector('.stx-bar-row[data-k="' + s.key + '"]');
+    if (!row) return;
+    const v = Number(live[s.key]) || 0;
+    const pct = v ? Math.max(6, Math.round((v / max) * 100)) : 0;
+    const fill = row.querySelector(".stx-bar-fill"); if (fill) { fill.setAttribute("data-w", pct); fill.style.width = pct + "%"; }
+    const val = row.querySelector(".stx-bar-val"); if (val) val.textContent = stxNum(v);
+    row.classList.toggle("is-zero", !v);
+  });
+}
+
+// ---- HTML ----
+function stxBarsHtml(live) {
+  const max = Math.max(1, ...STX_SECTIONS.map(s => Number(live[s.key]) || 0));
+  return STX_SECTIONS.map(s => {
+    const v = Number(live[s.key]) || 0;
+    const pct = v ? Math.max(6, Math.round((v / max) * 100)) : 0;
     return `
-      <div class="analytics-dashboard-page" style="padding: 20px; text-align: center;">
-        <div class="analytics-card" style="padding: 40px 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-          <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Statistika yuklanmadi</div>
-          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">${dash.error_message || 'Ma\'lumotlarni olishda xatolik yuz berdi.'}</div>
-          <button onclick="refreshAdminAnalyticsDashboard()" style="padding: 12px 24px; border: none; border-radius: 10px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;">Qayta yuklash</button>
-        </div>
-      </div>
-    `;
-  }
-  const kpi = dash?.kpi || null;
-  const timeSeries = dash?.time_series || null;
-  const seriesData = timeSeries?.data || [];
-  const seriesSummary = timeSeries?.summary || {};
-  const categories = dash?.categories || [];
-  const weekdays = dash?.weekdays?.data || [];
-  const peakDay = dash?.weekdays?.peak_day || 'Dushanba';
-  const hourly = dash?.hourly?.data || [];
-  const peakHour = dash?.hourly?.peak_hour || '20:00';
-  const heatmap = dash?.heatmap || [];
-  const deepDives = dash?.deep_dives || {};
-  const retention = dash?.retention || { day_1_pct: 0, day_7_pct: 0, day_30_pct: 0 };
-  const devices = dash?.devices || null;
-  const topStudents = dash?.top_students || [];
+      <div class="stx-bar-row ${v ? "" : "is-zero"}" data-k="${s.key}">
+        <div class="stx-bar-label"><span class="stx-bar-ico">${s.icon}</span>${s.label}</div>
+        <div class="stx-bar-track"><div class="stx-bar-fill ${s.cls}" data-w="${pct}" style="width:${stxState.animated ? pct : 0}%"></div></div>
+        <div class="stx-bar-val">${stxNum(v)}</div>
+      </div>`;
+  }).join("");
+}
 
-  const period = adminAnalyticsDashboardState.period || '7days';
-  const customStart = adminAnalyticsDashboardState.startDate || '';
-  const customEnd = adminAnalyticsDashboardState.endDate || '';
-  const granularity = adminAnalyticsDashboardState.granularity || 'auto';
-  const activeMetric = adminAnalyticsDashboardState.activeMetric || 'all';
-  const deepDiveTab = adminAnalyticsDashboardState.deepDiveTab || 'lessons';
+function stxUsersHtml(users) {
+  if (!users || !users.length) return `<div class="stx-empty-mini">Hozir hech kim faol emas.</div>`;
+  const label = k => (STX_SECTIONS.find(s => s.key === k) || STX_SECTIONS[5]);
+  return users.map(u => {
+    const s = label(u.category);
+    return `
+      <button type="button" class="stx-user" onclick="stxOpenUser(${Number(u.user_id)})">
+        <span class="stx-user-ico">${s.icon}</span>
+        <span class="stx-user-main"><span class="stx-user-name">${escapeHtml(u.name)}</span>
+          <span class="stx-user-sub">${s.label}${u.detail ? " • " + escapeHtml(u.detail) : ""}</span></span>
+        <span class="stx-user-time">${u.seen_seconds_ago < 15 ? "hozir" : u.seen_seconds_ago + " s"}</span>
+      </button>`;
+  }).join("");
+}
 
-  // Fallbacks from stats if dashboard not yet loaded
-  const totalUsers = kpi?.users?.total ?? (s.total_students || allStudents.length || 0);
-  const paidUsers = kpi?.users?.paid ?? (s.paid_students || 0);
-  const newToday = kpi?.users?.new_today ?? (s.today_new_users || 0);
-  const newThisWeek = kpi?.users?.new_this_week ?? (s.week_new_users || 0);
-  const newThisMonth = kpi?.users?.new_this_month ?? (s.month_new_users || 0);
-  const activeInPeriod = kpi?.users?.active_in_period ?? (s.today_active || 0);
-  const activeToday = kpi?.users?.active_today ?? (s.today_active || 0);
-  const inactiveUsers = kpi?.users?.inactive ?? Math.max(0, totalUsers - activeInPeriod);
+function stxChartHtml(series) {
+  const W = 340, H = 190, PL = 30, PR = 10, PT = 12, PB = 26;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const active = STX_SERIES.filter(s => !stxState.hidden.has(s.key));
+  const n = series.length;
+  let max = 1;
+  series.forEach(p => active.forEach(s => { max = Math.max(max, Number(p[s.key]) || 0); }));
+  const step = max <= 4 ? 1 : Math.ceil(max / 4);
+  const top = step * Math.ceil(max / step);
+  const x = i => PL + (n === 1 ? iw / 2 : (i * iw) / (n - 1));
+  const y = v => PT + ih - (v / top) * ih;
+  const grid = [];
+  for (let v = 0; v <= top; v += step) grid.push(`<line x1="${PL}" x2="${W - PR}" y1="${y(v)}" y2="${y(v)}" class="stx-grid"/><text x="${PL - 6}" y="${y(v) + 3.5}" class="stx-axis" text-anchor="end">${v}</text>`);
+  const labelEvery = n <= 7 ? 1 : (n <= 14 ? 2 : 5);
+  const xl = series.map((p, i) => (i % labelEvery === 0 || i === n - 1) ? `<text x="${x(i)}" y="${H - 7}" class="stx-axis" text-anchor="middle">${stxFmtDay(p.day)}</text>` : "").join("");
+  const lines = active.map(s => {
+    const pts = series.map((p, i) => [x(i), y(Number(p[s.key]) || 0)]);
+    const d = pts.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
+    const dots = n <= 14 ? pts.map(q => `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3" fill="${s.color}" class="stx-dot"/>`).join("") : "";
+    return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" class="stx-line"/>${dots}`;
+  }).join("");
+  const sel = stxState.selectedDay ? series.findIndex(p => p.day === stxState.selectedDay) : -1;
+  const selLine = sel >= 0 ? `<line x1="${x(sel)}" x2="${x(sel)}" y1="${PT}" y2="${PT + ih}" class="stx-sel-line"/>` : "";
+  const colW = n === 1 ? iw : iw / (n - 1);
+  const hit = series.map((p, i) => `<rect x="${(x(i) - colW / 2).toFixed(1)}" y="${PT}" width="${colW.toFixed(1)}" height="${ih}" fill="transparent" class="stx-hit" onclick="stxSelectDay('${p.day}')"/>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" class="stx-svg" role="img" aria-label="Kunlar bo‘yicha faollik">${grid.join("")}${xl}${selLine}${lines}${hit}</svg>`;
+}
 
-  const todayLessonViewers = kpi?.content_today?.lesson_viewers ?? (s.today_lesson_views || 0);
-  const todayBookReaders = kpi?.content_today?.book_readers ?? 0;
-  const todayMaterialViewers = kpi?.content_today?.material_viewers ?? 0;
-  const todaySourceUsers = kpi?.content_today?.source_users ?? 0;
-
-  const newGrowthPct = kpi?.users?.new_growth_pct ?? 0;
-  const activeGrowthPct = kpi?.users?.active_growth_pct ?? 0;
-
+function stxActivityHtml() {
+  const d = stxState.data;
+  const series = d.series || [];
+  const first = series[0], last = series[series.length - 1];
+  const range = first && last ? stxFmtDay(first.day) + " – " + stxFmtDay(last.day) : "";
+  const total = k => series.reduce((a, p) => a + (Number(p[k]) || 0), 0);
+  const sel = stxState.selectedDay ? series.find(p => p.day === stxState.selectedDay) : null;
+  const allZero = series.every(p => !p.visitors && !p.lesson_viewers && !p.book_readers);
+  const idx = [3, 7, 30].indexOf(stxState.days);
   return `
-    <style id="admin-analytics-modern-css">
-      .analytics-dashboard-page {
-        animation: fadeIn 0.25s ease-out;
-      }
-      .analytics-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 18px;
-        margin-bottom: 20px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-      .analytics-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 12px;
-        margin-bottom: 20px;
-      }
-      .analytics-kpi-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 16px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-      .analytics-kpi-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-      .analytics-kpi-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-      }
-      .analytics-kpi-badge {
-        font-size: 11px;
-        font-weight: 750;
-        padding: 2px 7px;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 2px;
-      }
-      .analytics-kpi-badge.up {
-        background: rgba(52, 199, 89, 0.15);
-        color: #34c759;
-      }
-      .analytics-kpi-badge.down {
-        background: rgba(255, 59, 48, 0.15);
-        color: #ff3b30;
-      }
-      .analytics-kpi-badge.neutral {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text-secondary);
-      }
-      .analytics-kpi-value {
-        font-size: 26px;
-        font-weight: 850;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
-        line-height: 1.15;
-        margin-bottom: 4px;
-      }
-      .analytics-kpi-label {
-        font-size: 12px;
-        color: var(--text-secondary);
-        font-weight: 600;
-      }
-      .analytics-kpi-sub {
-        font-size: 11px;
-        color: var(--text-muted);
-        margin-top: 4px;
-      }
-      .analytics-toolbar {
-        background: var(--bg-surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px 16px;
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .analytics-chip-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        align-items: center;
-      }
-      .analytics-chip {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--border);
-        color: var(--text-secondary);
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 650;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-      .analytics-chip:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text-primary);
-      }
-      .analytics-chip.active {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-        box-shadow: 0 2px 8px rgba(41, 121, 255, 0.3);
-      }
-      .analytics-heatmap-grid {
-        display: grid;
-        grid-template-columns: 75px repeat(24, 1fr);
-        gap: 4px;
-        align-items: center;
-        overflow-x: auto;
-        padding-bottom: 6px;
-      }
-      .analytics-heatmap-cell {
-        aspect-ratio: 1;
-        border-radius: 3px;
-        cursor: pointer;
-        transition: transform 0.12s ease;
-      }
-      .analytics-heatmap-cell:hover {
-        transform: scale(1.3);
-        z-index: 10;
-        box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-      }
-      .analytics-heat-0 { background: rgba(255, 255, 255, 0.04); }
-      .analytics-heat-1 { background: rgba(41, 121, 255, 0.25); }
-      .analytics-heat-2 { background: rgba(41, 121, 255, 0.50); }
-      .analytics-heat-3 { background: rgba(41, 121, 255, 0.75); }
-      .analytics-heat-4 { background: #2979ff; }
-      .analytics-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12.5px;
-      }
-      .analytics-table th {
-        text-align: left;
-        padding: 10px 12px;
-        color: var(--text-secondary);
-        font-weight: 700;
-        border-bottom: 1px solid var(--border);
-        font-size: 11.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .analytics-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        color: var(--text-primary);
-      }
-      .analytics-table tr:hover td {
-        background: rgba(255, 255, 255, 0.03);
-      }
-      .analytics-chip-group-scroll {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        gap: 8px !important;
-        padding: 4px 2px 8px 2px !important;
-        scrollbar-width: none !important;
-      }
-      .analytics-chip-group-scroll::-webkit-scrollbar {
-        display: none !important;
-      }
-      .analytics-chip {
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-      }
-      @media (max-width: 768px) {
-        .analytics-kpi-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-        .analytics-two-col {
-          grid-template-columns: 1fr !important;
-        }
-      }
-      @media (max-width: 480px) {
-        .analytics-kpi-grid {
-          grid-template-columns: repeat(2, 1fr) !important;
-          gap: 8px !important;
-        }
-        .analytics-kpi-card {
-          padding: 12px 10px !important;
-          border-radius: 12px !important;
-        }
-        .analytics-kpi-value {
-          font-size: 20px !important;
-        }
-        .analytics-kpi-label {
-          font-size: 11px !important;
-          line-height: 1.25 !important;
-        }
-        .analytics-kpi-sub {
-          font-size: 10px !important;
-        }
-        .analytics-kpi-badge {
-          font-size: 10px !important;
-          padding: 1px 5px !important;
-        }
-        .analytics-toolbar {
-          padding: 12px !important;
-          margin-bottom: 14px !important;
-        }
-        .admin-section-hero {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 10px !important;
-        }
-      }
-    </style>
-
-    <div class="admin-stats-page analytics-dashboard-page" id="admin-analytics-dashboard-wrap">
-      
-      <!-- HERO HEADER -->
-      <div class="admin-section-hero" style="margin-bottom:18px;">
-        <div>
-          <div class="admin-hero-title">📊 Analytics Dashboard</div>
-          <div class="admin-hero-desc">Platformaning to'liq ko'rsatkichlari, o'sish dinamikasi va auditoriya tahlili</div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          ${adminAnalyticsDashboardState.loading ? `
-            <div style="font-size:12px; color:var(--accent); font-weight:700; display:flex; align-items:center; gap:5px; margin-right:4px;">
-              <span class="spinner-inline" style="width:12px; height:12px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; display:inline-block;"></span> Yangilanmoqda...
-            </div>
-          ` : `
-            <div style="font-size:12px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:5px; margin-right:4px;">
-              <span class="live-pulse-dot"></span> Jonli Tizim
-            </div>
-          `}
-          <button class="admin-small-btn" onclick="exportAdminAnalyticsCsv()" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06);">
-            📥 CSV Eksport
-          </button>
-          <button class="admin-small-btn" onclick="refreshAdminAnalyticsDashboard()" style="display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:none;">
-            🔄 Yangilash
-          </button>
-        </div>
-      </div>
-
-      <!-- 1. VAQT FILTRI VA GRANULYARLIK TOOLBARI -->
-      <div class="analytics-toolbar">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="font-weight:750; font-size:13px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-            <span>📅</span> Vaqt Oralig'i:
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:11.5px; color:var(--text-secondary);">Granulyarlik:</span>
-            <select id="analytics-granularity-select" class="apple-input" style="padding:4px 8px; font-size:11.5px; width:auto; height:32px; border-radius:8px;" onchange="refreshAdminAnalyticsDashboard({ granularity: this.value })">
-              <option value="auto" ${granularity === 'auto' ? 'selected' : ''}>Avtomatik moslashuv</option>
-              <option value="yearly" ${granularity === 'yearly' ? 'selected' : ''}>Yillik</option>
-              <option value="monthly" ${granularity === 'monthly' ? 'selected' : ''}>Oylik</option>
-              <option value="weekly" ${granularity === 'weekly' ? 'selected' : ''}>Haftalik</option>
-              <option value="daily" ${granularity === 'daily' ? 'selected' : ''}>Kunlik</option>
-              <option value="hourly" ${granularity === 'hourly' ? 'selected' : ''}>Soatlik</option>
-              <option value="minutely" ${granularity === 'minutely' ? 'selected' : ''}>Minutlik (5 daqiqa)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="analytics-chip-group analytics-chip-group-scroll">
-          <button class="analytics-chip ${period === 'today' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'today' })">Bugun</button>
-          <button class="analytics-chip ${period === 'yesterday' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'yesterday' })">Kecha</button>
-          <button class="analytics-chip ${period === '7days' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '7days' })">Oxirgi 7 kun</button>
-          <button class="analytics-chip ${period === '30days' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '30days' })">Oxirgi 30 kun</button>
-          <button class="analytics-chip ${period === 'this_month' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'this_month' })">Shu oy</button>
-          <button class="analytics-chip ${period === 'last_month' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'last_month' })">O'tgan oy</button>
-          <button class="analytics-chip ${period === '3months' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '3months' })">Oxirgi 3 oy</button>
-          <button class="analytics-chip ${period === '6months' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: '6months' })">Oxirgi 6 oy</button>
-          <button class="analytics-chip ${period === 'this_year' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'this_year' })">Shu yil</button>
-          <button class="analytics-chip ${period === 'last_year' ? 'active' : ''}" onclick="refreshAdminAnalyticsDashboard({ period: 'last_year' })">O'tgan yil</button>
-          <button class="analytics-chip ${period === 'custom' ? 'active' : ''}" onclick="toggleAnalyticsCustomRange()">📅 Tanlangan oraliq</button>
-        </div>
-
-        <!-- CUSTOM RANGE INPUTS -->
-        <div id="analytics-custom-range-box" style="display:${period === 'custom' ? 'flex' : 'none'}; gap:8px; align-items:center; flex-wrap:wrap; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:12px; color:var(--text-secondary);">Dan:</span>
-            <input type="date" id="analytics-start-date" class="apple-input" style="padding:5px 8px; font-size:12px; width:auto;" value="${escapeHtml(customStart)}">
-          </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:12px; color:var(--text-secondary);">Gacha:</span>
-            <input type="date" id="analytics-end-date" class="apple-input" style="padding:5px 8px; font-size:12px; width:auto;" value="${escapeHtml(customEnd)}">
-          </div>
-          <button class="admin-small-btn" onclick="applyAnalyticsCustomRange()" style="background:var(--accent); color:#fff; border:none; padding:6px 12px; font-size:12px;">
-            Qo'llash
-          </button>
-        </div>
-      </div>
-
-      <!-- QUICK SECTION NAVIGATION CHIPS -->
-      <div class="analytics-chip-group analytics-chip-group-scroll" style="margin-bottom:18px;">
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-kpi')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📌 Asosiy KPI</button>
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-dynamics')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📈 Dinamika</button>
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-hourly')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">⏰ Soatlik & Heatmap</button>
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-devices')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📱 Qurilmalar</button>
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-content')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">📚 Kontent Tahlili</button>
-        <button class="analytics-chip" onclick="document.getElementById('analytics-section-students')?.scrollIntoView({behavior:'smooth'})" style="white-space:nowrap;">🏆 O'quvchilar Reytingi</button>
-      </div>
-
-      <!-- 2. YUQORI KPI KARTALAR (FOYDALANUVCHILAR) -->
-      <div id="analytics-section-kpi" style="margin-bottom:12px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">👥 Foydalanuvchilar Ko'rsatkichlari</div>
-        <div class="analytics-kpi-grid">
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(41,121,255,0.12); color:#2979ff;">👥</div>
-              <span class="analytics-kpi-badge ${newGrowthPct >= 0 ? 'up' : 'down'}">
-                ${newGrowthPct >= 0 ? '↑ +' : '↓ '}${newGrowthPct}%
-              </span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value">${totalUsers}</div>
-              <div class="analytics-kpi-label">Jami O'quvchilar</div>
-              <div class="analytics-kpi-sub">Bazada ro'yxatdan o'tganlar</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">⚡</div>
-              <span class="analytics-kpi-badge ${activeGrowthPct >= 0 ? 'up' : 'down'}">
-                ${activeGrowthPct >= 0 ? '↑ +' : '↓ '}${activeGrowthPct}%
-              </span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value" style="color:#10b981;">${activeInPeriod}</div>
-              <div class="analytics-kpi-label">Davrdagi Faol O'quvchilar</div>
-              <div class="analytics-kpi-sub">Tanlangan vaqtda kirganlar</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(139,92,246,0.12); color:#8b5cf6;">🆕</div>
-              <span class="analytics-kpi-badge neutral">Bugun</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value" style="color:#8b5cf6;">${newToday}</div>
-              <div class="analytics-kpi-label">Bugun Qo'shilganlar</div>
-              <div class="analytics-kpi-sub">Haftada: +${newThisWeek} • Oyda: +${newThisMonth}</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card" style="cursor:pointer;" onclick="adminNavigate('students')">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(255,149,0,0.12); color:#ff9500;">💳</div>
-              <span class="analytics-kpi-badge up">Faol</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value" style="color:#ff9500;">${paidUsers}</div>
-              <div class="analytics-kpi-label">Kurs Obunachilari →</div>
-              <div class="analytics-kpi-sub">Kirish ruxsati faollar</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(255,59,48,0.12); color:#ff3b30;">⏳</div>
-              <span class="analytics-kpi-badge neutral">${totalUsers ? Math.round((inactiveUsers / totalUsers) * 100) : 0}%</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value" style="color:var(--text-secondary);">${inactiveUsers}</div>
-              <div class="analytics-kpi-label">Nofaol O'quvchilar</div>
-              <div class="analytics-kpi-sub">Davrda kirmagan a'zolar</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. KONTENT FAOLLIGI (BUGUNGI REAL-TIME KO'RSATKICHLAR) -->
-      <div style="margin-bottom:20px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">⚡ Bugungi Kontent Faolligi (Real-Time)</div>
-        <div class="analytics-kpi-grid">
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(0,122,255,0.12); color:#007aff;">🎬</div>
-              <span class="analytics-kpi-badge up">Bugun</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value">${todayLessonViewers}</div>
-              <div class="analytics-kpi-label">Bugun Dars Ko'rganlar</div>
-              <div class="analytics-kpi-sub">O'quvchi tomonidan ochilgan</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(255,149,0,0.12); color:#ff9500;">📖</div>
-              <span class="analytics-kpi-badge up">Bugun</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value">${todayBookReaders}</div>
-              <div class="analytics-kpi-label">Bugun Kitob O'qiganlar</div>
-              <div class="analytics-kpi-sub">Kitob mutolaa qilganlar</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(52,199,89,0.12); color:#34c759;">🧱</div>
-              <span class="analytics-kpi-badge up">Bugun</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value">${todayMaterialViewers}</div>
-              <div class="analytics-kpi-label">Bugun Material Ko'rganlar</div>
-              <div class="analytics-kpi-sub">Qurilish bazasidan foydalanish</div>
-            </div>
-          </div>
-
-          <div class="analytics-kpi-card">
-            <div class="analytics-kpi-top">
-              <div class="analytics-kpi-icon" style="background:rgba(175,82,222,0.12); color:#af52de;">📐</div>
-              <span class="analytics-kpi-badge up">Bugun</span>
-            </div>
-            <div>
-              <div class="analytics-kpi-value">${todaySourceUsers}</div>
-              <div class="analytics-kpi-label">Bugun Manba Ishlatganlar</div>
-              <div class="analytics-kpi-sub">Revit andozalari / fayllar</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. O'QUVCHILAR QO'SHILISH DINAMIKASI VA FAOLLIK GRAFIGI -->
-      <div id="analytics-section-dynamics" class="analytics-card">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
-          <div>
-            <div style="font-size:15px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>📈</span> Faollik va Yangi O'quvchilar Dinamikasi
-            </div>
-            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-              Vaqt kesimida foydalanuvchilar oqimi va platformadan foydalanish tendensiyasi
-            </div>
-          </div>
-
-          <!-- SUMMARY NUMBERS -->
-          <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
-            <div style="text-align:right;">
-              <div style="font-size:11px; color:var(--text-muted);">Jami faollik:</div>
-              <div style="font-size:16px; font-weight:850; color:var(--text-primary);">${seriesSummary.total_activity || 0}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:11px; color:var(--text-muted);">O'rtacha:</div>
-              <div style="font-size:16px; font-weight:850; color:#007aff;">${seriesSummary.average_activity || 0}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:11px; color:var(--text-muted);">Peak nuqta:</div>
-              <div style="font-size:16px; font-weight:850; color:#10b981;">${seriesSummary.peak_value || 0} (${escapeHtml(seriesSummary.peak_label || '-')})</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:11px; color:var(--text-muted);">O'sish:</div>
-              <div style="font-size:16px; font-weight:850; color:${(seriesSummary.growth_pct || 0) >= 0 ? '#10b981' : '#ff3b30'};">
-                ${(seriesSummary.growth_pct || 0) >= 0 ? '+' : ''}${seriesSummary.growth_pct || 0}%
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- METRIC FILTER BUTTONS -->
-        <div style="display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px;">
-          <button class="analytics-chip ${activeMetric === 'all' ? 'active' : ''}" onclick="setAnalyticsMetric('all')">Hammasi</button>
-          <button class="analytics-chip ${activeMetric === 'new_users' ? 'active' : ''}" onclick="setAnalyticsMetric('new_users')">👥 Yangi o'quvchilar</button>
-          <button class="analytics-chip ${activeMetric === 'lesson_views' ? 'active' : ''}" onclick="setAnalyticsMetric('lesson_views')">🎬 Dars ko'rishlar</button>
-          <button class="analytics-chip ${activeMetric === 'book_reads' ? 'active' : ''}" onclick="setAnalyticsMetric('book_reads')">📖 Kitob o'qishlar</button>
-          <button class="analytics-chip ${activeMetric === 'material_views' ? 'active' : ''}" onclick="setAnalyticsMetric('material_views')">🧱 Materiallar</button>
-        </div>
-
-        <!-- SVG LINE / AREA CHART -->
-        <div style="width:100%; overflow-x:auto;">
-          ${renderAnalyticsSvgLineChart(seriesData, activeMetric)}
-        </div>
-      </div>
-
-      <!-- 5. FOYDALANUVCHILARNING FAOLLIK TARKIBI (USER ACTIVITY BREAKDOWN) -->
-      <div class="analytics-card">
-        <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center; gap:8px;">
-          <span>🎯</span> Foydalanuvchilar Faolligi Tarkibi
-        </div>
-        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
-          O'quvchilarning darslar, kitoblar, materiallar va manbalar orasidagi vaqt va harakat ulushi
-        </div>
-
-        ${renderAnalyticsCompositionHtml(categories)}
-      </div>
-
-      <!-- 6. HAFTA KUNLARI VA 24 SOATLIK FAOLLIK (2 USTUNLI GRID) -->
-      <div id="analytics-section-hourly" class="analytics-two-col" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-bottom:20px;">
-        <!-- HAFTANING ENG FAOL KUNLARI -->
-        <div class="analytics-card" style="margin-bottom:0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div>
-              <div style="font-weight:750; font-size:14px; color:var(--text-primary);">📅 Haftaning Eng Faol Kunlari</div>
-              <div style="font-size:11.5px; color:var(--text-secondary);">Dushanba — Yakshanba faollik taqsimoti</div>
-            </div>
-            <span class="admin-hub-badge" style="background:rgba(255,149,0,0.15); color:#ff9500; font-size:11px;">
-              🔥 Peak: ${escapeHtml(peakDay)}
-            </span>
-          </div>
-
-          ${renderAnalyticsWeekdayBarChart(weekdays)}
-        </div>
-
-        <!-- 24 SOATLIK FAOLLIK -->
-        <div class="analytics-card" style="margin-bottom:0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div>
-              <div style="font-weight:750; font-size:14px; color:var(--text-primary);">⏰ 24 Soatlik Faollik (Kun Davomida)</div>
-              <div style="font-size:11.5px; color:var(--text-secondary);">00:00 dan 23:00 gacha soatlar kesimi</div>
-            </div>
-            <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-size:11px;">
-              ⭐ Peak: ${escapeHtml(peakHour)}
-            </span>
-          </div>
-
-          ${renderAnalyticsHourlyBarChart(hourly)}
-        </div>
-      </div>
-
-      <!-- 7. HAFTA KUNI X SOAT ACTIVITY HEATMAP -->
-      <div class="analytics-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-          <div>
-            <div style="font-weight:750; font-size:14px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>🔥</span> Faollik Issiqlik Xaritasi (Activity Heatmap)
-            </div>
-            <div style="font-size:11.5px; color:var(--text-secondary);">Haftaning har bir kuni va har bir soatidagi intensivlik</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted);">
-            <span>Kam</span>
-            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(255,255,255,0.06);"></span>
-            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.25);"></span>
-            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.50);"></span>
-            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:rgba(41,121,255,0.75);"></span>
-            <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#2979ff;"></span>
-            <span>Ko'p</span>
-          </div>
-        </div>
-
-        ${renderAnalyticsHeatmapHtml(heatmap)}
-      </div>
-
-      <!-- 5. QURILMA / DEVICE ANALYTICS (24-BO'LIM) -->
-      <div id="analytics-section-devices" class="analytics-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
-          <div>
-            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>📱</span> 24. Qurilma / Device Analytics
-            </div>
-            <div style="font-size:12px; color:var(--text-secondary);">
-              Foydalanuvchilar qaysi qurilmalardan kirayotgani, platformalar taqsimoti, kontent aloqasi va faol vaqtlar
-            </div>
-          </div>
-          <span class="admin-hub-badge" style="background:rgba(52,199,89,0.15); color:#34c759; font-weight:750;">
-            Real-Time Sessions
-          </span>
-        </div>
-
-        ${renderAnalyticsDeviceSectionHtml(devices)}
-      </div>
-
-      <!-- 8. KONTENT BO'YICHA CHUQUR TAHLIL (DEEP DIVES) -->
-      <div id="analytics-section-content" class="analytics-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
-          <div>
-            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>📚</span> Kontent Bo'yicha Chuqur Tahlil
-            </div>
-            <div style="font-size:12px; color:var(--text-secondary);">Darslar, kitoblar, materiallar va manbalarning o'qilishi va samaradorligi</div>
-          </div>
-
-          <div style="display:flex; gap:6px;">
-            <button class="analytics-chip ${deepDiveTab === 'lessons' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('lessons')">🎬 Darslar</button>
-            <button class="analytics-chip ${deepDiveTab === 'books' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('books')">📖 Kitoblar</button>
-            <button class="analytics-chip ${deepDiveTab === 'materials' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('materials')">🧱 Materiallar</button>
-            <button class="analytics-chip ${deepDiveTab === 'sources' ? 'active' : ''}" onclick="setAnalyticsDeepDiveTab('sources')">📐 Manbalar</button>
-          </div>
-        </div>
-
-        ${renderAnalyticsDeepDivesHtml(deepDives, deepDiveTab)}
-      </div>
-
-      <!-- 9. USER RETENTION / QAYTA KELISH -->
-      <div class="analytics-card">
-        <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center; gap:8px;">
-          <span>🔄</span> O'quvchilarning Qayta Kelish Ko'rsatkichi (Retention)
-        </div>
-        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
-          Yangi a'zolarning platformaga 1, 7 va 30 kundan keyin qaytib kelish foizlari
-        </div>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 1 Retention</span>
-              <span class="admin-hub-badge" style="background:rgba(52,199,89,0.15); color:#34c759;">1-kundan keyin</span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
-              ${retention.day_1_pct || 0}%
-            </div>
-            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
-              <div style="width:${Math.min(100, retention.day_1_pct || 0)}%; height:100%; background:#34c759; border-radius:3px;"></div>
-            </div>
-          </div>
-
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 7 Retention</span>
-              <span class="admin-hub-badge" style="background:rgba(0,122,255,0.15); color:#007aff;">7-kundan keyin</span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
-              ${retention.day_7_pct || 0}%
-            </div>
-            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
-              <div style="width:${Math.min(100, retention.day_7_pct || 0)}%; height:100%; background:#007aff; border-radius:3px;"></div>
-            </div>
-          </div>
-
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:12.5px; font-weight:750; color:var(--text-secondary);">Day 30 Retention</span>
-              <span class="admin-hub-badge" style="background:rgba(175,82,222,0.15); color:#af52de;">30-kundan keyin</span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:6px;">
-              ${retention.day_30_pct || 0}%
-            </div>
-            <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
-              <div style="width:${Math.min(100, retention.day_30_pct || 0)}%; height:100%; background:#af52de; border-radius:3px;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 10. ENG FAOL O'QUVCHILAR JADVALI (TOP ACTIVE STUDENTS) -->
-      <div id="analytics-section-students" class="analytics-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>
-            <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>🏆</span> Eng Faol O'quvchilar Reytingi
-            </div>
-            <div style="font-size:12px; color:var(--text-secondary);">
-              Darslar, kitoblar, materiallar va manbalardagi umumiy faollik ko'rsatkichi bo'yicha saralangan
-            </div>
-          </div>
-          <button class="admin-small-btn" onclick="adminNavigate('students')">
-            Barcha o'quvchilar →
-          </button>
-        </div>
-
-        <div class="analytics-table-wrap" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-          <table class="analytics-table">
-            <thead>
-              <tr>
-                <th style="width:36px;">#</th>
-                <th>O'quvchi</th>
-                <th>Darslar</th>
-                <th>Kitoblar</th>
-                <th>Materiallar</th>
-                <th>Manbalar</th>
-                <th>Umumiy Ball</th>
-                <th>Oxirgi Faollik</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${topStudents.length ? topStudents.map((st, idx) => {
-                const fullName = [st.first_name, st.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
-                const username = st.username ? "@" + st.username : ("ID: " + st.telegram_id);
-                return `
-                  <tr style="cursor:pointer;" onclick="openAdminStudentLiveDossier(${Number(st.id)})" title="O'quvchi dosyesini ochish">
-                    <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
-                    <td>
-                      <div style="font-weight:750; color:var(--text-primary);">${escapeHtml(fullName)}</div>
-                      <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(username)}</div>
-                    </td>
-                    <td><span style="font-weight:700; color:#007aff;">${st.watched_lessons}</span> dars</td>
-                    <td><span style="font-weight:700; color:#ff9500;">${st.read_books}</span> kitob</td>
-                    <td><span style="font-weight:700; color:#34c759;">${st.viewed_materials}</span> material</td>
-                    <td><span style="font-weight:700; color:#af52de;">${st.used_sources}</span> manba</td>
-                    <td>
-                      <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-weight:800;">
-                        ⭐ ${st.total_activity_score}
-                      </span>
-                    </td>
-                    <td style="font-size:11.5px; color:var(--text-secondary);">
-                      ${st.last_seen_at ? formatRelativeTime(st.last_seen_at) : 'Yaqinda'}
-                    </td>
-                  </tr>
-                `;
-              }).join("") : `
-                <tr>
-                  <td colspan="8" style="text-align:center; padding:24px; color:var(--text-secondary);">
-                    Faol o'quvchilar ma'lumotlari topilmadi.
-                  </td>
-                </tr>
-              `}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 11. HOZIR ONLINE FOYDALANUVCHILAR (MAVJUD BLOK) -->
-      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>
-            <div style="font-weight:750; font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-              <span>⚡</span> Hozir Online Foydalanuvchilar
-              <span id="admin-live-users-count" class="admin-hub-badge" style="background:rgba(16,185,129,0.12); color:#10b981;">${activeUsers.length} ta faol</span>
-            </div>
-            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Mini App ichidagi real-time foydalanuvchilar</div>
-          </div>
-          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
-            <span class="live-pulse-dot"></span> Jonli
-          </div>
-        </div>
-
-        <div id="admin-live-users-rows">
-          ${renderAdminLiveUsersHtml(activeUsers)}
-        </div>
-      </div>
-
+    <div class="stx-label">FAOLLIK</div>
+    <div class="stx-seg" role="tablist" aria-label="Davr" data-idx="${idx}">
+      <div class="stx-seg-pill" style="transform:translateX(${idx * 100}%)"></div>
+      ${[3, 7, 30].map(n => `<button type="button" role="tab" aria-selected="${stxState.days === n}" class="stx-seg-btn ${stxState.days === n ? "active" : ""}" onclick="stxSetPeriod(${n})">${n} kun</button>`).join("")}
     </div>
-  `;
+    <div class="stx-card stx-chart-card ${stxState.chartLoading ? "is-loading" : ""}" style="margin-top:12px;">
+      <div class="stx-chart-title">${range}</div>
+      <div class="stx-detail">${sel ? `<b>${stxFmtDay(sel.day, true)}</b>` + STX_SERIES.filter(s => !stxState.hidden.has(s.key)).map(s => `<span><i style="background:${s.color}"></i>${s.label}: <b>${stxNum(sel[s.key])}</b></span>`).join("") : `<span class="stx-hint">Kunni bosing — shu kunning raqamlari chiqadi</span>`}</div>
+      ${allZero ? `<div class="stx-empty">Bu davrda hali faollik qayd etilmagan.</div>` : stxChartHtml(series)}
+      <div class="stx-chips">
+        ${STX_SERIES.map(s => `<button type="button" class="stx-chip ${stxState.hidden.has(s.key) ? "off" : ""}" style="--c:${s.color}" onclick="stxToggleSeries('${s.key}')"><span class="stx-chip-check">✓</span>${s.label} <b>${stxNum(total(s.key))}</b></button>`).join("")}
+      </div>
+      ${stxState.chartLoading ? `<div class="stx-chart-loader"><div class="stx-spinner"></div></div>` : ""}
+    </div>`;
+}
+
+function stxInnerHtml() {
+  if (stxState.error && !stxState.data) {
+    return `
+      <div class="stx-head"><h1 class="stx-title">Statistika</h1></div>
+      <div class="stx-card stx-error">
+        <div class="stx-error-ico">⚠️</div>
+        <div class="stx-error-title">Statistikani yuklashda xatolik yuz berdi.</div>
+        <button type="button" class="stx-retry" onclick="stxState.error=null; loadAdminStats();">🔄 Qayta yuklash</button>
+      </div>`;
+  }
+  if (stxState.loading && !stxState.data) {
+    const sk = t => `<div class="stx-stat"><div class="stx-stat-label">${t}</div><div class="stx-stat-num stx-skel">...</div></div>`;
+    return `
+      <div class="stx-head"><h1 class="stx-title">Statistika</h1></div>
+      <div class="stx-label">ASOSIY KO‘RSATKICHLAR</div>
+      <div class="stx-card stx-grid-cards">${sk("Jami o‘quvchilar")}${sk("Hozir platformada")}${sk("Dars ko‘rayotganlar")}${sk("Kitob o‘qiyotganlar")}${sk("Boshqa bo‘limlarda")}${sk("Bugun faol bo‘lganlar")}</div>
+      <div class="stx-label">HOZIR PLATFORMADA</div>
+      <div class="stx-card"><div class="stx-skel-row"></div><div class="stx-skel-row"></div><div class="stx-skel-row"></div></div>`;
+  }
+  const d = stxState.data, live = d.live, t = d.totals, today = d.today;
+  const others = (live.materials || 0) + (live.normatives || 0) + (live.sources || 0) + (live.other || 0);
+  const delta = (t.new_in_period || 0) - (t.new_prev_period || 0);
+  const deltaTxt = (t.new_in_period || 0) > 0 || (t.new_prev_period || 0) > 0
+    ? `<span class="stx-delta ${delta >= 0 ? "up" : "down"}">${t.new_in_period >= 0 ? "+" : ""}${stxNum(t.new_in_period)} <small>${stxState.days} kunda</small></span>` : `<span class="stx-sub">${stxState.days} kunda yangi yo‘q</span>`;
+  const stat = (label, id, val, extra, cls) => `
+    <div class="stx-stat ${cls || ""}">
+      <div class="stx-stat-num" id="${id}">${stxNum(val)}</div>
+      <div class="stx-stat-label">${label}</div>
+      ${extra || ""}
+    </div>`;
+  return `
+    <div class="stx-head">
+      <h1 class="stx-title">Statistika</h1>
+      <div class="stx-head-right"><span id="stx-updated" class="stx-updated">Yangilandi ${stxClock(stxState.lastLiveAt)}</span>
+        <button type="button" class="stx-refresh" aria-label="Yangilash" onclick="haptic('light'); loadAdminStats({chart:true});">↻</button></div>
+    </div>
+
+    <div class="stx-label">ASOSIY KO‘RSATKICHLAR</div>
+    <div class="stx-card stx-grid-cards">
+      ${stat("Jami o‘quvchilar", "stx-v-total", t.students, deltaTxt)}
+      ${stat("Hozir platformada", "stx-v-online", live.online, `<span class="stx-sub"><i class="stx-live-dot"></i> jonli</span>`, "stx-stat-live")}
+      ${stat("Dars ko‘rayotganlar", "stx-v-lessons", live.lessons, `<span class="stx-sub">bugun: ${stxNum(today.lesson_viewers)}</span>`)}
+      ${stat("Kitob o‘qiyotganlar", "stx-v-books", live.books, `<span class="stx-sub">bugun: ${stxNum(today.book_readers)}</span>`)}
+      ${stat("Boshqa bo‘limlarda", "stx-v-others", others, `<span class="stx-sub">materiallar, normativlar…</span>`)}
+      ${stat("Bugun faol bo‘lganlar", "stx-v-today", today.active, `<span class="stx-sub">platformaga kirgan</span>`)}
+    </div>
+
+    <div class="stx-label">HOZIR PLATFORMADA</div>
+    <div class="stx-card">
+      <div class="stx-now"><span class="stx-now-num" id="stx-v-online-big">${stxNum(live.online)}</span> <span class="stx-now-text">kishi hozir platformada</span></div>
+      <div id="stx-bars" class="stx-bars">${stxBarsHtml(live)}</div>
+      <button type="button" class="stx-more ${stxState.showUsers ? "open" : ""}" onclick="stxToggleUsers()">Kimlar faol? <span class="stx-more-chev">›</span></button>
+      <div id="stx-users" class="stx-users ${stxState.showUsers ? "open" : ""}">${stxUsersHtml(d.live_users)}</div>
+      <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar.</div>
+    </div>
+
+    ${stxActivityHtml()}`;
+}
+
+function renderAdminStatsView() {
+  setTimeout(stxPaintBars, 30);
+  return `
+    <div class="page admin-page stx" id="stx-root">${stxInnerHtml()}</div>`;
 }
 
 // -------------------------------------------------------------
 // SVG LINE & AREA CHART GENERATOR
 // -------------------------------------------------------------
-function renderAnalyticsSvgLineChart(data, metric) {
-  if (!data || !data.length) {
-    return `<div class="empty-box" style="padding:40px 16px; text-align:center;">Ushbu davr uchun grafik ma'lumotlari mavjud emas.</div>`;
-  }
 
-  const width = 800;
-  const height = 240;
-  const padLeft = 45;
-  const padRight = 20;
-  const padTop = 20;
-  const padBottom = 35;
-
-  const plotW = width - padLeft - padRight;
-  const plotH = height - padTop - padBottom;
-
-  // Extract points based on selected metric
-  const points = data.map((d, i) => {
-    let val = 0;
-    if (metric === 'new_users') val = d.new_users || 0;
-    else if (metric === 'lesson_views') val = d.lesson_views || 0;
-    else if (metric === 'book_reads') val = d.book_reads || 0;
-    else if (metric === 'material_views') val = d.material_views || 0;
-    else val = d.total_activity || 0;
-
-    return { val, label: d.label, raw: d };
-  });
-
-  const maxVal = Math.max(1, ...points.map(p => p.val));
-  const minVal = 0;
-
-  // Compute X and Y
-  const coords = points.map((p, i) => {
-    const x = padLeft + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
-    const y = padTop + plotH - ((p.val - minVal) / (maxVal - minVal)) * plotH;
-    return { x, y, val: p.val, label: p.label };
-  });
-
-  // Build SVG Path
-  let pathD = `M ${coords[0].x} ${coords[0].y}`;
-  for (let i = 1; i < coords.length; i++) {
-    const prev = coords[i - 1];
-    const curr = coords[i];
-    const cpX = (prev.x + curr.x) / 2;
-    pathD += ` C ${cpX} ${prev.y}, ${cpX} ${curr.y}, ${curr.x} ${curr.y}`;
-  }
-
-  // Area path
-  const areaD = `${pathD} L ${coords[coords.length - 1].x} ${padTop + plotH} L ${coords[0].x} ${padTop + plotH} Z`;
-
-  // Grid Lines
-  const gridSteps = 4;
-  let gridHtml = '';
-  for (let s = 0; s <= gridSteps; s++) {
-    const gY = padTop + (s / gridSteps) * plotH;
-    const gVal = Math.round(maxVal - (s / gridSteps) * maxVal);
-    gridHtml += `
-      <line x1="${padLeft}" y1="${gY}" x2="${width - padRight}" y2="${gY}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
-      <text x="${padLeft - 8}" y="${gY + 4}" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="end">${gVal}</text>
-    `;
-  }
-
-  // X Labels (sample if too many)
-  let xLabelsHtml = '';
-  const stepLabel = Math.max(1, Math.ceil(points.length / 10));
-  coords.forEach((c, idx) => {
-    if (idx % stepLabel === 0 || idx === coords.length - 1) {
-      xLabelsHtml += `
-        <text x="${c.x}" y="${height - 10}" fill="rgba(255,255,255,0.5)" font-size="10.5" text-anchor="middle">${escapeHtml(c.label)}</text>
-      `;
-    }
-  });
-
-  // Data Dots
-  const dotsHtml = coords.map((c, idx) => `
-    <circle cx="${c.x}" cy="${c.y}" r="4" fill="#007aff" stroke="#fff" stroke-width="1.5" style="cursor:pointer; transition:transform 0.1s ease;" data-label="${escapeHtml(c.label)}" data-val="${c.val}">
-      <title>${escapeHtml(c.label)}: ${c.val}</title>
-    </circle>
-  `).join('');
-
-  return `
-    <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; overflow:visible;" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <linearGradient id="analyticsLineGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#007aff" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="#007aff" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-      
-      <!-- Grid -->
-      ${gridHtml}
-
-      <!-- Area -->
-      <path d="${areaD}" fill="url(#analyticsLineGrad)" />
-
-      <!-- Line -->
-      <path d="${pathD}" fill="none" stroke="#007aff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-
-      <!-- Dots -->
-      ${dotsHtml}
-
-      <!-- X Axis Labels -->
-      ${xLabelsHtml}
-    </svg>
-  `;
-}
 
 // -------------------------------------------------------------
 // FAOL KUNLAR BAR CHART GENERATOR
 // -------------------------------------------------------------
-function renderAnalyticsWeekdayBarChart(weekdays) {
-  if (!weekdays || !weekdays.length) {
-    return `<div class="empty-box" style="padding:24px 12px; font-size:12px;">Ma'lumot mavjud emas</div>`;
-  }
-  const max = Math.max(1, ...weekdays.map(w => w.total_activity));
 
-  return `
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:8px;">
-      ${weekdays.map(w => {
-        const heightPct = Math.max(8, Math.round((w.total_activity / max) * 100));
-        const isPeak = w.total_activity === max && max > 0;
-        return `
-          <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${w.name}: ${w.total_activity} ta faollik (${w.lesson_views} dars, ${w.book_reads} kitob, ${w.material_views} material)">
-            <div style="font-size:10px; font-weight:750; color:${isPeak ? '#ff9500' : 'var(--text-muted)'}; margin-bottom:4px;">
-              ${w.total_activity}
-            </div>
-            <div style="width:100%; max-width:24px; height:${heightPct}%; background:${isPeak ? '#ff9500' : 'rgba(41,121,255,0.45)'}; border-radius:6px 6px 2px 2px; transition:all 0.2s ease;"></div>
-            <div style="font-size:11px; font-weight:700; color:${isPeak ? 'var(--text-primary)' : 'var(--text-secondary)'}; margin-top:6px;">
-              ${w.name.slice(0, 2)}
-            </div>
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
-}
 
 // -------------------------------------------------------------
 // 24 SOATLIK BAR CHART GENERATOR
 // -------------------------------------------------------------
-function renderAnalyticsHourlyBarChart(hourly) {
-  if (!hourly || !hourly.length) {
-    return `<div class="empty-box" style="padding:24px 12px; font-size:12px;">Ma'lumot mavjud emas</div>`;
-  }
-  const max = Math.max(1, ...hourly.map(h => h.total_activity));
 
-  return `
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:2px;">
-      ${hourly.map((h, i) => {
-        const heightPct = Math.max(6, Math.round((h.total_activity / max) * 100));
-        const isPeak = h.total_activity === max && max > 0;
-        const showLabel = i % 4 === 0 || i === 23;
-        return `
-          <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${h.label}: ${h.total_activity} ta harakat">
-            <div style="width:100%; height:${heightPct}%; background:${isPeak ? '#2979ff' : 'rgba(255,255,255,0.12)'}; border-radius:3px 3px 1px 1px; transition:all 0.2s ease;"></div>
-            <div style="font-size:9.5px; color:var(--text-muted); margin-top:6px; height:14px;">
-              ${showLabel ? h.hour : ''}
-            </div>
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
-}
 
 // -------------------------------------------------------------
 // HEATMAP GENERATOR
 // -------------------------------------------------------------
-function renderAnalyticsHeatmapHtml(heatmap) {
-  if (!heatmap || !heatmap.length) {
-    return `<div class="empty-box" style="padding:24px 12px;">Heatmap ma'lumotlari mavjud emas</div>`;
-  }
-
-  const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
-  let html = `<div class="analytics-chart-scroll-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;"><div class="analytics-heatmap-grid" style="min-width:560px;">`;
-
-  // Header row for hours
-  html += `<div></div>`;
-  for (let h = 0; h < 24; h++) {
-    html += `<div style="font-size:9.5px; text-align:center; color:var(--text-muted);">${h}</div>`;
-  }
-
-  // Rows for days
-  for (let d = 1; d <= 7; d++) {
-    const dayName = days[d - 1];
-    html += `<div style="font-size:11px; font-weight:700; color:var(--text-secondary);">${dayName.slice(0, 2)}</div>`;
-    for (let h = 0; h < 24; h++) {
-      const cell = heatmap.find(c => c.day === d && c.hour === h) || { count: 0, intensity: 0 };
-      html += `
-        <div class="analytics-heatmap-cell analytics-heat-${cell.intensity}" title="${dayName} ${h < 10 ? '0' : ''}${h}:00 — ${cell.count} ta faollik"></div>
-      `;
-    }
-  }
-
-  html += `</div></div>`;
-  return html;
-}
 
 
 // -------------------------------------------------------------
 // 24. QURILMA / DEVICE ANALYTICS RENDERER
 // -------------------------------------------------------------
-function renderAnalyticsDeviceSectionHtml(devices) {
-  if (!devices) {
-    return `<div class="empty-box" style="padding:24px 12px;">Qurilmalar analitikasi ma'lumotlari yuklanmoqda...</div>`;
-  }
 
-  const rawSummary = devices.summary || {};
-  const mob = rawSummary.mobile || {};
-  const desk = rawSummary.desktop || {};
-  const tab = rawSummary.tablet || {};
-
-  const summary = {
-    mobile: {
-      pct: mob.pct ?? mob.percentage ?? 0,
-      users: mob.users ?? mob.users_count ?? 0,
-      active: mob.active ?? mob.active_count ?? 0,
-      sessions: mob.sessions ?? mob.sessions_count ?? 0
-    },
-    desktop: {
-      pct: desk.pct ?? desk.percentage ?? 0,
-      users: desk.users ?? desk.users_count ?? 0,
-      active: desk.active ?? desk.active_count ?? 0,
-      sessions: desk.sessions ?? desk.sessions_count ?? 0
-    },
-    tablet: {
-      pct: tab.pct ?? tab.percentage ?? 0,
-      users: tab.users ?? tab.users_count ?? 0,
-      active: tab.active ?? tab.active_count ?? 0,
-      sessions: tab.sessions ?? tab.sessions_count ?? 0
-    }
-  };
-
-  const osColors = {
-    'Android': '#34c759',
-    'iPhone / iOS': '#007aff',
-    'iOS': '#007aff',
-    'Windows': '#00a4ef',
-    'macOS': '#af52de',
-    'iPad / Tablet': '#ff9500',
-    'Linux': '#ffcc00',
-    'Unknown': '#8e8e93'
-  };
-
-  const distribution = (devices.distribution || []).map(d => {
-    const name = d.name || d.os || 'Unknown';
-    const pct = d.pct ?? d.percentage ?? 0;
-    const count = d.count ?? d.users_count ?? d.sessions_count ?? 0;
-    const clr = osColors[name] || d.color || '#8e8e93';
-    return { ...d, name, pct, count, clr };
-  });
-
-  const timeSeries = devices.time_series || [];
-  const contentMatrix = devices.content_matrix || [];
-  const peakHours = devices.peak_hours || {
-    mobile: { peak: '20:00 - 22:00', label: 'Kechki payt' },
-    desktop: { peak: '10:00 - 13:00', label: 'Ish vaqti' },
-    tablet: { peak: '19:00 - 21:00', label: 'Dam olish' }
-  };
-  const hourly = devices.hourly_breakdown || [];
-
-  const maxTimeVal = Math.max(1, ...timeSeries.map(t => Math.max(t.mobile || 0, t.desktop || 0, t.tablet || 0)));
-
-  return `
-    <div style="display:flex; flex-direction:column; gap:16px;">
-      
-      <!-- 24.1. UMUMIY DEVICE STATISTIKASI (CARDS) -->
-      <div>
-        <div style="font-size:12.5px; font-weight:750; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
-          24.1. Umumiy Qurilmalar Holati
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
-          
-          <!-- MOBILE -->
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div style="width:36px; height:36px; border-radius:10px; background:rgba(52,199,89,0.15); color:#34c759; display:flex; align-items:center; justify-content:center; font-size:18px;">
-                  📱
-                </div>
-                <div>
-                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Mobile</div>
-                  <div style="font-size:11px; color:var(--text-muted);">Smartfonlar (Android, iOS)</div>
-                </div>
-              </div>
-              <span class="admin-hub-badge" style="background:rgba(52,199,89,0.18); color:#34c759; font-weight:800; font-size:12px;">
-                ${summary.mobile.pct}%
-              </span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
-              ${summary.mobile.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
-            </div>
-            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
-              <div>Faol: <strong style="color:#34c759;">${summary.mobile.active}</strong></div>
-              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.mobile.sessions}</strong></div>
-            </div>
-          </div>
-
-          <!-- DESKTOP -->
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div style="width:36px; height:36px; border-radius:10px; background:rgba(0,122,255,0.15); color:#007aff; display:flex; align-items:center; justify-content:center; font-size:18px;">
-                  💻
-                </div>
-                <div>
-                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Desktop</div>
-                  <div style="font-size:11px; color:var(--text-muted);">Kompyuterlar (Win, Mac)</div>
-                </div>
-              </div>
-              <span class="admin-hub-badge" style="background:rgba(0,122,255,0.18); color:#007aff; font-weight:800; font-size:12px;">
-                ${summary.desktop.pct}%
-              </span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
-              ${summary.desktop.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
-            </div>
-            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
-              <div>Faol: <strong style="color:#007aff;">${summary.desktop.active}</strong></div>
-              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.desktop.sessions}</strong></div>
-            </div>
-          </div>
-
-          <!-- TABLET -->
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,149,0,0.15); color:#ff9500; display:flex; align-items:center; justify-content:center; font-size:18px;">
-                  📱
-                </div>
-                <div>
-                  <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Tablet</div>
-                  <div style="font-size:11px; color:var(--text-muted);">Planshetlar (iPad, Tab)</div>
-                </div>
-              </div>
-              <span class="admin-hub-badge" style="background:rgba(255,149,0,0.18); color:#ff9500; font-weight:800; font-size:12px;">
-                ${summary.tablet.pct}%
-              </span>
-            </div>
-            <div style="font-size:24px; font-weight:850; color:var(--text-primary); margin-bottom:8px;">
-              ${summary.tablet.users} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">foydalanuvchi</span>
-            </div>
-            <div style="display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:8px;">
-              <div>Faol: <strong style="color:#ff9500;">${summary.tablet.active}</strong></div>
-              <div>Sessionlar: <strong style="color:var(--text-primary);">${summary.tablet.sessions}</strong></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 24.2. DEVICE DISTRIBUTION -->
-      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <div>
-            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.2. Qurilmalar & Operatsion Tizimlar Taqsimoti (Distribution)</div>
-            <div style="font-size:11.5px; color:var(--text-secondary);">Foydalanuvchilar qaysi OT va platformalardan kirmoqda</div>
-          </div>
-        </div>
-
-        <!-- Segmented bar -->
-        <div style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:rgba(255,255,255,0.06); margin-bottom:12px;">
-          ${distribution.map(d => {
-            return `<div style="width:${Math.max(2, d.pct)}%; background:${d.clr};" title="${escapeHtml(d.name)}: ${d.pct}% (${d.count} user)"></div>`;
-          }).join('')}
-        </div>
-
-        <!-- Distribution cards -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-          ${distribution.map(d => {
-            return `
-              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <span style="font-size:15px;">${d.icon || '📱'}</span>
-                  <div>
-                    <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${escapeHtml(d.name)}</div>
-                    <div style="font-size:10px; color:var(--text-muted);">${d.count} user</div>
-                  </div>
-                </div>
-                <span class="admin-hub-badge" style="background:${d.clr}22; color:${d.clr}; font-size:11px; font-weight:800;">
-                  ${d.pct}%
-                </span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-
-      <!-- 24.3. VAQT BO'YICHA DEVICE ACTIVITY -->
-      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-          <div>
-            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.3. Vaqt Bo'yicha Qurilmalar Faolligi Dinamikasi</div>
-            <div style="font-size:11.5px; color:var(--text-secondary);">Tanlangan davr bo'yicha Mobile, Desktop va Tablet harakatlari</div>
-          </div>
-          <div style="display:flex; gap:10px; font-size:11px;">
-            <span style="display:flex; align-items:center; gap:4px; color:#34c759;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#34c759;"></span> Mobile</span>
-            <span style="display:flex; align-items:center; gap:4px; color:#007aff;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#007aff;"></span> Desktop</span>
-            <span style="display:flex; align-items:center; gap:4px; color:#ff9500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ff9500;"></span> Tablet</span>
-          </div>
-        </div>
-
-        ${timeSeries.length ? `
-          <div style="display:flex; justify-content:space-between; align-items:flex-end; height:140px; padding:10px 4px 0 4px; gap:6px; overflow-x:auto;">
-            ${timeSeries.map((t, idx) => {
-              const mH = Math.max(4, Math.round(((t.mobile || 0) / maxTimeVal) * 100));
-              const dH = Math.max(4, Math.round(((t.desktop || 0) / maxTimeVal) * 100));
-              const tH = Math.max(4, Math.round(((t.tablet || 0) / maxTimeVal) * 100));
-              const showLbl = timeSeries.length <= 14 || idx % Math.ceil(timeSeries.length / 10) === 0 || idx === timeSeries.length - 1;
-              return `
-                <div style="flex:1; min-width:28px; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${t.label} | Mobile: ${t.mobile || 0}, Desktop: ${t.desktop || 0}, Tablet: ${t.tablet || 0}">
-                  <div style="display:flex; gap:2px; align-items:flex-end; width:100%; justify-content:center; height:100%;">
-                    <div style="width:6px; height:${mH}%; background:#34c759; border-radius:2px 2px 0 0;" title="Mobile: ${t.mobile || 0}"></div>
-                    <div style="width:6px; height:${dH}%; background:#007aff; border-radius:2px 2px 0 0;" title="Desktop: ${t.desktop || 0}"></div>
-                    <div style="width:6px; height:${tH}%; background:#ff9500; border-radius:2px 2px 0 0;" title="Tablet: ${t.tablet || 0}"></div>
-                  </div>
-                  <div style="font-size:9.5px; color:var(--text-muted); margin-top:6px; white-space:nowrap;">
-                    ${showLbl ? escapeHtml(t.label) : ''}
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        ` : `<div class="empty-box" style="padding:20px;">Vaqt bo'yicha dinamika ma'lumotlari topilmadi</div>`}
-      </div>
-
-      <!-- 24.4. DEVICE X CONTENT ANALYTICS -->
-      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-          <div>
-            <div style="font-size:13.5px; font-weight:800; color:var(--text-primary);">24.4. Qurilma × Kontent Analitikasi (Device × Content)</div>
-            <div style="font-size:11.5px; color:var(--text-secondary);">Qaysi qurilmadan qaysi kontent ko‘proq foydalanilayotganini ko‘rsatuvchi matritsa</div>
-          </div>
-          <span class="admin-hub-badge" style="background:rgba(255,255,255,0.06); color:var(--text-secondary); font-size:11px;">
-            📊 Matritsa
-          </span>
-        </div>
-
-        <div style="overflow-x:auto;">
-          <table class="analytics-table">
-            <thead>
-              <tr>
-                <th>Qurilma</th>
-                <th style="text-align:right;">🎬 Darslar</th>
-                <th style="text-align:right;">📖 Kitoblar</th>
-                <th style="text-align:right;">🧱 Materiallar</th>
-                <th style="text-align:right;">📐 Manbalar</th>
-                <th style="text-align:right;">Jami Harakat</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${contentMatrix.map(cm => `
-                <tr>
-                  <td>
-                    <div style="font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                      <span>${cm.icon || '📱'}</span>
-                      <span>${escapeHtml(cm.device)}</span>
-                    </div>
-                  </td>
-                  <td style="text-align:right; font-weight:700; color:#007aff;">${cm.lessons}</td>
-                  <td style="text-align:right; font-weight:700; color:#ff9500;">${cm.books}</td>
-                  <td style="text-align:right; font-weight:700; color:#34c759;">${cm.materials}</td>
-                  <td style="text-align:right; font-weight:700; color:#af52de;">${cm.sources}</td>
-                  <td style="text-align:right;">
-                    <span class="admin-hub-badge" style="background:rgba(41,121,255,0.15); color:#2979ff; font-weight:800;">
-                      ${cm.total}
-                    </span>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div style="margin-top:10px; padding:10px 12px; background:rgba(0,122,255,0.06); border-radius:8px; border:1px solid rgba(0,122,255,0.15); font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
-          💡 <strong>Tahliliy xulosa:</strong> Telefon (Android va iOS) orqali talabalar ko‘proq video darslarni tomosha qilishadi; kompyuter (Windows / Mac) foydalanuvchilari esa asosan kutubxona kitoblari va katta arxitektura manbalarini ko‘proq o‘rganishadi.
-        </div>
-      </div>
-
-      <!-- 24.5. DEVICE BO'YICHA FAOL VAQT (PEAK HOURS) -->
-      <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-        <div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">
-          24.5. Qurilma Bo'yicha Faol Vaqt & Peak Soatlar
-        </div>
-        <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
-          Har bir platformada o'quvchilarning eng yuqori faollik soatlari (Peak hours)
-        </div>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:14px;">
-          <div style="background:rgba(52,199,89,0.08); border:1px solid rgba(52,199,89,0.2); border-radius:10px; padding:10px 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:12px; font-weight:750; color:#34c759;">📱 Mobile Peak</span>
-              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.mobile.label)}</span>
-            </div>
-            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
-              ${escapeHtml(peakHours.mobile.peak)}
-            </div>
-          </div>
-
-          <div style="background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.2); border-radius:10px; padding:10px 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:12px; font-weight:750; color:#007aff;">💻 Desktop Peak</span>
-              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.desktop.label)}</span>
-            </div>
-            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
-              ${escapeHtml(peakHours.desktop.peak)}
-            </div>
-          </div>
-
-          <div style="background:rgba(255,149,0,0.08); border:1px solid rgba(255,149,0,0.2); border-radius:10px; padding:10px 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:12px; font-weight:750; color:#ff9500;">📱 Tablet Peak</span>
-              <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(peakHours.tablet.label)}</span>
-            </div>
-            <div style="font-size:18px; font-weight:850; color:var(--text-primary);">
-              ${escapeHtml(peakHours.tablet.peak)}
-            </div>
-          </div>
-        </div>
-
-        <!-- 24-Hour Comparative Breakdown -->
-        <div style="font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:8px;">
-          24 Soatlik Taqsimot (Mobile vs Desktop)
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; height:100px; padding:6px 2px 0 2px; gap:2px;">
-          ${hourly.map((h, i) => {
-            const maxH = Math.max(1, ...hourly.map(x => Math.max(x.mobile || 0, x.desktop || 0)));
-            const mPct = Math.max(4, Math.round(((h.mobile || 0) / maxH) * 100));
-            const dPct = Math.max(4, Math.round(((h.desktop || 0) / maxH) * 100));
-            const showLbl = i % 4 === 0 || i === 23;
-            return `
-              <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;" title="${h.hour}:00 — Mobile: ${h.mobile || 0}, Desktop: ${h.desktop || 0}">
-                <div style="display:flex; gap:1px; align-items:flex-end; width:100%; justify-content:center; height:100%;">
-                  <div style="width:50%; height:${mPct}%; background:#34c759; border-radius:2px 2px 0 0;"></div>
-                  <div style="width:50%; height:${dPct}%; background:#007aff; border-radius:2px 2px 0 0;"></div>
-                </div>
-                <div style="font-size:9px; color:var(--text-muted); margin-top:4px; height:12px;">
-                  ${showLbl ? h.hour : ''}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-
-    </div>
-  `;
-}
 
 // -------------------------------------------------------------
 // ACTIVITY COMPOSITION / DONUT BREAKDOWN
 // -------------------------------------------------------------
-function renderAnalyticsCompositionHtml(categories) {
-  if (!categories || !categories.length) {
-    return `<div class="empty-box">Kategoriyalar ma'lumotlari yuklanmoqda...</div>`;
-  }
-
-  return `
-    <div>
-      <!-- Multi-segment Progress Bar -->
-      <div style="display:flex; height:14px; border-radius:7px; overflow:hidden; margin-bottom:16px; background:rgba(255,255,255,0.06);">
-        ${categories.map(c => `
-          <div style="width:${c.share_pct}%; background:${c.color};" title="${escapeHtml(c.name)}: ${c.share_pct}%"></div>
-        `).join("")}
-      </div>
-
-      <!-- Categories Cards Grid -->
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
-        ${categories.map(c => `
-          <div style="background:var(--bg-surface-elevated); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:13px; font-weight:750; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                <span>${c.icon}</span> ${escapeHtml(c.name)}
-              </span>
-              <span class="admin-hub-badge" style="background:${c.color}22; color:${c.color}; font-weight:800;">
-                ${c.share_pct}%
-              </span>
-            </div>
-            <div style="font-size:20px; font-weight:850; color:var(--text-primary); margin-bottom:2px;">
-              ${c.actions} <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">harakat</span>
-            </div>
-            <div style="font-size:11px; color:var(--text-muted);">
-              Taxminiy vaqt: ~${Math.round(c.est_minutes / 60)} soat (${c.est_minutes} daqiqa)
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-  `;
-}
-
-// -------------------------------------------------------------
-// DEEP DIVES TABS (DARSLAR, KITOBLAR, MATERIALLAR, MANBALAR)
-// -------------------------------------------------------------
-function renderAnalyticsDeepDivesHtml(deepDives, tab) {
-  if (tab === 'lessons') {
-    const top = deepDives.lessons?.top_lessons || [];
-    const least = deepDives.lessons?.least_lessons || [];
-    return `
-      <div>
-        <div style="font-weight:750; font-size:13.5px; color:var(--text-primary); margin-bottom:10px;">
-          🎬 Eng Ko'p Ko'rilgan Darslar (Top 15)
-        </div>
-        <div style="overflow-x:auto; margin-bottom:20px;">
-          <table class="analytics-table">
-            <thead>
-              <tr>
-                <th style="width:36px;">#</th>
-                <th>Dars Nomi</th>
-                <th>Modul & Kurs</th>
-                <th>Ko'rishlar</th>
-                <th>Unique O'quvchilar</th>
-                <th>Yakunlash Darajasi</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${top.length ? top.map((l, idx) => `
-                <tr>
-                  <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
-                  <td style="font-weight:700; color:var(--text-primary);">${escapeHtml(l.title)}</td>
-                  <td style="font-size:11.5px; color:var(--text-secondary);">${escapeHtml(l.module_title || '')} (${escapeHtml(l.course_title || 'Revit')})</td>
-                  <td style="font-weight:800; color:#007aff;">${l.view_count}</td>
-                  <td>${l.unique_viewers} ta</td>
-                  <td>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                      <div style="flex:1; max-width:80px; background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
-                        <div style="width:${Math.min(100, l.completion_rate)}%; height:100%; background:#10b981; border-radius:3px;"></div>
-                      </div>
-                      <span style="font-size:11px; font-weight:700;">${l.completion_rate}%</span>
-                    </div>
-                  </td>
-                </tr>
-              `).join("") : `<tr><td colspan="6" style="text-align:center; padding:16px;">Ma'lumot mavjud emas</td></tr>`}
-            </tbody>
-          </table>
-        </div>
-
-        ${least.length ? `
-          <div style="font-weight:750; font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
-            ⚠️ Diqqat talab darslar (Kam ko'rilganlar):
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${least.map(l => `
-              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:11.5px;">
-                <b>#${l.order_index}</b> ${escapeHtml(l.title)}: <span style="color:#ff9500; font-weight:700;">${l.view_count || 0} ta</span>
-              </div>
-            `).join("")}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  if (tab === 'books') {
-    const books = deepDives.books?.top_books || [];
-    return `
-      <div style="overflow-x:auto;">
-        <table class="analytics-table">
-          <thead>
-            <tr>
-              <th style="width:36px;">#</th>
-              <th>Kitob Nomi</th>
-              <th>Muallif</th>
-              <th>Kategoriya</th>
-              <th>Ochilishlar</th>
-              <th>Unique O'quvchilar</th>
-              <th>Saqlanganlar</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${books.length ? books.map((b, idx) => `
-              <tr>
-                <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
-                <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(b.title)}</td>
-                <td style="font-size:11.5px; color:var(--text-secondary);">${escapeHtml(b.author || '-')}</td>
-                <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(b.category || 'Revit')}</span></td>
-                <td style="font-weight:800; color:#ff9500;">${b.view_count}</td>
-                <td>${b.unique_readers} ta</td>
-                <td style="color:#ff334b; font-weight:750;">♥ ${b.saved_count}</td>
-              </tr>
-            `).join("") : `<tr><td colspan="7" style="text-align:center; padding:16px;">Kitoblar ma'lumotlari mavjud emas</td></tr>`}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (tab === 'materials') {
-    const mats = deepDives.materials?.top_materials || [];
-    const cats = deepDives.materials?.categories || [];
-    return `
-      <div>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
-          <div style="font-weight:750; font-size:13.5px; color:var(--text-primary);">
-            🧱 Eng Ko'p Ko'rilgan Materiallar
-          </div>
-        </div>
-
-        <div style="overflow-x:auto; margin-bottom:18px;">
-          <table class="analytics-table">
-            <thead>
-              <tr>
-                <th style="width:36px;">#</th>
-                <th>Material Nomi</th>
-                <th>Kategoriya</th>
-                <th>Ko'rishlar</th>
-                <th>Layklar</th>
-                <th>Saqlanganlar</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${mats.length ? mats.map((m, idx) => `
-                <tr>
-                  <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
-                  <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(m.name_uz || 'Material')}</td>
-                  <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(m.category || 'Boshqa')}</span></td>
-                  <td style="font-weight:800; color:#34c759;">${m.view_count || 0}</td>
-                  <td style="color:#ff2d55;">♥ ${m.like_count || 0}</td>
-                  <td style="color:#ff9500;">⭐ ${m.save_count || 0}</td>
-                </tr>
-              `).join("") : `<tr><td colspan="6" style="text-align:center; padding:16px;">Materiallar ma'lumotlari mavjud emas</td></tr>`}
-            </tbody>
-          </table>
-        </div>
-
-        ${cats.length ? `
-          <div style="font-weight:750; font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
-            Kategoriyalar bo'yicha taqsimot:
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${cats.map(c => `
-              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:12px;">
-                ${escapeHtml(c.category)}: <b>${c.total_views}</b> ko'rish (${c.item_count} ta mahsulot)
-              </div>
-            `).join("")}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  // tab === 'sources'
-  const sources = deepDives.sources?.top_sources || [];
-  return `
-    <div style="overflow-x:auto;">
-      <table class="analytics-table">
-        <thead>
-          <tr>
-            <th style="width:36px;">#</th>
-            <th>Manba Nomi</th>
-            <th>Kategoriya</th>
-            <th>Ko'rishlar</th>
-            <th>Yuklab Olishlar</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sources.length ? sources.map((s, idx) => `
-            <tr>
-              <td style="font-weight:800; color:var(--text-secondary);">#${idx + 1}</td>
-              <td style="font-weight:750; color:var(--text-primary);">${escapeHtml(s.title)}</td>
-              <td><span class="admin-hub-badge" style="font-size:10px;">${escapeHtml(s.category || 'Manba')}</span></td>
-              <td style="font-weight:800; color:#af52de;">${s.view_count || 0}</td>
-              <td style="font-weight:750; color:#10b981;">📥 ${s.download_count || 0} ta</td>
-            </tr>
-          `).join("") : `<tr><td colspan="5" style="text-align:center; padding:16px;">Manbalar ma'lumotlari mavjud emas</td></tr>`}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// -------------------------------------------------------------
-// EVENT HANDLERS & FILTERS
-// -------------------------------------------------------------
-async function refreshAdminAnalyticsDashboard(opts = {}) {
-  haptic("light");
-  if (opts.period !== undefined) adminAnalyticsDashboardState.period = opts.period;
-  if (opts.startDate !== undefined) adminAnalyticsDashboardState.startDate = opts.startDate;
-  if (opts.endDate !== undefined) adminAnalyticsDashboardState.endDate = opts.endDate;
-  if (opts.granularity !== undefined) adminAnalyticsDashboardState.granularity = opts.granularity;
-  if (opts.metric !== undefined) adminAnalyticsDashboardState.activeMetric = opts.metric;
-
-  adminAnalyticsDashboardState.loading = true;
-  adminAnalyticsDashboardState.error = null;
-  renderAdminPanel();
-
-  const fetchTimeout = (prom, ms) => {
-    let t;
-    const toProm = new Promise((resolve) => {
-      t = setTimeout(() => resolve(null), ms);
-    });
-    return Promise.race([
-      prom.then(res => { clearTimeout(t); return res; }).catch(() => { clearTimeout(t); return null; }),
-      toProm
-    ]);
-  };
-
-  try {
-    const data = await fetchTimeout(adminApi("/api/admin/analytics/dashboard", {
-      period: adminAnalyticsDashboardState.period,
-      start_date: adminAnalyticsDashboardState.startDate || undefined,
-      end_date: adminAnalyticsDashboardState.endDate || undefined,
-      granularity: adminAnalyticsDashboardState.granularity || undefined
-    }), 3500);
-
-    if (data) {
-      adminData.analyticsDashboard = data;
-      adminAnalyticsDashboardState.error = null;
-    } else if (!adminData.analyticsDashboard) {
-      adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-      adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
-    }
-  } catch (err) {
-    console.warn("Analytics refresh xatosi:", err);
-    if (!adminData.analyticsDashboard) {
-      adminData.analyticsDashboard = buildFallbackAnalyticsDashboard(adminData.stats, adminData.analyticsHistory);
-      adminAnalyticsDashboardState.error = 'Statistika ma\'lumotlarini olishda xatolik. Qayta urinib ko\'ring.';
-    }
-  } finally {
-    adminAnalyticsDashboardState.loading = false;
-    renderAdminPanel();
-  }
-}
-window.refreshAdminAnalyticsDashboard = refreshAdminAnalyticsDashboard;
-
-function setAnalyticsMetric(metric) {
-  haptic("light");
-  adminAnalyticsDashboardState.activeMetric = metric;
-  renderAdminPanel();
-}
-window.setAnalyticsMetric = setAnalyticsMetric;
-
-function setAnalyticsDeepDiveTab(tab) {
-  haptic("light");
-  adminAnalyticsDashboardState.deepDiveTab = tab;
-  renderAdminPanel();
-}
-window.setAnalyticsDeepDiveTab = setAnalyticsDeepDiveTab;
-
-function toggleAnalyticsCustomRange() {
-  haptic("light");
-  adminAnalyticsDashboardState.period = 'custom';
-  const box = document.getElementById("analytics-custom-range-box");
-  if (box) {
-    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
-  } else {
-    renderAdminPanel();
-  }
-}
-window.toggleAnalyticsCustomRange = toggleAnalyticsCustomRange;
-
-function applyAnalyticsCustomRange() {
-  const sDate = document.getElementById("analytics-start-date")?.value;
-  const eDate = document.getElementById("analytics-end-date")?.value;
-  if (!sDate || !eDate) {
-    return showAlert("Boshlanish va tugash sanasini tanlang!");
-  }
-  refreshAdminAnalyticsDashboard({
-    period: 'custom',
-    startDate: sDate,
-    endDate: eDate
-  });
-}
-window.applyAnalyticsCustomRange = applyAnalyticsCustomRange;
-
-let isExportingAnalyticsCsv = false;
-async function exportAdminAnalyticsCsv() {
-  if (isExportingAnalyticsCsv) return;
-  haptic("medium");
-  const btn = document.querySelector('button[onclick="exportAdminAnalyticsCsv()"]');
-  const originalText = btn ? btn.innerHTML : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Eksport qilinmoqda...';
-  }
-  isExportingAnalyticsCsv = true;
-
-  try {
-    const period = adminAnalyticsDashboardState.period || '7days';
-    const sDate = adminAnalyticsDashboardState.startDate || '';
-    const eDate = adminAnalyticsDashboardState.endDate || '';
-    const gran = adminAnalyticsDashboardState.granularity || 'auto';
-
-    const payload = {
-      initData: getTelegramInitData(),
-      period: period,
-      granularity: gran,
-      start_date: sDate,
-      end_date: eDate
-    };
-
-    const res = await adminApi('/api/admin/analytics/export', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.error || ('Server xatosi: ' + res.status));
-    }
-
-    const blob = await res.blob();
-    const fileName = `yoshuzbekk_analytics_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
-
-    // Try standard Blob download
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = fileName;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      try {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (e) {}
-    }, 2000);
-
-    // If Telegram WebApp provides downloadFile API
-    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.downloadFile === 'function') {
-      try {
-        window.Telegram.WebApp.downloadFile({ url: blobUrl, file_name: fileName });
-      } catch (tgDlErr) {
-        console.warn('Telegram downloadFile fallback:', tgDlErr);
-      }
-    }
-
-    showToast("✅ CSV hisoboti muvaffaqiyatli yuklab olindi!");
-  } catch (err) {
-    console.error('CSV Export Error:', err);
-    showAlert("Eksport qilishda xato: " + (err.message || 'Xatolik yuz berdi'));
-  } finally {
-    isExportingAnalyticsCsv = false;
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  }
-}
-window.exportAdminAnalyticsCsv = exportAdminAnalyticsCsv;
 
 
 // 3. KUTUBXONA BOSH HUB SAHIFASI
@@ -16856,69 +15163,6 @@ function renderAdminPanel() {
   }
 }
 
-function startAdminLivePolling() {
-  stopAdminLivePolling();
-  adminLivePollingTimer = setInterval(async () => {
-    if (!currentView || !currentView.isAdminPanel || (adminNavPath && adminNavPath[0] !== "stats" && adminView !== "dashboard" && adminView !== "live")) {
-      stopAdminLivePolling();
-      return;
-    }
-    try {
-      const liveData = await adminApi("/api/admin/live-activity");
-      if (liveData && liveData.ok) {
-        adminData.stats = Object.assign({}, adminData.stats || {}, liveData.stats || {});
-        adminData.activeUsers = liveData.active_users || [];
-        updateAdminLiveDomElements();
-      }
-    } catch (e) {}
-  }, 6000);
-}
-
-function stopAdminLivePolling() {
-  if (adminLivePollingTimer) {
-    clearInterval(adminLivePollingTimer);
-    adminLivePollingTimer = null;
-  }
-}
-
-function updateAdminLiveDomElements() {
-  const s = adminData.stats || {};
-  const setTxt = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  };
-  setTxt("adm-live-online", s.online_now || 0);
-  setTxt("adm-live-watching", s.watching_now || 0);
-  setTxt("adm-live-testing", s.testing_now || 0);
-  setTxt("adm-live-today-active", s.today_active || 0);
-  setTxt("adm-live-today-views", s.today_lesson_views || 0);
-  setTxt("adm-live-today-tests", s.today_test_attempts || 0);
-  setTxt("adm-live-total-users", s.total_students || 0);
-
-  const listEl = document.getElementById("admin-live-users-rows");
-  if (listEl) {
-    listEl.innerHTML = renderAdminLiveUsersHtml(adminData.activeUsers || []);
-  }
-  const countEl = document.getElementById("admin-live-users-count");
-  if (countEl) {
-    countEl.textContent = `(${adminData.activeUsers ? adminData.activeUsers.length : 0} ta faol)`;
-  }
-}
-
-async function adminSetAnalyticsPeriod(period) {
-  haptic("light");
-  adminData.analyticsPeriod = period;
-  try {
-    const data = await adminApi("/api/admin/analytics/history", { period });
-    adminData.analyticsHistory = data || { summary: {}, daily: [] };
-    const container = document.getElementById("admin-analytics-section");
-    if (container) {
-      container.innerHTML = renderAdminAnalyticsSectionHtml();
-    }
-  } catch (e) {
-    showAlert("Tahlillarni yuklashda xatolik.");
-  }
-}
 
 // BACKWARD COMPATIBILITY ADAPTER FOR EXISTING CALLERS
 async function adminSetTab(tab) {
@@ -16960,262 +15204,9 @@ function getTabDisplayLabel(tab) {
   }
 }
 
-function renderAdminLiveUsersHtml(users) {
-  if (!users || !users.length) {
-    return `<div class="empty-box" style="padding:24px 0;">Ayni damda faol foydalanuvchilar mavjud emas.</div>`;
-  }
-
-  return users.map(u => {
-    const isRecent = u.last_seen_at && (Date.now() - new Date(u.last_seen_at).getTime()) < 75000;
-    const isWatching = isRecent && !!u.lesson_id && u.status === "watching" && u.video_status === "watching";
-    const isTesting = u.status === "testing";
-    const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Noma'lum O'quvchi";
-    const progressPercent = u.video_duration > 0 ? Math.min(100, Math.round((u.video_progress / u.video_duration) * 100)) : 0;
-
-    return `
-      <div class="live-user-card" onclick="openAdminStudentLiveDossier(${Number(u.user_id)})">
-        <div class="live-user-header">
-          <div class="live-user-name-wrap">
-            <div class="live-user-avatar">
-              ${(fullName[0] || "O").toUpperCase()}
-              ${isRecent ? `<span class="live-pulse-dot avatar-dot"></span>` : ""}
-            </div>
-            <div class="live-user-details">
-              <div class="live-user-name">${escapeHtml(fullName)}</div>
-              <div class="live-user-handle">${u.phone ? escapeHtml(u.phone) : (u.username ? "@" + escapeHtml(u.username) : "ID: " + escapeHtml(u.telegram_id))}</div>
-            </div>
-          </div>
-          <div class="live-user-badge-time">
-            ${isRecent ? `<span style="color:#10b981; font-weight:700;">🟢 Online</span><br>` : ""}
-            <span>${formatRelativeTime(u.last_seen_at)}</span>
-          </div>
-        </div>
-
-        <div class="live-activity-box">
-          ${isWatching ? `
-            <div class="live-activity-title" style="color:#ef4444;">
-              <span>▶️</span> Dars ko'rmoqda: <span style="color:var(--text-primary);">${escapeHtml(u.lesson_title || "Dars")}</span>
-            </div>
-            ${u.course_title ? `<div style="font-size:11px; color:var(--text-muted);">${escapeHtml(u.course_title)} ${u.module_title ? `→ ${escapeHtml(u.module_title)}` : ""}</div>` : ""}
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-secondary); margin-top:2px;">
-              <span>⏱️ ${formatSeconds(u.video_progress)} / ${formatSeconds(u.video_duration)}</span>
-              <span>${progressPercent}%</span>
-            </div>
-            <div class="live-progress-track">
-              <div class="live-progress-fill red" style="width:${progressPercent}%;"></div>
-            </div>
-          ` : (isTesting ? `
-            <div class="live-activity-title" style="color:#8b5cf6;">
-              <span>📝</span> Test ishlamoqda: <span style="color:var(--text-primary);">${escapeHtml(u.module_title || "Modul Testi")}</span>
-            </div>
-            <div style="font-size:11.5px; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
-              <span>Savol: <strong>${u.test_question_index || 1} / ${u.test_total_questions || 1}</strong></span>
-              <span>${u.test_total_questions > 0 ? Math.round(((u.test_question_index || 1) / u.test_total_questions) * 100) : 0}%</span>
-            </div>
-            <div class="live-progress-track">
-              <div class="live-progress-fill purple" style="width:${u.test_total_questions > 0 ? Math.round(((u.test_question_index || 1) / u.test_total_questions) * 100) : 0}%;"></div>
-            </div>
-          ` : `
-            <div class="live-activity-title" style="color:var(--text-secondary);">
-              <span>🌐</span> Sahifa: <span style="color:var(--text-primary);">${getTabDisplayLabel(u.current_tab)}</span>
-            </div>
-          `)}
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-function renderAdminAnalyticsSectionHtml() {
-  const h = adminData.analyticsHistory?.summary || {};
-  const daily = adminData.analyticsHistory?.daily || [];
-  const period = adminData.analyticsPeriod || "7days";
-
-  // Calculate max for bar chart scaling
-  let maxViews = 1;
-  daily.forEach(d => {
-    if (d.lesson_views > maxViews) maxViews = d.lesson_views;
-    if (d.new_users > maxViews) maxViews = d.new_users;
-  });
-
-  return `
-    <div class="analytics-chart-box">
-      <div class="analytics-chart-header">
-        <div style="font-weight:750; font-size:14px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-          <span>📈</span> Tarixiy Tahlil
-        </div>
-        <div style="display:flex; gap:4px;">
-          <button class="chip ${period === "today" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('today')">Bugun</button>
-          <button class="chip ${period === "yesterday" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('yesterday')">Kecha</button>
-          <button class="chip ${period === "7days" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('7days')">7 kun</button>
-          <button class="chip ${period === "30days" ? "active" : ""}" style="padding:4px 8px; font-size:10.5px;" onclick="adminSetAnalyticsPeriod('30days')">30 kun</button>
-        </div>
-      </div>
-
-      <!-- KURS SUMMARY CARDS -->
-      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:14px;">
-        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-          <div style="font-size:10.5px; color:var(--text-muted);">Yangi Ro'yxatdan O'tgan:</div>
-          <div style="font-size:16px; font-weight:800; color:var(--text-primary);">${h.new_users || 0}</div>
-        </div>
-        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-          <div style="font-size:10.5px; color:var(--text-muted);">Faol O'quvchilar:</div>
-          <div style="font-size:16px; font-weight:800; color:#10b981;">${h.active_users || 0}</div>
-        </div>
-        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-          <div style="font-size:10.5px; color:var(--text-muted);">Ko'rilgan Darslar:</div>
-          <div style="font-size:16px; font-weight:800; color:var(--accent);">${h.lesson_views || 0}</div>
-        </div>
-        <div style="background:var(--bg-surface-elevated); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
-          <div style="font-size:10.5px; color:var(--text-muted);">Topshirilgan Testlar:</div>
-          <div style="font-size:16px; font-weight:800; color:#8b5cf6;">${h.test_attempts || 0} (${h.passed_tests || 0} o'tdi)</div>
-        </div>
-      </div>
-
-      <!-- KUNLIK BAR CHART -->
-      ${daily.length > 1 ? `
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px; font-weight:700;">Kunlik dars ko'rishlar dinamikasi:</div>
-        <div class="analytics-bars-container">
-          ${daily.map(d => {
-            const heightPct = Math.max(8, Math.round((d.lesson_views / maxViews) * 100));
-            return `
-              <div class="analytics-bar-col" title="${escapeHtml(d.date)}: ${d.lesson_views} dars, ${d.new_users} yangi user">
-                <span class="analytics-bar-val">${d.lesson_views}</span>
-                <div class="analytics-bar-stem" style="height:${heightPct}%;"></div>
-                <span class="analytics-bar-lbl">${escapeHtml(d.label || d.date.slice(5))}</span>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      ` : ""}
-    </div>
-  `;
-}
 
 // ASOSIY ADMIN DASHBOARD
-function renderAdminDashboard() {
-  const s = adminData.stats || {};
-  const activeUsers = adminData.activeUsers || [];
 
-  return `
-    <div>
-      <!-- 1. LIVE ANALYTICS CARDS (REAL-TIME METRICS) -->
-      <div class="live-stats-row" id="admin-live-stats-row">
-        <div class="live-stat-card online-highlight">
-          <div class="live-stat-val">
-            <span class="live-pulse-dot"></span>
-            <span id="adm-live-online">${s.online_now || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Hozir Online</div>
-        </div>
-
-        <div class="live-stat-card watching-highlight">
-          <div class="live-stat-val">
-            <span>▶️</span>
-            <span id="adm-live-watching">${s.watching_now || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Dars Ko'rayotganlar</div>
-        </div>
-
-        <div class="live-stat-card testing-highlight">
-          <div class="live-stat-val">
-            <span>📝</span>
-            <span id="adm-live-testing">${s.testing_now || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Test Yechayotganlar</div>
-        </div>
-
-        <div class="live-stat-card">
-          <div class="live-stat-val">
-            <span>👥</span>
-            <span id="adm-live-total-users">${s.total_students || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Jami O'quvchilar</div>
-        </div>
-
-        <div class="live-stat-card">
-          <div class="live-stat-val">
-            <span>📅</span>
-            <span id="adm-live-today-active">${s.today_active || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Bugun Faol Bo'lgan</div>
-        </div>
-
-        <div class="live-stat-card">
-          <div class="live-stat-val">
-            <span>🎬</span>
-            <span id="adm-live-today-views">${s.today_lesson_views || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Bugun Ko'rilgan Dars</div>
-        </div>
-
-        <div class="live-stat-card">
-          <div class="live-stat-val">
-            <span>🎯</span>
-            <span id="adm-live-today-tests">${s.today_test_attempts || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Bugun Test Topshirish</div>
-        </div>
-
-        <div class="live-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('active', 'Faol Obunachilar')">
-          <div class="live-stat-val">
-            <span>💳</span>
-            <span>${s.paid_students || 0}</span>
-          </div>
-          <div class="live-stat-lbl">Faol Obunachilar →</div>
-        </div>
-      </div>
-
-      <!-- 2. JONLI FAOLLIK LISTI (LIVE NOW USERS) -->
-      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div style="font-weight:750; font-size:14.5px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-            <span>⚡</span> Hozirgi Faol O'quvchilar <span id="admin-live-users-count" style="color:var(--accent);">(${activeUsers.length})</span>
-          </div>
-          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
-            <span class="live-pulse-dot"></span> Jonli efir
-          </div>
-        </div>
-
-        <div id="admin-live-users-rows">
-          ${renderAdminLiveUsersHtml(activeUsers)}
-        </div>
-      </div>
-
-      <!-- 3. TARIXIY TAHLILLAR VA GRAFIKLAR -->
-      <div id="admin-analytics-section">
-        ${renderAdminAnalyticsSectionHtml()}
-      </div>
-
-      <!-- 4. QO'SHIMCHA OBUNA VA DARS STATISTIKASI -->
-      <div style="margin-top:16px;">
-        <div class="admin-section-title" style="margin-bottom:10px;">Obunalar & Murojaatlar</div>
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_new', 'Yangi Kirish So\\'ragan')">
-            <div class="admin-stat-icon">🆕</div>
-            <div class="admin-stat-value">${s.pending_new || 0}</div>
-            <div class="admin-stat-label">Yangi So'rovlar →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('pending_renewal', 'Muddat Uzaytirish So\\'ragan')">
-            <div class="admin-stat-icon">🔄</div>
-            <div class="admin-stat-value">${s.pending_renewal || 0}</div>
-            <div class="admin-stat-label">Uzaytirish So'rovlari →</div>
-          </div>
-          <div class="admin-stat-card" style="cursor:pointer;" onclick="openStudentsDetailList('expired', 'Muddati Tugaganlar')">
-            <div class="admin-stat-icon">⏳</div>
-            <div class="admin-stat-value">${s.unpaid_students || 0}</div>
-            <div class="admin-stat-label">Muddati Tugaganlar →</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-icon">🎬</div>
-            <div class="admin-stat-value">${s.total_lessons || 0}</div>
-            <div class="admin-stat-label">Jami Darslar</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 async function openAdminStudentLiveDossier(userId) {
   try {
@@ -23037,6 +21028,7 @@ function renderNav() {
 }
 
 function setTab(id, event) {
+  touchActivity();
   if (!state.terms_accepted && !state.is_admin) {
     render();
     return;
@@ -23882,7 +21874,6 @@ async function deleteLearningResource(id) {
 }
 
 
-
 function render() {
   if (!app) return;
 
@@ -24118,7 +22109,6 @@ window.handleTgStreamFallback = function(videoEl) {
     `;
   }
 };
-
 
 
 // ============================================================================
@@ -26275,7 +24265,6 @@ function closeAdminModal() {
   const m = document.getElementById('app-dynamic-modal-wrap');
   if (m) m.remove();
 }
-
 
 
 // ======================================================

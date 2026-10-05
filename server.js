@@ -18,6 +18,7 @@ var materialsModule = require('./materialsData');
 var initMaterialsTables = materialsModule.initMaterialsTables;
 var normativesModule = require('./normativesData');
 var urlValidator = require('./urlValidator');
+var statsOverview = require('./statsOverview');
 var initNormativesTables = normativesModule.initNormativesTables;
 var getNormativesList = normativesModule.getNormativesList;
 var getNormativeDetail = normativesModule.getNormativeDetail;
@@ -1003,6 +1004,7 @@ async function ensureUserActivityTable() {
 
     var uaCols = [
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ DEFAULT NOW()',
+      'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS current_section VARCHAR(40)',
       "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS current_tab VARCHAR(50) DEFAULT 'home'",
       "ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'online'",
       'ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS lesson_id INT',
@@ -4100,6 +4102,7 @@ app.post('/api/activity/heartbeat', async function (req, res) {
 
     var b = req.body || {};
     var currentTab = (b.current_tab || 'home').slice(0, 50);
+    var currentSection = statsOverview.normalizeSection(b.current_section);
     var status = (b.status || 'online').slice(0, 50);
     var lessonId = b.lesson_id ? parseInt(b.lesson_id) : null;
     var lessonTitle = b.lesson_title ? String(b.lesson_title).slice(0, 500) : null;
@@ -4132,12 +4135,13 @@ app.post('/api/activity/heartbeat', async function (req, res) {
         lesson_id, lesson_title, module_title, course_title,
         video_progress, video_duration, video_status,
         module_id, test_question_index, test_total_questions,
-        device_info, updated_at
+        device_info, updated_at, current_section
       ) VALUES (
-        $1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW()
+        $1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), $15
       )
       ON CONFLICT (user_id) DO UPDATE SET
         last_seen_at = NOW(),
+        current_section = EXCLUDED.current_section,
         current_tab = EXCLUDED.current_tab,
         status = EXCLUDED.status,
         lesson_id = EXCLUDED.lesson_id,
@@ -4157,10 +4161,22 @@ app.post('/api/activity/heartbeat', async function (req, res) {
       lessonId, lessonTitle, moduleTitle, courseTitle,
       videoProgress, videoDuration, videoStatus,
       moduleId, testQuestionIndex, testTotalQuestions,
-      deviceInfo
+      deviceInfo, currentSection
     ]);
 
     await pool.query('UPDATE users SET device_last_seen = NOW() WHERE id = $1', [user.id]);
+
+    // Kunlik faollik (Statistika uchun): ilova ochiq bo'lgan heartbeat'lar hisoblanadi
+    if (status !== 'idle') {
+      ensureStatsOverview().then(function () {
+        return statsOverview.recordDaily(pool, user.id, {
+          lesson: Boolean(lessonId) || status === 'testing',
+          book: currentSection === 'books',
+          material: currentSection === 'materials',
+          normative: currentSection === 'normatives'
+        });
+      }).catch(function (e) { console.warn('daily activity:', e.message); });
+    }
 
     analyticsService.recordSessionPing(user.id, b, req.headers['user-agent']).catch(function(e) {
       console.error('Session ping record error:', e.message);
@@ -4453,6 +4469,48 @@ app.post('/api/analytics/track', async function (req, res) {
   }
 });
 
+// ======================================================
+// ADMIN → STATISTIKA (sodda): hozir platformada, bugun, kunlik faollik
+// ======================================================
+var statsOverviewReady = null;
+function ensureStatsOverview() {
+  if (!statsOverviewReady) {
+    statsOverviewReady = (async function () {
+      await statsOverview.ensureTables(pool);
+      await statsOverview.backfillOnce(pool);
+    })().catch(function (e) { console.warn('ensureStatsOverview:', e.message); statsOverviewReady = null; throw e; });
+  }
+  return statsOverviewReady;
+}
+
+// Server ishga tushganda jadval va bir martalik to'ldirish tayyor bo'lsin (birinchi heartbeat'ni kutmasdan)
+setTimeout(function () { ensureStatsOverview().catch(function () {}); }, 20000);
+
+app.post('/api/admin/stats/overview', requireAdmin, async function (req, res) {
+  try {
+    await ensureStatsOverview();
+    var excl = await statsOverview.getAdminTelegramIds(pool, ADMIN_TELEGRAM_ID);
+    var data = await statsOverview.getOverview(pool, parseInt(req.body.days, 10) || 7, excl);
+    return res.json(data);
+  } catch (error) {
+    console.error('STATS OVERVIEW ERROR:', error);
+    return res.status(500).json({ ok: false, error: 'Statistikani yuklashda xatolik yuz berdi.' });
+  }
+});
+
+// Yengil: faqat "hozir" va "bugun" (har 10 soniyada yangilanadi)
+app.post('/api/admin/stats/live', requireAdmin, async function (req, res) {
+  try {
+    await ensureStatsOverview();
+    var excl = await statsOverview.getAdminTelegramIds(pool, ADMIN_TELEGRAM_ID);
+    var results = await Promise.all([statsOverview.getLive(pool, excl), statsOverview.getToday(pool, excl)]);
+    return res.json({ ok: true, generated_at: new Date().toISOString(), live: results[0].live, live_users: results[0].users, today: results[1] });
+  } catch (error) {
+    console.error('STATS LIVE ERROR:', error);
+    return res.status(500).json({ ok: false, error: 'Statistikani yuklashda xatolik yuz berdi.' });
+  }
+});
+
 app.post('/api/admin/analytics/dashboard', requireAdmin, async function (req, res) {
   try {
     var data = await analyticsService.getDashboardData(req.body || {});
@@ -4460,20 +4518,6 @@ app.post('/api/admin/analytics/dashboard', requireAdmin, async function (req, re
   } catch (error) {
     console.error('ANALYTICS DASHBOARD ERROR:', error);
     return res.status(500).json({ error: 'Analytics ma\'lumotlarini olishda xatolik: ' + error.message });
-  }
-});
-
-app.all(['/api/admin/analytics/export'], requireAdmin, async function (req, res) {
-  try {
-    var params = Object.assign({}, req.query, req.body);
-    var csvData = await analyticsService.generateCsvExport(params);
-    var fileName = 'yoshuzbekk_analytics_' + (params.period || 'report') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + fileName + '"');
-    return res.send(csvData);
-  } catch (error) {
-    console.error('ANALYTICS EXPORT ERROR:', error);
-    return res.status(500).json({ error: 'Eksport qilishda xatolik yuz berdi' });
   }
 });
 

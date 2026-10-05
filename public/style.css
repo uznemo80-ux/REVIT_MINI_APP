@@ -13689,3 +13689,107 @@ body.is-scrolling * {
   color: #f59e0b;
 }
 .paid-lesson-chip { font-size: 10.5px; font-weight: 700; color: var(--text-secondary); background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+
+/* ===== ADMIN → STATISTIKA (stx): sodda va tushunarli ===== */
+.stx { padding-bottom: 28px; }
+.stx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 2px 14px; }
+.stx-title { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); }
+.stx-head-right { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.stx-updated { font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; }
+.stx-refresh { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-primary); font-size: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: background .2s, transform .35s; }
+.stx-label { margin: 20px 4px 8px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary); }
+.stx-card { position: relative; padding: 16px; border-radius: 20px; background: var(--bg-surface); border: 1px solid var(--border); }
+
+.stx-grid-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
+.stx-stat { min-width: 0; }
+.stx-stat-num { font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.stx-stat-live .stx-stat-num { color: #34c759; }
+.stx-stat-label { margin-top: 4px; font-size: 13px; color: var(--text-secondary); line-height: 1.25; }
+.stx-sub { display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 11.5px; color: var(--text-muted); }
+.stx-delta { display: inline-flex; align-items: baseline; gap: 4px; margin-top: 4px; font-size: 12.5px; font-weight: 700; }
+.stx-delta small { font-weight: 500; color: var(--text-muted); font-size: 11px; }
+.stx-delta.up { color: #34c759; } .stx-delta.down { color: #ff453a; }
+.stx-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #34c759; display: inline-block; box-shadow: 0 0 0 0 rgba(52,199,89,.5); animation: stxPulse 2s ease-out infinite; }
+@keyframes stxPulse { 0% { box-shadow: 0 0 0 0 rgba(52,199,89,.5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(52,199,89,0); } }
+.stx-bump { animation: stxBump .45s ease; }
+@keyframes stxBump { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.stx-skel { color: var(--text-muted); }
+.stx-skel-row { height: 18px; margin: 14px 0; border-radius: 9px; background: linear-gradient(90deg, var(--bg-surface-elevated), var(--border), var(--bg-surface-elevated)); background-size: 200% 100%; animation: stxShimmer 1.4s linear infinite; }
+@keyframes stxShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.stx-now { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.stx-now-num { font-size: 34px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.stx-now-text { font-size: 15px; color: var(--text-secondary); }
+.stx-bars { display: flex; flex-direction: column; gap: 11px; }
+.stx-bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 36px; align-items: center; gap: 10px; }
+.stx-bar-row.is-zero { opacity: .55; }
+.stx-bar-label { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--text-primary); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stx-bar-ico { font-size: 15px; }
+.stx-bar-track { height: 12px; border-radius: 8px; background: var(--bg-surface-elevated); overflow: hidden; }
+.stx-bar-fill { height: 100%; width: 0; border-radius: 8px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.stx-bar-val { text-align: right; font-size: 14px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.stx-c-lessons { background: #3b82f6; } .stx-c-books { background: #f59e0b; } .stx-c-materials { background: #34c759; }
+.stx-c-normatives { background: #a855f7; } .stx-c-sources { background: #14b8a6; } .stx-c-other { background: #8e8e93; }
+.stx-more { width: 100%; margin-top: 14px; min-height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-surface-elevated); color: var(--text-primary); font-family: inherit; font-size: 14px; font-weight: 650; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.stx-more-chev { transition: transform .25s ease; font-size: 18px; }
+.stx-more.open .stx-more-chev { transform: rotate(90deg); }
+.stx-users { display: none; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
+.stx-users.open { display: flex; animation: stxFade .25s ease; }
+@keyframes stxFade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.stx-user { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-surface-elevated); color: var(--text-primary); font-family: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.stx-user-ico { font-size: 18px; flex: 0 0 auto; }
+.stx-user-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.stx-user-name { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stx-user-sub { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stx-user-time { font-size: 11px; color: var(--text-muted); flex: 0 0 auto; }
+.stx-empty-mini { padding: 12px; font-size: 13px; color: var(--text-secondary); text-align: center; }
+.stx-foot { margin-top: 12px; font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
+
+/* 3 / 7 / 30 kun: tanlangan holat aniq ko'rinadi (siljiydigan "tabletka") */
+.stx-seg { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; border-radius: 14px; background: var(--bg-surface); border: 1px solid var(--border); }
+.stx-seg-pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); border-radius: 10px; background: var(--accent); box-shadow: 0 4px 14px rgba(0, 0, 0, .25); transition: transform .28s cubic-bezier(.3, .9, .3, 1); pointer-events: none; }
+.stx-seg-btn { position: relative; z-index: 1; min-height: 42px; border: 0; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 14.5px; font-weight: 650; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color .2s; }
+.stx-seg-btn.active { color: #fff; font-weight: 800; }
+
+.stx-chart-card { overflow: hidden; }
+.stx-chart-card.is-loading .stx-svg, .stx-chart-card.is-loading .stx-chips { opacity: .35; transition: opacity .2s; }
+.stx-chart-title { text-align: center; font-size: 14px; font-weight: 750; color: var(--text-primary); }
+.stx-detail { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 12px; min-height: 36px; margin: 8px 0 4px; font-size: 12.5px; color: var(--text-secondary); text-align: center; }
+.stx-detail i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.stx-hint { color: var(--text-muted); }
+.stx-svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; }
+.stx-grid { stroke: var(--border); stroke-width: 1; }
+.stx-axis { fill: var(--text-muted); font-size: 10px; }
+.stx-sel-line { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.stx-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: stxDraw .9s ease forwards; }
+@keyframes stxDraw { to { stroke-dashoffset: 0; } }
+.stx-hit { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.stx-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.stx-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--c); color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: opacity .2s, filter .2s; }
+.stx-chip b { font-weight: 800; opacity: .9; }
+.stx-chip.off { background: var(--bg-surface-elevated); color: var(--text-secondary); box-shadow: inset 0 0 0 1.5px var(--c); }
+.stx-chip.off .stx-chip-check { opacity: 0; width: 0; margin: 0; overflow: hidden; }
+.stx-empty { padding: 36px 12px; text-align: center; color: var(--text-secondary); font-size: 13.5px; }
+.stx-chart-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.stx-spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: stxSpin .7s linear infinite; }
+@keyframes stxSpin { to { transform: rotate(360deg); } }
+.stx-error { text-align: center; padding: 28px 16px; }
+.stx-error-ico { font-size: 30px; margin-bottom: 8px; }
+.stx-error-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
+.stx-retry { min-height: 44px; padding: 0 20px; border-radius: 12px; border: 0; background: var(--accent); color: #fff; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* Faqat sichqonchali qurilmalarda (kompyuter): hover. Telefonda hover/active animatsiyasi yo'q — scroll bilan to'qnashmaydi */
+@media (hover: hover) and (pointer: fine) {
+  .stx-card { transition: border-color .2s, transform .2s; }
+  .stx-card:hover { border-color: var(--accent); }
+  .stx-seg-btn:not(.active):hover { color: var(--text-primary); }
+  .stx-chip:hover { filter: brightness(1.1); }
+  .stx-more:hover, .stx-user:hover { border-color: var(--accent); }
+  .stx-refresh:hover { background: var(--bg-surface-elevated); transform: rotate(90deg); }
+  .stx-hit:hover { fill: rgba(255, 255, 255, .06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stx-line, .stx-live-dot, .stx-bump, .stx-bar-fill, .stx-seg-pill, .stx-users.open { animation: none !important; transition: none !important; }
+  .stx-line { stroke-dashoffset: 0; }
+}
+@media (max-width: 359px) { .stx-bar-row { grid-template-columns: 92px minmax(0, 1fr) 30px; } .stx-stat-num { font-size: 26px; } .stx-updated { display: none; } }
