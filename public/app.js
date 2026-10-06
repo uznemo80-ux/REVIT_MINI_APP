@@ -14136,7 +14136,9 @@ const stxState = {
   reqId: 0,
   pollTimer: null,
   lastLiveAt: null,
-  animated: false
+  animated: false,
+  geoHidden: new Set(),
+  geoSel: null
 };
 
 function stxNum(n) { return new Intl.NumberFormat("ru-RU").format(Number(n) || 0).replace(/\u00a0/g, " "); }
@@ -14186,6 +14188,7 @@ function stxSetPeriod(days) {
   haptic("light");
   stxState.days = days;
   stxState.selectedDay = null;
+  stxState.geoSel = null;
   loadAdminStats({ chart: true });
 }
 
@@ -14342,6 +14345,89 @@ function stxActivityHtml() {
     </div>`;
 }
 
+
+// ---- QAYERDAN KIRGAN (davlatlar) ----
+const STX_GEO_COLORS = ["#007aff", "#5ac8fa", "#7ed321", "#ff9500", "#34c759", "#ff3b30", "#5856d6"];
+const STX_GEO_OTHER = "#af52de", STX_GEO_UNKNOWN = "#8e8e93";
+
+function stxGeoColor(c, idx) {
+  if (c.code === "UNKNOWN") return STX_GEO_UNKNOWN;
+  if (c.code === "OTHER") return STX_GEO_OTHER;
+  return STX_GEO_COLORS[idx % STX_GEO_COLORS.length];
+}
+
+function stxToggleGeo(code) {
+  haptic("light");
+  const list = (stxState.data && stxState.data.geo && stxState.data.geo.countries) || [];
+  if (stxState.geoHidden.has(code)) stxState.geoHidden.delete(code);
+  else if (stxState.geoHidden.size < list.length - 1) stxState.geoHidden.add(code);   // kamida bitta bo'lak qoladi
+  if (stxState.geoSel === code) stxState.geoSel = null;
+  stxRender();
+}
+function stxSelectGeo(code) { stxState.geoSel = stxState.geoSel === code ? null : code; stxRender(); }
+
+function stxPieHtml(countries) {
+  const vis = countries.map((c, i) => ({ c, i })).filter(x => !stxState.geoHidden.has(x.c.code));
+  const sum = vis.reduce((s, x) => s + x.c.count, 0);
+  const R = 88, CX = 100, CY = 100;
+  if (!sum) return "";
+  const pt = ang => [CX + R * Math.sin(ang), CY - R * Math.cos(ang)];
+  let start = 0;
+  const parts = vis.map(({ c, i }) => {
+    const frac = c.count / sum, end = start + frac * 2 * Math.PI;
+    const color = stxGeoColor(c, i);
+    const sel = stxState.geoSel === c.code;
+    const dim = stxState.geoSel && !sel ? 0.45 : 1;
+    let shape;
+    if (vis.length === 1) shape = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="${color}" opacity="${dim}" class="stx-slice" onclick="stxSelectGeo('${c.code}')"/>`;
+    else {
+      const [x1, y1] = pt(start), [x2, y2] = pt(end);
+      shape = `<path d="M${CX} ${CY} L${x1.toFixed(2)} ${y1.toFixed(2)} A${R} ${R} 0 ${frac > 0.5 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" fill="${color}" opacity="${dim}" stroke="var(--bg-surface)" stroke-width="1.5" class="stx-slice${sel ? " sel" : ""}" onclick="stxSelectGeo('${c.code}')"/>`;
+    }
+    const mid = start + (end - start) / 2;
+    const lr = vis.length === 1 ? 0 : R * 0.62;
+    const labelR = frac < 0.08 && vis.length > 1 ? R * 0.8 : lr;
+    const label = frac >= 0.04 ? `<text x="${(CX + labelR * Math.sin(mid)).toFixed(1)}" y="${(CY - labelR * Math.cos(mid) + 4).toFixed(1)}" class="stx-pie-pct${frac < 0.08 ? " small" : ""}" text-anchor="middle">${Math.round(frac * 100)}%</text>` : "";
+    start = end;
+    return shape + label;
+  });
+  return `<svg viewBox="0 0 200 200" class="stx-pie" role="img" aria-label="Davlatlar bo‘yicha taqsimot">${parts.join("")}</svg>`;
+}
+
+function stxGeoHtml() {
+  const g = stxState.data && stxState.data.geo;
+  if (!g) return "";
+  const series = stxState.data.series || [];
+  const range = series.length ? stxFmtDay(series[0].day) + " – " + stxFmtDay(series[series.length - 1].day) : "";
+  const list = g.countries || [];
+  let body;
+  if (!g.total) {
+    body = `<div class="stx-empty">Bu davrda faol o‘quvchi yo‘q.</div>`;
+  } else if (!g.located) {
+    body = `<div class="stx-empty">Davlat ma’lumoti endi yig‘ila boshladi: o‘quvchilar ilovani keyingi safar ochganda aniqlanadi.</div>`;
+  } else {
+    const vis = list.filter(c => !stxState.geoHidden.has(c.code));
+    const sum = vis.reduce((s, c) => s + c.count, 0);
+    const sel = stxState.geoSel ? list.find(c => c.code === stxState.geoSel) : null;
+    body = `
+      <div class="stx-detail">${sel ? `<span><b>${sel.flag} ${escapeHtml(sel.name)}</b></span><span><b>${stxNum(sel.count)}</b> kishi</span><span><b>${sum ? Math.round((sel.count / sum) * 100) : 0}%</b></span>` : `<span class="stx-hint">Bo‘lakni bosing — davlat va kishilar soni chiqadi</span>`}</div>
+      <div class="stx-pie-wrap">${stxPieHtml(list)}</div>
+      <div class="stx-chips">
+        ${list.map((c, i) => {
+          const off = stxState.geoHidden.has(c.code);
+          return `<button type="button" class="stx-chip ${off ? "off" : ""}" style="--c:${stxGeoColor(c, i)}" onclick="stxToggleGeo('${c.code}')"><span class="stx-chip-check">✓</span>${c.flag} ${escapeHtml(c.name)} <b>${stxNum(c.count)}</b></button>`;
+        }).join("")}
+      </div>`;
+  }
+  return `
+    <div class="stx-label">QAYERDAN KIRGAN</div>
+    <div class="stx-card stx-geo-card ${stxState.chartLoading ? "is-loading" : ""}">
+      <div class="stx-chart-title">Davlatlar • ${range}</div>
+      ${body}
+      <div class="stx-foot">Faol o‘quvchilarning davlati IP manzil bo‘yicha aniqlanadi (IP saqlanmaydi, faqat davlat kodi). ${g.total ? `${stxNum(g.located)} / ${stxNum(g.total)} tasining davlati aniqlangan.` : ""} Viloyat va tuman IP orqali ishonchli aniqlanmaydi.</div>
+    </div>`;
+}
+
 function stxInnerHtml() {
   if (stxState.error && !stxState.data) {
     return `
@@ -14398,7 +14484,9 @@ function stxInnerHtml() {
       <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar.</div>
     </div>
 
-    ${stxActivityHtml()}`;
+    ${stxActivityHtml()}
+
+    ${stxGeoHtml()}`;
 }
 
 function renderAdminStatsView() {

@@ -13793,3 +13793,13 @@ body.is-scrolling * {
   .stx-line { stroke-dashoffset: 0; }
 }
 @media (max-width: 359px) { .stx-bar-row { grid-template-columns: 92px minmax(0, 1fr) 30px; } .stx-stat-num { font-size: 26px; } .stx-updated { display: none; } }
+
+/* Statistika: davlatlar doira diagrammasi */
+.stx-pie-wrap { display: flex; justify-content: center; margin: 6px 0 4px; }
+.stx-pie { width: min(260px, 78%); height: auto; display: block; overflow: visible; }
+.stx-slice { cursor: pointer; transition: opacity .25s ease, transform .25s ease; transform-origin: 100px 100px; -webkit-tap-highlight-color: transparent; }
+.stx-pie-pct { fill: #fff; font-size: 13px; font-weight: 800; pointer-events: none; paint-order: stroke; stroke: rgba(0,0,0,.18); stroke-width: 2px; }
+.stx-geo-card.is-loading .stx-pie-wrap, .stx-geo-card.is-loading .stx-chips { opacity: .35; transition: opacity .2s; }
+@media (hover: hover) and (pointer: fine) { .stx-slice:hover { transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .stx-slice { transition: none !important; } }
+.stx-pie-pct.small { font-size: 9.5px; }

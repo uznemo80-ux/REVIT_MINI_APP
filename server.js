@@ -19,6 +19,7 @@ var initMaterialsTables = materialsModule.initMaterialsTables;
 var normativesModule = require('./normativesData');
 var urlValidator = require('./urlValidator');
 var statsOverview = require('./statsOverview');
+var geoCountry = require('./geoCountry');
 var initNormativesTables = normativesModule.initNormativesTables;
 var getNormativesList = normativesModule.getNormativesList;
 var getNormativeDetail = normativesModule.getNormativeDetail;
@@ -4176,6 +4177,16 @@ app.post('/api/activity/heartbeat', async function (req, res) {
           normative: currentSection === 'normatives'
         });
       }).catch(function (e) { console.warn('daily activity:', e.message); });
+    }
+
+    // Davlat (IP bo'yicha, IP saqlanmaydi): ilova ochiq paytda, kamdan-kam yoziladi
+    if (status !== 'idle') {
+      var geoIp = geoCountry.clientIpFromReq(req);
+      if (geoIp) {
+        ensureStatsOverview().then(function () {
+          return statsOverview.recordGeo(pool, user.id, geoIp);
+        }).catch(function (e) { console.warn('geo record:', e.message); });
+      }
     }
 
     analyticsService.recordSessionPing(user.id, b, req.headers['user-agent']).catch(function(e) {

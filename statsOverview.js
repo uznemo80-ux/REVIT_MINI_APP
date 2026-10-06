@@ -12,6 +12,8 @@
  * Admin akkauntlari o'quvchi hisobiga kirmaydi.
  */
 
+const geoCountry = require('./geoCountry');
+
 const TZ = 'Asia/Tashkent';
 const LIVE_WINDOW_SECONDS = 90;
 const SECTION_WHITELIST = ['home', 'lessons', 'books', 'materials', 'normatives', 'sources', 'tests', 'process', 'equipment', 'library', 'chat', 'profile', 'learning', 'other'];
@@ -38,6 +40,13 @@ async function ensureTables(pool) {
     );
     CREATE INDEX IF NOT EXISTS idx_user_daily_activity_day ON user_daily_activity(day);
     ALTER TABLE user_activity ADD COLUMN IF NOT EXISTS current_section VARCHAR(40);
+    CREATE TABLE IF NOT EXISTS user_geo (
+      user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      country_code CHAR(2) NOT NULL,
+      first_seen_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_user_geo_country ON user_geo(country_code);
   `);
 }
 
@@ -96,6 +105,24 @@ async function recordDaily(pool, userId, flags) {
       had_material = user_daily_activity.had_material OR EXCLUDED.had_material,
       had_normative = user_daily_activity.had_normative OR EXCLUDED.had_normative
   `, [userId, !!flags.lesson, !!flags.book, !!flags.material, !!flags.normative]);
+}
+
+// Davlatni heartbeat paytida yozish: IP saqlanmaydi, faqat 2 harfli kod. Xotirada throttle (o'zgarmasa 6 soatda bir marta)
+const geoCache = new Map();
+const GEO_REFRESH_MS = 6 * 60 * 60 * 1000;
+async function recordGeo(pool, userId, ip) {
+  const found = geoCountry.lookupCountry(ip);
+  if (!found) return false;
+  const prev = geoCache.get(userId);
+  const now = Date.now();
+  if (prev && prev.code === found.code && now - prev.ts < GEO_REFRESH_MS) return false;
+  await pool.query(`
+    INSERT INTO user_geo (user_id, country_code) VALUES ($1, $2)
+    ON CONFLICT (user_id) DO UPDATE SET country_code = EXCLUDED.country_code, updated_at = NOW()
+  `, [userId, found.code]);
+  geoCache.set(userId, { code: found.code, ts: now });
+  if (geoCache.size > 20000) geoCache.clear();
+  return true;
 }
 
 async function getAdminTelegramIds(pool, mainAdminId) {
@@ -202,13 +229,40 @@ async function getSeries(pool, days, excludeTelegramIds) {
   return r.rows;
 }
 
+// ---------- QAYERDAN KIRGAN (davlatlar) ----------
+// Tanlangan davrda faol bo'lgan o'quvchilar, ularning oxirgi aniqlangan davlati bo'yicha
+async function getGeo(pool, days, excludeTelegramIds) {
+  const r = await pool.query(`
+    SELECT COALESCE(g.country_code, '') AS code, COUNT(*)::int AS cnt
+    FROM (
+      SELECT DISTINCT d.user_id FROM user_daily_activity d
+      JOIN users u ON u.id = d.user_id
+      WHERE d.day > ${TODAY_SQL} - $1::int AND u.telegram_id::text <> ALL($2::text[])
+    ) a
+    LEFT JOIN user_geo g ON g.user_id = a.user_id
+    GROUP BY 1
+  `, [days, excludeTelegramIds || []]);
+  const total = r.rows.reduce((s, x) => s + x.cnt, 0);
+  const unknown = (r.rows.find(x => x.code === '') || { cnt: 0 }).cnt;
+  const rows = r.rows.filter(x => x.code !== '').sort((a, b) => b.cnt - a.cnt || a.code.localeCompare(b.code));
+  const TOP = 7;
+  const top = rows.slice(0, TOP);
+  const restCnt = rows.slice(TOP).reduce((s, x) => s + x.cnt, 0);
+  const pct = c => total ? Math.round((c / total) * 1000) / 10 : 0;
+  const countries = top.map(x => ({ code: x.code, name: geoCountry.countryName(x.code), flag: geoCountry.flagEmoji(x.code), count: x.cnt, pct: pct(x.cnt) }));
+  if (restCnt) countries.push({ code: 'OTHER', name: 'Boshqa davlatlar', flag: '🌍', count: restCnt, pct: pct(restCnt) });
+  if (unknown) countries.push({ code: 'UNKNOWN', name: 'Aniqlanmagan', flag: '❔', count: unknown, pct: pct(unknown) });
+  return { total: total, located: total - unknown, unknown: unknown, countries: countries };
+}
+
 async function getOverview(pool, days, excludeTelegramIds) {
   days = [3, 7, 30].indexOf(Number(days)) !== -1 ? Number(days) : 7;
-  const [liveRes, today, totals, series] = await Promise.all([
+  const [liveRes, today, totals, series, geoRes] = await Promise.all([
     getLive(pool, excludeTelegramIds),
     getToday(pool, excludeTelegramIds),
     getTotals(pool, days, excludeTelegramIds),
-    getSeries(pool, days, excludeTelegramIds)
+    getSeries(pool, days, excludeTelegramIds),
+    getGeo(pool, days, excludeTelegramIds)
   ]);
   return {
     ok: true,
@@ -218,8 +272,9 @@ async function getOverview(pool, days, excludeTelegramIds) {
     live: liveRes.live,
     live_users: liveRes.users,
     today: today,
-    series: series
+    series: series,
+    geo: geoRes
   };
 }
 
-module.exports = { ensureTables, backfillOnce, recordDaily, getAdminTelegramIds, getLive, getToday, getTotals, getSeries, getOverview, normalizeSection, LIVE_WINDOW_SECONDS };
+module.exports = { ensureTables, backfillOnce, recordDaily, recordGeo, getGeo, getAdminTelegramIds, getLive, getToday, getTotals, getSeries, getOverview, normalizeSection, LIVE_WINDOW_SECONDS };
