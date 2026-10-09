@@ -9088,6 +9088,7 @@ const MAT_I18N = {
     open_link: "Открыть ↗",
     verified: "✓ Проверено",
     pending: "🟡 На проверке",
+    uz_available: "🇺🇿 Есть в продаже в Узбекистане",
     source_label: "Источник",
     spec_dimensions: "Стандартные размеры",
     spec_thickness: "Толщина",
@@ -9196,6 +9197,7 @@ const MAT_I18N = {
     open_link: "Ochish ↗",
     verified: "✓ Verified",
     pending: "🟡 Tekshiruvda",
+    uz_available: "🇺🇿 O‘zbekistonda sotuvda bor",
     source_label: "Manba",
     spec_dimensions: "Standart o‘lchamlari",
     spec_thickness: "Mavjud qalinliklar",
@@ -9304,6 +9306,7 @@ const MAT_I18N = {
     open_link: "Open ↗",
     verified: "✓ Verified",
     pending: "🟡 In Review",
+    uz_available: "🇺🇿 Available in Uzbekistan",
     source_label: "Source",
     spec_dimensions: "Dimensions",
     spec_thickness: "Thickness",
@@ -11853,6 +11856,13 @@ function renderMaterialDetailPage(detailData) {
                 ${escapeHtml(matT('pending'))} • ${verifiedDate}
               </div>
             `}
+            ${m.uz_available === true ? (m.uz_dealer_url ? `
+              <button type="button" class="lib-mat-uz-pill" onclick="safeOpenExternal(${escapeHtml(JSON.stringify(String(m.uz_dealer_url)))})">
+                ${escapeHtml(matT('uz_available'))} ↗
+              </button>
+            ` : `
+              <span class="lib-mat-uz-pill">${escapeHtml(matT('uz_available'))}</span>
+            `) : ''}
           </div>
           <div style="font-size:12px; font-weight:750; color:var(--accent);">
             ${escapeHtml(g.icon || '🧱')} ${escapeHtml(subcatName || catName)}

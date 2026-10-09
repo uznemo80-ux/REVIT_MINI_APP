@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "bot": "node bot.js",
-    "check": "node --check server.js && node --check public/app.js && echo OK"
+    "check": "node --check server.js && node --check bot.js && node --check public/app.js && for f in services/materialAgent/*.js; do node --check $f || exit 1; done && echo OK",
+    "test:material-agent": "node --test test/materialAgent.test.js"
   },
   "dependencies": {
     "compression": "^1.7.4",

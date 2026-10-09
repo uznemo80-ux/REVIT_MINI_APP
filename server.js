@@ -1918,7 +1918,7 @@ runSqlMigrations().catch(function (e) { console.error('SQL MIGRATIONS ERROR:', e
 ensureUserActivityTable();
 ensureLibraryV2Tables();
 initLearningTables(pool);
-initMaterialsTables(pool);
+var materialsTablesReady = initMaterialsTables(pool);
 initNormativesTables(pool);
 initProcessDatabase(pool);
 
@@ -12238,6 +12238,18 @@ app.get('/api/health', async function (req, res) {
     });
   }
 });
+
+// ======================================================
+// AI MATERIAL AGENT (Kutubxona → Materiallar avtomatik to'ldirish)
+// ======================================================
+// Alohida modul (services/materialAgent) — mavjud material endpointlariga tegmaydi.
+// Rasmlar yopiq Telegram kanalda saqlanadi va shu proxy orqali ko'rsatiladi (bot tokeni brauzerga chiqmaydi).
+var materialAgent = require('./services/materialAgent');
+app.get('/api/media/tg/:id', materialAgent.mediaHandler(pool));
+Promise.resolve(materialsTablesReady)
+  .catch(function () {})
+  .then(function () { return materialAgent.start({ pool: pool, bot: botModule.bot }); })
+  .catch(function (e) { console.error('  [ERROR] MaterialAgent ishga tushmadi:', e.message); });
 
 // ======================================================
 // EQUIPMENT (JIHOZLAR) API MOUNT
