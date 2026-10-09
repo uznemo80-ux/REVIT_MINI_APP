@@ -342,6 +342,29 @@ const MODULE2_TEST_SEED = [
 
 async function initExtendedTables() {
   try {
+    // Yangi (bo'sh) bazada quyidagi ALTER/INSERT'lar shu ikki jadvalga tayanadi — avval ular yaratiladi.
+    // Mavjud bazada bu ikki buyruq hech narsani o'zgartirmaydi (IF NOT EXISTS).
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS academy_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        subtitle TEXT,
+        price VARCHAR(100),
+        total_modules INT DEFAULT 0,
+        total_lessons INT DEFAULT 0,
+        release_date VARCHAR(100),
+        cover_url TEXT,
+        status VARCHAR(50) DEFAULT 'active',
+        order_index INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
     await pool.query('ALTER TABLE progress ADD COLUMN IF NOT EXISTS watched_at TIMESTAMPTZ DEFAULT NOW()');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_started_at TIMESTAMPTZ');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMPTZ');

@@ -23,6 +23,27 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ACADEMY SETTINGS (server.js ham yaratadi; bu yerda yangi bazani noldan ko'tarish uchun)
+CREATE TABLE IF NOT EXISTS academy_settings (
+  key           VARCHAR(100) PRIMARY KEY,
+  value         TEXT
+);
+
+-- COURSES (qolgan ustunlar server.js ichida ADD COLUMN IF NOT EXISTS orqali qo'shiladi)
+CREATE TABLE IF NOT EXISTS courses (
+  id            SERIAL PRIMARY KEY,
+  title         VARCHAR(255) NOT NULL,
+  subtitle      TEXT,
+  price         VARCHAR(100),
+  total_modules INT DEFAULT 0,
+  total_lessons INT DEFAULT 0,
+  release_date  VARCHAR(100),
+  cover_url     TEXT,
+  status        VARCHAR(50) DEFAULT 'active',
+  order_index   INT DEFAULT 0,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- MODULES
 CREATE TABLE IF NOT EXISTS modules (
   id            SERIAL PRIMARY KEY,
