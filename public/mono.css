@@ -520,3 +520,79 @@ html.light .admin-page [style*="color:#34c759"], html.light .admin-page [style*=
 }
 .lib-mat-badge-verified { background: var(--accent) !important; color: var(--accent-contrast) !important; }
 .lib-mat-badge.verified { background: var(--accent-soft) !important; color: var(--text-primary) !important; border: 1px solid var(--border-hover) !important; }
+
+/* ------------------------------------------------------
+   OCHILISH ANIMATSIYASI — YOSHUZBEKK
+   Harflar ketma-ket ko'tariladi (40ms oraliq), ostidan ingichka chiziq
+   chiziladi, so'ng yo'nalishlar paydo bo'ladi. Jami ~1.4s, bosilsa darhol yopiladi.
+   ------------------------------------------------------ */
+.splash-logo { display: none; }
+.splash-name { letter-spacing: 0.32em; font-weight: 600; font-size: 15px; }
+
+#brand-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+#brand-intro.bi-out { opacity: 0; pointer-events: none; }
+
+.bi-word {
+  display: flex;
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 8.4vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding-left: 0.18em; /* oxirgi harfdan keyingi bo'shliqni muvozanatlash */
+}
+.bi-word span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: biLetter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.bi-word span:nth-child(1)  { animation-delay: 0.05s; }
+.bi-word span:nth-child(2)  { animation-delay: 0.09s; }
+.bi-word span:nth-child(3)  { animation-delay: 0.13s; }
+.bi-word span:nth-child(4)  { animation-delay: 0.17s; }
+.bi-word span:nth-child(5)  { animation-delay: 0.21s; }
+.bi-word span:nth-child(6)  { animation-delay: 0.25s; }
+.bi-word span:nth-child(7)  { animation-delay: 0.29s; }
+.bi-word span:nth-child(8)  { animation-delay: 0.33s; }
+.bi-word span:nth-child(9)  { animation-delay: 0.37s; }
+.bi-word span:nth-child(10) { animation-delay: 0.41s; }
+
+.bi-line {
+  width: min(62vw, 300px);
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: biLine 0.5s cubic-bezier(0.6, 0, 0.2, 1) 0.55s forwards;
+}
+.bi-sub {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0;
+  animation: biFade 0.4s ease 0.9s forwards;
+}
+
+@keyframes biLetter { to { opacity: 1; transform: translateY(0); } }
+@keyframes biLine   { to { transform: scaleX(1); } }
+@keyframes biFade   { to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bi-word span, .bi-line, .bi-sub { animation: none; opacity: 1; transform: none; }
+}
