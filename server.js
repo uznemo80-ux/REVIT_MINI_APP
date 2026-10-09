@@ -3096,7 +3096,7 @@ app.post('/api/lesson/:id', async function (req, res) {
           'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)',
           [courseModuleIds]
         );
-        modulesWithTestsForCheckResult.rows.forEach(function (r) { modulesWithTestsSet.add(r.module_id); });
+        modulesWithTestsForCheckResult.rows.forEach(function (r) { modulesWithTestsForCheckSet.add(r.module_id); });
       }
 
       var canAccessNext = true;
