@@ -368,7 +368,7 @@ html.light .course-card-header { background: linear-gradient(160deg, #2a2a2a 0%,
 /* ------------------------------------------------------
    DESKTOP: pastki panel markazlashgan ixcham blok
    ------------------------------------------------------ */
-@media (min-width: 1024px) {
+@media (min-width: 641px) {
   .nav {
     left: 50% !important;
     right: auto !important;
@@ -380,7 +380,10 @@ html.light .course-card-header { background: linear-gradient(160deg, #2a2a2a 0%,
     border: 1px solid var(--border) !important;
     border-radius: 14px !important;
     box-shadow: var(--shadow-md);
+    max-width: none !important;
+    margin: 0 !important;
   }
+  .nav-item { min-width: 56px; padding: 0 !important; }
   .nav-item:hover { color: var(--text-primary); }
 }
 
@@ -397,7 +400,7 @@ html.light .course-card-header { background: linear-gradient(160deg, #2a2a2a 0%,
   border-radius: 50%;
   background: currentColor;
 }
-@media (min-width: 1024px) {
+@media (min-width: 641px) {
   .nav-item.active::after { bottom: 6px; }
 }
 
