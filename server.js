@@ -1874,7 +1874,47 @@ async function ensureLibraryV2Tables() {
   }
 }
 
+// ======================================================
+// SQL MIGRATSIYALAR (migrations/*.sql) — avtomatik, bir martalik
+// Har bir fayl app_migrations jadvalida 'sql:<fayl nomi>' kaliti bilan belgilanadi.
+// Fayllar o'z BEGIN/COMMIT'iga ega; xato bo'lsa ROLLBACK qilinadi va belgilanmaydi
+// (keyingi ishga tushishda qayta urinadi). Mavjud jadvallarga tegmaydi.
+// ======================================================
+async function runSqlMigrations() {
+  var dir = path.join(__dirname, 'migrations');
+  var files = [];
+  try {
+    files = fs.readdirSync(dir).filter(function (f) { return /^\d+_.+\.sql$/.test(f); }).sort();
+  } catch (e) { return; }
+  if (!files.length) return;
+  // users jadvali (FK uchun) tayyor bo'lishini kutamiz — yangi bazada init parallel ishlaydi
+  for (var w = 0; w < 30; w++) {
+    var ready = await pool.query("SELECT to_regclass('public.users') AS t").catch(function () { return { rows: [{}] }; });
+    if (ready.rows[0] && ready.rows[0].t) break;
+    await new Promise(function (r) { setTimeout(r, 1000); });
+  }
+  await pool.query("CREATE TABLE IF NOT EXISTS app_migrations (key TEXT PRIMARY KEY, done_at TIMESTAMPTZ DEFAULT NOW())");
+  for (var i = 0; i < files.length; i++) {
+    var key = 'sql:' + files[i];
+    var done = await pool.query('SELECT 1 FROM app_migrations WHERE key = $1', [key]);
+    if (done.rows.length) continue;
+    var client = await pool.connect();
+    try {
+      await client.query(fs.readFileSync(path.join(dir, files[i]), 'utf8'));
+      await client.query('INSERT INTO app_migrations (key) VALUES ($1) ON CONFLICT DO NOTHING', [key]);
+      console.log('  [OK] SQL migratsiya qo\'llandi: ' + files[i]);
+    } catch (migErr) {
+      try { await client.query('ROLLBACK'); } catch (rbErr) {}
+      console.error('  [ERROR] SQL migratsiya ' + files[i] + ': ' + migErr.message);
+      client.release();
+      return; // keyingi fayllar oldingisiga bog'liq — to'xtaymiz
+    }
+    client.release();
+  }
+}
+
 initExtendedTables();
+runSqlMigrations().catch(function (e) { console.error('SQL MIGRATIONS ERROR:', e.message); });
 ensureUserActivityTable();
 ensureLibraryV2Tables();
 initLearningTables(pool);
