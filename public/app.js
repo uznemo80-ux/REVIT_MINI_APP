@@ -4365,8 +4365,10 @@ function renderFreeMiniCourseCard() {
 
   const freeTitle = s.free_minicourse_title || "REVIT 0 DAN";
   const freeSubtitle = s.free_minicourse_subtitle || "Revit dasturini birinchi marta o‘rganayotganlar uchun bepul mini-kurs";
-  const rawPoints = s.free_minicourse_points || "Revit nima ekanini tushunasiz\nBirinchi loyihani yaratasiz\nDevor, eshik, deraza chizasiz\nBirinchi 3D modelingizni yaratasiz";
-  const freePoints = rawPoints.split("\n").map(p => p.trim()).filter(Boolean);
+  // Fon: admin qo'ygan rasm (Sozlamalar), bo'lmasa — o'zimizning BIM-uslubdagi chizma
+  const coverRaw = String(s.free_minicourse_cover_url || "").trim();
+  const cover = coverRaw ? (formatImageUrl(coverRaw) || coverRaw) : "/img/revit-hero.svg";
+  const safeCover = /^(https?:\/\/|\/)/i.test(cover) ? cover.replace(/["'()\\]/g, "") : "/img/revit-hero.svg";
 
   let fmcLessons = [];
   if (typeof s.free_minicourse_lesson_ids === "string" && s.free_minicourse_lesson_ids.trim().length > 0) {
@@ -4380,44 +4382,27 @@ function renderFreeMiniCourseCard() {
   const countText = fmcLessons.length > 0 ? `${fmcLessons.length} ta bepul dars` : "Bepul darslar";
 
   return `
-    <div class="free-minicourse-card" onclick="openFreeMiniCourseLessonsModal()" style="cursor:pointer;" title="Bepul mini-kurs darslarini ko'rish">
-      <div class="fmc-top">
-        <div class="fmc-top-bar">
-          <div class="fmc-tag" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal();" style="cursor:pointer;">Bepul mini-kurs</div>
-          ${state.is_admin ? `
-            <button class="admin-small-btn" onclick="event.stopPropagation(); openEditFreeMiniCourseModal()" style="font-size:11px; padding:4px 9px;">
-              ✏️ Tahrirlash
-            </button>
-          ` : ""}
-        </div>
-
-        <div class="fmc-title">${escapeHtml(freeTitle)}</div>
-        <div class="fmc-subtitle">${escapeHtml(freeSubtitle)}</div>
-
-        <div class="fmc-gift-pill">
-          ${countText}
-        </div>
-
-        <div>
-          <button type="button" class="fmc-start-btn" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal()">
-            Bepul mini-kursni boshlash
-          </button>
+    <div class="fmc2" role="button" tabindex="0" aria-label="${escapeHtml(freeTitle)} — bepul darslarni ochish"
+         onclick="openFreeMiniCourseLessonsModal()"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFreeMiniCourseLessonsModal();}"
+         style="background-image: url('${safeCover}');">
+      <div class="fmc2-shade"></div>
+      <div class="fmc2-body">
+        <div class="fmc2-tag">Bepul mini-kurs</div>
+        <div class="fmc2-title">${escapeHtml(freeTitle)}</div>
+        <div class="fmc2-sub">${escapeHtml(freeSubtitle)}</div>
+        <div class="fmc2-foot">
+          <span class="fmc2-count">${escapeHtml(countText)}</span>
+          <span class="fmc2-go" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
         </div>
       </div>
-
-      <div class="fmc-divider"></div>
-
-      <div class="fmc-bottom">
-        <div class="fmc-features-title">Bu mini-kursda siz:</div>
-        <div class="fmc-checklist">
-          ${freePoints.map(point => `
-            <div class="fmc-check-item">
-              <span class="fmc-check-icon">✓</span>
-              <span>${escapeHtml(point)}</span>
-            </div>
-          `).join("")}
-        </div>
-      </div>
+      ${state.is_admin ? `
+        <button type="button" class="fmc2-edit" aria-label="Mini-kursni tahrirlash" onclick="event.stopPropagation(); openEditFreeMiniCourseModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>
+        </button>
+      ` : ""}
     </div>
   `;
 }
@@ -4583,8 +4568,9 @@ function openEditFreeMiniCourseModal() {
           </div>
 
           <div class="apple-field">
-            <label>O'rganiladigan natijalar (Har bir qatorda bittadan yozing, kartada ✓ bilan chiqadi)</label>
-            <textarea id="edit-fmc-points" class="apple-input apple-textarea" rows="4">${escapeHtml(currentPoints)}</textarea>
+            <label>Kartaning fon rasmi (havola, ixtiyoriy)</label>
+            <input id="edit-fmc-cover" class="apple-input" type="url" inputmode="url" placeholder="https://... yoki Google Drive havolasi" value="${escapeHtml((state.settings || {}).free_minicourse_cover_url || "")}" />
+            <span style="font-size:11.5px; color:var(--text-secondary); margin-top:6px; display:block;">Bo'sh qoldirilsa, Revit uslubidagi standart chizma ko'rsatiladi. Gorizontal rasm (taxminan 16:7) eng yaxshi chiqadi.</span>
           </div>
 
           <div class="apple-field">
@@ -4629,7 +4615,8 @@ function openEditFreeMiniCourseModal() {
 async function submitEditFreeMiniCourse() {
   const title = document.getElementById("edit-fmc-title")?.value.trim() || "REVIT 0 DAN";
   const subtitle = document.getElementById("edit-fmc-subtitle")?.value.trim() || "";
-  const points = document.getElementById("edit-fmc-points")?.value.trim() || "";
+  const cover = document.getElementById("edit-fmc-cover")?.value.trim() || "";
+  if (cover && !/^https?:\/\//i.test(cover)) { showAlert("Fon rasmi havolasi https:// bilan boshlanishi kerak."); return; }
   const chosenIds = Array.from(fmcSelectedLessonIds).join(",");
 
   const btn = document.getElementById("save-fmc-btn");
@@ -4640,7 +4627,7 @@ async function submitEditFreeMiniCourse() {
     await adminApi("/api/admin/settings/update", {
       free_minicourse_title: title,
       free_minicourse_subtitle: subtitle,
-      free_minicourse_points: points,
+      free_minicourse_cover_url: cover,
       free_minicourse_lesson_ids: chosenIds
     });
     showToast("Bepul mini-kurs sozlamalari saqlandi!");
@@ -13728,10 +13715,12 @@ async function openAdminPanel() {
   render();
 
   try {
-    const [statsData, liveData] = await Promise.all([
+    const [statsData, liveData, eqStats] = await Promise.all([
       adminApi("/api/admin/stats").catch(() => ({ stats: {} })),
-      adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] }))
+      adminApi("/api/admin/live-activity").catch(() => ({ stats: {}, active_users: [] })),
+      adminApi("/api/admin/equipment/stats").catch(() => null)
     ]);
+    if (eqStats && eqStats.ok) adminData.equipmentStats = eqStats;
     adminData.stats = Object.assign({}, statsData.stats || {}, liveData.stats || {});
     adminData.activeUsers = liveData.active_users || [];
     adminView = "menu";
@@ -13928,11 +13917,14 @@ function renderAdminNavBar() {
     });
   }
 
+  const lastSeg = isRoot ? null : path[path.length - 1];
+  const currentLabel = isRoot ? "Admin panel" : ((titlesMap[lastSeg] || { label: lastSeg }).label);
   return `
     <div class="admin-nav-bar">
-      <button class="admin-back-btn" onclick="adminGoBack()">
+      <button class="admin-back-btn" onclick="adminGoBack()" aria-label="${escapeHtml(backLabel.replace(/^←\s*/, ''))}">
         ${backLabel}
       </button>
+      <div class="admin-nav-current">${escapeHtml(currentLabel)}</div>
       <div class="admin-breadcrumb-wrap">
         ${breadcrumbItems.join(" ")}
       </div>
@@ -13945,185 +13937,80 @@ function renderAdminRootMenu() {
   const s = adminData.stats || {};
   const activeCount = adminData.activeUsers ? adminData.activeUsers.length : (s.online_now || 0);
 
+  // Jihozlar: server by_status'ni massiv ko'rinishida qaytaradi
+  const eqBy = (adminData.equipmentStats && adminData.equipmentStats.by_status) || [];
+  const eqCounts = Array.isArray(eqBy)
+    ? eqBy.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + Number(r.n || 0); acc.total += Number(r.n || 0); return acc; }, { total: 0 })
+    : Object.assign({ total: Object.values(eqBy).reduce((a, b) => a + Number(b || 0), 0) }, eqBy);
+  const eqUnpublished = (eqCounts.draft || 0) + (eqCounts.pending_review || 0);
+
+  // Bo'limlar ish tartibida: kundalik ish -> kontent -> tahlil va tizim
+  const groups = [
+    { title: "Kundalik ish", items: [
+      { to: "students", icon: "👥", title: "Foydalanuvchilar", desc: "Kirish berish, muddatlar, bloklash", badge: s.total_students || 0 },
+      { to: "chat", icon: "💬", title: "Chat va murojaatlar", desc: "O‘quvchi savollari va javoblar" },
+      { to: "tasks", icon: "📝", title: "Vazifalar va testlar", desc: "Topshiriqlarni tekshirish, modul testlari" }
+    ]},
+    { title: "Kontent", items: [
+      { to: "courses", icon: "🎓", title: "Kurslar", desc: "Modullar, darslar, “Revit 0 dan”" },
+      { to: "library", icon: "📚", title: "Kutubxona", desc: "Kitoblar, manbalar, materiallar", badge: (adminData.libraryBooks || []).length ? `${(adminData.libraryBooks || []).length} kitob` : "" },
+      { to: "equipment", icon: "🧰", title: "Jihozlar", desc: eqUnpublished ? `${eqUnpublished} tasi nashr kutmoqda` : "Katalog va nashr", badge: eqCounts.total ? `${eqCounts.published || 0}/${eqCounts.total}` : "", attention: eqUnpublished > 0 },
+      { to: "normatives", icon: "📋", title: "Normativlar", desc: "SHNQ, QMQ, O‘z DSt, amaliy yechimlar", badge: (adminData.normativesStats && adminData.normativesStats.total_documents) || "" }
+    ]},
+    { title: "Tahlil va tizim", items: [
+      { to: "stats", icon: "📊", title: "Statistika", desc: "Jonli faollik, kunlar, davlatlar", badge: "Jonli" },
+      { to: "settings", icon: "⚙️", title: "Sozlamalar", desc: "Kontaktlar, tarmoqlar, to‘lov kartalari" },
+      { to: "admins", icon: "🔐", title: "Adminlar", desc: "Rollar va xavfsizlik" }
+    ]}
+  ];
+
+  const row = (it) => `
+    <button type="button" class="adm-row ${it.attention ? "attention" : ""}" onclick="adminNavigate('${it.to}')">
+      <span class="adm-row-ico" aria-hidden="true">${it.icon}</span>
+      <span class="adm-row-text">
+        <span class="adm-row-title">${escapeHtml(it.title)}</span>
+        <span class="adm-row-desc">${escapeHtml(it.desc)}</span>
+      </span>
+      ${it.badge !== undefined && it.badge !== "" && it.badge !== 0 ? `<span class="adm-row-badge">${escapeHtml(String(it.badge))}</span>` : ""}
+      <svg class="adm-row-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>`;
+
   return `
     <div class="admin-root-menu">
-      <div class="admin-header" style="margin-bottom:14px;">
+      <div class="adm-head">
         <div>
-          <div class="admin-title">👑 Boshqaruv Paneli</div>
-          <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">
-            YOSHUZBEKK boshqaruv va nazorat markazi
-          </div>
-        </div>
-        <div class="admin-role">${state.admin_role === "super_admin" ? "Super Admin" : "Admin"}</div>
-      </div>
-
-      <!-- TEZKOR METRIKA KARTALARI -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:18px;">
-        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('stats')">
-          <div style="font-size:11px; color:#10b981; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;">
-            <span class="live-pulse-dot"></span> Online
-          </div>
-          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.online_now || activeCount || 0}</div>
-        </div>
-        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('students')">
-          <div style="font-size:11px; color:var(--text-secondary); font-weight:700;">O'quvchilar</div>
-          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.total_students || (adminData.students ? adminData.students.length : 0)}</div>
-        </div>
-        <div class="card" style="padding:12px; text-align:center; margin:0; cursor:pointer;" onclick="adminNavigate('students')">
-          <div style="font-size:11px; color:var(--accent); font-weight:700;">Faol Obuna</div>
-          <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-top:2px;">${s.paid_students || 0}</div>
+          <div class="adm-head-title">Boshqaruv</div>
+          <div class="adm-head-sub">YOSHUZBEKK · ${state.admin_role === "super_admin" ? "Super admin" : "Admin"}</div>
         </div>
       </div>
 
-      <!-- 8 TA ASOSIY BO'LIM (IERARXIK MENYU) -->
-      <div class="admin-hub-grid">
-        <!-- 1. STATISTIKA -->
-        <div class="admin-hub-card" onclick="adminNavigate('stats')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(0,122,255,0.12); color:#007aff;">
-            📊
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              1. Statistika
-              <span class="admin-hub-badge" style="background:rgba(16,185,129,0.12); color:#10b981;">Jonli</span>
-            </div>
-            <div class="admin-hub-desc">Foydalanuvchilar oqimi, dars ko'rilishlari, online monitoring va tahlil</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 2. KUTUBXONA -->
-        <div class="admin-hub-card" onclick="adminNavigate('library')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(255,149,0,0.12); color:#ff9500;">
-            📚
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              2. Kutubxona
-              <span class="admin-hub-badge">${(adminData.libraryBooks || []).length} kitob</span>
-            </div>
-            <div class="admin-hub-desc">Kitoblar, arxitektura manbalari, qurilish materiallari va dars fayllari</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 3. KURSLAR / INTPRO -->
-        <div class="admin-hub-card" onclick="adminNavigate('courses')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(175,82,222,0.12); color:#af52de;">
-            🎓
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              3. Kurslar / INTPRO
-            </div>
-            <div class="admin-hub-desc">Modullar, darslar, video darsliklar tartibi va kontent boshqaruvi</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 4. FOYDALANUVCHILAR -->
-        <div class="admin-hub-card" onclick="adminNavigate('students')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(52,199,89,0.12); color:#34c759;">
-            👥
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              4. Foydalanuvchilar
-              <span class="admin-hub-badge">${s.total_students || 0}</span>
-            </div>
-            <div class="admin-hub-desc">O'quvchilar ro'yxati, obunalar, access berish, muddatlar va bloklash</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 5. VAZIFALAR / TESTLAR -->
-        <div class="admin-hub-card" onclick="adminNavigate('tasks')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(255,45,85,0.12); color:#ff2d55;">
-            📝
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              5. Vazifalar / Testlar
-            </div>
-            <div class="admin-hub-desc">Amaliy topshiriqlarni tekshirish, sharhlar va modul test savollari</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 6. CHAT / MUROJAATLAR -->
-        <div class="admin-hub-card" onclick="adminNavigate('chat')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(88,86,214,0.12); color:#5856d6;">
-            💬
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              6. Chat / Murojaatlar
-            </div>
-            <div class="admin-hub-desc">O'quvchilar savollari, murojaatlar markazi va admin javoblari</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 7. PLATFORMA SOZLAMALARI -->
-        <div class="admin-hub-card" onclick="adminNavigate('settings')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(90,200,250,0.12); color:#5ac8fa;">
-            ⚙️
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              7. Platforma sozlamalari
-            </div>
-            <div class="admin-hub-desc">Admin kontaktlari, ijtimoiy tarmoqlar va to'lov kartalari</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 8. ADMINLAR / XAVFSIZLIK -->
-        <div class="admin-hub-card" onclick="adminNavigate('admins')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(255,204,0,0.12); color:#ffcc00;">
-            🔐
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              8. Adminlar / Xavfsizlik
-            </div>
-            <div class="admin-hub-desc">Adminlar tizimi, rollar, taqiqlar va tizim xavfsizligi</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 10. JIHOZLAR (EQUIPMENT) -->
-        <div class="admin-hub-card" onclick="adminNavigate('equipment')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(52,211,153,0.12); color:#34d399;">
-            ⚙️
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              10. Jihozlar (Equipment)
-              <span class="admin-hub-badge">${(adminData.equipmentStats && adminData.equipmentStats.total) || 0} jihoz</span>
-            </div>
-            <div class="admin-hub-desc">Texnik jihozlar katalogi — draft/published boshqaruvi, rasmiy manbalar va validatsiya</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
-
-        <!-- 9. NORMATIVLAR VA STANDARTLAR -->
-        <div class="admin-hub-card" onclick="adminNavigate('normatives')">
-          <div class="admin-hub-icon-wrap" style="background:rgba(50,173,230,0.12); color:#32ade6;">
-            📋
-          </div>
-          <div class="admin-hub-text">
-            <div class="admin-hub-title">
-              9. Normativlar va Standartlar
-              <span class="admin-hub-badge">${(adminData.normativesStats && adminData.normativesStats.total_documents) || 0} hujjat</span>
-            </div>
-            <div class="admin-hub-desc">SHNQ, QMQ, O‘z DSt va amaliy "Nima kerak?" keyslari CMS boshqaruvi</div>
-          </div>
-          <div class="admin-hub-chevron">→</div>
-        </div>
+      <div class="adm-metrics">
+        <button type="button" class="adm-metric" onclick="adminNavigate('stats')">
+          <span class="adm-metric-n">${s.online_now || activeCount || 0}</span>
+          <span class="adm-metric-k"><i class="live-pulse-dot"></i> Hozir onlayn</span>
+        </button>
+        <button type="button" class="adm-metric" onclick="adminNavigate('students')">
+          <span class="adm-metric-n">${s.total_students || (adminData.students ? adminData.students.length : 0)}</span>
+          <span class="adm-metric-k">O‘quvchilar</span>
+        </button>
+        <button type="button" class="adm-metric" onclick="adminSetStudentsFilterAndGo('active')">
+          <span class="adm-metric-n">${s.paid_students || 0}</span>
+          <span class="adm-metric-k">Faol obuna</span>
+        </button>
       </div>
+
+      ${groups.map(g => `
+        <div class="adm-group-title">${escapeHtml(g.title)}</div>
+        <div class="adm-group">${g.items.map(row).join("")}</div>
+      `).join("")}
     </div>
   `;
+}
+
+// Metrika kartasidan to'g'ridan-to'g'ri filtrlangan ro'yxatga
+function adminSetStudentsFilterAndGo(tab) {
+  adminStudentsFilterTab = tab;
+  adminNavigate("students");
 }
 
 
@@ -14826,8 +14713,8 @@ function renderAdminCoursesView() {
               const isDraft = c.status === 'draft';
 
               return `
-                <div class="admin-hub-card" style="padding:16px; border-radius:14px; border:1px solid var(--border); background:var(--bg-surface); cursor:pointer; transition:all 0.2s ease;" onclick="selectAdminCourse(${Number(c.id)})">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; gap:12px;">
+                <div class="admin-hub-card adm-course-card" style="padding:16px; border-radius:14px; border:1px solid var(--border); background:var(--bg-surface); cursor:pointer; transition:all 0.2s ease;" onclick="selectAdminCourse(${Number(c.id)})">
+                  <div class="adm-course-row" style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; gap:12px;">
                     <div style="display:flex; align-items:flex-start; gap:14px; flex:1;">
                       <div class="admin-hub-icon-wrap" style="width:48px; height:48px; border-radius:12px; background:rgba(41,121,255,0.12); color:var(--accent); font-size:24px; flex-shrink:0;">
                         🎓
@@ -14836,7 +14723,7 @@ function renderAdminCoursesView() {
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
                           <span style="font-size:15px; font-weight:800; color:var(--text-primary);">${escapeHtml(c.title)}</span>
                           <span class="admin-hub-badge" style="background:${isDraft ? 'rgba(255,149,0,0.15)' : 'rgba(52,199,89,0.15)'}; color:${isDraft ? '#ff9500' : '#34c759'}; font-size:11px;">
-                            ${isDraft ? '📝 Qoralama' : '🟢 Faol'}
+                            ${isDraft ? 'Qoralama' : 'Faol'}
                           </span>
                         </div>
                         ${c.subtitle ? `<div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:6px; line-height:1.35;">${escapeHtml(c.subtitle)}</div>` : ''}
@@ -14847,7 +14734,7 @@ function renderAdminCoursesView() {
                         </div>
                       </div>
                     </div>
-                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;" onclick="event.stopPropagation()">
+                    <div class="adm-course-actions" style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;" onclick="event.stopPropagation()">
                       <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:var(--accent); color: var(--accent-contrast);" onclick="selectAdminCourse(${Number(c.id)})">
                         📂 Modullarni ochish →
                       </button>

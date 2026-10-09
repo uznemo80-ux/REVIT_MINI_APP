@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice">
+  <!-- YOSHUZBEKK: "Revit 0 dan" kartasi uchun original BIM-uslubdagi fon (Revit interfeysidan nusxa emas).
+       Tarkibi: o'qlar to'ri (grid bubbles), sath belgilari (levels), izometrik bino karkasi, kesim belgisi. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c1c1c"/>
+      <stop offset="1" stop-color="#090909"/>
+    </linearGradient>
+    <pattern id="minor" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+    <pattern id="major" width="100" height="100" patternUnits="userSpaceOnUse">
+      <path d="M100 0H0V100" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="360" fill="url(#bg)"/>
+  <rect width="800" height="360" fill="url(#minor)"/>
+  <rect width="800" height="360" fill="url(#major)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <!-- O'qlar (grid) — punktir va doira belgilari -->
+    <g stroke-opacity="0.22" stroke-dasharray="10 4 2 4" stroke-width="1">
+      <path d="M470 24V336M560 24V336M650 24V336M740 24V336"/>
+    </g>
+    <g stroke-opacity="0.45" stroke-width="1.2">
+      <circle cx="470" cy="20" r="11"/><circle cx="560" cy="20" r="11"/><circle cx="650" cy="20" r="11"/><circle cx="740" cy="20" r="11"/>
+    </g>
+
+    <!-- Sath (level) chiziqlari -->
+    <g stroke-opacity="0.28" stroke-width="1" stroke-dasharray="14 6">
+      <path d="M430 300H790M430 214H790M430 128H790"/>
+    </g>
+    <g stroke-opacity="0.5" stroke-width="1.2">
+      <path d="M776 294l8 6-8 6-8-6zM776 208l8 6-8 6-8-6zM776 122l8 6-8 6-8-6z"/>
+    </g>
+
+    <!-- Izometrik bino karkasi (2 qavat) -->
+    <g stroke-opacity="0.85" stroke-width="1.6">
+      <!-- poydevor plitasi -->
+      <path d="M500 300l110-56 130 64-110 56z" stroke-opacity="0.45"/>
+      <!-- tashqi devorlar -->
+      <path d="M520 296V140l100-50 110 54v156"/>
+      <path d="M520 140l110 54 100-50"/>
+      <path d="M630 194V350"/>
+      <!-- oraliq yopma (2-qavat) -->
+      <path d="M520 218l110 54 100-50" stroke-opacity="0.55"/>
+      <!-- tom -->
+      <path d="M512 136l118-74 108 78" stroke-opacity="0.9"/>
+      <path d="M630 62v132" stroke-opacity="0.35"/>
+    </g>
+    <!-- derazalar va eshik -->
+    <g stroke-opacity="0.6" stroke-width="1.2">
+      <path d="M540 175l30 15v34l-30-15zM585 197l30 15v34l-30-15z"/>
+      <path d="M540 255l30 15v34l-30-15z"/>
+      <path d="M650 214l26-13v34l-26 13zM690 194l26-13v34l-26 13z"/>
+      <path d="M660 300l24-12v46l-24 12z"/>
+    </g>
+
+    <!-- Kesim belgisi (section marker) -->
+    <g stroke-opacity="0.55" stroke-width="1.2">
+      <path d="M440 250H480" stroke-dasharray="6 4"/>
+      <circle cx="432" cy="250" r="10"/>
+      <path d="M422 250h20"/>
+    </g>
+
+    <!-- O'lcham chizig'i -->
+    <g stroke-opacity="0.35" stroke-width="1">
+      <path d="M520 330l110 54" transform="translate(0 -12)"/>
+      <path d="M516 314l8 8M626 368l8 8" transform="translate(0 -12)"/>
+    </g>
+  </g>
+
+  <g font-family="-apple-system, Inter, Arial, sans-serif" font-size="11" fill="#ffffff" fill-opacity="0.55" text-anchor="middle">
+    <text x="470" y="24">A</text><text x="560" y="24">B</text><text x="650" y="24">C</text><text x="740" y="24">D</text>
+  </g>
+  <g font-family="-apple-system, Inter, Arial, sans-serif" font-size="10" fill="#ffffff" fill-opacity="0.45">
+    <text x="440" y="296">±0.000</text><text x="440" y="210">+3.300</text><text x="440" y="124">+6.600</text>
+  </g>
+</svg>

@@ -4375,8 +4375,8 @@ app.post('/api/activity/heartbeat', async function (req, res) {
 app.post('/api/admin/stats', requireAdmin, async function (req, res) {
   try {
     var totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM users');
-    var paidResult = await pool.query('SELECT COUNT(*)::int AS paid FROM users WHERE access_until > NOW()');
-    var unpaidResult = await pool.query('SELECT COUNT(*)::int AS unpaid FROM users WHERE access_until IS NULL OR access_until <= NOW()');
+    var paidResult = await pool.query('SELECT COUNT(*)::int AS paid FROM users WHERE (access_revoked_at IS NULL AND COALESCE(access_expires_at, access_until) > NOW())');
+    var unpaidResult = await pool.query('SELECT COUNT(*)::int AS unpaid FROM users WHERE NOT (access_revoked_at IS NULL AND COALESCE(access_expires_at, access_until) > NOW())');
     var activeResult = await pool.query('SELECT COUNT(DISTINCT user_id)::int AS active FROM progress WHERE watched = true');
     var lessonsResult = await pool.query('SELECT COUNT(*)::int AS total FROM lessons');
     var modulesResult = await pool.query('SELECT COUNT(*)::int AS total FROM modules');
@@ -4460,8 +4460,8 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
     var liveStatsPromise = pool.query(`
       SELECT
         COUNT(*)::int AS total_students,
-        COUNT(CASE WHEN access_until > NOW() THEN 1 END)::int AS paid_students,
-        COUNT(CASE WHEN access_until IS NULL OR access_until <= NOW() THEN 1 END)::int AS unpaid_students
+        COUNT(CASE WHEN (access_revoked_at IS NULL AND COALESCE(access_expires_at, access_until) > NOW()) THEN 1 END)::int AS paid_students,
+        COUNT(CASE WHEN NOT (access_revoked_at IS NULL AND COALESCE(access_expires_at, access_until) > NOW()) THEN 1 END)::int AS unpaid_students
       FROM users
       WHERE telegram_id::text <> ALL($1::text[])
     `, [exclIds]).catch(function(e) {
@@ -4774,8 +4774,8 @@ app.post('/api/admin/students/detail-list', requireAdmin, async function (req, r
           WHERE user_id = u.id AND status = 'approved'
           ORDER BY approved_at DESC NULLS LAST LIMIT 1
         ) lr ON true
-        WHERE u.access_until > NOW()
-        ORDER BY u.access_until DESC
+        WHERE (u.access_revoked_at IS NULL AND COALESCE(u.access_expires_at, u.access_until) > NOW())
+        ORDER BY COALESCE(u.access_expires_at, u.access_until) DESC
       `;
     } else if (filter === 'expired') {
       query = `
@@ -4787,7 +4787,7 @@ app.post('/api/admin/students/detail-list', requireAdmin, async function (req, r
           WHERE user_id = u.id AND status = 'approved'
           ORDER BY approved_at DESC NULLS LAST LIMIT 1
         ) lr ON true
-        WHERE u.access_until IS NULL OR u.access_until <= NOW()
+        WHERE NOT (u.access_revoked_at IS NULL AND COALESCE(u.access_expires_at, u.access_until) > NOW())
         ORDER BY u.access_until DESC NULLS LAST
       `;
     } else if (filter === 'pending_new') {
@@ -6259,6 +6259,11 @@ app.post('/api/admin/settings/update', requireAdmin, async function (req, res) {
     }
     if (req.body.free_minicourse_subtitle !== undefined) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_subtitle\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_subtitle).trim()]);
+    }
+    if (req.body.free_minicourse_cover_url !== undefined) {
+      var fmcCover = String(req.body.free_minicourse_cover_url || '').trim().slice(0, 1000);
+      if (fmcCover && !/^https?:\/\//i.test(fmcCover)) fmcCover = '';
+      await pool.query("INSERT INTO academy_settings (key, value) VALUES ('free_minicourse_cover_url', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [fmcCover]);
     }
     if (req.body.free_minicourse_points !== undefined) {
       await pool.query('INSERT INTO academy_settings (key, value) VALUES (\'free_minicourse_points\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(req.body.free_minicourse_points).trim()]);
