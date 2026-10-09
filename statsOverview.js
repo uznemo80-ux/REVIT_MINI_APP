@@ -140,7 +140,7 @@ const LIVE_CATEGORY_SQL = `
   CASE
     WHEN ua.status = 'testing' OR ua.lesson_id IS NOT NULL THEN 'lessons'
     WHEN ua.current_section = 'books' THEN 'books'
-    WHEN ua.current_section = 'materials' THEN 'materials'
+    WHEN ua.current_section IN ('materials', 'equipment') THEN 'materials'
     WHEN ua.current_section = 'normatives' THEN 'normatives'
     WHEN ua.current_section = 'sources' THEN 'sources'
     ELSE 'other'

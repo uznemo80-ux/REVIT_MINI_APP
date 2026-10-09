@@ -561,6 +561,15 @@ let currentTheme = localStorage.getItem("theme") || "dark";
 
 function applyTheme(theme) {
   document.documentElement.classList.toggle("light", theme === "light");
+  // Telegram sarlavhasi va pastki paneli ilova foniga mos bo'lsin (Bot API 6.1+ / 7.10+)
+  try {
+    const bg = theme === "light" ? "#f5f5f7" : "#0a0a0a";
+    const W = window.Telegram && window.Telegram.WebApp;
+    if (W && typeof W.isVersionAtLeast === "function") {
+      if (W.isVersionAtLeast("6.1")) { W.setHeaderColor(bg); W.setBackgroundColor(bg); }
+      if (W.isVersionAtLeast("7.10") && typeof W.setBottomBarColor === "function") W.setBottomBarColor(bg);
+    }
+  } catch (e) {}
 }
 
 applyTheme(currentTheme);
@@ -804,7 +813,7 @@ let librarySections = [
   { id: 1, slug: 'books', name: 'Kitoblar', icon: '📚', description: 'Revit, BIM, arxitektura va interyer elektron kitoblari hamda ShNQ normativlari', is_active: true, order_index: 1 },
   { id: 2, slug: 'sources', name: 'Manbalar', icon: '📦', description: 'Revit oilalari (.rfa), shablonlar (.rte), DWG chizmalar va 3D parametrlar', is_active: true, order_index: 2 },
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
-  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
+  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish materiallari va texnik jihozlar katalogi', is_active: true, order_index: 4 },
   { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 },
   { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 },
   // Equipment (Jihozlar) — alohida backend modul (equipmentApi.js) va
@@ -2900,7 +2909,7 @@ function renderTermsOnboardingHtml() {
       </div>
 
       <div class="rules-footer">
-        <div class="rules-footer-brand">YOSHUZBEKK Academy</div>
+        <div class="rules-footer-brand">YOSHUZBEKK</div>
         <div class="rules-footer-motto">Bilim &rarr; Amaliyot &rarr; Natija</div>
       </div>
 
@@ -3080,7 +3089,7 @@ function openPlatformRulesModal() {
         </div>
 
         <div class="rules-footer">
-          <div class="rules-footer-brand">YOSHUZBEKK Academy</div>
+          <div class="rules-footer-brand">YOSHUZBEKK</div>
           <div class="rules-footer-motto">Bilim &rarr; Amaliyot &rarr; Natija</div>
         </div>
       </div>
@@ -4023,11 +4032,30 @@ function deleteOpenResourceItem(id) {
 }
 
 
+// Narx: faqat raqam bo'lsa "1 500 000 so'm" ko'rinishiga keltiriladi, matn bo'lsa o'zgarmaydi
+function formatCoursePrice(raw) {
+  const v = String(raw == null ? "" : raw).trim();
+  if (!/^\d+$/.test(v)) return v;
+  return Number(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ") + " so‘m";
+}
+
+// O'zbekcha qisqa sana: 09.10.2026 (uz-UZ ICU ba'zi qurilmalarda "2026 M10 09" beradi)
+function uzDate(d) {
+  if (!d) return "";
+  const date = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(date.getTime())) return "";
+  return String(date.getDate()).padStart(2, "0") + "." + String(date.getMonth() + 1).padStart(2, "0") + "." + date.getFullYear();
+}
+
+const UZ_MONTHS_LONG = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
+
 function fmtDate(d) {
   if (!d) return null;
   const date = new Date(d);
   if (Number.isNaN(date.getTime())) return null;
-  const _loc = { uz: "uz-UZ", ru: "ru-RU", en: "en-GB", tr: "tr-TR", ar: "ar" }[(window.I18N && window.I18N.lang) || "uz"] || "uz-UZ";
+  const _lang = (window.I18N && window.I18N.lang) || "uz";
+  if (_lang === "uz") return date.getDate() + "-" + UZ_MONTHS_LONG[date.getMonth()] + ", " + date.getFullYear();
+  const _loc = { ru: "ru-RU", en: "en-GB", tr: "tr-TR", ar: "ar" }[_lang] || "en-GB";
   return date.toLocaleDateString(_loc, {
     day: "2-digit",
     month: "long",
@@ -4047,7 +4075,7 @@ function fmtTimeAgo(d) {
   if (diffHour < 24) return `${diffHour} soat oldin`;
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 30) return `${diffDay} kun oldin`;
-  return date.toLocaleDateString("uz-UZ");
+  return uzDate(date);
 }
 
 // ======================================================
@@ -4064,7 +4092,7 @@ function renderRegistration() {
       <div class="apple-registration">
         <div class="apple-registration-brand">
           <div class="apple-registration-logo">Y</div>
-          <div class="apple-registration-brand-name">YOSHUZBEKK Academy</div>
+          <div class="apple-registration-brand-name">YOSHUZBEKK</div>
         </div>
 
         <div class="apple-registration-content">
@@ -4285,7 +4313,7 @@ function openFreeMiniCourseLessonsModal() {
         <div class="back-btn" onclick="closeDetail()">← Ortga qaytish</div>
         
         <div style="margin-bottom:18px;">
-          <div class="fmc-tag" style="margin-bottom:8px;">✨ Bepul Mini-Kurs</div>
+          <div class="fmc-tag" style="margin-bottom:8px;">Bepul mini-kurs</div>
           <div class="page-title" style="margin-bottom:6px;">${escapeHtml(freeTitle)} — Darslar</div>
           <p style="font-size:13px; color:var(--text-secondary); line-height:1.45;">
             ${escapeHtml(freeSubtitle)}. Kerakli darsni tanlab o'rganishni boshlang:
@@ -4354,7 +4382,7 @@ function renderFreeMiniCourseCard() {
     <div class="free-minicourse-card" onclick="openFreeMiniCourseLessonsModal()" style="cursor:pointer;" title="Bepul mini-kurs darslarini ko'rish">
       <div class="fmc-top">
         <div class="fmc-top-bar">
-          <div class="fmc-tag" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal();" style="cursor:pointer;">✨ Bepul Mini-Kurs</div>
+          <div class="fmc-tag" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal();" style="cursor:pointer;">Bepul mini-kurs</div>
           ${state.is_admin ? `
             <button class="admin-small-btn" onclick="event.stopPropagation(); openEditFreeMiniCourseModal()" style="font-size:11px; padding:4px 9px;">
               ✏️ Tahrirlash
@@ -4366,12 +4394,12 @@ function renderFreeMiniCourseCard() {
         <div class="fmc-subtitle">${escapeHtml(freeSubtitle)}</div>
 
         <div class="fmc-gift-pill">
-          🎁 ${countText}
+          ${countText}
         </div>
 
         <div>
           <button type="button" class="fmc-start-btn" onclick="event.stopPropagation(); openFreeMiniCourseLessonsModal()">
-            ✨ Bepul mini-kursni boshlash
+            Bepul mini-kursni boshlash
           </button>
         </div>
       </div>
@@ -4677,7 +4705,7 @@ function renderHome() {
   return `
     <div class="page">
       <div class="welcome-hero">
-        <div class="welcome-badge">✨ YOSHUZBEKK Academy</div>
+        <div class="welcome-badge">YOSHUZBEKK</div>
         <div class="welcome-title">
           Xush kelibsiz${state.first_name ? ", " + escapeHtml(state.first_name) : ""}!
         </div>
@@ -4782,8 +4810,8 @@ function renderHome() {
               ` : ""}
             </div>
             <div class="course-meta" style="margin-top:6px;">
-              <span>📚 ${course.total_modules || 0} Modul</span>
-              <span>🎬 ${course.total_lessons || 0} Dars</span>
+              <span>${course.total_modules || 0} modul</span>
+              <span>${course.total_lessons || 0} dars</span>
             </div>
             <div class="course-price-wrap">
               ${renderCoursePriceBlock(course)}
@@ -4909,7 +4937,7 @@ function renderHome() {
         </div>
 
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
-          © ${new Date().getFullYear()} YOSHUZBEKK Academy. Barcha huquqlar himoyalangan.
+          © ${new Date().getFullYear()} YOSHUZBEKK. Barcha huquqlar himoyalangan.
         </div>
       </div>
     </div>
@@ -5048,13 +5076,13 @@ function renderCoursePriceBlock(course) {
       <div>
         <div style="display:flex; align-items:baseline; gap:8px;">
           <div class="course-price" style="color:var(--danger);">${escapeHtml(course.discount_price)}</div>
-          <div style="font-size:13px; color:var(--text-secondary); text-decoration:line-through;">${escapeHtml(course.original_price || course.price || '')}</div>
+          <div style="font-size:13px; color:var(--text-secondary); text-decoration:line-through;">${escapeHtml(formatCoursePrice(course.original_price || course.price || ''))}</div>
         </div>
         <div class="discount-countdown" data-until="${escapeHtml(course.discount_until || '')}" style="font-size:11px; color:var(--danger); font-weight:700;">🔥 Hisoblanmoqda...</div>
       </div>
     `;
   }
-  return `<div class="course-price">${escapeHtml(course.price || '')}</div>`;
+  return `<div class="course-price">${escapeHtml(formatCoursePrice(course.price))}</div>`;
 }
 
 function isCourseFreeCheck(c) {
@@ -5118,15 +5146,15 @@ function renderCourseCardsListHtml() {
               return '<div class="tag" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-weight:700;">🟡 Jarayonda</div>';
             }
             if (isPub) {
-              return '<div class="tag passed" style="font-weight:700;">🚀 Sotuvda</div>';
+              return '<div class="tag passed" style="font-weight:700;">Sotuvda</div>';
             }
             return '<div class="tag" style="background:rgba(239,68,68,0.15); color:#ff6b6b; border:1px solid rgba(239,68,68,0.3); font-weight:700;">🔒 Qoralama</div>';
           })()}
           <div style="font-weight:750; color:var(--accent); font-size:15px;">
             ${course.is_discount_active && course.discount_price ? `
               <span style="color:var(--danger);">${escapeHtml(course.discount_price)}</span>
-              <span style="font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px;">${escapeHtml(course.original_price || course.price || '')}</span>
-            ` : escapeHtml(course.price || '')}
+              <span style="font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px;">${escapeHtml(formatCoursePrice(course.original_price || course.price || ''))}</span>
+            ` : escapeHtml(formatCoursePrice(course.price || ''))}
           </div>
         </div>
         ${course.is_discount_active && course.discount_until ? `
@@ -5135,9 +5163,9 @@ function renderCourseCardsListHtml() {
           </div>
         ` : ""}
         <div class="course-meta" style="margin-bottom:12px;">
-          <span>🏷️ ${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
-          <span>📚 ${course.total_modules || 0} Modul</span>
-          <span>🎬 ${course.total_lessons || 0} Dars</span>
+          <span>${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
+          <span>${course.total_modules || 0} modul</span>
+          <span>${course.total_lessons || 0} dars</span>
           ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
         </div>
         ${(() => {
@@ -5785,7 +5813,7 @@ function renderCourseModules() {
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
                 <div style="font-size:15px; font-weight:800; color:var(--accent);">
-                  ${escapeHtml(course.discount_price || course.price || "1 500 000 so'm")}
+                  ${escapeHtml(formatCoursePrice(course.discount_price || course.price || "1 500 000 so'm"))}
                 </div>
                 <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
                   💳 Darsga a'zo bo'lish
@@ -7703,7 +7731,10 @@ function renderTasks() {
     if (typeof equipmentUi !== "undefined") {
       content = equipmentUi.isDetailOpen() ? equipmentUi.renderDetail()
              : equipmentUi.isListOpen()   ? equipmentUi.renderList()
-             : equipmentUi.renderHome();
+             : `<div class="kind-switch-host">
+                  <div class="lib-back-nav" onclick="closeLibrarySection()">${libIcons.back('lib-back-svg', 16)} Kutubxona</div>
+                  ${renderMaterialsKindSwitchHtml('equipment')}
+                </div>` + equipmentUi.renderHome();
     } else {
       content = `<div class="lib-section-wrap page lib-container" style="padding:16px">
         <div class="lib-back-nav" onclick="closeLibrarySection()">← Kutubxona</div>
@@ -7743,7 +7774,7 @@ function renderGenericSectionHtml(slug) {
 // 1. KUTUBXONA HOME (Apple-like 4 Plitka + So'nggi + Tavsiya)
 // ------------------------------------------------------
 function renderTasksHomeHtml() {
-  const sections = librarySections.filter(s => s.is_active !== false && s.is_visible !== false && s.slug !== 'amaliy_yechimlar' && s.slug !== 'cases' && s.slug !== 'practical_cases' && s.slug !== 'amaliy');
+  const sections = librarySections.filter(s => s.is_active !== false && s.is_visible !== false && s.slug !== 'equipment' && s.slug !== 'amaliy_yechimlar' && s.slug !== 'cases' && s.slug !== 'practical_cases' && s.slug !== 'amaliy');
   const recentList = libraryV2RecentList || [];
   // Faqat admin "tavsiya" qilib belgilagan resurslar ko'rsatiladi (avtomatik to'ldirish yo'q)
   const recommendedList = (libraryV2RecommendedList || []).filter(r => (r.content_url && String(r.content_url).trim()) || r.type === "test" || r.type === "quiz" || r.content_data);
@@ -7781,11 +7812,11 @@ function renderTasksHomeHtml() {
 
         <!-- UNIVERSAL LIKES & SAVES QUICK ACCESS -->
         <div style="display:flex; gap:10px; margin-top:14px;">
-          <button type="button" class="btn" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.22); border-radius:14px; padding:10px 14px; font-weight:700; font-size:13px; cursor:pointer;" onclick="openLibrarySection('liked')">
-            <span>♥</span> Yoqtirganlar
+          <button type="button" class="lib-quick-btn" onclick="openLibrarySection('liked')">
+            <span aria-hidden="true">♡</span> Yoqtirganlar
           </button>
-          <button type="button" class="btn" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:rgba(245,158,11,0.1); color:#fbbf24; border:1px solid rgba(245,158,11,0.22); border-radius:14px; padding:10px 14px; font-weight:700; font-size:13px; cursor:pointer;" onclick="openLibrarySection('saved')">
-            <span>🔖</span> Saqlanganlar
+          <button type="button" class="lib-quick-btn" onclick="openLibrarySection('saved')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z" stroke-linejoin="round"/></svg> Saqlanganlar
           </button>
         </div>
       </div>
@@ -10325,6 +10356,27 @@ function renderMaterialSavedViewHtml() {
   `;
 }
 
+// ======================================================
+// MATERIALLAR + JIHOZLAR — bitta bo'lim, ikki tab
+// Jihozlar endi Kutubxonada alohida karta emas: Materiallar ichidan ochiladi.
+// ======================================================
+function renderMaterialsKindSwitchHtml(active) {
+  return `
+    <div class="kind-switch" role="tablist" aria-label="Materiallar va jihozlar">
+      <button type="button" role="tab" aria-selected="${active === 'materials'}" class="kind-switch-btn ${active === 'materials' ? 'active' : ''}" onclick="switchMaterialsKind('materials')">Materiallar</button>
+      <button type="button" role="tab" aria-selected="${active === 'equipment'}" class="kind-switch-btn ${active === 'equipment' ? 'active' : ''}" onclick="switchMaterialsKind('equipment')">Jihozlar</button>
+    </div>`;
+}
+
+function switchMaterialsKind(kind) {
+  if (kind !== 'materials' && kind !== 'equipment') return;
+  if (libraryActiveSection === kind) return;
+  if (kind === 'materials' && typeof equipmentUi !== "undefined") {
+    window.dispatchEvent(new Event("equipmentUi:reset"));
+  }
+  openLibrarySection(kind);
+}
+
 function renderMaterialsSectionHtml() {
   if (!materialsState.loaded && !materialsState.loading) {
     loadMaterialsData().then(() => {
@@ -10375,6 +10427,8 @@ function renderMaterialsSectionHtml() {
           </button>
         </div>
       </div>
+
+      ${isSpecialTab ? '' : renderMaterialsKindSwitchHtml('materials')}
 
       ${materialsState.currentViewTab === 'liked' ? renderMaterialLikedViewHtml() : (
         materialsState.currentViewTab === 'saved' ? renderMaterialSavedViewHtml() : `
@@ -12226,11 +12280,11 @@ function openSpecSourceInfo(specId) {
 
   const title = spec.parameter_label || spec.parameter;
   const val = `${spec.value} ${spec.unit || ''}`.trim();
-  const doc = spec.source_document_name || spec.source_title || "Rasmiy texnik pasport";
-  const page = spec.source_document_page ? `${spec.source_document_page}-sahifa` : "Asosiy parametrlar jadvali";
+  const doc = spec.source_document_name || spec.source_title || "Manba ko‘rsatilmagan";
+  const page = spec.source_document_page ? `${spec.source_document_page}-sahifa` : "—";
   const url = spec.source_url || "";
-  const date = spec.verified_at ? new Date(spec.verified_at).toLocaleDateString('uz-UZ') : "28.09.2026";
-  const confidence = spec.confidence ? Math.round(Number(spec.confidence) * 100) : 100;
+  const date = spec.verified_at ? uzDate(spec.verified_at) : "Tekshirilmagan";
+  const confidence = spec.confidence ? Math.round(Number(spec.confidence) * 100) : null;
 
   const modalHtml = `
     <div class="modal-overlay active" id="spec-source-modal" onclick="closeSpecSourceModal(event)">
@@ -12255,7 +12309,7 @@ function openSpecSourceInfo(specId) {
             <b>Hujjatdagi sahifasi:</b> ${escapeHtml(page)}
           </div>
           <div>
-            <b>Ishonchlilik darajasi:</b> <span style="color:#10b981; font-weight:750;">${confidence}% (Rasmiy tasdiqlangan)</span>
+            <b>Ishonchlilik darajasi:</b> <span style="color:var(--text-primary); font-weight:750;">${confidence !== null ? confidence + "%" : "Ko‘rsatilmagan"}</span>
           </div>
           <div>
             <b>Tekshirilgan sana:</b> ${date}
@@ -13209,7 +13263,7 @@ function renderProfileCourseAccessCard() {
     title = 'INTPRO — Revit Kursi (To\'liq kirish)';
     desc = 'Sizda bosh administrator huquqi mavjud. Barcha 11 ta modul va 140 ta dars ochiq.';
   } else if (accState === 'ACTIVE') {
-    badge = `<span class="tag" style="background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853;">🟢 Faol · ${daysLeft} kun qoldi</span>`;
+    badge = `<span class="tag">Faol · ${daysLeft} kun qoldi</span>`;
     title = 'INTPRO — Revit Kursi (1 Yillik A\'zolik)';
     desc = `Boshlangan sana: <b>${fmtDate(startedAt) || '-'}</b><br>Tugash sanasi: <b>${fmtDate(expiresAt) || '-'}</b> (${daysLeft} kun qoldi)`;
     btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px;" onclick="openCourseCatalog(1)">Kurs darslariga o'tish ▶</button>`;
@@ -13301,7 +13355,7 @@ function renderProfile() {
         <div class="info-row">
           <span class="info-label">Kursga kirish holati</span>
           <span class="info-val ${state.has_access ? "ok" : "warn"}">
-            ${state.is_admin ? "👑 Admin" : (state.access_state === 'ACTIVE' || state.has_access) ? `🟢 Faol (${state.days_left || 0} kun qoldi)` : state.access_state === 'EXPIRED' ? "🔴 Muddati tugagan" : state.access_state === 'REVOKED' ? "🚫 Bekor qilingan" : "🔒 Access yo'q"}
+            ${state.is_admin ? "👑 Admin" : (state.access_state === 'ACTIVE' || state.has_access) ? `Faol (${state.days_left || 0} kun qoldi)` : state.access_state === 'EXPIRED' ? "Muddati tugagan" : state.access_state === 'REVOKED' ? "Bekor qilingan" : "Kirish yo‘q"}
           </span>
         </div>
         ${(state.access_state === 'ACTIVE' || state.has_access) ? `
@@ -13895,7 +13949,7 @@ function renderAdminRootMenu() {
         <div>
           <div class="admin-title">👑 Boshqaruv Paneli</div>
           <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">
-            YOSHUZBEKK Academy boshqaruv va nazorat markazi
+            YOSHUZBEKK boshqaruv va nazorat markazi
           </div>
         </div>
         <div class="admin-role">${state.admin_role === "super_admin" ? "Super Admin" : "Admin"}</div>
@@ -14451,7 +14505,7 @@ function stxInnerHtml() {
   const others = (live.materials || 0) + (live.normatives || 0) + (live.sources || 0) + (live.other || 0);
   const delta = (t.new_in_period || 0) - (t.new_prev_period || 0);
   const deltaTxt = (t.new_in_period || 0) > 0 || (t.new_prev_period || 0) > 0
-    ? `<span class="stx-delta ${delta >= 0 ? "up" : "down"}">${t.new_in_period >= 0 ? "+" : ""}${stxNum(t.new_in_period)} <small>${stxState.days} kunda</small></span>` : `<span class="stx-sub">${stxState.days} kunda yangi yo‘q</span>`;
+    ? `<span class="stx-sub">+${stxNum(t.new_in_period)} yangi · ${stxState.days} kunda</span><span class="stx-sub">oldingi ${stxState.days} kunda: ${stxNum(t.new_prev_period)} ${delta > 0 ? "↑" : delta < 0 ? "↓" : ""}</span>` : `<span class="stx-sub">${stxState.days} kunda yangi yo‘q</span>`;
   const stat = (label, id, val, extra, cls) => `
     <div class="stx-stat ${cls || ""}">
       <div class="stx-stat-num" id="${id}">${stxNum(val)}</div>
@@ -14481,7 +14535,7 @@ function stxInnerHtml() {
       <div id="stx-bars" class="stx-bars">${stxBarsHtml(live)}</div>
       <button type="button" class="stx-more ${stxState.showUsers ? "open" : ""}" onclick="stxToggleUsers()">Kimlar faol? <span class="stx-more-chev">›</span></button>
       <div id="stx-users" class="stx-users ${stxState.showUsers ? "open" : ""}">${stxUsersHtml(d.live_users)}</div>
-      <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar.</div>
+      <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar. Admin akkauntlari hech bir raqamga kirmaydi — o‘zingiz ilovani ochsangiz, hisob o‘zgarmaydi.</div>
     </div>
 
     ${stxActivityHtml()}
@@ -21100,12 +21154,12 @@ function renderNav() {
       ${tabs.map(t => {
         const isActive = activeTab === t.id;
         const icon = NAV_ICONS[t.id];
-        const svgInner = isActive ? icon.filled : icon.outline;
-        const strokeProps = isActive ? "" : `fill="none" stroke="currentColor" stroke-width="1.6"`;
+        const svgInner = icon.outline;
+        const strokeProps = `fill="none" stroke="currentColor" stroke-width="1.4"`;
         return `
-        <div class="nav-item ${isActive ? "active" : ""}" data-tab="${t.id}" onclick="setTab('${t.id}', event)">
+        <div class="nav-item ${isActive ? "active" : ""}" data-tab="${t.id}" role="button" tabindex="0" aria-label="${t.label}" ${isActive ? 'aria-current="page"' : ''} onclick="setTab('${t.id}', event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTab('${t.id}', event);}">
           <div class="nav-icon">
-            <svg class="nav-svg" viewBox="0 0 24 24" ${isActive ? 'fill="currentColor"' : strokeProps}>${svgInner}</svg>
+            <svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" ${strokeProps}>${svgInner}</svg>
           </div>
           <div class="nav-label">${t.label}</div>
         </div>
@@ -21315,6 +21369,10 @@ function handleTelegramBackClick() {
       closeDetail();
     }
   } else if (activeTab === "tasks" && typeof libraryActiveSection !== "undefined" && libraryActiveSection) {
+    if (libraryActiveSection === "equipment" && typeof equipmentUi !== "undefined" && (equipmentUi.isDetailOpen() || equipmentUi.isListOpen())) {
+      equipmentUi.back();
+      return;
+    }
     closeLibrarySection();
   }
 }
@@ -22057,7 +22115,7 @@ async function openCourseAccessModal(courseId) {
           </div>
 
           <div style="text-align:left; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:18px; font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
-            <div style="font-weight:750; color:var(--text-primary); margin-bottom:6px;">✨ Kurs a'zolariga nimalar beriladi:</div>
+            <div style="font-weight:750; color:var(--text-primary); margin-bottom:6px;">Kurs a'zolariga nimalar beriladi:</div>
             <div>✅ <b>${course.total_modules || 11} ta modul</b> va <b>${course.total_lessons || 140} ta video dars</b>ga 1 yil to'liq kirish</div>
             <div>✅ Revit loyiha andozalari, oilalari (family) va ishchi fayllar</div>
             <div>✅ Har bir dars ostida ustoz bilan to'g'ridan-to'g'ri savol-javob</div>
@@ -22982,7 +23040,7 @@ function renderNormativeDocsTabHtml() {
           const status = doc.status || "AMALDA";
           const isSaved = isNormativeSaved(doc.id) || isUniversalItemSaved('normative', doc.id);
           const isLiked = isUniversalItemLiked('normative', doc.id);
-          const dateStr = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : (doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "");
+          const dateStr = doc.adopted_date ? uzDate(doc.adopted_date) : (doc.effective_date ? uzDate(doc.effective_date) : "");
           return `
             <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
               <div class="norm-doc-header">
@@ -23526,10 +23584,10 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
   const status = doc.status || "AMALDA";
   const docNum = doc.document_number || "Normativ";
   const isSaved = isNormativeSaved(doc.id);
-  const adoptedDate = doc.adopted_date ? new Date(doc.adopted_date).toLocaleDateString('uz-UZ') : "—";
-  const effectiveDate = doc.effective_date ? new Date(doc.effective_date).toLocaleDateString('uz-UZ') : "—";
+  const adoptedDate = doc.adopted_date ? uzDate(doc.adopted_date) : "—";
+  const effectiveDate = doc.effective_date ? uzDate(doc.effective_date) : "—";
   const nrmL = doc.links || nrmFallbackLinks(doc);
-  const verifiedDate = (nrmL.official && nrmL.official.verified && doc.official_check && doc.official_check.checked_at) ? new Date(doc.official_check.checked_at).toLocaleDateString('uz-UZ') : "";
+  const verifiedDate = (nrmL.official && nrmL.official.verified && doc.official_check && doc.official_check.checked_at) ? uzDate(doc.official_check.checked_at) : "";
   const authority = (doc.issuing_authority || "").trim();
   const oldEdition = doc.old_edition_note || doc.previous_edition || "";
   const newEdition = doc.new_edition_note || doc.new_edition || "";
@@ -23724,7 +23782,7 @@ function renderNormativeDocDetailPage(doc, linkedCases) {
             ${changeDate ? `
               <div class="norm-meta-row">
                 <span class="norm-meta-key">O‘zgartirilgan sana:</span>
-                <span class="norm-meta-val">${escapeHtml(new Date(changeDate).toLocaleDateString('uz-UZ'))}</span>
+                <span class="norm-meta-val">${escapeHtml(uzDate(changeDate))}</span>
               </div>
             ` : ''}
           </div>

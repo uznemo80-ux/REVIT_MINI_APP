@@ -854,8 +854,17 @@
   let ctx = {
     getState: function () { return state; },
     load: function () {
+      // Har render'da qayta-qayta so'rov ketmasin
+      if (state.loading || ctx._loadingAll) return;
+      ctx._loadingAll = true;
       state.page = 1;
-      loadCategories().then(function () { return loadList(false); });
+      // Yoqtirilgan/saqlangan holat serverdan (avval hech qachon chaqirilmagan edi)
+      loadMyState().then(function () { if (typeof ctx.rerender === 'function') ctx.rerender(); });
+      // Yuklangach sahifa qayta chiziladi (avval skelet holatida qotib qolardi)
+      loadCategories()
+        .then(function () { if (typeof ctx.rerender === 'function') ctx.rerender(); return loadList(false); })
+        .then(function () { if (typeof ctx.rerender === 'function') ctx.rerender(); })
+        .finally(function () { ctx._loadingAll = false; });
     }
   };
 
@@ -906,6 +915,11 @@
         state.detail = null;
         state.detailError = null;
         ctx.rerender();
+        return;
+      }
+      // Bosh sahifada (kategoriya/qidiruv yo'q) — Kutubxonaga qaytamiz
+      if (!state.category && !state.search && typeof window.closeLibrarySection === 'function') {
+        window.closeLibrarySection();
         return;
       }
       state.category = null;

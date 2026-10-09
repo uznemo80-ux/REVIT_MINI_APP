@@ -1874,7 +1874,47 @@ async function ensureLibraryV2Tables() {
   }
 }
 
+// ======================================================
+// SQL MIGRATSIYALAR (migrations/*.sql) — avtomatik, bir martalik
+// Har bir fayl app_migrations jadvalida 'sql:<fayl nomi>' kaliti bilan belgilanadi.
+// Fayllar o'z BEGIN/COMMIT'iga ega; xato bo'lsa ROLLBACK qilinadi va belgilanmaydi
+// (keyingi ishga tushishda qayta urinadi). Mavjud jadvallarga tegmaydi.
+// ======================================================
+async function runSqlMigrations() {
+  var dir = path.join(__dirname, 'migrations');
+  var files = [];
+  try {
+    files = fs.readdirSync(dir).filter(function (f) { return /^\d+_.+\.sql$/.test(f); }).sort();
+  } catch (e) { return; }
+  if (!files.length) return;
+  // users jadvali (FK uchun) tayyor bo'lishini kutamiz — yangi bazada init parallel ishlaydi
+  for (var w = 0; w < 30; w++) {
+    var ready = await pool.query("SELECT to_regclass('public.users') AS t").catch(function () { return { rows: [{}] }; });
+    if (ready.rows[0] && ready.rows[0].t) break;
+    await new Promise(function (r) { setTimeout(r, 1000); });
+  }
+  await pool.query("CREATE TABLE IF NOT EXISTS app_migrations (key TEXT PRIMARY KEY, done_at TIMESTAMPTZ DEFAULT NOW())");
+  for (var i = 0; i < files.length; i++) {
+    var key = 'sql:' + files[i];
+    var done = await pool.query('SELECT 1 FROM app_migrations WHERE key = $1', [key]);
+    if (done.rows.length) continue;
+    var client = await pool.connect();
+    try {
+      await client.query(fs.readFileSync(path.join(dir, files[i]), 'utf8'));
+      await client.query('INSERT INTO app_migrations (key) VALUES ($1) ON CONFLICT DO NOTHING', [key]);
+      console.log('  [OK] SQL migratsiya qo\'llandi: ' + files[i]);
+    } catch (migErr) {
+      try { await client.query('ROLLBACK'); } catch (rbErr) {}
+      console.error('  [ERROR] SQL migratsiya ' + files[i] + ': ' + migErr.message);
+      client.release();
+      return; // keyingi fayllar oldingisiga bog'liq — to'xtaymiz
+    }
+    client.release();
+  }
+}
+
 initExtendedTables();
+runSqlMigrations().catch(function (e) { console.error('SQL MIGRATIONS ERROR:', e.message); });
 ensureUserActivityTable();
 ensureLibraryV2Tables();
 initLearningTables(pool);
@@ -4298,7 +4338,7 @@ app.post('/api/activity/heartbeat', async function (req, res) {
         return statsOverview.recordDaily(pool, user.id, {
           lesson: Boolean(lessonId) || status === 'testing',
           book: currentSection === 'books',
-          material: currentSection === 'materials',
+          material: currentSection === 'materials' || currentSection === 'equipment',
           normative: currentSection === 'normatives'
         });
       }).catch(function (e) { console.warn('daily activity:', e.message); });
@@ -4413,25 +4453,32 @@ app.post('/api/admin/stats', requireAdmin, async function (req, res) {
 
 app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
   try {
+    // Statistika sahifasi bilan bir xil qoidalar: adminlar hisobga kirmaydi, "online" = oxirgi
+    // LIVE_WINDOW_SECONDS ichida va ilova yashirilmagan, "bugun" = Toshkent vaqti bo'yicha.
+    var exclIds = await statsOverview.getAdminTelegramIds(pool, ADMIN_TELEGRAM_ID);
+    var liveWin = statsOverview.LIVE_WINDOW_SECONDS;
     var liveStatsPromise = pool.query(`
       SELECT
         COUNT(*)::int AS total_students,
         COUNT(CASE WHEN access_until > NOW() THEN 1 END)::int AS paid_students,
         COUNT(CASE WHEN access_until IS NULL OR access_until <= NOW() THEN 1 END)::int AS unpaid_students
       FROM users
-    `).catch(function(e) {
+      WHERE telegram_id::text <> ALL($1::text[])
+    `, [exclIds]).catch(function(e) {
       console.warn('liveStatsPromise warn:', e.message);
       return { rows: [{ total_students: 0, paid_students: 0, unpaid_students: 0 }] };
     });
 
     var liveActivityPromise = pool.query(`
       SELECT
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' THEN 1 END)::int AS online_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND lesson_id IS NOT NULL AND status = 'watching' AND video_status = 'watching' THEN 1 END)::int AS watching_now,
-        COUNT(CASE WHEN last_seen_at >= NOW() - INTERVAL '75 SECONDS' AND status = 'testing' THEN 1 END)::int AS testing_now,
-        COUNT(DISTINCT CASE WHEN last_seen_at >= CURRENT_DATE THEN user_id END)::int AS today_active
-      FROM user_activity
-    `).catch(function(e) {
+        COUNT(CASE WHEN ua.last_seen_at >= NOW() - ($2::int * INTERVAL '1 second') AND COALESCE(ua.status, 'online') <> 'idle' THEN 1 END)::int AS online_now,
+        COUNT(CASE WHEN ua.last_seen_at >= NOW() - ($2::int * INTERVAL '1 second') AND ua.lesson_id IS NOT NULL AND ua.status = 'watching' AND ua.video_status = 'watching' THEN 1 END)::int AS watching_now,
+        COUNT(CASE WHEN ua.last_seen_at >= NOW() - ($2::int * INTERVAL '1 second') AND ua.status = 'testing' THEN 1 END)::int AS testing_now,
+        COUNT(DISTINCT CASE WHEN (ua.last_seen_at AT TIME ZONE 'Asia/Tashkent')::date = (NOW() AT TIME ZONE 'Asia/Tashkent')::date THEN ua.user_id END)::int AS today_active
+      FROM user_activity ua
+      JOIN users u ON u.id = ua.user_id
+      WHERE u.telegram_id::text <> ALL($1::text[])
+    `, [exclIds, liveWin]).catch(function(e) {
       console.warn('liveActivityPromise warn:', e.message);
       ensureUserActivityTable().catch(function(err) { console.error('Auto repair error:', err.message); });
       return { rows: [{ online_now: 0, watching_now: 0, testing_now: 0, today_active: 0 }] };
@@ -4440,7 +4487,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
     var todayProgressPromise = pool.query(`
       SELECT COUNT(*)::int AS today_lesson_views
       FROM progress
-      WHERE watched = true AND watched_at >= CURRENT_DATE
+      WHERE watched = true AND (watched_at AT TIME ZONE 'Asia/Tashkent')::date = (NOW() AT TIME ZONE 'Asia/Tashkent')::date
     `).catch(function() { return { rows: [{ today_lesson_views: 0 }] }; });
 
     var todayTestsPromise = pool.query(`
@@ -4448,7 +4495,7 @@ app.post('/api/admin/live-activity', requireAdmin, async function (req, res) {
         COUNT(*)::int AS today_test_attempts,
         COUNT(CASE WHEN passed = true THEN 1 END)::int AS today_test_passed
       FROM module_results
-      WHERE attempted_at >= CURRENT_DATE
+      WHERE (attempted_at AT TIME ZONE 'Asia/Tashkent')::date = (NOW() AT TIME ZONE 'Asia/Tashkent')::date
     `).catch(function() { return { rows: [{ today_test_attempts: 0, today_test_passed: 0 }] }; });
 
     var activeUsersPromise = pool.query(`
