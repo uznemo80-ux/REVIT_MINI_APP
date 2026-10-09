@@ -37,7 +37,7 @@ async function rawGet(url, opts) {
   if (fetcher) return fetcher(url, opts);
   var f = await urlValidator.fetchFollow(url, {
     timeout: opts.timeout || 20000,
-    headers: { 'User-Agent': BROWSER_UA, 'Accept': opts.accept || '*/*', 'Accept-Language': 'ru,uz;q=0.9,en;q=0.8' }
+    headers: { 'User-Agent': opts.userAgent || BROWSER_UA, 'Accept': opts.accept || '*/*', 'Accept-Language': 'ru,uz;q=0.9,en;q=0.8' }
   });
   if (f.error) return { ok: false, status: 0, finalUrl: url, contentType: '', body: null, error: f.error };
   var ct = String(f.res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
@@ -151,8 +151,8 @@ function extractImageUrls(html, baseUrl) {
 }
 
 /** Rasmni yuklab, turini va o'lchamini tekshiradi */
-async function fetchImage(url, maxBytes) {
-  var r = await rawGet(url, { accept: 'image/avif,image/webp,image/jpeg,image/png,*/*;q=0.5', maxBytes: maxBytes, timeout: 20000 });
+async function fetchImage(url, maxBytes, userAgent) {
+  var r = await rawGet(url, { accept: 'image/webp,image/jpeg,image/png,*/*;q=0.5', maxBytes: maxBytes, timeout: 20000, userAgent: userAgent });
   if (!r.ok || !r.body) return { ok: false, url: url, error: r.error || 'fetch_failed' };
   var inf = imageInfo.info(r.body);
   if (!inf) return { ok: false, url: url, error: 'not_image' };

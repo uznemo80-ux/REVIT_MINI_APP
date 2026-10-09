@@ -23,11 +23,11 @@
   <!-- Top Badges -->
   <g transform="translate(40, 42)">
     <rect width="130" height="26" rx="13" fill="#8b5cf6" opacity="0.2"/>
-    <text x="65" y="17" fill="#8b5cf6" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">✓ VERIFIED FLOOR</text>
+    <text x="65" y="17" fill="#8b5cf6" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">SXEMATIK RASM</text>
   </g>
   <g transform="translate(420, 42)">
     <rect width="140" height="26" rx="13" fill="rgba(255,255,255,0.08)"/>
-    <text x="70" y="17" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" text-anchor="middle">FOTO №2 / 3</text>
+    <text x="70" y="17" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" text-anchor="middle">SXEMA №2 / 3</text>
   </g>
 
   <!-- Center Graphic -->

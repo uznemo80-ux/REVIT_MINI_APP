@@ -12,6 +12,7 @@ var store = require('./store');
 var review = require('./review');
 var pipeline = require('./pipeline');
 var gemini = require('./gemini');
+var imageRepair = require('./imageRepair');
 
 var FOCUS_LABEL = { images: '🖼 Rasm mos emas', text: '📝 Matn mos emas', data: '📊 Ma\'lumot mos emas' };
 
@@ -63,6 +64,60 @@ function register(bot, getPool) {
       });
     } catch (e) {
       await ctx.reply('Material agent holatini olishda xato: ' + e.message);
+    }
+  });
+
+  // ---------- Rasm tuzatuvchi: /rasmlar, /rasmqaytar <id> ----------
+  async function repairStatus(pool) {
+    var st = await imageRepair.getState(pool);
+    var s = await imageRepair.summary(pool);
+    return '🖼 <b>Materiallar rasmini tuzatish</b>\nHolat: ' + (st.running ? '▶️ ishlayapti (soatiga partiya)' : '⏸ to\'xtatilgan') +
+      '\n\n' + imageRepair.summaryText(s) +
+      '\n\nHar bir material: SVG shablon yoki noto\'g\'ri rasm → rasmiy sahifa / Wikimedia Commons\'dan mos foto, AI tekshiruvi bilan.' +
+      '\nQaytarish: /rasmqaytar &lt;material_id&gt;';
+  }
+  function repairKeyboard(running) {
+    return { inline_keyboard: [[running
+      ? { text: '⏸ To\'xtatish', callback_data: 'mir:pause' }
+      : { text: '▶️ Boshlash / davom ettirish', callback_data: 'mir:start' }]] };
+  }
+
+  bot.command('rasmlar', async function (ctx) {
+    if (!isAdmin(ctx)) return;
+    var pool = getPool();
+    try {
+      var st = await imageRepair.getState(pool);
+      await ctx.reply(await repairStatus(pool), { parse_mode: 'HTML', reply_markup: repairKeyboard(st.running) });
+    } catch (e) { await ctx.reply('Xato: ' + e.message); }
+  });
+
+  bot.command('rasmqaytar', async function (ctx) {
+    if (!isAdmin(ctx)) return;
+    var id = parseInt(String(ctx.message.text || '').split(/\s+/)[1], 10);
+    if (!id) return ctx.reply('Foydalanish: /rasmqaytar 123 (material ID)');
+    try {
+      var r = await imageRepair.revert(getPool(), id);
+      await ctx.reply(r.ok ? '↩️ #' + id + ' materialining eski rasmlari qaytarildi.' : '⚠️ ' + r.error);
+    } catch (e) { await ctx.reply('Xato: ' + e.message); }
+  });
+
+  bot.action(/^mir:(start|pause)$/, async function (ctx) {
+    if (!isAdmin(ctx)) return ctx.answerCbQuery('❌ Siz admin emassiz.', { show_alert: true });
+    var pool = getPool();
+    try {
+      if (ctx.match[1] === 'start') {
+        if (!pipeline.ready()) return ctx.answerCbQuery('Agent o\'chirilgan (GEMINI_API_KEY)', { show_alert: true });
+        await imageRepair.setState(pool, { running: true, last_batch_at: null });
+        await ctx.answerCbQuery('▶️ Boshlandi — birinchi natija bir necha daqiqada keladi');
+        require('./index')._repairTick(pool);
+      } else {
+        await imageRepair.setState(pool, { running: false });
+        await ctx.answerCbQuery('⏸ To\'xtatildi');
+      }
+      var st = await imageRepair.getState(pool);
+      await editCard(ctx, await repairStatus(pool), repairKeyboard(st.running));
+    } catch (e) {
+      try { await ctx.answerCbQuery('Xato: ' + String(e.message).slice(0, 150), { show_alert: true }); } catch (x) {}
     }
   });
 
