@@ -2995,6 +2995,99 @@ app.post('/api/course/:id/modules', async function (req, res) {
 });
 
 // ======================================================
+// KETMA-KET OCHILISH HOLATI (server tomonda yagona manba)
+// /api/course/:id/modules dagi mantiq bilan bir xil:
+// 1-modul to'liq ochiq; keyingi modul — oldingisi to'liq ko'rilib, testi o'tilgach;
+// 2-moduldan boshlab darslar birinchi ko'rilmagan darsgacha (shu dars ham) ochiladi.
+// ======================================================
+var STREAM_TITLE_RE = /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i;
+var STREAM_LESSON_TITLE_RE = /marafon|марафон|stream|jonli|efir|vebinar/i;
+
+async function computeSequentialUnlock(userId, courseId) {
+  var out = { lessonIds: new Set(), moduleIds: new Set() };
+  if (!courseId) return out;
+  var modulesRes = await pool.query(
+    'SELECT id FROM modules WHERE course_id = $1 ORDER BY order_index ASC, id ASC', [courseId]
+  );
+  var mods = modulesRes.rows;
+  if (!mods.length) return out;
+  var modIds = mods.map(function (m) { return m.id; });
+  var lessonsRes = await pool.query(
+    'SELECT id, module_id FROM lessons WHERE module_id = ANY($1) ORDER BY order_index ASC, id ASC', [modIds]
+  );
+  var watchedRes = await pool.query(
+    'SELECT lesson_id FROM progress WHERE user_id = $1 AND watched = true', [userId]
+  );
+  var watched = new Set(watchedRes.rows.map(function (r) { return Number(r.lesson_id); }));
+  var passedRes = await pool.query(
+    'SELECT module_id FROM module_results WHERE user_id = $1 AND module_id = ANY($2) AND passed = true', [userId, modIds]
+  );
+  var passed = new Set(passedRes.rows.map(function (r) { return Number(r.module_id); }));
+  var withTestsRes = await pool.query(
+    'SELECT DISTINCT module_id FROM module_tests WHERE module_id = ANY($1)', [modIds]
+  );
+  var withTests = new Set(withTestsRes.rows.map(function (r) { return Number(r.module_id); }));
+
+  var canAccessNext = true;
+  for (var i = 0; i < mods.length; i++) {
+    if (!canAccessNext) break;
+    var mid = Number(mods[i].id);
+    out.moduleIds.add(mid);
+    var modLessons = lessonsRes.rows.filter(function (l) { return Number(l.module_id) === mid; });
+    var testOk = !withTests.has(mid) || passed.has(mid);
+    if (i === 0) {
+      modLessons.forEach(function (l) { out.lessonIds.add(Number(l.id)); });
+      if (!testOk) canAccessNext = false;
+    } else {
+      var chain = true;
+      modLessons.forEach(function (l) {
+        if (!chain) return;
+        out.lessonIds.add(Number(l.id));
+        if (!watched.has(Number(l.id))) chain = false;
+      });
+      var allWatched = modLessons.length > 0 && modLessons.every(function (l) { return watched.has(Number(l.id)); });
+      if (!allWatched || !testOk) canAccessNext = false;
+    }
+  }
+  return out;
+}
+
+// Foydalanuvchi shu darsni ochishi mumkinmi? (/api/lesson/:id bilan bir xil qoidalar)
+async function canUserOpenLesson(user, lessonId) {
+  var lRes = await pool.query(
+    'SELECT l.id, l.title, l.is_free, m.id AS module_id, m.title AS module_title, m.course_id FROM lessons l JOIN modules m ON m.id = l.module_id WHERE l.id = $1 LIMIT 1',
+    [Number(lessonId)]
+  );
+  var row = lRes.rows[0];
+  if (!row) return false;
+  if (await isAdminUserObject(user)) return true;
+  var course = row.course_id ? (await pool.query('SELECT * FROM courses WHERE id = $1 LIMIT 1', [row.course_id])).rows[0] : null;
+  if (course && courseStatusKind(course.status) !== 'published') return false;
+  if (row.is_free) return true;
+  if (isFreeCourseRecord(course)) return true;
+  if (STREAM_LESSON_TITLE_RE.test(row.title || '') || STREAM_TITLE_RE.test(row.module_title || '') || (course && STREAM_TITLE_RE.test(course.title || ''))) return true;
+  var grant = await pool.query('SELECT 1 FROM module_access_grants WHERE user_id = $1 AND module_id = $2 LIMIT 1', [user.id, row.module_id]);
+  if (grant.rows.length) return true;
+  if (!hasAccess(user)) return false;
+  var unlock = await computeSequentialUnlock(user.id, row.course_id);
+  return unlock.lessonIds.has(Number(row.id));
+}
+
+// Foydalanuvchi shu modul testini ochishi/topshirishi mumkinmi?
+async function canUserTakeModuleTest(user, moduleId) {
+  if (String(user.telegram_id) === String(ADMIN_TELEGRAM_ID)) return true;
+  if (await isAdminUserObject(user)) return true;
+  var mRes = await pool.query('SELECT id, course_id FROM modules WHERE id = $1 LIMIT 1', [Number(moduleId)]);
+  var mod = mRes.rows[0];
+  if (!mod) return false;
+  var grant = await pool.query('SELECT 1 FROM module_access_grants WHERE user_id = $1 AND module_id = $2 LIMIT 1', [user.id, mod.id]);
+  if (grant.rows.length) return true;
+  if (!hasAccess(user)) return false;
+  var unlock = await computeSequentialUnlock(user.id, mod.course_id);
+  return unlock.moduleIds.has(Number(mod.id));
+}
+
+// ======================================================
 // LESSON
 // ======================================================
 
@@ -3778,6 +3871,9 @@ app.post('/api/progress/mark', async function (req, res) {
     var lessonId = req.body.lesson_id;
     if (!lessonId) return res.status(400).json({ error: 'lesson_id majburiy' });
     if (denyCourseByStatus(res, await getCourseByLessonId(lessonId), await isAdminUserObject(user))) return;
+    if (!(await canUserOpenLesson(user, lessonId))) {
+      return res.status(403).json({ ok: false, error: 'LESSON_LOCKED', message: "Bu dars hali siz uchun ochilmagan, shuning uchun uni ko'rilgan deb belgilab bo'lmaydi." });
+    }
 
     await pool.query(
       'INSERT INTO progress (user_id, lesson_id, watched) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO UPDATE SET watched = true',
@@ -3805,6 +3901,9 @@ app.post('/api/module/:id/test', async function (req, res) {
     if (denyCourseByStatus(res, await getCourseByModuleId(req.params.id), await isAdminUserObject(user))) return;
     if (!hasAccess(user) && !isMainAdminForTest) {
       return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
+    }
+    if (!isMainAdminForTest && !(await canUserTakeModuleTest(user, req.params.id))) {
+      return res.status(403).json({ error: 'module_locked', message: "Bu modul testi oldingi modullar yakunlangach ochiladi." });
     }
 
     if (!isMainAdminForTest) {
@@ -3852,6 +3951,9 @@ app.post('/api/module/:id/submit', async function (req, res) {
     if (denyCourseByStatus(res, await getCourseByModuleId(req.params.id), await isAdminUserObject(user))) return;
     if (!hasAccess(user) && !isMainAdminForSubmit) {
       return res.status(403).json({ error: 'locked', message: 'Testlar faqat kursga toʻlov qilib, kirish huquqi berilgan oʻquvchilar uchun ochiq.' });
+    }
+    if (!isMainAdminForSubmit && !(await canUserTakeModuleTest(user, req.params.id))) {
+      return res.status(403).json({ error: 'module_locked', message: "Bu modul testi oldingi modullar yakunlangach ochiladi." });
     }
 
     var answers = req.body.answers || {};
@@ -6629,6 +6731,10 @@ app.get('/api/pdf-proxy', async function (req, res) {
   try {
     // 1. Telegram autentifikatsiya va cheklov (ban) nazorati
     var initData = req.query.auth || req.query.initData || req.headers['x-telegram-init-data'];
+    // Faqat Telegram orqali tasdiqlangan foydalanuvchiga ruxsat (ochiq proxy bo'lib qolmasligi uchun)
+    if (!initData || !verifyInitData(initData, process.env.BOT_TOKEN)) {
+      return res.status(401).json({ error: 'Telegram foydalanuvchisi tekshirilmadi' });
+    }
     if (initData) {
       try {
         var tgUser = verifyInitData(initData, process.env.BOT_TOKEN);
