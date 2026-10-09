@@ -14,16 +14,42 @@
   <link rel="stylesheet" href="/i18n.css?v=1">
   <link rel="stylesheet" href="/equipment.css?v=1">
   <link rel="stylesheet" href="/equipmentAdmin.css?v=1">
-  <link rel="stylesheet" href="/mono.css?v=1">
+  <link rel="stylesheet" href="/mono.css?v=2">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
   <div id="app">
     <div class="splash-screen">
-      <div class="splash-logo">Y</div>
       <div class="splash-name">YOSHUZBEKK</div>
       <div class="splash-loader"><div class="spinner"></div></div>
     </div>
+  </div>
+
+  <!-- Ochilish animatsiyasi: ilova ustida ~1.4 soniya, keyin yo'qoladi (bosilsa darhol). #app ichida emas,
+       shuning uchun ilovaning birinchi render'i uni o'chirib yubormaydi. -->
+  <div id="brand-intro" aria-hidden="true">
+    <div class="bi-word">
+      <span>Y</span><span>O</span><span>S</span><span>H</span><span>U</span><span>Z</span><span>B</span><span>E</span><span>K</span><span>K</span>
+    </div>
+    <div class="bi-line"></div>
+    <div class="bi-sub">Arxitektura · Interyer dizayn · Revit</div>
+  </div>
+  <script>
+    (function () {
+      var el = document.getElementById('brand-intro');
+      if (!el) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var done = false;
+      function hide() {
+        if (done) return; done = true;
+        el.classList.add('bi-out');
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+      }
+      el.addEventListener('click', hide);
+      setTimeout(hide, reduce ? 0 : 1450);
+    })();
+  </script>
+
   <script src="/i18n.js?v=1"></script>
   <script src="/app.js?v=95"></script>
   <script src="/equipmentI18n.js?v=1"></script>
