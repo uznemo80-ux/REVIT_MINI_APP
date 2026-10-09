@@ -15,11 +15,29 @@ var store = require('./store');
 var pipeline = require('./pipeline');
 var media = require('./media');
 var adminBot = require('./adminBot');
+var imageRepair = require('./imageRepair');
+var review = require('./review');
 
 var timer = null;
 var running = false;
+var repairRunning = false;
+
+/** Rasm tuzatuvchi (admin /rasmlar orqali yoqiladi) — soatiga bir partiya */
+async function repairTick(pool) {
+  if (repairRunning || !pipeline.ready()) return;
+  repairRunning = true;
+  try {
+    var bot = pipeline._deps.bot;
+    await imageRepair.tick(pool, bot, function (html) { return review.notifyAdmin(bot, html); });
+  } catch (e) {
+    console.error('🖼 Rasm tuzatuvchi xato:', e.message);
+  } finally {
+    repairRunning = false;
+  }
+}
 
 async function tick(pool) {
+  repairTick(pool);
   if (running || !pipeline.ready()) return;
   var now = store.tashkentNow();
   if (now.getUTCHours() < config.runHour) return;
@@ -44,6 +62,7 @@ async function start(opts) {
   if (!pool) { console.warn('🧱 MaterialAgent: DATABASE_URL yo\'q — ishlamaydi'); return; }
   try {
     await store.migrate(pool);
+    await imageRepair.migrate(pool);
   } catch (e) {
     console.error('🧱 MaterialAgent migratsiya xatosi:', e.message);
     return;
@@ -75,5 +94,6 @@ module.exports = {
   start: start,
   registerBot: adminBot.register,
   mediaHandler: media.makeMediaHandler,
-  _tick: tick
+  _tick: tick,
+  _repairTick: repairTick
 };

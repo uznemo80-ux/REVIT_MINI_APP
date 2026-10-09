@@ -7,7 +7,7 @@
     "start": "node server.js",
     "bot": "node bot.js",
     "check": "node --check server.js && node --check bot.js && node --check public/app.js && for f in services/materialAgent/*.js; do node --check $f || exit 1; done && echo OK",
-    "test:material-agent": "node --test --test-concurrency=1 test/materialAgent.test.js test/materialAgent.free.test.js"
+    "test:material-agent": "node --test --test-concurrency=1 test/materialAgent.test.js test/materialAgent.free.test.js test/imageRepair.test.js"
   },
   "dependencies": {
     "compression": "^1.7.4",
