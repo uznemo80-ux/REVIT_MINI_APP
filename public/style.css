@@ -9619,6 +9619,35 @@ html.light .h-scroll-arrow {
   border-color: rgba(245, 158, 11, 0.25);
 }
 
+/* AI agent: "O'zbekistonda sotuvda bor" belgisi (diler havolasi bilan) */
+.lib-mat-uz-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  margin: 0 0 10px 6px;
+  border-radius: 22px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease, transform 150ms ease;
+}
+button.lib-mat-uz-pill { cursor: pointer; }
+button.lib-mat-uz-pill:active { transform: scale(0.98); opacity: 0.85; }
+button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) {
+  button.lib-mat-uz-pill:hover { background: var(--bg-elevated, var(--bg-surface)); }
+}
+@media (max-width: 380px) {
+  .lib-mat-uz-pill { margin-left: 0; }
+}
+
 .lib-mat-detail-section {
   background: var(--bg-surface);
   border: 1px solid var(--border);

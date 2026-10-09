@@ -423,6 +423,16 @@ async function notifyAdmin(text, telegramId = null) {
 }
 
 // ======================================================
+// AI MATERIAL AGENT — admin tugmalari (✅ Joylash / 🔁 Qayta ishlash / ❌ Rad etish) va /matagent
+// ======================================================
+// bot.on('text') dan OLDIN ro'yxatga olinadi — aks holda /matagent buyrug'i yetib bormaydi.
+try {
+  require('./services/materialAgent').registerBot(bot, function () { return pool; });
+} catch (materialAgentErr) {
+  console.error('❌ MaterialAgent bot handlerlari ulanmadi:', materialAgentErr.message);
+}
+
+// ======================================================
 // BOT RESTRICTION MIDDLEWARE & FALLBACK
 // ======================================================
 

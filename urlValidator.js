@@ -188,4 +188,4 @@ function buildDocLinks(doc, checks) {
   return out;
 }
 
-module.exports = { classifyUrl, validateSourceUrl, validatePdfUrl, buildDocLinks, hostLabel };
+module.exports = { classifyUrl, validateSourceUrl, validatePdfUrl, buildDocLinks, hostLabel, fetchFollow };
