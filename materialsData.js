@@ -321,6 +321,17 @@ async function initMaterialsTables(pool) {
       ALTER TABLE material_sources ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'verified';
     `).catch(e => console.warn('Sources status col warn:', e.message));
 
+    // schema.sql dagi eski material_sources ta'rifida bu ustunlar yo'q — yangi bazada seed xato bermasligi uchun
+    for (const colDef of [
+      'http_status INT DEFAULT 200',
+      'content_matched BOOLEAN DEFAULT true',
+      'error_message TEXT',
+      'sort_order INT DEFAULT 1'
+    ]) {
+      await pool.query(`ALTER TABLE material_sources ADD COLUMN IF NOT EXISTS ${colDef};`)
+        .catch(e => console.warn('Sources col warn:', e.message));
+    }
+
     // Backfill legacy rows with bilingual values if empty
     await pool.query(`
       UPDATE materials SET 
