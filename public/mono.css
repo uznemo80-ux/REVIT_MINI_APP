@@ -1,0 +1,423 @@
+/* ======================================================
+   YOSHUZBEKK — MONO (oq-qora) dizayn qatlami
+   ------------------------------------------------------
+   Maqsad: qora fon, to'q kulrang kartalar, ingichka oq ikonlar,
+   pastki chiziqli tablar, minimal pastki navigatsiya (Apple uslubi).
+
+   Qanday ishlaydi: bu fayl index.html'da ENG OXIRIDA yuklanadi va
+   mavjud style.css'ni o'chirmasdan, faqat dizayn tokenlari va bir
+   nechta komponentning rangini qayta belgilaydi. Eski ko'rinishga
+   qaytish uchun index.html'dagi mono.css qatorini olib tashlash yetarli.
+
+   Telegram: --tg-safe-area-inset-* / --tg-content-safe-area-inset-*
+   (Bot API 8.0+) telegram-web-app.js tomonidan :root'ga yoziladi.
+   ====================================================== */
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-surface: #151515;
+  --bg-surface-elevated: #1b1b1b;
+  --bg-surface-hover: #202020;
+  --bg-input: #151515;
+  --bg-secondary: #111111;
+  --card-bg: #151515;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #9a9a9a;
+  --text-muted: #5f5f5f;
+
+  --accent: #f5f5f5;
+  --accent-hover: #dcdcdc;
+  --accent-soft: rgba(255, 255, 255, 0.07);
+  --accent-glow: rgba(0, 0, 0, 0);
+  --accent-contrast: #0a0a0a;
+
+  /* Holat ranglari: faqat ma'no uchun, past to'yinganlik */
+  --success: #e8e8e8;
+  --success-soft: rgba(255, 255, 255, 0.07);
+  --warning: #bdbdbd;
+  --warning-soft: rgba(255, 255, 255, 0.06);
+  --danger: #ff453a;
+  --danger-soft: rgba(255, 69, 58, 0.12);
+
+  --border: rgba(255, 255, 255, 0.06);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-focus: rgba(255, 255, 255, 0.35);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 8px 22px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.65);
+
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Telegram xavfsiz hududlari (eski klientlarda 0) */
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--tg-safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px));
+  --tg-content-top: var(--tg-content-safe-area-inset-top, 0px);
+  --nav-height: 60px;
+}
+
+html.light {
+  --bg-primary: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-hover: #f0f0f0;
+  --bg-input: #ffffff;
+  --bg-secondary: #ececec;
+  --card-bg: #ffffff;
+
+  --text-primary: #111111;
+  --text-secondary: #6b6b6b;
+  --text-muted: #a3a3a3;
+
+  --accent: #111111;
+  --accent-hover: #2a2a2a;
+  --accent-soft: rgba(0, 0, 0, 0.05);
+  --accent-contrast: #ffffff;
+
+  --success: #111111;
+  --success-soft: rgba(0, 0, 0, 0.05);
+  --warning: #555555;
+  --warning-soft: rgba(0, 0, 0, 0.05);
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-light: rgba(0, 0, 0, 0.05);
+  --border-focus: rgba(0, 0, 0, 0.35);
+  --border-hover: rgba(0, 0, 0, 0.18);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fullscreen / yangi Telegram klientlari: kontent Telegram tugmalari ostida qolmasin */
+#app {
+  padding-top: var(--tg-content-top);
+}
+
+/* ------------------------------------------------------
+   PASTKI NAVIGATSIYA — faqat ingichka ikonlar (rasmdagidek)
+   ------------------------------------------------------ */
+.nav {
+  background: var(--bg-primary) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1px solid var(--border);
+  height: calc(var(--nav-height) + var(--safe-bottom));
+}
+html.light .nav { background: var(--bg-surface) !important; }
+
+.nav-item {
+  opacity: 1;
+  color: var(--text-muted);
+  gap: 0;
+}
+.nav-item.active {
+  color: var(--text-primary);
+  background: transparent !important;
+}
+.nav-item.nav-item-bounce .nav-icon { animation: none; }
+.nav-item:active { transform: scale(0.96); }
+.nav-item:active .nav-icon { transform: none; }
+.nav-item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -6px; border-radius: 10px; }
+
+.nav-svg,
+.nav-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none !important;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+/* Ikon ostidagi yozuv ko'rinmaydi, lekin ekran o'quvchilar uchun qoladi */
+.nav-label {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------
+   KARTALAR, TUGMALAR, CHIPLAR
+   ------------------------------------------------------ */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+.btn:active { background: var(--accent-hover); }
+.btn.secondary {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn.danger { background: var(--danger); color: #fff; }
+
+/* Rasmdagi tablar: fon yo'q, faol tab ostida chiziq */
+.chip,
+.mcat-chip,
+.lib-reactions-pill,
+.norm-clean-subtab {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  padding-left: 4px;
+  padding-right: 4px;
+  margin-right: 14px;
+  border-bottom: 1.5px solid transparent !important;
+}
+.chip.active,
+.mcat-chip.active,
+.lib-reactions-pill.active,
+.norm-clean-subtab.active {
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--text-primary) !important;
+}
+
+.tag,
+.tag.passed {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+/* ------------------------------------------------------
+   BOSH SAHIFA
+   ------------------------------------------------------ */
+.welcome-badge {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.welcome-title { font-weight: 700; letter-spacing: -0.4px; }
+
+.free-minicourse-card {
+  border: 1px solid var(--border) !important;
+  background: var(--bg-surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.fmc-tag {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+}
+.fmc-gift-pill {
+  background: transparent;
+  border: 1px solid var(--border-hover);
+  color: var(--text-primary);
+}
+.fmc-start-btn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+}
+.fmc-start-btn:hover { filter: none; box-shadow: none; background: var(--accent-hover); }
+.fmc-check-icon { color: var(--text-primary) !important; }
+
+.about-photo { border-color: var(--border-hover) !important; filter: grayscale(1); }
+.about-more { color: var(--text-primary) !important; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Kurs kartalari: ko'k gradient o'rniga qora-kulrang, muqova rasmi oq-qora */
+.course-card-header {
+  background: linear-gradient(160deg, #1f1f1f 0%, #0d0d0d 100%) !important;
+}
+html.light .course-card-header { background: linear-gradient(160deg, #2a2a2a 0%, #0d0d0d 100%) !important; }
+.course-cover { filter: grayscale(1) contrast(1.05); }
+.course-price { color: var(--text-primary) !important; }
+.pc-specs-compact-card { background: var(--bg-surface) !important; }
+
+/* Profil avatari */
+.profile-avatar {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
+  box-shadow: none;
+}
+.info-val.ok { color: var(--text-primary) !important; }
+
+/* ------------------------------------------------------
+   KUTUBXONA
+   ------------------------------------------------------ */
+.library-tile-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.library-tile-icon-box {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.lib-quick-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.lib-quick-btn:active { transform: scale(0.98); background: var(--bg-surface-hover); }
+.lib-rec-btn-text,
+.mcat-link,
+.mcat-card-cat,
+.norm-doc-action,
+.norm-doc-num-tag { color: var(--text-primary) !important; }
+.mcat-group-tile.active,
+.learning-entry-icon {
+  background: var(--accent-soft) !important;
+  border-color: var(--border-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Normativ holatlari: rang o'rniga uslub bilan farqlanadi */
+.norm-dot { background: var(--text-secondary) !important; }
+.norm-status-pill {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-hover) !important;
+}
+.norm-status-pill.status-amalda { color: var(--text-primary) !important; border-color: var(--text-primary) !important; }
+.norm-status-pill.status-yoqotgan { text-decoration: line-through; opacity: 0.7; }
+
+/* Materiallar | Jihozlar tablari (rasmdagi underline tab) */
+.kind-switch {
+  display: flex;
+  gap: 28px;
+  margin: 4px 0 18px;
+  border-bottom: 1px solid var(--border);
+}
+.kind-switch-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 2px;
+  min-height: 44px;
+  margin-bottom: -1px;
+  border-bottom: 1.5px solid transparent;
+  cursor: pointer;
+}
+.kind-switch-btn.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+.kind-switch-host { padding: 16px 16px 0; max-width: 1100px; margin: 0 auto; }
+
+/* Jihozlar moduli ham bir xil uslubda */
+.equipment-scope .equipment-cat-card,
+.equipment-cat-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Admin statistikasi: rangli chiziqlar kulrang tuslarda */
+.stx-bar-fill { background: var(--text-primary) !important; }
+.stx-delta.up, .stx-delta.down { color: var(--text-secondary) !important; }
+
+/* ------------------------------------------------------
+   HARAKAT: qisqa va yengil (AGENTS.md 27)
+   ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ------------------------------------------------------
+   DESKTOP: pastki panel markazlashgan ixcham blok
+   ------------------------------------------------------ */
+@media (min-width: 1024px) {
+  .nav {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    width: 360px !important;
+    bottom: 16px !important;
+    height: 56px !important;
+    padding-bottom: 0 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--shadow-md);
+  }
+  .nav-item:hover { color: var(--text-primary); }
+}
+
+/* Faol tab: ikon ostida kichik nuqta (rangsiz holatda ham aniq bo'lsin) */
+.nav-item { position: relative; }
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: calc(8px + var(--safe-bottom));
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: currentColor;
+}
+@media (min-width: 1024px) {
+  .nav-item.active::after { bottom: 6px; }
+}
+
+/* Jihozlar Materiallar ichidan ochilganda: modulning o'z sarlavhasi takrorlanmasin */
+.kind-switch-host + .equipment-scope > .equipment-header { display: none; }
+.kind-switch-host .lib-back-nav { margin-bottom: 8px; }
+
+/* Rangli emoji-ikonlar monoxrom ko'rinishda */
+.equipment-cat-icon,
+.mcat-nav-tab-ico,
+.mcat-sec-emoji,
+.stx-bar-ico { filter: grayscale(1); }
+
+/* Bepul mini-kurs kartasi: kunduzgi rejimda ham o'qiladigan */
+.fmc-title { color: var(--text-primary); text-shadow: none; }
+.fmc-bottom { background: transparent; border-top: 1px solid var(--border); }
+.fmc-top-bar { background: transparent !important; }
+
+/* Admin: rangli emoji/yashil raqamlar o'rniga monoxrom */
+.admin-hub-icon-wrap { filter: grayscale(1); background: var(--bg-surface-elevated) !important; }
+.stx-stat-live .stx-stat-num { color: var(--text-primary); }
+.stx-live-dot, .live-pulse-dot { background: var(--text-primary) !important; box-shadow: none !important; }
+.stx-stat .stx-sub { display: block; }
