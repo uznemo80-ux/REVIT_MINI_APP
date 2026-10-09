@@ -4338,7 +4338,7 @@ app.post('/api/activity/heartbeat', async function (req, res) {
         return statsOverview.recordDaily(pool, user.id, {
           lesson: Boolean(lessonId) || status === 'testing',
           book: currentSection === 'books',
-          material: currentSection === 'materials',
+          material: currentSection === 'materials' || currentSection === 'equipment',
           normative: currentSection === 'normatives'
         });
       }).catch(function (e) { console.warn('daily activity:', e.message); });

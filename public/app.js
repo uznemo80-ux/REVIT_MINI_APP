@@ -804,7 +804,7 @@ let librarySections = [
   { id: 1, slug: 'books', name: 'Kitoblar', icon: '📚', description: 'Revit, BIM, arxitektura va interyer elektron kitoblari hamda ShNQ normativlari', is_active: true, order_index: 1 },
   { id: 2, slug: 'sources', name: 'Manbalar', icon: '📦', description: 'Revit oilalari (.rfa), shablonlar (.rte), DWG chizmalar va 3D parametrlar', is_active: true, order_index: 2 },
   { id: 3, slug: 'tests', name: 'Testlar', icon: '✓', description: 'Bilimlarni mustahkamlash uchun kurslar va mavzular bo‘yicha interaktiv testlar', is_active: true, order_index: 3 },
-  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish va pardozlash materiallari ensiklopediyasi, xususiyatlari va o‘lchamlari', is_active: true, order_index: 4 },
+  { id: 4, slug: 'materials', name: 'Materiallar', icon: '🧱', description: 'Qurilish materiallari va texnik jihozlar katalogi', is_active: true, order_index: 4 },
   { id: 5, slug: 'normatives', name: 'Normativlar va amaliy yechimlar', icon: '📋', description: 'SHNQ, QMQ, O‘z DSt standartlari va amaliy yo‘l xaritalari', is_active: true, order_index: 5 },
   { id: 6, slug: 'process', name: 'Jarayon', icon: '⚡', subtitle: 'Interyer va remont bosqichlari', description: 'Interyer va remont ishlarining bosqichma-bosqich interaktiv bilim bazasi', is_active: true, order_index: 6 },
   // Equipment (Jihozlar) — alohida backend modul (equipmentApi.js) va
@@ -7703,7 +7703,10 @@ function renderTasks() {
     if (typeof equipmentUi !== "undefined") {
       content = equipmentUi.isDetailOpen() ? equipmentUi.renderDetail()
              : equipmentUi.isListOpen()   ? equipmentUi.renderList()
-             : equipmentUi.renderHome();
+             : `<div class="kind-switch-host">
+                  <div class="lib-back-nav" onclick="closeLibrarySection()">${libIcons.back('lib-back-svg', 16)} Kutubxona</div>
+                  ${renderMaterialsKindSwitchHtml('equipment')}
+                </div>` + equipmentUi.renderHome();
     } else {
       content = `<div class="lib-section-wrap page lib-container" style="padding:16px">
         <div class="lib-back-nav" onclick="closeLibrarySection()">← Kutubxona</div>
@@ -7743,7 +7746,7 @@ function renderGenericSectionHtml(slug) {
 // 1. KUTUBXONA HOME (Apple-like 4 Plitka + So'nggi + Tavsiya)
 // ------------------------------------------------------
 function renderTasksHomeHtml() {
-  const sections = librarySections.filter(s => s.is_active !== false && s.is_visible !== false && s.slug !== 'amaliy_yechimlar' && s.slug !== 'cases' && s.slug !== 'practical_cases' && s.slug !== 'amaliy');
+  const sections = librarySections.filter(s => s.is_active !== false && s.is_visible !== false && s.slug !== 'equipment' && s.slug !== 'amaliy_yechimlar' && s.slug !== 'cases' && s.slug !== 'practical_cases' && s.slug !== 'amaliy');
   const recentList = libraryV2RecentList || [];
   // Faqat admin "tavsiya" qilib belgilagan resurslar ko'rsatiladi (avtomatik to'ldirish yo'q)
   const recommendedList = (libraryV2RecommendedList || []).filter(r => (r.content_url && String(r.content_url).trim()) || r.type === "test" || r.type === "quiz" || r.content_data);
@@ -10325,6 +10328,27 @@ function renderMaterialSavedViewHtml() {
   `;
 }
 
+// ======================================================
+// MATERIALLAR + JIHOZLAR — bitta bo'lim, ikki tab
+// Jihozlar endi Kutubxonada alohida karta emas: Materiallar ichidan ochiladi.
+// ======================================================
+function renderMaterialsKindSwitchHtml(active) {
+  return `
+    <div class="kind-switch" role="tablist" aria-label="Materiallar va jihozlar">
+      <button type="button" role="tab" aria-selected="${active === 'materials'}" class="kind-switch-btn ${active === 'materials' ? 'active' : ''}" onclick="switchMaterialsKind('materials')">Materiallar</button>
+      <button type="button" role="tab" aria-selected="${active === 'equipment'}" class="kind-switch-btn ${active === 'equipment' ? 'active' : ''}" onclick="switchMaterialsKind('equipment')">Jihozlar</button>
+    </div>`;
+}
+
+function switchMaterialsKind(kind) {
+  if (kind !== 'materials' && kind !== 'equipment') return;
+  if (libraryActiveSection === kind) return;
+  if (kind === 'materials' && typeof equipmentUi !== "undefined") {
+    window.dispatchEvent(new Event("equipmentUi:reset"));
+  }
+  openLibrarySection(kind);
+}
+
 function renderMaterialsSectionHtml() {
   if (!materialsState.loaded && !materialsState.loading) {
     loadMaterialsData().then(() => {
@@ -10375,6 +10399,8 @@ function renderMaterialsSectionHtml() {
           </button>
         </div>
       </div>
+
+      ${isSpecialTab ? '' : renderMaterialsKindSwitchHtml('materials')}
 
       ${materialsState.currentViewTab === 'liked' ? renderMaterialLikedViewHtml() : (
         materialsState.currentViewTab === 'saved' ? renderMaterialSavedViewHtml() : `
@@ -14451,7 +14477,7 @@ function stxInnerHtml() {
   const others = (live.materials || 0) + (live.normatives || 0) + (live.sources || 0) + (live.other || 0);
   const delta = (t.new_in_period || 0) - (t.new_prev_period || 0);
   const deltaTxt = (t.new_in_period || 0) > 0 || (t.new_prev_period || 0) > 0
-    ? `<span class="stx-delta ${delta >= 0 ? "up" : "down"}">${t.new_in_period >= 0 ? "+" : ""}${stxNum(t.new_in_period)} <small>${stxState.days} kunda</small></span>` : `<span class="stx-sub">${stxState.days} kunda yangi yo‘q</span>`;
+    ? `<span class="stx-sub">+${stxNum(t.new_in_period)} yangi · ${stxState.days} kunda <span class="stx-delta ${delta >= 0 ? "up" : "down"}">${delta >= 0 ? "↑" : "↓"} oldingi ${stxNum(t.new_prev_period)}</span></span>` : `<span class="stx-sub">${stxState.days} kunda yangi yo‘q</span>`;
   const stat = (label, id, val, extra, cls) => `
     <div class="stx-stat ${cls || ""}">
       <div class="stx-stat-num" id="${id}">${stxNum(val)}</div>
@@ -14481,7 +14507,7 @@ function stxInnerHtml() {
       <div id="stx-bars" class="stx-bars">${stxBarsHtml(live)}</div>
       <button type="button" class="stx-more ${stxState.showUsers ? "open" : ""}" onclick="stxToggleUsers()">Kimlar faol? <span class="stx-more-chev">›</span></button>
       <div id="stx-users" class="stx-users ${stxState.showUsers ? "open" : ""}">${stxUsersHtml(d.live_users)}</div>
-      <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar.</div>
+      <div class="stx-foot">“Hozir” — oxirgi ${live.window_seconds || 90} soniyada ilovani ochiq tutgan o‘quvchilar. Admin akkauntlari hech bir raqamga kirmaydi — o‘zingiz ilovani ochsangiz, hisob o‘zgarmaydi.</div>
     </div>
 
     ${stxActivityHtml()}

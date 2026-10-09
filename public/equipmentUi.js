@@ -908,6 +908,11 @@
         ctx.rerender();
         return;
       }
+      // Bosh sahifada (kategoriya/qidiruv yo'q) — Kutubxonaga qaytamiz
+      if (!state.category && !state.search && typeof window.closeLibrarySection === 'function') {
+        window.closeLibrarySection();
+        return;
+      }
       state.category = null;
       state.subcategory = null;
       state.filters = {};
