@@ -7735,6 +7735,7 @@ function renderTasks() {
              : `<div class="kind-switch-host">
                   <div class="lib-back-nav" onclick="closeLibrarySection()">${libIcons.back('lib-back-svg', 16)} Kutubxona</div>
                   ${renderMaterialsKindSwitchHtml('equipment')}
+                  ${state.is_admin ? `<button type="button" class="lib-quick-btn" style="width:100%; margin-bottom:12px;" onclick="openAdminPanel().then(() => adminNavigate('equipment'))">Admin: jihozlarni boshqarish va nashr qilish →</button>` : ''}
                 </div>` + equipmentUi.renderHome();
     } else {
       content = `<div class="lib-section-wrap page lib-container" style="padding:16px">
@@ -12926,7 +12927,7 @@ async function loadChatQuestions() {
       if (res && Array.isArray(res.questions)) {
         adminQuestionsList = res.questions;
         if (activeTab === "chat" && !currentView) {
-          render();
+          rerenderAdminOrApp();
         }
       }
     } else {
@@ -12934,7 +12935,7 @@ async function loadChatQuestions() {
       if (res && Array.isArray(res.questions)) {
         studentQuestionsList = res.questions;
         if (activeTab === "chat" && !currentView) {
-          render();
+          rerenderAdminOrApp();
         }
       }
     }
@@ -12988,7 +12989,7 @@ async function deleteChatQuestion(questionId) {
 function setAdminQuestionsFilter(filter) {
   haptic("light");
   adminQuestionsFilter = filter;
-  render();
+  rerenderAdminOrApp();
 }
 
 function openDirectAdminTelegram(username, messageText) {
@@ -15559,9 +15560,19 @@ async function openStudentsDetailList(filter, title) {
 let adminStudentsSearchQuery = "";
 let adminStudentsFilterTab = "all";
 
+// Admin panel ichida bo'lsak — panelni qayta chizamiz (render() admin'ning eski HTML nusxasini qaytaradi)
+function rerenderAdminOrApp() {
+  if (typeof currentView !== "undefined" && currentView && currentView.isAdminPanel && typeof renderAdminPanel === "function") {
+    renderAdminPanel();
+  } else {
+    render();
+  }
+}
+
 function setAdminStudentsFilterTab(tab) {
+  haptic("light");
   adminStudentsFilterTab = tab;
-  render();
+  rerenderAdminOrApp();
 }
 
 function onAdminStudentsSearch(val) {
@@ -15570,7 +15581,7 @@ function onAdminStudentsSearch(val) {
   if (listEl) {
     listEl.innerHTML = renderAdminStudentsListHtml();
   } else {
-    render();
+    rerenderAdminOrApp();
   }
 }
 

@@ -194,16 +194,26 @@
             <h1 class="eqa-title">⚙️ ${esc(ET('equipment.title'))} — Admin</h1>
           </div>
           ${statsHtml()}
+          ${bulkHtml()}
           ${toolbarHtml()}
           ${body}
         </div>
       </div>`;
   }
 
+  // Server by_status'ni [{status, verification_status, n}] massiv ko'rinishida qaytaradi —
+  // UI esa { draft: 10, ... } kutardi, shuning uchun kartalar doim 0 ko'rsatardi.
+  function byStatus() {
+    const raw = (state.stats && state.stats.by_status) || {};
+    if (!Array.isArray(raw)) return raw;
+    const out = {};
+    raw.forEach(function (r) { out[r.status] = (out[r.status] || 0) + Number(r.n || 0); });
+    return out;
+  }
+
   function statsHtml() {
     if (!state.stats) return '';
-    const s = state.stats;
-    const by = s.by_status || {};
+    const by = byStatus();
     return `<div class="eqa-stats">
       ${statCard(by.published, 'published', '🟢')}
       ${statCard(by.draft, 'draft', '⚪')}
@@ -212,13 +222,54 @@
     </div>`;
   }
 
+  const STATUS_UZ = { all: 'Barchasi', draft: 'Qoralama', pending_review: 'Ko‘rib chiqilmoqda', published: 'Nashr qilingan', archived: 'Arxiv' };
+  const VERIF_UZ = { pending: 'Tekshirilmagan', verified: 'Tekshirilgan', failed: 'Xato topilgan' };
+  function stUz(k) { return STATUS_UZ[k] || k; }
+
+  // Nashr qilinmagan (qoralama + ko'rib chiqilmoqda) va tekshiruvdan o'tganlarni bittada nashr qilish
+  async function publishAllReady() {
+    if (state.bulkBusy) return;
+    const ids = [];
+    for (const st of ['draft', 'pending_review']) {
+      const r = await api('/api/admin/equipment/list', { status: st, page: 1, limit: 100 }).catch(function () { return null; });
+      if (r && r.ok) r.items.forEach(function (it) { ids.push(it.id); });
+    }
+    if (!ids.length) { toast('Nashr qilinmagan jihoz yo‘q'); return; }
+    const go = async function () {
+      state.bulkBusy = true; rerender();
+      let ok = 0; const skipped = [];
+      for (const id of ids) {
+        const v = await api('/api/admin/equipment/validate-publish', { id: id }).catch(function () { return null; });
+        if (!v || !v.ok || !v.ready) { skipped.push(id); continue; }
+        const r = await api('/api/admin/equipment/status', { id: id, status: 'published' }).catch(function () { return null; });
+        if (r && r.ok) ok++; else skipped.push(id);
+      }
+      state.bulkBusy = false;
+      toast(ok + ' ta jihoz nashr qilindi' + (skipped.length ? ', ' + skipped.length + ' tasi ma’lumoti to‘liq emas' : ''));
+      await load(true); rerender();
+    };
+    const msg = ids.length + ' ta jihoz nashr qilinmagan. Tekshiruvdan o‘tganlari o‘quvchilarga ko‘rinadigan bo‘ladi.';
+    if (typeof G('showConfirm') === 'function') G('showConfirm')('Nashr qilinsinmi?', msg, 'Nashr qilish', go);
+    else if (window.confirm(msg)) go();
+  }
+
   function statCard(n, key, dot) {
     return `<button class="eqa-stat ${state.statusFilter === key ? 'active' : ''}"
       onclick="equipmentAdminUi.setFilter('${key}')">
       <span class="eqa-stat-dot">${dot}</span>
       <span class="eqa-stat-n">${Number(n || 0)}</span>
-      <span class="eqa-stat-k">${esc(key)}</span>
+      <span class="eqa-stat-k">${esc(stUz(key))}</span>
     </button>`;
+  }
+
+  function bulkHtml() {
+    const by = byStatus();
+    const pending = Number(by.draft || 0) + Number(by.pending_review || 0);
+    if (!pending) return '';
+    return `<div class="eqa-bulk">
+      <div class="eqa-bulk-text"><b>${pending} ta jihoz o‘quvchilarga ko‘rinmayapti.</b> Ular nashr qilinmaguncha Kutubxona → Materiallar → Jihozlar bo‘sh chiqadi.</div>
+      <button class="eqa-bulk-btn" ${state.bulkBusy ? 'disabled' : ''} onclick="equipmentAdminUi.publishAllReady()">${state.bulkBusy ? 'Nashr qilinmoqda…' : 'Tayyorlarini nashr qilish'}</button>
+    </div>`;
   }
 
   function toolbarHtml() {
@@ -229,11 +280,11 @@
           value="${esc(state.search)}" oninput="equipmentAdminUi.onSearch(this.value)" autocomplete="off" />
       </div>
       <div class="eqa-filter-chips">
-        ${chip('all', 'Barchasi', f)}
-        ${chip('draft', 'draft', f)}
-        ${chip('pending_review', 'pending_review', f)}
-        ${chip('published', 'published', f)}
-        ${chip('archived', 'archived', f)}
+        ${chip('all', stUz('all'), f)}
+        ${chip('draft', stUz('draft'), f)}
+        ${chip('pending_review', stUz('pending_review'), f)}
+        ${chip('published', stUz('published'), f)}
+        ${chip('archived', stUz('archived'), f)}
       </div>
     </div>`;
   }
@@ -270,16 +321,16 @@
 
     // Publish tugmasi: draft/pending_review/archived da, validation tekshirilgan bo'lsa
     const canPublish = st !== 'published';
-    const pubLabel = st === 'draft' ? '⏩ pending_review' : (st === 'pending_review' ? '🚀 Publish' : '↩ draft');
-    const pubNext = st === 'draft' ? 'pending_review' : (st === 'pending_review' ? 'published' : 'draft');
+    const pubLabel = st === 'archived' ? 'Qoralamaga qaytarish' : 'Nashr qilish';
+    const pubNext = st === 'archived' ? 'draft' : 'published';
 
     return `<div class="eqa-row">
       <div class="eqa-row-top">
         <div class="eqa-row-main">
           <div class="eqa-row-name">${esc(it.name_uz || it.slug)}</div>
           <div class="eqa-row-meta">
-            <span class="eqa-badge ${esc(st)}">${esc(st)}</span>
-            <span class="eqa-badge v-${esc(vs)}">${esc(vs)}</span>
+            <span class="eqa-badge ${esc(st)}">${esc(stUz(st))}</span>
+            <span class="eqa-badge v-${esc(vs)}">${esc(VERIF_UZ[vs] || vs)}</span>
             <span class="eqa-brand">${esc(it.brand || it.manufacturer_name || '')}</span>
             ${it.model ? `<span class="eqa-model">${esc(it.model)}</span>` : ''}
           </div>
@@ -293,14 +344,14 @@
 
       <div class="eqa-row-actions">
         <button class="eqa-act" onclick="equipmentAdminUi.validate('${id}')"
-          title="validate-publish">🔍</button>
+          title="Nashrga tayyorligini tekshirish" aria-label="Tekshirish">🔍</button>
         <button class="eqa-act" onclick="equipmentAdminUi.verify('${id}')"
-          title="verification_status">${vs === 'verified' ? '✅' : '⚠️'}</button>
+          title="Tekshirilgan deb belgilash" aria-label="Tekshirilgan">${vs === 'verified' ? '✅' : '⚠️'}</button>
         <button class="eqa-act primary ${busyPub ? 'busy' : ''}"
           ${canPublish ? '' : 'disabled'}
           onclick="equipmentAdminUi.setStatus(${id},'${pubNext}')">${esc(pubLabel)}</button>
         <button class="eqa-act danger ${busyArch ? 'busy' : ''}"
-          onclick="equipmentAdminUi.archive(${id})">🗄️</button>
+          onclick="equipmentAdminUi.archive(${id})" title="Arxivlash" aria-label="Arxivlash">🗄️</button>
       </div>
     </div>`;
   }
@@ -370,6 +421,7 @@
     },
 
     setStatus: function (id, status) { buzz('light'); return setStatus(id, status); },
+    publishAllReady: function () { buzz('light'); return publishAllReady(); },
 
     verify: function (id) {
       buzz('light');
