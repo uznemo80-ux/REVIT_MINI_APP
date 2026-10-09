@@ -196,6 +196,16 @@ async function isDuplicate(pool, brand, productName, productUrl, excludeCandidat
   return { duplicate: false };
 }
 
+/** Oldin taklif qilingan yoki bazadagi mahsulot sahifalari (qayta tanlanmasligi uchun) */
+async function usedProductUrls(pool) {
+  var r = await pool.query(`
+    SELECT product_url AS u FROM material_ai_candidates WHERE product_url IS NOT NULL
+    UNION SELECT manufacturer_url FROM materials WHERE COALESCE(manufacturer_url, '') <> ''
+    UNION SELECT source_url FROM materials WHERE COALESCE(source_url, '') <> ''
+  `);
+  return new Set(r.rows.map(function (x) { return x.u; }));
+}
+
 // ---------- nomzodlar ----------
 async function createCandidate(pool, fields) {
   var r = await pool.query(
@@ -432,6 +442,7 @@ module.exports = {
   existingNames: existingNames,
   dedupKey: dedupKey,
   isDuplicate: isDuplicate,
+  usedProductUrls: usedProductUrls,
   createCandidate: createCandidate,
   updateCandidate: updateCandidate,
   getCandidate: getCandidate,

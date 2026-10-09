@@ -185,8 +185,14 @@ function rootDomain(host) {
   return parts.slice(-2).join('.');
 }
 
+/** Xom baytlar (sitemap, robots.txt) — SSRF himoyasi bilan */
+function rawGetPublic(url, maxBytes) {
+  return rawGet(url, { maxBytes: maxBytes, accept: '*/*', timeout: 20000 });
+}
+
 module.exports = {
   setFetcher: setFetcher,
+  rawGetPublic: rawGetPublic,
   fetchPage: fetchPage,
   fetchImage: fetchImage,
   extractImageUrls: extractImageUrls,

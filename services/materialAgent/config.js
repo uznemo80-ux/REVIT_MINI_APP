@@ -20,6 +20,10 @@ module.exports = {
   get apiKey() { return (process.env.GEMINI_API_KEY || '').trim(); },
   get enabled() { return envBool('MATERIAL_AGENT_ENABLED', true) && !!this.apiKey && !!this.botToken; },
 
+  // Qidiruv rejimi: 'off' — B variant (bepul, brend saytlari sitemap'i orqali),
+  //                 'google' — A variant (Google Search grounding, Gemini paid tarif kerak)
+  get searchMode() { return String(process.env.MATERIAL_AGENT_SEARCH || 'off').trim().toLowerCase() === 'google' ? 'google' : 'off'; },
+
   // Model: bo'sh qolsa, mavjud modellar ro'yxatidan avtomatik tanlanadi
   get modelOverride() { return (process.env.GEMINI_MODEL || '').trim(); },
   MODEL_PREFERENCE: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],

@@ -31,6 +31,11 @@ async function statusText(pool) {
   if (config.enabled) {
     try { lines.push('Model: ' + review.esc(await gemini.resolveModel())); } catch (e) { lines.push('Model: ⚠️ ' + review.esc(e.message).slice(0, 200)); }
   }
+  lines.push('Rejim: ' + (config.searchMode === 'google' ? 'Google qidiruv (Gemini paid)' : 'bepul — brend saytlari (admin paneldagi ishlab chiqaruvchilar)'));
+  if (pool && config.searchMode !== 'google') {
+    var sitesN = await pool.query("SELECT COUNT(*)::int AS n FROM material_manufacturers WHERE COALESCE(website, '') <> ''");
+    lines.push('Brend saytlari: ' + sitesN.rows[0].n + ' ta');
+  }
   lines.push('Jadval: har kuni ' + String(config.runHour).padStart(2, '0') + ':00 (Toshkent), haftasiga ' + config.weeklyLimit + ' ta');
   lines.push('Rasm ombori: ' + (config.mediaChannelId ? 'yopiq kanal ' + review.esc(config.mediaChannelId) : '⚠️ kanal ulanmagan (MATERIAL_MEDIA_CHANNEL_ID) — admin chatiga saqlanmoqda'));
   if (pool) {

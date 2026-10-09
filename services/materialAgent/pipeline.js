@@ -15,6 +15,7 @@ var stages = require('./stages');
 var web = require('./web');
 var media = require('./media');
 var review = require('./review');
+var sources = require('./sources');
 
 var deps = { pool: null, bot: null };
 function init(pool, bot) { deps.pool = pool; deps.bot = bot; }
@@ -82,7 +83,7 @@ function checksSummary(check, data, uz) {
 /** Yangi material: 1–5 bosqichlar */
 async function processNew(cand, catCtx) {
   var pool = deps.pool;
-  var found = await stages.discover(catCtx);
+  var found = config.searchMode === 'google' ? await stages.discover(catCtx) : await stages.discoverFromSites(catCtx);
   var dup = await store.isDuplicate(pool, found.brand, found.product_name, found.product_url, cand.id);
   if (dup.duplicate) {
     var e = new Error('Dublikat (' + dup.where + '): ' + found.brand + ' ' + found.product_name);
@@ -131,6 +132,9 @@ async function runDaily(opts) {
 
     var categories = await store.listCategories(pool);
     var avoid = [], triedCats = [], errors = [];
+    // Bepul rejim uchun: brend saytlari va oldin ko'rilgan sahifalar
+    var sites = config.searchMode === 'google' ? [] : await sources.brandSites(pool);
+    var usedUrls = await store.usedProductUrls(pool);
     for (var attempt = 0; attempt < config.MAX_DISCOVERY_ATTEMPTS; attempt++) {
       var category = store.pickCategory(categories, triedCats);
       if (!category) break;
@@ -138,6 +142,8 @@ async function runDaily(opts) {
       try {
         var catCtx = await categoryContext(pool, category);
         catCtx.avoid = avoid;
+        catCtx.sites = sites;
+        catCtx.usedUrls = usedUrls;
         var done = await processNew(cand, catCtx);
         log('yangi nomzod #' + done.id + ' adminga yuborildi:', done.brand, done.product_name);
         return { ok: true, result: 'Adminga yuborildi: #' + done.id + ' ' + done.brand + ' ' + done.product_name, candidate_id: done.id };

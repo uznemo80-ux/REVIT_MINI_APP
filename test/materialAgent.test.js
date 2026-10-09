@@ -13,6 +13,7 @@ process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-key';
 process.env.ADMIN_TELEGRAM_ID = '111';
 process.env.BOT_TOKEN = 'TEST:TOKEN';
 process.env.MATERIAL_MEDIA_CHANNEL_ID = '-1001234567890';
+process.env.MATERIAL_AGENT_SEARCH = 'google'; // bu fayl A variantni (Google qidiruv) tekshiradi
 delete process.env.GEMINI_MODEL;
 
 var imageInfo = require('../services/materialAgent/imageInfo');
