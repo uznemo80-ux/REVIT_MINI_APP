@@ -75,8 +75,8 @@ html.light {
   --card-bg: #ffffff;
 
   --text-primary: #111111;
-  --text-secondary: #6b6b6b;
-  --text-muted: #a3a3a3;
+  --text-secondary: #5c5c5c;
+  --text-muted: #767676; /* oq fonda 4.5:1 (WCAG AA) */
 
   --accent: #111111;
   --accent-hover: #2a2a2a;
@@ -193,7 +193,6 @@ html.light .nav { background: var(--bg-surface) !important; }
   margin-right: 14px;
   border-bottom: 1.5px solid transparent !important;
 }
-.chip.active,
 .mcat-chip.active,
 .lib-reactions-pill.active,
 .norm-clean-subtab.active {
@@ -424,3 +423,100 @@ html.light .course-card-header { background: linear-gradient(160deg, #2a2a2a 0%,
 .stx-stat-live .stx-stat-num { color: var(--text-primary); }
 .stx-live-dot, .live-pulse-dot { background: var(--text-primary) !important; box-shadow: none !important; }
 .stx-stat .stx-sub { display: block; }
+
+/* ------------------------------------------------------
+   KONTRAST: accent (oq/qora) fonli elementlarda yozuv rangi
+   Eski CSS bu elementlarga doim oq yozuv bergan edi — mono'da
+   accent oq bo'lgani uchun oq ustida oq bo'lib qolardi.
+   Ro'yxat style.css'dan avtomatik yig'ilgan.
+   ------------------------------------------------------ */
+.splash-logo,
+.download-file-btn,
+.btn:not(.secondary):not(.danger),
+.apple-registration-logo,
+.modal-btn.confirm,
+.admin-tabs button.active,
+.admin-small-btn,
+.about-photo-placeholder,
+.qa-submit-btn,
+.spec-tab-btn.active,
+.sheet-chip-btn.active,
+.donate-copy-btn,
+.sf-retry-btn,
+.library-v2-view-btn.active,
+.terms-accept-btn,
+.support-card-copy-btn,
+.admin-filter-chip.active,
+.book-cat-chip.selected,
+.stat-pill.pill-active,
+.learning-action-btn.primary,
+.h-scroll-arrow:hover,
+.lib-mat-cat-pill.active,
+.lib-mat-spec-info-btn:hover,
+.lib-mat-step-num,
+.lib-mat-quickpick-chip.active,
+.lib-mat-subcat-pill.active,
+.lib-mat-type-num,
+.lib-mat-source-open-btn,
+.mcat-icon-btn.on,
+.mcat-detail-actions .mcat-icon-btn.on,
+.stx-seg-pill,
+.stx-retry,
+.equipment-filter-chip.active,
+.equipment-retry-btn {
+  color: var(--accent-contrast) !important;
+}
+
+/* Statistika chiplari: rangli fon ustida oq yozuv (kontrast 2.2) o'rniga neytral chip + rangli belgi */
+.stx-chip {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--border-hover);
+}
+.stx-chip .stx-chip-check { color: var(--c); }
+.stx-chip.off { color: var(--text-secondary) !important; box-shadow: inset 0 0 0 1px var(--border); }
+
+/* Jihozlar kategoriyasi belgilari o'qiladigan bo'lsin */
+.equipment-cat-badge { color: var(--text-secondary) !important; border-color: var(--border-hover) !important; }
+
+/* Holat belgilari (yashil/sariq/qizil fon + rangli yozuv) — ikki rejimda ham o'qiladigan neytral ko'rinish */
+.badge.ok, .admin-status-pill.active, .admin-hub-badge, .stat-pill {
+  background: var(--accent-soft) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-hover) !important;
+}
+.admin-breadcrumb-sep { color: var(--text-secondary) !important; }
+html.light .proc-hub-number,
+html.light .proc-hub-desc,
+html.light .lib-mat-stat-num { color: var(--text-secondary) !important; }
+
+/* Jarayon bo'limi kartalari: rangli gradient o'rniga neytral karta */
+.proc-hub-card,
+.proc-hub-card.hub-remont,
+.proc-hub-card.hub-design,
+.proc-hub-card.hub-rabochka {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.proc-hub-card .proc-hub-icon-wrap {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-primary) !important;
+  filter: grayscale(1);
+}
+.proc-hub-btn { background: var(--accent) !important; color: var(--accent-contrast) !important; }
+.proc-hub-pill { background: var(--accent-soft) !important; color: var(--text-primary) !important; }
+html.light .proc-hub-number, html.light .proc-hub-desc { color: var(--text-secondary) !important; }
+
+/* Statistika davr tanlagich: faol tab yozuvi accent fon ustida */
+.stx-seg-btn.active { color: var(--accent-contrast) !important; }
+
+/* Admin: inline yashil/sariq/to'q sariq yozuvlar oq fonda o'qilmasdi */
+html.light .admin-page [style*="color:#10b981"], html.light .admin-page [style*="color: #10b981"],
+html.light .admin-page [style*="color:#f59e0b"], html.light .admin-page [style*="color: #f59e0b"],
+html.light .admin-page [style*="color:#ff9500"], html.light .admin-page [style*="color: #ff9500"],
+html.light .admin-page [style*="color:#34c759"], html.light .admin-page [style*="color: #34c759"] {
+  color: var(--text-primary) !important;
+}
+.lib-mat-badge-verified { background: var(--accent) !important; color: var(--accent-contrast) !important; }
+.lib-mat-badge.verified { background: var(--accent-soft) !important; color: var(--text-primary) !important; border: 1px solid var(--border-hover) !important; }

@@ -4036,6 +4036,7 @@ function deleteOpenResourceItem(id) {
 function formatCoursePrice(raw) {
   const v = String(raw == null ? "" : raw).trim();
   if (!/^\d+$/.test(v)) return v;
+  if (Number(v) === 0) return "Bepul";
   return Number(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ") + " so‘m";
 }
 
@@ -4336,7 +4337,7 @@ function openFreeMiniCourseLessonsModal() {
                   </div>
                 </div>
               </div>
-              <div style="background:var(--accent); color:#fff; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px; flex-shrink:0;">
+              <div style="background:var(--accent); color: var(--accent-contrast); border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px; flex-shrink:0;">
                 ▶ Ko'rish
               </div>
             </div>
@@ -4747,7 +4748,7 @@ function renderHome() {
               onerror="handleImageError(this) || (this.src='https://ui-avatars.com/api/?name=Abdulloh&background=2979ff&color=fff&size=128&bold=true');"
             />
             ${state.is_admin ? `
-              <div onclick="openAdminSettingsModal()" title="Rasmni o'zgartirish" style="position:absolute; bottom:-2px; right:-2px; background:var(--accent); color:#fff; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+              <div onclick="openAdminSettingsModal()" title="Rasmni o'zgartirish" style="position:absolute; bottom:-2px; right:-2px; background:var(--accent); color: var(--accent-contrast); border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
                 📷
               </div>
             ` : ""}
@@ -14805,7 +14806,7 @@ function renderAdminCoursesView() {
             <div class="admin-hero-desc">Modullar va darslarni ko'rish va tahrirlash uchun kerakli kurs ustiga bosing</div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="admin-small-btn" onclick="openAddCourseModal()" style="background:var(--accent); color:#fff; border:none; font-weight:700;">➕ Yangi Kurs Yaratish</button>
+            <button class="admin-small-btn" onclick="openAddCourseModal()" style="background:var(--accent); color: var(--accent-contrast); border:none; font-weight:700;">➕ Yangi Kurs Yaratish</button>
             <button class="admin-small-btn" onclick="openEditFreeMiniCourseModal()">✨ "Revit 0 dan" Sozlamalari</button>
             <button class="admin-small-btn" onclick="goToCourseManagement()">📚 O'quvchi Katalogi →</button>
           </div>
@@ -14841,12 +14842,12 @@ function renderAdminCoursesView() {
                         <div style="display:flex; gap:12px; font-size:12px; color:var(--text-secondary); flex-wrap:wrap;">
                           <span>📂 <b>${modCount}</b> ta modul</span>
                           ${lessonCount ? `<span>🎬 <b>${lessonCount}</b> ta dars</span>` : ''}
-                          <span>💰 <b>${escapeHtml(c.price || 'Pullik')}</b></span>
+                          <span>💰 <b>${escapeHtml(formatCoursePrice(c.price || 'Pullik'))}</b></span>
                         </div>
                       </div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;" onclick="event.stopPropagation()">
-                      <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:var(--accent); color:#fff;" onclick="selectAdminCourse(${Number(c.id)})">
+                      <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:var(--accent); color: var(--accent-contrast);" onclick="selectAdminCourse(${Number(c.id)})">
                         📂 Modullarni ochish →
                       </button>
                       <div style="display:flex; gap:6px;">
@@ -14894,7 +14895,7 @@ function renderAdminCoursesView() {
           <div class="admin-hero-desc">${courseModules.length} ta modul · Modullar va ularning darslari tuzilmasi</div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="admin-small-btn" onclick="openAddModuleModal(${Number(adminSelectedCourseId)})" style="background:var(--accent); color:#fff; border:none; font-weight:700;">➕ Yangi Modul Qo'shish</button>
+          <button class="admin-small-btn" onclick="openAddModuleModal(${Number(adminSelectedCourseId)})" style="background:var(--accent); color: var(--accent-contrast); border:none; font-weight:700;">➕ Yangi Modul Qo'shish</button>
           <button class="admin-small-btn" onclick="openAddLessonView(null, ${Number(adminSelectedCourseId)})">➕ Yangi Dars Qo'shish</button>
           <button class="admin-small-btn" onclick="openEditCourseModal(${Number(adminSelectedCourseId)})">✏️ Kursni Tahrirlash</button>
         </div>
@@ -17153,7 +17154,7 @@ function renderAdminLibraryDrive() {
         <div style="display:flex; gap:10px;">
           <button id="btn-test-drive"
                   class="btn"
-                  style="flex:1; background:var(--accent); color:#fff; font-weight:700; padding:11px 16px; border-radius:10px; font-size:14px; margin:0;"
+                  style="flex:1; background:var(--accent); color: var(--accent-contrast); font-weight:700; padding:11px 16px; border-radius:10px; font-size:14px; margin:0;"
                   onclick="testAdminDriveFolder()">
             🔍 1. Papkani tekshirish
           </button>
@@ -17460,7 +17461,7 @@ function renderAdminLibraryBooks() {
         </div>
         <div style="display:flex; gap:6px;">
           <button class="admin-small-btn" onclick="refreshAdminBooks()" title="Yangilash">🔄</button>
-          <button class="admin-small-btn" onclick="openAdminBookModal()" style="font-weight:700; background:var(--accent); color:#fff; border:none; padding:7px 14px; border-radius:8px;">
+          <button class="admin-small-btn" onclick="openAdminBookModal()" style="font-weight:700; background:var(--accent); color: var(--accent-contrast); border:none; padding:7px 14px; border-radius:8px;">
             ➕ Qo'lda qo'shish
           </button>
         </div>
@@ -17616,7 +17617,7 @@ function renderAdminBooksGridHtml(books) {
           </div>
 
           <div class="admin-book-actions" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
-            <button class="btn-sm btn" style="margin:0; background:var(--accent); color:#fff; border:none; font-weight:700;" onclick="openAdminBookReviewModal(${Number(b.id)})" title="Ko'rib chiqish">
+            <button class="btn-sm btn" style="margin:0; background:var(--accent); color: var(--accent-contrast); border:none; font-weight:700;" onclick="openAdminBookReviewModal(${Number(b.id)})" title="Ko'rib chiqish">
               🔍 Review
             </button>
             <button class="btn-sm btn" style="margin:0; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border);" onclick="openAdminBookModal(${Number(b.id)})" title="Tahrirlash">
@@ -18459,7 +18460,7 @@ function renderAdminMaterialsCMSInner() {
             ${adminMaterialsState.verifyingSources ? '⏳ Tekshirilmoqda...' : '🔄 Manbalarni tekshirish'}
           </button>
           <button class="admin-small-btn" onclick="refreshAdminMaterials()" title="Yangilash">🔄</button>
-          <button class="btn" style="margin:0; padding:8px 14px; font-size:13px; font-weight:700; border-radius:10px; background:var(--accent); color:#fff;" onclick="openAdminMaterialForm()">
+          <button class="btn" style="margin:0; padding:8px 14px; font-size:13px; font-weight:700; border-radius:10px; background:var(--accent); color: var(--accent-contrast);" onclick="openAdminMaterialForm()">
             ➕ Yangi Material
           </button>
         </div>
@@ -21059,7 +21060,7 @@ function renderAdminAdmins() {
     <div class="admin-list">
       ${admins.map(adm => `
         <div class="admin-student-card" style="cursor:default;">
-          <div class="admin-student-avatar" style="background:var(--accent); color:#fff;">👑</div>
+          <div class="admin-student-avatar" style="background:var(--accent); color: var(--accent-contrast);">👑</div>
           <div class="admin-student-info">
             <div class="admin-student-name">${escapeHtml(adm.first_name || "Admin")}</div>
             <div class="admin-student-username">Telegram ID: ${escapeHtml(adm.telegram_id)}</div>
