@@ -5260,6 +5260,12 @@ function openAddCourseModal() {
             <input id="c-price" class="apple-input" placeholder="1 500 000" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
           <div class="apple-field">
+            <label style="display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;">
+              <input id="c-is-free" type="checkbox" style="width:20px;height:20px;">
+              <span>Bepul kurs (to'lovsiz hammaga ochiq)</span>
+            </label>
+          </div>
+          <div class="apple-field">
             <label>Chegirma narxi (ixtiyoriy, faqat raqam)</label>
             <input id="c-discount-price" class="apple-input" placeholder="990 000" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
           </div>
@@ -5344,6 +5350,7 @@ async function submitCreateCourse() {
   const rel = document.getElementById("c-rel")?.value.trim();
   const cover = formatImageUrl(document.getElementById("c-cover")?.value.trim() || "");
   const status = document.getElementById("c-status")?.value || "draft";
+  const isFree = Boolean(document.getElementById("c-is-free")?.checked);
 
   if (!title) return showAlert("Kurs nomi kiritilishi shart!");
 
@@ -5354,6 +5361,7 @@ async function submitCreateCourse() {
     haptic("medium");
     await adminApi("/api/admin/courses/add", {
       title,
+      is_free: isFree,
       subtitle: sub,
       price,
       discount_price: discountPrice || null,
@@ -5395,6 +5403,12 @@ async function openEditCourseModal(id) {
           <div class="apple-field">
             <label>Kurs narxi (so'mda, faqat raqam)</label>
             <input id="ec-price" class="apple-input" value="${formatPriceDigitsForDisplay(course.price)}" type="text" inputmode="numeric" oninput="formatPriceInput(this)">
+          </div>
+          <div class="apple-field">
+            <label style="display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;">
+              <input id="ec-is-free" type="checkbox" style="width:20px;height:20px;" ${course.is_free ? "checked" : ""}>
+              <span>Bepul kurs (to'lovsiz hammaga ochiq)</span>
+            </label>
           </div>
           <div class="apple-field">
             <label>Chegirma narxi (ixtiyoriy, bo'sh qoldirsangiz chegirma o'chadi)</label>
@@ -5488,6 +5502,7 @@ async function submitUpdateCourse(id) {
   const rel = document.getElementById("ec-rel")?.value.trim();
   const cover = formatImageUrl(document.getElementById("ec-cover")?.value.trim() || "");
   const status = document.getElementById("ec-status")?.value || "draft";
+  const isFreeEl = document.getElementById("ec-is-free");
 
   if (!title) return showAlert("Kurs nomi majburiy!");
 
@@ -5498,6 +5513,7 @@ async function submitUpdateCourse(id) {
     haptic("medium");
     await adminApi(`/api/admin/courses/${Number(id)}/update`, {
       title,
+      is_free: isFreeEl ? isFreeEl.checked : undefined,
       subtitle: sub,
       price,
       discount_price: discountPrice || null,
@@ -10742,6 +10758,11 @@ async function openBookReader(bookIdOrObj, initialPage) {
   }
 
   if (!book) return showAlert("Kitob ma'lumotlari topilmadi.");
+
+  // PRO kitob: server fayl havolasini faqat kursga a'zo o'quvchiga beradi
+  if (book.locked || (book.access_type === "pro" && !book.pdf_url && !book.content_url && !book.drive_file_id)) {
+    return showAlert("🔒 Bu PRO kitob. U faqat kursga a'zo bo'lgan o'quvchilar uchun ochiq.");
+  }
 
   currentReaderIsSaved = Boolean(book.is_saved || libraryV2SavedBookIds.has(bookId));
   currentReaderSavedCount = Number(book.saved_count || 0);

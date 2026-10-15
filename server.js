@@ -198,6 +198,62 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // ======================================================
+// KUTUBXONA: PRO KITOBLAR HIMOYASI (server tomonda)
+// Kursga a'zo bo'lmagan foydalanuvchiga PRO kitobning fayl havolalari (pdf_url, content_url,
+// drive_file_id ...) hech bir /api/library/* javobida yuborilmaydi; o'rniga locked: true qo'yiladi.
+// Admin va faol obunachi uchun javob o'zgarmaydi.
+// ======================================================
+var PRO_SECRET_FIELDS = ['pdf_url', 'content_url', 'drive_file_id', 'drive_file_name', 'drive_source_id', 'storage_id'];
+
+function isProLibraryItem(o) {
+  if (!o || typeof o !== 'object') return false;
+  if (String(o.access_type || '').toLowerCase() === 'pro') return true;
+  var cd = o.content_data;
+  if (cd && typeof cd === 'string') { try { cd = JSON.parse(cd); } catch (e) { cd = null; } }
+  return Boolean(cd && typeof cd === 'object' && String(cd.access_type || '').toLowerCase() === 'pro');
+}
+
+function payloadHasProItem(v, depth) {
+  if (!v || typeof v !== 'object' || depth > 6) return false;
+  if (Array.isArray(v)) return v.some(function (x) { return payloadHasProItem(x, depth + 1); });
+  if (isProLibraryItem(v)) return true;
+  return Object.keys(v).some(function (k) { return payloadHasProItem(v[k], depth + 1); });
+}
+
+function redactProItems(v, depth) {
+  if (!v || typeof v !== 'object' || depth > 6) return;
+  if (Array.isArray(v)) { v.forEach(function (x) { redactProItems(x, depth + 1); }); return; }
+  if (isProLibraryItem(v)) {
+    PRO_SECRET_FIELDS.forEach(function (f) { if (f in v) v[f] = null; });
+    v.locked = true;
+  }
+  Object.keys(v).forEach(function (k) { redactProItems(v[k], depth + 1); });
+}
+
+async function userCanSeeProContent(user) {
+  if (!user) return false;
+  if (await isAdminUserObject(user)) return true;
+  return hasAccess(user);
+}
+
+app.use('/api/library', function proLibraryGuard(req, res, next) {
+  var originalJson = res.json.bind(res);
+  res.json = function (body) {
+    if (!payloadHasProItem(body, 0)) return originalJson(body);
+    var initDataRaw = (req.body && req.body.initData) || req.query.initData || req.headers['x-telegram-init-data'];
+    getOrCreateUser(initDataRaw)
+      .then(function (u) { return userCanSeeProContent(u); })
+      .catch(function () { return false; })
+      .then(function (canSee) {
+        if (!canSee) redactProItems(body, 0);
+        originalJson(body);
+      });
+    return res;
+  };
+  next();
+});
+
+// ======================================================
 // I18N: 5 tilli tizim (uz, ru, en, tr, ar) — orqaga mos qatlam
 // ======================================================
 var fs = require('fs');
@@ -459,6 +515,24 @@ async function initExtendedTables() {
     await pool.query(`
       ALTER TABLE courses ADD COLUMN IF NOT EXISTS show_on_home BOOLEAN DEFAULT false;
     `);
+
+    // Bepul kurs endi aniq belgi (courses.is_free) bilan aniqlanadi.
+    // Ustun birinchi marta qo'shilganda mavjud kurslar ESKI qoida bo'yicha bir marta to'ldiriladi
+    // (narx bo'sh/0 yoki sarlavhada marafon/stream so'zlari) — hozir ochiq kurslar yopilib qolmaydi.
+    var courseIsFreeCol = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_name = 'courses' AND column_name = 'is_free'"
+    );
+    if (!courseIsFreeCol.rows.length) {
+      await pool.query('ALTER TABLE courses ADD COLUMN IF NOT EXISTS is_free BOOLEAN');
+      await pool.query(`
+        UPDATE courses SET is_free = (
+          regexp_replace(COALESCE(price, ''), '\\D', '', 'g') ~ '^0*$'
+          OR COALESCE(title, '') ~* '(marafon|марафон|stream|jonli|efir|vebinar|\\m7\\s*kun)'
+        )
+        WHERE is_free IS NULL
+      `);
+      console.log('MIGRATION: courses.is_free qo\'shildi va mavjud kurslar uchun to\'ldirildi');
+    }
 
     // Testimonials (O'quvchilar fikri) jadvali (Talab 5)
     await pool.query(`
@@ -2136,14 +2210,23 @@ function getUserAccessState(user) {
 }
 
 
-// Bepul kursni ANIQ aniqlash: faqat narx haqiqatan 0/bo'sh bo'lsa yoki sarlavhada marafon/stream so'zlari bo'lsa.
 // (Eski "includes('0 so')" va "7" regex "1 500 000 so'm" kabi pullik narxlarni ham bepul deb hisoblardi.)
+// YANGI QOIDA: kurs faqat admin "Bepul kurs" deb belgilagan bo'lsa (courses.is_free = true) bepul.
+// Belgi yo'q (NULL) bo'lsa — faqat narx aniq "0" deb yozilgan bo'lsa bepul. Bo'sh narx = PULLIK (xavfsiz default).
+// Sarlavhadagi so'zlar (marafon, jonli efir, ...) endi kirish huquqiga ta'sir qilmaydi.
+function isPriceExplicitlyZero(price) {
+  var digits = String(price == null ? '' : price).replace(/\D/g, '');
+  return digits !== '' && Number(digits) === 0;
+}
 function isFreeCourseRecord(c) {
   if (!c) return false;
-  var digits = String(c.price == null ? '' : c.price).replace(/\D/g, '');
-  var priceIsZero = digits === '' || Number(digits) === 0;
-  var stream = /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(c.title || '');
-  return priceIsZero || stream;
+  if (c.is_free === true || c.is_free === false) return c.is_free;
+  return isPriceExplicitlyZero(c.price);
+}
+function parseOptionalBool(v) {
+  if (v === true || v === 'true' || v === 1 || v === '1') return true;
+  if (v === false || v === 'false' || v === 0 || v === '0') return false;
+  return null;
 }
 
 function hasAccess(user) {
@@ -2730,17 +2813,15 @@ app.post('/api/content', async function (req, res) {
     var data = modules.map(function (mod) {
       var course = activeCourseMap.get(mod.course_id);
       var isFreeCourse = Boolean(course && course.is_free);
-      var isStreamCourseOrModule = isFreeCourse ||
-        /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '') ||
-        (course && course.title && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(course.title));
+      // Faqat aniq belgilangan bepul kurs hammaga ochiq (sarlavhadagi so'zlar hisobga olinmaydi)
+      var isStreamCourseOrModule = isFreeCourse;
 
       var moduleUnlocked = isStreamCourseOrModule || userHasAccess || isAdminUser;
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var isStreamLesson = isStreamCourseOrModule ||
-          /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '');
+        var isStreamLesson = isStreamCourseOrModule;
         var available = Boolean(lesson.is_free) || isStreamLesson || isAdminUser || (userHasAccess && moduleUnlocked);
         var watched = watchedSet.has(lesson.id);
         if (watched) watchedCount++;
@@ -3009,16 +3090,14 @@ app.post('/api/course/:id/modules', async function (req, res) {
 
     var data = modules.map(function (mod) {
       var isGranted = grantedModuleIds.has(mod.id);
-      var isStreamCourseOrModule = isFreeCourse ||
-        /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '') ||
-        (course.title && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(course.title));
+      // Faqat aniq belgilangan bepul kurs hammaga ochiq (sarlavhadagi so'zlar hisobga olinmaydi)
+      var isStreamCourseOrModule = isFreeCourse;
       var moduleUnlocked = isStreamCourseOrModule || isGranted || isAdmin || (userHasAccess && unlockedModuleIds.has(mod.id));
       var moduleLessons = lessons.filter(function (l) { return l.module_id === mod.id; });
       var watchedCount = 0;
 
       var mappedLessons = moduleLessons.map(function (lesson) {
-        var isStreamLesson = isStreamCourseOrModule ||
-          /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '');
+        var isStreamLesson = isStreamCourseOrModule;
         var available = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted ||
           (userHasAccess && sequentialUnlockedSet.has(lesson.id));
         var watched = watchedSet.has(lesson.id);
@@ -3063,8 +3142,6 @@ app.post('/api/course/:id/modules', async function (req, res) {
 // 1-modul to'liq ochiq; keyingi modul — oldingisi to'liq ko'rilib, testi o'tilgach;
 // 2-moduldan boshlab darslar birinchi ko'rilmagan darsgacha (shu dars ham) ochiladi.
 // ======================================================
-var STREAM_TITLE_RE = /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i;
-var STREAM_LESSON_TITLE_RE = /marafon|марафон|stream|jonli|efir|vebinar/i;
 
 async function computeSequentialUnlock(userId, courseId) {
   var out = { lessonIds: new Set(), moduleIds: new Set() };
@@ -3128,7 +3205,6 @@ async function canUserOpenLesson(user, lessonId) {
   if (course && courseStatusKind(course.status) !== 'published') return false;
   if (row.is_free) return true;
   if (isFreeCourseRecord(course)) return true;
-  if (STREAM_LESSON_TITLE_RE.test(row.title || '') || STREAM_TITLE_RE.test(row.module_title || '') || (course && STREAM_TITLE_RE.test(course.title || ''))) return true;
   var grant = await pool.query('SELECT 1 FROM module_access_grants WHERE user_id = $1 AND module_id = $2 LIMIT 1', [user.id, row.module_id]);
   if (grant.rows.length) return true;
   if (!hasAccess(user)) return false;
@@ -3212,10 +3288,8 @@ app.post('/api/lesson/:id', async function (req, res) {
     }
 
     var isFreeCourse = isFreeCourseRecord(courseData);
-    var isStreamLesson = isFreeCourse ||
-      /marafon|марафон|stream|jonli|efir|vebinar/i.test(lesson.title || '') ||
-      (courseData && /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(courseData.title || '')) ||
-      /marafon|марафон|stream|jonli|efir|vebinar|\b7\s*kun/i.test(mod.title || '');
+    // Faqat aniq belgilangan bepul kurs hammaga ochiq (sarlavhadagi so'zlar hisobga olinmaydi)
+    var isStreamLesson = isFreeCourse;
 
     var lessonAvailable = Boolean(lesson.is_free) || isStreamLesson || isAdmin || isGranted;
 
@@ -3667,13 +3741,9 @@ app.get('/api/video/stream', async function (req, res) {
     var lesson = lRes.rows[0];
     if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
 
-    // 3. Ruxsat tekshiruvi: is_free darslar, adminlar yoki to\'lov qilingan access
-    var isMainAdminUser = String(user.telegram_id) === String(ADMIN_TELEGRAM_ID);
-    var adminUser = await getAdminByTelegramId(user.telegram_id);
-    var isAdmin = Boolean(isMainAdminUser || adminUser);
-    var userHasAccess = hasAccess(user);
-
-    if (!lesson.is_free && !isAdmin && !userHasAccess) {
+    // 3. Ruxsat tekshiruvi — /api/lesson/:id bilan BIR XIL qoida (canUserOpenLesson):
+    // bepul dars/kurs, admin, alohida ochilgan modul (module_access_grants), to'lov + ketma-ket ochilish.
+    if (!(await canUserOpenLesson(user, lesson.id))) {
       return res.status(403).json({ error: 'ACCESS_DENIED', message: 'Ushbu videoni ko\'rish uchun pullik kurs ruxsati kerak' });
     }
 
@@ -6124,11 +6194,15 @@ app.post('/api/admin/courses/add', requireAdmin, async function (req, res) {
     var discountPrice = req.body.discount_price ? String(req.body.discount_price).trim() : null;
     var discountUntil = req.body.discount_until ? new Date(req.body.discount_until) : null;
 
+    // Bepul belgisi: admin aniq tanlagan bo'lsa shu, aks holda faqat narx aniq "0" bo'lsa bepul
+    var isFreeFlag = parseOptionalBool(req.body.is_free);
+    if (isFreeFlag === null) isFreeFlag = isPriceExplicitlyZero(price);
+
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, discount_price, discount_until, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil]
+      'INSERT INTO courses (title, subtitle, price, total_modules, total_lessons, release_date, cover_url, status, category, categories, discount_price, discount_until, is_free, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, (SELECT COALESCE(MAX(order_index), 0) + 1 FROM courses)) RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, isFreeFlag]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -6161,8 +6235,8 @@ app.post('/api/admin/courses/:id/update', requireAdmin, async function (req, res
     if (!title) return res.status(400).json({ error: 'Kurs nomi majburiy' });
 
     var result = await pool.query(
-      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10, discount_price = $11, discount_until = $12 WHERE id = $13 RETURNING *',
-      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, Number(req.params.id)]
+      'UPDATE courses SET title = $1, subtitle = $2, price = $3, total_modules = $4, total_lessons = $5, release_date = $6, cover_url = $7, status = $8, category = $9, categories = $10, discount_price = $11, discount_until = $12, is_free = COALESCE($14, is_free) WHERE id = $13 RETURNING *',
+      [title, subtitle, price, totalModules, totalLessons, releaseDate, coverUrl, status, category, categories, discountPrice || null, discountUntil, Number(req.params.id), parseOptionalBool(req.body.is_free)]
     );
 
     return res.json({ ok: true, course: result.rows[0] });
@@ -6856,6 +6930,31 @@ app.get('/api/pdf-proxy', async function (req, res) {
       }
     }
 
+    // 3. PRO / qoralama kitob himoyasi: fayl kutubxonadagi PRO yoki nashr qilinmagan kitobga tegishli bo'lsa,
+    // faqat admin yoki faol obunachiga uzatiladi (keshdan ham).
+    try {
+      var gateKey = fileId || rawUrl;
+      var gateRes = await pool.query(
+        "SELECT access_type, status FROM library_books WHERE drive_file_id = $1 OR pdf_url = $2 OR (LENGTH($1) >= 15 AND pdf_url LIKE '%' || $1 || '%')",
+        [gateKey, rawUrl || gateKey]
+      );
+      var needsPro = gateRes.rows.some(function (r) { return String(r.access_type || '').toLowerCase() === 'pro'; });
+      var allUnpublished = gateRes.rows.length > 0 && gateRes.rows.every(function (r) { return String(r.status || 'published') !== 'published'; });
+      if (needsPro || allUnpublished) {
+        var proxyUser = await getOrCreateUser(initData);
+        var proxyIsAdmin = await isAdminUserObject(proxyUser);
+        if (allUnpublished && !proxyIsAdmin) {
+          return res.status(404).json({ error: 'Fayl topilmadi' });
+        }
+        if (needsPro && !proxyIsAdmin && !hasAccess(proxyUser)) {
+          return res.status(403).json({ error: 'PRO_LOCKED', message: "Bu kitob faqat kursga a'zo bo'lgan o'quvchilar uchun ochiq." });
+        }
+      }
+    } catch (gateErr) {
+      console.error('PDF PROXY ACCESS CHECK ERROR:', gateErr.message);
+      return res.status(500).json({ error: 'Ruxsatni tekshirishda xatolik' });
+    }
+
     var cacheKey = crypto.createHash('md5').update(fileId || rawUrl).digest('hex');
     var cacheFile = path.join(pdfCacheDir, cacheKey + '.pdf');
 
@@ -7520,6 +7619,11 @@ app.post('/api/library/v2/book/:id', async function (req, res) {
 
     var bRow = bookRes.rows[0];
 
+    // Nashr qilinmagan (qoralama) kitob faqat adminga ko'rinadi
+    if (String(bRow.status || 'published') !== 'published' && !(await isAdminUserObject(user))) {
+      return res.status(404).json({ error: 'Kitob topilmadi' });
+    }
+
     // Ko'rishlar sonini inkrement qilish
     try {
       await pool.query('UPDATE library_books SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1', [bookId]);
@@ -7652,6 +7756,11 @@ app.post('/api/library/v2/resource/:id', async function (req, res) {
       } else {
         return res.status(404).json({ error: 'Resurs topilmadi' });
       }
+    }
+
+    // Nashr qilinmagan (qoralama) resurs/kitob faqat adminga ko'rinadi
+    if (String(result.rows[0].status || 'published') !== 'published' && !(await isAdminUserObject(user))) {
+      return res.status(404).json({ error: 'Resurs topilmadi' });
     }
 
     if (!isFromBooksTable) await refreshResourceSize(result.rows[0]);
@@ -12229,7 +12338,7 @@ app.get('/api/health', async function (req, res) {
     await pool.query('SELECT 1');
     return res.json({
       ok: true, message: 'Server ishlayapti',
-      database: 'connected', admin_telegram_id: ADMIN_TELEGRAM_ID
+      database: 'connected'
     });
   } catch (error) {
     console.error('HEALTH DATABASE ERROR:', error);
