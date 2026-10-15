@@ -259,7 +259,7 @@ app.use('/api/library', function proLibraryGuard(req, res, next) {
 var fs = require('fs');
 var path = require('path');
 var I18N_LANGS = ['uz', 'ru', 'en', 'tr', 'ar'];
-var I18N_NAMESPACES = ['common', 'navigation', 'lessons', 'library', 'profile', 'settings', 'errors'];
+var I18N_NAMESPACES = ['common', 'navigation', 'lessons', 'library', 'profile', 'settings', 'errors', 'pages'];
 var I18N_LOCALES_DIR = path.join(__dirname, 'public', 'locales');
 var i18nCache = {};
 

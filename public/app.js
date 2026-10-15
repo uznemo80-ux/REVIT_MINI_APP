@@ -2898,7 +2898,7 @@ function renderTermsOnboardingHtml() {
       <div class="rules-header-card">
         <div class="rules-badge">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          YOSHUZBEKK ACADEMY
+          YOSHUZBEKK
         </div>
         <div class="rules-main-title">Foydalanish qoidalari</div>
         <div class="rules-subtitle">Platformadan to‘liq foydalanish uchun quyidagi rasmiy qoidalar bilan tanishib chiqing va ularni qabul qiling.</div>
@@ -2950,7 +2950,7 @@ const PLATFORM_RULES_SECTIONS = [
   {
     title: "Umumiy qoidalar",
     items: [
-      "Ushbu qoidalar YOSHUZBEKK Academy ta’lim platformasi, uning Telegram Mini App interfeysi, barcha darsliklar, materiallar va xizmatlaridan foydalanish tartibini belgilaydi.",
+      "Ushbu qoidalar YOSHUZBEKK ta’lim platformasi, uning Telegram Mini App interfeysi, barcha darsliklar, materiallar va xizmatlaridan foydalanish tartibini belgilaydi.",
       "Platformadan ro‘yxatdan o‘tgan yoki undan foydalangan har bir shaxs ushbu qoidalar bilan to‘liq tanishgan va ularga so‘zsiz rozi bo‘lgan hisoblanadi.",
       "Agar foydalanuvchi ushbu qoidalarning biron bir bandiga rozi bo‘lmasa, platformadan foydalanishni darhol to‘xtatishi shart."
     ]
@@ -2967,7 +2967,7 @@ const PLATFORM_RULES_SECTIONS = [
   {
     title: "Intellektual mulk huquqlari",
     items: [
-      "Platformadagi barcha video darslar, audio materiallar, matnlar, taqdimotlar, Revit oilalari (families), shablonlar, testlar, qo‘llanmalar va boshqa barcha kontentlar YOSHUZBEKK Academy’ning intellektual mulki hisoblanadi.",
+      "Platformadagi barcha video darslar, audio materiallar, matnlar, taqdimotlar, Revit oilalari (families), shablonlar, testlar, qo‘llanmalar va boshqa barcha kontentlar YOSHUZBEKK’ning intellektual mulki hisoblanadi.",
       "Foydalanuvchiga taqdim etilgan barcha o‘quv materiallari faqat uning shaxsiy foydalanishi uchun berilgan omonat hisoblanadi.",
       "Materiallarni nusxalash, qayta yozib olish (screen recording), uchinchi shaxslarga yuborish, internetda e’lon qilish, tarqatish, sotish yoki tijoriy maqsadlarda foydalanish qat’iyan man etiladi.",
       "Mualliflik huquqlari buzilgan taqdirda, qonunchilikda belgilangan tartibda javobgarlik choralari ko‘riladi."
@@ -3081,7 +3081,7 @@ function openPlatformRulesModal() {
             Rasmiy hujjat
           </div>
           <div class="rules-main-title">Foydalanish qoidalari</div>
-          <div class="rules-subtitle">YOSHUZBEKK Academy platformasidan foydalanish shartlari va tartibi</div>
+          <div class="rules-subtitle">YOSHUZBEKK platformasidan foydalanish shartlari va tartibi</div>
         </div>
 
         <div class="rules-content-wrap">
@@ -4274,7 +4274,7 @@ Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya 
 
 Men real arxitektura, interyer va BIM loyihalarini yaratish, ishchi chizmalar tayyorlash hamda loyiha jarayonini tizimli tashkil qilish vositalarini amaliyotda 4 yildan beri qo'llab kelmoqdaman.
 
-Shu tajribalarimni boshqalar bilan professional tarzda bo'lishish maqsadida YOSHUZBEKK Academy platformasini yaratdim.
+Shu tajribalarimni boshqalar bilan professional tarzda bo'lishish maqsadida YOSHUZBEKK platformasini yaratdim.
 `;
 
 const ABOUT_SHORT = `
@@ -4798,8 +4798,8 @@ function renderHome() {
               ` : ""}
             </div>
             <div class="course-meta" style="margin-top:6px;">
-              <span>${course.total_modules || 0} modul</span>
-              <span>${course.total_lessons || 0} dars</span>
+              <span>${course.total_modules || 0} ta modul</span>
+              <span>${course.total_lessons || 0} ta dars</span>
             </div>
             <div class="course-price-wrap">
               ${renderCoursePriceBlock(course)}
@@ -5152,8 +5152,8 @@ function renderCourseCardsListHtml() {
         ` : ""}
         <div class="course-meta" style="margin-bottom:12px;">
           <span>${escapeHtml((Array.isArray(course.categories) && course.categories.length ? course.categories : [course.category || 'Boshqa']).join(', '))}</span>
-          <span>${course.total_modules || 0} modul</span>
-          <span>${course.total_lessons || 0} dars</span>
+          <span>${course.total_modules || 0} ta modul</span>
+          <span>${course.total_lessons || 0} ta dars</span>
           ${course.release_date ? `<span>⏱️ ${escapeHtml(course.release_date)}</span>` : ""}
         </div>
         ${(() => {
@@ -21497,7 +21497,7 @@ function renderLearningCenter() {
 
       <!-- HERO BANNER -->
       <div class="learning-hero">
-        <div class="learning-hero-badge">YOSHUZBEKK ACADEMY • KNOWLEDGE CENTER</div>
+        <div class="learning-hero-badge">YOSHUZBEKK • KNOWLEDGE CENTER</div>
         <h1 class="learning-hero-title">Arxitektura loyihalash va professional loyiha hujjatlari</h1>
         <p class="learning-hero-desc">
           O‘zbekiston sharoitida arxitektura loyihalash, ishchi hujjatlar, grafik rasmiylashtirish, komponovka, spetsifikatsiya va normativ hujjatlarni bosqichma-bosqich o‘rganish.
@@ -22046,11 +22046,10 @@ async function openCourseAccessModal(courseId) {
 
           <div style="text-align:left; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:18px; font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
             <div style="font-weight:750; color:var(--text-primary); margin-bottom:6px;">Kurs a'zolariga nimalar beriladi:</div>
-            <div>✅ <b>${course.total_modules || 11} ta modul</b> va <b>${course.total_lessons || 140} ta video dars</b>ga 1 yil to'liq kirish</div>
+            <div>✅ ${course.total_modules || 11} ta modul va ${course.total_lessons || 140} ta video darsga 1 yil to'liq kirish</div>
             <div>✅ Revit loyiha andozalari, oilalari (family) va ishchi fayllar</div>
             <div>✅ Har bir dars ostida ustoz bilan to'g'ridan-to'g'ri savol-javob</div>
             <div>✅ Amaliy uy vazifalarini ustoz tomonidan tekshirish va baholash</div>
-            <div>✅ Kurs yakunida rasmiy sertifikat va portfolio himoyasi</div>
           </div>
 
           <div style="display:flex; flex-direction:column; gap:10px;">

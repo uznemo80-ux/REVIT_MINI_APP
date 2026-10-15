@@ -84,13 +84,24 @@
   }
 
   // ---------- tarjima ----------
-  function lookup(text) {
+  // strict: shablon o'zgaruvchisi emoji/belgini "yutib" yubormasin ("{0} so'm" -> "💰 Narxi: 1 500 000").
+  // Bunday moslik rad etiladi va matn o'zagi (emoji'siz) alohida tarjima qilinadi.
+  function swallowsDecor(m) {
+    for (var k = 1; k < m.length; k++) {
+      var v = m[k] || "";
+      if ((v.match(PRE_RE) || [""])[0] || (v.match(SUF_RE) || [""])[0]) return true;
+    }
+    return false;
+  }
+
+  function lookup(text, strict) {
     var n = norm(text);
     if (!n) return null;
     var hit = S.exact.get(n);
     if (hit != null) return hit;
     for (var i = 0; i < S.patterns.length; i++) {
       var m = S.patterns[i].re.exec(n);
+      if (m && strict && swallowsDecor(m)) continue;
       if (m) {
         var out = S.patterns[i].tpl;
         S.patterns[i].names.forEach(function (name, idx) {
@@ -107,16 +118,15 @@
   function translateString(text) {
     if (S.lang === "uz" || text == null) return null;
     var raw = String(text);
-    var direct = lookup(raw);
+    var direct = lookup(raw, true);
     if (direct != null) return direct;
     // Emoji / strelka / belgilar bilan o'ralgan matn: "🚀 Boshlash →"
     var pre = (raw.match(PRE_RE) || [""])[0];
     var rest = raw.slice(pre.length);
     var suf = (rest.match(SUF_RE) || [""])[0];
     var core = suf ? rest.slice(0, rest.length - suf.length) : rest;
-    if (!core || (!pre && !suf)) return null;
-    var tr = lookup(core);
-    if (tr == null) return null;
+    var tr = (core && (pre || suf)) ? lookup(core) : null;
+    if (tr == null) return lookup(raw);          // oxirgi imkon: avvalgi (qat'iy bo'lmagan) moslik
     if (S.dir === "rtl") { pre = mirrorArrows(pre); suf = mirrorArrows(suf); }
     return pre + tr + suf;
   }
