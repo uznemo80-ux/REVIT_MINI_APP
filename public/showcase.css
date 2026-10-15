@@ -1,0 +1,442 @@
+/* ======================================================
+   O'quvchilar natijalari — karusel (sc2-*) va to'liq ekran ko'ruvchi (sv-*)
+   Oq-qora, Apple uslubi. Tokenlar mono.css'dan (--bg-surface, --border, --text-*).
+   ====================================================== */
+
+/* ---------- Karusel ---------- */
+.sc2 { margin-bottom: 28px; }
+
+.sc2-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.sc2-title { margin: 0 !important; }
+.sc2-sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+}
+
+.sc2-viewport {
+  /* sahifa chetigacha surilsin, lekin kontent bilan bir chiziqda boshlansin */
+  margin: 0 -16px;
+}
+
+.sc2-track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 16px;
+  padding: 2px 16px 4px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+}
+.sc2-track::-webkit-scrollbar { display: none; }
+
+.sc2-slide {
+  flex: 0 0 88%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-width: 0;
+}
+.sc2-track > .sc2-slide:only-child { flex-basis: 100%; }
+
+.sc2-sheet {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.414 / 1;           /* A-format list (gorizontal) */
+  padding: 0;
+  border: 1px solid var(--border-hover, rgba(255,255,255,0.12));
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sc2-sheet:active { transform: scale(0.985); }
+.sc2-sheet:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+.sc2-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 360ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.sc2-sheet.is-loaded .sc2-img { opacity: 1; }
+
+/* Yuklanish: matn o'rniga yumshoq "shimmer" */
+.sc2-skeleton {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0) 70%) 0 0 / 220% 100%,
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 22px),
+    #f3f3f3;
+  animation: sc2-shimmer 1.4s linear infinite;
+}
+.sc2-sheet.is-loaded .sc2-skeleton { display: none; }
+.sc2-sheet.is-error .sc2-skeleton { animation: none; }
+@keyframes sc2-shimmer { to { background-position: -220% 0, 0 0, 0 0, 0 0; } }
+
+.sc2-sheet-label,
+.sc2-expand {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+.sc2-sheet-label {
+  left: 10px;
+  bottom: 10px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.sc2-expand {
+  right: 10px;
+  bottom: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.sc2-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.sc2-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sc2-course {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc2-badge {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  color: var(--accent-contrast, #0a0a0a);
+  background: var(--text-primary);
+}
+
+.sc2-nav {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 22px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hover, rgba(255,255,255,0.12));
+}
+.sc2-arrow {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease, transform 150ms ease;
+}
+.sc2-arrow:active { transform: scale(0.9); background: var(--bg-hover, rgba(255,255,255,0.08)); }
+@media (hover: hover) { .sc2-arrow:hover { background: var(--bg-hover, rgba(255,255,255,0.08)); } }
+.sc2-arrow:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+.sc2-count {
+  min-width: 46px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.sc2-progress {
+  position: relative;
+  height: 2px;
+  margin-top: 12px;
+  border-radius: 2px;
+  background: var(--border-hover, rgba(255,255,255,0.12));
+  overflow: hidden;
+}
+.sc2-progress > span {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sc2 .carousel-admin-row { margin-top: 12px; }
+
+@media (min-width: 768px) {
+  .sc2-viewport { margin: 0; }
+  .sc2-track { padding: 2px 0 4px; scroll-padding: 0; }
+  .sc2-slide { flex-basis: 70%; }
+}
+
+/* ---------- To'liq ekran ko'ruvchi ---------- */
+.sv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: #000;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.sv-overlay.is-open { opacity: 1; }
+.sv-overlay.is-closing { opacity: 0; }
+
+.sv-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: calc(10px + var(--tg-content-safe-area-inset-top, 0px) + var(--tg-safe-area-inset-top, 0px)) 12px 18px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.sv-top > * { pointer-events: auto; }
+.sv-title { text-align: center; min-width: 0; }
+.sv-title-main {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.sv-title-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sv-icon-btn {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease, transform 150ms ease;
+}
+.sv-icon-btn:active { transform: scale(0.9); }
+@media (hover: hover) { .sv-icon-btn:hover { background: rgba(255, 255, 255, 0.2); } }
+.sv-icon-btn[hidden] { display: inline-flex; visibility: hidden; }
+
+.sv-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+.sv-strip {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -100%;
+  width: 300%;
+  display: flex;
+  will-change: transform;
+}
+.sv-pane {
+  position: relative;
+  flex: 0 0 33.3333%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.sv-img {
+  display: block;
+  max-width: none;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  transform-origin: center center;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 240ms ease;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+.sv-pane.is-loaded .sv-img { opacity: 1; }
+.sv-pane.is-loaded .sv-loading { display: none; }
+
+.sv-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.sv-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: #fff;
+  animation: sv-spin 0.8s linear infinite;
+}
+@keyframes sv-spin { to { transform: rotate(360deg); } }
+
+.sv-error {
+  max-width: 280px;
+  text-align: center;
+  padding: 22px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.sv-error-title { font-weight: 600; margin-bottom: 4px; }
+.sv-error-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.65); margin-bottom: 14px; }
+.sv-retry {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 22px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sv-side {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.85;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 200ms ease, background 150ms ease, transform 150ms ease;
+}
+.sv-side:active { transform: scale(0.9); }
+@media (hover: hover) { .sv-side:hover { opacity: 1; background: rgba(255, 255, 255, 0.22); } }
+.sv-side-prev { left: 12px; }
+.sv-side-next { right: 12px; }
+/* Telefonda surish asosiy usul — tugmalar ixcham va pastroq */
+@media (hover: none) and (pointer: coarse) {
+  .sv-side { top: auto; bottom: calc(18px + var(--tg-safe-area-inset-bottom, 0px)); margin-top: 0; }
+}
+
+.sv-bottom {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(18px + var(--tg-safe-area-inset-bottom, 0px));
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.sv-count {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+@media (hover: none) and (pointer: coarse) {
+  .sv-count { height: 44px; padding: 0 16px; border-radius: 22px; }
+}
+.sv-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: opacity 250ms ease;
+}
+.sv-hint.is-hidden { opacity: 0; }
+@media (hover: none) and (pointer: coarse) {
+  .sv-hint { position: absolute; bottom: 56px; }
+}
+
+/* Kattalashtirilganda boshqaruv elementlari chalg'itmasin */
+.sv-overlay.is-zoomed .sv-side,
+.sv-overlay.is-zoomed .sv-bottom { opacity: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc2-sheet, .sc2-img, .sc2-progress > span, .sv-overlay, .sv-img { transition: none !important; }
+  .sc2-skeleton { animation: none; }
+}

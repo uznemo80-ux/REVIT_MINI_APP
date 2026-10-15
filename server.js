@@ -6876,6 +6876,132 @@ function streamPdfFromLocalFile(filePath, req, res) {
   }
 }
 
+// ======================================================
+// PDF KESH: manbadan (Google Drive / URL) yuklab, diskka saqlash.
+// Bir xil fayl uchun bir vaqtda kelgan so'rovlar BITTA yuklashni kutadi (PDF.js range so'rovlari
+// bir nechta parallel so'rov yuboradi — har biri Drive'dan qayta yuklamasligi kerak).
+// ======================================================
+var pdfDownloadsInFlight = new Map();
+
+function pdfCacheFileFor(fileId, rawUrl) {
+  var cacheKey = crypto.createHash('md5').update(fileId || rawUrl).digest('hex');
+  return path.join(pdfCacheDir, cacheKey + '.pdf');
+}
+
+function ensurePdfCached(fileId, rawUrl) {
+  var cacheFile = pdfCacheFileFor(fileId, rawUrl);
+  try {
+    if (fs.existsSync(cacheFile) && fs.statSync(cacheFile).size > 1024) return Promise.resolve({ file: cacheFile });
+  } catch (e) {}
+  if (pdfDownloadsInFlight.has(cacheFile)) return pdfDownloadsInFlight.get(cacheFile);
+  var p = downloadPdfToCache(fileId, rawUrl, cacheFile)
+    .finally(function () { pdfDownloadsInFlight.delete(cacheFile); });
+  pdfDownloadsInFlight.set(cacheFile, p);
+  return p;
+}
+
+async function downloadPdfToCache(fileId, rawUrl, cacheFile) {
+    var fetchRes = null;
+    var driveApiKey = process.env.GOOGLE_DRIVE_API_KEY || '';
+
+    // A. Agar Drive File ID va API Key bo'lsa - to'g'ridan-to'g'ri rasmiy Drive API v3 alt=media orqali yuklash (100% barqaror)
+    if (fileId && driveApiKey) {
+      try {
+        var driveApiUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${encodeURIComponent(driveApiKey)}`;
+        var apiRes = await fetch(driveApiUrl, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          redirect: 'follow'
+        });
+        var apiType = (apiRes.headers.get('content-type') || '').toLowerCase();
+        if (apiRes.ok && !apiType.includes('text/html')) {
+          fetchRes = apiRes;
+        }
+      } catch (dErr) {
+        console.warn('Drive API media fetch warning:', dErr.message);
+      }
+    }
+
+    // B. Standart anonim download fallback
+    if (!fetchRes) {
+      var targetUrl = fileId
+        ? 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=t'
+        : rawUrl;
+
+      fetchRes = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        redirect: 'follow'
+      });
+    }
+
+    var cType = (fetchRes.headers.get('content-type') || '').toLowerCase();
+    if (!fetchRes.ok || cType.includes('text/html')) {
+      if (fileId) {
+        var fbUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId) + '&confirm=t';
+        var fbRes = await fetch(fbUrl, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          redirect: 'follow'
+        });
+        var fbType = (fbRes.headers.get('content-type') || '').toLowerCase();
+        if (fbRes.ok && !fbType.includes('text/html')) {
+          fetchRes = fbRes;
+        } else {
+          var html = await fbRes.text();
+          var confirmMatch = html.match(/confirm=([0-9a-zA-Z_-]+)/) || html.match(/name="confirm"\s+value="([0-9a-zA-Z_-]+)"/);
+          if (confirmMatch && confirmMatch[1]) {
+            var confirmedUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=' + confirmMatch[1];
+            var confRes = await fetch(confirmedUrl, {
+              method: 'GET',
+              headers: { 'User-Agent': 'Mozilla/5.0' },
+              redirect: 'follow'
+            });
+            if (confRes.ok) {
+              fetchRes = confRes;
+            }
+          }
+        }
+      }
+    }
+
+    if (!fetchRes.ok) {
+      throw new Error('PDF faylni manbadan yuklab bo‘lmadi (' + fetchRes.status + ')');
+    }
+
+    var arrayBuffer = await fetchRes.arrayBuffer();
+    var buffer = Buffer.from(arrayBuffer);
+
+    // Keshga atomar saqlash (yarim yozilgan fayl hech qachon uzatilmasin)
+    try {
+      var tmpFile = cacheFile + '.' + process.pid + '.' + Date.now() + '.tmp';
+      fs.writeFileSync(tmpFile, buffer);
+      fs.renameSync(tmpFile, cacheFile);
+      return { file: cacheFile };
+    } catch (saveErr) {
+      console.warn('PDF cache save error:', saveErr.message);
+      return { buffer: buffer };
+    }
+}
+
+// "O'quvchilar natijalari" PDF'larini oldindan keshga yuklash: deploy'dan keyin disk kesh bo'sh bo'ladi,
+// birinchi kirgan o'quvchi Drive'dan to'liq yuklanishini kutmasligi uchun.
+async function warmShowcasePdfCache() {
+  try {
+    var r = await pool.query("SELECT pdf_url FROM course_showcases WHERE COALESCE(pdf_url, '') <> ''");
+    for (var i = 0; i < r.rows.length; i++) {
+      var url = String(r.rows[i].pdf_url || '').trim();
+      var fid = extractGoogleDriveId(url);
+      if (!fid && !/^https:\/\//i.test(url)) continue;
+      try { await ensurePdfCached(fid, fid ? '' : url); } catch (e) { console.warn('SHOWCASE PDF WARM:', e.message); }
+    }
+  } catch (e) {
+    console.warn('SHOWCASE PDF WARM ERROR:', e.message);
+  }
+}
+
 app.get('/api/pdf-proxy', async function (req, res) {
   try {
     // 1. Telegram autentifikatsiya va cheklov (ban) nazorati
@@ -6968,91 +7094,18 @@ app.get('/api/pdf-proxy', async function (req, res) {
       } catch (checkErr) {}
     }
 
-    // 2. Keshda yo'q bo'lsa, manbadan yuklab olib keshga yozish
-    var fetchRes = null;
-    var driveApiKey = process.env.GOOGLE_DRIVE_API_KEY || '';
-
-    // A. Agar Drive File ID va API Key bo'lsa - to'g'ridan-to'g'ri rasmiy Drive API v3 alt=media orqali yuklash (100% barqaror)
-    if (fileId && driveApiKey) {
-      try {
-        var driveApiUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${encodeURIComponent(driveApiKey)}`;
-        var apiRes = await fetch(driveApiUrl, {
-          method: 'GET',
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          redirect: 'follow'
-        });
-        var apiType = (apiRes.headers.get('content-type') || '').toLowerCase();
-        if (apiRes.ok && !apiType.includes('text/html')) {
-          fetchRes = apiRes;
-        }
-      } catch (dErr) {
-        console.warn('Drive API media fetch warning:', dErr.message);
-      }
-    }
-
-    // B. Standart anonim download fallback
-    if (!fetchRes) {
-      var targetUrl = fileId
-        ? 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=t'
-        : rawUrl;
-
-      fetchRes = await fetch(targetUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        },
-        redirect: 'follow'
-      });
-    }
-
-    var cType = (fetchRes.headers.get('content-type') || '').toLowerCase();
-    if (!fetchRes.ok || cType.includes('text/html')) {
-      if (fileId) {
-        var fbUrl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId) + '&confirm=t';
-        var fbRes = await fetch(fbUrl, {
-          method: 'GET',
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          redirect: 'follow'
-        });
-        var fbType = (fbRes.headers.get('content-type') || '').toLowerCase();
-        if (fbRes.ok && !fbType.includes('text/html')) {
-          fetchRes = fbRes;
-        } else {
-          var html = await fbRes.text();
-          var confirmMatch = html.match(/confirm=([0-9a-zA-Z_-]+)/) || html.match(/name="confirm"\s+value="([0-9a-zA-Z_-]+)"/);
-          if (confirmMatch && confirmMatch[1]) {
-            var confirmedUrl = 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(fileId) + '&export=download&confirm=' + confirmMatch[1];
-            var confRes = await fetch(confirmedUrl, {
-              method: 'GET',
-              headers: { 'User-Agent': 'Mozilla/5.0' },
-              redirect: 'follow'
-            });
-            if (confRes.ok) {
-              fetchRes = confRes;
-            }
-          }
-        }
-      }
-    }
-
-    if (!fetchRes.ok) {
-      return res.status(502).json({ error: 'PDF faylni manbadan yuklab bo‘lmadi (' + fetchRes.status + ')' });
-    }
-
-    var arrayBuffer = await fetchRes.arrayBuffer();
-    var buffer = Buffer.from(arrayBuffer);
-
-    // Keshga saqlash
+    // 2. Keshda yo'q bo'lsa, manbadan yuklab olib keshga yozish (bir vaqtdagi so'rovlar bitta yuklashni kutadi)
+    var dl;
     try {
-      fs.writeFileSync(cacheFile, buffer);
-      return streamPdfFromLocalFile(cacheFile, req, res);
-    } catch (saveErr) {
-      console.warn('PDF cache save error:', saveErr.message);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline');
-      return res.send(buffer);
+      dl = await ensurePdfCached(fileId, rawUrl);
+    } catch (dlErr) {
+      return res.status(502).json({ error: dlErr.message || 'PDF faylni manbadan yuklab bo‘lmadi' });
     }
+    if (dl.file) return streamPdfFromLocalFile(dl.file, req, res);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    return res.send(dl.buffer);
   } catch (error) {
     console.error('PDF PROXY ERROR:', error);
     return res.status(500).json({ error: 'PDF faylni yuklashda xatolik yuz berdi' });
@@ -7152,6 +7205,7 @@ app.post('/api/admin/showcases/add', requireAdmin, async function (req, res) {
       RETURNING *
     `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, selectedPages]);
 
+    warmShowcasePdfCache();
     return res.json({ ok: true, showcase: result.rows[0] });
   } catch (error) {
     console.error('ADD SHOWCASE ERROR:', error);
@@ -7186,6 +7240,7 @@ app.post('/api/admin/showcases/:id/update', requireAdmin, async function (req, r
     `, [courseId, courseTitle, title, studentName, description, pdfUrl, previewImageUrl, discountBadge, orderIndex, selectedPages, id]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Natija topilmadi' });
+    warmShowcasePdfCache();
     return res.json({ ok: true, showcase: result.rows[0] });
   } catch (error) {
     console.error('UPDATE SHOWCASE ERROR:', error);
@@ -12383,4 +12438,6 @@ app.listen(PORT, function () {
   console.log('Server ' + PORT + '-portda ishga tushdi');
   console.log('Admin Telegram ID: ' + ADMIN_TELEGRAM_ID);
   console.log('==========================================');
+  // Natijalar PDF'larini fonda keshga yuklash (jadvallar tayyor bo'lishi uchun biroz kutiladi)
+  setTimeout(warmShowcasePdfCache, 15000);
 });

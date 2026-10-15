@@ -1,161 +1,1185 @@
 [
- ["Xush kelibsiz, {0}!", "Добро пожаловать, {0}!", "Welcome, {0}!", "Hoş geldiniz, {0}!", "أهلاً بك، {0}!"],
- ["Arxitektura, BIM, Interyer va Vizualizatsiya akademiyasi", "Академия архитектуры, BIM, интерьера и визуализации", "Academy of Architecture, BIM, Interior Design and Visualization", "Mimarlık, BIM, İç Mimarlık ve Görselleştirme Akademisi", "أكاديمية العمارة وBIM والتصميم الداخلي والتصوير"],
- ["Bepul namuna darslar progressi", "Прогресс бесплатных пробных уроков", "Free sample lessons progress", "Ücretsiz örnek ders ilerlemesi", "تقدّم الدروس التجريبية المجانية"],
- ["Bepul mini-kurs", "Бесплатный мини-курс", "Free mini-course", "Ücretsiz mini kurs", "دورة مصغّرة مجانية"],
- ["Revit dasturini birinchi marta o'rganayotganlar uchun bepul mini-kurs", "Бесплатный мини-курс для тех, кто впервые изучает Revit", "A free mini-course for those learning Revit for the first time", "Revit'i ilk kez öğrenenler için ücretsiz mini kurs", "دورة مصغّرة مجانية لمن يتعلّم Revit لأول مرة"],
- ["Revit dasturini birinchi marta o'rganayotganlar uchun bepul mini-kurs. Kerakli darsni tanlab o'rganishni boshlang:", "Бесплатный мини-курс для тех, кто впервые изучает Revit. Выберите урок и начните обучение:", "A free mini-course for those learning Revit for the first time. Choose a lesson and start learning:", "Revit'i ilk kez öğrenenler için ücretsiz mini kurs. Bir ders seçin ve öğrenmeye başlayın:", "دورة مصغّرة مجانية لمن يتعلّم Revit لأول مرة. اختر الدرس وابدأ التعلّم:"],
- ["{0} — bepul darslarni ochish", "{0} — открыть бесплатные уроки", "{0} — open free lessons", "{0} — ücretsiz dersleri aç", "{0} — فتح الدروس المجانية"],
- ["{0} • Bepul dars", "{0} • Бесплатный урок", "{0} • Free lesson", "{0} • Ücretsiz ders", "{0} • درس مجاني"],
- ["Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman. Zamonaviy loyihalash va modellashtirishni amaliyotda o'rgataman.", "Ассалому алайкум! Я Абдуллох — специалист в области архитектуры, BIM, интерьера и визуализации. Обучаю современному проектированию и моделированию на практике.", "Hello! I'm Abdulloh — a specialist in architecture, BIM, interior design and visualization. I teach modern design and modeling through practice.", "Merhaba! Ben Abdulloh — mimarlık, BIM, iç mimarlık ve görselleştirme alanında çalışan bir uzmanım. Modern tasarım ve modellemeyi uygulamalı olarak öğretiyorum.", "السلام عليكم! أنا عبد الله — متخصص في العمارة وBIM والتصميم الداخلي والتصوير. أُدرّس التصميم والنمذجة الحديثة بشكل عملي."],
- ["Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman.", "Ассалому алайкум! Я Абдуллох — специалист в области архитектуры, BIM, интерьера и визуализации.", "Hello! I'm Abdulloh — a specialist in architecture, BIM, interior design and visualization.", "Merhaba! Ben Abdulloh — mimarlık, BIM, iç mimarlık ve görselleştirme alanında çalışan bir uzmanım.", "السلام عليكم! أنا عبد الله — متخصص في العمارة وBIM والتصميم الداخلي والتصوير."],
- ["Men real arxitektura, interyer va BIM loyihalarini yaratish, ishchi chizmalar tayyorlash hamda loyiha jarayonini tizimli tashkil qilish vositalarini amaliyotda 4 yildan beri qo'llab kelmoqdaman.", "Уже более 4 лет я на практике создаю реальные архитектурные, интерьерные и BIM-проекты, готовлю рабочие чертежи и выстраиваю системный процесс проектирования.", "For more than 4 years I have been creating real architectural, interior and BIM projects, preparing working drawings and organizing the design process systematically.", "4 yılı aşkın süredir gerçek mimari, iç mekân ve BIM projeleri oluşturuyor, uygulama çizimleri hazırlıyor ve proje sürecini sistemli şekilde yönetiyorum.", "منذ أكثر من 4 سنوات أعمل عملياً على إنشاء مشاريع معمارية وداخلية وBIM حقيقية، وإعداد الرسومات التنفيذية وتنظيم عملية التصميم بشكل منهجي."],
- ["Shu tajribalarimni boshqalar bilan professional tarzda bo'lishish maqsadida YOSHUZBEKK platformasini yaratdim.", "Чтобы профессионально делиться этим опытом с другими, я создал платформу YOSHUZBEKK.", "I created the YOSHUZBEKK platform to share this experience with others professionally.", "Bu deneyimi başkalarıyla profesyonelce paylaşmak için YOSHUZBEKK platformunu kurdum.", "أنشأتُ منصة YOSHUZBEKK لمشاركة هذه الخبرة مع الآخرين بشكل احترافي."],
- ["Batafsil ma'lumot", "Подробнее", "Learn more", "Daha fazla bilgi", "مزيد من المعلومات"],
- ["Yashirish", "Скрыть", "Hide", "Gizle", "إخفاء"],
- ["Barcha kurslar ({0})", "Все курсы ({0})", "All courses ({0})", "Tüm kurslar ({0})", "جميع الدورات ({0})"],
- ["{0} so'm", "{0} сум", "{0} UZS", "{0} UZS", "{0} سوم"],
- ["Darsga a'zo bo'lish", "Записаться на курс", "Join the course", "Kursa katıl", "الاشتراك في الدورة"],
- ["\"Darslar juda tushunarli va amaliy. Revitda loyiha chizishni 0 dan o'rgandim.\"", "«Уроки очень понятные и практичные. Я научился проектировать в Revit с нуля.»", "\"The lessons are very clear and practical. I learned to design in Revit from scratch.\"", "\"Dersler çok anlaşılır ve uygulamalı. Revit'te proje çizmeyi sıfırdan öğrendim.\"", "\"الدروس واضحة جداً وعملية. تعلّمت التصميم في Revit من الصفر.\""],
- ["\"Revit shablonlari va ishchi chizmalar tayyorlash bo'yicha eng zo'r akademiya!\"", "«Лучшая академия по шаблонам Revit и подготовке рабочих чертежей!»", "\"The best academy for Revit templates and working drawings!\"", "\"Revit şablonları ve uygulama çizimleri konusunda en iyi akademi!\"", "\"أفضل أكاديمية لقوالب Revit وإعداد الرسومات التنفيذية!\""],
- ["\"Har bir darsda yangi qulayliklar bor. Oilalar va materiallar kutubxonasi juda asqotdi.\"", "«В каждом уроке есть новые полезные приёмы. Библиотека семейств и материалов очень пригодилась.»", "\"Every lesson has new useful tricks. The families and materials library has been very helpful.\"", "\"Her derste yeni kolaylıklar var. Aile ve malzeme kütüphanesi çok işe yaradı.\"", "\"في كل درس حيل مفيدة جديدة. مكتبة العائلات والمواد كانت مفيدة جداً.\""],
- ["Kursga qanday to'lov qilaman?", "Как оплатить курс?", "How do I pay for the course?", "Kurs ücretini nasıl öderim?", "كيف أدفع رسوم الدورة؟"],
- ["Chat bo'limidan adminga murojaat qiling yoki Telegram orqali to'g'ridan-to'g'ri bog'laning.", "Напишите администратору в разделе «Чат» или свяжитесь напрямую через Telegram.", "Contact the admin in the Chat section or reach out directly via Telegram.", "Sohbet bölümünden yöneticiye yazın veya doğrudan Telegram üzerinden iletişime geçin.", "تواصل مع المشرف من قسم الدردشة أو مباشرةً عبر Telegram."],
- ["— Muallif: Admin", "— Автор: Админ", "— Author: Admin", "— Yazar: Yönetici", "— الكاتب: المشرف"],
- ["Kirish huquqi qancha muddatga beriladi?", "На какой срок предоставляется доступ?", "How long is access granted for?", "Erişim ne kadar süreyle verilir?", "ما مدة صلاحية الوصول؟"],
- ["To'lov tasdiqlangandan so'ng darslarga 1 yil (365 kun) davomida to'liq kirish huquqi beriladi.", "После подтверждения оплаты предоставляется полный доступ к урокам на 1 год (365 дней).", "After payment is confirmed, you get full access to the lessons for 1 year (365 days).", "Ödeme onaylandıktan sonra derslere 1 yıl (365 gün) boyunca tam erişim verilir.", "بعد تأكيد الدفع يُمنح وصول كامل إلى الدروس لمدة سنة واحدة (365 يوماً)."],
- ["Namuna darslarni ko'ra olamanmi?", "Можно ли посмотреть пробные уроки?", "Can I watch sample lessons?", "Örnek dersleri izleyebilir miyim?", "هل يمكنني مشاهدة دروس تجريبية؟"],
- ["Ha, ba'zi darslar hammaga bepul ochiq — Namuna belgisi bilan ko'rsatilgan.", "Да, некоторые уроки открыты для всех бесплатно — они отмечены значком «Пробный».", "Yes, some lessons are free and open to everyone — they are marked as Sample.", "Evet, bazı dersler herkese ücretsiz açıktır — Örnek işaretiyle gösterilir.", "نعم، بعض الدروس مفتوحة مجاناً للجميع — وهي معلَّمة بعلامة \"تجريبي\"."],
- ["Bizni ijtimoiy tarmoqlarda kuzating", "Следите за нами в соцсетях", "Follow us on social media", "Bizi sosyal medyada takip edin", "تابعونا على وسائل التواصل الاجتماعي"],
- ["© {0} YOSHUZBEKK. Barcha huquqlar himoyalangan.", "© {0} YOSHUZBEKK. Все права защищены.", "© {0} YOSHUZBEKK. All rights reserved.", "© {0} YOSHUZBEKK. Tüm hakları saklıdır.", "© {0} YOSHUZBEKK. جميع الحقوق محفوظة."],
- ["{0} ta modul · Kerakli modulni tanlang va darslarni boshlang:", "Модулей: {0} · Выберите модуль и начните уроки:", "{0} modules · Choose a module and start the lessons:", "{0} modül · Bir modül seçin ve derslere başlayın:", "{0} وحدات · اختر الوحدة وابدأ الدروس:"],
- ["{0}/{1} dars bajarildi", "Пройдено уроков: {0}/{1}", "{0}/{1} lessons completed", "{0}/{1} ders tamamlandı", "{0}/{1} دروس مكتملة"],
- ["Bepul namuna", "Бесплатный пробный", "Free sample", "Ücretsiz örnek", "عيّنة مجانية"],
- ["Pullik dars", "Платный урок", "Paid lesson", "Ücretli ders", "درس مدفوع"],
- ["Bosh sahifaga qaytish", "Вернуться на главную", "Back to home", "Ana sayfaya dön", "العودة إلى الصفحة الرئيسية"],
- ["Tavsiya etilgan parametrlar (Professional interyer & BIM)", "Рекомендуемые параметры (профессиональный интерьер и BIM)", "Recommended specs (Professional interior & BIM)", "Önerilen özellikler (Profesyonel iç mimarlık ve BIM)", "المواصفات الموصى بها (تصميم داخلي احترافي وBIM)"],
- ["Optimal & Professional", "Оптимально и профессионально", "Optimal & Professional", "Optimal ve Profesyonel", "مثالي واحترافي"],
- ["Intel Core i7 (13700F / 14700F) yoki AMD Ryzen 7 (7700X / 7800X3D)", "Intel Core i7 (13700F / 14700F) или AMD Ryzen 7 (7700X / 7800X3D)", "Intel Core i7 (13700F / 14700F) or AMD Ryzen 7 (7700X / 7800X3D)", "Intel Core i7 (13700F / 14700F) veya AMD Ryzen 7 (7700X / 7800X3D)", "Intel Core i7 (13700F / 14700F) أو AMD Ryzen 7 (7700X / 7800X3D)"],
- ["Revitda murakkab oilalar va 3ds Max Corona Renderda tezkor hisoblash uchun 16-20 yadro", "16–20 ядер для сложных семейств в Revit и быстрого рендера Corona в 3ds Max", "16–20 cores for complex Revit families and fast Corona rendering in 3ds Max", "Revit'te karmaşık aileler ve 3ds Max Corona'da hızlı render için 16-20 çekirdek", "16–20 نواة للعائلات المعقّدة في Revit والعرض السريع بـ Corona في 3ds Max"],
- ["Revitda 100+ MB hajmdagi ishchi loyihalarda qotishning oldini oladi", "Предотвращает зависания в рабочих проектах Revit объёмом 100+ МБ", "Prevents freezing in 100+ MB Revit working projects", "Revit'te 100+ MB'lık projelerde donmaları önler", "يمنع التجمّد في مشاريع Revit التي يتجاوز حجمها 100 ميغابايت"],
- ["NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) yoki RTX 4070 (12GB VRAM)", "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) или RTX 4070 (12GB VRAM)", "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) or RTX 4070 (12GB VRAM)", "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) veya RTX 4070 (12GB VRAM)", "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) أو RTX 4070 (12GB VRAM)"],
- ["RTX nurlari tezlatkichi va sun'iy intellektli Denoiser uchun ideal", "Идеально для RTX-ускорения трассировки лучей и AI-денойзера", "Ideal for RTX ray-tracing acceleration and the AI Denoiser", "RTX ışın izleme hızlandırma ve yapay zekâlı Denoiser için ideal", "مثالي لتسريع تتبّع الأشعة RTX ومزيل الضوضاء بالذكاء الاصطناعي"],
- ["1 TB M.2 NVMe PCIe 4.0 SSD (Tezligi: 5000 - 7000 MB/s)", "1 TB M.2 NVMe PCIe 4.0 SSD (скорость: 5000–7000 МБ/с)", "1 TB M.2 NVMe PCIe 4.0 SSD (speed: 5000–7000 MB/s)", "1 TB M.2 NVMe PCIe 4.0 SSD (hız: 5000 - 7000 MB/s)", "1 TB M.2 NVMe PCIe 4.0 SSD (السرعة: 5000 - 7000 MB/s)"],
- ["Katta teksturalar va kutubxonalar bir zumda ochiladi", "Большие текстуры и библиотеки открываются мгновенно", "Large textures and libraries open instantly", "Büyük dokular ve kütüphaneler anında açılır", "تُفتح الخامات والمكتبات الكبيرة فوراً"],
- ["27 dyuym 2K QHD (2560x1440) IPS, 99-100% sRGB rang aniqligi", "27 дюймов 2K QHD (2560x1440) IPS, точность цвета 99–100% sRGB", "27-inch 2K QHD (2560x1440) IPS, 99–100% sRGB color accuracy", "27 inç 2K QHD (2560x1440) IPS, %99-100 sRGB renk doğruluğu", "27 بوصة 2K QHD (2560x1440) IPS، دقة ألوان 99-100% sRGB"],
- ["Chizmalardagi mayda detallar va interyer ranglari to'g'ri ko'rinadi", "Мелкие детали чертежей и цвета интерьера отображаются точно", "Fine drawing details and interior colors display accurately", "Çizimlerdeki ince detaylar ve iç mekân renkleri doğru görünür", "تظهر التفاصيل الدقيقة في الرسومات وألوان التصميم الداخلي بدقة"],
- ["750W 80+ Gold quvvat bloki, 240mm/360mm suv sovutish tizimi", "Блок питания 750W 80+ Gold, водяное охлаждение 240mm/360mm", "750W 80+ Gold power supply, 240mm/360mm liquid cooling", "750W 80+ Gold güç kaynağı, 240mm/360mm sıvı soğutma", "مزوّد طاقة 750W 80+ Gold، تبريد مائي 240mm/360mm"],
- ["Revitda to'liq 40-50 listlik ishchi loyiha (Rabochka) albomini chiqarish, 3ds Maxda fotorealistik Corona vizualizatsiyalarini tezkor olish uchun eng optimal tanlov!", "Оптимальный выбор для выпуска полного альбома рабочего проекта (рабочки) на 40–50 листов в Revit и быстрой фотореалистичной визуализации Corona в 3ds Max!", "The optimal choice for producing a full 40–50 sheet working drawing set in Revit and fast photorealistic Corona renders in 3ds Max!", "Revit'te 40-50 paftalık eksiksiz uygulama projesi albümü çıkarmak ve 3ds Max'te hızlı fotogerçekçi Corona görselleri almak için en uygun seçim!", "الخيار الأمثل لإخراج ألبوم مشروع تنفيذي كامل من 40-50 لوحة في Revit والحصول السريع على تصيير واقعي بـ Corona في 3ds Max!"],
- ["Tavsiya etilgan noutbuk (Ko'chma professional ish uchun)", "Рекомендуемый ноутбук (для мобильной профессиональной работы)", "Recommended laptop (for professional work on the go)", "Önerilen dizüstü (taşınabilir profesyonel çalışma için)", "حاسوب محمول موصى به (للعمل الاحترافي أثناء التنقّل)"],
- ["Optimal & Ishonchli", "Оптимально и надёжно", "Optimal & Reliable", "Optimal ve Güvenilir", "مثالي وموثوق"],
- ["Intel Core i7 (13700H / 14700HX) yoki AMD Ryzen 7 (7745HX / 7840HS)", "Intel Core i7 (13700H / 14700HX) или AMD Ryzen 7 (7745HX / 7840HS)", "Intel Core i7 (13700H / 14700HX) or AMD Ryzen 7 (7745HX / 7840HS)", "Intel Core i7 (13700H / 14700HX) veya AMD Ryzen 7 (7745HX / 7840HS)", "Intel Core i7 (13700H / 14700HX) أو AMD Ryzen 7 (7745HX / 7840HS)"],
- ["Yuqori takt chastotali kuchli noutbuk protsessori", "Мощный ноутбучный процессор с высокой тактовой частотой", "A powerful high-clock laptop processor", "Yüksek saat hızına sahip güçlü dizüstü işlemcisi", "معالج قوي للحاسوب المحمول بتردد عالٍ"],
- ["Revitda bir vaqtning o'zida AutoCAD va Photoshop bilan erkin ishlash imkoni", "Свободная работа в Revit одновременно с AutoCAD и Photoshop", "Work freely in Revit alongside AutoCAD and Photoshop at the same time", "Revit'te aynı anda AutoCAD ve Photoshop ile rahat çalışma imkânı", "إمكانية العمل بحرية في Revit مع AutoCAD وPhotoshop في الوقت نفسه"],
- ["NVIDIA GeForce RTX 4060 (8GB VRAM, to'liq 115W-140W TGP)", "NVIDIA GeForce RTX 4060 (8GB VRAM, полный TGP 115W–140W)", "NVIDIA GeForce RTX 4060 (8GB VRAM, full 115W–140W TGP)", "NVIDIA GeForce RTX 4060 (8GB VRAM, tam 115W-140W TGP)", "NVIDIA GeForce RTX 4060 (8GB VRAM، TGP كامل 115W-140W)"],
- ["Zamonaviy DLSS 3 va arxitektura vizualizatsiyasi uchun ideal", "Идеально для современного DLSS 3 и архитектурной визуализации", "Ideal for modern DLSS 3 and architectural visualization", "Modern DLSS 3 ve mimari görselleştirme için ideal", "مثالي لتقنية DLSS 3 الحديثة والتصوير المعماري"],
- ["1 TB M.2 NVMe PCIe 4.0 SSD (qo'shimcha 2-chi SSD sloti bilan)", "1 TB M.2 NVMe PCIe 4.0 SSD (с дополнительным вторым слотом SSD)", "1 TB M.2 NVMe PCIe 4.0 SSD (with an extra second SSD slot)", "1 TB M.2 NVMe PCIe 4.0 SSD (ek ikinci SSD yuvası ile)", "1 TB M.2 NVMe PCIe 4.0 SSD (مع منفذ SSD ثانٍ إضافي)"],
- ["Tezkor loyihalarni yuklash va saqlash", "Быстрая загрузка и сохранение проектов", "Fast project loading and saving", "Projeleri hızlı yükleme ve kaydetme", "تحميل المشاريع وحفظها بسرعة"],
- ["16 dyuym QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (16:10 format chizma uchun juda qulay)", "16 дюймов QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (формат 16:10 очень удобен для чертежей)", "16-inch QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (the 16:10 format is great for drawings)", "16 inç QHD+ (2560x1600) IPS, %100 sRGB, 165Hz (16:10 format çizim için çok rahat)", "16 بوصة QHD+ (2560x1600) IPS، 100% sRGB، 165Hz (تنسيق 16:10 مريح جداً للرسم)"],
- ["Vertikal maydon kengroq bo'lib, Ribbon va xususiyatlar paneli sig'adi", "Больше места по вертикали — помещаются лента (Ribbon) и панель свойств", "More vertical space fits the Ribbon and the Properties panel", "Dikey alan daha geniş olduğundan Ribbon ve özellikler paneli sığar", "مساحة عمودية أكبر تتسع لشريط Ribbon ولوحة الخصائص"],
- ["Bug' kamerali (Vapor Chamber) ilg'or sovutish tizimi (Lenovo Legion 5 / Asus ROG Strix)", "Продвинутое охлаждение с испарительной камерой (Vapor Chamber) (Lenovo Legion 5 / Asus ROG Strix)", "Advanced vapor chamber cooling (Lenovo Legion 5 / Asus ROG Strix)", "Buhar odalı (Vapor Chamber) gelişmiş soğutma sistemi (Lenovo Legion 5 / Asus ROG Strix)", "نظام تبريد متقدّم بغرفة بخار (Vapor Chamber) (Lenovo Legion 5 / Asus ROG Strix)"],
- ["Ofisdan tashqarida, ob'ektlarda mijozlarga loyihani ko'rsatish va uzoq soatlab barqaror ishlash uchun eng qulay noutbuk!", "Самый удобный ноутбук, чтобы показывать проект клиентам на объектах вне офиса и стабильно работать долгими часами!", "The most convenient laptop for showing projects to clients on site and working reliably for long hours!", "Ofis dışında, şantiyelerde müşterilere proje göstermek ve uzun saatler istikrarlı çalışmak için en uygun dizüstü!", "أنسب حاسوب محمول لعرض المشروع على العملاء في المواقع خارج المكتب والعمل بثبات لساعات طويلة!"],
- ["Minimal noutbuk (Talabalar va boshlovchilar uchun)", "Минимальный ноутбук (для студентов и начинающих)", "Minimum laptop (for students and beginners)", "Minimum dizüstü (öğrenciler ve yeni başlayanlar için)", "الحد الأدنى للحاسوب المحمول (للطلاب والمبتدئين)"],
- ["Boshlang'ich", "Начальный", "Entry-level", "Başlangıç", "مبتدئ"],
- ["Intel Core i5 (12500H / 13500H) yoki AMD Ryzen 5 (6600H / 7535HS)", "Intel Core i5 (12500H / 13500H) или AMD Ryzen 5 (6600H / 7535HS)", "Intel Core i5 (12500H / 13500H) or AMD Ryzen 5 (6600H / 7535HS)", "Intel Core i5 (12500H / 13500H) veya AMD Ryzen 5 (6600H / 7535HS)", "Intel Core i5 (12500H / 13500H) أو AMD Ryzen 5 (6600H / 7535HS)"],
- ["H indeksli kuchaytirilgan protsessor bo'lishi shart (U yoki G seriyalar to'g'ri kelmaydi)", "Обязательно производительный процессор с индексом H (серии U или G не подходят)", "It must be a high-performance H-series processor (U or G series won't do)", "H serisi güçlendirilmiş işlemci olmalıdır (U veya G serileri uygun değildir)", "يجب أن يكون معالجاً عالي الأداء من فئة H (فئتا U وG غير مناسبتين)"],
- ["Keyinchalik 32GB ga oshirish uchun bo'sh slot borligini tekshiring", "Проверьте наличие свободного слота для расширения до 32 ГБ", "Make sure there's a free slot to upgrade to 32GB later", "Daha sonra 32GB'a yükseltmek için boş yuva olduğunu kontrol edin", "تأكد من وجود منفذ فارغ للترقية إلى 32GB لاحقاً"],
- ["NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)", "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)", "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)", "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)", "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)"],
- ["Integratsiyalangan videokartalar (Intel Iris / AMD Vega) bilan cheklanmang", "Не ограничивайтесь встроенной графикой (Intel Iris / AMD Vega)", "Don't settle for integrated graphics (Intel Iris / AMD Vega)", "Dahili ekran kartlarıyla (Intel Iris / AMD Vega) yetinmeyin", "لا تكتفِ ببطاقات الرسومات المدمجة (Intel Iris / AMD Vega)"],
- ["Revit va 3ds Max kutubxonalari uchun yetarli", "Достаточно для библиотек Revit и 3ds Max", "Enough for Revit and 3ds Max libraries", "Revit ve 3ds Max kütüphaneleri için yeterli", "كافٍ لمكتبات Revit و3ds Max"],
- ["15.6 dyuym Full HD (1920x1080) IPS, 144Hz", "15,6 дюйма Full HD (1920x1080) IPS, 144Hz", "15.6-inch Full HD (1920x1080) IPS, 144Hz", "15.6 inç Full HD (1920x1080) IPS, 144Hz", "15.6 بوصة Full HD (1920x1080) IPS، 144Hz"],
- ["Ko'rish burchagi keng va ko'z toliqmaydigan displey", "Дисплей с широкими углами обзора, глаза не устают", "Wide viewing angles and an eye-friendly display", "Geniş görüş açılı ve gözü yormayan ekran", "شاشة بزوايا رؤية واسعة ومريحة للعين"],
- ["2 ta mustaqil ventilatorli gaming korpus (Lenovo LOQ / Asus TUF / Acer Nitro)", "Игровой корпус с 2 независимыми вентиляторами (Lenovo LOQ / Asus TUF / Acer Nitro)", "Gaming chassis with 2 independent fans (Lenovo LOQ / Asus TUF / Acer Nitro)", "2 bağımsız fanlı oyun kasası (Lenovo LOQ / Asus TUF / Acer Nitro)", "هيكل ألعاب بمروحتين مستقلتين (Lenovo LOQ / Asus TUF / Acer Nitro)"],
- ["Yupqa ofis noutbuklarini aslo xarid qilmang! Ular og'ir yuklamada qizib, tezligini pasaytiradi (trottling). Gaming seriyalarni tanlang.", "Ни в коем случае не покупайте тонкие офисные ноутбуки! Под нагрузкой они перегреваются и сбрасывают частоты (троттлинг). Выбирайте игровые серии.", "Never buy thin office laptops! Under heavy load they overheat and slow down (throttling). Choose gaming series.", "İnce ofis dizüstülerini asla almayın! Ağır yük altında ısınıp yavaşlarlar (throttling). Oyun serilerini seçin.", "لا تشترِ أبداً الحواسيب المكتبية الرفيعة! فهي تسخن تحت الحمل وتنخفض سرعتها (throttling). اختر فئات الألعاب."],
- ["Maksimal mobil stansiya (Mobile Workstation)", "Максимальная мобильная станция (Mobile Workstation)", "Maximum mobile workstation", "Maksimum mobil iş istasyonu (Mobile Workstation)", "محطة عمل متنقلة قصوى (Mobile Workstation)"],
- ["Mobil Superkompyuter", "Мобильный суперкомпьютер", "Mobile supercomputer", "Mobil süper bilgisayar", "حاسوب فائق متنقل"],
- ["Intel Core i9 (13980HX / 14900HX) yoki AMD Ryzen 9 (7945HX)", "Intel Core i9 (13980HX / 14900HX) или AMD Ryzen 9 (7945HX)", "Intel Core i9 (13980HX / 14900HX) or AMD Ryzen 9 (7945HX)", "Intel Core i9 (13980HX / 14900HX) veya AMD Ryzen 9 (7945HX)", "Intel Core i9 (13980HX / 14900HX) أو AMD Ryzen 9 (7945HX)"],
- ["Stol usti protsessorlariga tenglashadigan 24 yadroli quvvat", "24 ядра — мощность на уровне настольных процессоров", "24-core power on par with desktop processors", "Masaüstü işlemcilerle eşdeğer 24 çekirdekli güç", "قوة 24 نواة تضاهي معالجات الحواسيب المكتبية"],
- ["Murakkab BIM koordinatsiyasi va katta shaharlar modeli uchun", "Для сложной BIM-координации и моделей больших городов", "For complex BIM coordination and large city models", "Karmaşık BIM koordinasyonu ve büyük şehir modelleri için", "لتنسيق BIM المعقّد ونماذج المدن الكبيرة"],
- ["NVIDIA GeForce RTX 4080 (12GB) yoki RTX 4090 (16GB VRAM, 175W Full Power)", "NVIDIA GeForce RTX 4080 (12GB) или RTX 4090 (16GB VRAM, 175W Full Power)", "NVIDIA GeForce RTX 4080 (12GB) or RTX 4090 (16GB VRAM, 175W Full Power)", "NVIDIA GeForce RTX 4080 (12GB) veya RTX 4090 (16GB VRAM, 175W Full Power)", "NVIDIA GeForce RTX 4080 (12GB) أو RTX 4090 (16GB VRAM، 175W Full Power)"],
- ["Mobil formatdagi eng yuqori grafika quvvati", "Максимальная графическая мощность в мобильном формате", "The highest graphics power in a mobile form factor", "Mobil formatta en yüksek grafik gücü", "أعلى قوة رسومية في حجم محمول"],
- ["Gigabaytlab og'ir Revit fayllari soniyalarda ochiladi", "Тяжёлые файлы Revit в несколько гигабайт открываются за секунды", "Multi-gigabyte Revit files open in seconds", "Gigabaytlarca ağır Revit dosyaları saniyeler içinde açılır", "تُفتح ملفات Revit الثقيلة بحجم غيغابايتات في ثوانٍ"],
- ["16 - 17.3 dyuym Mini-LED yoki 2.5K 240Hz, 100% DCI-P3 rang aniqligi", "16–17,3 дюйма Mini-LED или 2.5K 240Hz, точность цвета 100% DCI-P3", "16–17.3-inch Mini-LED or 2.5K 240Hz, 100% DCI-P3 color accuracy", "16 - 17.3 inç Mini-LED veya 2.5K 240Hz, %100 DCI-P3 renk doğruluğu", "16 - 17.3 بوصة Mini-LED أو 2.5K 240Hz، دقة ألوان 100% DCI-P3"],
- ["Ranglarni chop etishga tayyorlash uchun mutlaq aniqlik", "Абсолютная точность при подготовке цветов к печати", "Absolute accuracy when preparing colors for print", "Renkleri baskıya hazırlarken mutlak doğruluk", "دقة مطلقة عند تجهيز الألوان للطباعة"],
- ["Suyuq metall va katta issiqlik trubkalari (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)", "Жидкий металл и крупные тепловые трубки (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)", "Liquid metal and large heat pipes (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)", "Sıvı metal ve büyük ısı boruları (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)", "معدن سائل وأنابيب حرارية كبيرة (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)"],
- ["Stol usti kompyuteridan qolishmaydigan, xohlagan joyda og'ir renderlarni hisoblashga qodir flagman qurilma.", "Флагманское устройство, не уступающее настольному ПК и способное считать тяжёлые рендеры где угодно.", "A flagship device that rivals a desktop PC and can compute heavy renders anywhere.", "Masaüstü bilgisayardan geri kalmayan, ağır renderları her yerde hesaplayabilen amiral gemisi cihaz.", "جهاز رائد لا يقلّ عن الحاسوب المكتبي وقادر على معالجة التصيير الثقيل في أي مكان."],
- ["Boshqa", "Другое", "Other", "Diğer", "أخرى"],
- ["Sotuvda", "В продаже", "On sale", "Satışta", "متاح للبيع"],
- ["Faol kurs", "Активный курс", "Active course", "Aktif kurs", "دورة نشطة"],
- ["Narxi: {0}", "Цена: {0}", "Price: {0}", "Fiyat: {0}", "السعر: {0}"],
- ["Kurs a'zolariga nimalar beriladi:", "Что получают участники курса:", "What course members get:", "Kurs üyelerine neler verilir:", "ما الذي يحصل عليه المشتركون في الدورة:"],
- ["{0} ta modul va {1} ta video darsga 1 yil to'liq kirish", "Полный доступ на 1 год к {0} модулям и {1} видеоурокам", "1 year of full access to {0} modules and {1} video lessons", "{0} modül ve {1} video derse 1 yıl tam erişim", "وصول كامل لمدة سنة إلى {0} وحدات و{1} درس فيديو"],
- ["Adminga Telegram'dan yozish (@{0})", "Написать админу в Telegram (@{0})", "Message the admin on Telegram (@{0})", "Yöneticiye Telegram'dan yaz (@{0})", "راسل المشرف عبر Telegram (@{0})"],
- ["Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.", "Этот урок и его материалы — ДОВЕРЕННОЕ вам имущество, предоставленное только для личного использования.", "This lesson and its materials are ENTRUSTED to you for personal use only.", "Bu ders ve içindeki materyaller size yalnızca kişisel kullanımınız için verilmiş bir EMANETTİR.", "هذا الدرس وموادّه أمانةٌ مُنحت لك للاستخدام الشخصي فقط."],
- ["Darsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qatiyan taqiqlanadi.", "Строго запрещается пересылать уроки другим лицам, распространять, копировать, продавать или выкладывать в интернет.", "Sending lessons to others, distributing, copying, selling or posting them online is strictly prohibited.", "Dersleri başkalarına göndermek, dağıtmak, kopyalamak, satmak veya internette paylaşmak kesinlikle yasaktır.", "يُمنع منعاً باتاً إرسال الدروس إلى الآخرين أو توزيعها أو نسخها أو بيعها أو نشرها على الإنترنت."],
- ["Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.", "Пожалуйста, берегите доверенное вам и не распространяйте его.", "Please safeguard what has been entrusted to you and do not share it.", "Lütfen size verilen bu emanete sahip çıkın ve başkalarıyla paylaşmayın.", "يُرجى الحفاظ على هذه الأمانة وعدم نشرها للآخرين."],
- ["To'liq ko'rib bo'ldim (Keyingi darsni ochish)", "Я досмотрел полностью (открыть следующий урок)", "I've watched it fully (unlock the next lesson)", "Tamamen izledim (sonraki dersi aç)", "شاهدته بالكامل (فتح الدرس التالي)"],
- ["To'liq ko'rib bo'ldim (Tugallangan)", "Я досмотрел полностью (завершено)", "I've watched it fully (completed)", "Tamamen izledim (tamamlandı)", "شاهدته بالكامل (مكتمل)"],
- ["Admin Bilan Aloqa", "Связь с администратором", "Contact the Admin", "Yönetici ile İletişim", "التواصل مع المشرف"],
- ["Revit kursi bo'yicha savol yoki to'lov", "Вопрос или оплата по курсу Revit", "Questions or payment for the Revit course", "Revit kursu ile ilgili soru veya ödeme", "سؤال أو دفع بخصوص دورة Revit"],
- ["Savol, to'lov yoki texnik masalalar bo'yicha to'g'ridan-to'g'ri adminning shaxsiy chatiga yozing yoki telefon orqali bog'laning.", "По вопросам, оплате или техническим проблемам пишите напрямую администратору в личный чат или звоните по телефону.", "For questions, payment or technical issues, write directly to the admin's private chat or call by phone.", "Soru, ödeme veya teknik konular için doğrudan yöneticinin özel sohbetine yazın veya telefonla ulaşın.", "للأسئلة أو الدفع أو المشكلات التقنية، اكتب مباشرةً في الدردشة الخاصة بالمشرف أو اتصل هاتفياً."],
- ["Admin bilan Telegramda shaxsiy chat ochish", "Открыть личный чат с админом в Telegram", "Open a private chat with the admin on Telegram", "Telegram'da yöneticiyle özel sohbet aç", "فتح دردشة خاصة مع المشرف في Telegram"],
- ["Qaysi kurs bo'yicha so'rov yubormoqchisiz?", "По какому курсу вы хотите отправить заявку?", "Which course do you want to send a request for?", "Hangi kurs için talep göndermek istiyorsunuz?", "لأي دورة تريد إرسال طلب؟"],
- ["Kursga kirish so'rovini yuborish", "Отправить заявку на доступ к курсу", "Send a course access request", "Kursa erişim talebi gönder", "إرسال طلب الوصول إلى الدورة"],
- ["INTPRO — Revit Kursi (Pullik)", "INTPRO — курс Revit (платный)", "INTPRO — Revit Course (Paid)", "INTPRO — Revit Kursu (Ücretli)", "INTPRO — دورة Revit (مدفوعة)"],
- ["Kurs 11 ta modul va 140 ta darsdan iborat. Kursga to'liq a'zo bo'lish 1 yilga (365 kunga) beriladi.", "Курс состоит из 11 модулей и 140 уроков. Полный доступ к курсу предоставляется на 1 год (365 дней).", "The course has 11 modules and 140 lessons. Full course membership is granted for 1 year (365 days).", "Kurs 11 modül ve 140 dersten oluşur. Kursa tam üyelik 1 yıl (365 gün) için verilir.", "تتكون الدورة من 11 وحدة و140 درساً. تُمنح العضوية الكاملة لمدة سنة واحدة (365 يوماً)."],
- ["Kirish yo'q", "Нет доступа", "No access", "Erişim yok", "لا يوجد وصول"],
- ["Rasmiy hujjat", "Официальный документ", "Official document", "Resmî belge", "وثيقة رسمية"],
- ["YOSHUZBEKK platformasidan foydalanish shartlari va tartibi", "Условия и порядок использования платформы YOSHUZBEKK", "Terms and rules for using the YOSHUZBEKK platform", "YOSHUZBEKK platformunun kullanım koşulları ve kuralları", "شروط وقواعد استخدام منصة YOSHUZBEKK"],
- ["Umumiy qoidalar", "Общие положения", "General provisions", "Genel hükümler", "أحكام عامة"],
- ["Ushbu qoidalar YOSHUZBEKK ta'lim platformasi, uning Telegram Mini App interfeysi, barcha darsliklar, materiallar va xizmatlaridan foydalanish tartibini belgilaydi.", "Настоящие правила определяют порядок использования образовательной платформы YOSHUZBEKK, её интерфейса Telegram Mini App, всех уроков, материалов и услуг.", "These rules govern the use of the YOSHUZBEKK learning platform, its Telegram Mini App interface, and all lessons, materials and services.", "Bu kurallar YOSHUZBEKK eğitim platformunun, Telegram Mini App arayüzünün, tüm derslerin, materyallerin ve hizmetlerin kullanım düzenini belirler.", "تحدد هذه القواعد نظام استخدام منصة YOSHUZBEKK التعليمية وواجهة Telegram Mini App الخاصة بها وجميع الدروس والمواد والخدمات."],
- ["Platformadan ro'yxatdan o'tgan yoki undan foydalangan har bir shaxs ushbu qoidalar bilan to'liq tanishgan va ularga so'zsiz rozi bo'lgan hisoblanadi.", "Каждое лицо, зарегистрировавшееся на платформе или пользующееся ею, считается полностью ознакомленным с настоящими правилами и безоговорочно принявшим их.", "Anyone who registers on or uses the platform is deemed to have fully read and unconditionally accepted these rules.", "Platforma kayıt olan veya platformu kullanan herkes bu kuralları tamamen okumuş ve koşulsuz kabul etmiş sayılır.", "يُعدّ كل من سجّل في المنصة أو استخدمها قد اطّلع على هذه القواعد بالكامل ووافق عليها دون قيد أو شرط."],
- ["Agar foydalanuvchi ushbu qoidalarning biron bir bandiga rozi bo'lmasa, platformadan foydalanishni darhol to'xtatishi shart.", "Если пользователь не согласен с каким-либо пунктом правил, он обязан немедленно прекратить использование платформы.", "If a user disagrees with any provision of these rules, they must stop using the platform immediately.", "Kullanıcı bu kuralların herhangi bir maddesini kabul etmiyorsa platformu kullanmayı derhal bırakmalıdır.", "إذا لم يوافق المستخدم على أي بند من هذه القواعد، فعليه التوقف عن استخدام المنصة فوراً."],
- ["Foydalanuvchi majburiyatlari", "Обязанности пользователя", "User obligations", "Kullanıcı yükümlülükleri", "التزامات المستخدم"],
- ["Platformadan faqat qonuniy, shaxsiy va ta'lim maqsadlarida foydalanish.", "Использовать платформу только в законных, личных и образовательных целях.", "Use the platform only for lawful, personal and educational purposes.", "Platformu yalnızca yasal, kişisel ve eğitim amaçlı kullanmak.", "استخدام المنصة لأغراض قانونية وشخصية وتعليمية فقط."],
- ["O'z akkaunti xavfsizligini ta'minlash va unga uchinchi shaxslarning kirishiga yo'l qo'ymaslik.", "Обеспечивать безопасность своего аккаунта и не допускать к нему третьих лиц.", "Keep your account secure and do not allow third parties to access it.", "Kendi hesabının güvenliğini sağlamak ve üçüncü kişilerin erişimine izin vermemek.", "الحفاظ على أمان الحساب وعدم السماح لأطراف ثالثة بالوصول إليه."],
- ["Platformaning ishlashiga xalaqit beruvchi har qanday noqonuniy, zararli yoki ruxsatsiz texnik harakatlarni amalga oshirmaslik.", "Не совершать незаконных, вредоносных или несанкционированных технических действий, мешающих работе платформы.", "Do not perform any unlawful, harmful or unauthorized technical actions that interfere with the platform.", "Platformanın çalışmasını engelleyen yasa dışı, zararlı veya yetkisiz teknik işlemler yapmamak.", "عدم القيام بأي أفعال تقنية غير قانونية أو ضارة أو غير مصرّح بها تعيق عمل المنصة."],
- ["O'quv jarayonida, guruhlarda va platforma ichidagi muloqotda etika va o'zaro hurmat qoidalariga amal qilish.", "Соблюдать этику и взаимное уважение в учебном процессе, группах и общении на платформе.", "Follow ethics and mutual respect during learning, in groups and in communication on the platform.", "Eğitim sürecinde, gruplarda ve platform içi iletişimde etik ve karşılıklı saygı kurallarına uymak.", "الالتزام بالأخلاق والاحترام المتبادل أثناء التعلّم وفي المجموعات والتواصل داخل المنصة."],
- ["Intellektual mulk huquqlari", "Права на интеллектуальную собственность", "Intellectual property rights", "Fikrî mülkiyet hakları", "حقوق الملكية الفكرية"],
- ["Platformadagi barcha video darslar, audio materiallar, matnlar, taqdimotlar, Revit oilalari (families), shablonlar, testlar, qo'llanmalar va boshqa barcha kontentlar YOSHUZBEKK'ning intellektual mulki hisoblanadi.", "Все видеоуроки, аудиоматериалы, тексты, презентации, семейства Revit (families), шаблоны, тесты, руководства и прочий контент платформы являются интеллектуальной собственностью YOSHUZBEKK.", "All video lessons, audio, texts, presentations, Revit families, templates, tests, guides and other content on the platform are the intellectual property of YOSHUZBEKK.", "Platformadaki tüm video dersler, ses materyalleri, metinler, sunumlar, Revit aileleri (families), şablonlar, testler, kılavuzlar ve diğer tüm içerikler YOSHUZBEKK'in fikrî mülkiyetidir.", "جميع دروس الفيديو والمواد الصوتية والنصوص والعروض وعائلات Revit (families) والقوالب والاختبارات والأدلة وسائر المحتوى على المنصة ملكية فكرية لـ YOSHUZBEKK."],
- ["Foydalanuvchiga taqdim etilgan barcha o'quv materiallari faqat uning shaxsiy foydalanishi uchun berilgan omonat hisoblanadi.", "Все учебные материалы, предоставленные пользователю, доверены ему исключительно для личного использования.", "All learning materials provided to the user are entrusted to them for personal use only.", "Kullanıcıya sunulan tüm eğitim materyalleri yalnızca kişisel kullanımı için verilmiş bir emanettir.", "جميع المواد التعليمية المقدّمة للمستخدم أمانة مُنحت له للاستخدام الشخصي فقط."],
- ["Materiallarni nusxalash, qayta yozib olish (screen recording), uchinchi shaxslarga yuborish, internetda e'lon qilish, tarqatish, sotish yoki tijoriy maqsadlarda foydalanish qat'iyan man etiladi.", "Строго запрещается копировать материалы, записывать экран (screen recording), передавать третьим лицам, публиковать в интернете, распространять, продавать или использовать в коммерческих целях.", "Copying, screen recording, sending to third parties, publishing online, distributing, selling or using materials commercially is strictly prohibited.", "Materyalleri kopyalamak, ekran kaydı almak (screen recording), üçüncü kişilere göndermek, internette yayınlamak, dağıtmak, satmak veya ticari amaçla kullanmak kesinlikle yasaktır.", "يُمنع منعاً باتاً نسخ المواد أو تسجيل الشاشة (screen recording) أو إرسالها لأطراف ثالثة أو نشرها على الإنترنت أو توزيعها أو بيعها أو استخدامها تجارياً."],
- ["Mualliflik huquqlari buzilgan taqdirda, qonunchilikda belgilangan tartibda javobgarlik choralari ko'riladi.", "В случае нарушения авторских прав применяются меры ответственности в порядке, установленном законодательством.", "In case of copyright infringement, liability measures will be taken in accordance with the law.", "Telif haklarının ihlali durumunda mevzuatta belirtilen şekilde yaptırım uygulanır.", "في حال انتهاك حقوق المؤلف، تُتخذ إجراءات المساءلة وفقاً للقانون."],
- ["Yopiq va pullik materiallar tartibi", "Порядок доступа к закрытым и платным материалам", "Rules for closed and paid materials", "Kapalı ve ücretli materyaller düzeni", "نظام المواد المغلقة والمدفوعة"],
- ["Platformadagi pullik kurslar, yopiq darslar va maxsus materiallarga kirish huquqi faqat to'lov to'liq amalga oshirilgandan va ma'muriyat tomonidan tasdiqlangandan so'ng beriladi.", "Доступ к платным курсам, закрытым урокам и специальным материалам предоставляется только после полной оплаты и подтверждения администрацией.", "Access to paid courses, closed lessons and special materials is granted only after full payment and confirmation by the administration.", "Ücretli kurslara, kapalı derslere ve özel materyallere erişim yalnızca ödeme tamamen yapıldıktan ve yönetim tarafından onaylandıktan sonra verilir.", "يُمنح الوصول إلى الدورات المدفوعة والدروس المغلقة والمواد الخاصة فقط بعد إتمام الدفع بالكامل وتأكيده من الإدارة."],
- ["Berilgan kirish huquqi faqat to'lov qilgan bitta foydalanuvchiga tegishli bo'lib, uni boshqa shaxsga o'tkazish, ulashish yoki bir nechta qurilmadan bir vaqtda suiiste'mol qilish taqiqlanadi.", "Предоставленный доступ принадлежит только одному оплатившему пользователю; запрещается передавать его другим, делиться им или злоупотреблять, используя одновременно с нескольких устройств.", "Access belongs only to the single user who paid; transferring, sharing or abusing it from multiple devices at once is prohibited.", "Verilen erişim yalnızca ödeme yapan tek kullanıcıya aittir; başkasına devretmek, paylaşmak veya aynı anda birden fazla cihazdan kötüye kullanmak yasaktır.", "حق الوصول الممنوح يخص المستخدم الذي دفع فقط، ويُمنع نقله لشخص آخر أو مشاركته أو إساءة استخدامه من عدة أجهزة في آنٍ واحد."],
- ["Qoidalar buzilgan taqdirda, foydalanuvchining pullik materiallarga kirish huquqi to'lov qaytarilmasdan bekor qilinishi mumkin.", "В случае нарушения правил доступ пользователя к платным материалам может быть аннулирован без возврата оплаты.", "If the rules are violated, the user's access to paid materials may be revoked without a refund.", "Kuralların ihlali durumunda kullanıcının ücretli materyallere erişimi ödeme iadesi yapılmadan iptal edilebilir.", "في حال مخالفة القواعد، يجوز إلغاء وصول المستخدم إلى المواد المدفوعة دون استرداد المبلغ."],
- ["Natijalar va kafolatlar bo'yicha ogohlantirish", "Предупреждение о результатах и гарантиях", "Disclaimer on results and guarantees", "Sonuçlar ve garantilerle ilgili uyarı", "تنبيه بشأن النتائج والضمانات"],
- ["Platforma har bir o'quvchiga sifatli, tizimli va amaliy bilim berishga intiladi.", "Платформа стремится дать каждому ученику качественные, системные и практические знания.", "The platform strives to give every student high-quality, structured and practical knowledge.", "Platform her öğrenciye kaliteli, sistemli ve uygulamalı bilgi vermeyi amaçlar.", "تسعى المنصة إلى تقديم معرفة عالية الجودة ومنهجية وعملية لكل طالب."],
- ["O'quv natijasi foydalanuvchining shaxsiy mehnati, intizomi, amaliyot hajmi va mustaqil ishlashiga to'g'ridan-to'g'ri bog'liqdir.", "Результат обучения напрямую зависит от личного труда, дисциплины, объёма практики и самостоятельной работы пользователя.", "Learning outcomes depend directly on the user's own effort, discipline, amount of practice and independent work.", "Öğrenme sonucu doğrudan kullanıcının kişisel emeğine, disiplinine, pratik miktarına ve bağımsız çalışmasına bağlıdır.", "تعتمد نتيجة التعلّم مباشرةً على جهد المستخدم وانضباطه وحجم ممارسته وعمله المستقل."],
- ["Shu sababli, platforma foydalanuvchiga 100% natija, ishga joylashish yoki daromad kafolatini bermaydi.", "Поэтому платформа не гарантирует пользователю 100% результат, трудоустройство или доход.", "Therefore, the platform does not guarantee 100% results, employment or income.", "Bu nedenle platform kullanıcıya %100 sonuç, işe yerleşme veya gelir garantisi vermez.", "لذلك لا تضمن المنصة للمستخدم نتيجة 100% أو التوظيف أو الدخل."],
- ["Texnik talablar va javobgarlik chegarasi", "Технические требования и пределы ответственности", "Technical requirements and limitation of liability", "Teknik gereksinimler ve sorumluluk sınırı", "المتطلبات التقنية وحدود المسؤولية"],
- ["Platforma va unga integratsiya qilingan xizmatlarning barqaror ishlashi uchun barcha texnik choralar ko'riladi.", "Принимаются все технические меры для стабильной работы платформы и интегрированных с ней сервисов.", "All technical measures are taken to keep the platform and its integrated services running reliably.", "Platformun ve entegre hizmetlerin istikrarlı çalışması için tüm teknik önlemler alınır.", "تُتخذ جميع التدابير التقنية لضمان عمل المنصة والخدمات المدمجة بها بثبات."],
- ["Biroq foydalanuvchi tomonidagi internet sifati, qurilma nosozliklari, Telegram yoki boshqa uchinchi tomon xizmatlaridagi uzilishlar tufayli yuzaga kelgan nosozliklar uchun platforma javobgar emas.", "Однако платформа не несёт ответственности за сбои, вызванные качеством интернета пользователя, неисправностью устройства, перебоями в Telegram или других сторонних сервисах.", "However, the platform is not responsible for issues caused by the user's internet quality, device faults, or outages in Telegram or other third-party services.", "Ancak kullanıcının internet kalitesi, cihaz arızaları, Telegram veya diğer üçüncü taraf hizmetlerdeki kesintilerden kaynaklanan sorunlardan platform sorumlu değildir.", "ومع ذلك، لا تتحمل المنصة مسؤولية الأعطال الناتجة عن جودة إنترنت المستخدم أو أعطال الجهاز أو انقطاعات Telegram أو خدمات الأطراف الثالثة الأخرى."],
- ["Profilaktika yoki texnik yangilanishlar sababli platforma ishlashida qisqa muddatli uzilishlar bo'lishi mumkin.", "Из-за профилактики или технических обновлений возможны кратковременные перерывы в работе платформы.", "Short interruptions may occur due to maintenance or technical updates.", "Bakım veya teknik güncellemeler nedeniyle platformun çalışmasında kısa süreli kesintiler olabilir.", "قد تحدث انقطاعات قصيرة في عمل المنصة بسبب الصيانة أو التحديثات التقنية."],
- ["Akkaunt xavfsizligi va ma'lumotlar daxlsizligi", "Безопасность аккаунта и конфиденциальность данных", "Account security and data privacy", "Hesap güvenliği ve veri gizliliği", "أمان الحساب وخصوصية البيانات"],
- ["Foydalanuvchining shaxsiy ma'lumotlari (ism, telefon raqami, Telegram ma'lumotlari) faqat ta'lim jarayonini tashkil qilish, foydalanuvchini identifikatsiya qilish va u bilan bog'lanish maqsadida ishlatiladi.", "Персональные данные пользователя (имя, номер телефона, данные Telegram) используются только для организации обучения, идентификации пользователя и связи с ним.", "The user's personal data (name, phone number, Telegram data) is used only to organize learning, identify the user and contact them.", "Kullanıcının kişisel verileri (ad, telefon numarası, Telegram bilgileri) yalnızca eğitim sürecini düzenlemek, kullanıcıyı tanımlamak ve onunla iletişim kurmak amacıyla kullanılır.", "تُستخدم البيانات الشخصية للمستخدم (الاسم، رقم الهاتف، بيانات Telegram) فقط لتنظيم العملية التعليمية والتعرّف على المستخدم والتواصل معه."],
- ["Platforma foydalanuvchi ma'lumotlarining xavfsizligini ta'minlash choralarini ko'radi va ularni uchinchi shaxslarga bermaydi (qonunda nazarda tutilgan hollar bundan mustasno).", "Платформа принимает меры для защиты данных пользователей и не передаёт их третьим лицам (за исключением случаев, предусмотренных законом).", "The platform takes measures to protect user data and does not share it with third parties (except as required by law).", "Platform kullanıcı verilerinin güvenliğini sağlamak için önlem alır ve bunları üçüncü kişilere vermez (yasada öngörülen durumlar hariç).", "تتخذ المنصة تدابير لحماية بيانات المستخدمين ولا تقدّمها لأطراف ثالثة (باستثناء الحالات التي ينص عليها القانون)."],
- ["Foydalanuvchi o'zining Telegram akkaunti va unga ulangan qurilmalari xavfsizligi uchun shaxsan o'zi javobgar bo'ladi.", "Пользователь лично несёт ответственность за безопасность своего аккаунта Telegram и подключённых к нему устройств.", "The user is personally responsible for the security of their Telegram account and connected devices.", "Kullanıcı, Telegram hesabının ve ona bağlı cihazlarının güvenliğinden bizzat sorumludur.", "يتحمل المستخدم شخصياً مسؤولية أمان حسابه في Telegram والأجهزة المرتبطة به."],
- ["To'lovlar va xizmatlardan foydalanish", "Оплата и пользование услугами", "Payments and use of services", "Ödemeler ve hizmetlerin kullanımı", "المدفوعات واستخدام الخدمات"],
- ["Kurslar va xizmatlar uchun to'lovlar platformada ko'rsatilgan to'lov tizimlari yoki rasmiy tasdiqlangan usullar orqali amalga oshiriladi.", "Оплата курсов и услуг производится через указанные на платформе платёжные системы или официально подтверждённые способы.", "Payments for courses and services are made via the payment systems listed on the platform or officially approved methods.", "Kurs ve hizmet ödemeleri platformda belirtilen ödeme sistemleri veya resmî olarak onaylanmış yöntemlerle yapılır.", "تتم مدفوعات الدورات والخدمات عبر أنظمة الدفع المذكورة في المنصة أو الطرق المعتمدة رسمياً."],
- ["Foydalanuvchi to'lovni amalga oshirishdan oldin kurs dasturi, formati va shartlari bilan to'liq tanishib chiqishi shart.", "Перед оплатой пользователь обязан полностью ознакомиться с программой, форматом и условиями курса.", "Before paying, the user must fully review the course syllabus, format and terms.", "Kullanıcı ödeme yapmadan önce kurs programını, formatını ve koşullarını tamamen incelemelidir.", "يجب على المستخدم قبل الدفع الاطلاع الكامل على برنامج الدورة وتنسيقها وشروطها."],
- ["Xizmat ko'rsatish boshlanganidan, darslar ochilganidan yoki materiallar taqdim etilganidan so'ng, qonunda boshqacha tartib nazarda tutilmagan bo'lsa, to'lovlar qaytarilmaydi.", "После начала оказания услуг, открытия уроков или предоставления материалов оплата не возвращается, если законом не предусмотрено иное.", "Once services have started, lessons have been unlocked or materials provided, payments are non-refundable unless the law provides otherwise.", "Hizmet başladıktan, dersler açıldıktan veya materyaller sağlandıktan sonra, yasada aksi belirtilmedikçe ödemeler iade edilmez.", "بعد بدء تقديم الخدمة أو فتح الدروس أو تقديم المواد، لا تُسترد المدفوعات ما لم ينص القانون على خلاف ذلك."],
- ["Qoidalarni buzganlik uchun choralar", "Меры за нарушение правил", "Measures for rule violations", "Kural ihlallerine yönelik yaptırımlar", "الإجراءات المتخذة عند مخالفة القواعد"],
- ["Agar foydalanuvchi ushbu qoidalarni buzsa, etika doirasidan chiqsa, kontentni tarqatsa yoki noqonuniy harakatlarni sodir etsa, ma'muriyat quyidagi choralarni qo'llash huquqiga ega:", "Если пользователь нарушает правила, выходит за рамки этики, распространяет контент или совершает незаконные действия, администрация вправе применить следующие меры:", "If a user violates these rules, breaches ethics, distributes content or acts unlawfully, the administration may take the following measures:", "Kullanıcı bu kuralları ihlal ederse, etik sınırları aşarsa, içeriği dağıtırsa veya yasa dışı eylemlerde bulunursa yönetim aşağıdaki önlemleri alma hakkına sahiptir:", "إذا خالف المستخدم هذه القواعد أو تجاوز حدود الأخلاق أو نشر المحتوى أو ارتكب أفعالاً غير قانونية، يحق للإدارة اتخاذ الإجراءات التالية:"],
- ["– ogohlantirish berish;", "– вынесение предупреждения;", "– issuing a warning;", "– uyarı verme;", "– توجيه تحذير؛"],
- ["– platformadan foydalanishni vaqtincha cheklash;", "– временное ограничение доступа к платформе;", "– temporarily restricting use of the platform;", "– platform kullanımını geçici olarak kısıtlama;", "– تقييد استخدام المنصة مؤقتاً؛"],
- ["– akkauntni butunlay bloklash;", "– полная блокировка аккаунта;", "– permanently blocking the account;", "– hesabı tamamen engelleme;", "– حظر الحساب نهائياً؛"],
- ["– kurslar va materiallarga kirishni to'xtatish;", "– прекращение доступа к курсам и материалам;", "– suspending access to courses and materials;", "– kurslara ve materyallere erişimi durdurma;", "– إيقاف الوصول إلى الدورات والمواد؛"],
- ["– qonunbuzarlik holatlari bo'yicha vakolatli organlarga murojaat qilish.", "– обращение в уполномоченные органы по фактам правонарушений.", "– reporting violations to the competent authorities.", "– hukuka aykırılık durumlarında yetkili makamlara başvurma.", "– إبلاغ الجهات المختصة بحالات المخالفة القانونية."],
- ["Nizolarni hal qilish tartibi", "Порядок разрешения споров", "Dispute resolution", "Uyuşmazlıkların çözümü", "آلية حل النزاعات"],
- ["Platformadan foydalanish jarayonida kelib chiqadigan barcha tushunmovchiliklar va nizolar birinchi navbatda muzokaralar va o'zaro muloqot yo'li bilan hal qilinadi.", "Все разногласия и споры, возникающие при использовании платформы, в первую очередь решаются путём переговоров и диалога.", "All misunderstandings and disputes arising from use of the platform are first resolved through negotiation and dialogue.", "Platform kullanımında ortaya çıkan tüm anlaşmazlıklar öncelikle müzakere ve karşılıklı iletişim yoluyla çözülür.", "تُحل جميع الخلافات والنزاعات الناشئة عن استخدام المنصة أولاً عن طريق التفاوض والحوار المتبادل."],
- ["Foydalanuvchi o'z e'tirozlarini rasmiy qo'llab-quvvatlash xizmati orqali ma'muriyatga yuborishi mumkin.", "Пользователь может направить свои претензии администрации через официальную службу поддержки.", "The user may submit objections to the administration via the official support service.", "Kullanıcı itirazlarını resmî destek hizmeti aracılığıyla yönetime iletebilir.", "يمكن للمستخدم إرسال اعتراضاته إلى الإدارة عبر خدمة الدعم الرسمية."],
- ["Kelishuvga erishilmagan taqdirda, barcha nizolar O'zbekiston Respublikasining amaldagi qonunchiligiga muvofiq ko'rib chiqiladi.", "Если соглашение не достигнуто, все споры рассматриваются в соответствии с действующим законодательством Республики Узбекистан.", "If no agreement is reached, all disputes are handled under the current legislation of the Republic of Uzbekistan.", "Anlaşmaya varılamazsa tüm uyuşmazlıklar Özbekistan Cumhuriyeti'nin yürürlükteki mevzuatına göre incelenir.", "في حال عدم التوصل إلى اتفاق، تُنظر جميع النزاعات وفقاً للتشريعات النافذة في جمهورية أوزبكستان."],
- ["Qoidalarga o'zgartirish kiritish", "Изменение правил", "Changes to the rules", "Kurallarda değişiklik", "تعديل القواعد"],
- ["Platforma ma'muriyati ushbu qoidalarga istalgan vaqtda bir tomonlama tartibda o'zgartirish va qo'shimchalar kiritish huquqini o'zida saqlab qoladi.", "Администрация платформы оставляет за собой право в любое время в одностороннем порядке вносить изменения и дополнения в настоящие правила.", "The platform administration reserves the right to amend these rules unilaterally at any time.", "Platform yönetimi bu kurallarda istediği zaman tek taraflı olarak değişiklik ve ekleme yapma hakkını saklı tutar.", "تحتفظ إدارة المنصة بحق تعديل هذه القواعد أو الإضافة إليها في أي وقت وبشكل أحادي."],
- ["Yangilangan qoidalar platformada e'lon qilingan paytdan boshlab kuchga kiradi.", "Обновлённые правила вступают в силу с момента их публикации на платформе.", "Updated rules take effect from the moment they are published on the platform.", "Güncellenen kurallar platformda yayınlandığı andan itibaren yürürlüğe girer.", "تدخل القواعد المحدّثة حيّز التنفيذ من لحظة نشرها على المنصة."],
- ["Foydalanuvchining yangilanishlardan so'ng platformadan foydalanishni davom ettirishi uning yangi tahrirdagi qoidalarga rozi ekanligini bildiradi.", "Продолжение использования платформы после обновлений означает согласие пользователя с новой редакцией правил.", "Continuing to use the platform after updates means the user accepts the revised rules.", "Güncellemelerden sonra platformu kullanmaya devam etmek, kullanıcının yeni kuralları kabul ettiği anlamına gelir.", "استمرار المستخدم في استخدام المنصة بعد التحديثات يعني موافقته على القواعد بصيغتها الجديدة."],
- ["Yakuniy qoidalar", "Заключительные положения", "Final provisions", "Son hükümler", "أحكام ختامية"],
- ["Ushbu qoidalar platforma ma'muriyati va foydalanuvchi o'rtasidagi rasmiy kelishuv hujjati hisoblanadi.", "Настоящие правила являются официальным соглашением между администрацией платформы и пользователем.", "These rules constitute an official agreement between the platform administration and the user.", "Bu kurallar platform yönetimi ile kullanıcı arasındaki resmî anlaşma belgesidir.", "تُعدّ هذه القواعد وثيقة اتفاق رسمية بين إدارة المنصة والمستخدم."],
- ["Savollar, takliflar yoki murojaatlar uchun foydalanuvchi Profil bo'limidagi rasmiy qo'llab-quvvatlash aloqa manzillari orqali ma'muriyatga murojaat qilishi mumkin.", "С вопросами, предложениями или обращениями пользователь может обратиться к администрации через официальные контакты поддержки в разделе «Профиль».", "For questions, suggestions or requests, the user can contact the administration via the official support contacts in the Profile section.", "Sorular, öneriler veya başvurular için kullanıcı Profil bölümündeki resmî destek iletişim adresleri aracılığıyla yönetime başvurabilir.", "للأسئلة أو الاقتراحات أو الطلبات، يمكن للمستخدم التواصل مع الإدارة عبر جهات اتصال الدعم الرسمية في قسم الملف الشخصي."]
+ [
+  "Xush kelibsiz, {0}!",
+  "Добро пожаловать, {0}!",
+  "Welcome, {0}!",
+  "Hoş geldiniz, {0}!",
+  "أهلاً بك، {0}!"
+ ],
+ [
+  "Arxitektura, BIM, Interyer va Vizualizatsiya akademiyasi",
+  "Академия архитектуры, BIM, интерьера и визуализации",
+  "Academy of Architecture, BIM, Interior Design and Visualization",
+  "Mimarlık, BIM, İç Mimarlık ve Görselleştirme Akademisi",
+  "أكاديمية العمارة وBIM والتصميم الداخلي والتصوير"
+ ],
+ [
+  "Bepul namuna darslar progressi",
+  "Прогресс бесплатных пробных уроков",
+  "Free sample lessons progress",
+  "Ücretsiz örnek ders ilerlemesi",
+  "تقدّم الدروس التجريبية المجانية"
+ ],
+ [
+  "Bepul mini-kurs",
+  "Бесплатный мини-курс",
+  "Free mini-course",
+  "Ücretsiz mini kurs",
+  "دورة مصغّرة مجانية"
+ ],
+ [
+  "Revit dasturini birinchi marta o'rganayotganlar uchun bepul mini-kurs",
+  "Бесплатный мини-курс для тех, кто впервые изучает Revit",
+  "A free mini-course for those learning Revit for the first time",
+  "Revit'i ilk kez öğrenenler için ücretsiz mini kurs",
+  "دورة مصغّرة مجانية لمن يتعلّم Revit لأول مرة"
+ ],
+ [
+  "Revit dasturini birinchi marta o'rganayotganlar uchun bepul mini-kurs. Kerakli darsni tanlab o'rganishni boshlang:",
+  "Бесплатный мини-курс для тех, кто впервые изучает Revit. Выберите урок и начните обучение:",
+  "A free mini-course for those learning Revit for the first time. Choose a lesson and start learning:",
+  "Revit'i ilk kez öğrenenler için ücretsiz mini kurs. Bir ders seçin ve öğrenmeye başlayın:",
+  "دورة مصغّرة مجانية لمن يتعلّم Revit لأول مرة. اختر الدرس وابدأ التعلّم:"
+ ],
+ [
+  "{0} — bepul darslarni ochish",
+  "{0} — открыть бесплатные уроки",
+  "{0} — open free lessons",
+  "{0} — ücretsiz dersleri aç",
+  "{0} — فتح الدروس المجانية"
+ ],
+ [
+  "{0} • Bepul dars",
+  "{0} • Бесплатный урок",
+  "{0} • Free lesson",
+  "{0} • Ücretsiz ders",
+  "{0} • درس مجاني"
+ ],
+ [
+  "Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman. Zamonaviy loyihalash va modellashtirishni amaliyotda o'rgataman.",
+  "Ассалому алайкум! Я Абдуллох — специалист в области архитектуры, BIM, интерьера и визуализации. Обучаю современному проектированию и моделированию на практике.",
+  "Hello! I'm Abdulloh — a specialist in architecture, BIM, interior design and visualization. I teach modern design and modeling through practice.",
+  "Merhaba! Ben Abdulloh — mimarlık, BIM, iç mimarlık ve görselleştirme alanında çalışan bir uzmanım. Modern tasarım ve modellemeyi uygulamalı olarak öğretiyorum.",
+  "السلام عليكم! أنا عبد الله — متخصص في العمارة وBIM والتصميم الداخلي والتصوير. أُدرّس التصميم والنمذجة الحديثة بشكل عملي."
+ ],
+ [
+  "Assalomu alaykum! Men Abdulloh — arxitektura, BIM, interyer va vizualizatsiya yo'nalishida faoliyat yurituvchi mutaxassisman.",
+  "Ассалому алайкум! Я Абдуллох — специалист в области архитектуры, BIM, интерьера и визуализации.",
+  "Hello! I'm Abdulloh — a specialist in architecture, BIM, interior design and visualization.",
+  "Merhaba! Ben Abdulloh — mimarlık, BIM, iç mimarlık ve görselleştirme alanında çalışan bir uzmanım.",
+  "السلام عليكم! أنا عبد الله — متخصص في العمارة وBIM والتصميم الداخلي والتصوير."
+ ],
+ [
+  "Men real arxitektura, interyer va BIM loyihalarini yaratish, ishchi chizmalar tayyorlash hamda loyiha jarayonini tizimli tashkil qilish vositalarini amaliyotda 4 yildan beri qo'llab kelmoqdaman.",
+  "Уже более 4 лет я на практике создаю реальные архитектурные, интерьерные и BIM-проекты, готовлю рабочие чертежи и выстраиваю системный процесс проектирования.",
+  "For more than 4 years I have been creating real architectural, interior and BIM projects, preparing working drawings and organizing the design process systematically.",
+  "4 yılı aşkın süredir gerçek mimari, iç mekân ve BIM projeleri oluşturuyor, uygulama çizimleri hazırlıyor ve proje sürecini sistemli şekilde yönetiyorum.",
+  "منذ أكثر من 4 سنوات أعمل عملياً على إنشاء مشاريع معمارية وداخلية وBIM حقيقية، وإعداد الرسومات التنفيذية وتنظيم عملية التصميم بشكل منهجي."
+ ],
+ [
+  "Shu tajribalarimni boshqalar bilan professional tarzda bo'lishish maqsadida YOSHUZBEKK platformasini yaratdim.",
+  "Чтобы профессионально делиться этим опытом с другими, я создал платформу YOSHUZBEKK.",
+  "I created the YOSHUZBEKK platform to share this experience with others professionally.",
+  "Bu deneyimi başkalarıyla profesyonelce paylaşmak için YOSHUZBEKK platformunu kurdum.",
+  "أنشأتُ منصة YOSHUZBEKK لمشاركة هذه الخبرة مع الآخرين بشكل احترافي."
+ ],
+ [
+  "Batafsil ma'lumot",
+  "Подробнее",
+  "Learn more",
+  "Daha fazla bilgi",
+  "مزيد من المعلومات"
+ ],
+ [
+  "Yashirish",
+  "Скрыть",
+  "Hide",
+  "Gizle",
+  "إخفاء"
+ ],
+ [
+  "Barcha kurslar ({0})",
+  "Все курсы ({0})",
+  "All courses ({0})",
+  "Tüm kurslar ({0})",
+  "جميع الدورات ({0})"
+ ],
+ [
+  "{0} so'm",
+  "{0} сум",
+  "{0} UZS",
+  "{0} UZS",
+  "{0} سوم"
+ ],
+ [
+  "Darsga a'zo bo'lish",
+  "Записаться на курс",
+  "Join the course",
+  "Kursa katıl",
+  "الاشتراك في الدورة"
+ ],
+ [
+  "\"Darslar juda tushunarli va amaliy. Revitda loyiha chizishni 0 dan o'rgandim.\"",
+  "«Уроки очень понятные и практичные. Я научился проектировать в Revit с нуля.»",
+  "\"The lessons are very clear and practical. I learned to design in Revit from scratch.\"",
+  "\"Dersler çok anlaşılır ve uygulamalı. Revit'te proje çizmeyi sıfırdan öğrendim.\"",
+  "\"الدروس واضحة جداً وعملية. تعلّمت التصميم في Revit من الصفر.\""
+ ],
+ [
+  "\"Revit shablonlari va ishchi chizmalar tayyorlash bo'yicha eng zo'r akademiya!\"",
+  "«Лучшая академия по шаблонам Revit и подготовке рабочих чертежей!»",
+  "\"The best academy for Revit templates and working drawings!\"",
+  "\"Revit şablonları ve uygulama çizimleri konusunda en iyi akademi!\"",
+  "\"أفضل أكاديمية لقوالب Revit وإعداد الرسومات التنفيذية!\""
+ ],
+ [
+  "\"Har bir darsda yangi qulayliklar bor. Oilalar va materiallar kutubxonasi juda asqotdi.\"",
+  "«В каждом уроке есть новые полезные приёмы. Библиотека семейств и материалов очень пригодилась.»",
+  "\"Every lesson has new useful tricks. The families and materials library has been very helpful.\"",
+  "\"Her derste yeni kolaylıklar var. Aile ve malzeme kütüphanesi çok işe yaradı.\"",
+  "\"في كل درس حيل مفيدة جديدة. مكتبة العائلات والمواد كانت مفيدة جداً.\""
+ ],
+ [
+  "Kursga qanday to'lov qilaman?",
+  "Как оплатить курс?",
+  "How do I pay for the course?",
+  "Kurs ücretini nasıl öderim?",
+  "كيف أدفع رسوم الدورة؟"
+ ],
+ [
+  "Chat bo'limidan adminga murojaat qiling yoki Telegram orqali to'g'ridan-to'g'ri bog'laning.",
+  "Напишите администратору в разделе «Чат» или свяжитесь напрямую через Telegram.",
+  "Contact the admin in the Chat section or reach out directly via Telegram.",
+  "Sohbet bölümünden yöneticiye yazın veya doğrudan Telegram üzerinden iletişime geçin.",
+  "تواصل مع المشرف من قسم الدردشة أو مباشرةً عبر Telegram."
+ ],
+ [
+  "— Muallif: Admin",
+  "— Автор: Админ",
+  "— Author: Admin",
+  "— Yazar: Yönetici",
+  "— الكاتب: المشرف"
+ ],
+ [
+  "Kirish huquqi qancha muddatga beriladi?",
+  "На какой срок предоставляется доступ?",
+  "How long is access granted for?",
+  "Erişim ne kadar süreyle verilir?",
+  "ما مدة صلاحية الوصول؟"
+ ],
+ [
+  "To'lov tasdiqlangandan so'ng darslarga 1 yil (365 kun) davomida to'liq kirish huquqi beriladi.",
+  "После подтверждения оплаты предоставляется полный доступ к урокам на 1 год (365 дней).",
+  "After payment is confirmed, you get full access to the lessons for 1 year (365 days).",
+  "Ödeme onaylandıktan sonra derslere 1 yıl (365 gün) boyunca tam erişim verilir.",
+  "بعد تأكيد الدفع يُمنح وصول كامل إلى الدروس لمدة سنة واحدة (365 يوماً)."
+ ],
+ [
+  "Namuna darslarni ko'ra olamanmi?",
+  "Можно ли посмотреть пробные уроки?",
+  "Can I watch sample lessons?",
+  "Örnek dersleri izleyebilir miyim?",
+  "هل يمكنني مشاهدة دروس تجريبية؟"
+ ],
+ [
+  "Ha, ba'zi darslar hammaga bepul ochiq — Namuna belgisi bilan ko'rsatilgan.",
+  "Да, некоторые уроки открыты для всех бесплатно — они отмечены значком «Пробный».",
+  "Yes, some lessons are free and open to everyone — they are marked as Sample.",
+  "Evet, bazı dersler herkese ücretsiz açıktır — Örnek işaretiyle gösterilir.",
+  "نعم، بعض الدروس مفتوحة مجاناً للجميع — وهي معلَّمة بعلامة \"تجريبي\"."
+ ],
+ [
+  "Bizni ijtimoiy tarmoqlarda kuzating",
+  "Следите за нами в соцсетях",
+  "Follow us on social media",
+  "Bizi sosyal medyada takip edin",
+  "تابعونا على وسائل التواصل الاجتماعي"
+ ],
+ [
+  "© {0} YOSHUZBEKK. Barcha huquqlar himoyalangan.",
+  "© {0} YOSHUZBEKK. Все права защищены.",
+  "© {0} YOSHUZBEKK. All rights reserved.",
+  "© {0} YOSHUZBEKK. Tüm hakları saklıdır.",
+  "© {0} YOSHUZBEKK. جميع الحقوق محفوظة."
+ ],
+ [
+  "{0} ta modul · Kerakli modulni tanlang va darslarni boshlang:",
+  "Модулей: {0} · Выберите модуль и начните уроки:",
+  "{0} modules · Choose a module and start the lessons:",
+  "{0} modül · Bir modül seçin ve derslere başlayın:",
+  "{0} وحدات · اختر الوحدة وابدأ الدروس:"
+ ],
+ [
+  "{0}/{1} dars bajarildi",
+  "Пройдено уроков: {0}/{1}",
+  "{0}/{1} lessons completed",
+  "{0}/{1} ders tamamlandı",
+  "{0}/{1} دروس مكتملة"
+ ],
+ [
+  "Bepul namuna",
+  "Бесплатный пробный",
+  "Free sample",
+  "Ücretsiz örnek",
+  "عيّنة مجانية"
+ ],
+ [
+  "Pullik dars",
+  "Платный урок",
+  "Paid lesson",
+  "Ücretli ders",
+  "درس مدفوع"
+ ],
+ [
+  "Bosh sahifaga qaytish",
+  "Вернуться на главную",
+  "Back to home",
+  "Ana sayfaya dön",
+  "العودة إلى الصفحة الرئيسية"
+ ],
+ [
+  "Tavsiya etilgan parametrlar (Professional interyer & BIM)",
+  "Рекомендуемые параметры (профессиональный интерьер и BIM)",
+  "Recommended specs (Professional interior & BIM)",
+  "Önerilen özellikler (Profesyonel iç mimarlık ve BIM)",
+  "المواصفات الموصى بها (تصميم داخلي احترافي وBIM)"
+ ],
+ [
+  "Optimal & Professional",
+  "Оптимально и профессионально",
+  "Optimal & Professional",
+  "Optimal ve Profesyonel",
+  "مثالي واحترافي"
+ ],
+ [
+  "Intel Core i7 (13700F / 14700F) yoki AMD Ryzen 7 (7700X / 7800X3D)",
+  "Intel Core i7 (13700F / 14700F) или AMD Ryzen 7 (7700X / 7800X3D)",
+  "Intel Core i7 (13700F / 14700F) or AMD Ryzen 7 (7700X / 7800X3D)",
+  "Intel Core i7 (13700F / 14700F) veya AMD Ryzen 7 (7700X / 7800X3D)",
+  "Intel Core i7 (13700F / 14700F) أو AMD Ryzen 7 (7700X / 7800X3D)"
+ ],
+ [
+  "Revitda murakkab oilalar va 3ds Max Corona Renderda tezkor hisoblash uchun 16-20 yadro",
+  "16–20 ядер для сложных семейств в Revit и быстрого рендера Corona в 3ds Max",
+  "16–20 cores for complex Revit families and fast Corona rendering in 3ds Max",
+  "Revit'te karmaşık aileler ve 3ds Max Corona'da hızlı render için 16-20 çekirdek",
+  "16–20 نواة للعائلات المعقّدة في Revit والعرض السريع بـ Corona في 3ds Max"
+ ],
+ [
+  "Revitda 100+ MB hajmdagi ishchi loyihalarda qotishning oldini oladi",
+  "Предотвращает зависания в рабочих проектах Revit объёмом 100+ МБ",
+  "Prevents freezing in 100+ MB Revit working projects",
+  "Revit'te 100+ MB'lık projelerde donmaları önler",
+  "يمنع التجمّد في مشاريع Revit التي يتجاوز حجمها 100 ميغابايت"
+ ],
+ [
+  "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) yoki RTX 4070 (12GB VRAM)",
+  "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) или RTX 4070 (12GB VRAM)",
+  "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) or RTX 4070 (12GB VRAM)",
+  "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) veya RTX 4070 (12GB VRAM)",
+  "NVIDIA GeForce RTX 4060 Ti (8GB / 16GB) أو RTX 4070 (12GB VRAM)"
+ ],
+ [
+  "RTX nurlari tezlatkichi va sun'iy intellektli Denoiser uchun ideal",
+  "Идеально для RTX-ускорения трассировки лучей и AI-денойзера",
+  "Ideal for RTX ray-tracing acceleration and the AI Denoiser",
+  "RTX ışın izleme hızlandırma ve yapay zekâlı Denoiser için ideal",
+  "مثالي لتسريع تتبّع الأشعة RTX ومزيل الضوضاء بالذكاء الاصطناعي"
+ ],
+ [
+  "1 TB M.2 NVMe PCIe 4.0 SSD (Tezligi: 5000 - 7000 MB/s)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (скорость: 5000–7000 МБ/с)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (speed: 5000–7000 MB/s)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (hız: 5000 - 7000 MB/s)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (السرعة: 5000 - 7000 MB/s)"
+ ],
+ [
+  "Katta teksturalar va kutubxonalar bir zumda ochiladi",
+  "Большие текстуры и библиотеки открываются мгновенно",
+  "Large textures and libraries open instantly",
+  "Büyük dokular ve kütüphaneler anında açılır",
+  "تُفتح الخامات والمكتبات الكبيرة فوراً"
+ ],
+ [
+  "27 dyuym 2K QHD (2560x1440) IPS, 99-100% sRGB rang aniqligi",
+  "27 дюймов 2K QHD (2560x1440) IPS, точность цвета 99–100% sRGB",
+  "27-inch 2K QHD (2560x1440) IPS, 99–100% sRGB color accuracy",
+  "27 inç 2K QHD (2560x1440) IPS, %99-100 sRGB renk doğruluğu",
+  "27 بوصة 2K QHD (2560x1440) IPS، دقة ألوان 99-100% sRGB"
+ ],
+ [
+  "Chizmalardagi mayda detallar va interyer ranglari to'g'ri ko'rinadi",
+  "Мелкие детали чертежей и цвета интерьера отображаются точно",
+  "Fine drawing details and interior colors display accurately",
+  "Çizimlerdeki ince detaylar ve iç mekân renkleri doğru görünür",
+  "تظهر التفاصيل الدقيقة في الرسومات وألوان التصميم الداخلي بدقة"
+ ],
+ [
+  "750W 80+ Gold quvvat bloki, 240mm/360mm suv sovutish tizimi",
+  "Блок питания 750W 80+ Gold, водяное охлаждение 240mm/360mm",
+  "750W 80+ Gold power supply, 240mm/360mm liquid cooling",
+  "750W 80+ Gold güç kaynağı, 240mm/360mm sıvı soğutma",
+  "مزوّد طاقة 750W 80+ Gold، تبريد مائي 240mm/360mm"
+ ],
+ [
+  "Revitda to'liq 40-50 listlik ishchi loyiha (Rabochka) albomini chiqarish, 3ds Maxda fotorealistik Corona vizualizatsiyalarini tezkor olish uchun eng optimal tanlov!",
+  "Оптимальный выбор для выпуска полного альбома рабочего проекта (рабочки) на 40–50 листов в Revit и быстрой фотореалистичной визуализации Corona в 3ds Max!",
+  "The optimal choice for producing a full 40–50 sheet working drawing set in Revit and fast photorealistic Corona renders in 3ds Max!",
+  "Revit'te 40-50 paftalık eksiksiz uygulama projesi albümü çıkarmak ve 3ds Max'te hızlı fotogerçekçi Corona görselleri almak için en uygun seçim!",
+  "الخيار الأمثل لإخراج ألبوم مشروع تنفيذي كامل من 40-50 لوحة في Revit والحصول السريع على تصيير واقعي بـ Corona في 3ds Max!"
+ ],
+ [
+  "Tavsiya etilgan noutbuk (Ko'chma professional ish uchun)",
+  "Рекомендуемый ноутбук (для мобильной профессиональной работы)",
+  "Recommended laptop (for professional work on the go)",
+  "Önerilen dizüstü (taşınabilir profesyonel çalışma için)",
+  "حاسوب محمول موصى به (للعمل الاحترافي أثناء التنقّل)"
+ ],
+ [
+  "Optimal & Ishonchli",
+  "Оптимально и надёжно",
+  "Optimal & Reliable",
+  "Optimal ve Güvenilir",
+  "مثالي وموثوق"
+ ],
+ [
+  "Intel Core i7 (13700H / 14700HX) yoki AMD Ryzen 7 (7745HX / 7840HS)",
+  "Intel Core i7 (13700H / 14700HX) или AMD Ryzen 7 (7745HX / 7840HS)",
+  "Intel Core i7 (13700H / 14700HX) or AMD Ryzen 7 (7745HX / 7840HS)",
+  "Intel Core i7 (13700H / 14700HX) veya AMD Ryzen 7 (7745HX / 7840HS)",
+  "Intel Core i7 (13700H / 14700HX) أو AMD Ryzen 7 (7745HX / 7840HS)"
+ ],
+ [
+  "Yuqori takt chastotali kuchli noutbuk protsessori",
+  "Мощный ноутбучный процессор с высокой тактовой частотой",
+  "A powerful high-clock laptop processor",
+  "Yüksek saat hızına sahip güçlü dizüstü işlemcisi",
+  "معالج قوي للحاسوب المحمول بتردد عالٍ"
+ ],
+ [
+  "Revitda bir vaqtning o'zida AutoCAD va Photoshop bilan erkin ishlash imkoni",
+  "Свободная работа в Revit одновременно с AutoCAD и Photoshop",
+  "Work freely in Revit alongside AutoCAD and Photoshop at the same time",
+  "Revit'te aynı anda AutoCAD ve Photoshop ile rahat çalışma imkânı",
+  "إمكانية العمل بحرية في Revit مع AutoCAD وPhotoshop في الوقت نفسه"
+ ],
+ [
+  "NVIDIA GeForce RTX 4060 (8GB VRAM, to'liq 115W-140W TGP)",
+  "NVIDIA GeForce RTX 4060 (8GB VRAM, полный TGP 115W–140W)",
+  "NVIDIA GeForce RTX 4060 (8GB VRAM, full 115W–140W TGP)",
+  "NVIDIA GeForce RTX 4060 (8GB VRAM, tam 115W-140W TGP)",
+  "NVIDIA GeForce RTX 4060 (8GB VRAM، TGP كامل 115W-140W)"
+ ],
+ [
+  "Zamonaviy DLSS 3 va arxitektura vizualizatsiyasi uchun ideal",
+  "Идеально для современного DLSS 3 и архитектурной визуализации",
+  "Ideal for modern DLSS 3 and architectural visualization",
+  "Modern DLSS 3 ve mimari görselleştirme için ideal",
+  "مثالي لتقنية DLSS 3 الحديثة والتصوير المعماري"
+ ],
+ [
+  "1 TB M.2 NVMe PCIe 4.0 SSD (qo'shimcha 2-chi SSD sloti bilan)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (с дополнительным вторым слотом SSD)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (with an extra second SSD slot)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (ek ikinci SSD yuvası ile)",
+  "1 TB M.2 NVMe PCIe 4.0 SSD (مع منفذ SSD ثانٍ إضافي)"
+ ],
+ [
+  "Tezkor loyihalarni yuklash va saqlash",
+  "Быстрая загрузка и сохранение проектов",
+  "Fast project loading and saving",
+  "Projeleri hızlı yükleme ve kaydetme",
+  "تحميل المشاريع وحفظها بسرعة"
+ ],
+ [
+  "16 dyuym QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (16:10 format chizma uchun juda qulay)",
+  "16 дюймов QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (формат 16:10 очень удобен для чертежей)",
+  "16-inch QHD+ (2560x1600) IPS, 100% sRGB, 165Hz (the 16:10 format is great for drawings)",
+  "16 inç QHD+ (2560x1600) IPS, %100 sRGB, 165Hz (16:10 format çizim için çok rahat)",
+  "16 بوصة QHD+ (2560x1600) IPS، 100% sRGB، 165Hz (تنسيق 16:10 مريح جداً للرسم)"
+ ],
+ [
+  "Vertikal maydon kengroq bo'lib, Ribbon va xususiyatlar paneli sig'adi",
+  "Больше места по вертикали — помещаются лента (Ribbon) и панель свойств",
+  "More vertical space fits the Ribbon and the Properties panel",
+  "Dikey alan daha geniş olduğundan Ribbon ve özellikler paneli sığar",
+  "مساحة عمودية أكبر تتسع لشريط Ribbon ولوحة الخصائص"
+ ],
+ [
+  "Bug' kamerali (Vapor Chamber) ilg'or sovutish tizimi (Lenovo Legion 5 / Asus ROG Strix)",
+  "Продвинутое охлаждение с испарительной камерой (Vapor Chamber) (Lenovo Legion 5 / Asus ROG Strix)",
+  "Advanced vapor chamber cooling (Lenovo Legion 5 / Asus ROG Strix)",
+  "Buhar odalı (Vapor Chamber) gelişmiş soğutma sistemi (Lenovo Legion 5 / Asus ROG Strix)",
+  "نظام تبريد متقدّم بغرفة بخار (Vapor Chamber) (Lenovo Legion 5 / Asus ROG Strix)"
+ ],
+ [
+  "Ofisdan tashqarida, ob'ektlarda mijozlarga loyihani ko'rsatish va uzoq soatlab barqaror ishlash uchun eng qulay noutbuk!",
+  "Самый удобный ноутбук, чтобы показывать проект клиентам на объектах вне офиса и стабильно работать долгими часами!",
+  "The most convenient laptop for showing projects to clients on site and working reliably for long hours!",
+  "Ofis dışında, şantiyelerde müşterilere proje göstermek ve uzun saatler istikrarlı çalışmak için en uygun dizüstü!",
+  "أنسب حاسوب محمول لعرض المشروع على العملاء في المواقع خارج المكتب والعمل بثبات لساعات طويلة!"
+ ],
+ [
+  "Minimal noutbuk (Talabalar va boshlovchilar uchun)",
+  "Минимальный ноутбук (для студентов и начинающих)",
+  "Minimum laptop (for students and beginners)",
+  "Minimum dizüstü (öğrenciler ve yeni başlayanlar için)",
+  "الحد الأدنى للحاسوب المحمول (للطلاب والمبتدئين)"
+ ],
+ [
+  "Boshlang'ich",
+  "Начальный",
+  "Entry-level",
+  "Başlangıç",
+  "مبتدئ"
+ ],
+ [
+  "Intel Core i5 (12500H / 13500H) yoki AMD Ryzen 5 (6600H / 7535HS)",
+  "Intel Core i5 (12500H / 13500H) или AMD Ryzen 5 (6600H / 7535HS)",
+  "Intel Core i5 (12500H / 13500H) or AMD Ryzen 5 (6600H / 7535HS)",
+  "Intel Core i5 (12500H / 13500H) veya AMD Ryzen 5 (6600H / 7535HS)",
+  "Intel Core i5 (12500H / 13500H) أو AMD Ryzen 5 (6600H / 7535HS)"
+ ],
+ [
+  "H indeksli kuchaytirilgan protsessor bo'lishi shart (U yoki G seriyalar to'g'ri kelmaydi)",
+  "Обязательно производительный процессор с индексом H (серии U или G не подходят)",
+  "It must be a high-performance H-series processor (U or G series won't do)",
+  "H serisi güçlendirilmiş işlemci olmalıdır (U veya G serileri uygun değildir)",
+  "يجب أن يكون معالجاً عالي الأداء من فئة H (فئتا U وG غير مناسبتين)"
+ ],
+ [
+  "Keyinchalik 32GB ga oshirish uchun bo'sh slot borligini tekshiring",
+  "Проверьте наличие свободного слота для расширения до 32 ГБ",
+  "Make sure there's a free slot to upgrade to 32GB later",
+  "Daha sonra 32GB'a yükseltmek için boş yuva olduğunu kontrol edin",
+  "تأكد من وجود منفذ فارغ للترقية إلى 32GB لاحقاً"
+ ],
+ [
+  "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)",
+  "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)",
+  "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)",
+  "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)",
+  "NVIDIA GeForce RTX 3050 (4GB / 6GB VRAM, TGP 75W+)"
+ ],
+ [
+  "Integratsiyalangan videokartalar (Intel Iris / AMD Vega) bilan cheklanmang",
+  "Не ограничивайтесь встроенной графикой (Intel Iris / AMD Vega)",
+  "Don't settle for integrated graphics (Intel Iris / AMD Vega)",
+  "Dahili ekran kartlarıyla (Intel Iris / AMD Vega) yetinmeyin",
+  "لا تكتفِ ببطاقات الرسومات المدمجة (Intel Iris / AMD Vega)"
+ ],
+ [
+  "Revit va 3ds Max kutubxonalari uchun yetarli",
+  "Достаточно для библиотек Revit и 3ds Max",
+  "Enough for Revit and 3ds Max libraries",
+  "Revit ve 3ds Max kütüphaneleri için yeterli",
+  "كافٍ لمكتبات Revit و3ds Max"
+ ],
+ [
+  "15.6 dyuym Full HD (1920x1080) IPS, 144Hz",
+  "15,6 дюйма Full HD (1920x1080) IPS, 144Hz",
+  "15.6-inch Full HD (1920x1080) IPS, 144Hz",
+  "15.6 inç Full HD (1920x1080) IPS, 144Hz",
+  "15.6 بوصة Full HD (1920x1080) IPS، 144Hz"
+ ],
+ [
+  "Ko'rish burchagi keng va ko'z toliqmaydigan displey",
+  "Дисплей с широкими углами обзора, глаза не устают",
+  "Wide viewing angles and an eye-friendly display",
+  "Geniş görüş açılı ve gözü yormayan ekran",
+  "شاشة بزوايا رؤية واسعة ومريحة للعين"
+ ],
+ [
+  "2 ta mustaqil ventilatorli gaming korpus (Lenovo LOQ / Asus TUF / Acer Nitro)",
+  "Игровой корпус с 2 независимыми вентиляторами (Lenovo LOQ / Asus TUF / Acer Nitro)",
+  "Gaming chassis with 2 independent fans (Lenovo LOQ / Asus TUF / Acer Nitro)",
+  "2 bağımsız fanlı oyun kasası (Lenovo LOQ / Asus TUF / Acer Nitro)",
+  "هيكل ألعاب بمروحتين مستقلتين (Lenovo LOQ / Asus TUF / Acer Nitro)"
+ ],
+ [
+  "Yupqa ofis noutbuklarini aslo xarid qilmang! Ular og'ir yuklamada qizib, tezligini pasaytiradi (trottling). Gaming seriyalarni tanlang.",
+  "Ни в коем случае не покупайте тонкие офисные ноутбуки! Под нагрузкой они перегреваются и сбрасывают частоты (троттлинг). Выбирайте игровые серии.",
+  "Never buy thin office laptops! Under heavy load they overheat and slow down (throttling). Choose gaming series.",
+  "İnce ofis dizüstülerini asla almayın! Ağır yük altında ısınıp yavaşlarlar (throttling). Oyun serilerini seçin.",
+  "لا تشترِ أبداً الحواسيب المكتبية الرفيعة! فهي تسخن تحت الحمل وتنخفض سرعتها (throttling). اختر فئات الألعاب."
+ ],
+ [
+  "Maksimal mobil stansiya (Mobile Workstation)",
+  "Максимальная мобильная станция (Mobile Workstation)",
+  "Maximum mobile workstation",
+  "Maksimum mobil iş istasyonu (Mobile Workstation)",
+  "محطة عمل متنقلة قصوى (Mobile Workstation)"
+ ],
+ [
+  "Mobil Superkompyuter",
+  "Мобильный суперкомпьютер",
+  "Mobile supercomputer",
+  "Mobil süper bilgisayar",
+  "حاسوب فائق متنقل"
+ ],
+ [
+  "Intel Core i9 (13980HX / 14900HX) yoki AMD Ryzen 9 (7945HX)",
+  "Intel Core i9 (13980HX / 14900HX) или AMD Ryzen 9 (7945HX)",
+  "Intel Core i9 (13980HX / 14900HX) or AMD Ryzen 9 (7945HX)",
+  "Intel Core i9 (13980HX / 14900HX) veya AMD Ryzen 9 (7945HX)",
+  "Intel Core i9 (13980HX / 14900HX) أو AMD Ryzen 9 (7945HX)"
+ ],
+ [
+  "Stol usti protsessorlariga tenglashadigan 24 yadroli quvvat",
+  "24 ядра — мощность на уровне настольных процессоров",
+  "24-core power on par with desktop processors",
+  "Masaüstü işlemcilerle eşdeğer 24 çekirdekli güç",
+  "قوة 24 نواة تضاهي معالجات الحواسيب المكتبية"
+ ],
+ [
+  "Murakkab BIM koordinatsiyasi va katta shaharlar modeli uchun",
+  "Для сложной BIM-координации и моделей больших городов",
+  "For complex BIM coordination and large city models",
+  "Karmaşık BIM koordinasyonu ve büyük şehir modelleri için",
+  "لتنسيق BIM المعقّد ونماذج المدن الكبيرة"
+ ],
+ [
+  "NVIDIA GeForce RTX 4080 (12GB) yoki RTX 4090 (16GB VRAM, 175W Full Power)",
+  "NVIDIA GeForce RTX 4080 (12GB) или RTX 4090 (16GB VRAM, 175W Full Power)",
+  "NVIDIA GeForce RTX 4080 (12GB) or RTX 4090 (16GB VRAM, 175W Full Power)",
+  "NVIDIA GeForce RTX 4080 (12GB) veya RTX 4090 (16GB VRAM, 175W Full Power)",
+  "NVIDIA GeForce RTX 4080 (12GB) أو RTX 4090 (16GB VRAM، 175W Full Power)"
+ ],
+ [
+  "Mobil formatdagi eng yuqori grafika quvvati",
+  "Максимальная графическая мощность в мобильном формате",
+  "The highest graphics power in a mobile form factor",
+  "Mobil formatta en yüksek grafik gücü",
+  "أعلى قوة رسومية في حجم محمول"
+ ],
+ [
+  "Gigabaytlab og'ir Revit fayllari soniyalarda ochiladi",
+  "Тяжёлые файлы Revit в несколько гигабайт открываются за секунды",
+  "Multi-gigabyte Revit files open in seconds",
+  "Gigabaytlarca ağır Revit dosyaları saniyeler içinde açılır",
+  "تُفتح ملفات Revit الثقيلة بحجم غيغابايتات في ثوانٍ"
+ ],
+ [
+  "16 - 17.3 dyuym Mini-LED yoki 2.5K 240Hz, 100% DCI-P3 rang aniqligi",
+  "16–17,3 дюйма Mini-LED или 2.5K 240Hz, точность цвета 100% DCI-P3",
+  "16–17.3-inch Mini-LED or 2.5K 240Hz, 100% DCI-P3 color accuracy",
+  "16 - 17.3 inç Mini-LED veya 2.5K 240Hz, %100 DCI-P3 renk doğruluğu",
+  "16 - 17.3 بوصة Mini-LED أو 2.5K 240Hz، دقة ألوان 100% DCI-P3"
+ ],
+ [
+  "Ranglarni chop etishga tayyorlash uchun mutlaq aniqlik",
+  "Абсолютная точность при подготовке цветов к печати",
+  "Absolute accuracy when preparing colors for print",
+  "Renkleri baskıya hazırlarken mutlak doğruluk",
+  "دقة مطلقة عند تجهيز الألوان للطباعة"
+ ],
+ [
+  "Suyuq metall va katta issiqlik trubkalari (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)",
+  "Жидкий металл и крупные тепловые трубки (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)",
+  "Liquid metal and large heat pipes (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)",
+  "Sıvı metal ve büyük ısı boruları (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)",
+  "معدن سائل وأنابيب حرارية كبيرة (Lenovo Legion Pro 7 / Asus ROG SCAR 16/18)"
+ ],
+ [
+  "Stol usti kompyuteridan qolishmaydigan, xohlagan joyda og'ir renderlarni hisoblashga qodir flagman qurilma.",
+  "Флагманское устройство, не уступающее настольному ПК и способное считать тяжёлые рендеры где угодно.",
+  "A flagship device that rivals a desktop PC and can compute heavy renders anywhere.",
+  "Masaüstü bilgisayardan geri kalmayan, ağır renderları her yerde hesaplayabilen amiral gemisi cihaz.",
+  "جهاز رائد لا يقلّ عن الحاسوب المكتبي وقادر على معالجة التصيير الثقيل في أي مكان."
+ ],
+ [
+  "Boshqa",
+  "Другое",
+  "Other",
+  "Diğer",
+  "أخرى"
+ ],
+ [
+  "Sotuvda",
+  "В продаже",
+  "On sale",
+  "Satışta",
+  "متاح للبيع"
+ ],
+ [
+  "Faol kurs",
+  "Активный курс",
+  "Active course",
+  "Aktif kurs",
+  "دورة نشطة"
+ ],
+ [
+  "Narxi: {0}",
+  "Цена: {0}",
+  "Price: {0}",
+  "Fiyat: {0}",
+  "السعر: {0}"
+ ],
+ [
+  "Kurs a'zolariga nimalar beriladi:",
+  "Что получают участники курса:",
+  "What course members get:",
+  "Kurs üyelerine neler verilir:",
+  "ما الذي يحصل عليه المشتركون في الدورة:"
+ ],
+ [
+  "{0} ta modul va {1} ta video darsga 1 yil to'liq kirish",
+  "Полный доступ на 1 год к {0} модулям и {1} видеоурокам",
+  "1 year of full access to {0} modules and {1} video lessons",
+  "{0} modül ve {1} video derse 1 yıl tam erişim",
+  "وصول كامل لمدة سنة إلى {0} وحدات و{1} درس فيديو"
+ ],
+ [
+  "Adminga Telegram'dan yozish (@{0})",
+  "Написать админу в Telegram (@{0})",
+  "Message the admin on Telegram (@{0})",
+  "Yöneticiye Telegram'dan yaz (@{0})",
+  "راسل المشرف عبر Telegram (@{0})"
+ ],
+ [
+  "Ushbu darslik va undagi materiallar sizga faqat shaxsiy foydalanishingiz uchun berilgan OMONATdir.",
+  "Этот урок и его материалы — ДОВЕРЕННОЕ вам имущество, предоставленное только для личного использования.",
+  "This lesson and its materials are ENTRUSTED to you for personal use only.",
+  "Bu ders ve içindeki materyaller size yalnızca kişisel kullanımınız için verilmiş bir EMANETTİR.",
+  "هذا الدرس وموادّه أمانةٌ مُنحت لك للاستخدام الشخصي فقط."
+ ],
+ [
+  "Darsliklarni boshqa shaxslarga yuborish, tarqatish, nusxalash, sotish yoki internetga joylashtirish qatiyan taqiqlanadi.",
+  "Строго запрещается пересылать уроки другим лицам, распространять, копировать, продавать или выкладывать в интернет.",
+  "Sending lessons to others, distributing, copying, selling or posting them online is strictly prohibited.",
+  "Dersleri başkalarına göndermek, dağıtmak, kopyalamak, satmak veya internette paylaşmak kesinlikle yasaktır.",
+  "يُمنع منعاً باتاً إرسال الدروس إلى الآخرين أو توزيعها أو نسخها أو بيعها أو نشرها على الإنترنت."
+ ],
+ [
+  "Iltimos, sizga berilgan ushbu omonatni asrang va boshqalarga tarqatmang.",
+  "Пожалуйста, берегите доверенное вам и не распространяйте его.",
+  "Please safeguard what has been entrusted to you and do not share it.",
+  "Lütfen size verilen bu emanete sahip çıkın ve başkalarıyla paylaşmayın.",
+  "يُرجى الحفاظ على هذه الأمانة وعدم نشرها للآخرين."
+ ],
+ [
+  "To'liq ko'rib bo'ldim (Keyingi darsni ochish)",
+  "Я досмотрел полностью (открыть следующий урок)",
+  "I've watched it fully (unlock the next lesson)",
+  "Tamamen izledim (sonraki dersi aç)",
+  "شاهدته بالكامل (فتح الدرس التالي)"
+ ],
+ [
+  "To'liq ko'rib bo'ldim (Tugallangan)",
+  "Я досмотрел полностью (завершено)",
+  "I've watched it fully (completed)",
+  "Tamamen izledim (tamamlandı)",
+  "شاهدته بالكامل (مكتمل)"
+ ],
+ [
+  "Admin Bilan Aloqa",
+  "Связь с администратором",
+  "Contact the Admin",
+  "Yönetici ile İletişim",
+  "التواصل مع المشرف"
+ ],
+ [
+  "Revit kursi bo'yicha savol yoki to'lov",
+  "Вопрос или оплата по курсу Revit",
+  "Questions or payment for the Revit course",
+  "Revit kursu ile ilgili soru veya ödeme",
+  "سؤال أو دفع بخصوص دورة Revit"
+ ],
+ [
+  "Savol, to'lov yoki texnik masalalar bo'yicha to'g'ridan-to'g'ri adminning shaxsiy chatiga yozing yoki telefon orqali bog'laning.",
+  "По вопросам, оплате или техническим проблемам пишите напрямую администратору в личный чат или звоните по телефону.",
+  "For questions, payment or technical issues, write directly to the admin's private chat or call by phone.",
+  "Soru, ödeme veya teknik konular için doğrudan yöneticinin özel sohbetine yazın veya telefonla ulaşın.",
+  "للأسئلة أو الدفع أو المشكلات التقنية، اكتب مباشرةً في الدردشة الخاصة بالمشرف أو اتصل هاتفياً."
+ ],
+ [
+  "Admin bilan Telegramda shaxsiy chat ochish",
+  "Открыть личный чат с админом в Telegram",
+  "Open a private chat with the admin on Telegram",
+  "Telegram'da yöneticiyle özel sohbet aç",
+  "فتح دردشة خاصة مع المشرف في Telegram"
+ ],
+ [
+  "Qaysi kurs bo'yicha so'rov yubormoqchisiz?",
+  "По какому курсу вы хотите отправить заявку?",
+  "Which course do you want to send a request for?",
+  "Hangi kurs için talep göndermek istiyorsunuz?",
+  "لأي دورة تريد إرسال طلب؟"
+ ],
+ [
+  "Kursga kirish so'rovini yuborish",
+  "Отправить заявку на доступ к курсу",
+  "Send a course access request",
+  "Kursa erişim talebi gönder",
+  "إرسال طلب الوصول إلى الدورة"
+ ],
+ [
+  "INTPRO — Revit Kursi (Pullik)",
+  "INTPRO — курс Revit (платный)",
+  "INTPRO — Revit Course (Paid)",
+  "INTPRO — Revit Kursu (Ücretli)",
+  "INTPRO — دورة Revit (مدفوعة)"
+ ],
+ [
+  "Kurs 11 ta modul va 140 ta darsdan iborat. Kursga to'liq a'zo bo'lish 1 yilga (365 kunga) beriladi.",
+  "Курс состоит из 11 модулей и 140 уроков. Полный доступ к курсу предоставляется на 1 год (365 дней).",
+  "The course has 11 modules and 140 lessons. Full course membership is granted for 1 year (365 days).",
+  "Kurs 11 modül ve 140 dersten oluşur. Kursa tam üyelik 1 yıl (365 gün) için verilir.",
+  "تتكون الدورة من 11 وحدة و140 درساً. تُمنح العضوية الكاملة لمدة سنة واحدة (365 يوماً)."
+ ],
+ [
+  "Kirish yo'q",
+  "Нет доступа",
+  "No access",
+  "Erişim yok",
+  "لا يوجد وصول"
+ ],
+ [
+  "Rasmiy hujjat",
+  "Официальный документ",
+  "Official document",
+  "Resmî belge",
+  "وثيقة رسمية"
+ ],
+ [
+  "YOSHUZBEKK platformasidan foydalanish shartlari va tartibi",
+  "Условия и порядок использования платформы YOSHUZBEKK",
+  "Terms and rules for using the YOSHUZBEKK platform",
+  "YOSHUZBEKK platformunun kullanım koşulları ve kuralları",
+  "شروط وقواعد استخدام منصة YOSHUZBEKK"
+ ],
+ [
+  "Umumiy qoidalar",
+  "Общие положения",
+  "General provisions",
+  "Genel hükümler",
+  "أحكام عامة"
+ ],
+ [
+  "Ushbu qoidalar YOSHUZBEKK ta'lim platformasi, uning Telegram Mini App interfeysi, barcha darsliklar, materiallar va xizmatlaridan foydalanish tartibini belgilaydi.",
+  "Настоящие правила определяют порядок использования образовательной платформы YOSHUZBEKK, её интерфейса Telegram Mini App, всех уроков, материалов и услуг.",
+  "These rules govern the use of the YOSHUZBEKK learning platform, its Telegram Mini App interface, and all lessons, materials and services.",
+  "Bu kurallar YOSHUZBEKK eğitim platformunun, Telegram Mini App arayüzünün, tüm derslerin, materyallerin ve hizmetlerin kullanım düzenini belirler.",
+  "تحدد هذه القواعد نظام استخدام منصة YOSHUZBEKK التعليمية وواجهة Telegram Mini App الخاصة بها وجميع الدروس والمواد والخدمات."
+ ],
+ [
+  "Platformadan ro'yxatdan o'tgan yoki undan foydalangan har bir shaxs ushbu qoidalar bilan to'liq tanishgan va ularga so'zsiz rozi bo'lgan hisoblanadi.",
+  "Каждое лицо, зарегистрировавшееся на платформе или пользующееся ею, считается полностью ознакомленным с настоящими правилами и безоговорочно принявшим их.",
+  "Anyone who registers on or uses the platform is deemed to have fully read and unconditionally accepted these rules.",
+  "Platforma kayıt olan veya platformu kullanan herkes bu kuralları tamamen okumuş ve koşulsuz kabul etmiş sayılır.",
+  "يُعدّ كل من سجّل في المنصة أو استخدمها قد اطّلع على هذه القواعد بالكامل ووافق عليها دون قيد أو شرط."
+ ],
+ [
+  "Agar foydalanuvchi ushbu qoidalarning biron bir bandiga rozi bo'lmasa, platformadan foydalanishni darhol to'xtatishi shart.",
+  "Если пользователь не согласен с каким-либо пунктом правил, он обязан немедленно прекратить использование платформы.",
+  "If a user disagrees with any provision of these rules, they must stop using the platform immediately.",
+  "Kullanıcı bu kuralların herhangi bir maddesini kabul etmiyorsa platformu kullanmayı derhal bırakmalıdır.",
+  "إذا لم يوافق المستخدم على أي بند من هذه القواعد، فعليه التوقف عن استخدام المنصة فوراً."
+ ],
+ [
+  "Foydalanuvchi majburiyatlari",
+  "Обязанности пользователя",
+  "User obligations",
+  "Kullanıcı yükümlülükleri",
+  "التزامات المستخدم"
+ ],
+ [
+  "Platformadan faqat qonuniy, shaxsiy va ta'lim maqsadlarida foydalanish.",
+  "Использовать платформу только в законных, личных и образовательных целях.",
+  "Use the platform only for lawful, personal and educational purposes.",
+  "Platformu yalnızca yasal, kişisel ve eğitim amaçlı kullanmak.",
+  "استخدام المنصة لأغراض قانونية وشخصية وتعليمية فقط."
+ ],
+ [
+  "O'z akkaunti xavfsizligini ta'minlash va unga uchinchi shaxslarning kirishiga yo'l qo'ymaslik.",
+  "Обеспечивать безопасность своего аккаунта и не допускать к нему третьих лиц.",
+  "Keep your account secure and do not allow third parties to access it.",
+  "Kendi hesabının güvenliğini sağlamak ve üçüncü kişilerin erişimine izin vermemek.",
+  "الحفاظ على أمان الحساب وعدم السماح لأطراف ثالثة بالوصول إليه."
+ ],
+ [
+  "Platformaning ishlashiga xalaqit beruvchi har qanday noqonuniy, zararli yoki ruxsatsiz texnik harakatlarni amalga oshirmaslik.",
+  "Не совершать незаконных, вредоносных или несанкционированных технических действий, мешающих работе платформы.",
+  "Do not perform any unlawful, harmful or unauthorized technical actions that interfere with the platform.",
+  "Platformanın çalışmasını engelleyen yasa dışı, zararlı veya yetkisiz teknik işlemler yapmamak.",
+  "عدم القيام بأي أفعال تقنية غير قانونية أو ضارة أو غير مصرّح بها تعيق عمل المنصة."
+ ],
+ [
+  "O'quv jarayonida, guruhlarda va platforma ichidagi muloqotda etika va o'zaro hurmat qoidalariga amal qilish.",
+  "Соблюдать этику и взаимное уважение в учебном процессе, группах и общении на платформе.",
+  "Follow ethics and mutual respect during learning, in groups and in communication on the platform.",
+  "Eğitim sürecinde, gruplarda ve platform içi iletişimde etik ve karşılıklı saygı kurallarına uymak.",
+  "الالتزام بالأخلاق والاحترام المتبادل أثناء التعلّم وفي المجموعات والتواصل داخل المنصة."
+ ],
+ [
+  "Intellektual mulk huquqlari",
+  "Права на интеллектуальную собственность",
+  "Intellectual property rights",
+  "Fikrî mülkiyet hakları",
+  "حقوق الملكية الفكرية"
+ ],
+ [
+  "Platformadagi barcha video darslar, audio materiallar, matnlar, taqdimotlar, Revit oilalari (families), shablonlar, testlar, qo'llanmalar va boshqa barcha kontentlar YOSHUZBEKK'ning intellektual mulki hisoblanadi.",
+  "Все видеоуроки, аудиоматериалы, тексты, презентации, семейства Revit (families), шаблоны, тесты, руководства и прочий контент платформы являются интеллектуальной собственностью YOSHUZBEKK.",
+  "All video lessons, audio, texts, presentations, Revit families, templates, tests, guides and other content on the platform are the intellectual property of YOSHUZBEKK.",
+  "Platformadaki tüm video dersler, ses materyalleri, metinler, sunumlar, Revit aileleri (families), şablonlar, testler, kılavuzlar ve diğer tüm içerikler YOSHUZBEKK'in fikrî mülkiyetidir.",
+  "جميع دروس الفيديو والمواد الصوتية والنصوص والعروض وعائلات Revit (families) والقوالب والاختبارات والأدلة وسائر المحتوى على المنصة ملكية فكرية لـ YOSHUZBEKK."
+ ],
+ [
+  "Foydalanuvchiga taqdim etilgan barcha o'quv materiallari faqat uning shaxsiy foydalanishi uchun berilgan omonat hisoblanadi.",
+  "Все учебные материалы, предоставленные пользователю, доверены ему исключительно для личного использования.",
+  "All learning materials provided to the user are entrusted to them for personal use only.",
+  "Kullanıcıya sunulan tüm eğitim materyalleri yalnızca kişisel kullanımı için verilmiş bir emanettir.",
+  "جميع المواد التعليمية المقدّمة للمستخدم أمانة مُنحت له للاستخدام الشخصي فقط."
+ ],
+ [
+  "Materiallarni nusxalash, qayta yozib olish (screen recording), uchinchi shaxslarga yuborish, internetda e'lon qilish, tarqatish, sotish yoki tijoriy maqsadlarda foydalanish qat'iyan man etiladi.",
+  "Строго запрещается копировать материалы, записывать экран (screen recording), передавать третьим лицам, публиковать в интернете, распространять, продавать или использовать в коммерческих целях.",
+  "Copying, screen recording, sending to third parties, publishing online, distributing, selling or using materials commercially is strictly prohibited.",
+  "Materyalleri kopyalamak, ekran kaydı almak (screen recording), üçüncü kişilere göndermek, internette yayınlamak, dağıtmak, satmak veya ticari amaçla kullanmak kesinlikle yasaktır.",
+  "يُمنع منعاً باتاً نسخ المواد أو تسجيل الشاشة (screen recording) أو إرسالها لأطراف ثالثة أو نشرها على الإنترنت أو توزيعها أو بيعها أو استخدامها تجارياً."
+ ],
+ [
+  "Mualliflik huquqlari buzilgan taqdirda, qonunchilikda belgilangan tartibda javobgarlik choralari ko'riladi.",
+  "В случае нарушения авторских прав применяются меры ответственности в порядке, установленном законодательством.",
+  "In case of copyright infringement, liability measures will be taken in accordance with the law.",
+  "Telif haklarının ihlali durumunda mevzuatta belirtilen şekilde yaptırım uygulanır.",
+  "في حال انتهاك حقوق المؤلف، تُتخذ إجراءات المساءلة وفقاً للقانون."
+ ],
+ [
+  "Yopiq va pullik materiallar tartibi",
+  "Порядок доступа к закрытым и платным материалам",
+  "Rules for closed and paid materials",
+  "Kapalı ve ücretli materyaller düzeni",
+  "نظام المواد المغلقة والمدفوعة"
+ ],
+ [
+  "Platformadagi pullik kurslar, yopiq darslar va maxsus materiallarga kirish huquqi faqat to'lov to'liq amalga oshirilgandan va ma'muriyat tomonidan tasdiqlangandan so'ng beriladi.",
+  "Доступ к платным курсам, закрытым урокам и специальным материалам предоставляется только после полной оплаты и подтверждения администрацией.",
+  "Access to paid courses, closed lessons and special materials is granted only after full payment and confirmation by the administration.",
+  "Ücretli kurslara, kapalı derslere ve özel materyallere erişim yalnızca ödeme tamamen yapıldıktan ve yönetim tarafından onaylandıktan sonra verilir.",
+  "يُمنح الوصول إلى الدورات المدفوعة والدروس المغلقة والمواد الخاصة فقط بعد إتمام الدفع بالكامل وتأكيده من الإدارة."
+ ],
+ [
+  "Berilgan kirish huquqi faqat to'lov qilgan bitta foydalanuvchiga tegishli bo'lib, uni boshqa shaxsga o'tkazish, ulashish yoki bir nechta qurilmadan bir vaqtda suiiste'mol qilish taqiqlanadi.",
+  "Предоставленный доступ принадлежит только одному оплатившему пользователю; запрещается передавать его другим, делиться им или злоупотреблять, используя одновременно с нескольких устройств.",
+  "Access belongs only to the single user who paid; transferring, sharing or abusing it from multiple devices at once is prohibited.",
+  "Verilen erişim yalnızca ödeme yapan tek kullanıcıya aittir; başkasına devretmek, paylaşmak veya aynı anda birden fazla cihazdan kötüye kullanmak yasaktır.",
+  "حق الوصول الممنوح يخص المستخدم الذي دفع فقط، ويُمنع نقله لشخص آخر أو مشاركته أو إساءة استخدامه من عدة أجهزة في آنٍ واحد."
+ ],
+ [
+  "Qoidalar buzilgan taqdirda, foydalanuvchining pullik materiallarga kirish huquqi to'lov qaytarilmasdan bekor qilinishi mumkin.",
+  "В случае нарушения правил доступ пользователя к платным материалам может быть аннулирован без возврата оплаты.",
+  "If the rules are violated, the user's access to paid materials may be revoked without a refund.",
+  "Kuralların ihlali durumunda kullanıcının ücretli materyallere erişimi ödeme iadesi yapılmadan iptal edilebilir.",
+  "في حال مخالفة القواعد، يجوز إلغاء وصول المستخدم إلى المواد المدفوعة دون استرداد المبلغ."
+ ],
+ [
+  "Natijalar va kafolatlar bo'yicha ogohlantirish",
+  "Предупреждение о результатах и гарантиях",
+  "Disclaimer on results and guarantees",
+  "Sonuçlar ve garantilerle ilgili uyarı",
+  "تنبيه بشأن النتائج والضمانات"
+ ],
+ [
+  "Platforma har bir o'quvchiga sifatli, tizimli va amaliy bilim berishga intiladi.",
+  "Платформа стремится дать каждому ученику качественные, системные и практические знания.",
+  "The platform strives to give every student high-quality, structured and practical knowledge.",
+  "Platform her öğrenciye kaliteli, sistemli ve uygulamalı bilgi vermeyi amaçlar.",
+  "تسعى المنصة إلى تقديم معرفة عالية الجودة ومنهجية وعملية لكل طالب."
+ ],
+ [
+  "O'quv natijasi foydalanuvchining shaxsiy mehnati, intizomi, amaliyot hajmi va mustaqil ishlashiga to'g'ridan-to'g'ri bog'liqdir.",
+  "Результат обучения напрямую зависит от личного труда, дисциплины, объёма практики и самостоятельной работы пользователя.",
+  "Learning outcomes depend directly on the user's own effort, discipline, amount of practice and independent work.",
+  "Öğrenme sonucu doğrudan kullanıcının kişisel emeğine, disiplinine, pratik miktarına ve bağımsız çalışmasına bağlıdır.",
+  "تعتمد نتيجة التعلّم مباشرةً على جهد المستخدم وانضباطه وحجم ممارسته وعمله المستقل."
+ ],
+ [
+  "Shu sababli, platforma foydalanuvchiga 100% natija, ishga joylashish yoki daromad kafolatini bermaydi.",
+  "Поэтому платформа не гарантирует пользователю 100% результат, трудоустройство или доход.",
+  "Therefore, the platform does not guarantee 100% results, employment or income.",
+  "Bu nedenle platform kullanıcıya %100 sonuç, işe yerleşme veya gelir garantisi vermez.",
+  "لذلك لا تضمن المنصة للمستخدم نتيجة 100% أو التوظيف أو الدخل."
+ ],
+ [
+  "Texnik talablar va javobgarlik chegarasi",
+  "Технические требования и пределы ответственности",
+  "Technical requirements and limitation of liability",
+  "Teknik gereksinimler ve sorumluluk sınırı",
+  "المتطلبات التقنية وحدود المسؤولية"
+ ],
+ [
+  "Platforma va unga integratsiya qilingan xizmatlarning barqaror ishlashi uchun barcha texnik choralar ko'riladi.",
+  "Принимаются все технические меры для стабильной работы платформы и интегрированных с ней сервисов.",
+  "All technical measures are taken to keep the platform and its integrated services running reliably.",
+  "Platformun ve entegre hizmetlerin istikrarlı çalışması için tüm teknik önlemler alınır.",
+  "تُتخذ جميع التدابير التقنية لضمان عمل المنصة والخدمات المدمجة بها بثبات."
+ ],
+ [
+  "Biroq foydalanuvchi tomonidagi internet sifati, qurilma nosozliklari, Telegram yoki boshqa uchinchi tomon xizmatlaridagi uzilishlar tufayli yuzaga kelgan nosozliklar uchun platforma javobgar emas.",
+  "Однако платформа не несёт ответственности за сбои, вызванные качеством интернета пользователя, неисправностью устройства, перебоями в Telegram или других сторонних сервисах.",
+  "However, the platform is not responsible for issues caused by the user's internet quality, device faults, or outages in Telegram or other third-party services.",
+  "Ancak kullanıcının internet kalitesi, cihaz arızaları, Telegram veya diğer üçüncü taraf hizmetlerdeki kesintilerden kaynaklanan sorunlardan platform sorumlu değildir.",
+  "ومع ذلك، لا تتحمل المنصة مسؤولية الأعطال الناتجة عن جودة إنترنت المستخدم أو أعطال الجهاز أو انقطاعات Telegram أو خدمات الأطراف الثالثة الأخرى."
+ ],
+ [
+  "Profilaktika yoki texnik yangilanishlar sababli platforma ishlashida qisqa muddatli uzilishlar bo'lishi mumkin.",
+  "Из-за профилактики или технических обновлений возможны кратковременные перерывы в работе платформы.",
+  "Short interruptions may occur due to maintenance or technical updates.",
+  "Bakım veya teknik güncellemeler nedeniyle platformun çalışmasında kısa süreli kesintiler olabilir.",
+  "قد تحدث انقطاعات قصيرة في عمل المنصة بسبب الصيانة أو التحديثات التقنية."
+ ],
+ [
+  "Akkaunt xavfsizligi va ma'lumotlar daxlsizligi",
+  "Безопасность аккаунта и конфиденциальность данных",
+  "Account security and data privacy",
+  "Hesap güvenliği ve veri gizliliği",
+  "أمان الحساب وخصوصية البيانات"
+ ],
+ [
+  "Foydalanuvchining shaxsiy ma'lumotlari (ism, telefon raqami, Telegram ma'lumotlari) faqat ta'lim jarayonini tashkil qilish, foydalanuvchini identifikatsiya qilish va u bilan bog'lanish maqsadida ishlatiladi.",
+  "Персональные данные пользователя (имя, номер телефона, данные Telegram) используются только для организации обучения, идентификации пользователя и связи с ним.",
+  "The user's personal data (name, phone number, Telegram data) is used only to organize learning, identify the user and contact them.",
+  "Kullanıcının kişisel verileri (ad, telefon numarası, Telegram bilgileri) yalnızca eğitim sürecini düzenlemek, kullanıcıyı tanımlamak ve onunla iletişim kurmak amacıyla kullanılır.",
+  "تُستخدم البيانات الشخصية للمستخدم (الاسم، رقم الهاتف، بيانات Telegram) فقط لتنظيم العملية التعليمية والتعرّف على المستخدم والتواصل معه."
+ ],
+ [
+  "Platforma foydalanuvchi ma'lumotlarining xavfsizligini ta'minlash choralarini ko'radi va ularni uchinchi shaxslarga bermaydi (qonunda nazarda tutilgan hollar bundan mustasno).",
+  "Платформа принимает меры для защиты данных пользователей и не передаёт их третьим лицам (за исключением случаев, предусмотренных законом).",
+  "The platform takes measures to protect user data and does not share it with third parties (except as required by law).",
+  "Platform kullanıcı verilerinin güvenliğini sağlamak için önlem alır ve bunları üçüncü kişilere vermez (yasada öngörülen durumlar hariç).",
+  "تتخذ المنصة تدابير لحماية بيانات المستخدمين ولا تقدّمها لأطراف ثالثة (باستثناء الحالات التي ينص عليها القانون)."
+ ],
+ [
+  "Foydalanuvchi o'zining Telegram akkaunti va unga ulangan qurilmalari xavfsizligi uchun shaxsan o'zi javobgar bo'ladi.",
+  "Пользователь лично несёт ответственность за безопасность своего аккаунта Telegram и подключённых к нему устройств.",
+  "The user is personally responsible for the security of their Telegram account and connected devices.",
+  "Kullanıcı, Telegram hesabının ve ona bağlı cihazlarının güvenliğinden bizzat sorumludur.",
+  "يتحمل المستخدم شخصياً مسؤولية أمان حسابه في Telegram والأجهزة المرتبطة به."
+ ],
+ [
+  "To'lovlar va xizmatlardan foydalanish",
+  "Оплата и пользование услугами",
+  "Payments and use of services",
+  "Ödemeler ve hizmetlerin kullanımı",
+  "المدفوعات واستخدام الخدمات"
+ ],
+ [
+  "Kurslar va xizmatlar uchun to'lovlar platformada ko'rsatilgan to'lov tizimlari yoki rasmiy tasdiqlangan usullar orqali amalga oshiriladi.",
+  "Оплата курсов и услуг производится через указанные на платформе платёжные системы или официально подтверждённые способы.",
+  "Payments for courses and services are made via the payment systems listed on the platform or officially approved methods.",
+  "Kurs ve hizmet ödemeleri platformda belirtilen ödeme sistemleri veya resmî olarak onaylanmış yöntemlerle yapılır.",
+  "تتم مدفوعات الدورات والخدمات عبر أنظمة الدفع المذكورة في المنصة أو الطرق المعتمدة رسمياً."
+ ],
+ [
+  "Foydalanuvchi to'lovni amalga oshirishdan oldin kurs dasturi, formati va shartlari bilan to'liq tanishib chiqishi shart.",
+  "Перед оплатой пользователь обязан полностью ознакомиться с программой, форматом и условиями курса.",
+  "Before paying, the user must fully review the course syllabus, format and terms.",
+  "Kullanıcı ödeme yapmadan önce kurs programını, formatını ve koşullarını tamamen incelemelidir.",
+  "يجب على المستخدم قبل الدفع الاطلاع الكامل على برنامج الدورة وتنسيقها وشروطها."
+ ],
+ [
+  "Xizmat ko'rsatish boshlanganidan, darslar ochilganidan yoki materiallar taqdim etilganidan so'ng, qonunda boshqacha tartib nazarda tutilmagan bo'lsa, to'lovlar qaytarilmaydi.",
+  "После начала оказания услуг, открытия уроков или предоставления материалов оплата не возвращается, если законом не предусмотрено иное.",
+  "Once services have started, lessons have been unlocked or materials provided, payments are non-refundable unless the law provides otherwise.",
+  "Hizmet başladıktan, dersler açıldıktan veya materyaller sağlandıktan sonra, yasada aksi belirtilmedikçe ödemeler iade edilmez.",
+  "بعد بدء تقديم الخدمة أو فتح الدروس أو تقديم المواد، لا تُسترد المدفوعات ما لم ينص القانون على خلاف ذلك."
+ ],
+ [
+  "Qoidalarni buzganlik uchun choralar",
+  "Меры за нарушение правил",
+  "Measures for rule violations",
+  "Kural ihlallerine yönelik yaptırımlar",
+  "الإجراءات المتخذة عند مخالفة القواعد"
+ ],
+ [
+  "Agar foydalanuvchi ushbu qoidalarni buzsa, etika doirasidan chiqsa, kontentni tarqatsa yoki noqonuniy harakatlarni sodir etsa, ma'muriyat quyidagi choralarni qo'llash huquqiga ega:",
+  "Если пользователь нарушает правила, выходит за рамки этики, распространяет контент или совершает незаконные действия, администрация вправе применить следующие меры:",
+  "If a user violates these rules, breaches ethics, distributes content or acts unlawfully, the administration may take the following measures:",
+  "Kullanıcı bu kuralları ihlal ederse, etik sınırları aşarsa, içeriği dağıtırsa veya yasa dışı eylemlerde bulunursa yönetim aşağıdaki önlemleri alma hakkına sahiptir:",
+  "إذا خالف المستخدم هذه القواعد أو تجاوز حدود الأخلاق أو نشر المحتوى أو ارتكب أفعالاً غير قانونية، يحق للإدارة اتخاذ الإجراءات التالية:"
+ ],
+ [
+  "– ogohlantirish berish;",
+  "– вынесение предупреждения;",
+  "– issuing a warning;",
+  "– uyarı verme;",
+  "– توجيه تحذير؛"
+ ],
+ [
+  "– platformadan foydalanishni vaqtincha cheklash;",
+  "– временное ограничение доступа к платформе;",
+  "– temporarily restricting use of the platform;",
+  "– platform kullanımını geçici olarak kısıtlama;",
+  "– تقييد استخدام المنصة مؤقتاً؛"
+ ],
+ [
+  "– akkauntni butunlay bloklash;",
+  "– полная блокировка аккаунта;",
+  "– permanently blocking the account;",
+  "– hesabı tamamen engelleme;",
+  "– حظر الحساب نهائياً؛"
+ ],
+ [
+  "– kurslar va materiallarga kirishni to'xtatish;",
+  "– прекращение доступа к курсам и материалам;",
+  "– suspending access to courses and materials;",
+  "– kurslara ve materyallere erişimi durdurma;",
+  "– إيقاف الوصول إلى الدورات والمواد؛"
+ ],
+ [
+  "– qonunbuzarlik holatlari bo'yicha vakolatli organlarga murojaat qilish.",
+  "– обращение в уполномоченные органы по фактам правонарушений.",
+  "– reporting violations to the competent authorities.",
+  "– hukuka aykırılık durumlarında yetkili makamlara başvurma.",
+  "– إبلاغ الجهات المختصة بحالات المخالفة القانونية."
+ ],
+ [
+  "Nizolarni hal qilish tartibi",
+  "Порядок разрешения споров",
+  "Dispute resolution",
+  "Uyuşmazlıkların çözümü",
+  "آلية حل النزاعات"
+ ],
+ [
+  "Platformadan foydalanish jarayonida kelib chiqadigan barcha tushunmovchiliklar va nizolar birinchi navbatda muzokaralar va o'zaro muloqot yo'li bilan hal qilinadi.",
+  "Все разногласия и споры, возникающие при использовании платформы, в первую очередь решаются путём переговоров и диалога.",
+  "All misunderstandings and disputes arising from use of the platform are first resolved through negotiation and dialogue.",
+  "Platform kullanımında ortaya çıkan tüm anlaşmazlıklar öncelikle müzakere ve karşılıklı iletişim yoluyla çözülür.",
+  "تُحل جميع الخلافات والنزاعات الناشئة عن استخدام المنصة أولاً عن طريق التفاوض والحوار المتبادل."
+ ],
+ [
+  "Foydalanuvchi o'z e'tirozlarini rasmiy qo'llab-quvvatlash xizmati orqali ma'muriyatga yuborishi mumkin.",
+  "Пользователь может направить свои претензии администрации через официальную службу поддержки.",
+  "The user may submit objections to the administration via the official support service.",
+  "Kullanıcı itirazlarını resmî destek hizmeti aracılığıyla yönetime iletebilir.",
+  "يمكن للمستخدم إرسال اعتراضاته إلى الإدارة عبر خدمة الدعم الرسمية."
+ ],
+ [
+  "Kelishuvga erishilmagan taqdirda, barcha nizolar O'zbekiston Respublikasining amaldagi qonunchiligiga muvofiq ko'rib chiqiladi.",
+  "Если соглашение не достигнуто, все споры рассматриваются в соответствии с действующим законодательством Республики Узбекистан.",
+  "If no agreement is reached, all disputes are handled under the current legislation of the Republic of Uzbekistan.",
+  "Anlaşmaya varılamazsa tüm uyuşmazlıklar Özbekistan Cumhuriyeti'nin yürürlükteki mevzuatına göre incelenir.",
+  "في حال عدم التوصل إلى اتفاق، تُنظر جميع النزاعات وفقاً للتشريعات النافذة في جمهورية أوزبكستان."
+ ],
+ [
+  "Qoidalarga o'zgartirish kiritish",
+  "Изменение правил",
+  "Changes to the rules",
+  "Kurallarda değişiklik",
+  "تعديل القواعد"
+ ],
+ [
+  "Platforma ma'muriyati ushbu qoidalarga istalgan vaqtda bir tomonlama tartibda o'zgartirish va qo'shimchalar kiritish huquqini o'zida saqlab qoladi.",
+  "Администрация платформы оставляет за собой право в любое время в одностороннем порядке вносить изменения и дополнения в настоящие правила.",
+  "The platform administration reserves the right to amend these rules unilaterally at any time.",
+  "Platform yönetimi bu kurallarda istediği zaman tek taraflı olarak değişiklik ve ekleme yapma hakkını saklı tutar.",
+  "تحتفظ إدارة المنصة بحق تعديل هذه القواعد أو الإضافة إليها في أي وقت وبشكل أحادي."
+ ],
+ [
+  "Yangilangan qoidalar platformada e'lon qilingan paytdan boshlab kuchga kiradi.",
+  "Обновлённые правила вступают в силу с момента их публикации на платформе.",
+  "Updated rules take effect from the moment they are published on the platform.",
+  "Güncellenen kurallar platformda yayınlandığı andan itibaren yürürlüğe girer.",
+  "تدخل القواعد المحدّثة حيّز التنفيذ من لحظة نشرها على المنصة."
+ ],
+ [
+  "Foydalanuvchining yangilanishlardan so'ng platformadan foydalanishni davom ettirishi uning yangi tahrirdagi qoidalarga rozi ekanligini bildiradi.",
+  "Продолжение использования платформы после обновлений означает согласие пользователя с новой редакцией правил.",
+  "Continuing to use the platform after updates means the user accepts the revised rules.",
+  "Güncellemelerden sonra platformu kullanmaya devam etmek, kullanıcının yeni kuralları kabul ettiği anlamına gelir.",
+  "استمرار المستخدم في استخدام المنصة بعد التحديثات يعني موافقته على القواعد بصيغتها الجديدة."
+ ],
+ [
+  "Yakuniy qoidalar",
+  "Заключительные положения",
+  "Final provisions",
+  "Son hükümler",
+  "أحكام ختامية"
+ ],
+ [
+  "Ushbu qoidalar platforma ma'muriyati va foydalanuvchi o'rtasidagi rasmiy kelishuv hujjati hisoblanadi.",
+  "Настоящие правила являются официальным соглашением между администрацией платформы и пользователем.",
+  "These rules constitute an official agreement between the platform administration and the user.",
+  "Bu kurallar platform yönetimi ile kullanıcı arasındaki resmî anlaşma belgesidir.",
+  "تُعدّ هذه القواعد وثيقة اتفاق رسمية بين إدارة المنصة والمستخدم."
+ ],
+ [
+  "Savollar, takliflar yoki murojaatlar uchun foydalanuvchi Profil bo'limidagi rasmiy qo'llab-quvvatlash aloqa manzillari orqali ma'muriyatga murojaat qilishi mumkin.",
+  "С вопросами, предложениями или обращениями пользователь может обратиться к администрации через официальные контакты поддержки в разделе «Профиль».",
+  "For questions, suggestions or requests, the user can contact the administration via the official support contacts in the Profile section.",
+  "Sorular, öneriler veya başvurular için kullanıcı Profil bölümündeki resmî destek iletişim adresleri aracılığıyla yönetime başvurabilir.",
+  "للأسئلة أو الاقتراحات أو الطلبات، يمكن للمستخدم التواصل مع الإدارة عبر جهات اتصال الدعم الرسمية في قسم الملف الشخصي."
+ ],
+ [
+  "O'quvchilar natijalari va rabochka loyihalari",
+  "Результаты учеников и рабочие проекты",
+  "Student results and working drawing projects",
+  "Öğrenci sonuçları ve uygulama projeleri",
+  "نتائج الطلاب ومشاريع الرسومات التنفيذية"
+ ],
+ [
+  "O'quvchilar natijalari",
+  "Результаты учеников",
+  "Student results",
+  "Öğrenci sonuçları",
+  "نتائج الطلاب"
+ ],
+ [
+  "{0}-list",
+  "Лист {0}",
+  "Sheet {0}",
+  "Pafta {0}",
+  "اللوحة {0}"
+ ],
+ [
+  "{0}-list — kattalashtirib ko'rish",
+  "Лист {0} — открыть крупно",
+  "Sheet {0} — view full screen",
+  "Pafta {0} — büyüterek gör",
+  "اللوحة {0} — عرض بحجم كامل"
+ ],
+ [
+  "{0}-list yuklanmoqda...",
+  "Загрузка листа {0}...",
+  "Loading sheet {0}...",
+  "Pafta {0} yükleniyor...",
+  "جارٍ تحميل اللوحة {0}..."
+ ],
+ [
+  "Ikki barmoq bilan kattalashtiring",
+  "Увеличивайте двумя пальцами",
+  "Pinch with two fingers to zoom",
+  "İki parmakla yakınlaştırın",
+  "كبّر بإصبعين"
+ ],
+ [
+  "Natija qo'shish",
+  "Добавить результат",
+  "Add result",
+  "Sonuç ekle",
+  "إضافة نتيجة"
+ ],
+ [
+  "Revit kursi",
+  "Курс Revit",
+  "Revit course",
+  "Revit kursu",
+  "دورة Revit"
+ ],
+ [
+  "Asl o'lcham",
+  "Исходный размер",
+  "Original size",
+  "Orijinal boyut",
+  "الحجم الأصلي"
+ ],
+ [
+  "Kattalashtirish: sichqoncha g'ildiragi yoki ikki marta bosing",
+  "Масштаб: колесо мыши или двойной клик",
+  "Zoom: mouse wheel or double-click",
+  "Yakınlaştırma: fare tekerleği veya çift tıklama",
+  "التكبير: عجلة الفأرة أو النقر المزدوج"
+ ]
 ]
