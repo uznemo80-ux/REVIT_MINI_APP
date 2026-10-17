@@ -87,7 +87,7 @@ async function start(opts) {
   if (timer.unref) timer.unref();
   var first = setTimeout(function () { tick(pool); }, 60 * 1000); // ishga tushgandan 1 daqiqa keyin birinchi tekshiruv
   if (first.unref) first.unref();
-  console.log('🧱 MaterialAgent: yoqildi — har kuni ' + config.runHour + ':00 (Toshkent), kuniga ' + (config.dailyLimit || 4) + ' ta, haftasiga ' + config.weeklyLimit + ' ta');
+  console.log('🧱 MaterialAgent: yoqildi — har kuni ' + config.runHour + ':00 (Toshkent), kuniga ' + (config.dailyLimit || 2) + ' ta, haftasiga ' + config.weeklyLimit + ' ta');
 }
 
 module.exports = {

@@ -28,13 +28,13 @@ module.exports = {
   get modelOverride() { return (process.env.GEMINI_MODEL || '').trim(); },
   MODEL_PREFERENCE: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],
 
-  // Jadval: har kuni soat 12:00 (Toshkent), kuniga 4 ta (3-5 ta), haftasiga 25 ta (20+ ta) material
+  // Jadval: har kuni soat 12:00 (Toshkent), kuniga 2 ta, haftasiga 14 ta material
   TIMEZONE: 'Asia/Tashkent',
   TZ_OFFSET_MIN: 5 * 60, // Toshkentda yozgi vaqt yo'q — UTC+5 doimiy
   get runHour() { return envInt('MATERIAL_AGENT_HOUR', 12); },
-  get dailyLimit() { return envInt('MATERIAL_AGENT_DAILY_LIMIT', 4); },
-  get weeklyLimit() { return envInt('MATERIAL_AGENT_WEEKLY_LIMIT', 25); },
-  TICK_MS: 10 * 60 * 1000,
+  get dailyLimit() { return envInt('MATERIAL_AGENT_DAILY_LIMIT', 2); },
+  get weeklyLimit() { return envInt('MATERIAL_AGENT_WEEKLY_LIMIT', 14); },
+  TICK_MS: 60 * 1000, // Har daqiqada tekshiradi — 12:00 bo'lishi bilan darhol ishga tushadi
 
   // Bitta ishga tushishda nechta material nomzodini va nechta saytni sinab ko'radi
   MAX_DISCOVERY_ATTEMPTS: 8,

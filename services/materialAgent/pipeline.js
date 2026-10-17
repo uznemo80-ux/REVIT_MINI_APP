@@ -140,7 +140,7 @@ async function runDaily(opts) {
 
     var targetCount = opts.count && opts.count > 0
       ? Math.min(opts.count, 10)
-      : (web.isMocked() ? 1 : Math.min(config.dailyLimit || 4, Math.max(1, config.weeklyLimit - count)));
+      : (web.isMocked() ? 1 : Math.min(config.dailyLimit || 2, Math.max(1, config.weeklyLimit - count)));
 
     var categories = await store.listCategories(pool);
     var avoid = [], triedCats = [], errors = [], created = [];

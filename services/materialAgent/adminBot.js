@@ -38,7 +38,7 @@ async function statusText(pool) {
     var allSites = await sources.brandSites(pool);
     lines.push('Brend saytlari: ' + allSites.length + ' ta (20 ta kategoriyaga bog\'langan)');
   }
-  lines.push('Jadval: har kuni ' + String(config.runHour).padStart(2, '0') + ':00 (Toshkent), kuniga ' + (config.dailyLimit || 4) + ' ta, haftasiga ' + config.weeklyLimit + ' ta');
+  lines.push('Jadval: har kuni ' + String(config.runHour).padStart(2, '0') + ':00 (Toshkent), kuniga ' + (config.dailyLimit || 2) + ' ta, haftasiga ' + config.weeklyLimit + ' ta');
   lines.push('Rasm ombori: ' + (config.mediaChannelId ? 'yopiq kanal ' + review.esc(config.mediaChannelId) : '⚠️ kanal ulanmagan (MATERIAL_MEDIA_CHANNEL_ID) — admin chatiga saqlanmoqda'));
   if (pool) {
     lines.push('Bu hafta: ' + (await store.weeklyCount(pool)) + ' / ' + config.weeklyLimit);
@@ -64,9 +64,8 @@ function register(bot, getPool) {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: '▶️ 1 ta topish', callback_data: 'mai:run:1' },
-              { text: '🚀 3 ta topish', callback_data: 'mai:run:3' },
-              { text: '🔥 5 ta topish', callback_data: 'mai:run:5' }
+              { text: '▶️ Hozir 2 ta topish', callback_data: 'mai:run:2' },
+              { text: '➕ 1 ta topish', callback_data: 'mai:run:1' }
             ]
           ]
         }
