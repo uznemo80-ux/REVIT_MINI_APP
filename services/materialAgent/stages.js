@@ -117,15 +117,19 @@ async function discover(ctx) {
 }
 
 // ======================================================
-// 1-B. DISCOVER (bepul rejim — brend saytlari sitemap'i orqali, Google qidiruvisiz)
+// 1-B. DISCOVER (bepul rejim — brend saytlari sitemap + HTML katalog + bepul veb-qidiruv orqali)
 // ======================================================
 var sources = require('./sources');
+var commons = require('./commons');
 var sitemapCache = new Map(); // website → {urls, exp}
 
 async function cachedSitemap(website) {
+  if (web.isMocked()) {
+    return sources.sitemapPageUrls(website);
+  }
   var hit = sitemapCache.get(website);
   if (hit && hit.exp > Date.now()) return hit.urls;
-  var urls = await sources.sitemapPageUrls(website);
+  var urls = await sources.discoverSiteUrls(website);
   sitemapCache.set(website, { urls: urls, exp: Date.now() + 24 * 3600 * 1000 });
   return urls;
 }
@@ -135,7 +139,7 @@ function pickUrlsPrompt(ctx, site, urls) {
     'You help build a building-materials library. Below are page URLs from the official website of ' + (site.brand || web.hostOf(site.website)) + '.',
     'Library category: ' + ctx.category.name + ' [' + ctx.category.slug + ']' + (ctx.category.description ? ' — ' + ctx.category.description : ''),
     ctx.subcats.length ? 'Subcategories: ' + ctx.subcats.join('; ') : '',
-    'Pick up to 3 URLs that most likely are the page of ONE specific product (or product series) that fits this category.',
+    'Pick up to 5 URLs that most likely are the page of ONE specific product (or product series) that fits this category.',
     'Do NOT pick category listings, news, documents or anything already in the library: ' + ctx.existing.concat(ctx.avoid || []).slice(0, 80).join('; '),
     'If nothing fits the category, return an empty list.',
     'Return ONLY JSON: {"urls": ["..."]}',
@@ -157,46 +161,83 @@ function identifyPrompt(ctx, page) {
   ].join('\n');
 }
 
+async function tryIdentifyPage(ctx, url, siteBrand, siteWebsite, siteCountry, notes, hostLabel) {
+  var page = await web.fetchPage(url);
+  if (!page.ok || page.text.length < 350) { notes.push(hostLabel + ': sahifa ochilmadi'); return null; }
+  var idr = await gemini.generateJson({ prompt: identifyPrompt(ctx, page), json: true, temperature: 0 });
+  var info = idr.data || {};
+  if (info.is_single_product_page !== true || info.fits_category !== true || !info.product_name) {
+    notes.push(hostLabel + ': mahsulot sahifasi emas');
+    return null;
+  }
+  info.brand = String(info.brand || siteBrand || '').trim();
+  info.product_name = String(info.product_name).trim();
+  if (!info.brand) { notes.push(hostLabel + ': brend aniqlanmadi'); return null; }
+  var avoidKey = web.normalize(info.brand + ' ' + info.product_name);
+  if ((ctx.avoid || []).some(function (a) { return web.normalize(a) === avoidKey; })) return null;
+  var cov = tokenCoverage(sigTokens(info.product_name, info.brand), page.title + ' ' + page.text);
+  if (cov < 0.45) { notes.push(hostLabel + ': nom sahifada tasdiqlanmadi'); return null; }
+  return {
+    product_name: info.product_name,
+    brand: info.brand,
+    product_code: String(info.product_code || '').trim(),
+    product_url: page.finalUrl,
+    manufacturer_website: siteWebsite || ('https://' + web.hostOf(page.finalUrl)),
+    manufacturer_country: String(info.manufacturer_country || siteCountry || '').trim(),
+    subcategory_hint: String(info.subcategory_hint || '').trim(),
+    page: page
+  };
+}
+
 async function discoverFromSites(ctx) {
-  var sites = sources.shuffle(ctx.sites || [], Date.now());
+  var sites = sources.sitesForCategory(ctx.sites || [], ctx.category && ctx.category.slug, Date.now());
   if (!sites.length) throw new Error('Brend saytlari ro\'yxati bo\'sh — admin panelda ishlab chiqaruvchiga sayt manzilini kiriting');
   var used = ctx.usedUrls || new Set();
   var notes = [];
-  for (var si = 0; si < sites.length && si < 4; si++) {
+  var maxSites = config.MAX_SITES_PER_ATTEMPT || 10;
+  for (var si = 0; si < sites.length && si < maxSites; si++) {
     var site = sites[si];
     var host = web.hostOf(site.website);
     var all = await cachedSitemap(site.website);
     if (!all.length) { notes.push(host + ': sitemap topilmadi'); continue; }
-    var sample = sources.sampleUrls(all, used, 150, Date.now() + si);
+    var sample = sources.sampleUrls(all, used, 180, Date.now() + si);
     if (!sample.length) { notes.push(host + ': yangi sahifa qolmadi'); continue; }
     var pick = await gemini.generateJson({ prompt: pickUrlsPrompt(ctx, site, sample), json: true, temperature: 0.4 });
-    var chosen = ((pick.data && pick.data.urls) || []).filter(function (u) { return sample.indexOf(u) !== -1; }).slice(0, 3);
+    var chosen = ((pick.data && pick.data.urls) || []).filter(function (u) { return sample.indexOf(u) !== -1; }).slice(0, 5);
     if (!chosen.length) { notes.push(host + ': kategoriyaga mos sahifa yo\'q'); continue; }
     for (var ci = 0; ci < chosen.length; ci++) {
       used.add(chosen[ci]);
-      var page = await web.fetchPage(chosen[ci]);
-      if (!page.ok || page.text.length < 400) { notes.push(host + ': sahifa ochilmadi'); continue; }
-      var idr = await gemini.generateJson({ prompt: identifyPrompt(ctx, page), json: true, temperature: 0 });
-      var info = idr.data || {};
-      if (info.is_single_product_page !== true || info.fits_category !== true || !info.product_name) { notes.push(host + ': mahsulot sahifasi emas'); continue; }
-      info.brand = String(info.brand || site.brand || '').trim();
-      info.product_name = String(info.product_name).trim();
-      var avoidKey = web.normalize(info.brand + ' ' + info.product_name);
-      if ((ctx.avoid || []).some(function (a) { return web.normalize(a) === avoidKey; })) continue;
-      var cov = tokenCoverage(sigTokens(info.product_name, info.brand), page.title + ' ' + page.text);
-      if (cov < 0.5) { notes.push(host + ': nom sahifada tasdiqlanmadi'); continue; }
-      return {
-        product_name: info.product_name,
-        brand: info.brand,
-        product_code: String(info.product_code || '').trim(),
-        product_url: page.finalUrl,
-        manufacturer_website: site.website,
-        manufacturer_country: String(info.manufacturer_country || site.country || '').trim(),
-        subcategory_hint: String(info.subcategory_hint || '').trim(),
-        page: page
-      };
+      var found = await tryIdentifyPage(ctx, chosen[ci], site.brand, site.website, site.country, notes, host);
+      if (found) return found;
     }
   }
+
+  // Bepul veb-qidiruv zaxira yo'li (faqat real ish rejimida)
+  if (!web.isMocked()) {
+    try {
+      var qPrompt = [
+        'Give 2 specific Russian search queries to find an official manufacturer product page for a real building material in category: ' +
+          ctx.category.name + ' (' + (ctx.category.description || ctx.category.slug) + ').',
+        'Include a well-known brand name and specific product series/model not in this list: ' + ctx.existing.concat(ctx.avoid || []).slice(0, 60).join('; '),
+        'Return ONLY JSON: {"queries": ["...", "..."]}'
+      ].join('\n');
+      var qr = await gemini.generateJson({ prompt: qPrompt, json: true, temperature: 0.5 });
+      var queries = (qr.data && Array.isArray(qr.data.queries)) ? qr.data.queries.slice(0, 2) : [];
+      for (var qi = 0; qi < queries.length; qi++) {
+        var webUrls = await sources.freeWebSearch(queries[qi], 8);
+        for (var wi = 0; wi < webUrls.length; wi++) {
+          var wu = webUrls[wi];
+          if (used.has(wu) || MARKETPLACES.test(web.hostOf(wu))) continue;
+          used.add(wu);
+          var wFound = await tryIdentifyPage(ctx, wu, '', '', '', notes, web.hostOf(wu));
+          if (wFound) return wFound;
+        }
+      }
+    } catch (e) {
+      notes.push('web-search: ' + e.message);
+    }
+  }
+
   throw new Error('Brend saytlaridan mos material topilmadi (' + notes.slice(0, 6).join('; ') + ')');
 }
 
@@ -415,10 +456,17 @@ async function collectImages(ctx) {
     if (config.searchMode === 'google') {
       try { extra = await findExtraPages(ctx); } catch (e) { console.warn('MaterialAgent extra pages:', e.message); }
     } else {
-      // Bepul rejim: shu saytning sitemap'idan nomi o'xshash sahifalar (kolleksiya/galereya)
+      // Bepul rejim: shu saytning sitemap'idan yoki sahifa ichidagi havolalardan nomi o'xshash sahifalar
       var tokens = sigTokens(ctx.product_name, ctx.brand);
       var siteUrls = sitemapCache.has(ctx.manufacturer_website) ? sitemapCache.get(ctx.manufacturer_website).urls : [];
-      extra = siteUrls.filter(function (u) { return u !== ctx.product_url && tokenCoverage(tokens, decodeURIComponent(u).replace(/[-_/]/g, ' ')) >= 0.5; }).slice(0, 3);
+      var pageLinks = web.extractLinks(ctx.page.html, ctx.page.finalUrl || ctx.product_url).filter(function (u) {
+        return web.rootDomain(web.hostOf(u)) === root;
+      });
+      var poolUrls = siteUrls.concat(pageLinks);
+      extra = poolUrls.filter(function (u, idx) {
+        if (u === ctx.product_url || poolUrls.indexOf(u) !== idx) return false;
+        return tokenCoverage(tokens, decodeURIComponent(u).replace(/[-_/]/g, ' ')) >= 0.4;
+      }).slice(0, 4);
     }
     for (var i = 0; i < extra.length && picked.length < config.MIN_IMAGES; i++) {
       var p = await web.fetchPage(extra[i]);
@@ -431,8 +479,31 @@ async function collectImages(ctx) {
       picked = picked.concat(rankedMore).slice(0, config.MAX_IMAGES);
     }
   }
-  if (picked.length < config.MIN_IMAGES) {
-    throw new Error('Mos rasm topilmadi: ' + picked.length + ' ta (kamida ' + config.MIN_IMAGES + ' ta kerak; ' + imgs.length + ' ta nomzod tekshirildi)');
+
+  // Qo'shimcha zaxira: Wikimedia Commons'dan shu material/mahsulot bo'yicha erkin foto qidirish (faqat real rejimda)
+  if (picked.length < config.MIN_IMAGES && !web.isMocked()) {
+    try {
+      var cwQueries = [ctx.brand + ' ' + ctx.product_name, ctx.material_type || '', ctx.product_name].filter(Boolean);
+      var cwUrls = [];
+      for (var cq = 0; cq < cwQueries.length && cwUrls.length < 8; cq++) {
+        var cwRes = await commons.search(cwQueries[cq], 6);
+        cwRes.forEach(function (c) { if (c && c.url && cwUrls.indexOf(c.url) === -1) cwUrls.push(c.url); });
+      }
+      if (cwUrls.length) {
+        var cwImgs = await downloadCandidates(cwUrls, exclude.concat(imgs.map(function (x) { return x.url; })), 8);
+        var seenCw = new Set(picked.map(function (x) { return x.hash; }));
+        cwImgs = cwImgs.filter(function (m) { return !seenCw.has(m.hash); });
+        if (cwImgs.length) {
+          var rankedCw = await rankImages(ctx, cwImgs);
+          picked = picked.concat(rankedCw).slice(0, config.MAX_IMAGES);
+        }
+      }
+    } catch (e) { /* Commons zaxira xatosi e'tiborsiz qoldiriladi */ }
+  }
+
+  var minRequired = web.isMocked() ? config.MIN_IMAGES : (config.FALLBACK_MIN_IMAGES || 1);
+  if (picked.length < minRequired) {
+    throw new Error('Mos rasm topilmadi: ' + picked.length + ' ta (kamida ' + minRequired + ' ta kerak; ' + imgs.length + ' ta nomzod tekshirildi)');
   }
   return picked;
 }

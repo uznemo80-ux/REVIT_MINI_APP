@@ -61,6 +61,35 @@ test('sources.sitemapPageUrls: robots → index → gzip sitemap, yangilik/konta
   } finally { web.setFetcher(null); }
 });
 
+test('sources: 80+ rasmiy brend saytlari barcha 20 ta kategoriyani qamrab oladi va sitesForCategory moslarini birinchi qo\'yadi', function () {
+  var seed = require('../materialsSeed');
+  assert.ok(sources.BUILTIN_MANUFACTURERS.length >= 80, 'kamida 80 ta brend sayti bo\'lishi kerak, hozir: ' + sources.BUILTIN_MANUFACTURERS.length);
+  seed.SEED_CATEGORIES.forEach(function (cat) {
+    var matching = sources.BUILTIN_MANUFACTURERS.filter(function (m) {
+      return Array.isArray(m.categories) && m.categories.indexOf(cat.slug) !== -1;
+    });
+    assert.ok(matching.length >= 2, cat.slug + ' kategoriyasida kamida 2 ta brend sayti bo\'lishi kerak');
+  });
+  var ordered = sources.sitesForCategory(sources.BUILTIN_MANUFACTURERS, 'santexnika-sanuzel', 42);
+  assert.ok(ordered[0].categories.indexOf('santexnika-sanuzel') !== -1, 'birinchi sayt shu kategoriyaga tegishli bo\'lishi kerak');
+});
+
+test('sources.crawlCatalogUrls: sitemap bo\'lmagan saytda katalog sahifalarini HTML orqali topadi', async function () {
+  var map = {
+    'https://nositemap.uz': '<html><body><a href="/catalog/profiles">Katalog</a><a href="/about">Haqida</a></body></html>',
+    'https://nositemap.uz/catalog/profiles': '<html><body><a href="/catalog/profiles/shadow-gap-20">Shadow Gap 20</a><a href="/news/item-1">Yangilik</a></body></html>'
+  };
+  web.setFetcher(async function (url) {
+    if (!map[url]) return { ok: false, status: 404, finalUrl: url, body: null, error: 'http_404' };
+    return { ok: true, status: 200, finalUrl: url, contentType: 'text/html', body: Buffer.from(map[url]) };
+  });
+  try {
+    var urls = await sources.crawlCatalogUrls('https://nositemap.uz');
+    assert.ok(urls.indexOf('https://nositemap.uz/catalog/profiles/shadow-gap-20') !== -1);
+    assert.ok(!urls.some(function (u) { return /news|about/.test(u); }));
+  } finally { web.setFetcher(null); }
+});
+
 var DB = process.env.TEST_DATABASE_URL;
 
 test('integratsiya (bepul rejim): sitemap → admin chat → joylash', { skip: !DB && 'TEST_DATABASE_URL berilmagan' }, async function () {

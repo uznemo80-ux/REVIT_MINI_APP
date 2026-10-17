@@ -27,17 +27,18 @@ async function editCard(ctx, html, keyboard) {
 }
 
 async function statusText(pool) {
+  var sources = require('./sources');
   var lines = ['🧱 <b>Material agent</b>'];
   lines.push('Holat: ' + (config.enabled ? '✅ yoqilgan' : '⛔️ o\'chirilgan (GEMINI_API_KEY yoki MATERIAL_AGENT_ENABLED)'));
   if (config.enabled) {
     try { lines.push('Model: ' + review.esc(await gemini.resolveModel())); } catch (e) { lines.push('Model: ⚠️ ' + review.esc(e.message).slice(0, 200)); }
   }
-  lines.push('Rejim: ' + (config.searchMode === 'google' ? 'Google qidiruv (Gemini paid)' : 'bepul — brend saytlari (admin paneldagi ishlab chiqaruvchilar)'));
+  lines.push('Rejim: ' + (config.searchMode === 'google' ? 'Google qidiruv (Gemini paid)' : 'bepul — 85+ rasmiy brend saytlari (sitemap + katalog + veb)'));
   if (pool && config.searchMode !== 'google') {
-    var sitesN = await pool.query("SELECT COUNT(*)::int AS n FROM material_manufacturers WHERE COALESCE(website, '') <> ''");
-    lines.push('Brend saytlari: ' + sitesN.rows[0].n + ' ta');
+    var allSites = await sources.brandSites(pool);
+    lines.push('Brend saytlari: ' + allSites.length + ' ta (20 ta kategoriyaga bog\'langan)');
   }
-  lines.push('Jadval: har kuni ' + String(config.runHour).padStart(2, '0') + ':00 (Toshkent), haftasiga ' + config.weeklyLimit + ' ta');
+  lines.push('Jadval: har kuni ' + String(config.runHour).padStart(2, '0') + ':00 (Toshkent), kuniga ' + (config.dailyLimit || 4) + ' ta, haftasiga ' + config.weeklyLimit + ' ta');
   lines.push('Rasm ombori: ' + (config.mediaChannelId ? 'yopiq kanal ' + review.esc(config.mediaChannelId) : '⚠️ kanal ulanmagan (MATERIAL_MEDIA_CHANNEL_ID) — admin chatiga saqlanmoqda'));
   if (pool) {
     lines.push('Bu hafta: ' + (await store.weeklyCount(pool)) + ' / ' + config.weeklyLimit);
@@ -60,7 +61,15 @@ function register(bot, getPool) {
     try {
       await ctx.reply(await statusText(pool), {
         parse_mode: 'HTML', disable_web_page_preview: true,
-        reply_markup: { inline_keyboard: [[{ text: '▶️ Hozir ishga tushirish', callback_data: 'mai:run:0' }]] }
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '▶️ 1 ta topish', callback_data: 'mai:run:1' },
+              { text: '🚀 3 ta topish', callback_data: 'mai:run:3' },
+              { text: '🔥 5 ta topish', callback_data: 'mai:run:5' }
+            ]
+          ]
+        }
       });
     } catch (e) {
       await ctx.reply('Material agent holatini olishda xato: ' + e.message);
@@ -128,8 +137,9 @@ function register(bot, getPool) {
     try {
       if (action === 'run') {
         if (!pipeline.ready()) return ctx.answerCbQuery('Agent o\'chirilgan yoki hali tayyor emas', { show_alert: true });
-        await ctx.answerCbQuery('⏳ Ishga tushirildi — natija shu chatga keladi');
-        pipeline.runDaily({ manual: true }).then(function (r) {
+        var reqCount = id > 0 ? id : 1;
+        await ctx.answerCbQuery('⏳ Ishga tushirildi (' + reqCount + ' ta) — natija shu chatga keladi');
+        pipeline.runDaily({ manual: true, count: reqCount }).then(function (r) {
           return review.notifyAdmin(bot, '🧱 Material agent: ' + review.esc((r && r.result) || 'tugadi'));
         }).catch(function (e) { review.notifyAdmin(bot, '⚠️ Material agent xatosi: ' + review.esc(e.message)); });
         return;

@@ -336,7 +336,7 @@ async function publishCandidate(pool, cand, adminTelegramId) {
     var manufacturerId = await upsertManufacturer(client, cand.brand, d.manufacturer_website, d.manufacturer_country);
 
     var mediaIds = (cand.images || []).map(function (im) { return im.media_id; }).filter(Boolean);
-    if (mediaIds.length < config.MIN_IMAGES) throw new Error('Rasmlar yetarli emas (' + mediaIds.length + ')');
+    if (mediaIds.length < (config.FALLBACK_MIN_IMAGES || 1)) throw new Error('Rasmlar yetarli emas (' + mediaIds.length + ')');
     await client.query('UPDATE tg_media SET is_public = TRUE WHERE id = ANY($1::int[])', [mediaIds]);
     var gallery = mediaIds.map(function (id) { return '/api/media/tg/' + id; });
 

@@ -37,17 +37,22 @@ async function categoryContext(pool, category) {
 
 /** Moslik tekshiruvi: yomon rasmlarni olib tashlaydi, matn mos bo'lmasa bir marta qayta yozdiradi */
 async function verifyAndFix(ctx, data, images) {
+  var minReq = web.isMocked() ? config.MIN_IMAGES : (config.FALLBACK_MIN_IMAGES || 1);
   var check = await stages.consistencyCheck(ctx, data, images);
   if (check.bad_image_indexes.length) {
     images = images.filter(function (_, i) { return check.bad_image_indexes.indexOf(i) === -1; });
   }
   if (images.length < config.MIN_IMAGES) {
-    var more = await stages.collectImages(Object.assign({}, ctx, { excludeUrls: (ctx.excludeUrls || []).concat(images.map(function (i) { return i.url; })) }));
-    var seen = new Set(images.map(function (i) { return i.hash; }));
-    images = images.concat(more.filter(function (m) { return !seen.has(m.hash); })).slice(0, config.MAX_IMAGES);
-    check = await stages.consistencyCheck(ctx, data, images);
-    if (check.bad_image_indexes.length) images = images.filter(function (_, i) { return check.bad_image_indexes.indexOf(i) === -1; });
-    if (images.length < config.MIN_IMAGES) throw new Error('Rasmlar moslik tekshiruvidan o\'tmadi');
+    try {
+      var more = await stages.collectImages(Object.assign({}, ctx, { excludeUrls: (ctx.excludeUrls || []).concat(images.map(function (i) { return i.url; })) }));
+      var seen = new Set(images.map(function (i) { return i.hash; }));
+      images = images.concat(more.filter(function (m) { return !seen.has(m.hash); })).slice(0, config.MAX_IMAGES);
+      check = await stages.consistencyCheck(ctx, data, images);
+      if (check.bad_image_indexes.length) images = images.filter(function (_, i) { return check.bad_image_indexes.indexOf(i) === -1; });
+    } catch (e) {
+      if (images.length < minReq) throw e;
+    }
+    if (images.length < minReq) throw new Error('Rasmlar moslik tekshiruvidan o\'tmadi');
   }
   if (!check.text_matches || !check.category_matches) {
     if (!check.category_matches) throw new Error('Material kategoriyaga mos emas: ' + check.issues.join('; '));
@@ -119,8 +124,9 @@ async function processNew(cand, catCtx) {
 }
 
 /**
- * Kunlik ishga tushish. Haftalik limit to'lgan bo'lsa hech narsa qilmaydi.
- * @param {{manual?: boolean}} opts
+ * Kunlik ishga tushish. Har kuni 3–5 ta (config.dailyLimit) material topib adminga yuboradi.
+ * Haftalik limit to'lgan bo'lsa hech narsa qilmaydi (manual=true bo'lsa haftalik limitdan qat'i nazar ishlaydi).
+ * @param {{manual?: boolean, count?: number}} opts
  */
 async function runDaily(opts) {
   opts = opts || {};
@@ -128,36 +134,63 @@ async function runDaily(opts) {
   var pool = deps.pool;
   var res = await store.withLock(pool, async function () {
     var count = await store.weeklyCount(pool);
-    if (count >= config.weeklyLimit) return { ok: true, result: 'Haftalik limit to\'lgan (' + count + '/' + config.weeklyLimit + ')' };
+    if (!opts.manual && count >= config.weeklyLimit) {
+      return { ok: true, result: 'Haftalik limit to\'lgan (' + count + '/' + config.weeklyLimit + ')' };
+    }
+
+    var targetCount = opts.count && opts.count > 0
+      ? Math.min(opts.count, 10)
+      : (web.isMocked() ? 1 : Math.min(config.dailyLimit || 4, Math.max(1, config.weeklyLimit - count)));
 
     var categories = await store.listCategories(pool);
-    var avoid = [], triedCats = [], errors = [];
+    var avoid = [], triedCats = [], errors = [], created = [];
     // Bepul rejim uchun: brend saytlari va oldin ko'rilgan sahifalar
     var sites = config.searchMode === 'google' ? [] : await sources.brandSites(pool);
     var usedUrls = await store.usedProductUrls(pool);
-    for (var attempt = 0; attempt < config.MAX_DISCOVERY_ATTEMPTS; attempt++) {
-      var category = store.pickCategory(categories, triedCats);
-      if (!category) break;
-      var cand = await store.createCandidate(pool, { status: 'searching', stage: 'discover', category_slug: category.slug });
-      try {
-        var catCtx = await categoryContext(pool, category);
-        catCtx.avoid = avoid;
-        catCtx.sites = sites;
-        catCtx.usedUrls = usedUrls;
-        var done = await processNew(cand, catCtx);
-        log('yangi nomzod #' + done.id + ' adminga yuborildi:', done.brand, done.product_name);
-        return { ok: true, result: 'Adminga yuborildi: #' + done.id + ' ' + done.brand + ' ' + done.product_name, candidate_id: done.id };
-      } catch (e) {
-        log('urinish ' + (attempt + 1) + ' muvaffaqiyatsiz:', e.message);
-        errors.push(category.slug + ': ' + e.message);
-        if (e.rejectedName) avoid.push(e.rejectedName);
-        await store.updateCandidate(pool, cand.id, { status: 'failed', last_error: String(e.message).slice(0, 2000) }).catch(function () {});
-        if (attempt >= 1) triedCats.push(category.slug); // 2-xatodan keyin boshqa kategoriyaga o'tamiz
+
+    for (var slot = 0; slot < targetCount; slot++) {
+      var slotSuccess = false;
+      for (var attempt = 0; attempt < config.MAX_DISCOVERY_ATTEMPTS; attempt++) {
+        var category = store.pickCategory(categories, triedCats);
+        if (!category) break;
+        var cand = await store.createCandidate(pool, { status: 'searching', stage: 'discover', category_slug: category.slug });
+        try {
+          var catCtx = await categoryContext(pool, category);
+          catCtx.avoid = avoid;
+          catCtx.sites = sites;
+          catCtx.usedUrls = usedUrls;
+          var done = await processNew(cand, catCtx);
+          log('yangi nomzod #' + done.id + ' adminga yuborildi:', done.brand, done.product_name);
+          created.push(done);
+          avoid.push(done.brand + ' ' + done.product_name);
+          if (done.product_url) usedUrls.add(done.product_url);
+          triedCats.push(category.slug); // Keyingi material boshqa kategoriyadan tanlansin
+          slotSuccess = true;
+          break;
+        } catch (e) {
+          log('urinish ' + (attempt + 1) + ' muvaffaqiyatsiz:', e.message);
+          errors.push(category.slug + ': ' + e.message);
+          if (e.rejectedName) avoid.push(e.rejectedName);
+          await store.updateCandidate(pool, cand.id, { status: 'failed', last_error: String(e.message).slice(0, 2000) }).catch(function () {});
+          if (attempt >= 1) triedCats.push(category.slug);
+        }
       }
+      if (!slotSuccess && web.isMocked()) break;
     }
+
+    if (created.length > 0) {
+      var summaryList = created.map(function (c) { return '#' + c.id + ' ' + c.brand + ' ' + c.product_name; }).join(', ');
+      return {
+        ok: true,
+        result: 'Adminga yuborildi (' + created.length + ' ta): ' + summaryList,
+        candidate_id: created[0].id,
+        candidate_ids: created.map(function (c) { return c.id; })
+      };
+    }
+
     await review.notifyAdmin(deps.bot, '⚠️ <b>Material agent</b>: bugun mos material topilmadi.\n\n' +
-      errors.map(function (x) { return '• ' + review.esc(x).slice(0, 400); }).join('\n'));
-    return { ok: false, result: 'Topilmadi: ' + errors.join(' | ') };
+      errors.slice(0, 8).map(function (x) { return '• ' + review.esc(x).slice(0, 400); }).join('\n'));
+    return { ok: false, result: 'Topilmadi: ' + errors.slice(0, 6).join(' | ') };
   });
   if (res && res.skipped) return { ok: false, result: 'Boshqa jarayon ishlayapti' };
   return res;

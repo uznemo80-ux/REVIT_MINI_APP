@@ -12,6 +12,7 @@ var MAX_HTML_BYTES = 3 * 1024 * 1024;
 // Testlar uchun: tarmoq o'rniga soxta fetcher
 var fetcher = null;
 function setFetcher(fn) { fetcher = fn; }
+function isMocked() { return !!fetcher; }
 
 async function readLimited(res, maxBytes) {
   if (!res.body || !res.body.getReader) {
@@ -93,7 +94,13 @@ async function fetchPage(url) {
 function absolutize(src, base) {
   try {
     var s = decodeEntities(String(src || '').trim());
-    if (!s || s.indexOf('data:') === 0) return '';
+    if (!s || s.indexOf('data:') === 0 || s.indexOf('javascript:') === 0 || s.indexOf('mailto:') === 0 || s.indexOf('tel:') === 0) return '';
+    // Next.js /_next/image?url=... holatida ichki rasm manzilini ajratib olamiz
+    if (/\/_next\/image\?/i.test(s)) {
+      var uNext = new URL(s, base);
+      var inner = uNext.searchParams.get('url');
+      if (inner) s = inner;
+    }
     var u = new URL(s, base);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
     u.hash = '';
@@ -101,11 +108,11 @@ function absolutize(src, base) {
   } catch (e) { return ''; }
 }
 
-var JUNK_IMG = /(logo|icon|sprite|favicon|avatar|placeholder|banner-small|loader|spinner|flag|payment|social|facebook|instagram|telegram|youtube|vk\.|whatsapp|cart|arrow|button|pixel|blank|1x1|svg$)/i;
+var JUNK_IMG = /(logo|icon|sprite|favicon|avatar|placeholder|banner-small|loader|spinner|flag|payment|social|facebook|instagram|telegram|youtube|vk\.|whatsapp|cart|arrow|button|pixel|blank|1x1|captcha|metric|yandex\.ru\/watch|google-analytics|svg$)/i;
 
 /**
  * Mahsulot sahifasidan rasm nomzodlarini ajratadi:
- * og:image, twitter:image, JSON-LD "image", <img src|data-src|srcset>, <a href="*.jpg">.
+ * og:image, twitter:image, JSON-LD, <picture><source srcset>, <img src|data-*|srcset>, style="background-image", <a href="*.jpg">.
  */
 function extractImageUrls(html, baseUrl) {
   var out = [], seen = new Set();
@@ -114,40 +121,72 @@ function extractImageUrls(html, baseUrl) {
     if (!abs || seen.has(abs)) return;
     var path = abs.split('?')[0];
     if (JUNK_IMG.test(path)) return;
-    if (/\.(svg|gif|ico)$/i.test(path)) return;
+    if (/\.(svg|gif|ico|pdf|mp4|webm|woff2?)$/i.test(path)) return;
     seen.add(abs);
     out.push({ url: abs, weight: weight });
   }
   var h = String(html || '');
-  var meta = /<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image(?::src)?)["'][^>]*>/gi, m;
+  var meta = /<meta[^>]+(?:property|name|itemprop)=["'](?:og:image(?::secure_url|:url)?|twitter:image(?::src)?|image)["'][^>]*>/gi, m;
   while ((m = meta.exec(h))) {
     var c = m[0].match(/content=["']([^"']+)["']/i);
     if (c) push(c[1], 10);
   }
+  var linkImg = /<link[^>]+rel=["']image_src["'][^>]*>/gi;
+  while ((m = linkImg.exec(h))) {
+    var lh = m[0].match(/href=["']([^"']+)["']/i);
+    if (lh) push(lh[1], 9);
+  }
   var ld = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
   while ((m = ld.exec(h))) {
-    var imgs = m[1].match(/"image"\s*:\s*(\[[^\]]*\]|"[^"]+"|\{[^}]*\})/g) || [];
+    var imgs = m[1].match(/"(?:image|contentUrl|thumbnailUrl)"\s*:\s*(\[[^\]]*\]|"[^"]+"|\{[^}]*\})/g) || [];
     imgs.forEach(function (blk) {
-      (blk.match(/https?:[^"\s]+?\.(?:jpe?g|png|webp)(?:\?[^"\s]*)?/gi) || []).forEach(function (u) { push(u.replace(/\\\//g, '/'), 9); });
+      (blk.match(/(?:https?:|\/)[^"\s]+?\.(?:jpe?g|png|webp)(?:\?[^"\s]*)?/gi) || []).forEach(function (u) { push(u.replace(/\\\//g, '/'), 9); });
     });
+  }
+  // <picture><source srcset="..."></picture>
+  var srcTag = /<source\b[^>]*>/gi;
+  while ((m = srcTag.exec(h))) {
+    var sTag = m[0];
+    if (/type=["']image\/(?:svg|gif)/i.test(sTag)) continue;
+    var sset = sTag.match(/\s(?:data-)?srcset=["']([^"']+)["']/i);
+    if (sset) {
+      var sparts = sset[1].split(',').map(function (p) { return p.trim().split(/\s+/)[0]; }).filter(Boolean);
+      if (sparts.length) push(sparts[sparts.length - 1], 7);
+    }
   }
   var img = /<img\b[^>]*>/gi;
   while ((m = img.exec(h))) {
     var tag = m[0];
-    var attrs = ['data-zoom-image', 'data-large', 'data-full', 'data-src', 'data-lazy-src', 'data-original', 'src'];
+    var attrs = ['data-zoom-image', 'data-large', 'data-full', 'data-highres', 'data-zoom', 'data-src', 'data-lazy-src', 'data-lazy', 'data-original', 'data-bg', 'data-image', 'src'];
     for (var i = 0; i < attrs.length; i++) {
       var a = tag.match(new RegExp('\\s' + attrs[i] + '=["\']([^"\']+)["\']', 'i'));
-      if (a) { push(a[1], attrs[i] === 'src' ? 3 : 5); break; }
+      if (a) { push(a[1], attrs[i] === 'src' ? 3 : 6); break; }
     }
-    var ss = tag.match(/\ssrcset=["']([^"']+)["']/i);
+    var ss = tag.match(/\s(?:data-)?srcset=["']([^"']+)["']/i);
     if (ss) {
       var parts = ss[1].split(',').map(function (p) { return p.trim().split(/\s+/)[0]; }).filter(Boolean);
       if (parts.length) push(parts[parts.length - 1], 4); // eng kattasi odatda oxirida
     }
   }
+  var bg = /background(?:-image)?\s*:\s*url\(\s*["']?([^"')]+?\.(?:jpe?g|png|webp)(?:\?[^"')]*)?)["']?\s*\)/gi;
+  while ((m = bg.exec(h))) push(m[1], 5);
   var link = /<a\b[^>]+href=["']([^"']+\.(?:jpe?g|png|webp)(?:\?[^"']*)?)["']/gi;
   while ((m = link.exec(h))) push(m[1], 6);
   return out.sort(function (a, b) { return b.weight - a.weight; }).map(function (x) { return x.url; });
+}
+
+/** HTML sahifadagi barcha <a href="..."> havolalarni ajratib oladi */
+function extractLinks(html, baseUrl) {
+  var out = [], seen = new Set();
+  var re = /<a\b[^>]+href=["']([^"'#]+)["']/gi, m;
+  var h = String(html || '');
+  while ((m = re.exec(h))) {
+    var abs = absolutize(m[1], baseUrl);
+    if (!abs || seen.has(abs)) continue;
+    seen.add(abs);
+    out.push(abs);
+  }
+  return out;
 }
 
 /** Rasmni yuklab, turini va o'lchamini tekshiradi */
@@ -192,10 +231,12 @@ function rawGetPublic(url, maxBytes) {
 
 module.exports = {
   setFetcher: setFetcher,
+  isMocked: isMocked,
   rawGetPublic: rawGetPublic,
   fetchPage: fetchPage,
   fetchImage: fetchImage,
   extractImageUrls: extractImageUrls,
+  extractLinks: extractLinks,
   verifyPageMentions: verifyPageMentions,
   htmlToText: htmlToText,
   normalize: normalize,

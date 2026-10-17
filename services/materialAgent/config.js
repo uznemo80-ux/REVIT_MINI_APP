@@ -28,24 +28,27 @@ module.exports = {
   get modelOverride() { return (process.env.GEMINI_MODEL || '').trim(); },
   MODEL_PREFERENCE: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],
 
-  // Jadval: har kuni soat 12:00 (Toshkent), haftasiga 2 ta material
+  // Jadval: har kuni soat 12:00 (Toshkent), kuniga 4 ta (3-5 ta), haftasiga 25 ta (20+ ta) material
   TIMEZONE: 'Asia/Tashkent',
   TZ_OFFSET_MIN: 5 * 60, // Toshkentda yozgi vaqt yo'q — UTC+5 doimiy
   get runHour() { return envInt('MATERIAL_AGENT_HOUR', 12); },
-  get weeklyLimit() { return envInt('MATERIAL_AGENT_WEEKLY_LIMIT', 2); },
+  get dailyLimit() { return envInt('MATERIAL_AGENT_DAILY_LIMIT', 4); },
+  get weeklyLimit() { return envInt('MATERIAL_AGENT_WEEKLY_LIMIT', 25); },
   TICK_MS: 10 * 60 * 1000,
 
-  // Bitta ishga tushishda nechta material nomzodini sinab ko'radi (topilmasa)
-  MAX_DISCOVERY_ATTEMPTS: 3,
-  MAX_REWORKS: 2,
+  // Bitta ishga tushishda nechta material nomzodini va nechta saytni sinab ko'radi
+  MAX_DISCOVERY_ATTEMPTS: 8,
+  MAX_SITES_PER_ATTEMPT: 10,
+  MAX_REWORKS: 3,
 
   // Rasmlar
   MIN_IMAGES: 2,
+  FALLBACK_MIN_IMAGES: 1,
   MAX_IMAGES: 3,
-  MIN_IMAGE_SIDE: 400,
+  MIN_IMAGE_SIDE: 320,
   MAX_IMAGE_BYTES: 8 * 1024 * 1024,
-  MAX_IMAGE_CANDIDATES: 10,
-  MIN_IMAGE_SCORE: 6,
+  MAX_IMAGE_CANDIDATES: 18,
+  MIN_IMAGE_SCORE: 5,
 
   // Telegram yopiq kanal (rasm ombori). Bo'sh bo'lsa admin chatiga saqlanadi.
   get mediaChannelId() { return (process.env.MATERIAL_MEDIA_CHANNEL_ID || '').trim(); },
