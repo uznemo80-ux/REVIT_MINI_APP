@@ -543,6 +543,36 @@ const SEED_TABLES = [
   }
 ];
 
+// ------------------------------------------------------
+// Tekshirilgan mazmun: bosqich darslari, tuzatilgan mavzular, ishlaydigan manba havolalari va jadvallar
+// (eski yandex/studfile qidiruv havolalari va noto'g'ri GOST havolalari shu bilan almashtiriladi)
+// ------------------------------------------------------
+const { STAGE_LESSONS, STAGE_TOPIC_OVERRIDES, VERIFIED_RESOURCES, VERIFIED_TABLES } = require('./learningVerified');
+
+SEED_STAGES.forEach(function (s) {
+  s.lessons = STAGE_LESSONS[s.stage_number] || [];
+  if (STAGE_TOPIC_OVERRIDES[s.stage_number]) s.topics = STAGE_TOPIC_OVERRIDES[s.stage_number];
+});
+SEED_STAGES[0].topics[0] = "Plan — deraza o'yiqlari sathidan o'tkazilgan gorizontal kesim";
+SEED_STAGES[0].topics[5] = "Standart masshtablar (GOST 2.302-68): 1:20, 1:25, 1:50, 1:75, 1:100, 1:200, 1:500";
+SEED_STAGES[2].topics[0] = "Formatlar (GOST 2.301-68): A3 297×420, A2 420×594, A1 594×841 mm va karrali formatlar";
+SEED_STAGES[3].topics[0] = "O'zbekistonda: SHNQ 1.03.03-23 → GOST 21.1101-2013; ShNQ 1.03.04-22 → GOST 21.101-97, 21.501-93";
+SEED_STAGES[3].topics[1] = "ГОСТ 21.501-2018 (Rossiyada 2019 dan) — AR va KR ishchi chizmalarini bajarish qoidalari";
+SEED_STAGES[4].topics = [
+  "Xonalar eksplikatsiyasi (raqami, nomi, maydoni m²)",
+  "Pollar va pardozlash vedomostlari (GOST 21.501 shakllari bo'yicha)",
+  "Eshik va deraza bloklari spetsifikatsiyasi (marka, o'lcham, ochilish tomoni, soni)",
+  "Uskunalar, buyumlar va materiallar spetsifikatsiyasi (GOST 21.110-2013)",
+  "Mebel, santexnika va yoritgichlar spetsifikatsiyasi (interyer albomi)",
+  "Chizmadagi markalar va jadvallarning bir-biriga mosligi"
+];
+SEED_RESOURCES.length = 0;
+VERIFIED_RESOURCES.forEach(function (r) { SEED_RESOURCES.push(Object.assign({ is_free: true, is_pro: false }, r)); });
+VERIFIED_TABLES.forEach(function (vt) {
+  const i = SEED_TABLES.findIndex(function (t) { return t.table_key === vt.table_key; });
+  if (i >= 0) SEED_TABLES[i] = vt; else SEED_TABLES.push(vt);
+});
+
 // Database seeding & synchronization helper
 async function initLearningTables(pool) {
   try {
@@ -600,17 +630,20 @@ async function initLearningTables(pool) {
       CREATE INDEX IF NOT EXISTS idx_learning_stages_order ON learning_stages(order_index, stage_number);
       CREATE INDEX IF NOT EXISTS idx_learning_resources_stage ON learning_resources(stage_id, resource_type);
       CREATE INDEX IF NOT EXISTS idx_learning_progress_user ON learning_progress(user_id);
+
+      ALTER TABLE learning_stages ADD COLUMN IF NOT EXISTS lessons JSONB NOT NULL DEFAULT '[]';
+      ALTER TABLE learning_resources ADD COLUMN IF NOT EXISTS verification_note TEXT;
     `);
 
     // 2. Always Sync / Upsert Stages
     for (const s of SEED_STAGES) {
       await pool.query(
-        `INSERT INTO learning_stages (stage_number, title, subtitle, description, topics, order_index, is_pro)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO learning_stages (stage_number, title, subtitle, description, topics, order_index, is_pro, lessons)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (stage_number) DO UPDATE
          SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, description = EXCLUDED.description,
-             topics = EXCLUDED.topics, order_index = EXCLUDED.order_index, is_pro = EXCLUDED.is_pro`,
-        [s.stage_number, s.title, s.subtitle, s.description, JSON.stringify(s.topics), s.order_index, s.is_pro]
+             topics = EXCLUDED.topics, order_index = EXCLUDED.order_index, is_pro = EXCLUDED.is_pro, lessons = EXCLUDED.lessons`,
+        [s.stage_number, s.title, s.subtitle, s.description, JSON.stringify(s.topics), s.order_index, s.is_pro, JSON.stringify(s.lessons || [])]
       );
     }
     console.log('LEARNING CENTER: 9 ta bosqich ma\'lumotlari sinxronlashtirildi.');
@@ -633,15 +666,15 @@ async function initLearningTables(pool) {
           `UPDATE learning_resources
            SET stage_id = $1, title = $2, author = $3, year = $4, language = $5, topic = $6,
                benefit_description = $7, resource_type = $8, pdf_url = $9, web_url = $10,
-               is_free = $11, is_pro = $12, order_index = $13
+               is_free = $11, is_pro = $12, order_index = $13, verification_note = $15
            WHERE id = $14`,
-          [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index, existing.rows[0].id]
+          [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index, existing.rows[0].id, res.verification_note || null]
         );
       } else {
         await pool.query(
-          `INSERT INTO learning_resources (stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-          [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index]
+          `INSERT INTO learning_resources (stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index, verification_note)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+          [stageId, res.title, res.author, res.year, res.language, res.topic, res.benefit_description, res.resource_type, res.pdf_url, res.web_url, res.is_free, res.is_pro, res.order_index, res.verification_note || null]
         );
       }
     }

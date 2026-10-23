@@ -1938,6 +1938,9 @@ async function ensureLibraryV2Tables() {
           AND NOT EXISTS (SELECT 1 FROM library_books WHERE library_books.title = library_resources.title)
       `);
       console.log('✅ LIBRARY BOOKS: library_books jadvali va mavjud kitoblar migratsiyasi muvaffaqiyatli tekshirildi');
+
+      // O'zbek tilidagi arxitektura / interyer / chizmachilik / qurilish kitoblari (idempotent)
+      await require('./uzBooksSeed').seedUzArchBooks(pool);
     } catch (bkErr) {
       console.warn('ensure library_books table warning:', bkErr.message);
     }
@@ -7041,12 +7044,16 @@ app.get('/api/pdf-proxy', async function (req, res) {
     } else if (rawUrl) {
       try {
         var parsedPdfUrl = new URL(rawUrl);
-        var allowedPdfHosts = ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com', 'lh3.googleusercontent.com'];
+        // Google Drive + kutubxona va normativlar uchun tekshirilgan rasmiy/ta'lim manbalari
+        var allowedPdfHosts = [
+          'drive.google.com', 'docs.google.com', 'drive.usercontent.google.com', 'lh3.googleusercontent.com',
+          'mc.uz', 'api.ziyonet.uz', 'ziyonet.uz', 'ziyouz.com', 'lib.utu-ranch.uz', 'lib.tiet.uz'
+        ];
         var isHostAllowed = allowedPdfHosts.some(function (h) {
           return parsedPdfUrl.hostname === h || parsedPdfUrl.hostname.endsWith('.' + h);
         });
         if (!isHostAllowed) {
-          return res.status(400).json({ error: 'Xavfsizlik: Faqat Google Drive manzillariga ruxsat berilgan' });
+          return res.status(400).json({ error: 'Xavfsizlik: Bu manzildan PDF ochishga ruxsat berilmagan' });
         }
         if (parsedPdfUrl.protocol !== 'https:') {
           return res.status(400).json({ error: 'Faqat xavfsiz HTTPS manzillarga ruxsat berilgan' });
@@ -8173,11 +8180,11 @@ app.post('/api/learning/content', async function (req, res) {
     }
 
     var stagesResult = await pool.query(
-      'SELECT id, stage_number, title, subtitle, description, topics, order_index, is_pro FROM learning_stages ORDER BY order_index ASC, stage_number ASC'
+      'SELECT id, stage_number, title, subtitle, description, topics, lessons, order_index, is_pro FROM learning_stages ORDER BY order_index ASC, stage_number ASC'
     );
 
     var resourcesResult = await pool.query(
-      'SELECT id, stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, is_free, is_pro, order_index FROM learning_resources ORDER BY order_index ASC, id ASC'
+      'SELECT id, stage_id, title, author, year, language, topic, benefit_description, resource_type, pdf_url, web_url, verification_note, is_free, is_pro, order_index FROM learning_resources ORDER BY order_index ASC, id ASC'
     );
 
     var tablesResult = await pool.query(
