@@ -10153,6 +10153,9 @@ let currentReaderIsSaved = false;
 let currentReaderSavedCount = 0;
 let readingProgressSaveTimeout = null;
 let readerIsTransitioning = false;
+let readerProgressKey = "";
+let readerResumePending = false;
+let readerChromeTimer = null;
 let readerTouchStartX = 0;
 let readerTouchStartY = 0;
 let readerTouchDistX = 0;
@@ -10232,28 +10235,13 @@ async function openBookReader(bookIdOrObj, initialPage) {
     : `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}${authParam}`;
 
   libReaderTitle = book.title || "Kitob Mutolaasi";
-
-  // Oxirgi o'qilgan sahifani aniqlash (Davom ettirish)
-  if (typeof initialPage === "number" && initialPage > 0) {
-    libReaderPageNum = initialPage;
-  } else if (typeof book.last_page === "number" && book.last_page > 0) {
-    libReaderPageNum = book.last_page;
-  } else {
-    libReaderPageNum = 1;
-    // Fondan reading_progress tekshirish
-    if (bookId > 0) {
-      api("/api/library/v2/reading-progress/get", { book_id: bookId }, "POST").then(res => {
-        if (res && res.page_number && res.page_number > 1 && libReaderPageNum === 1) {
-          libReaderPageNum = res.page_number;
-          renderReaderActivePage();
-        }
-      }).catch(() => {});
-    }
-  }
+  readerProgressKey = bookId > 0 ? `book:${bookId}` : `url:${pdfUrl}`;
 
   libReaderTotalPages = book.page_count || 1;
+  libReaderPageNum = 1;
   libReaderDoc = null;
   readerIsTransitioning = false;
+  readerResumePending = false;
   readerScale = 1.0;
   readerPanX = 0;
   readerPanY = 0;
@@ -10262,7 +10250,154 @@ async function openBookReader(bookIdOrObj, initialPage) {
 
   renderMinimalReaderView();
   loadMinimalReaderDocument();
+
+  // Oxirgi o'qilgan sahifa: server, kitob ma'lumoti yoki shu qurilmadagi saqlangan joy
+  const savedPage = await getReaderSavedPage(bookId, book, initialPage);
+  if (currentBookReaderId !== bookId || !document.getElementById("book-reader-view")) return;
+  if (savedPage > 1) showReaderResumePrompt(savedPage);
+  else flashReaderChrome();
 }
+
+// Mahalliy zaxira: server javob bermasa ham o'quvchi qayerda to'xtaganini eslab qoladi
+function readerLocalProgressGet(key) {
+  try {
+    const all = JSON.parse(localStorage.getItem("yosh_reader_progress") || "{}");
+    return Number(all[key]) || 0;
+  } catch (e) { return 0; }
+}
+
+function readerLocalProgressSet(key, page) {
+  try {
+    const all = JSON.parse(localStorage.getItem("yosh_reader_progress") || "{}");
+    all[key] = page;
+    localStorage.setItem("yosh_reader_progress", JSON.stringify(all));
+  } catch (e) {}
+}
+
+async function getReaderSavedPage(bookId, book, initialPage) {
+  let page = Math.max(
+    Number(initialPage) || 0,
+    Number(book && book.last_page) || 0,
+    readerLocalProgressGet(readerProgressKey)
+  );
+  if (bookId > 0) {
+    try {
+      const res = await Promise.race([
+        api("/api/library/v2/reading-progress/get", { book_id: bookId }, "POST"),
+        new Promise(resolve => setTimeout(() => resolve(null), 2500))
+      ]);
+      if (res && Number(res.page_number) > 0) page = Number(res.page_number);
+    } catch (e) {}
+  }
+  return page;
+}
+
+function showReaderResumePrompt(savedPage) {
+  const view = document.getElementById("book-reader-view");
+  if (!view) return;
+  readerResumePending = true;
+  const sheet = document.createElement("div");
+  sheet.className = "reader-resume-backdrop";
+  sheet.id = "reader-resume";
+  sheet.innerHTML = `
+    <div class="reader-resume-sheet" role="dialog" aria-modal="true" aria-labelledby="reader-resume-title">
+      <div class="reader-resume-ico">📖</div>
+      <div class="reader-resume-title" id="reader-resume-title">Qayerdan o‘qiysiz?</div>
+      <div class="reader-resume-sub">Siz bu kitobni <b>${Number(savedPage)}-sahifada</b> to‘xtatgansiz.</div>
+      <button type="button" class="reader-resume-btn primary" onclick="chooseReaderStart(${Number(savedPage)})">▶ ${Number(savedPage)}-sahifadan davom ettirish</button>
+      <button type="button" class="reader-resume-btn" onclick="chooseReaderStart(1)">↺ Boshidan o‘qish</button>
+    </div>`;
+  view.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add("open"));
+  const primary = sheet.querySelector(".reader-resume-btn.primary");
+  if (primary) primary.focus({ preventScroll: true });
+}
+
+function chooseReaderStart(page) {
+  haptic("light");
+  readerResumePending = false;
+  const sheet = document.getElementById("reader-resume");
+  if (sheet) {
+    sheet.classList.remove("open");
+    setTimeout(() => sheet.remove(), 200);
+  }
+  const target = Math.max(1, Number(page) || 1);
+  libReaderPageNum = libReaderDoc ? Math.min(target, libReaderTotalPages) : target;
+  updateReaderNavUI();
+  if (libReaderDoc) renderReaderActivePage();
+  scheduleSaveReadingProgress();
+  flashReaderChrome();
+}
+
+// Yuqori va pastki panel: odatda yashirin, sahifa o'rtasiga bosilganda chiqadi va o'zi yo'qoladi
+function setReaderChrome(visible) {
+  const view = document.getElementById("book-reader-view");
+  if (!view) return;
+  clearTimeout(readerChromeTimer);
+  view.classList.toggle("chrome-visible", !!visible);
+  if (visible) readerChromeTimer = setTimeout(() => setReaderChrome(false), 3500);
+}
+
+function toggleReaderChrome() {
+  const view = document.getElementById("book-reader-view");
+  if (!view) return;
+  setReaderChrome(!view.classList.contains("chrome-visible"));
+}
+
+function flashReaderChrome() {
+  setReaderChrome(true);
+  // Birinchi marta ochganda varaqlash usulini ko'rsatib qo'yamiz
+  let seen = false;
+  try { seen = localStorage.getItem("yosh_reader_hint_seen") === "1"; } catch (e) {}
+  const hint = document.getElementById("reader-gesture-hint");
+  if (!seen && hint) {
+    hint.classList.add("show");
+    setTimeout(() => hint.classList.remove("show"), 3200);
+    try { localStorage.setItem("yosh_reader_hint_seen", "1"); } catch (e) {}
+  }
+}
+
+// Sahifani ekranga to'liq sig'dirish (kichik PDF sahifalari ham kattalashadi)
+function fitReaderCanvas(canvasEl) {
+  const vp = document.getElementById("reader-viewport");
+  if (!vp || !canvasEl || !canvasEl.width || !canvasEl.height) return;
+  const maxW = vp.clientWidth;
+  const maxH = vp.clientHeight;
+  if (!maxW || !maxH) return;
+  const ratio = Math.min(maxW / canvasEl.width, maxH / canvasEl.height);
+  canvasEl.style.width = Math.floor(canvasEl.width * ratio) + "px";
+  canvasEl.style.height = Math.floor(canvasEl.height * ratio) + "px";
+}
+
+function refitReaderCanvases() {
+  if (!document.getElementById("book-reader-view")) return;
+  fitReaderCanvas(document.getElementById("reader-canvas-current"));
+  fitReaderCanvas(document.getElementById("reader-canvas-next"));
+}
+
+window.addEventListener("resize", () => {
+  clearTimeout(window._readerFitTimer);
+  window._readerFitTimer = setTimeout(refitReaderCanvases, 120);
+});
+
+// Kompyuterda klaviatura bilan varaqlash
+document.addEventListener("keydown", e => {
+  if (!document.getElementById("book-reader-view")) return;
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (readerResumePending) {
+    if (e.key === "Escape") chooseReaderStart(1);
+    return;
+  }
+  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+    e.preventDefault();
+    readerTurnPage(1);
+  } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+    e.preventDefault();
+    readerTurnPage(-1);
+  } else if (e.key === "Escape") {
+    closeBookReader();
+  }
+});
 
 function openPdfViewerModal(pdfUrl, title, bookId) {
   if (bookId) {
@@ -10277,7 +10412,11 @@ function openPdfViewerModal(pdfUrl, title, bookId) {
 
 function handleReaderZoneClick(side, e) {
   if (e) e.stopPropagation();
-  if (readerScale > 1.05) return;
+  if (readerScale > 1.05 || readerResumePending) return;
+  if (side === "center") {
+    toggleReaderChrome();
+    return;
+  }
   haptic("light");
   if (side === "left") {
     readerTurnPage(-1);
@@ -10298,31 +10437,8 @@ function renderMinimalReaderView() {
     isReader: true,
     type: "book_reader",
     html: `
-      <div class="book-reader-view" id="book-reader-view">
-        <!-- TOP BAR: Left: Exit button, Center: Title, Right: Bookmark + Close X -->
-        <div class="reader-top-bar">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button class="reader-action-btn" onclick="closeBookReader()" title="Orqaga / Chiqish" style="display:flex; align-items:center; gap:6px; width:auto; padding:0 14px; border-radius:20px;">
-              ${libIcons.back('reader-svg-back', 16)}
-              <span style="font-size:12.5px; font-weight:700;">Chiqish</span>
-            </button>
-          </div>
-
-          <div class="reader-book-title-subtle">
-            ${escapeHtml(libReaderTitle)}
-          </div>
-
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button id="reader-heart-btn" class="reader-action-btn ${currentReaderIsSaved ? 'saved' : ''}" onclick="toggleReaderBookmark(event)" title="Saqlash">
-              <span id="reader-heart-icon" style="font-size:18px; line-height:1;">${currentReaderIsSaved ? '♥' : '♡'}</span>
-            </button>
-            <button class="reader-action-btn" onclick="closeBookReader()" title="Yopish" style="font-weight:800; font-size:17px; line-height:1;">
-              ✕
-            </button>
-          </div>
-        </div>
-
-        <!-- VIEWPORT: Touch swipe surface, Wheel Zoom & Dual Canvas Stage -->
+      <div class="book-reader-view reader-immersive" id="book-reader-view">
+        <!-- VIEWPORT: sahifa butun ekranni egallaydi; surish, chetiga bosish, zoom -->
         <div class="reader-viewport" id="reader-viewport">
           <div class="reader-stage" id="reader-stage">
             <div class="reader-canvas-card slide-active" id="reader-card-current">
@@ -10332,12 +10448,13 @@ function renderMinimalReaderView() {
               <canvas id="reader-canvas-next"></canvas>
             </div>
 
-            <!-- TWO-ZONE OVERLAY FOR LEFT / RIGHT PAGE FLIP NAVIGATION -->
+            <!-- UCH ZONA: chap chet — oldingi, o'rta — panel, o'ng chet — keyingi (tugmasiz) -->
             <div class="reader-flip-overlay" id="reader-flip-overlay">
-              <div class="reader-zone reader-zone-left" id="reader-zone-left" onclick="handleReaderZoneClick('left', event)" title="Oldingi sahifa (Chap yarmi)">
+              <div class="reader-zone reader-zone-left" id="reader-zone-left" onclick="handleReaderZoneClick('left', event)" aria-label="Oldingi sahifa">
                 <div class="reader-zone-hint">‹</div>
               </div>
-              <div class="reader-zone reader-zone-right" id="reader-zone-right" onclick="handleReaderZoneClick('right', event)" title="Keyingi sahifa (O‘ng yarmi)">
+              <div class="reader-zone reader-zone-center" onclick="handleReaderZoneClick('center', event)" aria-label="Panelni ko‘rsatish"></div>
+              <div class="reader-zone reader-zone-right" id="reader-zone-right" onclick="handleReaderZoneClick('right', event)" aria-label="Keyingi sahifa">
                 <div class="reader-zone-hint">›</div>
               </div>
             </div>
@@ -10350,17 +10467,22 @@ function renderMinimalReaderView() {
           </div>
         </div>
 
-        <!-- FLOATING BOTTOM NAVIGATION CAPSULE -->
-        <div class="reader-floating-nav" id="reader-floating-nav">
-          <button class="reader-nav-btn" id="reader-prev-btn" onclick="readerTurnPage(-1)">
-            ← Oldingi
+        <!-- YASHIRIN PANEL: sahifa o'rtasiga bosilganda chiqadi -->
+        <div class="reader-top-bar reader-chrome-top">
+          <button class="reader-action-btn" onclick="closeBookReader()" title="Yopish" aria-label="Kitobni yopish" style="font-weight:800; font-size:17px; line-height:1;">✕</button>
+          <div class="reader-book-title-subtle">${escapeHtml(libReaderTitle)}</div>
+          <button id="reader-heart-btn" class="reader-action-btn ${currentReaderIsSaved ? 'saved' : ''}" onclick="toggleReaderBookmark(event)" title="Saqlash" aria-label="Saqlash">
+            <span id="reader-heart-icon" style="font-size:18px; line-height:1;">${currentReaderIsSaved ? '♥' : '♡'}</span>
           </button>
-          <span class="reader-nav-indicator" id="reader-page-indicator">
-            ${libReaderPageNum} / ${libReaderTotalPages}
-          </span>
-          <button class="reader-nav-btn" id="reader-next-btn" onclick="readerTurnPage(1)">
-            Keyingi →
-          </button>
+        </div>
+        <div class="reader-chrome-bottom">
+          <span class="reader-nav-indicator" id="reader-page-indicator">${libReaderPageNum} / ${libReaderTotalPages}</span>
+          <div class="reader-progress-track"><div class="reader-progress-fill" id="reader-progress-fill"></div></div>
+        </div>
+
+        <div class="reader-gesture-hint" id="reader-gesture-hint">
+          <span>‹ Chetiga bosing yoki suring ›</span>
+          <small>O‘rtasiga bosing — panel</small>
         </div>
       </div>
     `
@@ -10794,6 +10916,7 @@ async function renderPageOnCanvas(pageNum, canvasEl) {
 
   const renderTask = page.render({ canvasContext: ctx, viewport });
   await renderTask.promise;
+  fitReaderCanvas(canvasEl);
 }
 
 async function renderReaderActivePage() {
@@ -10820,7 +10943,7 @@ async function renderReaderActivePage() {
 }
 
 async function readerTurnPage(delta) {
-  if (readerIsTransitioning || !libReaderDoc) return;
+  if (readerIsTransitioning || !libReaderDoc || readerResumePending) return;
 
   const targetPage = libReaderPageNum + delta;
   if (targetPage < 1 || targetPage > libReaderTotalPages) return;
@@ -10891,11 +11014,14 @@ function updateReaderNavUI() {
   const ind = document.getElementById("reader-page-indicator");
   if (ind) ind.textContent = `${libReaderPageNum} / ${libReaderTotalPages}`;
 
-  const prevBtn = document.getElementById("reader-prev-btn");
-  if (prevBtn) prevBtn.disabled = libReaderPageNum <= 1;
+  const fill = document.getElementById("reader-progress-fill");
+  if (fill) fill.style.width = `${Math.round((libReaderPageNum / Math.max(1, libReaderTotalPages)) * 100)}%`;
 
-  const nextBtn = document.getElementById("reader-next-btn");
-  if (nextBtn) nextBtn.disabled = libReaderPageNum >= libReaderTotalPages;
+  const view = document.getElementById("book-reader-view");
+  if (view) {
+    view.classList.toggle("at-first-page", libReaderPageNum <= 1);
+    view.classList.toggle("at-last-page", libReaderPageNum >= libReaderTotalPages);
+  }
 }
 
 async function toggleReaderBookmark(e) {
@@ -10950,7 +11076,8 @@ function scheduleSaveReadingProgress() {
 }
 
 function saveReadingProgress() {
-  if (!currentBookReaderId || !libReaderPageNum || currentBookReaderId <= 0) return;
+  if (readerProgressKey && libReaderPageNum && !readerResumePending) readerLocalProgressSet(readerProgressKey, libReaderPageNum);
+  if (!currentBookReaderId || !libReaderPageNum || currentBookReaderId <= 0 || readerResumePending) return;
   api("/api/library/v2/reading-progress/save", {
     book_id: currentBookReaderId,
     page_number: libReaderPageNum
@@ -10971,7 +11098,9 @@ function closeBookReader() {
   }
   resetReaderZoom(false);
   clearTimeout(readingProgressSaveTimeout);
+  clearTimeout(readerChromeTimer);
   saveReadingProgress();
+  readerResumePending = false;
 
   const prev = lastPdfReturnView;
   const prevScroll = lastPdfReturnScroll || 0;
@@ -11008,6 +11137,26 @@ async function openBookDetail(resId) {
              (state.open_resources ? state.open_resources.find(r => Number(r.id) === numId) : null) ||
              libraryV2Resources.find(r => Number(r.id) === numId);
 
+  // Ro'yxatdagi ma'lumot bilan sahifani darhol ochamiz, server javobi kelgach yangilaymiz
+  if (book) {
+    renderBookDetailView(book, true);
+  } else {
+    currentView = {
+      type: "book_detail",
+      bookDetailId: numId,
+      html: `
+        <div class="page lib-container lib-detail-page">
+          <div class="lib-back-nav" onclick="closeDetail()">${libIcons.back('lib-back-svg', 16)} Orqaga</div>
+          <div style="padding:70px 20px; text-align:center;">
+            <div class="spinner" style="margin:0 auto 14px;"></div>
+            <div style="font-weight:700; color:var(--text-primary);">Kitob ochilmoqda...</div>
+          </div>
+        </div>`
+    };
+    render();
+    window.scrollTo(0, 0);
+  }
+
   // 2. Serverdan to'g'ri kitob ma'lumotlarini yuklash (/api/library/v2/book/:id)
   try {
     const detailData = await api(`/api/library/v2/book/${numId}`).catch(() => null);
@@ -11026,8 +11175,16 @@ async function openBookDetail(resId) {
   } catch (e) {}
 
   if (reqId !== currentDetailBookRequestId) return;
-  if (!book) return showAlert("Kitob ma'lumotlari topilmadi.");
+  // Foydalanuvchi bu orada boshqa sahifaga o'tgan bo'lsa, uni qaytarib ochmaymiz
+  if (!currentView || currentView.bookDetailId !== numId) return;
+  if (!book) {
+    closeDetail();
+    return showAlert("Kitob ma'lumotlari topilmadi.");
+  }
+  renderBookDetailView(book, false);
+}
 
+function renderBookDetailView(book, isFirstPaint) {
   const cover = formatImageUrl(book.preview_image_url || book.cover_url || book.generated_cover_url || "");
   const author = book.author || "Autodesk BIM & Architecture";
   const pages = book.page_count ? `${book.page_count} bet` : (book.drive_file_size || "PDF Kitob");
@@ -11054,8 +11211,13 @@ async function openBookDetail(resId) {
   }
 
   const readUrl = book.pdf_url || book.content_url || (book.drive_file_id ? `https://drive.google.com/file/d/${book.drive_file_id}/view` : "");
+  const localPage = readerLocalProgressGet(`book:${Number(book.id)}`);
+  const resumePage = Math.max(Number(book.last_page) || 0, localPage);
+  const keepScroll = !isFirstPaint ? (window.scrollY || 0) : 0;
 
   currentView = {
+    type: "book_detail",
+    bookDetailId: Number(book.id),
     html: `
       <div class="page lib-container lib-detail-page">
         <div class="lib-detail-top-bar">
@@ -11121,8 +11283,8 @@ async function openBookDetail(resId) {
           <!-- ACTION BUTTONS: FAQAT O'QISH (ASL MANBA VA ULASHISH YO'Q) -->
           <div class="lib-detail-actions" style="margin-top:24px;">
             ${readUrl ? `
-              <button class="lib-download-btn" style="width:100%;" onclick="openBookReader(${Number(book.id)}, ${Number(book.last_page || 1)})">
-                ${libIcons.book('lib-btn-svg', 18)} ${book.last_page && book.last_page > 1 ? `${book.last_page}-SAHIFADAN DAVOM ETTIRISH` : 'O‘QISHNI BOSHLASH'}
+              <button class="lib-download-btn" style="width:100%;" onclick="openBookReader(${Number(book.id)})">
+                ${libIcons.book('lib-btn-svg', 18)} ${resumePage > 1 ? `O‘QISH (${resumePage}-sahifada to‘xtagansiz)` : 'O‘QISHNI BOSHLASH'}
               </button>
             ` : `<button class="lib-download-btn" style="width:100%; opacity:0.6;" disabled>Kitob mutolaa havolasi kiritilmagan</button>`}
 
@@ -11135,7 +11297,7 @@ async function openBookDetail(resId) {
     `
   };
   render();
-  window.scrollTo(0, 0);
+  window.scrollTo(0, keepScroll);
 }
 
 async function openSourceDetail(resId) {
@@ -20906,13 +21068,14 @@ function renderLearningCenter() {
     { id: "stages", label: "Bosqichlar (01-09)" },
     { id: "books", label: "Kitoblar" },
     { id: "standards", label: "Normativlar (ShNQ/GOST)" },
-    { id: "projects", label: "Real Loyihalar" },
+    { id: "lessons", label: "Darslar (ilovada o‘qish)" },
     { id: "checklist", label: "Interyer Rabochka" },
     { id: "revit", label: "Revit BIM" }
   ];
 
   // Filtering stages
   const filteredStages = stages.filter(s => {
+    if (learningFilter === "lessons" && !(Array.isArray(s.lessons) && s.lessons.length)) return false;
     if (learningFilter === "books" || learningFilter === "standards" || learningFilter === "projects" || learningFilter === "checklist") {
       const stageRes = resources.filter(r => r.stage_id === s.id);
       if (learningFilter === "books" && !stageRes.some(r => r.resource_type === "book")) return false;
@@ -20925,6 +21088,8 @@ function renderLearningCenter() {
     const inSub = (s.subtitle || "").toLowerCase().includes(q);
     const inDesc = (s.description || "").toLowerCase().includes(q);
     const inTopics = (s.topics || []).some(t => String(t).toLowerCase().includes(q));
+    const inLessons = (s.lessons || []).some(l => JSON.stringify(l).toLowerCase().includes(q));
+    if (inLessons) return true;
     const inRes = resources.some(r => r.stage_id === s.id && (
       (r.title || "").toLowerCase().includes(q) ||
       (r.author || "").toLowerCase().includes(q) ||
@@ -20935,7 +21100,7 @@ function renderLearningCenter() {
 
   // Filtering tables
   const filteredTables = tables.filter(t => {
-    if (learningFilter === "stages") return false;
+    if (learningFilter === "stages" || learningFilter === "lessons") return false;
     if (learningFilter === "standards" && t.table_key !== "uzbekistan_norms" && t.table_key !== "spds_gost_standards") return false;
     if (learningFilter === "checklist" && t.table_key !== "interior_drawings_checklist") return false;
     if (learningFilter === "books" && t.table_key !== "top_10_sources") return false;
@@ -21028,6 +21193,11 @@ function renderLearningCenter() {
                   </div>
                 ` : ""}
 
+                ${Array.isArray(stage.lessons) && stage.lessons.length ? `
+                  <div class="learning-sec-label">📘 Darslar — shu yerning o‘zida o‘qing (${stage.lessons.length} ta):</div>
+                  <div class="learning-lessons">${stage.lessons.map(renderLearningLessonHtml).join("")}</div>
+                ` : ""}
+
                 ${stageRes.length ? `
                   <div class="learning-sec-label">Bosqich manbalari va adabiyotlari (${stageRes.length} ta):</div>
                   <div class="learning-res-list">
@@ -21048,8 +21218,9 @@ function renderLearningCenter() {
                             <b>Foydasi:</b> ${escapeHtml(res.benefit_description)}
                           </div>
                         ` : ""}
+                        ${res.verification_note ? `<div class="learning-res-verify">${escapeHtml(res.verification_note)}</div>` : ""}
                         <div class="learning-res-actions">
-                          ${(() => {
+                          ${res.verification_note ? learningResourceButtonsHtml(res) : (() => {
                             const isSame = res.pdf_url && res.web_url && (res.pdf_url === res.web_url);
                             if (isSame) {
                               let label = "🌐 Manbani to‘liq ochish →";
@@ -21146,7 +21317,7 @@ function renderLearningCenter() {
                         if (cellStr.startsWith("http://") || cellStr.startsWith("https://")) {
                           let linkText = "Ochish ↗";
                           if (cellStr.includes("lex.uz")) linkText = "Lex.uz ↗";
-                          else if (cellStr.includes("stroyinf.ru") || cellStr.includes("allgosts.ru")) linkText = "GOST Matni ↗";
+                          else if (cellStr.includes("wikisource.org") || cellStr.includes("meganorm.ru")) linkText = "GOST matni ↗";
                           else if (cellStr.includes(".pdf")) linkText = "PDF ↗";
                           return `
                             <td>
@@ -21159,8 +21330,8 @@ function renderLearningCenter() {
                         if (cellStr === "AMALDA") {
                           return `<td><span class="learning-status-badge active">AMALDA</span></td>`;
                         }
-                        if (cellStr === "BEKOR QILINGAN") {
-                          return `<td><span class="learning-status-badge deprecated">BEKOR QILINGAN</span></td>`;
+                        if (cellStr === "BEKOR QILINGAN" || cellStr === "KUCHINI YO‘QOTGAN") {
+                          return `<td><span class="learning-status-badge deprecated">${escapeHtml(cellStr)}</span></td>`;
                         }
                         return `<td>${escapeHtml(cellStr)}</td>`;
                       }).join("")}
@@ -21180,6 +21351,69 @@ function renderLearningCenter() {
       ` : ""}
     </div>
   `;
+}
+
+// O'rganish markazi: bosqich ichidagi dars (ilovaning o'zida o'qiladigan mazmun)
+function renderLearningLessonHtml(lesson, i) {
+  const l = lesson || {};
+  const table = l.table && Array.isArray(l.table.rows) ? `
+    <div class="learning-table-scroll learning-lesson-table">
+      <table class="learning-table">
+        <thead><tr>${(l.table.columns || []).map(c => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>
+        <tbody>${l.table.rows.map(r => `<tr>${r.map(c => {
+          const s = String(c || "");
+          if (s.startsWith("KUCHINI")) return `<td><span class="learning-status-badge deprecated">${escapeHtml(s)}</span></td>`;
+          if (s.startsWith("AMALDA")) return `<td><span class="learning-status-badge active">${escapeHtml(s)}</span></td>`;
+          return `<td>${escapeHtml(s)}</td>`;
+        }).join("")}</tr>`).join("")}</tbody>
+      </table>
+    </div>` : "";
+  const list = (arr, cls) => Array.isArray(arr) && arr.length ? `<ul class="${cls}">${arr.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : "";
+  return `
+    <details class="learning-lesson" ${i === 0 ? "open" : ""}>
+      <summary class="learning-lesson-head"><span class="learning-lesson-num">${i + 1}</span><span>${escapeHtml(l.heading || "Dars")}</span></summary>
+      <div class="learning-lesson-body">
+        ${l.text ? `<p class="learning-lesson-text">${escapeHtml(l.text)}</p>` : ""}
+        ${list(l.points, "learning-lesson-points")}
+        ${table}
+        ${(Array.isArray(l.correct) && l.correct.length) || (Array.isArray(l.wrong) && l.wrong.length) ? `
+          <div class="norm-dodont">
+            ${Array.isArray(l.correct) && l.correct.length ? `<div class="norm-dodont-box is-do"><div class="norm-dodont-head">✅ To‘g‘ri</div>${list(l.correct, "")}</div>` : ""}
+            ${Array.isArray(l.wrong) && l.wrong.length ? `<div class="norm-dodont-box is-dont"><div class="norm-dodont-head">❌ Noto‘g‘ri</div>${list(l.wrong, "")}</div>` : ""}
+          </div>` : ""}
+        ${l.source && l.source.title ? `
+          <div class="learning-lesson-source">
+            <div><b>📜 Manba:</b> ${escapeHtml(l.source.title)}</div>
+            ${l.source.status ? `<div class="learning-lesson-status">${escapeHtml(l.source.status)}</div>` : ""}
+            ${l.source.url ? `<button type="button" class="learning-action-btn" onclick="safeOpenExternal('${escapeJsString(l.source.url)}')">🌐 ${escapeHtml(learningHostLabel(l.source.url))} ↗</button>` : ""}
+          </div>` : ""}
+      </div>
+    </details>`;
+}
+
+function learningHostLabel(url) {
+  const u = String(url || "");
+  if (/lex\.uz/i.test(u)) return "Lex.uz — rasmiy matn";
+  if (/mc\.uz/i.test(u)) return "mc.uz — Qurilish vazirligi";
+  if (/wikisource\.org/i.test(u)) return "Vikiteka — standart matni";
+  if (/meganorm\.ru/i.test(u)) return "Meganorm — standart sahifasi";
+  if (/ziyonet\.uz|ziyouz\.com/i.test(u)) return "ZiyoNET / Ziyouz";
+  if (/autodesk\.com/i.test(u)) return "Autodesk — rasmiy yordam";
+  try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return "Manba sayti"; }
+}
+
+// Tekshirilgan manba: PDF bo'lsa ilovaning o'zida o'qiladi, qolganlari — aynan manba saytiga havola
+function learningResourceButtonsHtml(res) {
+  let html = "";
+  if (res.pdf_url && nrmCanReadInApp(res.pdf_url)) {
+    html += `<button class="learning-action-btn primary" onclick="openPdfViewerModal('${escapeJsString(res.pdf_url)}', '${escapeJsString(res.title || "")}')">📖 Ilovada o‘qish</button>`;
+  } else if (res.pdf_url) {
+    html += `<button class="learning-action-btn primary" onclick="safeOpenExternal('${escapeJsString(res.pdf_url)}')">📄 PDFni ochish ↗</button>`;
+  }
+  if (res.web_url) {
+    html += `<button class="learning-action-btn ${html ? "" : "primary"}" onclick="safeOpenExternal('${escapeJsString(res.web_url)}')">🌐 ${escapeHtml(learningHostLabel(res.web_url))} ↗</button>`;
+  }
+  return html;
 }
 
 // Admin Learning Management UI
@@ -21839,6 +22073,7 @@ function applyNormativesFiltersFromModal() {
   }
 
   closeNormativesFilterModal();
+  normativesState.animateList = true;
   render();
 }
 window.applyNormativesFiltersFromModal = applyNormativesFiltersFromModal;
@@ -22064,6 +22299,7 @@ async function loadNormativesData() {
 // FILTER & TAB HANDLERS
 function setNormativesTab(tab) {
   haptic("light");
+  if (normativesState.activeTab !== tab) normativesState.animateList = true;
   normativesState.activeTab = tab;
   render();
 }
@@ -22081,6 +22317,8 @@ function setNormativesSearch(val) {
   const phWord = document.getElementById("norm-ph-word");
   const phWrap = phWord ? phWord.closest(".mcat-ph") : null;
   if (listEl) {
+    // Har bir harfda kartalar animatsiyasi qayta o'ynamasin
+    listEl.classList.remove("norm-animate");
     if (normativesState.activeTab === "docs") {
       listEl.innerHTML = renderNormativeDocsTabHtml();
     } else if (normativesState.activeTab === "topics") {
@@ -22206,6 +22444,9 @@ function renderNormativesSectionHtml() {
   const activeTab = normativesState.activeTab;
   const searchQuery = normativesState.searchQuery;
   const activeFilterCount = getNormativesActiveFilterCount();
+  // Kartalar faqat bo'lim ochilganda, tab yoki filtr almashganda animatsiya bilan chiqadi (like/saqlashda emas)
+  const animateList = normativesState.animateList !== false;
+  normativesState.animateList = false;
 
   return `
     <div class="page lib-container lib-page-enter normatives-page mcat">
@@ -22255,7 +22496,7 @@ function renderNormativesSectionHtml() {
       ${renderNormativesActiveFilterHtml()}
 
       <!-- 5. CONTENT SWITCHER -->
-      <div class="norm-tab-content" style="margin-top:10px;">
+      <div class="norm-tab-content ${animateList ? "norm-animate" : ""}" style="margin-top:10px;">
         ${activeTab === 'cases' ? renderNormativeCasesTabHtml() : (activeTab === 'topics' ? renderNormativeTopicsTabHtml() : renderNormativeDocsTabHtml())}
       </div>
     </div>
@@ -22306,18 +22547,18 @@ function renderNormativeCasesTabHtml() {
 
   return `
     <div class="norm-cases-intro">
-      <div class="norm-intro-badge">⚡ Bosqichma-bosqich qonuniy yo‘riqnoma</div>
+      <div class="norm-intro-badge">⚡ Bosqichma-bosqich amaliy yo‘riqnoma</div>
       <div class="norm-intro-desc">
-        O‘zingizga kerakli qurilish yoki loyihalash vaziyatini tanlang. Qonun bo‘yicha talab qilinadigan barcha ruxsatnomalar, hujjatlar va ularning me'yoriy asoslari ko‘rsatiladi.
+        Vaziyatni tanlang: har bir bosqichda amaldagi normativ talabi (band raqami bilan), <b>✅ to‘g‘ri</b> va <b>❌ noto‘g‘ri</b> yechim misollari ko‘rsatiladi.
       </div>
     </div>
 
     <div class="norm-cases-grid">
-      ${list.map(item => {
+      ${list.map((item, i) => {
         const icon = item.icon || "🏠";
         const stepCount = item.step_count || (Array.isArray(item.steps) ? item.steps.length : 6);
         return `
-          <div class="norm-case-card" onclick="openNormativeCaseDetail(${Number(item.id)})">
+          <div class="norm-case-card norm-anim-in" style="--i:${Math.min(i, 12)};" onclick="openNormativeCaseDetail(${Number(item.id)})">
             <div class="norm-case-card-header">
               <span class="norm-case-icon">${escapeHtml(icon)}</span>
               <span class="norm-case-cat-pill">${escapeHtml(item.category || "Qurilish")}</span>
@@ -22325,7 +22566,7 @@ function renderNormativeCasesTabHtml() {
             <h3 class="norm-case-title">${escapeHtml(item.title)}</h3>
             <p class="norm-case-desc">${escapeHtml(item.description || "")}</p>
             <div class="norm-case-footer">
-              <span class="norm-case-steps-tag">📋 ${stepCount} ta asosiy hujjat bosqichi</span>
+              <span class="norm-case-steps-tag">📋 ${stepCount} ta bosqich • ✅/❌ misollar</span>
               <span class="norm-case-chevron">›</span>
             </div>
           </div>
@@ -22419,14 +22660,14 @@ function renderNormativeDocsTabHtml() {
       </div>
     ` : `
       <div class="norm-docs-grid">
-        ${list.map(doc => {
+        ${list.map((doc, i) => {
           const docNum = doc.document_number || "Normativ";
           const status = doc.status || "AMALDA";
           const isSaved = isNormativeSaved(doc.id) || isUniversalItemSaved('normative', doc.id);
           const isLiked = isUniversalItemLiked('normative', doc.id);
           const dateStr = doc.adopted_date ? uzDate(doc.adopted_date) : (doc.effective_date ? uzDate(doc.effective_date) : "");
           return `
-            <div class="norm-doc-card" onclick="openNormativeDocDetail(${Number(doc.id)})">
+            <div class="norm-doc-card norm-anim-in" style="--i:${Math.min(i, 12)};" onclick="openNormativeDocDetail(${Number(doc.id)})">
               <div class="norm-doc-header">
                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                   <div class="norm-doc-num-tag">${escapeHtml(docNum)}</div>
@@ -22607,7 +22848,7 @@ function renderNormativeTopicsTabHtml() {
 
     <!-- TOPICS GRID -->
     <div class="norm-docs-grid">
-      ${list.map(topic => {
+      ${list.map((topic, i) => {
         const isSaved = isNormativeTopicSaved(topic.id) || isUniversalItemSaved('normative', topic.id);
         const isLiked = isUniversalItemLiked('normative', topic.id);
         const val = topic.normative_value || "";
@@ -22616,7 +22857,7 @@ function renderNormativeTopicsTabHtml() {
         const band = topic.source_band || "";
 
         return `
-          <div class="norm-doc-card norm-topic-card" onclick="openNormativeTopicDetail(${Number(topic.id)})" style="cursor:pointer;">
+          <div class="norm-doc-card norm-topic-card norm-anim-in" onclick="openNormativeTopicDetail(${Number(topic.id)})" style="cursor:pointer; --i:${Math.min(i, 12)};">
             <div class="norm-doc-header">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 ${renderNormativeTopicTypeBadge(topic.data_type)}
@@ -23262,8 +23503,8 @@ function renderNormativeCaseDetailPage(res) {
         <h1 class="norm-case-detail-title">${escapeHtml(c.title)}</h1>
         <p class="norm-case-detail-desc">${escapeHtml(c.description || "")}</p>
         <div class="norm-case-stats-bar">
-          <span>📋 Jami ${steps.length} ta ketma-ket rasmiy bosqich</span>
-          <span>✓ Qonuniy talablar</span>
+          <span>📋 ${steps.length} ta bosqich</span>
+          <span>✅ To‘g‘ri / ❌ Noto‘g‘ri misollar</span>
         </div>
       </div>
 
@@ -23278,18 +23519,35 @@ function renderNormativeCaseDetailPage(res) {
             const stepNum = st.step_order || (idx + 1);
             const doc = st.document;
             return `
-              <div class="norm-step-card">
+              <div class="norm-step-card" style="--step-i:${idx};">
                 <div class="norm-step-header">
                   <div class="norm-step-number">${stepNum}</div>
                   <div class="norm-step-meta">
                     <h3 class="norm-step-title">${escapeHtml(st.title)}</h3>
-                    ${st.is_mandatory !== false ? '<span class="norm-mandatory-tag">Majburiy</span>' : ''}
+                    ${st.is_mandatory !== false ? '<span class="norm-mandatory-tag">Majburiy</span>' : '<span class="norm-advice-tag">💡 Tavsiya</span>'}
                   </div>
                 </div>
 
                 <div class="norm-step-desc">
                   ${escapeHtml(st.description || "")}
                 </div>
+
+                ${(Array.isArray(st.correct) && st.correct.length) || (Array.isArray(st.wrong) && st.wrong.length) ? `
+                  <div class="norm-dodont">
+                    ${Array.isArray(st.correct) && st.correct.length ? `
+                      <div class="norm-dodont-box is-do">
+                        <div class="norm-dodont-head">✅ To‘g‘ri</div>
+                        <ul>${st.correct.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+                      </div>` : ""}
+                    ${Array.isArray(st.wrong) && st.wrong.length ? `
+                      <div class="norm-dodont-box is-dont">
+                        <div class="norm-dodont-head">❌ Noto‘g‘ri</div>
+                        <ul>${st.wrong.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+                      </div>` : ""}
+                  </div>` : ""}
+
+                ${st.example ? `<div class="norm-step-example"><b>📐 Misol:</b> ${escapeHtml(st.example)}</div>` : ""}
+                ${st.law_basis ? `<div class="norm-step-basis">📜 Asos: ${escapeHtml(st.law_basis)}</div>` : ""}
 
                 <!-- LINKED OFFICIAL DOCUMENT CARD (IF PRESENT) -->
                 ${doc ? `
@@ -23301,7 +23559,7 @@ function renderNormativeCaseDetailPage(res) {
                         <div class="norm-step-doc-name">${escapeHtml(doc.title)}</div>
                       </div>
                     </div>
-                    <span class="norm-step-doc-arrow">Asos hujjat ›</span>
+                    <span class="norm-step-doc-arrow">Hujjatni ochish ›</span>
                   </div>
                 ` : ''}
               </div>
@@ -23312,7 +23570,7 @@ function renderNormativeCaseDetailPage(res) {
 
       <!-- LEGAL DISCLAIMER -->
       <div class="norm-legal-notice">
-        ⚖️ <strong>Eslatma:</strong> Barcha bosqichlar va talablar O‘zbekiston Respublikasi shaharsozlik qonunchiligi (SHNQ, QMQ) va Vazirlar Mahkamasi qarorlariga asoslangan. Har bir bosqich bo‘yicha batafsil normativni ustiga bosib ko‘rishingiz mumkin.
+        ⚖️ <strong>Eslatma:</strong> «Majburiy» bosqichlardagi raqamlar amaldagi ShNQ/QMQ matnidan band raqami bilan olingan (tekshirilgan sana: 24.10.2026). «💡 Tavsiya» — amaliy maslahat, majburiy norma emas. Hujjat kartasini bosib, rasmiy matnni lex.uz da o‘qishingiz mumkin.
       </div>
     </div>
   `;
@@ -25573,12 +25831,29 @@ function openNormPdf(url) {
   safeOpenExternal(url);
 }
 
+// Ilova ichidagi o'quvchida ochiladigan PDF manbalari (server pdf-proxy ruxsat bergan hostlar)
+function nrmCanReadInApp(url) {
+  return /^https:\/\/([a-z0-9-]+\.)*(mc\.uz|ziyonet\.uz|ziyouz\.com|lib\.utu-ranch\.uz)\//i.test(String(url || "")) && /\.pdf(\?|#|$)/i.test(String(url || ""));
+}
+
+function openNormPdfReader(url, title) {
+  haptic("light");
+  openPdfViewerModal(url, title || "Normativ hujjat");
+}
+
 function nrmSourceBlockHtml(doc) {
   const L = doc.links || nrmFallbackLinks(doc);
   const btns = [];
-  if (L.official) btns.push(`<button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">🌐 ${escapeHtml(L.official.label || "Rasmiy sayt")} ↗</button>`);
-  if (L.pdf) btns.push(`<button type="button" class="norm-secondary-btn" onclick="openNormPdf('${escapeJsString(L.pdf.url)}')">📥 PDF yuklab olish</button>`);
-  else btns.push(`<div class="nrm-nopdf">📄 PDF mavjud emas</div>`);
+  const docTitle = `${doc.document_number || ""} ${doc.title || ""}`.trim();
+  if (L.official) {
+    const isLex = /lex\.uz/i.test(L.official.url);
+    btns.push(`<button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">📖 ${isLex ? "Rasmiy matnni o‘qish (lex.uz)" : escapeHtml(L.official.label || "Rasmiy sahifa")} ↗</button>`);
+  }
+  if (L.pdf) {
+    if (nrmCanReadInApp(L.pdf.url)) btns.push(`<button type="button" class="${L.official ? "norm-secondary-btn" : "norm-primary-btn"}" onclick="openNormPdfReader('${escapeJsString(L.pdf.url)}', '${escapeJsString(docTitle)}')">📖 Ilovada o‘qish (PDF)</button>`);
+    btns.push(`<button type="button" class="norm-secondary-btn" onclick="openNormPdf('${escapeJsString(L.pdf.url)}')">📥 PDF yuklab olish</button>`);
+  }
+  if (!L.official && !L.pdf) btns.push(`<div class="nrm-nopdf">📄 Rasmiy matn havolasi hali qo‘shilmagan</div>`);
   if (L.search && !L.official) btns.push(`<button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(L.search.url)}')">🔎 ${escapeHtml(L.search.host || "Sayt")} qidiruvida ochish ↗</button>`);
   const issues = (state && state.is_admin && Array.isArray(doc.link_issues) && doc.link_issues.length)
     ? `<div class="nrm-admin-issues">${doc.link_issues.map(i => `⚠️ <b>${escapeHtml(i.field)}</b>: ${escapeHtml(i.text)}`).join("<br>")}</div>` : "";

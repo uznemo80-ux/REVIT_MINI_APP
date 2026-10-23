@@ -13832,3 +13832,462 @@ body.is-scrolling * {
 @media (hover: hover) and (pointer: fine) { .stx-slice:hover { transform: scale(1.03); } }
 @media (prefers-reduced-motion: reduce) { .stx-slice { transition: none !important; } }
 .stx-pie-pct.small { font-size: 9.5px; }
+
+/* ======================================================
+   KITOB O'QUVCHISI — TO'LIQ EKRAN (IMMERSIVE) REJIM
+   Panel yashirin; o'rtaga bosilganda chiqadi. Varaqlash: surish / chetga bosish / klaviatura.
+   ====================================================== */
+.reader-immersive .reader-viewport {
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0;
+  position: absolute;
+  inset: 0;
+}
+.reader-immersive .reader-canvas-card {
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.reader-immersive .reader-canvas-card canvas {
+  max-width: none;
+  max-height: none;
+}
+
+/* Panellar: odatda yashirin */
+.reader-immersive .reader-chrome-top,
+.reader-immersive .reader-chrome-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.reader-immersive .reader-chrome-top {
+  top: 0;
+  height: auto;
+  min-height: 56px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px;
+  gap: 10px;
+  transform: translateY(-8px);
+}
+.reader-immersive .reader-chrome-top .reader-action-btn {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+.reader-immersive .reader-chrome-top .reader-book-title-subtle {
+  flex: 1;
+  max-width: none;
+}
+.reader-immersive .reader-chrome-bottom {
+  bottom: 0;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(to top, rgba(11, 12, 16, 0.85), rgba(11, 12, 16, 0));
+  color: #f5f5f7;
+  transform: translateY(8px);
+}
+html.light .reader-immersive .reader-chrome-bottom {
+  background: linear-gradient(to top, rgba(247, 247, 249, 0.92), rgba(247, 247, 249, 0));
+  color: #1a1a1e;
+}
+.reader-immersive.chrome-visible .reader-chrome-top,
+.reader-immersive.chrome-visible .reader-chrome-bottom {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.reader-progress-track {
+  width: min(420px, 100%);
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+html.light .reader-progress-track { background: rgba(0, 0, 0, 0.1); }
+.reader-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent, #6366f1);
+  transition: width 0.25s ease;
+}
+
+/* Uch zonali bosish: chet — varaqlash, o'rta — panel */
+.reader-immersive .reader-zone-left,
+.reader-immersive .reader-zone-right { flex: 0 0 30%; }
+.reader-immersive .reader-zone-center { flex: 1 1 40%; cursor: default; }
+.reader-immersive.at-first-page .reader-zone-left .reader-zone-hint,
+.reader-immersive.at-last-page .reader-zone-right .reader-zone-hint { visibility: hidden; }
+.reader-immersive .reader-zone:active .reader-zone-hint { opacity: 0.85; transform: scale(1); }
+
+/* Birinchi ochilishdagi yordamchi ishora */
+.reader-gesture-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.96);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(22, 23, 30, 0.82);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.reader-gesture-hint small { font-size: 12px; font-weight: 500; opacity: 0.75; }
+.reader-gesture-hint.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* "Davom ettirish yoki boshidan" tanlovi */
+.reader-resume-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.2s ease;
+}
+.reader-resume-backdrop.open { background: rgba(0, 0, 0, 0.55); }
+.reader-resume-sheet {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 22px 18px 16px;
+  border-radius: 20px;
+  background: var(--bg-surface, #17181f);
+  color: var(--text-primary, #f5f5f7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  transform: translateY(24px);
+  opacity: 0;
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+}
+.reader-resume-backdrop.open .reader-resume-sheet { transform: none; opacity: 1; }
+html.light .reader-resume-sheet { background: #fff; color: #1a1a1e; border-color: rgba(0, 0, 0, 0.06); }
+.reader-resume-ico { font-size: 30px; line-height: 1; margin-bottom: 8px; }
+.reader-resume-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.reader-resume-sub { font-size: 13.5px; color: var(--text-secondary, #9ca3af); margin-bottom: 16px; }
+.reader-resume-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+html.light .reader-resume-btn { border-color: rgba(0, 0, 0, 0.12); }
+.reader-resume-btn.primary { background: var(--accent, #6366f1); border-color: transparent; color: var(--accent-contrast, #fff); }
+.reader-resume-btn:active { transform: scale(0.98); }
+.reader-resume-btn:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }
+@media (hover: hover) {
+  .reader-resume-btn:hover { background: rgba(255, 255, 255, 0.06); }
+  .reader-resume-btn.primary:hover { filter: brightness(1.08); background: var(--accent, #6366f1); }
+}
+@media (min-width: 768px) {
+  .reader-resume-backdrop { align-items: center; }
+  .reader-resume-sheet { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-resume-sheet, .reader-gesture-hint, .reader-immersive .reader-chrome-top, .reader-immersive .reader-chrome-bottom { transition: none !important; }
+}
+
+/* ======================================================
+   NORMATIVLAR — TUGMALAR, ANIMATSIYALAR VA YO'RIQNOMA "TO'G'RI / NOTO'G'RI" BLOKLARI
+   ====================================================== */
+.normatives-page .norm-cases-grid,
+.normatives-page .norm-docs-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+}
+
+/* Tablar: 44px touch maydon, aniq faol holat, bosilganda yengil siqilish */
+.normatives-page .norm-clean-topbar { gap: 8px; }
+.normatives-page .norm-subtabs-row {
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--bg-surface-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  max-width: 100%;
+}
+.normatives-page .norm-clean-subtab {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.12s ease;
+}
+.normatives-page .norm-clean-subtab.active {
+  background: var(--accent, #6366f1);
+  border-color: transparent;
+  color: var(--accent-contrast, #fff);
+  box-shadow: 0 6px 16px -6px var(--accent-glow, rgba(0, 0, 0, 0.3));
+  animation: normTabPop 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.normatives-page .norm-clean-subtab:active { transform: scale(0.97); }
+.normatives-page .norm-clean-subtab:focus-visible,
+.normatives-page .norm-filter-trigger-btn:focus-visible,
+.norm-primary-btn:focus-visible,
+.norm-secondary-btn:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .normatives-page .norm-clean-subtab:not(.active):hover {
+    background: var(--bg-surface-elevated, rgba(255, 255, 255, 0.08));
+    color: var(--text-primary, #fff);
+  }
+}
+@keyframes normTabPop {
+  0% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+.normatives-page .norm-filter-trigger-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+.normatives-page .norm-filter-trigger-btn:active { transform: scale(0.97); }
+.normatives-page .norm-filter-trigger-btn.has-active .norm-filter-count-badge { animation: normTabPop 0.24s ease; }
+
+/* Kartalar: ochilganda navbat bilan paydo bo'lish (150–300ms), hoverda kichik ko'tarilish */
+.norm-animate .norm-anim-in {
+  animation: normCardIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+@keyframes normCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.normatives-page .norm-doc-card,
+.normatives-page .norm-case-card {
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .normatives-page .norm-doc-card:hover,
+  .normatives-page .norm-case-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+  }
+  .normatives-page .norm-doc-card:hover .norm-doc-action,
+  .normatives-page .norm-case-card:hover .norm-case-chevron { transform: translateX(3px); }
+}
+.normatives-page .norm-doc-action,
+.normatives-page .norm-case-chevron { display: inline-block; transition: transform 0.18s ease; }
+.normatives-page .norm-doc-card:active,
+.normatives-page .norm-case-card:active { transform: scale(0.98); }
+
+/* Kartadagi like / saqlash tugmalari: 44px touch maydon */
+.normatives-page .norm-doc-header .proc-action-btn {
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.normatives-page .norm-doc-header .proc-action-btn:active { transform: scale(0.9); }
+
+/* Manba tugmalari */
+.norm-primary-btn,
+.norm-secondary-btn {
+  min-height: 48px;
+  transition: transform 0.12s ease, filter 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.norm-primary-btn:active,
+.norm-secondary-btn:active { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) {
+  .norm-primary-btn:hover { filter: brightness(1.08); }
+}
+
+/* Yo'riqnoma: bosqich kartalari, To'g'ri / Noto'g'ri */
+.norm-steps-list .norm-step-card {
+  animation: normCardIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--step-i, 0) * 45ms);
+}
+.norm-advice-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.norm-dodont {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (min-width: 640px) {
+  .norm-dodont { grid-template-columns: 1fr 1fr; }
+}
+.norm-dodont-box {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid;
+}
+.norm-dodont-box.is-do { background: rgba(16, 185, 129, 0.07); border-color: rgba(16, 185, 129, 0.28); }
+.norm-dodont-box.is-dont { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.28); }
+.norm-dodont-head { font-size: 12.5px; font-weight: 800; margin-bottom: 6px; }
+.norm-dodont-box.is-do .norm-dodont-head { color: #10b981; }
+.norm-dodont-box.is-dont .norm-dodont-head { color: #ef4444; }
+.norm-dodont-box ul { margin: 0; padding-left: 18px; }
+.norm-dodont-box li { font-size: 13px; line-height: 1.5; color: var(--text-primary, #fff); margin: 2px 0; }
+.norm-step-example {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary, #fff);
+  background: rgba(245, 158, 11, 0.07);
+  border-left: 3px solid #f59e0b;
+}
+.norm-step-basis {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary, #9ca3af);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .norm-animate .norm-anim-in,
+  .norm-steps-list .norm-step-card,
+  .normatives-page .norm-clean-subtab.active { animation: none !important; }
+}
+
+/* ======================================================
+   O'RGANISH MARKAZI — ILOVA ICHIDAGI DARSLAR VA MANBA TEKSHIRUVI
+   ====================================================== */
+.learning-lessons { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.learning-lesson {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
+  background: var(--bg-surface-elevated, rgba(0, 0, 0, 0.02));
+  overflow: hidden;
+}
+.learning-lesson-head {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.learning-lesson-head::-webkit-details-marker { display: none; }
+.learning-lesson-head::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+.learning-lesson[open] > .learning-lesson-head::after { transform: rotate(180deg); }
+.learning-lesson-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.learning-lesson-num {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-contrast, #fff);
+  background: var(--accent);
+}
+.learning-lesson-body { padding: 0 14px 14px; animation: fadeIn 0.2s ease; }
+.learning-lesson-text { font-size: 13.5px; line-height: 1.6; color: var(--text-primary); margin: 0 0 10px; }
+.learning-lesson-points { margin: 0 0 10px; padding-left: 18px; }
+.learning-lesson-points li { font-size: 13px; line-height: 1.55; color: var(--text-primary); margin: 3px 0; }
+.learning-lesson-table { margin: 6px 0 10px; }
+.learning-lesson-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  background: rgba(99, 102, 241, 0.06);
+  border-left: 3px solid var(--accent);
+}
+.learning-lesson-status { font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+.learning-res-verify {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px dashed rgba(16, 185, 129, 0.3);
+}
+.learning-action-btn { min-height: 40px; padding: 0 14px; }
+.learning-action-btn:active { transform: scale(0.98); }
+@media (hover: none) {
+  .learning-action-btn:hover { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border); }
+  .learning-action-btn.primary:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+}
+
+/* Mono mavzuda --accent oq rangga yaqin: accent fonidagi matn --accent-contrast bilan */
+.learning-action-btn.primary,
+.normatives-page .norm-filter-count-badge { color: var(--accent-contrast, #fff); }
+/* Telefonda uchala tab bitta qatorga teng sig'adi (gorizontal aylantirishsiz) */
+@media (max-width: 560px) {
+  .normatives-page .norm-subtabs-row { width: 100%; overflow-x: visible; }
+  .normatives-page .norm-clean-subtab {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .normatives-page .norm-filter-trigger-btn { width: 100%; justify-content: center; }
+}
