@@ -89,6 +89,27 @@ async function initNormativesTables(pool) {
       CREATE INDEX IF NOT EXISTS idx_normative_docs_number ON normative_documents(document_number);
     `);
 
+    // Eski versiyada yaratilgan jadvalda keyin qo'shilgan ustunlar bo'lmasligi mumkin (masalan is_system_seed) —
+    // ularsiz seed/upsert va qayta nomlash yiqiladi. Har bir ustun alohida qo'shiladi (biri xato bersa boshqalari qoladi).
+    const LEGACY_DOC_COLUMNS = [
+      "document_type VARCHAR(50) DEFAULT 'SHNQ'", "category VARCHAR(100) DEFAULT 'Loyihalash'",
+      'description TEXT', 'requirements TEXT', 'target_audience VARCHAR(255)', 'application_scope TEXT',
+      "status VARCHAR(50) DEFAULT 'AMALDA'", 'adopted_date DATE', 'effective_date DATE', 'repealed_date DATE',
+      'issuing_authority VARCHAR(255)', 'official_source_url TEXT', 'pdf_url TEXT',
+      'old_edition_note TEXT', 'new_edition_note TEXT', 'change_date DATE',
+      'supersedes_document_id INT', 'replaced_by_document_id INT', "tags TEXT[] DEFAULT '{}'",
+      'view_count INT DEFAULT 0', 'last_verified_at TIMESTAMPTZ DEFAULT NOW()', 'is_system_seed BOOLEAN DEFAULT true',
+      'created_at TIMESTAMPTZ DEFAULT NOW()', 'updated_at TIMESTAMPTZ DEFAULT NOW()'
+    ];
+    for (const colDef of LEGACY_DOC_COLUMNS) {
+      try {
+        await pool.query('ALTER TABLE normative_documents ADD COLUMN IF NOT EXISTS ' + colDef);
+      } catch (e) {
+        console.warn('normative_documents column notice (' + colDef.split(' ')[0] + '):', e.message);
+        noteSeedError('column ' + colDef.split(' ')[0], e);
+      }
+    }
+
     // Ensure unique constraint on document_number for safe idempotent UPSERTs
     try {
       await pool.query(`
