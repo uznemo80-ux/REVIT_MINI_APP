@@ -1181,5 +1181,166 @@
   "Zoom: mouse wheel or double-click",
   "Yakınlaştırma: fare tekerleği veya çift tıklama",
   "التكبير: عجلة الفأرة أو النقر المزدوج"
+ ],
+ [
+  "Rasmiy matnni ilovada o‘qish",
+  "Читать официальный текст в приложении",
+  "Read the official text in the app",
+  "Resmî metni uygulamada oku",
+  "قراءة النص الرسمي داخل التطبيق"
+ ],
+ [
+  "lex.uz saytida ochish",
+  "Открыть на сайте lex.uz",
+  "Open on lex.uz",
+  "lex.uz sitesinde aç",
+  "فتح على موقع lex.uz"
+ ],
+ [
+  "Rasmiy matn",
+  "Официальный текст",
+  "Official text",
+  "Resmî metin",
+  "النص الرسمي"
+ ],
+ [
+  "Rasmiy matn yuklanmoqda…",
+  "Загрузка официального текста…",
+  "Loading the official text…",
+  "Resmî metin yükleniyor…",
+  "جارٍ تحميل النص الرسمي…"
+ ],
+ [
+  "Katta hujjatlar birinchi marta 5–15 soniyada ochiladi",
+  "Большие документы при первом открытии загружаются 5–15 секунд",
+  "Large documents take 5–15 seconds to open the first time",
+  "Büyük belgeler ilk açılışta 5–15 saniye sürer",
+  "تستغرق المستندات الكبيرة من 5 إلى 15 ثانية عند فتحها لأول مرة"
+ ],
+ [
+  "Matnni ilovada ochib bo‘lmadi",
+  "Не удалось открыть текст в приложении",
+  "Could not open the text in the app",
+  "Metin uygulamada açılamadı",
+  "تعذّر فتح النص داخل التطبيق"
+ ],
+ [
+  "Rasmiy matnni yuklab bo‘lmadi. Pastdagi tugma orqali lex.uz saytida o‘qing.",
+  "Не удалось загрузить официальный текст. Прочитайте его на сайте lex.uz по кнопке ниже.",
+  "Could not load the official text. Read it on lex.uz using the button below.",
+  "Resmî metin yüklenemedi. Aşağıdaki düğmeyle lex.uz sitesinde okuyun.",
+  "تعذّر تحميل النص الرسمي. اقرأه على موقع lex.uz عبر الزر أدناه."
+ ],
+ [
+  "Rasmiy matnni hozir yuklab bo‘lmadi. Pastdagi tugma orqali lex.uz saytida o‘qing.",
+  "Сейчас не удалось загрузить официальный текст. Прочитайте его на сайте lex.uz по кнопке ниже.",
+  "The official text could not be loaded right now. Read it on lex.uz using the button below.",
+  "Resmî metin şu anda yüklenemedi. Aşağıdaki düğmeyle lex.uz sitesinde okuyun.",
+  "تعذّر تحميل النص الرسمي الآن. اقرأه على موقع lex.uz عبر الزر أدناه."
+ ],
+ [
+  "Saytga hozir ulanib bo‘lmadi — oldin saqlangan nusxa ko‘rsatilmoqda.",
+  "Сайт сейчас недоступен — показана ранее сохранённая копия.",
+  "The site is unavailable right now — showing a previously saved copy.",
+  "Siteye şu anda bağlanılamadı — daha önce kaydedilen kopya gösteriliyor.",
+  "تعذّر الاتصال بالموقع الآن — تُعرض نسخة محفوظة سابقًا."
+ ],
+ [
+  "Bo‘limlar topilmadi",
+  "Разделы не найдены",
+  "No sections found",
+  "Bölüm bulunamadı",
+  "لم يتم العثور على أقسام"
+ ],
+ [
+  "Matn topilmadi",
+  "Текст не найден",
+  "No matches found",
+  "Metin bulunamadı",
+  "لم يتم العثور على النص"
+ ],
+ [
+  "Matndan qidirish",
+  "Поиск по тексту",
+  "Search the text",
+  "Metinde ara",
+  "البحث في النص"
+ ],
+ [
+  "Matndan qidirish: masalan, balandlik",
+  "Поиск по тексту: например, высота",
+  "Search the text: e.g. height",
+  "Metinde ara: örneğin yükseklik",
+  "البحث في النص: مثلًا الارتفاع"
+ ],
+ [
+  "Mundarija",
+  "Содержание",
+  "Contents",
+  "İçindekiler",
+  "المحتويات"
+ ],
+ [
+  "Kattaroq shrift",
+  "Крупнее шрифт",
+  "Larger text",
+  "Daha büyük yazı",
+  "خط أكبر"
+ ],
+ [
+  "Kichikroq shrift",
+  "Мельче шрифт",
+  "Smaller text",
+  "Daha küçük yazı",
+  "خط أصغر"
+ ],
+ [
+  "Qayta urinish",
+  "Повторить",
+  "Try again",
+  "Tekrar dene",
+  "إعادة المحاولة"
+ ],
+ [
+  "Ko‘rilgan",
+  "Просмотрено",
+  "Watched",
+  "İzlendi",
+  "تمت المشاهدة"
+ ],
+ [
+  "Yopiq",
+  "Закрыто",
+  "Locked",
+  "Kilitli",
+  "مغلق"
+ ],
+ [
+  "Matn O‘zbekiston Respublikasi Qonunchilik ma’lumotlari milliy bazasidan (lex.uz) olingan, {0} holatiga ko‘ra.",
+  "Текст взят из Национальной базы данных законодательства Республики Узбекистан (lex.uz) по состоянию на {0}.",
+  "The text is taken from the National Database of Legislation of the Republic of Uzbekistan (lex.uz), as of {0}.",
+  "Metin, Özbekistan Cumhuriyeti Ulusal Mevzuat Veri Tabanı'ndan (lex.uz) {0} itibarıyla alınmıştır.",
+  "النص مأخوذ من قاعدة البيانات الوطنية لتشريعات جمهورية أوزبكستان (lex.uz) حتى تاريخ {0}."
+ ],
+ [
+  "Matn O‘zbekiston Respublikasi Qonunchilik ma’lumotlari milliy bazasidan (lex.uz) olingan.",
+  "Текст взят из Национальной базы данных законодательства Республики Узбекистан (lex.uz).",
+  "The text is taken from the National Database of Legislation of the Republic of Uzbekistan (lex.uz).",
+  "Metin, Özbekistan Cumhuriyeti Ulusal Mevzuat Veri Tabanı'ndan (lex.uz) alınmıştır.",
+  "النص مأخوذ من قاعدة البيانات الوطنية لتشريعات جمهورية أوزبكستان (lex.uz)."
+ ],
+ [
+  "Rasmiy kuchga ega matnni saytning o‘zida tekshirishingiz mumkin.",
+  "Юридически действующий текст можно проверить на самом сайте.",
+  "You can check the legally valid text on the site itself.",
+  "Resmî geçerliliği olan metni sitenin kendisinde kontrol edebilirsiniz.",
+  "يمكنك التحقق من النص ذي القوة الرسمية على الموقع نفسه."
+ ],
+ [
+  "lex.uz sayti",
+  "Сайт lex.uz",
+  "lex.uz website",
+  "lex.uz sitesi",
+  "موقع lex.uz"
  ]
 ]

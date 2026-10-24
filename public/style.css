@@ -141,7 +141,7 @@ input, button, select, textarea {
   height: 72px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--accent) 0%, #7b1fa2 100%);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 34px;
   font-weight: 800;
   display: flex;
@@ -795,7 +795,7 @@ html.light .nav {
 
 .chip.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
 }
 
@@ -1086,7 +1086,7 @@ html.light .nav {
 
 .download-file-btn {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: var(--radius-sm);
   padding: 8px 16px;
@@ -1190,7 +1190,7 @@ html.light .nav {
   height: 76px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent) 0%, #8e24aa 100%);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 32px;
   font-weight: 800;
   display: flex;
@@ -1292,7 +1292,7 @@ html.light .nav {
   padding: 15px 20px;
   border-radius: var(--radius-md);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   font-size: 15px;
   font-weight: 700;
@@ -1363,7 +1363,7 @@ html.light .nav {
   height: 42px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--accent) 0%, #8e24aa 100%);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 20px;
   font-weight: 800;
   display: flex;
@@ -1562,7 +1562,7 @@ html.light .nav {
 
 .modal-btn.confirm {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
 }
 
 /* ------------------------------------------------------
@@ -1693,7 +1693,7 @@ html.light .nav {
 .admin-tabs button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
 }
 
 /* Apple-Style Hierarchical Navigation & Hub Cards */
@@ -1999,7 +1999,7 @@ html.light .nav {
 
 .admin-small-btn {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   padding: 8px 14px;
   border-radius: var(--radius-sm);
@@ -2166,7 +2166,7 @@ html.light .nav {
   height: 58px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--accent) 0%, #7b1fa2 100%);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 24px;
   font-weight: 800;
   display: flex;
@@ -2677,7 +2677,7 @@ html.light .nav {
   width: 100%;
   padding: 10px 16px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-contrast, #fff);
   font-weight: 700;
   font-size: 13.5px;
   border-radius: var(--radius-sm);
@@ -2992,7 +2992,7 @@ html.light .nav {
 
 .spec-tab-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   box-shadow: 0 2px 8px var(--accent-glow);
 }
 
@@ -3461,7 +3461,7 @@ html.light .nav {
 
 .sheet-chip-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(41, 121, 255, 0.4);
@@ -3674,7 +3674,7 @@ html.light .nav {
   font-size: 13.5px;
   font-weight: 600;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -4550,7 +4550,7 @@ input, textarea, select {
   justify-content: center;
   gap: 6px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: 10px;
   padding: 10px 20px;
@@ -4633,7 +4633,7 @@ input, textarea, select {
 
 .library-v2-view-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
   box-shadow: 0 2px 8px var(--accent-glow);
 }
@@ -6912,7 +6912,7 @@ input, textarea, select {
   font-size: 15px;
   font-weight: 700;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -7059,7 +7059,7 @@ input, textarea, select {
   align-items: center;
   gap: 6px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: 8px;
   padding: 7px 12px;
@@ -7188,7 +7188,7 @@ input, textarea, select {
 
 .admin-filter-chip.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -7423,7 +7423,7 @@ input, textarea, select {
 
 .book-cat-chip.selected {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
 }
 
@@ -7497,7 +7497,7 @@ input, textarea, select {
 
 .stat-pill.pill-active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
 }
 
@@ -8569,7 +8569,7 @@ html.light .reader-spinner-overlay {
 
 .learning-action-btn.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
 }
 
@@ -8910,7 +8910,7 @@ html.light .reader-spinner-overlay {
 
 .lib-mat-purpose-chip.active {
   background: var(--accent, #007aff);
-  color: #ffffff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent, #007aff);
   box-shadow: 0 2px 10px rgba(0, 122, 255, 0.3);
 }
@@ -9066,7 +9066,7 @@ html.light .h-scroll-arrow {
 
 .h-scroll-arrow:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   transform: translateY(-50%) scale(1.15) !important;
   border-color: var(--accent);
   box-shadow: 0 6px 20px var(--accent-glow);
@@ -9151,7 +9151,7 @@ html.light .h-scroll-arrow {
 
 .lib-mat-cat-pill.active {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
   box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25);
 }
@@ -9712,7 +9712,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
 }
 .lib-mat-spec-info-btn:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
 }
 
 .lib-mat-steps-list {
@@ -9735,7 +9735,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
   height: 28px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 13px;
   font-weight: 800;
   display: flex;
@@ -9954,7 +9954,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
 
 .lib-mat-quickpick-chip.active {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
   box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
 }
@@ -10004,7 +10004,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
 
 .lib-mat-subcat-pill.active {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent);
 }
 
@@ -10134,7 +10134,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
   font-size: 10px;
   font-weight: 800;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -10250,7 +10250,7 @@ button.lib-mat-uz-pill:focus-visible { outline: 2px solid var(--accent); outline
   font-size: 12px;
   font-weight: 700;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -11300,7 +11300,7 @@ body {
 .norm-cat-chip.active {
   background: var(--accent, #007aff);
   border-color: var(--accent, #007aff);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-weight: 700;
 }
 
@@ -11785,7 +11785,7 @@ body {
 
 .norm-primary-btn {
   background: var(--accent, #007aff);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   font-size: 15px;
   font-weight: 750;
@@ -11908,7 +11908,7 @@ body {
 
 .norm-step-number {
   background: var(--accent, #007aff);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 13px;
   font-weight: 850;
   width: 26px;
@@ -12037,7 +12037,7 @@ body {
 
 .norm-empty-reset-btn {
   background: var(--accent, #007aff);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border: none;
   font-size: 13px;
   font-weight: 700;
@@ -13468,7 +13468,7 @@ body.is-scrolling * {
 }
 .norm-clean-subtab.active {
   background: var(--accent, #6366f1);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent, #6366f1);
 }
 .norm-filter-trigger-btn {
@@ -13496,7 +13496,7 @@ body.is-scrolling * {
 }
 .norm-filter-count-badge {
   background: var(--accent, #6366f1);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 10.5px;
   font-weight: 800;
   width: 18px;
@@ -13638,7 +13638,7 @@ body.is-scrolling * {
   border-radius: 12px;
   background: var(--accent, #6366f1);
   border: none;
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
@@ -13674,7 +13674,7 @@ body.is-scrolling * {
 }
 .lib-reactions-pill.active {
   background: var(--accent, #6366f1);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   border-color: var(--accent, #6366f1);
 }
 .lib-react-item-card {
@@ -13805,7 +13805,7 @@ body.is-scrolling * {
 .stx-error { text-align: center; padding: 28px 16px; }
 .stx-error-ico { font-size: 30px; margin-bottom: 8px; }
 .stx-error-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
-.stx-retry { min-height: 44px; padding: 0 20px; border-radius: 12px; border: 0; background: var(--accent); color: #fff; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.stx-retry { min-height: 44px; padding: 0 20px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-contrast, #fff); font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 /* Faqat sichqonchali qurilmalarda (kompyuter): hover. Telefonda hover/active animatsiyasi yo'q — scroll bilan to'qnashmaydi */
 @media (hover: hover) and (pointer: fine) {
@@ -14270,7 +14270,7 @@ html.light .reader-resume-btn { border-color: rgba(0, 0, 0, 0.12); }
 .learning-action-btn:active { transform: scale(0.98); }
 @media (hover: none) {
   .learning-action-btn:hover { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border); }
-  .learning-action-btn.primary:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .learning-action-btn.primary:hover { background: var(--accent); color: var(--accent-contrast, #fff); border-color: var(--accent); }
 }
 
 /* Mono mavzuda --accent oq rangga yaqin: accent fonidagi matn --accent-contrast bilan */
@@ -14290,4 +14290,57 @@ html.light .reader-resume-btn { border-color: rgba(0, 0, 0, 0.12); }
     font-size: 12px;
   }
   .normatives-page .norm-filter-trigger-btn { width: 100%; justify-content: center; }
+}
+
+/* ------------------------------------------------------
+   DARSLAR RO'YXATI: bir xil qator tuzilishi
+   Ikon — qat'iy 24px ustun, nom — moslashuvchan (kerak bo'lsa 2-qatorga o'tadi),
+   "Bepul namuna" belgisi — hech qachon bo'linmaydi va har qatorda bir xil o'lcham/joyda
+   ------------------------------------------------------ */
+.lesson { gap: 12px; min-height: 56px; }
+.lesson-left { flex: 1 1 auto; min-width: 0; gap: 12px; align-items: center; }
+.lesson-status-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  color: var(--text-secondary);
+}
+.lesson-status-icon svg { display: block; }
+.lesson-status-icon.is-done { color: var(--text-primary); }
+.lesson-status-icon.is-play { color: var(--text-primary); }
+.lesson-title-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.38;
+  overflow-wrap: break-word;
+}
+.lesson-right { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.free-badge,
+.paid-lesson-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.free-badge {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid var(--border-hover, transparent);
+}
+@media (max-width: 360px) {
+  .lesson { padding-left: 14px; padding-right: 14px; gap: 10px; }
+  .lesson-left { gap: 10px; }
+  .free-badge, .paid-lesson-chip { padding: 0 8px; font-size: 11px; }
 }
