@@ -12,6 +12,43 @@ const SEED_NORMATIVES = VERIFIED_NORMATIVES;
 // DATABASE INITIALIZATION & ROBUST UPSERT SEED
 // ======================================================
 
+// Seed xatolari (oxirgi 20 tasi) — /api/normatives/diagnostic orqali ko'rinadi
+const seedErrors = [];
+function noteSeedError(where, err) {
+  seedErrors.push({ where, error: String(err && err.message || err).slice(0, 300), at: new Date().toISOString() });
+  if (seedErrors.length > 20) seedErrors.shift();
+}
+function getNormativeSeedErrors() { return seedErrors.slice(); }
+
+// To'liq upsert yiqilganda: faqat har qanday sxemada mavjud asosiy ustunlar bilan yangilash/qo'shish
+async function seedDocCoreFallback(pool, item) {
+  const vals = [
+    item.document_number, item.title, item.status || 'AMALDA',
+    item.official_source_url || null, item.pdf_url || null,
+    item.adopted_date || null, item.effective_date || null, item.repealed_date || null,
+    item.issuing_authority || null, item.description || null
+  ];
+  const upd = await pool.query(`
+    UPDATE normative_documents SET
+      title = $2::text, status = $3::text, official_source_url = $4::text, pdf_url = $5::text,
+      adopted_date = $6::date, effective_date = $7::date, repealed_date = $8::date,
+      issuing_authority = $9::text, description = COALESCE($10::text, description),
+      last_verified_at = NOW(), updated_at = NOW()
+    WHERE document_number = $1::text AND is_admin_edited IS NOT TRUE
+  `, vals);
+  if (upd.rowCount > 0) return 'updated';
+  const ins = await pool.query(`
+    INSERT INTO normative_documents (
+      document_number, title, status, official_source_url, pdf_url,
+      adopted_date, effective_date, repealed_date, issuing_authority, description,
+      document_type, category, is_system_seed, last_verified_at
+    )
+    SELECT $1::text, $2::text, $3::text, $4::text, $5::text, $6::date, $7::date, $8::date, $9::text, $10::text, $11::text, $12::text, true, NOW()
+    WHERE NOT EXISTS (SELECT 1 FROM normative_documents WHERE document_number = $1::text)
+  `, vals.concat([item.document_type || 'SHNQ', item.category || 'Loyihalash']));
+  return ins.rowCount > 0 ? 'inserted' : 'skipped';
+}
+
 async function initNormativesTables(pool) {
   if (!pool) return;
   try {
@@ -464,6 +501,16 @@ async function initNormativesTables(pool) {
         else updatedDocs++;
       } catch (err) {
         console.error(`Error upserting doc ${item.document_number}:`, err.message);
+        noteSeedError('upsert ' + item.document_number, err);
+        // Zaxira: eski bazada ustun turi/indeks mos kelmasa ham asosiy maydonlar (havola, nom, holat) yangilansin
+        try {
+          const fb = await seedDocCoreFallback(pool, item);
+          if (fb === 'inserted') insertedDocs++;
+          else if (fb === 'updated') updatedDocs++;
+        } catch (err2) {
+          console.error(`Fallback upsert failed ${item.document_number}:`, err2.message);
+          noteSeedError('fallback ' + item.document_number, err2);
+        }
       }
     }
 
@@ -981,6 +1028,7 @@ module.exports = {
   SEED_NORMATIVES,
   SEED_PRACTICAL_CASES,
   initNormativesTables,
+  getNormativeSeedErrors,
   getNormativesList,
   getNormativeDetail,
   getPracticalCasesList,
