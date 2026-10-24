@@ -11938,6 +11938,7 @@ app.all('/api/normatives/diagnostic', async function (req, res) {
         case_documents_count: linksRes.rows.length
       },
       stats: statsRes,
+      seed_errors: (normativesModule.getNormativeSeedErrors ? normativesModule.getNormativeSeedErrors() : []),
       documents: docsRes.rows,
       cases: casesRes.rows,
       links: linksRes.rows
