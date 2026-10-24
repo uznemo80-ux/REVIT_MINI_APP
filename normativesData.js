@@ -683,12 +683,16 @@ async function getNormativeDetail(pool, id, userId) {
 
   pool.query('UPDATE normative_documents SET view_count = view_count + 1 WHERE id = $1', [doc.id]).catch(() => {});
 
+  // Bitta vaziyatning bir nechta bosqichi shu hujjatga bog'langan bo'lishi mumkin — vaziyat ro'yxatda bir marta chiqadi
   const casesRes = await pool.query(`
-    SELECT pc.id, pc.title, pc.slug, pc.icon, pc.category, cd.stage_name
-    FROM case_documents cd
-    JOIN practical_cases pc ON pc.id = cd.case_id
-    WHERE cd.document_id = $1
-    ORDER BY pc.order_index ASC
+    SELECT id, title, slug, icon, category, stage_name FROM (
+      SELECT DISTINCT ON (pc.id) pc.id, pc.title, pc.slug, pc.icon, pc.category, pc.order_index, cd.stage_name
+      FROM case_documents cd
+      JOIN practical_cases pc ON pc.id = cd.case_id
+      WHERE cd.document_id = $1 AND pc.is_active IS NOT FALSE
+      ORDER BY pc.id, cd.sort_order ASC
+    ) x
+    ORDER BY x.order_index ASC, x.id ASC
   `, [doc.id]);
 
   const st = await pool.query(`

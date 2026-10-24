@@ -220,7 +220,7 @@
 .equipment-filter-chip.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
 }
 
 .equipment-filter-chip .eq-chip-count {
@@ -514,7 +514,7 @@
   border-radius: var(--radius-full);
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;

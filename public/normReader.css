@@ -1,0 +1,265 @@
+/* ======================================================
+   Normativ hujjat matnini ilova ichida o'qish (normReader.js)
+   Mono dizayn tokenlari: tungi va kunduzgi mavzuda bir xil ishlaydi
+   ====================================================== */
+.nrd-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.nrd-top {
+  position: sticky;
+  top: calc(var(--safe-top, 0px) + var(--tg-content-top, 0px));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nrd-top-title { flex: 1; min-width: 0; padding: 0 4px; }
+.nrd-top-num {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nrd-top-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+
+.nrd-icon-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.nrd-icon-btn:active { background: var(--bg-hover, rgba(127, 127, 127, 0.12)); transform: scale(0.94); }
+.nrd-icon-btn:disabled { opacity: 0.35; }
+.nrd-icon-btn.sm { width: 40px; height: 40px; }
+
+.nrd-search {
+  position: sticky;
+  top: calc(var(--safe-top, 0px) + var(--tg-content-top, 0px) + 57px);
+  z-index: 29;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 8px 12px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+.nrd-search[hidden] { display: none; }
+.nrd-search input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover, var(--border));
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 16px; /* iOS: kattalashib ketmasligi uchun */
+  outline: none;
+}
+.nrd-search input:focus { border-color: var(--border-focus, var(--text-secondary)); }
+.nrd-search-count { min-width: 44px; text-align: center; font-size: 12.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.nrd-content { padding: 14px 16px 40px; max-width: 760px; margin: 0 auto; }
+
+/* ---------- Hujjat matni ---------- */
+.nrd-doc {
+  --nrd-fs: 16px;
+  font-size: var(--nrd-fs);
+  line-height: 1.62;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.nrd-b { margin: 0 0 0.7em; content-visibility: auto; contain-intrinsic-size: auto 60px; }
+.nrd-p, .nrd-fn, .nrd-sig, .nrd-center, .nrd-head, .nrd-meta { border-radius: 6px; }
+.nrd-head, .nrd-center { text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; font-size: 0.86em; color: var(--text-secondary); margin-bottom: 0.3em; }
+.nrd-title { text-align: center; font-weight: 750; font-size: 1.12em; line-height: 1.35; margin: 0.8em 0 0.9em; letter-spacing: -0.01em; }
+.nrd-meta { text-align: center; font-size: 0.82em; color: var(--text-secondary); font-style: italic; }
+.nrd-h { font-weight: 700; font-size: 1.04em; line-height: 1.4; margin: 1.5em 0 0.7em; padding-top: 0.9em; border-top: 1px solid var(--border); }
+.nrd-h b { font-weight: inherit; }
+.nrd-appl { text-align: right; font-size: 0.82em; color: var(--text-secondary); margin: 2.2em 0 0.4em; padding-top: 1.2em; border-top: 1px dashed var(--border-hover, var(--border)); }
+.nrd-sig { text-align: right; font-weight: 600; font-size: 0.92em; margin: 0.2em 0; }
+.nrd-fn { font-size: 0.84em; color: var(--text-secondary); }
+.nrd-cmt { font-size: 0.78em; color: var(--text-muted, var(--text-secondary)); margin-top: -0.35em; }
+.nrd-chg {
+  font-size: 0.8em;
+  font-style: italic;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-left: 2px solid var(--border-hover, var(--border));
+  background: var(--bg-surface);
+  border-radius: 0 8px 8px 0;
+}
+.nrd-doc a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 2px;
+}
+.nrd-doc sup, .nrd-doc sub { font-size: 0.72em; line-height: 0; }
+
+/* Jadvallar: faqat jadval ichida gorizontal surish, sahifa surilmaydi */
+.nrd-table { margin: 0.6em -16px 1em; content-visibility: visible; }
+.nrd-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 16px; overscroll-behavior-x: contain; }
+.nrd-table table { border-collapse: collapse; font-size: 0.82em; line-height: 1.4; width: max-content; min-width: 100%; }
+.nrd-table td, .nrd-table th {
+  border: 1px solid var(--border-hover, rgba(127, 127, 127, 0.3));
+  padding: 6px 8px;
+  vertical-align: top;
+  min-width: 48px;
+  max-width: 240px;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
+}
+.nrd-table td:first-child { min-width: 110px; }
+.nrd-table th { font-weight: 700; background: var(--bg-surface); }
+.nrd-table tr:first-child td { background: var(--bg-surface); font-weight: 600; }
+
+.nrd-flash { animation: nrdFlash 1.4s ease; }
+@keyframes nrdFlash {
+  0%, 30% { background: var(--accent-soft, rgba(127, 127, 127, 0.18)); box-shadow: 0 0 0 6px var(--accent-soft, rgba(127, 127, 127, 0.18)); }
+  100% { background: transparent; box-shadow: 0 0 0 6px transparent; }
+}
+
+mark.nrd-hit { background: rgba(255, 214, 10, 0.35); color: inherit; border-radius: 3px; padding: 0 1px; }
+mark.nrd-hit.is-current { background: #ffd60a; color: #111; }
+
+/* ---------- Yuklanish / xato ---------- */
+.nrd-loading { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 0 26px; color: var(--text-secondary); font-size: 14px; text-align: center; }
+.nrd-loading-hint { font-size: 12px; color: var(--text-muted, var(--text-secondary)); }
+.nrd-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid var(--border-hover, rgba(127, 127, 127, 0.3)); border-top-color: var(--text-primary); animation: nrdSpin 0.8s linear infinite; }
+@keyframes nrdSpin { to { transform: rotate(360deg); } }
+.nrd-skel { height: 13px; border-radius: 6px; margin: 0 0 12px; background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-surface-elevated, var(--bg-surface)) 50%, var(--bg-surface) 100%); background-size: 200% 100%; animation: nrdShimmer 1.3s ease infinite; }
+@keyframes nrdShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.nrd-error { text-align: center; padding: 36px 8px 18px; }
+.nrd-error-icon { font-size: 34px; }
+.nrd-error-title { font-weight: 700; font-size: 17px; margin-top: 10px; }
+.nrd-error-text { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin: 8px auto 16px; max-width: 420px; }
+.nrd-retry-btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hover, var(--border));
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 650;
+  font-size: 14.5px;
+}
+.nrd-stale { font-size: 12.5px; color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 14px; }
+
+/* ---------- Manba (saytga havola) ---------- */
+.nrd-source {
+  margin-top: 28px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+.nrd-source-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+.nrd-source-text { font-size: 13.5px; line-height: 1.5; color: var(--text-secondary); margin: 6px 0 14px; }
+.nrd-source-text span { display: block; }
+.nrd-source-text span + span { margin-top: 4px; }
+.nrd-source-btn {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+.nrd-source-btn:active { transform: scale(0.98); }
+.nrd-source-url { margin-top: 10px; font-size: 11.5px; color: var(--text-muted, var(--text-secondary)); text-align: center; overflow-wrap: anywhere; }
+
+/* ---------- Mundarija ---------- */
+.nrd-toc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: nrdFade 0.2s ease;
+}
+.nrd-toc-overlay[hidden] { display: none; }
+@keyframes nrdFade { from { opacity: 0; } to { opacity: 1; } }
+.nrd-toc-sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: var(--safe-bottom, 0px);
+  animation: nrdUp 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes nrdUp { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.nrd-toc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+.nrd-toc-title { font-size: 17px; font-weight: 700; }
+.nrd-font-ctl { display: flex; gap: 6px; }
+.nrd-font-btn {
+  min-width: 48px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover, var(--border));
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+.nrd-toc-list { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 16px; overscroll-behavior: contain; }
+.nrd-toc-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  min-height: 44px;
+  padding: 10px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.nrd-toc-item:active { background: var(--bg-hover, rgba(127, 127, 127, 0.12)); }
+.nrd-toc-item.nrd-toc-k-title { font-weight: 700; }
+.nrd-toc-item.nrd-toc-k-appl { color: var(--text-secondary); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 8px; }
+.nrd-toc-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nrd-flash, .nrd-toc-overlay, .nrd-toc-sheet, .nrd-skel { animation: none !important; }
+}

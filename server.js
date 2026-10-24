@@ -11701,6 +11701,138 @@ app.all('/api/normatives/detail/:id', async function (req, res) {
   }
 });
 
+// ======================================================
+// NORMATIV HUJJAT MATNI — ilova ichida o'qish (lex.uz dan olinadi, bazada keshlanadi)
+// ======================================================
+var lexText = require('./services/lexText');
+var NORM_TEXT_TTL_MS = 14 * 24 * 3600 * 1000; // 14 kun: o'zgartirishlar kiritilgan bo'lsa yangilanadi
+var normTextInflight = new Map();
+var normTextTableReady = null;
+
+function ensureNormTextTable() {
+  if (!normTextTableReady) {
+    normTextTableReady = pool.query(
+      'CREATE TABLE IF NOT EXISTS normative_texts (' +
+      '  url TEXT PRIMARY KEY,' +
+      '  title TEXT,' +
+      '  blocks JSONB NOT NULL,' +
+      '  block_count INT DEFAULT 0,' +
+      '  fetched_at TIMESTAMPTZ DEFAULT NOW(),' +
+      '  last_error TEXT,' +
+      '  last_error_at TIMESTAMPTZ' +
+      ')'
+    ).catch(function (e) { normTextTableReady = null; throw e; });
+  }
+  return normTextTableReady;
+}
+
+function normTextSourceUrl(doc) {
+  var cands = [doc && doc.official_source_url, doc && doc.pdf_url];
+  for (var i = 0; i < cands.length; i++) {
+    var u = String(cands[i] || '').trim();
+    if (lexText.isLexUrl(u) && lexText.lexDocId(u)) return u.split('#')[0];
+  }
+  return null;
+}
+
+// Keshdan yoki lex.uz dan; bir xil hujjat uchun parallel so'rovlar bitta yuklashni kutadi
+async function getNormativeText(url, opts) {
+  opts = opts || {};
+  await ensureNormTextTable();
+  var cached = (await pool.query('SELECT title, blocks, fetched_at FROM normative_texts WHERE url = $1', [url])).rows[0] || null;
+  var fresh = cached && (Date.now() - new Date(cached.fetched_at).getTime() < NORM_TEXT_TTL_MS);
+  if (cached && (fresh || opts.preferCache)) return { title: cached.title, blocks: cached.blocks, fetched_at: cached.fetched_at, cached: true };
+  if (!normTextInflight.has(url)) {
+    normTextInflight.set(url, (async function () {
+      try {
+        var r = await lexText.fetchLexDocument(url);
+        var row = (await pool.query(
+          'INSERT INTO normative_texts (url, title, blocks, block_count, fetched_at, last_error, last_error_at) ' +
+          'VALUES ($1, $2, $3::jsonb, $4, NOW(), NULL, NULL) ' +
+          'ON CONFLICT (url) DO UPDATE SET title = EXCLUDED.title, blocks = EXCLUDED.blocks, block_count = EXCLUDED.block_count, ' +
+          '  fetched_at = NOW(), last_error = NULL, last_error_at = NULL RETURNING fetched_at',
+          [url, r.title, JSON.stringify(r.blocks), r.blocks.length]
+        )).rows[0];
+        return { title: r.title, blocks: r.blocks, fetched_at: row.fetched_at, cached: false };
+      } catch (e) {
+        pool.query(
+          'UPDATE normative_texts SET last_error = $2, last_error_at = NOW() WHERE url = $1',
+          [url, String(e && e.message || e).slice(0, 300)]
+        ).catch(function () {});
+        throw e;
+      } finally {
+        normTextInflight.delete(url);
+      }
+    })());
+  }
+  try {
+    return await normTextInflight.get(url);
+  } catch (e) {
+    // lex.uz vaqtincha ishlamasa — eskirgan bo'lsa ham keshdagi matn ko'rsatiladi
+    if (cached) return { title: cached.title, blocks: cached.blocks, fetched_at: cached.fetched_at, cached: true, stale: true };
+    throw e;
+  }
+}
+
+app.all('/api/normatives/text/:id', async function (req, res) {
+  try {
+    var id = parseInt(req.params.id, 10);
+    if (!id) return res.status(400).json({ ok: false, error: 'Noto‘g‘ri hujjat' });
+    var docRes = await pool.query(
+      'SELECT id, title, document_number, official_source_url, pdf_url FROM normative_documents WHERE id = $1',
+      [id]
+    );
+    var doc = docRes.rows[0];
+    if (!doc) return res.status(404).json({ ok: false, error: 'Hujjat topilmadi' });
+    var url = normTextSourceUrl(doc);
+    if (!url) return res.status(404).json({ ok: false, error: 'Bu hujjat uchun lex.uz matni ulanmagan', code: 'no_source' });
+    var t = await getNormativeText(url);
+    res.set('Cache-Control', 'private, max-age=600');
+    return res.json({
+      ok: true,
+      document_id: doc.id,
+      document_number: doc.document_number,
+      title: doc.title,
+      source_title: t.title,
+      source_url: url,
+      fetched_at: t.fetched_at,
+      stale: !!t.stale,
+      blocks: t.blocks
+    });
+  } catch (err) {
+    console.error('NORMATIVE TEXT ERROR:', err && err.message);
+    return res.status(502).json({
+      ok: false,
+      code: (err && err.code) || 'error',
+      error: 'Rasmiy matnni hozir yuklab bo‘lmadi. Pastdagi tugma orqali lex.uz saytida o‘qing.'
+    });
+  }
+});
+
+// Ishga tushganda barcha lex.uz hujjatlarini fonda keshga olish (ketma-ket, sekin — saytga yuk bermaslik uchun)
+async function warmNormativeTexts() {
+  try {
+    await ensureNormTextTable();
+    var rows = (await pool.query(
+      "SELECT d.official_source_url, d.pdf_url FROM normative_documents d WHERE d.official_source_url ILIKE '%lex.uz%' OR d.pdf_url ILIKE '%lex.uz%'"
+    )).rows;
+    var urls = Array.from(new Set(rows.map(normTextSourceUrl).filter(Boolean)));
+    var have = (await pool.query(
+      'SELECT url FROM normative_texts WHERE fetched_at > NOW() - ($1 || \' milliseconds\')::interval',
+      [String(NORM_TEXT_TTL_MS)]
+    )).rows.map(function (r) { return r.url; });
+    var todo = urls.filter(function (u) { return have.indexOf(u) === -1; });
+    var ok = 0, fail = 0;
+    for (var i = 0; i < todo.length; i++) {
+      try { await getNormativeText(todo[i]); ok++; } catch (e) { fail++; }
+      await new Promise(function (r) { setTimeout(r, 2500); });
+    }
+    if (todo.length) console.log('[normative-texts] keshlandi: ' + ok + ', xato: ' + fail + ' (jami lex.uz hujjat: ' + urls.length + ')');
+  } catch (e) {
+    console.warn('[normative-texts] warm xatosi:', e.message);
+  }
+}
+
 app.all('/api/normatives/cases', async function (req, res) {
   try {
     var p = req.method === 'POST' ? (req.body || {}) : (req.query || {});
@@ -12447,4 +12579,6 @@ app.listen(PORT, function () {
   console.log('==========================================');
   // Natijalar PDF'larini fonda keshga yuklash (jadvallar tayyor bo'lishi uchun biroz kutiladi)
   setTimeout(warmShowcasePdfCache, 15000);
+  // Normativ hujjatlar matnini (lex.uz) fonda keshlash
+  setTimeout(warmNormativeTexts, 45000);
 });

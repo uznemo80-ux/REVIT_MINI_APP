@@ -24,7 +24,7 @@
 
   --text-primary: #f5f5f5;
   --text-secondary: #9a9a9a;
-  --text-muted: #5f5f5f;
+  --text-muted: #7c7c7c; /* #5f5f5f qora fonda o'qilmasdi (2.9:1) */
 
   --accent: #f5f5f5;
   --accent-hover: #dcdcdc;

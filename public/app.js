@@ -4626,7 +4626,7 @@ function renderCourseCardsListHtml() {
               Darslarni ochish →
             </button>`;
           } else {
-            return `<button class="btn" style="margin-bottom:0; padding:10px 16px; background:linear-gradient(135deg, #00c853, #009624);" onclick="event.stopPropagation(); openCourseAccessModal(${Number(course.id)})">
+            return `<button class="btn" style="margin-bottom:0; padding:10px 16px;" onclick="event.stopPropagation(); openCourseAccessModal(${Number(course.id)})">
               💳 Darsga a'zo bo'lish
             </button>`;
           }
@@ -5231,7 +5231,7 @@ function renderCourseModules() {
                   <div style="font-size:13px; color:var(--text-secondary);">
                     Tugagan sana: <b>${fmtDate(expDate) || '-'}</b>
                   </div>
-                  <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+                  <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px;" onclick="openCourseAccessModal(${Number(course.id)})">
                     💳 A'zolikni yangilash
                   </button>
                 </div>
@@ -5274,7 +5274,7 @@ function renderCourseModules() {
                 <div style="font-size:15px; font-weight:800; color:var(--accent);">
                   ${escapeHtml(formatCoursePrice(course.discount_price || course.price || "1 500 000 so'm"))}
                 </div>
-                <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+                <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px;" onclick="openCourseAccessModal(${Number(course.id)})">
                   💳 Darsga a'zo bo'lish
                 </button>
               </div>
@@ -5359,11 +5359,11 @@ function renderCourseModules() {
             ${lessons.length ? lessons.map(lesson => `
               <div class="lesson ${lesson.available ? "" : "disabled"}" onclick="${lesson.available ? `openLesson(${Number(lesson.id)})` : `showLockedInfo(${Number(course.id)})`}">
                 <div class="lesson-left">
-                  <span class="lesson-status-icon">${lesson.watched ? "✅" : (lesson.available ? "▶" : "🔒")}</span>
-                  <span>${escapeHtml(lesson.title)}</span>
+                  ${lessonStatusIconHtml(lesson)}
+                  <span class="lesson-title-text">${escapeHtml(lesson.title)}</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  ${lesson.is_free ? `<span class="free-badge">Bepul namuna</span>` : (!lesson.available && !state.is_admin ? `<span class="paid-lesson-chip">🔒 Pullik dars</span>` : "")}
+                <div class="lesson-right">
+                  ${lesson.is_free ? `<span class="free-badge">Bepul namuna</span>` : (!lesson.available && !state.is_admin ? `<span class="paid-lesson-chip">Pullik dars</span>` : "")}
                   ${state.is_admin ? `<button class="admin-small-btn" style="padding:3px 7px; font-size:10.5px;" onclick="event.stopPropagation(); openEditLessonView(${Number(lesson.id)})">✏️</button>` : ""}
                 </div>
               </div>
@@ -5406,7 +5406,7 @@ function renderCourseModules() {
   if (!courseModulesData.has_access && !state.has_access && !state.is_admin) {
     html += `
       <div style="margin-top: 18px;">
-        <button class="btn" style="background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(course.id)})">
+        <button class="btn" onclick="openCourseAccessModal(${Number(course.id)})">
           💳 Kursga a'zo bo'lish (To'lov va murojaat)
         </button>
       </div>
@@ -5958,7 +5958,7 @@ function renderLessonQABox(lessonId, questions) {
           <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
             Ustozdan to'liq amaliy yordam va savol-javob imkoniyatidan foydalanish uchun kursga a'zo bo'ling.
           </div>
-          <button class="btn" style="width:auto; margin:0 auto; padding:8px 18px; font-size:12.5px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(${Number(selectedCourseId || 1)})">
+          <button class="btn" style="width:auto; margin:0 auto; padding:8px 18px; font-size:12.5px;" onclick="openCourseAccessModal(${Number(selectedCourseId || 1)})">
             💳 Kursga a'zo bo'lish
           </button>
         </div>
@@ -9698,7 +9698,7 @@ function renderMaterialLikedViewHtml() {
           <div class="mcat-empty-ico" style="font-size:46px; color:#ef4444; margin-bottom:8px;">♡</div>
           <div class="mcat-empty-title" style="font-size:16px; font-weight:750; margin-bottom:4px;">${escapeHtml(matT('liked_empty_title'))}</div>
           <div class="mcat-empty-sub" style="font-size:13px; color:var(--text-muted); max-width:320px; margin:0 auto 16px auto;">${escapeHtml(matT('liked_empty_sub'))}</div>
-          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:#fff; border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
+          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:var(--accent-contrast, #fff); border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
             ${escapeHtml(matT('browse_catalog'))}
           </button>
         </div>
@@ -9772,7 +9772,7 @@ function renderMaterialSavedViewHtml() {
           <div class="mcat-empty-ico" style="font-size:46px; margin-bottom:8px;">🔖</div>
           <div class="mcat-empty-title" style="font-size:16px; font-weight:750; margin-bottom:4px;">${escapeHtml(matT('saved_empty_title'))}</div>
           <div class="mcat-empty-sub" style="font-size:13px; color:var(--text-muted); max-width:320px; margin:0 auto 16px auto;">${escapeHtml(matT('saved_empty_sub'))}</div>
-          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:#fff; border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
+          <button type="button" class="lib-page-btn" style="background:var(--accent, #007aff); color:var(--accent-contrast, #fff); border-radius:18px; padding:9px 22px; font-weight:700; border:none; cursor:pointer;" onclick="setMaterialsViewTab('catalog')">
             ${escapeHtml(matT('browse_catalog'))}
           </button>
         </div>
@@ -12908,7 +12908,7 @@ function renderProfileCourseAccessCard() {
     badge = '<span class="tag" style="background:rgba(235,59,59,0.2); color:#ff5252; border:1px solid #eb3b3b;">🔴 Muddati tugagan</span>';
     title = 'INTPRO — Revit Kursi';
     desc = `Kursga a'zolik muddati <b>${fmtDate(expiresAt) || '-'}</b> sanasida yakunlangan. Darslarni qayta ko'rish uchun a'zolikni uzaytiring.`;
-    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(1)">A'zolikni yangilash 💳</button>`;
+    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px;" onclick="openCourseAccessModal(1)">A'zolikni yangilash 💳</button>`;
   } else if (accState === 'REVOKED') {
     badge = '<span class="tag" style="background:rgba(235,59,59,0.2); color:#ff5252; border:1px solid #eb3b3b;">🚫 Bekor qilingan</span>';
     title = 'INTPRO — Revit Kursi';
@@ -12918,7 +12918,7 @@ function renderProfileCourseAccessCard() {
     badge = '<span class="tag" style="background:rgba(41,121,255,0.2); color:#2979ff; border:1px solid #2979ff;">🔒 Access yo\'q</span>';
     title = 'INTPRO — Revit Kursi (Pullik)';
     desc = 'Kurs 11 ta modul va 140 ta darsdan iborat. Kursga to\'liq a\'zo bo\'lish 1 yilga (365 kunga) beriladi.';
-    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px; background:linear-gradient(135deg, #00c853, #009624);" onclick="openCourseAccessModal(1)">Kursga a'zo bo'lish 💳</button>`;
+    btnHtml = `<button class="btn" style="margin-top:10px; margin-bottom:0; padding:9px 14px; font-size:13px;" onclick="openCourseAccessModal(1)">Kursga a'zo bo'lish 💳</button>`;
   }
 
   return `
@@ -15492,7 +15492,7 @@ async function openAdminStudentModal(id) {
 
             <!-- Tezkor amallar -->
             <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
-              <button class="btn" style="margin:0; background:linear-gradient(135deg, #00c853, #009624); font-size:13.5px;" onclick="grantStudentAccess(${Number(st.id)}, 'grant_1year')">
+              <button class="btn" style="margin:0; font-size:13.5px;" onclick="grantStudentAccess(${Number(st.id)}, 'grant_1year')">
                 ⚡ 1 Yillik Access Berish (365 kun)
               </button>
 
@@ -20909,6 +20909,10 @@ function handleTelegramBackClick() {
       return;
     }
   }
+  if (currentView && currentView.type === "normative_text" && typeof closeNormTextReader === "function") {
+    closeNormTextReader();
+    return;
+  }
   if (currentView) {
     if (currentView.type === "material_detail") {
       closeMaterialDetail();
@@ -21022,6 +21026,17 @@ async function toggleLearningStage(stageId) {
   } catch (err) {
     showAlert(err.message || "Progressni saqlashda xatolik.");
   }
+}
+
+// Dars holati belgisi: bir xil o'lchamdagi ingichka ikonlar (emoji har qurilmada har xil kenglikda chiqadi)
+function lessonStatusIconHtml(lesson) {
+  if (lesson.watched) {
+    return `<span class="lesson-status-icon is-done" aria-label="Ko‘rilgan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8"/></svg></span>`;
+  }
+  if (lesson.available) {
+    return `<span class="lesson-status-icon is-play" aria-label="Ko‘rish"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M10.2 8.6v6.8l5.4-3.4z" fill="currentColor" stroke="none"/></svg></span>`;
+  }
+  return `<span class="lesson-status-icon is-locked" aria-label="Yopiq"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg></span>`;
 }
 
 function safeOpenExternal(url) {
@@ -21742,7 +21757,7 @@ async function openCourseAccessModal(courseId) {
           </div>
 
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <button class="btn" style="margin-bottom:0; background:linear-gradient(135deg, #00c853, #009624);" onclick="submitCourseAccessRequest(${cid})">
+            <button class="btn" style="margin-bottom:0;" onclick="submitCourseAccessRequest(${cid})">
               🚀 Kursga a'zo bo'lish so'rovini yuborish
             </button>
 
@@ -23570,7 +23585,7 @@ function renderNormativeCaseDetailPage(res) {
 
       <!-- LEGAL DISCLAIMER -->
       <div class="norm-legal-notice">
-        ⚖️ <strong>Eslatma:</strong> «Majburiy» bosqichlardagi raqamlar amaldagi ShNQ/QMQ matnidan band raqami bilan olingan (tekshirilgan sana: 24.10.2026). «💡 Tavsiya» — amaliy maslahat, majburiy norma emas. Hujjat kartasini bosib, rasmiy matnni lex.uz da o‘qishingiz mumkin.
+        ⚖️ <strong>Eslatma:</strong> «Majburiy» bosqichlardagi raqamlar amaldagi ShNQ/QMQ matnidan band raqami bilan olingan (tekshirilgan sana: 24.10.2026). «💡 Tavsiya» — amaliy maslahat, majburiy norma emas. Hujjat kartasini bosib, rasmiy matnni ilovaning o‘zida o‘qishingiz mumkin.
       </div>
     </div>
   `;
@@ -25846,8 +25861,14 @@ function nrmSourceBlockHtml(doc) {
   const btns = [];
   const docTitle = `${doc.document_number || ""} ${doc.title || ""}`.trim();
   if (L.official) {
-    const isLex = /lex\.uz/i.test(L.official.url);
-    btns.push(`<button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">📖 ${isLex ? "Rasmiy matnni o‘qish (lex.uz)" : escapeHtml(L.official.label || "Rasmiy sahifa")} ↗</button>`);
+    const isLex = /lex\.uz\/(?:[a-z]{2}\/)?docs\/-?\d+/i.test(L.official.url);
+    if (isLex && doc.id && typeof openNormTextReader === "function") {
+      // Rasmiy matn ilovaning o'zida o'qiladi; saytdagi asl sahifa — ikkinchi tugma
+      btns.push(`<button type="button" class="norm-primary-btn" onclick="openNormTextReader(${Number(doc.id)}, false, '${escapeJsString(L.official.url)}')">📖 Rasmiy matnni ilovada o‘qish</button>`);
+      btns.push(`<button type="button" class="norm-secondary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">🌐 lex.uz saytida ochish ↗</button>`);
+    } else {
+      btns.push(`<button type="button" class="norm-primary-btn" onclick="safeOpenExternal('${escapeJsString(L.official.url)}')">📖 ${isLex ? "Rasmiy matnni o‘qish (lex.uz)" : escapeHtml(L.official.label || "Rasmiy sahifa")} ↗</button>`);
+    }
   }
   if (L.pdf) {
     if (nrmCanReadInApp(L.pdf.url)) btns.push(`<button type="button" class="${L.official ? "norm-secondary-btn" : "norm-primary-btn"}" onclick="openNormPdfReader('${escapeJsString(L.pdf.url)}', '${escapeJsString(docTitle)}')">📖 Ilovada o‘qish (PDF)</button>`);
